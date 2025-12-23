@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QScrap Admin - Platform Management</title>
+    <link rel="stylesheet" href="css/design-tokens.css">
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.css">
+</head>
+
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Auth Screen -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>🛡️ QScrap Admin</h1>
+                <p>Platform Management Console</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Admin Phone</label>
+                    <input type="tel" id="loginPhone" placeholder="+974 XXXX XXXX" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-shield-lock"></i> Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🛡️ QScrap</h2>
+                <span class="admin-badge">ADMIN</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-section="dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-section="approvals">
+                    <i class="bi bi-person-check"></i>
+                    <span>Approvals</span>
+                    <span class="nav-badge" id="pendingBadge">0</span>
+                </button>
+                <button class="nav-item" data-section="garages">
+                    <i class="bi bi-shop"></i>
+                    <span>Garages</span>
+                </button>
+                <button class="nav-item" data-section="users">
+                    <i class="bi bi-people"></i>
+                    <span>Users</span>
+                </button>
+                <button class="nav-item" data-section="audit">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Audit Log</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-outline" onclick="logout()">
+                    <i class="bi bi-box-arrow-left"></i> Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section class="section active" id="sectionDashboard">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard Overview</h1>
+                    <p>Real-time platform statistics</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card pending">
+                        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statPending">-</span>
+                            <span class="stat-label">Pending Approvals</span>
+                        </div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statApproved">-</span>
+                            <span class="stat-label">Approved Garages</span>
+                        </div>
+                    </div>
+                    <div class="stat-card demo">
+                        <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statDemos">-</span>
+                            <span class="stat-label">Active Demos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-icon"><i class="bi bi-people"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statCustomers">-</span>
+                            <span class="stat-label">Customers</span>
+                        </div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-icon"><i class="bi bi-truck"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statDrivers">-</span>
+                            <span class="stat-label">Drivers</span>
+                        </div>
+                    </div>
+                    <div class="stat-card primary">
+                        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statActiveOrders">-</span>
+                            <span class="stat-label">Active Orders</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="switchSection('approvals')">
+                            <i class="bi bi-person-plus"></i>
+                            Review Pending
+                        </button>
+                        <button class="action-btn" onclick="switchSection('garages')">
+                            <i class="bi bi-shop"></i>
+                            Manage Garages
+                        </button>
+                        <button class="action-btn" onclick="switchSection('audit')">
+                            <i class="bi bi-journal-text"></i>
+                            View Audit Log
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Approvals Section -->
+            <section class="section" id="sectionApprovals">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-person-check"></i> Pending Approvals</h1>
+                    <p>Review and approve new garage registrations</p>
+                </div>
+                <div id="pendingList" class="cards-grid">
+                    <div class="empty-state">
+                        <i class="bi bi-hourglass"></i>
+                        <p>Loading pending approvals...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Garages Section -->
+            <section class="section" id="sectionGarages">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-shop"></i> All Garages</h1>
+                    <div class="header-actions">
+                        <select id="garageStatusFilter" onchange="loadGarages()">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="demo">Demo</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <input type="text" id="garageSearch" placeholder="Search garages..." onkeyup="debounceSearch()">
+                    </div>
+                </div>
+                <div id="garagesList" class="cards-grid"></div>
+                <div id="garagesPagination"></div>
+            </section>
+
+            <!-- Users Section -->
+            <section class="section" id="sectionUsers">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-people"></i> User Management</h1>
+                    <p>View and manage platform users</p>
+                </div>
+                <div id="usersList"></div>
+            </section>
+
+            <!-- Audit Log Section -->
+            <section class="section" id="sectionAudit">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-journal-text"></i> Audit Log</h1>
+                    <p>Track admin actions</p>
+                </div>
+                <div id="auditList" class="audit-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Approve Modal -->
+    <div class="modal-overlay" id="approveModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="bi bi-check-circle"></i> Approve Garage</h3>
+                <button class="modal-close" onclick="closeModal('approveModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Approve <strong id="approveGarageName"></strong>?</p>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="approveNotes" placeholder="Add any notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('approveModal')">Cancel</button>
+                <button class="btn btn-success" onclick="confirmApprove()">
+                    <i class="bi bi-check-circle"></i> Approve
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal-overlay" id="rejectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="bi bi-x-circle"></i> Reject Garage</h3>
+                <button class="modal-close" onclick="closeModal('rejectModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Reject <strong id="rejectGarageName"></strong>?</p>
+                <div class="form-group">
+                    <label>Reason *</label>
+                    <textarea id="rejectReason" placeholder="Explain why the application was rejected..."
+                        required></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('rejectModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmReject()">
+                    <i class="bi bi-x-circle"></i> Reject
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Modal -->
+    <div class="modal-overlay" id="demoModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="bi bi-clock"></i> Grant Demo Access</h3>
+                <button class="modal-close" onclick="closeModal('demoModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Grant demo access to <strong id="demoGarageName"></strong>?</p>
+                <div class="form-group">
+                    <label>Demo Period (Days)</label>
+                    <input type="number" id="demoDays" value="30" min="7" max="90">
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="demoNotes" placeholder="Add any notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('demoModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmDemo()">
+                    <i class="bi bi-clock"></i> Grant Demo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-dashboard.js"></script>
+</body>
+
+</html>
