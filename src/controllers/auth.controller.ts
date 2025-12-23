@@ -184,6 +184,54 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
+        // ============================================
+        // GARAGE APPROVAL CHECK (Admin Module)
+        // ============================================
+        if (user.user_type === 'garage') {
+            const garageResult = await pool.query(
+                `SELECT approval_status, demo_expires_at, rejection_reason 
+                 FROM garages WHERE garage_id = $1`,
+                [user.user_id]
+            );
+
+            if (garageResult.rows.length > 0) {
+                const garage = garageResult.rows[0];
+                const approvalStatus = garage.approval_status || 'pending';
+
+                // Block pending garages
+                if (approvalStatus === 'pending') {
+                    return res.status(403).json({
+                        error: 'pending_approval',
+                        message: 'Your account is pending approval. Our team will review your application shortly. You will receive a notification once approved.',
+                        status: 'pending'
+                    });
+                }
+
+                // Block rejected garages
+                if (approvalStatus === 'rejected') {
+                    return res.status(403).json({
+                        error: 'application_rejected',
+                        message: garage.rejection_reason || 'Your application has been rejected. Please contact support for more information.',
+                        status: 'rejected'
+                    });
+                }
+
+                // Check if demo has expired
+                if (approvalStatus === 'demo' && garage.demo_expires_at) {
+                    const demoExpiry = new Date(garage.demo_expires_at);
+                    if (demoExpiry < new Date()) {
+                        return res.status(403).json({
+                            error: 'demo_expired',
+                            message: 'Your demo period has expired. Please contact our team to activate your account.',
+                            status: 'demo_expired'
+                        });
+                    }
+                }
+
+                // Approved and valid demo accounts can proceed
+            }
+        }
+
         // Update last login timestamp
         await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
 

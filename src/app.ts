@@ -23,6 +23,7 @@ import documentsRoutes from './routes/documents.routes';
 import reviewsRoutes from './routes/reviews.routes';
 import driverRoutes from './routes/driver.routes';
 import chatRoutes from './routes/chat.routes';
+import adminRoutes from './routes/admin.routes';
 
 // Middleware imports
 import { requestContext } from './middleware/requestContext.middleware';
@@ -139,6 +140,9 @@ app.use('/api/driver', driverRoutes);
 
 // Chat Routes (customer-driver messaging)
 app.use('/api/chat', chatRoutes);
+
+// Admin Routes (platform administration)
+app.use('/api/admin', adminRoutes);
 
 // ==========================================
 // HEALTH CHECK (Enhanced for Phase 1/2)
