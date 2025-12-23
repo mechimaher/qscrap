@@ -759,7 +759,12 @@ function switchSection(section) {
     if (section === 'profile') loadProfile();
 
     // Initialize delivery map when switching to new request section
-    if (section === 'New') initDeliveryMap();
+    if (section === 'create') {
+        setTimeout(() => {
+            initDeliveryMap();
+            if (deliveryMap) deliveryMap.invalidateSize();
+        }, 200);
+    }
 }
 
 // ===== LOCATION PICKER (Uber-like) =====
