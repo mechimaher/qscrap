@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QScrap Operations Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
+    <!-- Leaflet Maps for Delivery Tracking -->
+    <link rel="stylesheet" href="/assets/leaflet/leaflet.css" />
+    <script src="/assets/leaflet/leaflet.js"></script>
+    <!-- Shared CSS (must come before module CSS) -->
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/operations-dashboard.css">
+</head>
+
+<body>
+    <!-- Accessibility Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo"><i class="bi bi-building-gear"></i></div>
+                <h1 class="login-title">Operations Center</h1>
+                <p class="login-subtitle">QScrap Internal Dashboard</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email / Phone</label>
+                    <input type="text" class="form-control" id="loginEmail" placeholder="Enter your credentials"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" id="app" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon"><i class="bi bi-building-gear"></i></div>
+                    <div>
+                        <div class="logo-text">QScrap</div>
+                        <div class="logo-subtitle">Operations</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Search -->
+            <div class="global-search" style="padding: 0 16px 16px;">
+                <div class="search-container" style="position: relative;">
+                    <input type="text" id="globalSearchInput" placeholder="Search... (Ctrl+K)"
+                        style="width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px;">
+                    <i class="bi bi-search"
+                        style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <div id="searchResults"
+                        style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; max-height: 400px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a class="nav-item active" data-section="overview">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        Overview
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a class="nav-item" data-section="orders">
+                        <i class="bi bi-box-seam-fill"></i>
+                        Orders
+                        <span class="nav-badge" id="ordersBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="quality">
+                        <i class="bi bi-patch-check-fill"></i>
+                        Quality
+                        <span class="nav-badge" id="qualityBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="delivery">
+                        <i class="bi bi-truck"></i>
+                        Delivery
+                        <span class="nav-badge" id="deliveryBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="disputes">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Disputes
+                        <span class="nav-badge" id="disputesBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="reviewModeration">
+                        <i class="bi bi-star-half"></i>
+                        Reviews
+                        <span class="nav-badge" id="reviewModerationBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="support">
+                        <i class="bi bi-headset"></i>
+                        Support
+                        <span class="nav-badge" id="supportBadge" style="display: none;">0</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a class="nav-item" data-section="users">
+                        <i class="bi bi-people-fill"></i>
+                        Users
+                    </a>
+                    <a class="nav-item" data-section="finance">
+                        <i class="bi bi-cash-stack"></i>
+                        Finance
+                        <span class="nav-badge" id="financeBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="reports">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        Reports
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">O</div>
+                    <div>
+                        <div class="user-name" id="userName">Operations</div>
+                        <div class="user-role">Manager</div>
+                    </div>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Overview Section -->
+            <section class="section active" id="sectionOverview">
+                <div class="page-header">
+                    <h1 class="page-title">Live Overview</h1>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        Real-time
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="statActiveOrders">0</div>
+                        <div class="stat-label">Active Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon yellow"><i class="bi bi-exclamation-triangle"></i></div>
+                        </div>
+                        <div class="stat-value" id="statPendingDisputes">0</div>
+                        <div class="stat-label">Pending Disputes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon blue"><i class="bi bi-truck"></i></div>
+                        </div>
+                        <div class="stat-value" id="statInTransit">0</div>
+                        <div class="stat-label">In Transit</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+                        </div>
+                        <div class="stat-value" id="statRevenueToday">0 QAR</div>
+                        <div class="stat-label">Revenue Today</div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+                        </div>
+                        <div class="stat-value" id="statReadyPickup">0</div>
+                        <div class="stat-label">Ready for Pickup</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon red"><i class="bi bi-hourglass-split"></i></div>
+                        </div>
+                        <div class="stat-value" id="statContestedDisputes">0</div>
+                        <div class="stat-label">Contested Disputes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+                        </div>
+                        <div class="stat-value" id="statTotalCustomers">0</div>
+                        <div class="stat-label">Total Customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon green"><i class="bi bi-shop"></i></div>
+                        </div>
+                        <div class="stat-value" id="statTotalGarages">0</div>
+                        <div class="stat-label">Total Garages</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="content-card">
+                    <div class="content-header">
+                        <h3 class="content-title">Recent Orders</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="switchSection('orders')">View All</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Part</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersTable">
+                            <tr>
+                                <td colspan="6" class="empty-state"><i class="bi bi-inbox"></i>
+                                    <h4>Loading...</h4>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section class="section" id="sectionOrders">
+                <div class="page-header">
+                    <h1 class="page-title">Order Management</h1>
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" placeholder="Search orders..." id="orderSearch" onkeyup="searchOrders()">
+                    </div>
+                </div>
+
+                <div class="tabs" id="orderTabs" style="flex-wrap: wrap; gap: 8px;">
+                    <div class="tab active" data-status="all">All</div>
+                    <div class="tab" data-status="confirmed">Confirmed</div>
+                    <div class="tab" data-status="preparing">Preparing</div>
+                    <div class="tab" data-status="ready_for_pickup">Ready for Pickup</div>
+                    <div class="tab" data-status="collected">Collected</div>
+                    <div class="tab" data-status="qc_passed">QC Passed</div>
+                    <div class="tab" data-status="qc_failed">QC Failed</div>
+                    <div class="tab" data-status="in_transit">In Transit</div>
+                    <div class="tab" data-status="delivered">Delivered</div>
+                    <div class="tab" data-status="completed">Completed</div>
+                    <div class="tab" data-status="disputed">Disputed</div>
+                    <div class="tab" data-status="refunded">Refunded</div>
+                    <div class="tab" data-status="cancelled">Cancelled</div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Garage</th>
+                                <th>Part</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable">
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Container -->
+                <div id="ordersPagination"></div>
+            </section>
+
+
+
+            <!-- Support Section -->
+            <section class="section" id="sectionSupport">
+                <div class="page-header">
+                    <h1 class="page-title">Support Tickets</h1>
+                </div>
+
+                <div class="support-layout" style="display: flex; gap: 20px; height: calc(100vh - 140px);">
+                    <!-- Ticket List -->
+                    <div class="ticket-list-panel"
+                        style="flex: 1; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+                        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                            <div class="search-box" style="width: 100%;">
+                                <i class="bi bi-search"></i>
+                                <input type="text" placeholder="Search tickets..." id="ticketSearch">
+                            </div>
+                        </div>
+                        <div id="supportTicketList" style="flex: 1; overflow-y: auto;">
+                            <!-- Tickets loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Chat View -->
+                    <div class="ticket-chat-panel"
+                        style="flex: 2; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+                        <div id="emptyChatState"
+                            style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                            Select a ticket to view conversation
+                        </div>
+                        <div id="activeTicketView" style="display: none; flex-direction: column; height: 100%;">
+                            <div class="chat-header"
+                                style="background: var(--bg-secondary); color: var(--text-primary); border-bottom: 1px solid var(--border); padding: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h3 id="opsTicketSubject"
+                                            style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Subject</h3>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">
+                                            Order: <span id="opsTicketOrder">#123</span> • <span
+                                                id="opsTicketCustomer">Customer</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <select id="opsTicketStatus" onchange="updateTicketStatus(this.value)"
+                                            class="form-control" style="width: auto; font-size: 13px;">
+                                            <option value="open">Open</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="resolved">Resolved</option>
+                                            <option value="closed">Closed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-messages" id="opsChatMessages"
+                                style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-primary);">
+                                <!-- Messages -->
+                            </div>
+                            <div class="chat-input-area"
+                                style="padding: 16px; border-top: 1px solid var(--border); background: var(--bg-primary);">
+                                <textarea id="opsChatInput" class="form-control" rows="2"
+                                    placeholder="Type your reply..."></textarea>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                                    <button class="btn btn-primary" onclick="sendOpsMessage()">Send Reply</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Disputes Section -->
+            <section class="section" id="sectionDisputes">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-exclamation-triangle-fill" style="color: var(--danger);"></i>
+                        Disputes Center</h1>
+                    <p style="color: var(--text-secondary);">Manage customer order disputes and garage payment disputes
+                    </p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="disputesTotalOpen">0</div>
+                            <div class="stat-label">Total Open</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="disputesOrderCount">0</div>
+                            <div class="stat-label">Order Disputes</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                            <i class="bi bi-cash"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="disputesPaymentCount">0</div>
+                            <div class="stat-label">Payment Disputes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for Order vs Payment Disputes -->
+                <div class="tabs" style="margin-bottom: 0;">
+                    <div class="tab dispute-tab active" data-dispute-tab="order" onclick="switchDisputeTab('order')">
+                        <i class="bi bi-box-seam"></i> Order Disputes
+                        <span class="badge" id="orderDisputesTabBadge"
+                            style="margin-left: 8px; background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
+                    </div>
+                    <div class="tab dispute-tab" data-dispute-tab="payment" onclick="switchDisputeTab('payment')">
+                        <i class="bi bi-cash"></i> Payment Disputes
+                        <span class="badge" id="paymentDisputesTabBadge"
+                            style="margin-left: 8px; background: var(--danger); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
+                    </div>
+                </div>
+
+                <!-- Order Disputes Panel -->
+                <div class="content-card" id="orderDisputesPanel"
+                    style="border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <div class="table-header">
+                        <h3><i class="bi bi-box-seam" style="color: var(--primary);"></i> Customer Order Disputes</h3>
+                        <p style="color: var(--text-secondary); font-size: 13px;">Customers reporting issues with
+                            received parts</p>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Part</th>
+                                <th>Reason</th>
+                                <th>Refund</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderDisputesTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- Pagination Container -->
+                    <div id="disputesPagination"></div>
+                </div>
+
+                <!-- Payment Disputes Panel -->
+                <div class="content-card" id="paymentDisputesPanel"
+                    style="display: none; border-top-left-radius: 0; border-top-right-radius: 0;">
+                    <div class="table-header">
+                        <h3 style="color: var(--danger);"><i class="bi bi-cash-coin" style="color: var(--danger);"></i>
+                            Garage Payment Disputes</h3>
+                        <p style="color: var(--text-secondary); font-size: 13px;">Garages reporting issues with payment
+                            receipts</p>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Amount</th>
+                                <th>Issue</th>
+                                <th>Reported</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentDisputesTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Review Moderation Section -->
+            <section class="section" id="sectionReviewModeration">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
+                    </h1>
+                    <p style="color: var(--text-secondary);">Approve or reject customer reviews before they are visible
+                    </p>
+                </div>
+
+                <div class="tabs" id="reviewTabs">
+                    <div class="tab active" data-status="pending">Pending</div>
+                    <div class="tab" data-status="approved">Approved</div>
+                    <div class="tab" data-status="rejected">Rejected</div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Garage</th>
+                                <th>Rating</th>
+                                <th>Review</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewModerationTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Container -->
+                <div id="reviewsPagination"></div>
+            </section>
+
+            <!-- Delivery Section -->
+            <section class="section" id="sectionDelivery">
+                <div class="page-header">
+                    <h1 class="page-title">Logistics Management</h1>
+                    <button class="btn btn-primary" onclick="openAddDriverModal()">
+                        <i class="bi bi-plus-lg"></i> Add Driver
+                    </button>
+                </div>
+
+                <!-- Delivery Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="collectionPending">0</div>
+                            <div class="stat-label">Awaiting Collection</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-patch-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="deliveryReady">0</div>
+                            <div class="stat-label">Ready for Delivery</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="deliveryInTransit">0</div>
+                            <div class="stat-label">In Transit</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="deliveryAvailable">0</div>
+                            <div class="stat-label">Available Drivers</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collection & Delivery Tables -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <!-- Ready for Collection from Garages -->
+                    <div class="content-card">
+                        <h3 style="margin-bottom: 15px; color: var(--text-primary);">
+                            <i class="bi bi-building"></i> Ready for Collection
+                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">(from
+                                garages)</span>
+                        </h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Garage</th>
+                                    <th>Part</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="collectionTable">
+                                <tr>
+                                    <td colspan="4" class="empty-state">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Ready for Delivery (QC Passed) -->
+                    <div class="content-card">
+                        <h3 style="margin-bottom: 15px; color: var(--text-primary);">
+                            <i class="bi bi-box-arrow-up"></i> Ready for Delivery
+                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">(QC
+                                passed)</span>
+                        </h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Customer</th>
+                                    <th>Grade</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deliveryPendingTable">
+                                <tr>
+                                    <td colspan="4" class="empty-state">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Active Deliveries & Drivers -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
+                    <!-- Active Deliveries -->
+                    <div class="content-card">
+                        <h3 style="margin-bottom: 15px; color: var(--text-primary);">
+                            <i class="bi bi-truck"></i> Active Deliveries
+                        </h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Driver</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeDeliveriesTable">
+                                <tr>
+                                    <td colspan="5" class="empty-state">No active deliveries</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Drivers List -->
+                    <div class="content-card">
+                        <h3 style="margin-bottom: 15px; color: var(--text-primary);">
+                            <i class="bi bi-people"></i> Drivers
+                        </h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Driver</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="driversTable">
+                                <tr>
+                                    <td colspan="3" class="empty-state">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Delivery History -->
+                <div class="content-card" style="margin-top: 20px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--text-primary);">
+                            <i class="bi bi-clock-history"></i> Delivery History
+                        </h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="date" id="deliveryHistoryDate" class="form-control"
+                                style="width: auto; padding: 8px 12px;">
+                            <button class="btn btn-secondary" onclick="loadDeliveryHistory()">
+                                <i class="bi bi-search"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Order</th>
+                                <th>Driver</th>
+                                <th>Customer</th>
+                                <th>Address</th>
+                                <th>Delivery Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deliveryHistoryTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <span id="deliveryHistoryCount" style="color: var(--text-secondary); font-size: 13px;">0
+                            deliveries</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" id="deliveryHistoryPrev"
+                                onclick="loadDeliveryHistory(deliveryHistoryPage - 1)" disabled>
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-secondary" id="deliveryHistoryNext"
+                                onclick="loadDeliveryHistory(deliveryHistoryPage + 1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+
+            <!-- Quality Section -->
+            <section class="section" id="sectionQuality">
+                <div class="page-header">
+                    <h1 class="page-title">Quality Control</h1>
+                </div>
+
+                <!-- QC Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="qcPendingInspection">0</div>
+                            <div class="stat-label">Pending Inspection</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="qcPassedToday">0</div>
+                            <div class="stat-label">Passed Today</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="qcFailedToday">0</div>
+                            <div class="stat-label">Failed Today</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="qcPassRate">--%</div>
+                            <div class="stat-label">Pass Rate (7d)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Inspections -->
+                <div class="content-card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px; color: var(--text-primary);"><i class="bi bi-clipboard-check"></i>
+                        Pending Quality Inspections</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Part</th>
+                                <th>Garage</th>
+                                <th>Status</th>
+                                <th>Since</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qcPendingTable">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Recent Inspections -->
+                <div class="content-card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px; color: var(--text-primary);"><i class="bi bi-clock-history"></i>
+                        Recent Inspections</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Part</th>
+                                <th>Result</th>
+                                <th>Inspector</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qcRecentTable">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section class="section" id="sectionUsers">
+                <div class="page-header">
+                    <h1 class="page-title">User Management</h1>
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" placeholder="Search users..." id="userSearch">
+                    </div>
+                </div>
+
+                <div class="tabs" id="userTabs">
+                    <div class="tab active" data-type="customer">Customers</div>
+                    <div class="tab" data-type="garage">Garages</div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Orders</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                        </tbody>
+                    </table>
+                    <!-- Pagination Container -->
+                    <div id="usersPagination"></div>
+                </div>
+            </section>
+
+            <!-- Finance Section --!>
+            <section class="section" id="sectionFinance">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-cash-stack"></i> Finance & Payouts</h1>
+                </div>
+
+                <!-- Finance Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+                <div class="stat-card highlight">
+                    <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="financeTotalRevenue">0 QAR</div>
+                        <div class="stat-label">Platform Revenue</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="financePendingPayouts">0 QAR</div>
+                        <div class="stat-label">Pending Payouts</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="financeProcessingPayouts">0 QAR</div>
+                        <div class="stat-label">Awaiting Confirmation</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="financeCompletedPayouts">0 QAR</div>
+                        <div class="stat-label">Paid Out (Total)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Payouts Table -->
+            <div class="content-card">
+                <div class="table-header">
+                    <h3><i class="bi bi-clock-history" style="color: var(--warning);"></i> Pending Payouts</h3>
+                    <button class="btn btn-primary" onclick="processAllPayouts()"
+                        style="display: flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-check2-all"></i> Process All
+                    </button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Garage</th>
+                            <th>Order</th>
+                            <th>Gross Amount</th>
+                            <th>Commission</th>
+                            <th>Net Payout</th>
+                            <th>Scheduled</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingPayoutsTable">
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="bi bi-hourglass" style="font-size: 32px; color: var(--text-muted);"></i>
+                                <p>Loading payouts...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="pendingPayoutsPagination"></div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="content-card" style="margin-top: 24px;">
+                <div class="table-header">
+                    <h3><i class="bi bi-list-check" style="color: var(--accent);"></i> Recent Transactions</h3>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Order</th>
+                            <th>Garage</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTable">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="bi bi-inbox" style="font-size: 32px; color: var(--text-muted);"></i>
+                                <p>Loading transactions...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="transactionsPagination"></div>
+            </div>
+            </section>
+
+            <!-- Users Section -->
+            <section class="section" id="sectionUsers">
+                <div class="page-header">
+                    <h1 class="page-title">User Management</h1>
+                </div>
+
+                <!-- User Stats -->
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <div class="stat-value" id="totalGarages">0</div>
+                        <div class="stat-label">Total Garages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <div class="stat-value" id="newUsersThisMonth">0</div>
+                        <div class="stat-label">New This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                            <i class="bi bi-person-x"></i>
+                        </div>
+                        <div class="stat-value" id="suspendedUsers">0</div>
+                        <div class="stat-label">Suspended</div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="content-card">
+                    <div class="table-header">
+                        <h3><i class="bi bi-people-fill"></i> All Users</h3>
+                        <input type="text" class="search-input" id="userSearchInput"
+                            placeholder="Search by name or phone..." onkeyup="searchUsers()">
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Type</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Garages Table -->
+                <div class="content-card" style="margin-top: 20px;">
+                    <div class="table-header">
+                        <h3><i class="bi bi-building"></i> Garage Partners</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage Name</th>
+                                <th>Owner</th>
+                                <th>Rating</th>
+                                <th>Orders</th>
+                                <th>Subscription</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="garagesTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading garages...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Finance Section -->
+            <section class="section" id="sectionFinance">
+                <div class="page-header">
+                    <h1 class="page-title">Finance & Payouts</h1>
+                </div>
+
+                <!-- Finance Stats -->
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+                    <div class="stat-card highlight">
+                        <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <div class="stat-value" id="financeTotalRevenue">0 QAR</div>
+                        <div class="stat-label">Total Platform Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="stat-value" id="financePendingPayouts">0 QAR</div>
+                        <div class="stat-label">Pending Payouts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-value" id="financeProcessingPayouts">0 QAR</div>
+                        <div class="stat-label">Processing</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-value" id="financeCompletedPayouts">0 QAR</div>
+                        <div class="stat-label">Paid Out</div>
+                    </div>
+                </div>
+
+                <!-- Pending Payouts Table -->
+                <div class="content-card">
+                    <div class="table-header">
+                        <h3><i class="bi bi-clock-history"></i> Pending Payouts</h3>
+                        <button class="btn btn-primary" onclick="processAllPayouts()">
+                            <i class="bi bi-check2-all"></i> Process All
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order</th>
+                                <th>Gross</th>
+                                <th>Commission</th>
+                                <th>Net Payout</th>
+                                <th>Scheduled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingPayoutsTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading payouts...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="content-card" style="margin-top: 20px;">
+                    <div class="table-header">
+                        <h3><i class="bi bi-list-check"></i> Recent Transactions</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Order</th>
+                                <th>Garage</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading transactions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section class="section" id="sectionReports">
+                <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
+                    <h1 class="page-title"><i class="bi bi-file-earmark-bar-graph"></i> Reports Center</h1>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="printReport()">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
+                        <button class="btn btn-primary" onclick="exportPDF()">
+                            <i class="bi bi-file-pdf"></i> Export PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Builder -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h3><i class="bi bi-sliders"></i> Report Configuration</h3>
+                    </div>
+                    <div class="card-body"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div class="form-group">
+                            <label>Report Type</label>
+                            <select id="reportType" class="form-control" onchange="updateReportPreview()">
+                                <option value="orders">📦 Orders Report</option>
+                                <option value="revenue">💰 Revenue Report</option>
+                                <option value="disputes">⚠️ Disputes Report</option>
+                                <option value="deliveries">🚚 Deliveries Report</option>
+                                <option value="garages">🏢 Garages Performance</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>From Date</label>
+                            <input type="date" id="reportFromDate" class="form-control"
+                                onchange="updateReportPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>To Date</label>
+                            <input type="date" id="reportToDate" class="form-control" onchange="updateReportPreview()">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button class="btn btn-primary" onclick="generateReport()" style="width: 100%;">
+                                <i class="bi bi-play-circle"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Preview -->
+                <div id="reportPreviewContainer"
+                    style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <div id="reportContent" style="padding: 40px; min-height: 600px;">
+                        <!-- Report content will be generated here -->
+                        <div style="text-align: center; padding: 100px 20px; color: #9ca3af;">
+                            <i class="bi bi-file-earmark-text"
+                                style="font-size: 64px; margin-bottom: 20px; display: block;"></i>
+                            <h3>Select a report type and date range</h3>
+                            <p>Then click "Generate Report" to preview</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2><i class="bi bi-box-seam"></i> Order <span id="modalOrderNumber">#12345</span></h2>
+                <button class="modal-close" onclick="closeOrderModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Customer & Garage Info -->
+                <div class="modal-section">
+                    <div class="modal-section-title"><i class="bi bi-people"></i> Parties</div>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                <div class="info-card-icon customer"><i class="bi bi-person-fill"></i></div>
+                                <div>
+                                    <div class="info-card-title">Customer</div>
+                                    <div class="info-card-name" id="modalCustomerName">---</div>
+                                </div>
+                            </div>
+                            <div class="info-card-detail"><i class="bi bi-telephone"></i> <span
+                                    id="modalCustomerPhone">---</span></div>
+                            <div class="info-card-detail"><i class="bi bi-envelope"></i> <span
+                                    id="modalCustomerEmail">---</span></div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                <div class="info-card-icon garage"><i class="bi bi-shop"></i></div>
+                                <div>
+                                    <div class="info-card-title">Garage</div>
+                                    <div class="info-card-name" id="modalGarageName">---</div>
+                                </div>
+                            </div>
+                            <div class="info-card-detail"><i class="bi bi-telephone"></i> <span
+                                    id="modalGaragePhone">---</span></div>
+                            <div class="info-card-detail"><i class="bi bi-geo-alt"></i> <span
+                                    id="modalGarageAddress">---</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Part Details -->
+                <div class="modal-section">
+                    <div class="modal-section-title"><i class="bi bi-gear"></i> Part Details</div>
+                    <div class="part-details-card">
+                        <div class="part-header">
+                            <div>
+                                <div class="part-vehicle" id="modalVehicle">---</div>
+                                <span class="status-badge" id="modalStatusBadge">---</span>
+                            </div>
+                            <div class="part-price" id="modalPrice">0 QAR</div>
+                        </div>
+                        <div class="part-description" id="modalPartDesc">---</div>
+                        <div class="part-meta">
+                            <div class="part-meta-item"><i class="bi bi-award"></i> <span id="modalCondition">---</span>
+                            </div>
+                            <div class="part-meta-item"><i class="bi bi-shield-check"></i> <span
+                                    id="modalWarranty">---</span> days warranty</div>
+                            <div class="part-meta-item"><i class="bi bi-upc-scan"></i> VIN: <span
+                                    id="modalVin">---</span></div>
+                        </div>
+                        <div class="image-gallery" id="modalImages"></div>
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                <div class="modal-section">
+                    <div class="modal-section-title"><i class="bi bi-clock-history"></i> Order Timeline</div>
+                    <div class="order-timeline" id="modalTimeline">
+                        <!-- Timeline items will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Dispute Section (conditional) -->
+                <div class="modal-section" id="modalDisputeSection" style="display: none;">
+                    <div class="modal-section-title"><i class="bi bi-exclamation-triangle"></i> Dispute</div>
+                    <div class="dispute-card">
+                        <div class="dispute-header">
+                            <div class="dispute-reason" id="modalDisputeReason">---</div>
+                            <span class="status-badge" id="modalDisputeStatus">---</span>
+                        </div>
+                        <div class="dispute-description" id="modalDisputeDesc">---</div>
+                        <div class="part-meta" style="margin-top: 12px;">
+                            <div class="part-meta-item"><i class="bi bi-cash"></i> Refund: <strong
+                                    id="modalRefundAmount">0 QAR</strong></div>
+                        </div>
+                        <div class="dispute-actions" id="modalDisputeActions">
+                            <button class="btn btn-success" id="btnApproveRefund"><i class="bi bi-check-lg"></i> Approve
+                                Refund</button>
+                            <button class="btn btn-danger" id="btnDenyRefund"><i class="bi bi-x-lg"></i> Deny
+                                Refund</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bid Notes -->
+                <div class="modal-section" id="modalNotesSection" style="display: none;">
+                    <div class="modal-section-title"><i class="bi bi-chat-text"></i> Seller Notes</div>
+                    <div class="info-card">
+                        <p id="modalBidNotes" style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                            ---</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeOrderModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Payment Modal -->
+    <div class="modal-overlay" id="sendPaymentModal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <h2><i class="bi bi-send-check"></i> Send Payment</h2>
+                <button class="modal-close" onclick="closeSendPaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="info-card"
+                    style="margin-bottom: 20px; background: var(--bg-tertiary); padding: 15px; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: var(--text-secondary);">Garage:</span>
+                        <strong id="spGarageName">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: var(--text-secondary);">Order:</span>
+                        <strong id="spOrderNumber">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">Amount:</span>
+                        <strong id="spAmount" style="color: var(--accent); font-size: 18px;">0 QAR</strong>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Payment Method
+                        *</label>
+                    <select id="spPaymentMethod" class="form-control" required>
+                        <option value="">Select payment method...</option>
+                        <option value="bank_transfer">🏦 Bank Transfer</option>
+                        <option value="cash">💵 Cash</option>
+                        <option value="check">📝 Check</option>
+                        <option value="mobile_transfer">📱 Mobile Transfer</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Reference Number
+                        *</label>
+                    <input type="text" id="spReference" class="form-control"
+                        placeholder="Bank ref / Receipt # / Transaction ID" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Notes
+                        (Optional)</label>
+                    <textarea id="spNotes" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+
+                <input type="hidden" id="spPayoutId">
+
+                <div
+                    style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+                    <i class="bi bi-info-circle"></i> Garage will be notified and must confirm receipt within 7 days. If
+                    no response, payment will be auto-confirmed.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeSendPaymentModal()">Cancel</button>
+                <button class="btn btn-success" onclick="submitSendPayment()">
+                    <i class="bi bi-send-check"></i> Mark as Sent
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <!-- Shared JS utilities (must come before module JS) -->
+    <script src="js/shared/utils.js"></script>
+    <script src="js/shared/toast.js"></script>
+    <script src="js/shared/modal.js"></script>
+    <script src="js/pagination-utils.js"></script>
+    <script src="js/operations-dashboard.js"></script>
+</body>
+
+</html>

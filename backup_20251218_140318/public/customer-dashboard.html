@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QScrap - Find Auto Parts in Qatar</title>
+    <meta name="description"
+        content="Find genuine and used auto parts from verified scrap yards across Qatar. Fast delivery, best prices.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Leaflet Maps for Driver Tracking -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="css/customer-dashboard.css">
+</head>
+
+<body>
+    <!-- Accessibility Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- IMAGE LIGHTBOX -->
+    <div class="lightbox-overlay" id="lightboxOverlay">
+        <div class="lightbox-container">
+            <div class="lightbox-header">
+                <span class="lightbox-title" id="lightboxTitle">Image 1 of 3</span>
+                <div class="lightbox-controls">
+                    <button class="lightbox-btn" onclick="lightboxZoom(-0.25)" title="Zoom Out">
+                        <i class="bi bi-zoom-out"></i>
+                    </button>
+                    <button class="lightbox-btn" onclick="lightboxZoom(0.25)" title="Zoom In">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                    <button class="lightbox-btn" onclick="lightboxReset()" title="Reset">
+                        <i class="bi bi-arrows-angle-contract"></i>
+                    </button>
+                    <button class="lightbox-btn close" onclick="closeLightbox()" title="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="lightbox-image-container" id="lightboxImageContainer">
+                <img id="lightboxImage" class="lightbox-image" src="" alt="Preview">
+                <div class="lightbox-zoom-info" id="lightboxZoomInfo">100%</div>
+            </div>
+            <div class="lightbox-nav" id="lightboxNav"></div>
+        </div>
+    </div>
+
+    <!-- CANCEL CONFIRMATION MODAL -->
+    <div class="cancel-modal-overlay" id="cancelModal">
+        <div class="cancel-modal">
+            <div class="cancel-modal-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 id="cancelModalTitle">Cancel Request?</h3>
+            <p id="cancelModalMessage">This action cannot be undone. All bids will be rejected.</p>
+            <div class="cancel-modal-actions">
+                <button class="btn-keep" onclick="closeCancelModal()">Keep It</button>
+                <button class="btn-confirm-cancel" onclick="confirmCancel()">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIN SCANNER MODAL -->
+    <div class="vin-scanner-modal" id="vinScannerModal">
+        <div class="scanner-header">
+            <span class="scanner-title">📷 Scan VIN Number</span>
+            <button class="scanner-close" onclick="closeVinScanner()">×</button>
+        </div>
+
+        <div class="scanner-video-container">
+            <video id="scannerVideo" autoplay playsinline></video>
+            <div class="scanner-overlay">
+                <div class="scanner-frame">
+                    <div class="scanner-line"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="scanner-instructions">
+            Point the camera at your registration card (Istimara)<br>
+            Focus on the VIN/Chassis number
+        </p>
+
+        <div class="scanner-result" id="scannerResult"></div>
+
+        <div class="scanner-actions" id="scannerActions">
+            <button class="scanner-btn secondary" onclick="captureAndScan()">
+                <i class="bi bi-camera-fill"></i> Capture
+            </button>
+        </div>
+    </div>
+
+    <!-- COUNTER-OFFER MODAL -->
+    <div class="counter-modal-overlay" id="counterOfferModal">
+        <div class="counter-modal">
+            <div class="counter-modal-header">
+                <h3><i class="bi bi-cash-coin"></i> Make Counter-Offer</h3>
+                <button class="counter-modal-close" onclick="closeCounterOfferModal()">×</button>
+            </div>
+            <div class="counter-modal-body">
+                <div class="price-comparison">
+                    <div class="original">
+                        <div class="original-label">Garage's Price</div>
+                        <div class="original-price" id="counterOriginalPrice">0 QAR</div>
+                    </div>
+                    <div class="arrow">â†’</div>
+                    <div class="your-offer">
+                        <div class="original-label">Your Offer</div>
+                        <div class="original-price" id="counterYourPrice"
+                            style="text-decoration: none; color: var(--success);">? QAR</div>
+                    </div>
+                </div>
+
+                <div class="counter-input-group">
+                    <label>Your Proposed Price</label>
+                    <div class="counter-price-input">
+                        <input type="number" id="counterAmount" placeholder="0" oninput="updateCounterPreview()">
+                        <span class="currency">QAR</span>
+                    </div>
+                </div>
+
+                <div class="counter-input-group counter-message">
+                    <label>Message (Optional)</label>
+                    <textarea id="counterMessage"
+                        placeholder="e.g. I found similar parts for less, could you match this price?"></textarea>
+                </div>
+
+                <div class="negotiation-history" id="negotiationHistory" style="display: none;">
+                    <h4>Negotiation History</h4>
+                    <div id="negotiationHistoryList"></div>
+                </div>
+
+                <div class="rounds-remaining" id="roundsRemaining">
+                    3 rounds remaining in negotiation
+                </div>
+            </div>
+            <div class="counter-modal-actions">
+                <button class="btn-cancel-counter" onclick="closeCounterOfferModal()">Cancel</button>
+                <button class="btn-send-counter" onclick="sendCounterOffer()">
+                    <i class="bi bi-send-fill"></i> Send Offer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ORDER DETAIL MODAL -->
+    <div class="modal-overlay" id="orderDetailModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 16px 16px 0 0; padding: 20px;">
+                <div>
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="bi bi-box-seam"></i> Order Details
+                    </h3>
+                    <div id="orderDetailNumber" style="font-size: 14px; opacity: 0.9; margin-top: 4px;">#ORD-XXXX</div>
+                </div>
+                <button class="modal-close" onclick="closeOrderDetailModal()"
+                    style="color: white; background: rgba(255,255,255,0.2); border-radius: 8px; width: 36px; height: 36px;">×</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <!-- Order Status Banner -->
+                <div id="orderStatusBanner"
+                    style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+                    <div id="orderStatusIcon"
+                        style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #d1fae5; color: #059669;">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <div id="orderStatusText" style="font-weight: 600; font-size: 16px;">Processing</div>
+                        <div id="orderStatusDesc" style="font-size: 13px; color: var(--text-secondary);">Your order is
+                            being prepared</div>
+                    </div>
+                </div>
+
+                <!-- Part Info -->
+                <div style="margin-bottom: 20px;">
+                    <h4
+                        style="margin: 0 0 12px; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                        Part Information</h4>
+                    <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px;">
+                        <div id="orderPartInfo" style="font-weight: 600;">Loading...</div>
+                        <div id="orderCarInfo" style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            Vehicle details</div>
+                    </div>
+                </div>
+
+                <!-- Garage Info -->
+                <div style="margin-bottom: 20px;">
+                    <h4
+                        style="margin: 0 0 12px; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                        Garage</h4>
+                    <div
+                        style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                        <div
+                            style="width: 48px; height: 48px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <div>
+                            <div id="orderGarageName" style="font-weight: 600;">Garage Name</div>
+                            <div id="orderGarageRating" style="font-size: 13px; color: var(--text-secondary);">★ 4.5 (23
+                                reviews)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div style="margin-bottom: 20px;">
+                    <h4
+                        style="margin: 0 0 12px; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                        Pricing</h4>
+                    <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Part Price</span>
+                            <span id="orderPartPrice">0 QAR</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Delivery Fee</span>
+                            <span id="orderDeliveryFee">0 QAR</span>
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--border); font-weight: 700; font-size: 18px;">
+                            <span>Total</span>
+                            <span id="orderTotalAmount" style="color: var(--success);">0 QAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                <div id="orderTimeline" style="margin-bottom: 20px;"></div>
+
+                <!-- Actions -->
+                <div id="orderActions" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH SCREEN -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo"><i class="bi bi-car-front-fill"></i></div>
+                <h1 class="auth-title">QScrap</h1>
+                <p class="auth-subtitle">Find auto parts across Qatar</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="loginPhone" placeholder="+974 5XXX XXXX" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter password"
+                        required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+
+            <form id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="regName" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="regPhone" placeholder="+974 5XXX XXXX" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="regPassword" placeholder="Min 6 characters"
+                        required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div class="app" id="app">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon"><i class="bi bi-car-front-fill"></i></span>
+                    <span>QScrap</span>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-section="create"><i class="bi bi-plus-circle"></i> New
+                        Request</button>
+                    <button class="nav-tab nav-tab-badge" data-section="requests">
+                        <i class="bi bi-list-task"></i> My Requests
+                        <span class="notification-dot" id="requestsNotificationDot" style="display: none;"></span>
+                    </button>
+                    <button class="nav-tab nav-tab-badge" data-section="orders">
+                        <i class="bi bi-box-seam"></i> Orders
+                        <span class="notification-dot" id="ordersNotificationDot" style="display: none;"></span>
+                    </button>
+                    <button class="nav-tab" data-section="profile">
+                        <i class="bi bi-person-circle"></i> Profile
+                    </button>
+                    <button class="nav-tab nav-tab-badge" data-section="support">
+                        <i class="bi bi-chat-dots-fill"></i> Support
+                        <span class="notification-dot" id="chatBadge" style="display: none;">0</span>
+                    </button>
+                </nav>
+                <div class="header-actions">
+                    <!-- Notification Bell -->
+                    <div class="notification-wrapper">
+                        <button class="btn-notification" onclick="toggleNotificationPanel()" title="Notifications">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-count" id="notificationCount" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-panel" id="notificationPanel">
+                            <div class="notification-panel-header">
+                                <h4>Notifications</h4>
+                                <button onclick="markAllNotificationsRead()">Mark all read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="notification-empty">
+                                    <i class="bi bi-bell-slash"></i>
+                                    <p>No notifications yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-theme" onclick="toggleTheme()" title="Toggle theme">
+                        <i class="bi bi-sun-fill theme-icon-light"></i>
+                        <i class="bi bi-moon-fill theme-icon-dark"></i>
+                    </button>
+                    <button class="btn-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Sign
+                        Out</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Navigation -->
+        <nav class="mobile-nav">
+            <button class="mobile-nav-item active" data-section="create">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>New</span>
+            </button>
+            <button class="mobile-nav-item" data-section="requests">
+                <i class="bi bi-list-task"></i>
+                <span>Requests</span>
+            </button>
+            <button class="mobile-nav-item" data-section="orders">
+                <i class="bi bi-box-seam"></i>
+                <span>Orders</span>
+            </button>
+            <button class="mobile-nav-item" data-section="profile">
+                <i class="bi bi-person-circle"></i>
+                <span>Profile</span>
+            </button>
+            <button class="mobile-nav-item" data-section="support">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>Support</span>
+            </button>
+        </nav>
+
+        <main class="main-content" id="main-content">
+            <!-- CREATE REQUEST -->
+            <section class="section active" id="sectionCreate">
+                <div class="page-header">
+                    <h1 class="page-title">Request a Part</h1>
+                    <p class="page-subtitle">Describe what you need and get quotes from verified scrap yards</p>
+                </div>
+
+                <div class="request-form-card">
+                    <form id="requestForm">
+                        <!-- Vehicle Info -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-car-front"></i> Vehicle Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Make *</label>
+                                    <select class="form-control" id="carMake" required>
+                                        <option value="">Select make</option>
+                                        <option>Toyota</option>
+                                        <option>Nissan</option>
+                                        <option>Honda</option>
+                                        <option>Lexus</option>
+                                        <option>Land Rover</option>
+                                        <option>Mercedes-Benz</option>
+                                        <option>BMW</option>
+                                        <option>Audi</option>
+                                        <option>Porsche</option>
+                                        <option>Ford</option>
+                                        <option>Chevrolet</option>
+                                        <option>GMC</option>
+                                        <option>Hyundai</option>
+                                        <option>Kia</option>
+                                        <option>Mitsubishi</option>
+                                        <option>Mazda</option>
+                                        <option>Volkswagen</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Model *</label>
+                                    <input type="text" class="form-control" id="carModel"
+                                        placeholder="e.g. Camry, Patrol" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Year *</label>
+                                    <input type="number" class="form-control" id="carYear" placeholder="2020" min="1990"
+                                        max="2025" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">VIN / Chassis Number (17 characters)</label>
+                                <div class="vin-input-group">
+                                    <input type="text" class="form-control" id="vinNumber"
+                                        placeholder="e.g. JTDKN3DU5A0123456" maxlength="17">
+                                    <button type="button" class="vin-camera-btn" title="Scan from registration card">
+                                        <i class="bi bi-camera"></i>
+                                    </button>
+                                </div>
+                                <p class="vin-help">Find on your vehicle registration card (Istimara)</p>
+                            </div>
+                        </div>
+
+                        <!-- Part Category -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-grid"></i> Part Category</h3>
+                            <div class="category-grid" id="categoryGrid">
+                                <div class="category-item" data-category="engine">
+                                    <i class="bi bi-gear-wide-connected"></i>
+                                    <span>Engine</span>
+                                </div>
+                                <div class="category-item" data-category="transmission">
+                                    <i class="bi bi-box"></i>
+                                    <span>Transmission</span>
+                                </div>
+                                <div class="category-item" data-category="body">
+                                    <i class="bi bi-car-front-fill"></i>
+                                    <span>Body Parts</span>
+                                </div>
+                                <div class="category-item" data-category="electrical">
+                                    <i class="bi bi-lightning-charge"></i>
+                                    <span>Electrical</span>
+                                </div>
+                                <div class="category-item" data-category="suspension">
+                                    <i class="bi bi-arrows-expand"></i>
+                                    <span>Suspension</span>
+                                </div>
+                                <div class="category-item" data-category="interior">
+                                    <i class="bi bi-door-open"></i>
+                                    <span>Interior</span>
+                                </div>
+                                <div class="category-item" data-category="lights">
+                                    <i class="bi bi-lightbulb"></i>
+                                    <span>Lights</span>
+                                </div>
+                                <div class="category-item" data-category="other">
+                                    <i class="bi bi-three-dots"></i>
+                                    <span>Other</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="partCategory" value="">
+                        </div>
+
+                        <!-- Part Details -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-card-text"></i> Part Details</h3>
+                            <div class="form-group">
+                                <label class="form-label">Part Description *</label>
+                                <textarea class="form-control" id="partDesc"
+                                    placeholder="Describe the part you need in detail. Include any part numbers if known."
+                                    required></textarea>
+                            </div>
+                            <div class="form-row two">
+                                <div class="form-group">
+                                    <label class="form-label">Part Number (if known)</label>
+                                    <input type="text" class="form-control" id="partNumber"
+                                        placeholder="OEM part number">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Condition</label>
+                                    <select class="form-control" id="condition">
+                                        <option value="any">Any Condition</option>
+                                        <option value="used">Used (Good)</option>
+                                        <option value="new">New Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Images -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-images"></i> Photos (Optional)</h3>
+                            <div class="image-upload-area" id="imageUploadArea">
+                                <i class="bi bi-cloud-arrow-up image-upload-icon"></i>
+                                <p class="image-upload-text">Tap to upload photos</p>
+                                <p class="image-upload-hint">Add photos of the part you need or damaged part</p>
+                            </div>
+                            <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                            <div class="image-preview-grid" id="imagePreviewGrid"></div>
+                        </div>
+
+                        <!-- Delivery -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-geo-alt"></i> Delivery Location</h3>
+                            <div class="form-group">
+                                <label class="form-label">Delivery Address *</label>
+                                <input type="text" class="form-control" id="deliveryAddress"
+                                    placeholder="Street, Building, Zone, Area" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send-fill"></i> Submit Request
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- MY REQUESTS -->
+            <section class="section" id="sectionRequests">
+                <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h1 class="page-title">My Requests</h1>
+                        <p class="page-subtitle">Track your part requests and incoming bids</p>
+                    </div>
+                    <div class="filter-tabs" style="display: flex; gap: 8px;">
+                        <button class="filter-tab active" data-filter="all"
+                            onclick="filterCustomerRequests('all')">All</button>
+                        <button class="filter-tab" data-filter="active"
+                            onclick="filterCustomerRequests('active')">Active</button>
+                        <button class="filter-tab" data-filter="with_bids"
+                            onclick="filterCustomerRequests('with_bids')">With Bids</button>
+                        <button class="filter-tab" data-filter="expired"
+                            onclick="filterCustomerRequests('expired')">Expired</button>
+                    </div>
+                </div>
+                <div class="request-list" id="requestsList"></div>
+            </section>
+
+            <!-- ORDERS -->
+            <section class="section" id="sectionOrders">
+                <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h1 class="page-title">My Orders</h1>
+                        <p class="page-subtitle">Track your orders and confirm deliveries</p>
+                    </div>
+                    <div class="filter-tabs" style="display: flex; gap: 8px;">
+                        <button class="filter-tab active" data-filter="all"
+                            onclick="filterCustomerOrders('all')">All</button>
+                        <button class="filter-tab" data-filter="active"
+                            onclick="filterCustomerOrders('active')">Active</button>
+                        <button class="filter-tab" data-filter="completed"
+                            onclick="filterCustomerOrders('completed')">Completed</button>
+                        <button class="filter-tab" data-filter="cancelled"
+                            onclick="filterCustomerOrders('cancelled')">Cancelled</button>
+                    </div>
+                </div>
+                <div id="ordersList"></div>
+            </section>
+
+            <!-- SUPPORT -->
+            <section class="section" id="sectionSupport">
+                <div class="page-header">
+                    <h1 class="page-title">Support Tickets</h1>
+                    <p class="page-subtitle">Get help with your orders or account</p>
+                    <button class="btn-create-ticket" onclick="openCreateTicketModal()">
+                        <i class="bi bi-plus-lg"></i> New Ticket
+                    </button>
+                </div>
+
+                <div class="support-layout">
+                    <!-- Left: Ticket List -->
+                    <div class="ticket-list-container">
+                        <div class="ticket-filters">
+                            <button class="ticket-filter active" onclick="filterTickets('all')">All</button>
+                            <button class="ticket-filter" onclick="filterTickets('open')">Open</button>
+                            <button class="ticket-filter" onclick="filterTickets('resolved')">Resolved</button>
+                        </div>
+                        <div class="ticket-list" id="ticketsList">
+                            <!-- Populated by JS -->
+                            <div class="empty-state">
+                                <i class="bi bi-chat-square-dots empty-state-icon"></i>
+                                <p>No support tickets yet</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Chat View -->
+                    <div class="chat-view" id="chatView" style="display: none;">
+                        <div class="chat-header">
+                            <div class="chat-header-info">
+                                <button class="back-to-tickets-btn mobile-only" onclick="closeChatView()">
+                                    <i class="bi bi-arrow-left"></i>
+                                </button>
+                                <div>
+                                    <h3 id="chatTitle">Ticket #1234</h3>
+                                    <span class="chat-status" id="chatStatus">Open</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages go here -->
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" placeholder="Type your message..." autocomplete="off">
+                            <button class="btn-send-chat" onclick="sendChatMessage()">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State for Desktop (Right side) -->
+                    <div class="chat-empty-state" id="chatEmptyState">
+                        <i class="bi bi-chat-left-text"></i>
+                        <h3>Select a ticket</h3>
+                        <p>Choose a ticket to view the conversation</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROFILE -->
+            <section class="section" id="sectionProfile">
+                <!-- Enhanced Profile Header -->
+                <div
+                    style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); border-radius: 20px; padding: 32px; margin-bottom: 24px; color: white; position: relative; overflow: hidden;">
+                    <div
+                        style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;">
+                    </div>
+                    <div
+                        style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;">
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 20px; position: relative; z-index: 1;">
+                        <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700;"
+                            id="profileAvatarLarge">
+                            ?
+                        </div>
+                        <div style="flex: 1;">
+                            <h1 style="font-size: 28px; font-weight: 700; margin: 0;" id="profileNameLarge">Welcome!
+                            </h1>
+                            <p style="opacity: 0.8; margin-top: 4px; font-size: 14px;">Customer Account</p>
+                        </div>
+                        <button class="btn" onclick="openEditProfileModal()"
+                            style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div
+                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; position: relative; z-index: 1;">
+                        <div
+                            style="text-align: center; padding: 16px; background: rgba(255,255,255,0.15); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 700;" id="statRequestsLarge">0</div>
+                            <div style="font-size: 12px; opacity: 0.8;">Requests</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 16px; background: rgba(255,255,255,0.15); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 700;" id="statOrdersLarge">0</div>
+                            <div style="font-size: 12px; opacity: 0.8;">Orders</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 16px; background: rgba(255,255,255,0.15); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 700;" id="statCompletedLarge">0</div>
+                            <div style="font-size: 12px; opacity: 0.8;">Completed</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 16px; background: rgba(255,255,255,0.15); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 700;" id="statReviewsLarge">0</div>
+                            <div style="font-size: 12px; opacity: 0.8;">Reviews</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-container"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                    <!-- Account Details Card -->
+                    <div class="profile-card"
+                        style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden;">
+                        <div class="profile-card-header"
+                            style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
+                            <div
+                                style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <h3 style="margin: 0; font-size: 16px;">Account Details</h3>
+                        </div>
+                        <div class="profile-card-body" style="padding: 20px;">
+                            <div class="profile-info-row"
+                                style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                                <span class="label" style="color: var(--text-muted); font-size: 14px;">Name</span>
+                                <span class="value" id="profileName" style="font-weight: 600;">-</span>
+                            </div>
+                            <div class="profile-info-row"
+                                style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                                <span class="label" style="color: var(--text-muted); font-size: 14px;">Phone</span>
+                                <span class="value" id="profilePhone" style="font-weight: 600;">-</span>
+                            </div>
+                            <div class="profile-info-row"
+                                style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                                <span class="label" style="color: var(--text-muted); font-size: 14px;">Email</span>
+                                <span class="value" id="profileEmail" style="font-weight: 600;">-</span>
+                            </div>
+                            <div class="profile-info-row"
+                                style="display: flex; justify-content: space-between; padding: 12px 0;">
+                                <span class="label" style="color: var(--text-muted); font-size: 14px;">Member
+                                    Since</span>
+                                <span class="value" id="profileCreated" style="font-weight: 600;">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Addresses Card -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <i class="bi bi-geo-alt"></i>
+                            <h3>Saved Addresses</h3>
+                            <button class="btn-add-address" onclick="openAddAddressModal()">
+                                <i class="bi bi-plus"></i> Add
+                            </button>
+                        </div>
+                        <div class="profile-card-body" id="addressesList">
+                            <div class="empty-state-small">
+                                <i class="bi bi-geo-alt"></i>
+                                <p>No saved addresses</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Card -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <i class="bi bi-bar-chart"></i>
+                            <h3>My Activity</h3>
+                        </div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="statRequests">0</span>
+                                <span class="stat-label">Requests Made</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="statOrders">0</span>
+                                <span class="stat-label">Orders Completed</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="statReviews">0</span>
+                                <span class="stat-label">Reviews Given</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Card -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <i class="bi bi-gear"></i>
+                            <h3>Settings</h3>
+                        </div>
+                        <div class="profile-card-body">
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <span class="setting-title">Notifications</span>
+                                    <span class="setting-desc">Receive bid and order updates</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <div class="setting-info">
+                                    <span class="setting-title">Sound Alerts</span>
+                                    <span class="setting-desc">Play sound for new bids</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingSound" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>⭐ Rate Your Experience</h3>
+                <button class="modal-close" onclick="closeReviewModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reviewOrderId">
+                <input type="hidden" id="reviewGarageId">
+
+                <div class="review-garage-info" id="reviewGarageInfo">
+                    <span class="garage-name">Loading...</span>
+                </div>
+
+                <div class="rating-section">
+                    <label>Overall Rating *</label>
+                    <div class="star-rating" id="overallRating">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                </div>
+
+                <div class="rating-section">
+                    <label>Part Quality</label>
+                    <div class="star-rating" id="qualityRating">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                </div>
+
+                <div class="rating-section">
+                    <label>Communication</label>
+                    <div class="star-rating" id="communicationRating">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Your Review (Optional)</label>
+                    <textarea class="form-control" id="reviewText" rows="3"
+                        placeholder="Share your experience with this garage..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="submitReview()" style="width: 100%;">
+                    <i class="bi bi-send"></i> Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal-overlay" id="editProfileModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="bi bi-person-gear"></i> Edit Profile</h3>
+                <button class="modal-close" onclick="closeEditProfileModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="form-control" id="editFullName" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="editEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" class="form-control" id="editPhone" disabled placeholder="+974 XXXX XXXX">
+                    <small style="color: var(--text-muted);">Phone number cannot be changed</small>
+                </div>
+                <button class="btn btn-primary" onclick="saveProfile()" style="width: 100%;">
+                    <i class="bi bi-check-lg"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Address Modal -->
+    <div class="modal-overlay" id="addAddressModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="bi bi-geo-alt"></i> Add Address</h3>
+                <button class="modal-close" onclick="closeAddAddressModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Label</label>
+                    <select class="form-control" id="addressLabel">
+                        <option value="Home">Home</option>
+                        <option value="Work">Work</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Address *</label>
+                    <input type="text" class="form-control" id="addressLine" placeholder="Street, Building name"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Area</label>
+                    <input type="text" class="form-control" id="addressArea" placeholder="e.g., Al Sadd, Pearl Qatar">
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="addressDefault">
+                        <span>Set as default address</span>
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="saveAddress()" style="width: 100%;">
+                    <i class="bi bi-plus-lg"></i> Add Address
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Counter-Offer Modal -->
+    <div class="modal-overlay" id="counterOfferModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>💰 Make Counter-Offer</h3>
+                <button class="modal-close" onclick="closeCounterOfferModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: rgba(99, 102, 241, 0.1); border-radius: 12px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Garage Bid</div>
+                        <div id="counterOriginalPrice"
+                            style="font-size: 22px; font-weight: 700; color: var(--text-primary);">0 QAR</div>
+                    </div>
+                    <div style="display: flex; align-items: center;"><i class="bi bi-arrow-right"
+                            style="font-size: 24px; color: var(--accent);"></i></div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Your Offer</div>
+                        <div id="counterYourPrice" style="font-size: 22px; font-weight: 700; color: #10b981;">? QAR
+                        </div>
+                    </div>
+                </div>
+
+                <div id="negotiationHistory" style="display: none; margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Negotiation History:
+                    </div>
+                    <div id="negotiationHistoryList" style="max-height: 120px; overflow-y: auto;"></div>
+                </div>
+
+                <div id="roundsRemaining"
+                    style="font-size: 12px; color: var(--accent); margin-bottom: 15px; text-align: center;">
+                    3 rounds remaining in negotiation
+                </div>
+
+                <div class="form-group">
+                    <label>Your Counter-Offer (QAR)</label>
+                    <input type="number" class="form-control" id="counterAmount" placeholder="Enter your price"
+                        oninput="updateCounterPreview()" min="1" step="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label>Message (Optional)</label>
+                    <textarea class="form-control" id="counterMessage" rows="2"
+                        placeholder="e.g., I can do this price if delivery is included..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="sendCounterOffer()" style="width: 100%;">
+                    <i class="bi bi-send"></i> Send Counter-Offer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal-overlay" id="createTicketModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="bi bi-life-preserver"></i> New Support Ticket</h3>
+                <button class="modal-close" onclick="closeCreateTicketModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" class="form-control" id="ticketSubject" placeholder="Brief summary of issue"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea class="form-control" id="ticketMessage" rows="5"
+                        placeholder="Describe your issue in detail..." required></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="createTicket()" style="width: 100%;">
+                    <i class="bi bi-send"></i> Create Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Issue Modal -->
+    <div class="modal-overlay" id="reportIssueModal">
+        <div class="modal" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>âš ï¸ Report Issue</h3>
+                <button class="modal-close" onclick="closeReportIssueModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>What's the issue?</label>
+                    <select class="form-control" id="issueReason" onchange="updateRefundPreview()">
+                        <option value="">Select a reason...</option>
+                        <option value="wrong_part">Wrong Part Sent</option>
+                        <option value="doesnt_fit">Doesn't Fit My Car</option>
+                        <option value="damaged">Damaged in Transit</option>
+                        <option value="not_as_described">Not as Described</option>
+                        <option value="changed_mind">Changed My Mind</option>
+                    </select>
+                </div>
+
+                <div id="refundPreview"
+                    style="display: none; margin-bottom: 16px; padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>Expected Refund:</span>
+                        <strong id="previewRefund">0 QAR</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: var(--text-secondary);">
+                        <span>Restocking Fee:</span>
+                        <span id="previewFee">0 QAR</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Describe the issue</label>
+                    <textarea class="form-control" id="issueDescription" rows="3"
+                        placeholder="Please explain what's wrong..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Photos (required for damage/wrong part)</label>
+                    <div class="image-upload-area" onclick="document.getElementById('issuePhotos').click()"
+                        style="padding: 20px; cursor: pointer;">
+                        <i class="bi bi-camera" style="font-size: 24px; color: var(--text-secondary);"></i>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">Tap to add photos</p>
+                    </div>
+                    <input type="file" id="issuePhotos" accept="image/*" multiple style="display: none;"
+                        onchange="previewIssuePhotos()">
+                    <div id="issuePhotoPreview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                    </div>
+                </div>
+
+                <div
+                    style="padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; margin-bottom: 16px;">
+                    <p style="font-size: 12px; color: #f59e0b; margin: 0;">
+                        <i class="bi bi-info-circle"></i> Delivery fee (25 QAR) is non-refundable unless damaged in
+                        transit.
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" onclick="submitDispute()" style="width: 100%;">
+                    <i class="bi bi-send"></i> Submit Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REVIEW MODAL -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Rate Your Experience</h3>
+                <button class="modal-close" onclick="closeReviewModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reviewOrderId">
+                <input type="hidden" id="reviewGarageId">
+
+                <div id="reviewGarageInfo" style="margin-bottom: 20px; text-align: center;">
+                    <div style="font-size: 13px; color: var(--text-secondary);">Reviewing</div>
+                    <div class="garage-name" style="font-size: 18px; font-weight: 700;">Garage Name</div>
+                </div>
+
+                <div class="rating-group" style="text-align: center; margin-bottom: 24px;">
+                    <label style="display: block; margin-bottom: 8px;">Overall Rating *</label>
+                    <div class="star-rating" id="overallRating">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                    <div class="rating-group" style="flex: 1; text-align: center;">
+                        <label style="font-size: 12px; margin-bottom: 4px;">Part Quality</label>
+                        <div class="star-rating small" id="qualityRating">
+                            <i class="bi bi-star" data-rating="1"></i>
+                            <i class="bi bi-star" data-rating="2"></i>
+                            <i class="bi bi-star" data-rating="3"></i>
+                            <i class="bi bi-star" data-rating="4"></i>
+                            <i class="bi bi-star" data-rating="5"></i>
+                        </div>
+                    </div>
+                    <div class="rating-group" style="flex: 1; text-align: center;">
+                        <label style="font-size: 12px; margin-bottom: 4px;">Communication</label>
+                        <div class="star-rating small" id="communicationRating">
+                            <i class="bi bi-star" data-rating="1"></i>
+                            <i class="bi bi-star" data-rating="2"></i>
+                            <i class="bi bi-star" data-rating="3"></i>
+                            <i class="bi bi-star" data-rating="4"></i>
+                            <i class="bi bi-star" data-rating="5"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Write a review (optional)</label>
+                    <textarea class="form-control" id="reviewText" rows="3"
+                        placeholder="Share your experience with this garage..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="submitReview()" style="width: 100%;">
+                    Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="js/customer-dashboard.js"></script>
+</body>
+
+</html>

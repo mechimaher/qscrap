@@ -1,0 +1,868 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth.middleware';
+import pool from '../config/db';
+
+// Get live dashboard stats
+export const getDashboardStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const stats = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM orders WHERE order_status NOT IN ('completed', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')) as active_orders,
+                (SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURRENT_DATE) as orders_today,
+                (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as pending_disputes,
+                (SELECT COUNT(*) FROM disputes WHERE status = 'contested') as contested_disputes,
+                (SELECT COUNT(*) FROM orders WHERE order_status = 'in_transit') as in_transit,
+                (SELECT COUNT(*) FROM orders WHERE order_status = 'delivered') as awaiting_confirmation,
+                (SELECT COUNT(*) FROM orders WHERE order_status = 'ready_for_pickup') as ready_for_pickup,
+                (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as revenue_today,
+                (SELECT COUNT(*) FROM part_requests WHERE status = 'active') as pending_requests,
+                (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
+                (SELECT COUNT(*) FROM garages) as total_garages
+        `);
+
+        res.json({ stats: stats.rows[0] });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get all orders with filters
+export const getOrders = async (req: AuthRequest, res: Response) => {
+    const { status, search, page = 1, limit = 20 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    try {
+        let query = `
+            SELECT o.*, 
+                   pr.car_make, pr.car_model, pr.car_year, pr.part_description,
+                   u.full_name as customer_name, u.phone_number as customer_phone,
+                   g.garage_name, gu.phone_number as garage_phone
+            FROM orders o
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN users u ON o.customer_id = u.user_id
+            JOIN garages g ON o.garage_id = g.garage_id
+            JOIN users gu ON g.garage_id = gu.user_id
+            WHERE 1=1
+        `;
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (status && status !== 'all') {
+            // Handle 'cancelled' as a group of all cancelled statuses
+            if (status === 'cancelled') {
+                query += ` AND o.order_status LIKE 'cancelled%'`;
+            } else if (typeof status === 'string' && status.includes(',')) {
+                // Handle comma-separated statuses (e.g., "delivered,completed")
+                const statuses = status.split(',').map(s => s.trim());
+                query += ` AND o.order_status IN (${statuses.map((_, i) => `$${paramIndex + i}`).join(', ')})`;
+                params.push(...statuses);
+                paramIndex += statuses.length;
+            } else {
+                query += ` AND o.order_status = $${paramIndex++}`;
+                params.push(status);
+            }
+        }
+
+        if (search) {
+            query += ` AND (o.order_number ILIKE $${paramIndex} OR u.full_name ILIKE $${paramIndex} OR pr.part_description ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+
+        query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
+        params.push(Number(limit), offset);
+
+        const result = await pool.query(query, params);
+
+        // Get total count with same filters
+        let countQuery = `SELECT COUNT(*) FROM orders o
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN users u ON o.customer_id = u.user_id
+            WHERE 1=1`;
+        const countParams: any[] = [];
+        let countParamIndex = 1;
+
+        if (status && status !== 'all') {
+            if (status === 'cancelled') {
+                countQuery += ` AND o.order_status LIKE 'cancelled%'`;
+            } else if (typeof status === 'string' && status.includes(',')) {
+                // Handle comma-separated statuses (e.g., "delivered,completed")
+                const statuses = status.split(',').map(s => s.trim());
+                countQuery += ` AND o.order_status IN (${statuses.map((_, i) => `$${countParamIndex + i}`).join(', ')})`;
+                countParams.push(...statuses);
+                countParamIndex += statuses.length;
+            } else {
+                countQuery += ` AND o.order_status = $${countParamIndex++}`;
+                countParams.push(status);
+            }
+        }
+        if (search) {
+            countQuery += ` AND (o.order_number ILIKE $${countParamIndex} OR u.full_name ILIKE $${countParamIndex} OR pr.part_description ILIKE $${countParamIndex})`;
+            countParams.push(`%${search}%`);
+        }
+
+        const countResult = await pool.query(countQuery, countParams);
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            orders: result.rows,
+            pagination: {
+                page: Number(page),
+                limit: Number(limit),
+                total,
+                pages: Math.ceil(total / Number(limit))
+            }
+        });
+    } catch (err: any) {
+        console.error('getOrders Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get order details with full history
+export const getOrderDetails = async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+
+    try {
+        const orderResult = await pool.query(`
+            SELECT o.*, 
+                   pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.vin_number, pr.image_urls as request_images,
+                   u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email,
+                   g.garage_name, gu.phone_number as garage_phone, g.address as garage_address,
+                   b.bid_amount, b.part_condition, b.warranty_days, b.notes as bid_notes, b.image_urls as bid_photos
+            FROM orders o
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN users u ON o.customer_id = u.user_id
+            JOIN garages g ON o.garage_id = g.garage_id
+            JOIN users gu ON g.garage_id = gu.user_id
+            JOIN bids b ON o.bid_id = b.bid_id
+            WHERE o.order_id = $1
+        `, [order_id]);
+
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Get status history
+        const historyResult = await pool.query(`
+            SELECT history_id, order_id, old_status, new_status as status, changed_by, reason, created_at as changed_at
+            FROM order_status_history
+            WHERE order_id = $1
+            ORDER BY created_at ASC
+        `, [order_id]);
+
+        // Get dispute if exists
+        const disputeResult = await pool.query(`
+            SELECT * FROM disputes WHERE order_id = $1
+        `, [order_id]);
+
+        res.json({
+            order: orderResult.rows[0],
+            status_history: historyResult.rows,
+            dispute: disputeResult.rows[0] || null
+        });
+    } catch (err: any) {
+        console.error('getOrderDetails Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update order status (admin override)
+export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+    const { new_status, notes } = req.body;
+    const staffId = req.user!.userId;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Get current status
+        const orderResult = await client.query(
+            `SELECT order_status, customer_id, garage_id, order_number FROM orders WHERE order_id = $1`,
+            [order_id]
+        );
+
+        if (orderResult.rows.length === 0) {
+            throw new Error('Order not found');
+        }
+
+        const oldStatus = orderResult.rows[0].order_status;
+        const order = orderResult.rows[0];
+
+        // Update order status
+        await client.query(
+            `UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2`,
+            [new_status, order_id]
+        );
+
+        // Record in history
+        await client.query(
+            `INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, reason, changed_by_type)
+             VALUES ($1, $2, $3, $4, $5, 'admin')`,
+            [order_id, oldStatus, new_status, staffId, notes || 'Updated by operations']
+        );
+
+        await client.query('COMMIT');
+
+        // Notify customer and garage
+        const io = (global as any).io;
+        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+            order_id,
+            order_number: order.order_number,
+            old_status: oldStatus,
+            new_status,
+            notification: `Order #${order.order_number} status updated to ${new_status}`
+        });
+        io.to(`garage_${order.garage_id}`).emit('order_status_updated', {
+            order_id,
+            order_number: order.order_number,
+            old_status: oldStatus,
+            new_status,
+            notification: `Order #${order.order_number} status updated to ${new_status}`
+        });
+
+        res.json({ message: 'Status updated', old_status: oldStatus, new_status });
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        res.status(400).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+};
+
+// Collect order from garage (Operations team action)
+// Transitions: ready_for_pickup → collected
+export const collectOrder = async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+    const { notes } = req.body;
+    const staffId = req.user!.userId;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Get current order status
+        const orderResult = await client.query(
+            `SELECT order_status, customer_id, garage_id, order_number 
+             FROM orders WHERE order_id = $1 FOR UPDATE`,
+            [order_id]
+        );
+
+        if (orderResult.rows.length === 0) {
+            throw new Error('Order not found');
+        }
+
+        const order = orderResult.rows[0];
+
+        // STRICT: Only allow collection from ready_for_pickup status
+        if (order.order_status !== 'ready_for_pickup') {
+            throw new Error(`Cannot collect order. Current status is "${order.order_status}". Must be "ready_for_pickup".`);
+        }
+
+        // Update order status to 'collected'
+        await client.query(
+            `UPDATE orders SET order_status = 'collected', updated_at = NOW() WHERE order_id = $1`,
+            [order_id]
+        );
+
+        // Record in history
+        await client.query(
+            `INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+             VALUES ($1, $2, $3, $4, 'operations', $5)`,
+            [order_id, 'ready_for_pickup', 'collected', staffId, notes || 'Order collected from garage']
+        );
+
+        await client.query('COMMIT');
+
+        // Notify customer and garage
+        const io = (global as any).io;
+        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+            order_id,
+            order_number: order.order_number,
+            old_status: 'ready_for_pickup',
+            new_status: 'collected',
+            notification: `📦 Order #${order.order_number} has been collected and is now being inspected.`
+        });
+
+        io.to(`garage_${order.garage_id}`).emit('order_status_updated', {
+            order_id,
+            order_number: order.order_number,
+            old_status: 'ready_for_pickup',
+            new_status: 'collected',
+            notification: `Order #${order.order_number} has been collected by QScrap team.`
+        });
+
+        res.json({
+            message: 'Order collected successfully',
+            order_id,
+            order_number: order.order_number,
+            new_status: 'collected'
+        });
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        console.error('collectOrder Error:', err);
+        res.status(400).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+};
+
+// Get all disputes with pagination
+export const getDisputes = async (req: AuthRequest, res: Response) => {
+    const { status, page = 1, limit = 20 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    try {
+        let query = `
+            SELECT d.*, 
+                   o.order_number, o.part_price, o.total_amount,
+                   pr.car_make, pr.car_model, pr.part_description,
+                   u.full_name as customer_name, u.phone_number as customer_phone,
+                   g.garage_name
+            FROM disputes d
+            JOIN orders o ON d.order_id = o.order_id
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN users u ON d.customer_id = u.user_id
+            JOIN garages g ON d.garage_id = g.garage_id
+        `;
+
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (status && status !== 'all') {
+            query += ` WHERE d.status = $${paramIndex++}`;
+            params.push(status);
+        }
+
+        query += ` ORDER BY d.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
+        params.push(Number(limit), offset);
+
+        const result = await pool.query(query, params);
+
+        // Get total count with filters
+        let countQuery = `SELECT COUNT(*) FROM disputes d WHERE 1=1`;
+        const countParams: any[] = [];
+        if (status && status !== 'all') {
+            countQuery += ` AND d.status = $1`;
+            countParams.push(status);
+        }
+        const countResult = await pool.query(countQuery, countParams);
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            disputes: result.rows,
+            pagination: {
+                page: Number(page),
+                limit: Number(limit),
+                total,
+                pages: Math.ceil(total / Number(limit))
+            }
+        });
+    } catch (err: any) {
+        console.error('getDisputes Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Admin resolve dispute
+export const resolveDispute = async (req: AuthRequest, res: Response) => {
+    const { dispute_id } = req.params;
+    const { resolution, refund_amount, notes } = req.body;
+    const staffId = req.user!.userId;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const disputeResult = await client.query(
+            `SELECT d.*, o.order_number, o.customer_id, o.garage_id
+             FROM disputes d
+             JOIN orders o ON d.order_id = o.order_id
+             WHERE d.dispute_id = $1`,
+            [dispute_id]
+        );
+
+        if (disputeResult.rows.length === 0) {
+            throw new Error('Dispute not found');
+        }
+
+        const dispute = disputeResult.rows[0];
+
+        // Update dispute
+        await client.query(
+            `UPDATE disputes 
+             SET status = 'resolved',
+                 resolution = $2,
+                 refund_amount = $3,
+                 resolved_by = 'platform',
+                 resolved_at = NOW()
+             WHERE dispute_id = $1`,
+            [dispute_id, resolution, refund_amount || dispute.refund_amount]
+        );
+
+        // Update order status based on resolution
+        const newOrderStatus = resolution === 'refund_approved' ? 'refunded' : 'completed';
+        await client.query(
+            `UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2`,
+            [newOrderStatus, dispute.order_id]
+        );
+
+        await client.query('COMMIT');
+
+        // Notify both parties
+        const io = (global as any).io;
+        const refundMsg = resolution === 'refund_approved'
+            ? `Refund of ${refund_amount || dispute.refund_amount} QAR approved`
+            : 'Dispute resolved in favor of garage';
+
+        io.to(`user_${dispute.customer_id}`).emit('dispute_resolved', {
+            dispute_id,
+            order_number: dispute.order_number,
+            resolution,
+            notification: `Your dispute for Order #${dispute.order_number} has been resolved. ${refundMsg}`
+        });
+
+        io.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', {
+            dispute_id,
+            order_number: dispute.order_number,
+            resolution,
+            notification: `Dispute for Order #${dispute.order_number} has been resolved by platform.`
+        });
+
+        res.json({ message: 'Dispute resolved', resolution });
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        res.status(400).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+};
+
+// Get users (customers or garages)
+export const getUsers = async (req: AuthRequest, res: Response) => {
+    const { type, search } = req.query;
+
+    try {
+        if (type === 'garage') {
+            let query = `
+                SELECT g.*, u.email, u.phone_number as phone, u.created_at as user_created,
+                       (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id) as total_orders,
+                       (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id AND order_status = 'completed') as completed_orders
+                FROM garages g
+                JOIN users u ON g.garage_id = u.user_id
+            `;
+            if (search) {
+                query += ` WHERE g.garage_name ILIKE $1 OR u.phone_number ILIKE $1`;
+            }
+            query += ` ORDER BY g.created_at DESC`;
+
+            const result = await pool.query(query, search ? [`%${search}%`] : []);
+            res.json({ users: result.rows });
+        } else {
+            let query = `
+                SELECT u.*,
+                       (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id) as total_orders,
+                       (SELECT COUNT(*) FROM part_requests WHERE customer_id = u.user_id) as total_requests
+                FROM users u
+                WHERE u.user_type = 'customer'
+            `;
+            if (search) {
+                query += ` AND (u.full_name ILIKE $1 OR u.phone_number ILIKE $1)`;
+            }
+            query += ` ORDER BY u.created_at DESC`;
+
+            const result = await pool.query(query, search ? [`%${search}%`] : []);
+            res.json({ users: result.rows });
+        }
+    } catch (err: any) {
+        console.error('getUsers Error:', err);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+};
+
+// Get single dispute details
+export const getDisputeDetails = async (req: AuthRequest, res: Response) => {
+    const { dispute_id } = req.params;
+
+    try {
+        // Get dispute with order and user details
+        const disputeResult = await pool.query(`
+            SELECT d.*,
+                   o.order_number, o.order_status, o.total_amount as order_amount,
+                   o.created_at as order_created,
+                   pr.car_make, pr.car_model, pr.car_year, pr.part_description,
+                   u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email,
+                   g.garage_name, gu.phone_number as garage_phone
+            FROM disputes d
+            JOIN orders o ON d.order_id = o.order_id
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN users u ON o.customer_id = u.user_id
+            JOIN garages g ON o.garage_id = g.garage_id
+            JOIN users gu ON g.garage_id = gu.user_id
+            WHERE d.dispute_id = $1
+        `, [dispute_id]);
+
+        if (disputeResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dispute not found' });
+        }
+
+        const dispute = disputeResult.rows[0];
+
+        // Get order status history
+        const historyResult = await pool.query(`
+            SELECT new_status as status, created_at as changed_at, reason
+            FROM order_status_history
+            WHERE order_id = $1
+            ORDER BY created_at ASC
+        `, [dispute.order_id]);
+
+        res.json({
+            dispute,
+            order_history: historyResult.rows
+        });
+    } catch (err: any) {
+        console.error('getDisputeDetails Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get analytics dashboard data
+export const getAnalytics = async (req: AuthRequest, res: Response) => {
+    const { period = '7d' } = req.query;
+
+    // Calculate date range based on period
+    let daysBack = 7;
+    if (period === '30d') daysBack = 30;
+    if (period === '90d') daysBack = 90;
+
+    try {
+        // Orders summary
+        const ordersResult = await pool.query(`
+            SELECT 
+                COUNT(*) as total_orders,
+                COUNT(*) FILTER (WHERE order_status = 'completed') as completed,
+                COUNT(*) FILTER (WHERE order_status = 'confirmed') as confirmed,
+                COUNT(*) FILTER (WHERE order_status = 'in_transit') as in_transit,
+                COUNT(*) FILTER (WHERE order_status = 'disputed') as disputed,
+                COUNT(*) FILTER (WHERE order_status = 'refunded') as refunded,
+                COALESCE(SUM(total_amount), 0) as total_revenue,
+                COALESCE(SUM(total_amount) FILTER (WHERE order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'refunded')), 0) as net_revenue
+            FROM orders
+            WHERE created_at >= CURRENT_DATE - INTERVAL '${daysBack} days'
+        `);
+
+        // Orders by day for chart
+        const ordersByDayResult = await pool.query(`
+            SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(total_amount), 0) as revenue
+            FROM orders
+            WHERE created_at >= CURRENT_DATE - INTERVAL '${daysBack} days'
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        `);
+
+        // Disputes summary
+        const disputesResult = await pool.query(`
+            SELECT 
+                COUNT(*) as total_disputes,
+                COUNT(*) FILTER (WHERE status = 'pending') as pending,
+                COUNT(*) FILTER (WHERE status = 'resolved') as resolved,
+                COUNT(*) FILTER (WHERE resolution = 'refund_approved') as refunds_approved,
+                COUNT(*) FILTER (WHERE resolution = 'refund_denied') as refunds_denied
+            FROM disputes
+            WHERE created_at >= CURRENT_DATE - INTERVAL '${daysBack} days'
+        `);
+
+        // Top garages by order count
+        const topGaragesResult = await pool.query(`
+            SELECT g.garage_name, COUNT(*) as order_count, COALESCE(SUM(o.total_amount), 0) as total_revenue
+            FROM orders o
+            JOIN garages g ON o.garage_id = g.garage_id
+            WHERE o.created_at >= CURRENT_DATE - INTERVAL '${daysBack} days'
+            GROUP BY g.garage_id, g.garage_name
+            ORDER BY order_count DESC
+            LIMIT 5
+        `);
+
+        // Top parts requested
+        const topPartsResult = await pool.query(`
+            SELECT pr.part_description, COUNT(*) as request_count
+            FROM part_requests pr
+            WHERE pr.created_at >= CURRENT_DATE - INTERVAL '${daysBack} days'
+            GROUP BY pr.part_description
+            ORDER BY request_count DESC
+            LIMIT 5
+        `);
+
+        res.json({
+            period,
+            orders: {
+                ...ordersResult.rows[0],
+                by_day: ordersByDayResult.rows
+            },
+            disputes: disputesResult.rows[0],
+            top_garages: topGaragesResult.rows,
+            top_parts: topPartsResult.rows
+        });
+    } catch (err: any) {
+        console.error('getAnalytics Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get quality control stats
+export const getQualityStats = async (req: AuthRequest, res: Response) => {
+    try {
+        // QC stats - orders in "preparing" status need inspection
+        const statsResult = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE order_status = 'preparing') as pending_inspection,
+                COUNT(*) FILTER (WHERE order_status = 'ready_for_pickup' AND DATE(updated_at) = CURRENT_DATE) as passed_today,
+                COUNT(*) FILTER (WHERE order_status = 'disputed' AND DATE(updated_at) = CURRENT_DATE) as failed_today
+            FROM orders
+        `);
+
+        // Pass rate for last 7 days
+        const rateResult = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE order_status IN ('ready_for_pickup', 'in_transit', 'delivered', 'completed')) as passed,
+                COUNT(*) as total
+            FROM orders
+            WHERE updated_at >= CURRENT_DATE - INTERVAL '7 days'
+              AND order_status NOT IN ('confirmed', 'preparing')
+        `);
+
+        const passed = parseInt(rateResult.rows[0].passed) || 0;
+        const total = parseInt(rateResult.rows[0].total) || 1;
+        const passRate = Math.round((passed / total) * 100);
+
+        // Pending orders for inspection
+        const pendingResult = await pool.query(`
+            SELECT o.order_id, o.order_number, o.order_status, o.updated_at,
+                   pr.part_description, g.garage_name
+            FROM orders o
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN garages g ON o.garage_id = g.garage_id
+            WHERE o.order_status = 'preparing'
+            ORDER BY o.updated_at ASC
+            LIMIT 10
+        `);
+
+        // Recent inspections (orders that moved past preparing)
+        const recentResult = await pool.query(`
+            SELECT o.order_id, o.order_number, o.order_status, o.updated_at,
+                   pr.part_description,
+                   CASE WHEN o.order_status IN ('ready_for_pickup', 'in_transit', 'delivered', 'completed') 
+                        THEN 'passed' ELSE 'failed' END as result
+            FROM orders o
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            WHERE o.order_status NOT IN ('confirmed', 'preparing')
+              AND o.updated_at >= CURRENT_DATE - INTERVAL '7 days'
+            ORDER BY o.updated_at DESC
+            LIMIT 10
+        `);
+
+        res.json({
+            stats: {
+                ...statsResult.rows[0],
+                pass_rate: passRate
+            },
+            pending: pendingResult.rows,
+            recent: recentResult.rows
+        });
+    } catch (err: any) {
+        console.error('getQualityStats Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Get user details with activity history
+export const getUserDetails = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+
+    try {
+        // Get user basic info
+        const userResult = await pool.query(`
+            SELECT u.*, g.garage_name, g.address, g.rating_average, g.rating_count
+            FROM users u
+            LEFT JOIN garages g ON u.user_id = g.garage_id
+            WHERE u.user_id = $1
+        `, [user_id]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+
+        // Get orders
+        let ordersQuery = '';
+        if (user.user_type === 'customer') {
+            ordersQuery = `
+                SELECT o.order_id, o.order_number, o.order_status, o.total_amount, o.created_at,
+                       pr.part_description, g.garage_name
+                FROM orders o
+                JOIN part_requests pr ON o.request_id = pr.request_id
+                JOIN garages g ON o.garage_id = g.garage_id
+                WHERE o.customer_id = $1
+                ORDER BY o.created_at DESC LIMIT 10
+            `;
+        } else if (user.user_type === 'garage') {
+            ordersQuery = `
+                SELECT o.order_id, o.order_number, o.order_status, o.total_amount, o.created_at,
+                       pr.part_description, u.full_name as customer_name
+                FROM orders o
+                JOIN part_requests pr ON o.request_id = pr.request_id
+                JOIN users u ON o.customer_id = u.user_id
+                WHERE o.garage_id = $1
+                ORDER BY o.created_at DESC LIMIT 10
+            `;
+        }
+
+        const ordersResult = ordersQuery
+            ? await pool.query(ordersQuery, [user_id])
+            : { rows: [] };
+
+        // Get disputes
+        const disputesResult = await pool.query(`
+            SELECT d.dispute_id, d.status, d.reason, d.created_at, o.order_number
+            FROM disputes d
+            JOIN orders o ON d.order_id = o.order_id
+            WHERE d.customer_id = $1
+            ORDER BY d.created_at DESC LIMIT 5
+        `, [user_id]);
+
+        res.json({
+            user,
+            orders: ordersResult.rows,
+            disputes: disputesResult.rows
+        });
+    } catch (err: any) {
+        console.error('getUserDetails Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Suspend user
+export const suspendUser = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    const { reason } = req.body;
+
+    try {
+        const result = await pool.query(`
+            UPDATE users SET 
+                is_suspended = true,
+                suspension_reason = $1,
+                suspended_at = NOW(),
+                updated_at = NOW()
+            WHERE user_id = $2
+            RETURNING user_id, full_name, user_type, is_suspended
+        `, [reason || 'Suspended by operations team', user_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            user: result.rows[0],
+            message: 'User suspended successfully'
+        });
+    } catch (err: any) {
+        console.error('suspendUser Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Activate user
+export const activateUser = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+
+    try {
+        const result = await pool.query(`
+            UPDATE users SET 
+                is_suspended = false,
+                suspension_reason = NULL,
+                suspended_at = NULL,
+                updated_at = NOW()
+            WHERE user_id = $1
+            RETURNING user_id, full_name, user_type, is_suspended
+        `, [user_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            user: result.rows[0],
+            message: 'User activated successfully'
+        });
+    } catch (err: any) {
+        console.error('activateUser Error:', err);
+        res.status(500).json({ error: 'Failed to activate user' });
+    }
+};
+
+// Get user statistics
+export const getUserStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const stats = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE user_type = 'customer') as total_customers,
+                COUNT(*) FILTER (WHERE user_type = 'garage') as total_garages,
+                COUNT(*) FILTER (WHERE user_type = 'customer' AND is_active = true) as active_customers,
+                COUNT(*) FILTER (WHERE user_type = 'garage' AND is_active = true) as active_garages,
+                COUNT(*) FILTER (WHERE is_suspended = true) as suspended_users,
+                COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE - INTERVAL '7 days') as new_this_week,
+                COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE - INTERVAL '30 days') as new_this_month
+            FROM users
+        `);
+
+        res.json(stats.rows[0]);
+    } catch (err: any) {
+        console.error('[OPERATIONS] getUserStats error:', err);
+        res.status(500).json({ error: 'Failed to fetch user statistics' });
+    }
+};
+
+// Get all garages
+export const getGarages = async (req: AuthRequest, res: Response) => {
+    const { search, status } = req.query;
+
+    try {
+        let query = `
+            SELECT g.*, u.phone_number, u.email, u.is_active, u.is_suspended, u.created_at as user_created,
+                   (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id) as total_orders,
+                   (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id AND order_status = 'completed') as completed_orders,
+                   (SELECT COUNT(*) FROM bids WHERE garage_id = g.garage_id) as total_bids,
+                   gs.status as subscription_status, gs.plan_id, sp.plan_name
+            FROM garages g
+            JOIN users u ON g.garage_id = u.user_id
+            LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN ('active', 'trial')
+            LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+            WHERE 1=1
+        `;
+
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (search) {
+            query += ` AND (g.garage_name ILIKE $${paramIndex} OR u.phone_number ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+
+        if (status === 'active') {
+            query += ` AND u.is_active = true AND u.is_suspended = false`;
+        } else if (status === 'suspended') {
+            query += ` AND u.is_suspended = true`;
+        }
+
+        query += ` ORDER BY g.created_at DESC LIMIT 100`;
+
+        const result = await pool.query(query, params);
+        res.json({ garages: result.rows });
+    } catch (err: any) {
+        console.error('[OPERATIONS] getGarages error:', err);
+        res.status(500).json({ error: 'Failed to fetch garages' });
+    }
+};

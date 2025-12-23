@@ -1,0 +1,4475 @@
+const API_URL = '/api';
+let token = localStorage.getItem('opsToken');
+let socket = null;
+let currentOrderStatus = 'all';
+let currentDisputeStatus = 'pending';
+let currentUserType = 'customer';
+
+// Login
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: email, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.token) {
+            token = data.token;
+            localStorage.setItem('opsToken', token);
+            showDashboard();
+        } else {
+            showToast(data.error || 'Login failed', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+});
+
+// Check auth on load
+if (token) {
+    showDashboard();
+}
+
+async function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+
+    // Connect socket
+    socket = io();
+    socket.emit('join_user_room', 'operations');
+
+    // Socket listeners
+    socket.on('order_status_updated', () => { loadStats(); loadOrders(); });
+    socket.on('dispute_created', () => { loadStats(); loadDisputes(); });
+    socket.on('new_order', () => { loadStats(); loadOrders(); });
+
+    // Payment/Payout Real-time Events
+    socket.on('payment_confirmed', (data) => {
+        showToast(data.notification || '✅ Garage confirmed payment receipt!', 'success');
+        // Refresh finance data if on finance section
+        const activeSection = document.querySelector('.section.active');
+        if (activeSection && activeSection.id === 'sectionFinance') {
+            loadFinance();
+        }
+    });
+
+    socket.on('payment_disputed', (data) => {
+        showToast(data.notification || '⚠️ A payment has been disputed!', 'warning');
+        const activeSection = document.querySelector('.section.active');
+        if (activeSection && activeSection.id === 'sectionFinance') {
+            loadFinance();
+        }
+    });
+
+    socket.on('payout_completed', (data) => {
+        showToast(data.notification || '✅ Payout completed!', 'success');
+        const activeSection = document.querySelector('.section.active');
+        if (activeSection && activeSection.id === 'sectionFinance') {
+            loadFinance();
+        }
+    });
+
+    // Initialize support socket listeners
+    if (typeof initSupportSocketListeners === 'function') {
+        initSupportSocketListeners();
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => switchSection(item.dataset.section));
+    });
+
+    // Order tabs
+    document.querySelectorAll('#orderTabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#orderTabs .tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentOrderStatus = tab.dataset.status;
+            loadOrders();
+        });
+    });
+
+    // Dispute tabs
+    document.querySelectorAll('#disputeTabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#disputeTabs .tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentDisputeStatus = tab.dataset.status;
+            loadDisputes();
+        });
+    });
+
+    // User tabs
+    document.querySelectorAll('#userTabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#userTabs .tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentUserType = tab.dataset.type;
+            loadUsers();
+        });
+    });
+
+    // Load initial data
+    await loadStats();
+    await loadOrders();
+    loadQualityStats(); // Populate Quality badge
+}
+
+function switchSection(section) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+
+    // Load section data
+    if (section === 'orders') loadOrders();
+    if (section === 'disputes') loadDisputes();
+    if (section === 'users') loadUsers();
+    if (section === 'finance') loadFinance();
+    if (section === 'quality') loadQualityStats();
+    if (section === 'delivery') { loadDeliveryData(); loadDeliveryHistory(); }
+    if (section === 'analytics') loadAnalytics();
+    if (section === 'reports') loadReports();
+    if (section === 'reviewModeration') loadReviewModeration();
+}
+
+async function loadStats() {
+    try {
+        const res = await fetch(`${API_URL}/operations/dashboard/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.stats) {
+            const s = data.stats;
+            document.getElementById('statActiveOrders').textContent = s.active_orders;
+            document.getElementById('statPendingDisputes').textContent = s.pending_disputes;
+            document.getElementById('statContestedDisputes').textContent = s.contested_disputes;
+            document.getElementById('statInTransit').textContent = s.in_transit;
+            document.getElementById('statRevenueToday').textContent = Math.round(s.revenue_today) + ' QAR';
+            document.getElementById('statReadyPickup').textContent = s.ready_for_pickup;
+            document.getElementById('statTotalCustomers').textContent = s.total_customers;
+            document.getElementById('statTotalGarages').textContent = s.total_garages;
+
+            // Update badges
+            updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
+            updateBadge('ordersBadge', s.active_orders);
+        }
+    } catch (err) {
+        console.error('Failed to load stats:', err);
+    }
+}
+
+function updateBadge(id, count) {
+    const badge = document.getElementById(id);
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+}
+
+// Get context-sensitive action buttons based on order status
+function getOrderActions(order) {
+    const o = order;
+    const status = o.order_status;
+
+    // Define action buttons based on status
+    switch (status) {
+        case 'confirmed':
+        case 'preparing':
+            return `<span class="text-muted" style="font-size: 12px;">Awaiting garage</span>`;
+        case 'ready_for_pickup':
+            return `<button class="btn btn-primary btn-sm" onclick="assignCollection('${o.order_id}')" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
+        case 'collected':
+            return `<button class="btn btn-primary btn-sm" onclick="openInspection('${o.order_id}', '#${o.order_number}', '', '')" title="Start QC inspection"><i class="bi bi-clipboard-check"></i></button>`;
+        case 'qc_failed':
+            return `<button class="btn btn-warning btn-sm" onclick="handleQCFailed('${o.order_id}')" title="Handle QC failure"><i class="bi bi-exclamation-triangle"></i></button>`;
+        case 'in_transit':
+            return `<button class="btn btn-success btn-sm" onclick="confirmDelivery('${o.order_id}')" title="Confirm delivery"><i class="bi bi-check-circle"></i></button>`;
+        case 'delivered':
+            return `<span class="status-badge delivered" style="font-size: 11px;">Delivered</span>`;
+        case 'completed':
+            return `<span class="status-badge completed" style="font-size: 11px;">Completed</span>`;
+        case 'disputed':
+            return `<button class="btn btn-warning btn-sm" onclick="switchSection('disputes')" title="View dispute"><i class="bi bi-exclamation-circle"></i></button>`;
+        default:
+            if (status?.startsWith('cancelled')) {
+                return `<span class="status-badge cancelled" style="font-size: 11px;">Cancelled</span>`;
+            }
+            return `<span class="text-muted">-</span>`;
+    }
+}
+
+// Assign driver for collection from garage (for ready_for_pickup orders)
+async function assignCollection(orderId) {
+    // Load available drivers
+    let driversHtml = '<option value="">-- No drivers available --</option>';
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        // Filter for available drivers
+        const drivers = (data.drivers || []).filter(d => d.status === 'available');
+        if (drivers.length > 0) {
+            driversHtml = drivers.map(d => `
+                <option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'} - ${d.vehicle_plate || 'N/A'})</option>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load drivers:', err);
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'collectionAssignModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <h3><i class="bi bi-box-arrow-in-down"></i> Assign Collection Driver</h3>
+                <button class="modal-close" onclick="document.getElementById('collectionAssignModal').remove()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Assign a driver to collect this order from the garage.</p>
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver:</label>
+                <select id="collectionDriverSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    ${driversHtml}
+                </select>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-ghost" onclick="document.getElementById('collectionAssignModal').remove()">Cancel</button>
+                <button class="btn btn-primary" id="confirmCollectionBtn" onclick="submitCollectionAssignment('${orderId}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="bi bi-check-lg"></i> Assign & Collect
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Submit collection assignment - mark order as collected
+async function submitCollectionAssignment(orderId) {
+    const driverId = document.getElementById('collectionDriverSelect').value;
+    if (!driverId) {
+        showToast('Please select a driver', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('confirmCollectionBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
+
+    try {
+        // First, mark the order as collected
+        const res = await fetch(`${API_URL}/delivery/collect/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                driver_id: driverId,
+                notes: 'Collected by assigned driver'
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('📦 Order collected! Ready for QC inspection.', 'success');
+            document.getElementById('collectionAssignModal').remove();
+            loadOrders();
+            loadStats();
+            loadDeliveryData();
+        } else {
+            showToast(data.error || 'Failed to assign collection', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign & Collect';
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign & Collect';
+    }
+}
+
+async function loadOrders() {
+    try {
+        const res = await fetch(`${API_URL}/operations/orders?status=${currentOrderStatus}&limit=50`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const statusLabels = {
+            confirmed: 'Confirmed',
+            preparing: 'Preparing',
+            ready_for_pickup: 'Ready for Pickup',
+            collected: 'Collected',
+            qc_in_progress: 'QC In Progress',
+            qc_passed: 'QC Passed',
+            qc_failed: 'QC Failed',
+            in_transit: 'In Transit',
+            delivered: 'Delivered',
+            completed: 'Completed',
+            disputed: 'Disputed',
+            refunded: 'Refunded',
+            cancelled_by_customer: 'Cancelled (Customer)',
+            cancelled_by_garage: 'Cancelled (Garage)',
+            cancelled_by_operations: 'Cancelled (Ops)'
+        };
+
+        const statusClass = {
+            confirmed: 'confirmed',
+            preparing: 'preparing',
+            ready_for_pickup: 'ready',
+            collected: 'collected',
+            qc_in_progress: 'pending',
+            qc_passed: 'completed',
+            qc_failed: 'cancelled',
+            in_transit: 'in-transit',
+            delivered: 'delivered',
+            completed: 'completed',
+            disputed: 'pending',
+            refunded: 'refunded',
+            cancelled_by_customer: 'cancelled',
+            cancelled_by_garage: 'cancelled',
+            cancelled_by_operations: 'cancelled'
+        };
+
+        if (data.orders && data.orders.length) {
+            // Orders table
+            document.getElementById('ordersTable').innerHTML = data.orders.map(o => `
+                        <tr>
+                            <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
+                            <td>${o.customer_name}<br><small style="color: var(--text-muted);">${o.customer_phone}</small></td>
+                            <td>${o.garage_name}</td>
+                            <td>${o.car_make} ${o.car_model}<br><small style="color: var(--text-muted);">${o.part_description?.slice(0, 30)}...</small></td>
+                            <td><span class="status-badge ${statusClass[o.order_status] || ''}">${statusLabels[o.order_status] || o.order_status}</span></td>
+                            <td><strong>${o.total_amount} QAR</strong></td>
+                            <td>${getOrderActions(o)}</td>
+                        </tr>
+                    `).join('');
+
+            // Recent orders on overview
+            document.getElementById('recentOrdersTable').innerHTML = data.orders.slice(0, 5).map(o => `
+                        <tr>
+                            <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
+                            <td>${o.customer_name}</td>
+                            <td>${o.part_description?.slice(0, 25)}...</td>
+                            <td><span class="status-badge ${statusClass[o.order_status] || ''}">${statusLabels[o.order_status] || o.order_status}</span></td>
+                            <td>${o.total_amount} QAR</td>
+                            <td>${getOrderActions(o)}</td>
+                        </tr>
+                    `).join('');
+        } else {
+            document.getElementById('ordersTable').innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-inbox"></i><h4>No orders found</h4></td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load orders:', err);
+    }
+}
+
+async function loadDisputes() {
+    try {
+        const res = await fetch(`${API_URL}/operations/disputes?status=${currentDisputeStatus}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const reasonLabels = {
+            wrong_part: 'Wrong Part',
+            doesnt_fit: "Doesn't Fit",
+            damaged: 'Damaged',
+            not_as_described: 'Not as Described',
+            changed_mind: 'Changed Mind'
+        };
+
+        if (data.disputes && data.disputes.length) {
+            document.getElementById('disputesTable').innerHTML = data.disputes.map(d => {
+                // Determine action column based on status
+                let actionCol = '';
+                if (d.status === 'pending' || d.status === 'contested') {
+                    actionCol = `
+                                <button class="btn btn-success btn-sm" id="approveBtn-${d.dispute_id}" onclick="resolveDispute('${d.dispute_id}', 'refund_approved')">
+                                    <i class="bi bi-check-lg"></i> Approve
+                                </button>
+                                <button class="btn btn-danger btn-sm" id="denyBtn-${d.dispute_id}" onclick="resolveDispute('${d.dispute_id}', 'refund_denied')" style="margin-left: 5px;">
+                                    <i class="bi bi-x-lg"></i> Deny
+                                </button>
+                            `;
+                } else if (d.status === 'resolved') {
+                    const resolutionBadge = d.resolution === 'refund_approved'
+                        ? '<span class="status-badge completed"><i class="bi bi-check-circle"></i> Refund Approved</span>'
+                        : '<span class="status-badge cancelled"><i class="bi bi-x-circle"></i> Refund Denied</span>';
+                    actionCol = resolutionBadge;
+                } else {
+                    actionCol = `<span class="status-badge ${d.status}">${d.status}</span>`;
+                }
+
+                return `
+                            <tr id="dispute-row-${d.dispute_id}">
+                                <td><strong>#${d.order_number}</strong></td>
+                                <td>${d.customer_name}<br><small style="color: var(--text-muted);">${d.customer_phone}</small></td>
+                                <td>${reasonLabels[d.reason] || d.reason}</td>
+                                <td><span class="status-badge ${d.status}">${d.status}</span></td>
+                                <td><strong>${d.refund_amount} QAR</strong></td>
+                                <td>${actionCol}</td>
+                            </tr>
+                        `;
+            }).join('');
+        } else {
+            document.getElementById('disputesTable').innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i><h4>No disputes</h4></td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load disputes:', err);
+    }
+}
+
+async function loadUsers() {
+    try {
+        const res = await fetch(`${API_URL}/operations/users?type=${currentUserType}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.users && data.users.length) {
+            document.getElementById('usersTable').innerHTML = data.users.map(u => {
+                const userId = currentUserType === 'garage' ? u.garage_id : u.user_id;
+                const name = currentUserType === 'garage' ? u.garage_name : u.full_name;
+                const contact = u.phone || u.phone_number || u.email || 'N/A';
+                return `
+                            <tr>
+                                <td><strong>${name}</strong></td>
+                                <td>${contact}</td>
+                                <td>${u.total_orders || 0} orders</td>
+                                <td>${new Date(u.created_at || u.user_created).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="viewUser('${userId}', '${currentUserType}')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+            }).join('');
+        } else {
+            document.getElementById('usersTable').innerHTML = '<tr><td colspan="5" class="empty-state"><i class="bi bi-people"></i><h4>No users found</h4></td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load users:', err);
+    }
+}
+
+// View User Detail Modal
+async function viewUser(userId, userType) {
+    try {
+        const res = await fetch(`${API_URL}/operations/users/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showToast(data.error || 'Failed to load user', 'error');
+            return;
+        }
+
+        const u = data.user;
+        const isGarage = u.user_type === 'garage' || u.garage_name;
+        const name = isGarage ? u.garage_name : u.full_name;
+        const contact = u.phone || u.phone_number || 'N/A';
+        const email = u.email || 'N/A';
+        const suspended = u.is_suspended ? '<span class="status-badge cancelled">Suspended</span>' : '<span class="status-badge completed">Active</span>';
+
+        // Build orders table
+        let ordersHtml = '<p style="color: var(--text-muted);">No orders</p>';
+        if (data.orders && data.orders.length) {
+            ordersHtml = data.orders.map(o => `
+                        <div style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            <strong>#${o.order_number}</strong> - ${o.part_description?.slice(0, 30)}...
+                            <span class="status-badge ${o.order_status}" style="margin-left: 10px;">${o.order_status}</span>
+                        </div>
+                    `).join('');
+        }
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'userDetailModal';
+        modal.className = 'modal-overlay active';
+        modal.innerHTML = `
+                    <div class="modal-container" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h2><i class="bi bi-person"></i> ${name}</h2>
+                            <button class="modal-close" onclick="document.getElementById('userDetailModal').remove()"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="info-card" style="margin-bottom: 20px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <div>
+                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Type</p>
+                                        <p style="font-weight: 500;">${isGarage ? 'Garage' : 'Customer'}</p>
+                                    </div>
+                                    <div>
+                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Status</p>
+                                        <p>${suspended}</p>
+                                    </div>
+                                    <div>
+                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Phone</p>
+                                        <p style="font-weight: 500;">${contact}</p>
+                                    </div>
+                                    <div>
+                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Email</p>
+                                        <p style="font-weight: 500;">${email}</p>
+                                    </div>
+                                    ${isGarage ? `
+                                        <div>
+                                            <p style="color: var(--text-muted); margin-bottom: 5px;">Address</p>
+                                            <p style="font-weight: 500;">${u.address || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p style="color: var(--text-muted); margin-bottom: 5px;">Rating</p>
+                                            <p style="font-weight: 500;">â­ ${u.rating_average || 0} (${u.rating_count || 0})</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            <h4 style="margin-bottom: 10px;"><i class="bi bi-box-seam"></i> Recent Orders</h4>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+                                ${ordersHtml}
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
+                            ${u.is_suspended
+                ? `<button class="btn btn-success" onclick="activateUser('${userId}')"><i class="bi bi-check-circle"></i> Activate</button>`
+                : `<button class="btn btn-danger" onclick="suspendUser('${userId}')"><i class="bi bi-slash-circle"></i> Suspend</button>`
+            }
+                            <button class="btn btn-ghost" onclick="document.getElementById('userDetailModal').remove()">Close</button>
+                        </div>
+                    </div>
+                `;
+        document.body.appendChild(modal);
+    } catch (err) {
+        console.error('viewUser Error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+async function suspendUser(userId) {
+    const reason = prompt('Suspension reason (optional):');
+    try {
+        const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason || 'Suspended by operations team' })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(data.message || 'User suspended', 'success');
+            document.getElementById('userDetailModal')?.remove();
+            loadUsers();
+        } else {
+            showToast(data.error || 'Failed to suspend user', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function activateUser(userId) {
+    try {
+        const res = await fetch(`${API_URL}/operations/users/${userId}/activate`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(data.message || 'User activated', 'success');
+            document.getElementById('userDetailModal')?.remove();
+            loadUsers();
+        } else {
+            showToast(data.error || 'Failed to activate user', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+
+let currentAnalyticsPeriod = '7d';
+
+async function loadAnalytics() {
+    try {
+        const res = await fetch(`${API_URL}/operations/analytics?period=${currentAnalyticsPeriod}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        // Update stats
+        document.getElementById('analyticsTotalRevenue').textContent = parseFloat(data.orders.total_revenue || 0).toLocaleString() + ' QAR';
+        document.getElementById('analyticsNetRevenue').textContent = parseFloat(data.orders.net_revenue || 0).toLocaleString() + ' QAR';
+        document.getElementById('analyticsTotalOrders').textContent = data.orders.total_orders || 0;
+        document.getElementById('analyticsCompleted').textContent = data.orders.completed || 0;
+
+        // Update disputes
+        document.getElementById('analyticsDisputesTotal').textContent = data.disputes.total_disputes || 0;
+        document.getElementById('analyticsDisputesPending').textContent = data.disputes.pending || 0;
+        document.getElementById('analyticsDisputesResolved').textContent = data.disputes.resolved || 0;
+        document.getElementById('analyticsRefundsApproved').textContent = data.disputes.refunds_approved || 0;
+        document.getElementById('analyticsRefundsDenied').textContent = data.disputes.refunds_denied || 0;
+
+        // Top garages table
+        if (data.top_garages && data.top_garages.length) {
+            document.getElementById('topGaragesTable').innerHTML = data.top_garages.map(g => `
+                        <tr>
+                            <td><strong>${g.garage_name}</strong></td>
+                            <td>${g.order_count}</td>
+                            <td>${parseFloat(g.total_revenue || 0).toLocaleString()} QAR</td>
+                        </tr>
+                    `).join('');
+        } else {
+            document.getElementById('topGaragesTable').innerHTML = '<tr><td colspan="3" class="empty-state">No data</td></tr>';
+        }
+
+        // Top parts table
+        if (data.top_parts && data.top_parts.length) {
+            document.getElementById('topPartsTable').innerHTML = data.top_parts.map(p => `
+                        <tr>
+                            <td>${p.part_description}</td>
+                            <td>${p.request_count}</td>
+                        </tr>
+                    `).join('');
+        } else {
+            document.getElementById('topPartsTable').innerHTML = '<tr><td colspan="2" class="empty-state">No data</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load analytics:', err);
+    }
+}
+
+// Period tabs for Finance section
+document.getElementById('periodTabs')?.addEventListener('click', e => {
+    if (e.target.classList.contains('tab')) {
+        document.querySelectorAll('#periodTabs .tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        currentAnalyticsPeriod = e.target.dataset.period;
+        loadAnalytics();
+    }
+});
+
+// Delivery Management Functions
+let availableDrivers = [];
+
+async function loadDeliveryData() {
+    try {
+        // Load stats
+        const statsRes = await fetch(`${API_URL}/delivery/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const statsData = await statsRes.json();
+
+        document.getElementById('deliveryAvailable').textContent = statsData.stats?.available_drivers || 0;
+        document.getElementById('deliveryBusy').textContent = statsData.stats?.busy_drivers || 0;
+        document.getElementById('deliveryPending').textContent = statsData.stats?.pending_pickup || 0;
+        document.getElementById('deliveryInTransit').textContent = statsData.stats?.in_transit || 0;
+
+        // Load drivers
+        const driversRes = await fetch(`${API_URL}/delivery/drivers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const driversData = await driversRes.json();
+        availableDrivers = (driversData.drivers || []).filter(d => d.status === 'available');
+
+        if (driversData.drivers && driversData.drivers.length) {
+            document.getElementById('driversTable').innerHTML = driversData.drivers.map(d => {
+                const toggleBtn = d.status === 'available'
+                    ? `<button class="btn btn-sm" style="background: var(--warning); color: white; padding: 4px 10px;" onclick="toggleDriverStatus('${d.driver_id}', 'busy')" title="Mark as Busy"><i class="bi bi-pause-circle"></i></button>`
+                    : `<button class="btn btn-sm" style="background: var(--success); color: white; padding: 4px 10px;" onclick="toggleDriverStatus('${d.driver_id}', 'available')" title="Mark as Available"><i class="bi bi-play-circle"></i></button>`;
+                return `
+                    <tr>
+                        <td><strong>${d.full_name}</strong><br><small style="color: var(--text-muted);">${d.vehicle_type || 'car'} - ${d.vehicle_plate || 'N/A'}</small></td>
+                        <td><span class="status-badge ${d.status}">${d.status}</span></td>
+                        <td>${toggleBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            document.getElementById('driversTable').innerHTML = '<tr><td colspan="3" class="empty-state">No drivers. Click "Add Driver" to create one.</td></tr>';
+        }
+
+        // Load orders for delivery
+        const ordersRes = await fetch(`${API_URL}/delivery/orders`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const ordersData = await ordersRes.json();
+
+        if (ordersData.orders && ordersData.orders.length) {
+            document.getElementById('deliveryOrdersTable').innerHTML = ordersData.orders.map(o => {
+                const statusLabel = o.driver_name ? `Assigned to ${o.driver_name}` : o.order_status;
+                const actionBtn = o.driver_name
+                    ? `<span class="status-badge in_transit">Assigned</span>`
+                    : `<button class="btn btn-primary btn-sm" onclick="openAssignDriverModal('${o.order_id}', '${o.order_number}')"><i class="bi bi-person-plus"></i> Assign</button>`;
+                return `
+                            <tr>
+                                <td><strong>#${o.order_number}</strong></td>
+                                <td>${o.part_description}</td>
+                                <td><span class="status-badge ${o.order_status}">${statusLabel}</span></td>
+                                <td>${actionBtn}</td>
+                            </tr>
+                        `;
+            }).join('');
+        } else {
+            document.getElementById('deliveryOrdersTable').innerHTML = '<tr><td colspan="4" class="empty-state">No orders ready for pickup</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load delivery data:', err);
+    }
+}
+
+// Toggle driver status (Operations manual control)
+async function toggleDriverStatus(driverId, newStatus) {
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers/${driverId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`Driver status updated to ${newStatus}`, 'success');
+            loadDeliveryData(); // Refresh the drivers list
+        } else {
+            showToast(data.error || 'Failed to update driver status', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Delivery History
+let deliveryHistoryPage = 1;
+
+async function loadDeliveryHistory(page = 1) {
+    deliveryHistoryPage = page;
+    const dateFilter = document.getElementById('deliveryHistoryDate')?.value || '';
+
+    try {
+        // Include both 'delivered' and 'completed' since completed orders were previously delivered
+        let url = `${API_URL}/operations/orders?status=delivered,completed&limit=20&offset=${(page - 1) * 20}`;
+        if (dateFilter) {
+            url += `&date=${dateFilter}`;
+        }
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const orders = data.orders || [];
+        const total = data.pagination?.total || data.total || orders.length;
+
+        const tbody = document.getElementById('deliveryHistoryTable');
+
+        if (orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No delivery history found</td></tr>';
+        } else {
+            tbody.innerHTML = orders.map(o => {
+                const deliveryDate = o.delivered_at ? new Date(o.delivered_at).toLocaleDateString() : '-';
+                const deliveryTime = o.delivered_at ? new Date(o.delivered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+                const createdDate = new Date(o.created_at).toLocaleDateString();
+
+                return `
+                    <tr>
+                        <td>${createdDate}</td>
+                        <td><strong>#${o.order_number}</strong></td>
+                        <td>${o.driver_name || '<span class="text-muted">No driver</span>'}</td>
+                        <td>${o.customer_name || '-'}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${o.delivery_address || ''}">${o.delivery_address || '-'}</td>
+                        <td>${deliveryTime}</td>
+                        <td><span class="status-badge delivered">Delivered</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update count and pagination
+        document.getElementById('deliveryHistoryCount').textContent = `${total} deliveries`;
+        document.getElementById('deliveryHistoryPrev').disabled = page <= 1;
+        document.getElementById('deliveryHistoryNext').disabled = orders.length < 20 || (page * 20) >= total;
+
+    } catch (err) {
+        console.error('Failed to load delivery history:', err);
+        document.getElementById('deliveryHistoryTable').innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load delivery history</td></tr>';
+    }
+}
+
+function openAddDriverModal() {
+    const modal = document.createElement('div');
+    modal.id = 'addDriverModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+                <div class="modal-container" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2><i class="bi bi-person-plus"></i> Add Driver</h2>
+                        <button class="modal-close" onclick="document.getElementById('addDriverModal').remove()"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Full Name *</label>
+                            <input type="text" id="driverName" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);" required>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Phone *</label>
+                            <input type="text" id="driverPhone" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);" required>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Vehicle Type</label>
+                            <select id="driverVehicle" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
+                                <option value="motorcycle">Motorcycle</option>
+                                <option value="car">Car</option>
+                                <option value="van">Van</option>
+                                <option value="truck">Truck</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Vehicle Plate</label>
+                            <input type="text" id="driverPlate" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
+                        <button class="btn btn-ghost" onclick="document.getElementById('addDriverModal').remove()">Cancel</button>
+                        <button class="btn btn-primary" onclick="submitAddDriver()"><i class="bi bi-check-lg"></i> Add Driver</button>
+                    </div>
+                </div>
+            `;
+    document.body.appendChild(modal);
+}
+
+async function submitAddDriver() {
+    const name = document.getElementById('driverName').value.trim();
+    const phone = document.getElementById('driverPhone').value.trim();
+    const vehicle = document.getElementById('driverVehicle').value;
+    const plate = document.getElementById('driverPlate').value.trim();
+
+    if (!name || !phone) {
+        showToast('Name and phone are required', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_name: name, phone, vehicle_type: vehicle, vehicle_plate: plate })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(data.message || 'Driver added!', 'success');
+            document.getElementById('addDriverModal').remove();
+            loadDeliveryData();
+        } else {
+            showToast(data.error || 'Failed to add driver', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+function openAssignDriverModal(orderId, orderNumber) {
+    if (availableDrivers.length === 0) {
+        showToast('No available drivers. Add or free up a driver first.', 'error');
+        return;
+    }
+
+    const driverOptions = availableDrivers.map(d =>
+        `<option value="${d.driver_id}">${d.full_name} (${d.vehicle_type})</option>`
+    ).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'assignDriverModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+                <div class="modal-container" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2><i class="bi bi-person-check"></i> Assign Driver</h2>
+                        <button class="modal-close" onclick="document.getElementById('assignDriverModal').remove()"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 15px;">Assign a driver to order <strong>#${orderNumber}</strong></p>
+                        <select id="selectedDriver" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
+                            ${driverOptions}
+                        </select>
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
+                        <button class="btn btn-ghost" onclick="document.getElementById('assignDriverModal').remove()">Cancel</button>
+                        <button class="btn btn-primary" onclick="submitAssignDriver('${orderId}')"><i class="bi bi-check-lg"></i> Assign</button>
+                    </div>
+                </div>
+            `;
+    document.body.appendChild(modal);
+}
+
+async function submitAssignDriver(orderId) {
+    const driverId = document.getElementById('selectedDriver').value;
+    try {
+        const res = await fetch(`${API_URL}/delivery/assign/${orderId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driver_id: driverId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(data.message || 'Driver assigned!', 'success');
+            document.getElementById('assignDriverModal').remove();
+            loadDeliveryData();
+            loadOrders();
+            loadStats();
+        } else {
+            showToast(data.error || 'Failed to assign driver', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Order Action Functions - Reusing existing patterns
+
+// Assign driver for collection (reuses openAssignDriverModal)
+function assignCollection(orderId) {
+    // First make sure we have drivers loaded
+    if (!availableDrivers || availableDrivers.length === 0) {
+        showToast('No available drivers. Please add a driver first.', 'warning');
+        switchSection('delivery');
+        return;
+    }
+    openAssignDriverModal(orderId, '');
+}
+
+// Handle QC Failed - Show options modal
+function handleQCFailed(orderId) {
+    const modal = document.createElement('div');
+    modal.id = 'qcFailedModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <h2><i class="bi bi-exclamation-triangle"></i> QC Failed - Resolution</h2>
+                <button class="modal-close" onclick="document.getElementById('qcFailedModal').remove()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">This order failed quality control. Select an action:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn btn-primary" onclick="requestReplacement('${orderId}')" style="justify-content: flex-start; padding: 15px;">
+                        <i class="bi bi-arrow-repeat"></i> Request Replacement from Garage
+                    </button>
+                    <button class="btn btn-warning" onclick="issueRefund('${orderId}')" style="justify-content: flex-start; padding: 15px;">
+                        <i class="bi bi-cash"></i> Issue Refund to Customer
+                    </button>
+                    <button class="btn btn-success" onclick="retryQCInspection('${orderId}')" style="justify-content: flex-start; padding: 15px;">
+                        <i class="bi bi-clipboard-check"></i> Re-inspect (Override)
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-ghost" onclick="document.getElementById('qcFailedModal').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Request replacement from garage
+async function requestReplacement(orderId) {
+    if (!confirm('Request a replacement part from the garage?')) return;
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_status: 'preparing', notes: 'Replacement requested due to QC failure' })
+        });
+        if (res.ok) {
+            showToast('Replacement requested from garage', 'success');
+            document.getElementById('qcFailedModal')?.remove();
+            loadOrders();
+            loadStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to request replacement', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Issue refund for failed QC
+async function issueRefund(orderId) {
+    if (!confirm('Issue a full refund to the customer?')) return;
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_status: 'refunded', notes: 'Refund issued due to QC failure' })
+        });
+        if (res.ok) {
+            showToast('Refund initiated', 'success');
+            document.getElementById('qcFailedModal')?.remove();
+            loadOrders();
+            loadStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to issue refund', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Retry QC inspection (override failure)
+function retryQCInspection(orderId) {
+    document.getElementById('qcFailedModal')?.remove();
+    // Reuse existing QC inspection modal
+    openInspection(orderId, '', '', '');
+}
+
+// Confirm delivery completed
+async function confirmDelivery(orderId) {
+    if (!confirm('Confirm this order has been delivered to the customer?')) return;
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_status: 'delivered', notes: 'Delivery confirmed by operations' })
+        });
+        if (res.ok) {
+            showToast('Delivery confirmed!', 'success');
+            loadOrders();
+            loadDeliveryData();
+            loadStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to confirm delivery', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function loadQualityStats() {
+    try {
+        // Load stats
+        const statsRes = await fetch(`${API_URL}/quality/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const statsData = await statsRes.json();
+
+        document.getElementById('qcPendingInspection').textContent = statsData.stats?.pending_inspection || 0;
+        document.getElementById('qcPassedToday').textContent = statsData.stats?.passed_today || 0;
+        document.getElementById('qcFailedToday').textContent = statsData.stats?.failed_today || 0;
+        document.getElementById('qcPassRate').textContent = (statsData.stats?.pass_rate || 0) + '%';
+
+        // Update Quality badge with pending inspection count
+        updateBadge('qualityBadge', statsData.stats?.pending_inspection || 0);
+
+        // Load pending inspections
+        const pendingRes = await fetch(`${API_URL}/quality/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const pendingData = await pendingRes.json();
+
+        if (pendingData.orders && pendingData.orders.length) {
+            document.getElementById('qcPendingTable').innerHTML = pendingData.orders.map(o => `
+                        <tr>
+                            <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
+                            <td>${o.part_description}</td>
+                            <td>${o.garage_name}</td>
+                            <td>${o.is_reinspection
+                    ? '<span class="status-badge warning" style="font-size: 11px;">Re-inspection</span>'
+                    : '<span class="status-badge preparing">Awaiting QC</span>'}</td>
+                            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="openInspection('${o.order_id}', '${o.order_number}', '${o.part_description.replace(/'/g, "\\'")}', '${o.garage_name}')">
+                                    <i class="bi bi-clipboard-check"></i> Inspect
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+        } else {
+            document.getElementById('qcPendingTable').innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i><h4>No pending inspections</h4></td></tr>';
+        }
+
+        // Load recent inspections
+        const historyRes = await fetch(`${API_URL}/quality/history?limit=10`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const historyData = await historyRes.json();
+
+        if (historyData.inspections && historyData.inspections.length) {
+            document.getElementById('qcRecentTable').innerHTML = historyData.inspections.map(i => `
+                        <tr>
+                            <td><a href="#" onclick="viewOrder('${i.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${i.order_number}</a></td>
+                            <td>${i.part_description}</td>
+                            <td><span class="status-badge ${i.status}">${i.status === 'passed' ? 'Passed' : 'Failed'}</span></td>
+                            <td>${i.inspector_name || 'Inspector'}</td>
+                            <td>${new Date(i.completed_at).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('');
+        } else {
+            document.getElementById('qcRecentTable').innerHTML = '<tr><td colspan="5" class="empty-state">No recent inspections</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load quality stats:', err);
+    }
+}
+
+// Quality Inspection Modal Functions - Enhanced Professional Version
+let inspectionCriteria = [];
+let currentInspectionOrder = null;
+let currentInspectionData = null;
+
+// Failure categories for professional QC
+const FAILURE_CATEGORIES = {
+    'damaged': 'Physical Damage (cracks, dents, scratches)',
+    'wrong_part': 'Wrong Part (incorrect model/number)',
+    'missing_components': 'Missing Components or Hardware',
+    'quality_mismatch': 'Quality Does Not Match Description',
+    'counterfeit': 'Suspected Counterfeit or Non-OEM',
+    'rust_corrosion': 'Rust, Corrosion, or Oxidation',
+    'non_functional': 'Non-Functional or Defective',
+    'packaging_issue': 'Packaging Damage or Inadequate',
+    'other': 'Other Issue'
+};
+
+async function openInspection(orderId, orderNumber, partDesc, garageName) {
+    currentInspectionOrder = orderId;
+    currentInspectionData = { orderNumber, partDesc, garageName };
+
+    // Load criteria if not cached
+    if (inspectionCriteria.length === 0) {
+        const res = await fetch(`${API_URL}/quality/criteria`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        inspectionCriteria = data.criteria || [];
+    }
+
+    // Build professional checklist HTML with pass/fail toggles and per-item notes
+    const checklistHtml = inspectionCriteria.map(c => `
+                <div class="qc-checklist-item" style="padding: 15px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary);">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 15px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 14px;">
+                                ${c.name} ${c.is_required ? '<span style="color: var(--danger);">*</span>' : ''}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">${c.description || ''}</div>
+                        </div>
+                        <div class="qc-toggle-group" style="display: flex; gap: 5px;">
+                            <button type="button" class="qc-toggle-btn qc-pass-btn" data-criteria="${c.criteria_id}" data-status="pass"
+                                style="padding: 8px 16px; border-radius: 6px; border: 2px solid var(--success); background: transparent; color: var(--success); cursor: pointer; font-weight: 600; transition: all 0.2s;"
+                                onclick="toggleCriteriaStatus('${c.criteria_id}', 'pass')">
+                                <i class="bi bi-check-lg"></i> Pass
+                            </button>
+                            <button type="button" class="qc-toggle-btn qc-fail-btn" data-criteria="${c.criteria_id}" data-status="fail"
+                                style="padding: 8px 16px; border-radius: 6px; border: 2px solid var(--danger); background: transparent; color: var(--danger); cursor: pointer; font-weight: 600; transition: all 0.2s;"
+                                onclick="toggleCriteriaStatus('${c.criteria_id}', 'fail')">
+                                <i class="bi bi-x-lg"></i> Fail
+                            </button>
+                        </div>
+                    </div>
+                    <div class="qc-item-notes" id="notes-container-${c.criteria_id}" style="margin-top: 10px; display: none;">
+                        <input type="text" id="item-notes-${c.criteria_id}" placeholder="Add notes for this check..."
+                            style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary); font-size: 13px;">
+                    </div>
+                </div>
+            `).join('');
+
+    // Failure category options
+    const failureCategoryOptions = Object.entries(FAILURE_CATEGORIES).map(([value, label]) =>
+        `<option value="${value}">${label}</option>`
+    ).join('');
+
+    // Create professional inspection modal
+    const modal = document.createElement('div');
+    modal.id = 'inspectionModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+                <div class="modal-container" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px;">
+                        <div>
+                            <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <i class="bi bi-clipboard-check"></i> Quality Control Inspection
+                            </h2>
+                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Order #${orderNumber}</p>
+                        </div>
+                        <button class="modal-close" onclick="closeInspectionModal()" style="color: white;"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    
+                    <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 20px;">
+                        <!-- Order Details Card -->
+                        <div class="qc-order-details" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-color);">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Part</div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-top: 3px;">${partDesc}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Supplier Garage</div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-top: 3px;">${garageName}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
+                                <div style="margin-top: 3px;"><span class="status-badge preparing">Awaiting Inspection</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Inspection Checklist -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-check2-square"></i> Inspection Checklist
+                                <span style="font-size: 12px; font-weight: 400; color: var(--text-muted);">(Click Pass/Fail for each item)</span>
+                            </h4>
+                            <div style="border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; max-height: 280px; overflow-y: auto;">
+                                ${checklistHtml}
+                            </div>
+                        </div>
+                        
+                        <!-- Assessment Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-primary);">
+                                    <i class="bi bi-star"></i> Condition Assessment
+                                </label>
+                                <select id="conditionAssessment" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px;">
+                                    <option value="">-- Select Condition --</option>
+                                    <option value="excellent">Excellent - Like New</option>
+                                    <option value="good">Good - Minor Wear</option>
+                                    <option value="fair">Fair - Visible Wear</option>
+                                    <option value="poor">Poor - Significant Wear</option>
+                                    <option value="defective">Defective - Not Usable</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-primary);">
+                                    <i class="bi bi-award"></i> Part Grade
+                                </label>
+                                <select id="partGrade" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px;">
+                                    <option value="">-- Assign Grade --</option>
+                                    <option value="A">Grade A - Premium Quality</option>
+                                    <option value="B">Grade B - Standard Quality</option>
+                                    <option value="C">Grade C - Economy Quality</option>
+                                    <option value="reject">Reject - Does Not Pass</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Inspector Notes -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-primary);">
+                                <i class="bi bi-pencil-square"></i> Inspector Remarks
+                            </label>
+                            <textarea id="inspectionNotes" rows="3" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px; resize: vertical;" placeholder="Add detailed inspection notes, observations, and recommendations..."></textarea>
+                        </div>
+                        
+                        <!-- Failure Section (Hidden by default) -->
+                        <div id="failureSection" style="display: none; padding: 15px; background: rgba(220, 53, 69, 0.1); border: 1px solid var(--danger); border-radius: 10px; margin-bottom: 20px;">
+                            <h4 style="color: var(--danger); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-exclamation-triangle-fill"></i> QC Failure Details
+                            </h4>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-primary);">
+                                    Failure Category *
+                                </label>
+                                <select id="failureCategory" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--danger); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px;">
+                                    <option value="">-- Select Failure Category --</option>
+                                    ${failureCategoryOptions}
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-primary);">
+                                    Detailed Failure Reason * (min 10 characters)
+                                </label>
+                                <textarea id="failureReason" rows="3" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--danger); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px;" placeholder="Describe the specific defects, issues, or reasons for rejection in detail..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Actions -->
+                    <div class="modal-footer" style="display: flex; gap: 12px; justify-content: space-between; padding: 20px; border-top: 1px solid var(--border-color); background: var(--bg-secondary);">
+                        <button class="btn btn-ghost" onclick="closeInspectionModal()" style="padding: 12px 20px;">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-danger" id="failBtn" onclick="showFailureSection()" style="padding: 12px 24px; font-weight: 600;">
+                                <i class="bi bi-x-circle"></i> Fail QC
+                            </button>
+                            <button class="btn btn-success" id="passBtn" onclick="submitInspection('passed')" style="padding: 12px 24px; font-weight: 600;">
+                                <i class="bi bi-check-circle"></i> Pass QC & Assign Driver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+    document.body.appendChild(modal);
+}
+
+// Toggle criteria status (pass/fail)
+function toggleCriteriaStatus(criteriaId, status) {
+    const passBtn = document.querySelector(`.qc-pass-btn[data-criteria="${criteriaId}"]`);
+    const failBtn = document.querySelector(`.qc-fail-btn[data-criteria="${criteriaId}"]`);
+    const notesContainer = document.getElementById(`notes-container-${criteriaId}`);
+
+    // Reset both buttons
+    passBtn.style.background = 'transparent';
+    failBtn.style.background = 'transparent';
+
+    if (status === 'pass') {
+        passBtn.style.background = 'var(--success)';
+        passBtn.style.color = 'white';
+        passBtn.dataset.selected = 'true';
+        failBtn.dataset.selected = 'false';
+        failBtn.style.color = 'var(--danger)';
+        notesContainer.style.display = 'none';
+    } else {
+        failBtn.style.background = 'var(--danger)';
+        failBtn.style.color = 'white';
+        failBtn.dataset.selected = 'true';
+        passBtn.dataset.selected = 'false';
+        passBtn.style.color = 'var(--success)';
+        notesContainer.style.display = 'block'; // Show notes for failed items
+    }
+}
+
+// Show failure section
+function showFailureSection() {
+    document.getElementById('failureSection').style.display = 'block';
+    document.getElementById('failBtn').textContent = ' Confirm Failure';
+    document.getElementById('failBtn').innerHTML = '<i class="bi bi-x-circle"></i> Confirm Failure';
+    document.getElementById('failBtn').onclick = function () { submitInspection('failed'); };
+    document.getElementById('failureCategory').focus();
+}
+
+function closeInspectionModal() {
+    document.getElementById('inspectionModal')?.remove();
+    currentInspectionOrder = null;
+    currentInspectionData = null;
+}
+
+async function submitInspection(result) {
+    if (!currentInspectionOrder) return;
+
+    // Collect checklist results with per-item notes
+    const checklistResults = inspectionCriteria.map(c => {
+        const passBtn = document.querySelector(`.qc-pass-btn[data-criteria="${c.criteria_id}"]`);
+        const itemNotes = document.getElementById(`item-notes-${c.criteria_id}`)?.value || '';
+        return {
+            criteria_id: c.criteria_id,
+            name: c.name,
+            passed: passBtn?.dataset?.selected === 'true',
+            notes: itemNotes
+        };
+    });
+
+    // Collect per-item notes as object
+    const itemNotes = {};
+    inspectionCriteria.forEach(c => {
+        const notes = document.getElementById(`item-notes-${c.criteria_id}`)?.value;
+        if (notes) itemNotes[c.criteria_id] = notes;
+    });
+
+    const notes = document.getElementById('inspectionNotes')?.value || '';
+    const conditionAssessment = document.getElementById('conditionAssessment')?.value || '';
+    const partGrade = document.getElementById('partGrade')?.value || '';
+    const failureReason = document.getElementById('failureReason')?.value || '';
+    const failureCategory = document.getElementById('failureCategory')?.value || '';
+
+    // Validate for failure
+    if (result === 'failed') {
+        if (!failureCategory) {
+            showToast('Please select a failure category', 'error');
+            return;
+        }
+        if (!failureReason.trim() || failureReason.trim().length < 10) {
+            showToast('Failure reason must be at least 10 characters', 'error');
+            return;
+        }
+    }
+
+    // Disable buttons
+    document.getElementById('passBtn').disabled = true;
+    document.getElementById('failBtn').disabled = true;
+    document.getElementById('passBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+    try {
+        const res = await fetch(`${API_URL}/quality/inspect/${currentInspectionOrder}/submit`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                result,
+                checklist_results: checklistResults,
+                notes,
+                condition_assessment: conditionAssessment,
+                part_grade: partGrade,
+                item_notes: itemNotes,
+                failure_reason: failureReason,
+                failure_category: failureCategory
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            if (result === 'passed') {
+                // Save order data BEFORE closing modal (which resets these to null)
+                const passedOrderId = currentInspectionOrder;
+                const passedOrderData = currentInspectionData;
+                // Close inspection modal and open driver assignment
+                closeInspectionModal();
+                showToast('✅ Part passed QC! Now assign a driver for delivery.', 'success');
+                openDriverAssignmentModal(passedOrderId, passedOrderData);
+            } else {
+                // Save order ID before closing
+                const failedOrderId = currentInspectionOrder;
+                // Part failed - create return assignment
+                closeInspectionModal();
+                showToast('❌ Part failed QC. Return assignment will be created.', 'warning');
+                await createReturnForFailedQC(failedOrderId);
+            }
+            loadQualityStats();
+            loadStats();
+        } else {
+            showToast(data.error || 'Failed to submit inspection', 'error');
+            document.getElementById('passBtn').disabled = false;
+            document.getElementById('failBtn').disabled = false;
+            document.getElementById('passBtn').innerHTML = '<i class="bi bi-check-circle"></i> Pass QC & Assign Driver';
+        }
+    } catch (err) {
+        console.error('Submit inspection error:', err);
+        showToast('Connection error', 'error');
+        document.getElementById('passBtn').disabled = false;
+        document.getElementById('failBtn').disabled = false;
+        document.getElementById('passBtn').innerHTML = '<i class="bi bi-check-circle"></i> Pass QC & Assign Driver';
+    }
+}
+
+// Open driver assignment modal after QC pass
+async function openDriverAssignmentModal(orderId, orderData) {
+    // Load available drivers
+    let driversHtml = '<option value="">-- No drivers available --</option>';
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers?status=available`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const drivers = (data.drivers || []).filter(d => d.status === 'available');
+        if (drivers.length > 0) {
+            driversHtml = drivers.map(d => `
+                        <option value="${d.driver_id}">
+                            ${d.full_name} - ${d.vehicle_type} (${d.vehicle_plate || 'N/A'}) - ${d.total_deliveries} deliveries
+                        </option>
+                    `).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load drivers:', err);
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'driverAssignModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+                <div class="modal-container" style="max-width: 500px;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, var(--success), #218838); color: white;">
+                        <div>
+                            <h2 style="margin: 0;"><i class="bi bi-truck"></i> Assign Delivery Driver</h2>
+                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Order passed QC - Ready for delivery</p>
+                        </div>
+                        <button class="modal-close" onclick="document.getElementById('driverAssignModal').remove()" style="color: white;"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Part Details</div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${orderData?.partDesc || 'Auto Part'}</div>
+                            <div style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">From: ${orderData?.garageName || 'Garage'}</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Select Driver *</label>
+                            <select id="assignDriverSelect" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
+                                ${driversHtml}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
+                        <button class="btn btn-ghost" onclick="document.getElementById('driverAssignModal').remove()">
+                            <i class="bi bi-x-lg"></i> Skip for Now
+                        </button>
+                        <button class="btn btn-primary" id="confirmDriverBtn" onclick="confirmDriverAssignment('${orderId}')" style="background: var(--success);">
+                            <i class="bi bi-check-lg"></i> Assign & Start Delivery
+                        </button>
+                    </div>
+                </div>
+            `;
+    document.body.appendChild(modal);
+}
+
+// Confirm driver assignment
+async function confirmDriverAssignment(orderId) {
+    const driverId = document.getElementById('assignDriverSelect').value;
+    if (!driverId) {
+        showToast('Please select a driver', 'error');
+        return;
+    }
+
+    document.getElementById('confirmDriverBtn').disabled = true;
+    document.getElementById('confirmDriverBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
+
+    try {
+        const res = await fetch(`${API_URL}/delivery/assign/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ driver_id: driverId })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            showToast(data.message || 'Driver assigned! Delivery started.', 'success');
+            document.getElementById('driverAssignModal').remove();
+            loadQualityStats();
+            loadDeliveryData();
+            loadStats();
+        } else {
+            showToast(data.error || 'Failed to assign driver', 'error');
+            document.getElementById('confirmDriverBtn').disabled = false;
+            document.getElementById('confirmDriverBtn').innerHTML = '<i class="bi bi-check-lg"></i> Assign & Start Delivery';
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+        document.getElementById('confirmDriverBtn').disabled = false;
+        document.getElementById('confirmDriverBtn').innerHTML = '<i class="bi bi-check-lg"></i> Assign & Start Delivery';
+    }
+}
+
+// Create return assignment for failed QC
+async function createReturnForFailedQC(orderId) {
+    try {
+        const res = await fetch(`${API_URL}/quality/return/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            showToast('📦 Return assignment created. Part will be returned to garage.', 'success');
+        } else {
+            showToast(data.error || 'Return assignment may need manual creation', 'warning');
+        }
+    } catch (err) {
+        console.error('Return assignment error:', err);
+    }
+}
+
+
+
+let currentModalOrderId = null;
+let currentModalDisputeId = null;
+
+async function viewOrder(orderId) {
+    currentModalOrderId = orderId;
+
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/${orderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to load order');
+        }
+
+        const data = await res.json();
+        const order = data.order;
+        const history = data.status_history || [];
+        const dispute = data.dispute;
+
+        // Populate modal header
+        document.getElementById('modalOrderNumber').textContent = '#' + (order.order_number || orderId.slice(0, 8));
+
+        // Customer info
+        document.getElementById('modalCustomerName').textContent = order.customer_name || '---';
+        document.getElementById('modalCustomerPhone').textContent = order.customer_phone || '---';
+        document.getElementById('modalCustomerEmail').textContent = order.customer_email || '---';
+
+        // Garage info
+        document.getElementById('modalGarageName').textContent = order.garage_name || '---';
+        document.getElementById('modalGaragePhone').textContent = order.garage_phone || '---';
+        document.getElementById('modalGarageAddress').textContent = order.garage_address || '---';
+
+        // Part details
+        const vehicle = `${order.car_make || ''} ${order.car_model || ''} ${order.car_year || ''}`.trim();
+        document.getElementById('modalVehicle').textContent = vehicle || '---';
+        document.getElementById('modalPrice').textContent = (order.total_amount || 0) + ' QAR';
+        document.getElementById('modalPartDesc').textContent = order.part_description || '---';
+        document.getElementById('modalCondition').textContent = formatCondition(order.part_condition);
+        document.getElementById('modalWarranty').textContent = order.warranty_days || 0;
+        document.getElementById('modalVin').textContent = order.vin_number || 'N/A';
+
+        // Status badge
+        const statusLabels = {
+            confirmed: 'Confirmed', preparing: 'Preparing', ready_for_pickup: 'Ready',
+            in_transit: 'In Transit', delivered: 'Delivered', completed: 'Completed',
+            disputed: 'Disputed', refunded: 'Refunded', cancelled: 'Cancelled'
+        };
+        const statusClasses = {
+            confirmed: 'confirmed', preparing: 'preparing', ready_for_pickup: 'ready',
+            in_transit: 'in-transit', delivered: 'delivered', completed: 'completed',
+            disputed: 'pending', refunded: 'refunded', cancelled: 'refunded'
+        };
+        const statusBadge = document.getElementById('modalStatusBadge');
+        statusBadge.textContent = statusLabels[order.order_status] || order.order_status;
+        statusBadge.className = 'status-badge ' + (statusClasses[order.order_status] || '');
+
+        // Images
+        const imagesContainer = document.getElementById('modalImages');
+        const allImages = [...(order.bid_photos || []), ...(order.request_images || [])];
+        if (allImages.length > 0) {
+            imagesContainer.innerHTML = allImages.map(url =>
+                `<img src="${url}" class="gallery-img" onclick="window.open('${url}', '_blank')" alt="Part image">`
+            ).join('');
+        } else {
+            imagesContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No images available</div>';
+        }
+
+        // Timeline
+        renderTimeline(order.order_status, history);
+
+        // Bid notes
+        if (order.bid_notes) {
+            document.getElementById('modalNotesSection').style.display = 'block';
+            document.getElementById('modalBidNotes').textContent = order.bid_notes;
+        } else {
+            document.getElementById('modalNotesSection').style.display = 'none';
+        }
+
+        // Dispute section
+        if (dispute) {
+            currentModalDisputeId = dispute.dispute_id;
+            document.getElementById('modalDisputeSection').style.display = 'block';
+
+            const reasonLabels = {
+                wrong_part: 'Wrong Part', doesnt_fit: "Doesn't Fit", damaged: 'Damaged',
+                not_as_described: 'Not as Described', changed_mind: 'Changed Mind'
+            };
+            document.getElementById('modalDisputeReason').textContent = reasonLabels[dispute.reason] || dispute.reason;
+            document.getElementById('modalDisputeDesc').textContent = dispute.description || 'No description provided';
+            document.getElementById('modalRefundAmount').textContent = (dispute.refund_amount || 0) + ' QAR';
+
+            const disputeStatusBadge = document.getElementById('modalDisputeStatus');
+            disputeStatusBadge.textContent = dispute.status;
+            disputeStatusBadge.className = 'status-badge ' + dispute.status;
+
+            // Show/hide action buttons based on dispute status
+            const actionsDiv = document.getElementById('modalDisputeActions');
+            if (dispute.status === 'pending' || dispute.status === 'contested') {
+                actionsDiv.style.display = 'flex';
+                document.getElementById('btnApproveRefund').onclick = () => resolveDisputeFromModal('refund_approved');
+                document.getElementById('btnDenyRefund').onclick = () => resolveDisputeFromModal('refund_denied');
+            } else {
+                actionsDiv.style.display = 'none';
+            }
+        } else {
+            document.getElementById('modalDisputeSection').style.display = 'none';
+            currentModalDisputeId = null;
+        }
+
+        // Show modal
+        document.getElementById('orderModal').classList.add('active');
+
+    } catch (err) {
+        console.error('viewOrder error:', err);
+        showToast(err.message || 'Failed to load order details', 'error');
+    }
+}
+
+function closeOrderModal() {
+    document.getElementById('orderModal').classList.remove('active');
+    currentModalOrderId = null;
+    currentModalDisputeId = null;
+}
+
+function formatCondition(condition) {
+    const labels = { new: 'New', used_good: 'Used - Good', used_fair: 'Used - Fair', refurbished: 'Refurbished' };
+    return labels[condition] || condition || '---';
+}
+
+function renderTimeline(currentStatus, history) {
+    const timelineContainer = document.getElementById('modalTimeline');
+    const statusOrder = ['confirmed', 'preparing', 'ready_for_pickup', 'in_transit', 'delivered', 'completed'];
+    const statusLabels = {
+        confirmed: 'Order Confirmed', preparing: 'Preparing Part', ready_for_pickup: 'Ready for Pickup',
+        in_transit: 'In Transit', delivered: 'Delivered', completed: 'Completed',
+        disputed: 'Disputed', refunded: 'Refunded', cancelled: 'Cancelled'
+    };
+
+    // Build history map
+    const historyMap = {};
+    history.forEach(h => { historyMap[h.status] = h.changed_at; });
+
+    let html = '';
+    let reachedCurrent = false;
+
+    for (const status of statusOrder) {
+        const isActive = historyMap[status];
+        const isCurrent = status === currentStatus;
+        if (isCurrent) reachedCurrent = true;
+
+        const itemClass = isCurrent ? 'current' : (isActive ? 'active' : '');
+        const time = historyMap[status] ? new Date(historyMap[status]).toLocaleString() : (reachedCurrent ? '' : 'Pending');
+
+        html += `
+                    <div class="timeline-item ${itemClass}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-status">${statusLabels[status]}</div>
+                        <div class="timeline-time">${time}</div>
+                    </div>
+                `;
+
+        if (isCurrent) break; // Don't show future statuses
+    }
+
+    // Add special statuses if current
+    if (['disputed', 'refunded', 'cancelled'].includes(currentStatus)) {
+        const time = historyMap[currentStatus] ? new Date(historyMap[currentStatus]).toLocaleString() : '';
+        html += `
+                    <div class="timeline-item current">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-status">${statusLabels[currentStatus]}</div>
+                        <div class="timeline-time">${time}</div>
+                    </div>
+                `;
+    }
+
+    timelineContainer.innerHTML = html;
+}
+
+async function resolveDisputeFromModal(resolution) {
+    if (!currentModalDisputeId) {
+        showToast('No dispute selected', 'error');
+        return;
+    }
+
+    const confirmMsg = resolution === 'refund_approved'
+        ? 'Are you sure you want to approve this refund?'
+        : 'Are you sure you want to deny this refund?';
+
+    if (!confirm(confirmMsg)) return;
+
+    await resolveDispute(currentModalDisputeId, resolution, true); // skipConfirm since we already confirmed
+    closeOrderModal();
+}
+
+
+let isResolvingDispute = false;
+
+async function resolveDispute(disputeId, resolution, skipConfirm = false) {
+    if (isResolvingDispute) return; // Prevent double-clicks
+
+    if (!skipConfirm) {
+        const confirmMsg = resolution === 'refund_approved'
+            ? 'Are you sure you want to approve this refund?'
+            : 'Are you sure you want to deny this refund?';
+        if (!confirm(confirmMsg)) return;
+    }
+
+    isResolvingDispute = true;
+
+    // Disable buttons and show loading state
+    const approveBtn = document.getElementById(`approveBtn-${disputeId}`);
+    const denyBtn = document.getElementById(`denyBtn-${disputeId}`);
+    const originalApproveHtml = approveBtn?.innerHTML;
+    const originalDenyHtml = denyBtn?.innerHTML;
+
+    if (approveBtn) {
+        approveBtn.disabled = true;
+        approveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+    }
+    if (denyBtn) {
+        denyBtn.disabled = true;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ resolution })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            const msg = resolution === 'refund_approved'
+                ? 'Refund approved successfully'
+                : 'Refund denied successfully';
+            showToast(msg, 'success');
+            loadDisputes(); // Reload to show updated status
+            loadStats();
+        } else {
+            console.error('Resolve dispute error:', data);
+            showToast(data.error || 'Failed to resolve dispute', 'error');
+            // Re-enable buttons on error
+            if (approveBtn) {
+                approveBtn.disabled = false;
+                approveBtn.innerHTML = originalApproveHtml;
+            }
+            if (denyBtn) {
+                denyBtn.disabled = false;
+                denyBtn.innerHTML = originalDenyHtml;
+            }
+        }
+    } catch (err) {
+        console.error('Resolve dispute network error:', err);
+        showToast('Connection error. Please try again.', 'error');
+        // Re-enable buttons on network error
+        if (approveBtn) {
+            approveBtn.disabled = false;
+            approveBtn.innerHTML = originalApproveHtml;
+        }
+        if (denyBtn) {
+            denyBtn.disabled = false;
+        }
+    } finally {
+        isResolvingDispute = false;
+    }
+}
+
+// Search with debouncing
+let searchTimeout = null;
+function searchOrders() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadOrders();
+    }, 300);
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('opsToken');
+    token = null;
+    if (socket) socket.disconnect();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    showToast('Logged out successfully', 'success');
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}"></i> ${message}`;
+    document.getElementById('toastContainer').appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// ===== DELIVERY MANAGEMENT =====
+let deliveryMap = null;
+let deliveryMarkers = {};
+
+async function loadActiveDeliveries() {
+    try {
+        const res = await fetch(`${API_URL}/delivery/active`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.deliveries && data.deliveries.length > 0) {
+            renderActiveDeliveries(data.deliveries);
+            initDeliveryMap(data.deliveries);
+        } else {
+            document.getElementById('activeDeliveriesTable').innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="bi bi-truck"></i>
+                                <p>No active deliveries</p>
+                            </td>
+                        </tr>
+                    `;
+        }
+    } catch (err) {
+        console.error('Failed to load active deliveries:', err);
+    }
+}
+
+function renderActiveDeliveries(deliveries) {
+    const tbody = document.getElementById('activeDeliveriesTable');
+    tbody.innerHTML = deliveries.map(d => `
+                <tr>
+                    <td>${d.order_number}</td>
+                    <td>
+                        ${d.driver_name ? `
+                            <strong>${d.driver_name}</strong><br>
+                            <span style="color: var(--text-muted); font-size: 12px;">${d.vehicle_type || ''} - ${d.vehicle_plate || ''}</span>
+                        ` : `
+                            <em style="color: var(--warning);">No driver assigned</em><br>
+                            <span style="font-size: 11px; color: var(--danger);">Needs assignment!</span>
+                        `}
+                    </td>
+                    <td>
+                        ${d.customer_name}<br>
+                        <a href="tel:${d.customer_phone}" style="color: var(--accent); font-size: 12px;">${d.customer_phone}</a>
+                    </td>
+                    <td><span class="status-badge ${d.order_status || d.assignment_status}">${d.order_status || d.assignment_status || 'in_transit'}</span></td>
+                    <td>
+                        ${d.current_lat && d.current_lng ?
+            `<span style="color: var(--success);"><i class="bi bi-geo-alt-fill"></i> ${parseFloat(d.current_lat).toFixed(4)}, ${parseFloat(d.current_lng).toFixed(4)}</span>`
+            : '<span style="color: var(--text-muted);">No GPS</span>'}
+                    </td>
+                    <td>
+                        ${d.assignment_id ? `
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                <button class="btn btn-sm" onclick="markAsDelivered('${d.assignment_id}', '${d.order_number}')" 
+                                        style="padding: 4px 8px; font-size: 11px; background: var(--success);">
+                                    <i class="bi bi-check-circle"></i> Delivered
+                                </button>
+                                <button class="btn btn-sm" onclick="openLocationModal('${d.assignment_id}', '${d.order_number}')" 
+                                        style="padding: 4px 8px; font-size: 11px; background: var(--accent);">
+                                    <i class="bi bi-geo-alt"></i> GPS
+                                </button>
+                            </div>
+                        ` : `
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                <button class="btn btn-sm" onclick="markOrderDelivered('${d.order_id}', '${d.order_number}')" 
+                                        style="padding: 4px 8px; font-size: 11px; background: var(--success);">
+                                    <i class="bi bi-check-circle"></i> Delivered
+                                </button>
+                                <button class="btn btn-sm" onclick="openDriverAssignModal('${d.order_id}', ${JSON.stringify(d).replace(/"/g, '&quot;')})" 
+                                        style="padding: 4px 8px; font-size: 11px; background: var(--accent);">
+                                    <i class="bi bi-person-plus"></i> Assign
+                                </button>
+                            </div>
+                        `}
+                    </td>
+                </tr>
+            `).join('');
+}
+
+function initDeliveryMap(deliveries) {
+    const container = document.getElementById('deliveryMapContainer');
+    if (!container || !window.L) return;
+
+    // Initialize map if not exists
+    if (!deliveryMap) {
+        deliveryMap = L.map('deliveryMapContainer').setView([25.2854, 51.5310], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18
+        }).addTo(deliveryMap);
+    }
+
+    // Clear existing markers
+    Object.values(deliveryMarkers).forEach(m => m.remove());
+    deliveryMarkers = {};
+
+    // Add markers for each delivery
+    deliveries.forEach(d => {
+        if (d.current_lat && d.current_lng) {
+            const icon = L.divIcon({
+                className: 'driver-marker',
+                html: `<div style="width: 36px; height: 36px; background: #6366f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); border: 3px solid white;">
+                            <span style="font-size: 18px;">🚚</span>
+                        </div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+
+            const marker = L.marker([parseFloat(d.current_lat), parseFloat(d.current_lng)], { icon })
+                .bindPopup(`
+                            <strong>${d.order_number}</strong><br>
+                            Driver: ${d.driver_name}<br>
+                            Part: ${d.part_description}
+                        `)
+                .addTo(deliveryMap);
+
+            deliveryMarkers[d.assignment_id] = marker;
+        }
+    });
+
+    // Fit bounds if markers exist
+    const bounds = Object.values(deliveryMarkers).map(m => m.getLatLng());
+    if (bounds.length > 0) {
+        deliveryMap.fitBounds(bounds.map(b => [b.lat, b.lng]), { padding: [50, 50] });
+    }
+}
+
+// Mark order as delivered - THE CRITICAL MISSING FUNCTION
+async function markAsDelivered(assignmentId, orderNumber) {
+    if (!confirm(`Mark order ${orderNumber} as delivered?`)) return;
+
+    try {
+        const res = await fetch(`${API_URL}/delivery/assignment/${assignmentId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'delivered',
+                driver_notes: 'Marked as delivered by operations'
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`✅ Order ${orderNumber} marked as delivered!`, 'success');
+            // Refresh all delivery data
+            await loadDeliveryData();
+            await loadStats();
+        } else {
+            showToast(data.error || 'Failed to mark as delivered', 'error');
+        }
+    } catch (err) {
+        console.error('markAsDelivered error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+// Mark order as delivered via operations order status update (for orders without assignment)
+async function markOrderDelivered(orderId, orderNumber) {
+    if (!confirm(`Mark order ${orderNumber} as delivered?`)) return;
+
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                new_status: 'delivered',
+                notes: 'Marked as delivered by operations (no driver assignment)'
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`✅ Order ${orderNumber} marked as delivered!`, 'success');
+            // Refresh all delivery data
+            await loadDeliveryData();
+            await loadStats();
+        } else {
+            showToast(data.error || 'Failed to mark as delivered', 'error');
+        }
+    } catch (err) {
+        console.error('markOrderDelivered error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+function openLocationModal(assignmentId, orderNumber) {
+    const lat = prompt(`Enter Latitude for ${orderNumber}:`, '25.2854');
+    if (!lat) return;
+    const lng = prompt(`Enter Longitude for ${orderNumber}:`, '51.5310');
+    if (!lng) return;
+    updateDriverLocation(assignmentId, parseFloat(lat), parseFloat(lng));
+}
+
+async function updateDriverLocation(assignmentId, lat, lng) {
+    try {
+        const res = await fetch(`${API_URL}/delivery/assignment/${assignmentId}/location`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ lat, lng })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('ðŸ“ Driver location updated', 'success');
+            loadActiveDeliveries(); // Refresh
+        } else {
+            showToast(data.error || 'Failed to update location', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Safe element setter helper
+function setElementText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
+async function loadDeliveryStats() {
+    try {
+        const res = await fetch(`${API_URL}/delivery/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.stats) {
+            setElementText('collectionPending', data.stats.pending_pickup || 0);
+            setElementText('deliveryReady', data.stats.qc_passed || 0);
+            setElementText('deliveryInTransit', data.stats.in_transit || 0);
+            setElementText('deliveryAvailable', data.stats.available_drivers || 0);
+
+            // Update delivery nav badge with total pending items
+            const totalPending = (data.stats.pending_pickup || 0) + (data.stats.qc_passed || 0);
+            const deliveryBadge = document.getElementById('deliveryBadge');
+            if (deliveryBadge) {
+                deliveryBadge.textContent = totalPending;
+                deliveryBadge.style.display = totalPending > 0 ? 'flex' : 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load delivery stats:', e);
+    }
+}
+
+// Main function to load all delivery section data
+async function loadDeliveryData() {
+    await Promise.all([
+        loadDeliveryStats(),
+        loadCollectionOrders(),
+        loadDeliveryPending(),
+        loadActiveDeliveries(),
+        loadDriversList()
+    ]);
+}
+
+// Load orders ready for collection from garages
+async function loadCollectionOrders() {
+    try {
+        const res = await fetch(`${API_URL}/delivery/collection/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const table = document.getElementById('collectionTable');
+        if (data.orders && data.orders.length > 0) {
+            table.innerHTML = data.orders.map(o => `
+                <tr>
+                    <td><strong>${o.order_number}</strong></td>
+                    <td>
+                        ${o.garage_name}<br>
+                        <span style="font-size: 11px; color: var(--text-muted);">${o.pickup_address || 'N/A'}</span>
+                    </td>
+                    <td>${o.part_description}</td>
+                    <td>
+                        <button class="btn btn-sm" onclick="collectOrder('${o.order_id}')" 
+                                style="background: var(--warning); color: white; padding: 4px 10px;">
+                            <i class="bi bi-box-arrow-in-down"></i> Collect
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="4" class="empty-state">No orders waiting for collection</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load collection orders:', err);
+    }
+}
+
+// Load orders ready for delivery (QC passed)
+async function loadDeliveryPending() {
+    try {
+        const res = await fetch(`${API_URL}/delivery/delivery/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const table = document.getElementById('deliveryPendingTable');
+        if (data.orders && data.orders.length > 0) {
+            table.innerHTML = data.orders.map(o => `
+                <tr>
+                    <td><strong>${o.order_number}</strong></td>
+                    <td>
+                        ${o.customer_name}<br>
+                        <span style="font-size: 11px; color: var(--text-muted);">${o.customer_phone || ''}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge" style="background: ${o.part_grade === 'A' ? 'var(--success)' : o.part_grade === 'B' ? 'var(--warning)' : 'var(--danger)'};">
+                            ${o.part_grade || '?'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm" onclick="openDeliveryAssignModal('${o.order_id}', '${o.order_number}')" 
+                                style="background: var(--success); color: white; padding: 4px 10px;">
+                            <i class="bi bi-truck"></i> Assign Driver
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="4" class="empty-state">No orders ready for delivery</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load delivery pending:', err);
+    }
+}
+
+// Load drivers list with status toggle
+async function loadDriversList() {
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const table = document.getElementById('driversTable');
+        if (data.drivers && data.drivers.length > 0) {
+            table.innerHTML = data.drivers.map(d => {
+                const statusColor = d.status === 'available' ? 'var(--success)' : d.status === 'busy' ? 'var(--warning)' : 'var(--text-muted)';
+                const statusIcon = d.status === 'available' ? 'bi-check-circle-fill' : d.status === 'busy' ? 'bi-hourglass-split' : 'bi-pause-circle';
+                return `
+                    <tr>
+                        <td>
+                            <strong>${d.full_name}</strong><br>
+                            <span style="font-size: 11px; color: var(--text-muted);">${d.vehicle_type || 'Car'} - ${d.vehicle_plate || 'N/A'}</span>
+                        </td>
+                        <td>
+                            <span style="color: ${statusColor};">
+                                <i class="bi ${statusIcon}"></i> ${d.status}
+                            </span>
+                        </td>
+                        <td>
+                            ${d.status === 'available' ? `
+                                <button class="btn btn-sm" onclick="toggleDriverStatus('${d.driver_id}', 'busy')" 
+                                        style="padding: 2px 8px; font-size: 11px; background: var(--warning); color: white;" title="Mark as Busy">
+                                    <i class="bi bi-pause-circle"></i>
+                                </button>
+                            ` : d.status === 'busy' ? `
+                                <button class="btn btn-sm" onclick="toggleDriverStatus('${d.driver_id}', 'available')" 
+                                        style="padding: 2px 8px; font-size: 11px; background: var(--success); color: white;" title="Mark as Available">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                            ` : d.status === 'offline' ? `
+                                <button class="btn btn-sm" onclick="toggleDriverStatus('${d.driver_id}', 'available')" 
+                                        style="padding: 2px 8px; font-size: 11px; background: var(--success); color: white;" title="Mark as Available">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="3" class="empty-state">No drivers added</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load drivers:', err);
+    }
+}
+
+// Collect order from garage - show driver assignment modal
+async function collectOrder(orderId) {
+    // Load available drivers
+    let driversHtml = '<option value="">-- No drivers available --</option>';
+    let hasDrivers = false;
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        // Filter for available drivers
+        const drivers = (data.drivers || []).filter(d => d.status === 'available');
+        if (drivers.length > 0) {
+            hasDrivers = true;
+            driversHtml = '<option value="">-- Select a driver --</option>' + drivers.map(d => `
+                <option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'} - ${d.vehicle_plate || 'N/A'})</option>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load drivers:', err);
+    }
+
+    // Show modal
+    const modal = document.createElement('div');
+    modal.id = 'collectOrderModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <h3><i class="bi bi-box-arrow-in-down"></i> Collect Order from Garage</h3>
+                <button class="modal-close" onclick="document.getElementById('collectOrderModal').remove()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Assign a driver to collect this order from the garage.</p>
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver:</label>
+                <select id="collectOrderDriverSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    ${driversHtml}
+                </select>
+                ${!hasDrivers ? '<p style="color: var(--danger); font-size: 12px; margin-top: 8px;"><i class="bi bi-exclamation-triangle"></i> No drivers available. Please add drivers first.</p>' : ''}
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-ghost" onclick="document.getElementById('collectOrderModal').remove()">Cancel</button>
+                <button class="btn btn-primary" id="confirmCollectOrderBtn" onclick="submitCollectOrder('${orderId}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);" ${!hasDrivers ? 'disabled' : ''}>
+                    <i class="bi bi-check-lg"></i> Collect Order
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Submit collect order with driver
+async function submitCollectOrder(orderId) {
+    const driverId = document.getElementById('collectOrderDriverSelect').value;
+    if (!driverId) {
+        showToast('Please select a driver', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('confirmCollectOrderBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Collecting...';
+
+    try {
+        const res = await fetch(`${API_URL}/delivery/collect/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                driver_id: driverId,
+                notes: 'Collected by assigned driver'
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`📦 Order ${data.order_number || ''} collected!`, 'success');
+            document.getElementById('collectOrderModal').remove();
+            loadDeliveryData();
+            loadStats();
+            loadQualityStats();
+            loadOrders();
+        } else {
+            showToast(data.error || 'Failed to collect order', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Collect Order';
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Collect Order';
+    }
+}
+
+// Toggle driver status
+async function toggleDriverStatus(driverId, newStatus) {
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers/${driverId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Driver set to ${newStatus}`, 'success');
+            loadDriversList();
+            loadDeliveryStats();
+        } else {
+            showToast(data.error || 'Failed to update driver', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Open modal to assign driver for delivery
+async function openDeliveryAssignModal(orderId, orderNumber) {
+    // Load available drivers
+    let driversHtml = '<option value="">-- No drivers available --</option>';
+    try {
+        const res = await fetch(`${API_URL}/delivery/drivers?status=available`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const drivers = (data.drivers || []).filter(d => d.status === 'available');
+        if (drivers.length > 0) {
+            driversHtml = drivers.map(d => `
+                <option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'} - ${d.vehicle_plate || 'N/A'})</option>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load drivers:', err);
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'deliveryAssignModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="bi bi-truck"></i> Assign Delivery Driver</h3>
+                <button class="modal-close" onclick="document.getElementById('deliveryAssignModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="margin-bottom: 15px;">Order: <strong>${orderNumber}</strong></p>
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver:</label>
+                <select id="deliveryDriverSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    ${driversHtml}
+                </select>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-ghost" onclick="document.getElementById('deliveryAssignModal').remove()">Cancel</button>
+                <button class="btn btn-primary" id="confirmDeliveryBtn" onclick="submitDeliveryAssignment('${orderId}')" style="background: var(--success);">
+                    <i class="bi bi-check-lg"></i> Assign & Start Delivery
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Submit delivery assignment
+async function submitDeliveryAssignment(orderId) {
+    const driverId = document.getElementById('deliveryDriverSelect').value;
+    if (!driverId) {
+        showToast('Please select a driver', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('confirmDeliveryBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
+
+    try {
+        const res = await fetch(`${API_URL}/delivery/assign/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ driver_id: driverId })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('🚚 Driver assigned! Delivery started.', 'success');
+            document.getElementById('deliveryAssignModal').remove();
+            loadDeliveryData();
+            loadStats();
+        } else {
+            showToast(data.error || 'Failed to assign driver', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign & Start Delivery';
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign & Start Delivery';
+    }
+}
+
+// ===== USER MANAGEMENT =====
+let allUsers = [];
+
+async function loadUsers() {
+    try {
+        // Load user stats
+        const statsRes = await fetch(`${API_URL}/operations/users/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const statsData = await statsRes.json();
+
+        if (statsData.stats) {
+            document.getElementById('totalUsers').textContent = statsData.stats.total_customers || 0;
+            document.getElementById('totalGarages').textContent = statsData.stats.total_garages || 0;
+            document.getElementById('newUsersThisMonth').textContent = statsData.stats.new_this_month || 0;
+            document.getElementById('suspendedUsers').textContent = statsData.stats.suspended || 0;
+        }
+
+        // Load users list
+        const usersRes = await fetch(`${API_URL}/operations/users`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const usersData = await usersRes.json();
+
+        if (usersData.users) {
+            allUsers = usersData.users;
+            renderUsersTable(allUsers);
+        }
+
+        // Load garages
+        loadGarages();
+    } catch (err) {
+        console.error('Failed to load users:', err);
+    }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('usersTable');
+
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No users found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>${u.full_name || '-'}</td>
+            <td>${u.phone_number}</td>
+            <td><span class="badge ${u.user_type}">${u.user_type}</span></td>
+            <td>${new Date(u.created_at).toLocaleDateString()}</td>
+            <td>
+                <span class="status-badge ${u.is_active ? 'active' : 'suspended'}">
+                    ${u.is_active ? 'Active' : 'Suspended'}
+                </span>
+            </td>
+            <td>
+                ${u.is_active ?
+            `<button class="btn btn-sm btn-danger" onclick="suspendUser('${u.user_id}')">
+                        <i class="bi bi-ban"></i> Suspend
+                    </button>` :
+            `<button class="btn btn-sm btn-success" onclick="activateUser('${u.user_id}')">
+                        <i class="bi bi-check"></i> Activate
+                    </button>`
+        }
+            </td>
+        </tr>
+    `).join('');
+}
+
+function searchUsers() {
+    const query = document.getElementById('userSearchInput').value.toLowerCase();
+    const filtered = allUsers.filter(u =>
+        (u.full_name && u.full_name.toLowerCase().includes(query)) ||
+        (u.phone_number && u.phone_number.includes(query))
+    );
+    renderUsersTable(filtered);
+}
+
+async function loadGarages() {
+    try {
+        const res = await fetch(`${API_URL}/operations/garages`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('garagesTable');
+
+        if (!data.garages || data.garages.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No garages found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.garages.map(g => `
+            <tr>
+                <td><strong>${g.garage_name}</strong></td>
+                <td>${g.owner_name || '-'}</td>
+                <td>
+                    ${g.average_rating ?
+                `<span class="rating"><i class="bi bi-star-fill"></i> ${parseFloat(g.average_rating).toFixed(1)}</span>` :
+                '<span class="text-muted">No ratings</span>'
+            }
+                </td>
+                <td>${g.total_orders || 0}</td>
+                <td>
+                    <span class="badge ${g.subscription_status || 'none'}">
+                        ${g.plan_name || 'No Plan'}
+                    </span>
+                </td>
+                <td>
+                    ${g.is_verified ?
+                `<span class="status-badge verified"><i class="bi bi-patch-check"></i> Verified</span>` :
+                `<button class="btn btn-sm btn-primary" onclick="verifyGarage('${g.garage_id}')">
+                            <i class="bi bi-patch-check"></i> Verify
+                        </button>`
+            }
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load garages:', err);
+    }
+}
+
+async function suspendUser(userId) {
+    if (!confirm('Suspend this user?')) return;
+    try {
+        const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            showToast('User suspended', 'success');
+            loadUsers();
+        }
+    } catch (err) {
+        showToast('Failed to suspend user', 'error');
+    }
+}
+
+async function activateUser(userId) {
+    try {
+        const res = await fetch(`${API_URL}/operations/users/${userId}/activate`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            showToast('User activated', 'success');
+            loadUsers();
+        }
+    } catch (err) {
+        showToast('Failed to activate user', 'error');
+    }
+}
+
+async function verifyGarage(garageId) {
+    try {
+        const res = await fetch(`${API_URL}/operations/garages/${garageId}/verify`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            showToast('Garage verified!', 'success');
+            loadGarages();
+        }
+    } catch (err) {
+        showToast('Failed to verify garage', 'error');
+    }
+}
+
+// ===== FINANCE MANAGEMENT =====
+async function loadFinance() {
+    try {
+        // Load finance stats
+        const statsRes = await fetch(`${API_URL}/finance/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const statsData = await statsRes.json();
+
+        if (statsData.stats) {
+            const s = statsData.stats;
+            document.getElementById('financeTotalRevenue').textContent = `${s.total_revenue || 0} QAR`;
+            document.getElementById('financePendingPayouts').textContent = `${s.pending_payouts || 0} QAR`;
+            document.getElementById('financeProcessingPayouts').textContent = `${s.processing_payouts || 0} QAR`;
+            document.getElementById('financeCompletedPayouts').textContent = `${s.completed_payouts || 0} QAR`;
+        }
+
+        // Load pending payouts
+        loadPendingPayouts();
+        loadTransactions();
+    } catch (err) {
+        console.error('Failed to load finance data:', err);
+    }
+}
+
+async function loadPendingPayouts() {
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('pendingPayoutsTable');
+
+        if (!data.payouts || data.payouts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No pending payouts</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.payouts.map(p => `
+            <tr>
+                <td><strong>${p.garage_name || '-'}</strong></td>
+                <td>${p.order_number || '-'}</td>
+                <td>${parseFloat(p.gross_amount).toLocaleString()} QAR</td>
+                <td>${parseFloat(p.commission_amount).toLocaleString()} QAR</td>
+                <td><strong style="color: var(--accent);">${parseFloat(p.net_amount).toLocaleString()} QAR</strong></td>
+                <td>${p.scheduled_for ? new Date(p.scheduled_for).toLocaleDateString() : '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-success" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || ''}', '${p.order_number || ''}', ${p.net_amount})">
+                        <i class="bi bi-send-check"></i> Send Payment
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="holdPayout('${p.payout_id}')" title="Put on hold">
+                        <i class="bi bi-pause"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load pending payouts:', err);
+    }
+}
+
+// ==========================================
+// UNIFIED DISPUTES MODULE
+// Handles both Order Disputes (customer) and Payment Disputes (garage)
+// ==========================================
+
+let currentDisputeTab = 'order'; // 'order' or 'payment'
+
+async function loadDisputes() {
+    // Load stats
+    await loadDisputeStats();
+
+    // Load current tab data
+    if (currentDisputeTab === 'order') {
+        await loadOrderDisputes();
+    } else {
+        await loadPaymentDisputesData();
+    }
+}
+
+async function loadDisputeStats() {
+    try {
+        // Get order disputes count
+        const orderRes = await fetch(`${API_URL}/operations/disputes?status=pending&limit=1`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const orderData = await orderRes.json();
+
+        // Get payment disputes count
+        const paymentRes = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const paymentData = await paymentRes.json();
+
+        const orderCount = orderData.pagination?.total || 0;
+        const paymentCount = paymentData.payouts?.length || 0;
+        const totalOpen = orderCount + paymentCount;
+
+        // Update stats
+        document.getElementById('disputesTotalOpen').textContent = totalOpen;
+        document.getElementById('disputesOrderCount').textContent = orderCount;
+        document.getElementById('disputesPaymentCount').textContent = paymentCount;
+
+        // Update nav badge
+        const badge = document.getElementById('disputesBadge');
+        if (badge) {
+            badge.textContent = totalOpen;
+            badge.style.display = totalOpen > 0 ? 'inline-block' : 'none';
+        }
+
+        // Update tab badges
+        document.getElementById('orderDisputesTabBadge').textContent = orderCount;
+        document.getElementById('paymentDisputesTabBadge').textContent = paymentCount;
+    } catch (err) {
+        console.error('Failed to load dispute stats:', err);
+    }
+}
+
+async function loadOrderDisputes() {
+    const tbody = document.getElementById('orderDisputesTable');
+    if (!tbody) return;
+
+    try {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
+
+        const res = await fetch(`${API_URL}/operations/disputes?status=pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error);
+
+        const disputes = data.disputes || [];
+
+        if (disputes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle" style="font-size: 32px; color: var(--success);"></i><p>No pending order disputes</p></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = disputes.map(d => `
+            <tr>
+                <td><strong>${d.order_number || '-'}</strong></td>
+                <td>${d.customer_name || 'Customer'}</td>
+                <td>${d.part_description?.substring(0, 30) || '-'}${d.part_description?.length > 30 ? '...' : ''}</td>
+                <td><span class="badge badge-warning">${(d.reason || '').replace(/_/g, ' ')}</span></td>
+                <td><strong style="color: var(--accent);">${parseFloat(d.refund_amount || 0).toLocaleString()} QAR</strong></td>
+                <td>${d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-success" onclick="resolveOrderDisputeAction('${d.dispute_id}', 'refund_approved', ${d.refund_amount || 0})" title="Approve Refund">
+                            <i class="bi bi-check-lg"></i> Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="resolveOrderDisputeAction('${d.dispute_id}', 'refund_declined', 0)" title="Reject Dispute">
+                            <i class="bi bi-x-lg"></i> Reject
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load order disputes:', err);
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Error: ${err.message}</td></tr>`;
+    }
+}
+
+async function loadPaymentDisputesData() {
+    const tbody = document.getElementById('paymentDisputesTable');
+    if (!tbody) return;
+
+    try {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading...</td></tr>';
+
+        const res = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error);
+
+        const payouts = data.payouts || [];
+
+        if (payouts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle" style="font-size: 32px; color: var(--success);"></i><p>No payment disputes</p></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = payouts.map(p => `
+            <tr style="background: rgba(239, 68, 68, 0.03);">
+                <td><strong>${p.garage_name || '-'}</strong></td>
+                <td>${p.order_number || '-'}</td>
+                <td><strong style="color: var(--danger);">${parseFloat(p.net_amount).toLocaleString()} QAR</strong></td>
+                <td style="max-width: 200px;">
+                    <span title="${(p.failure_reason || '').replace(/"/g, '&quot;')}" style="color: var(--text-secondary); font-size: 13px;">
+                        ${(p.failure_reason || 'No reason').substring(0, 40)}${(p.failure_reason || '').length > 40 ? '...' : ''}
+                    </span>
+                </td>
+                <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-sm btn-success" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'resent_payment', ${p.net_amount})" title="Resend Payment">
+                            <i class="bi bi-arrow-repeat"></i> Resend
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'confirmed_received', ${p.net_amount})" title="Mark as Received">
+                            <i class="bi bi-check-lg"></i> Confirmed
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'cancelled', ${p.net_amount})" title="Cancel">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load payment disputes:', err);
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Error: ${err.message}</td></tr>`;
+    }
+}
+
+function switchDisputeTab(tab) {
+    currentDisputeTab = tab;
+
+    // Update tab styles
+    document.querySelectorAll('.dispute-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-dispute-tab="${tab}"]`).classList.add('active');
+
+    // Show/hide tables
+    document.getElementById('orderDisputesPanel').style.display = tab === 'order' ? 'block' : 'none';
+    document.getElementById('paymentDisputesPanel').style.display = tab === 'payment' ? 'block' : 'none';
+
+    // Load data
+    if (tab === 'order') {
+        loadOrderDisputes();
+    } else {
+        loadPaymentDisputesData();
+    }
+}
+
+async function resolveOrderDisputeAction(disputeId, resolution, refundAmount) {
+    const resolutionLabels = {
+        refund_approved: `Approve refund of ${refundAmount} QAR to customer?`,
+        refund_declined: 'Reject this dispute? Customer will not receive a refund.'
+    };
+
+    if (!confirm(resolutionLabels[resolution] || 'Proceed?')) return;
+
+    const notes = prompt('Add resolution notes (optional):') || '';
+
+    try {
+        const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                resolution: resolution,
+                refund_amount: refundAmount,
+                notes: notes
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Dispute resolved successfully', 'success');
+            loadDisputes();
+        } else {
+            showToast(data.error || 'Failed to resolve dispute', 'error');
+        }
+    } catch (err) {
+        console.error('Resolve order dispute error:', err);
+        showToast('Failed to resolve dispute', 'error');
+    }
+}
+
+async function resolvePaymentDisputeAction(payoutId, resolution, amount) {
+    const resolutionLabels = {
+        resent_payment: `Resend payment of ${amount} QAR? (Garage will need to confirm again)`,
+        confirmed_received: 'Mark as received? (Garage already confirmed they got it)',
+        cancelled: 'Cancel this payout permanently?'
+    };
+
+    if (!confirm(resolutionLabels[resolution] || 'Proceed?')) return;
+
+    const notes = prompt('Add resolution notes (optional):') || '';
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                resolution: resolution,
+                notes: notes,
+                resend_payment: resolution === 'resent_payment'
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Payment dispute resolved: ${resolution.replace(/_/g, ' ')}`, 'success');
+            loadDisputes();
+        } else {
+            showToast(data.error || 'Failed to resolve dispute', 'error');
+        }
+    } catch (err) {
+        console.error('Resolve payment dispute error:', err);
+        showToast('Failed to resolve dispute', 'error');
+    }
+}
+
+// ==========================================
+// SEND PAYMENT MODAL FUNCTIONS
+// ==========================================
+
+function openSendPaymentModal(payoutId, garageName, orderNumber, amount) {
+    document.getElementById('spPayoutId').value = payoutId;
+    document.getElementById('spGarageName').textContent = garageName || 'Unknown';
+    document.getElementById('spOrderNumber').textContent = orderNumber || '-';
+    document.getElementById('spAmount').textContent = parseFloat(amount).toLocaleString() + ' QAR';
+
+    // Reset form
+    document.getElementById('spPaymentMethod').value = '';
+    document.getElementById('spReference').value = '';
+    document.getElementById('spNotes').value = '';
+
+    document.getElementById('sendPaymentModal').classList.add('active');
+}
+
+function closeSendPaymentModal() {
+    document.getElementById('sendPaymentModal').classList.remove('active');
+}
+
+async function submitSendPayment() {
+    const payoutId = document.getElementById('spPayoutId').value;
+    const method = document.getElementById('spPaymentMethod').value;
+    const reference = document.getElementById('spReference').value;
+    const notes = document.getElementById('spNotes').value;
+
+    if (!method) {
+        showToast('Please select a payment method', 'error');
+        return;
+    }
+
+    if (!reference) {
+        showToast('Please enter a reference number', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                payout_method: method,
+                payout_reference: reference,
+                notes: notes
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('✅ Payment marked as sent! Awaiting garage confirmation.', 'success');
+            closeSendPaymentModal();
+            loadPendingPayouts();
+            loadFinance();
+        } else {
+            showToast(data.error || 'Failed to send payment', 'error');
+        }
+    } catch (err) {
+        console.error('Send payment error:', err);
+        showToast('Failed to send payment', 'error');
+    }
+}
+
+
+async function loadTransactions() {
+    try {
+        const res = await fetch(`${API_URL}/finance/transactions?limit=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('transactionsTable');
+
+        if (!data.transactions || data.transactions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No transactions yet</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.transactions.map(t => `
+            <tr>
+                <td>${new Date(t.created_at).toLocaleDateString()}</td>
+                <td><span class="badge ${t.transaction_type}">${t.transaction_type}</span></td>
+                <td>${t.order_number || '-'}</td>
+                <td>${t.garage_name || '-'}</td>
+                <td><strong>${t.amount} QAR</strong></td>
+                <td><span class="status-badge ${t.status}">${t.status}</span></td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load transactions:', err);
+    }
+}
+
+async function processPayout(payoutId) {
+    if (!confirm('Process this payout?')) return;
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/process`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            showToast('Payout processed!', 'success');
+            loadFinance();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to process payout', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function holdPayout(payoutId) {
+    const reason = prompt('Reason for holding payout:');
+    if (!reason) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+        if (res.ok) {
+            showToast('Payout held', 'success');
+            loadFinance();
+        }
+    } catch (err) {
+        showToast('Failed to hold payout', 'error');
+    }
+}
+
+// ============================================
+// SUPPORT TICKET LOGIC (OPERATIONS)
+// ============================================
+
+let activeOpsTicketId = null;
+
+async function loadOpsTickets() {
+    try {
+        const res = await fetch(`${API_URL}/support/tickets`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const tickets = await res.json();
+        const container = document.getElementById('supportTicketList');
+
+        if (tickets.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No active tickets</div>';
+            return;
+        }
+
+        container.innerHTML = tickets.map(t => {
+            const lastMsg = t.last_message ? t.last_message.message_text : 'No messages';
+            const activeClass = activeOpsTicketId === t.ticket_id ? 'active' : '';
+            return `
+            <div class="ticket-item ${activeClass}" onclick="viewOpsTicket('${t.ticket_id}', '${t.subject}', '${t.customer_name}', '${t.status}', '${t.order_id}')">
+                <div class="ticket-header">
+                    <span class="ticket-subject">${t.subject}</span>
+                    <span class="ticket-status status-${t.status}">${t.status}</span>
+                </div>
+                <div class="ticket-meta">
+                    <span>${t.customer_name}</span>
+                    <span>${new Date(t.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="ticket-preview">${lastMsg}</div>
+                ${t.order_id ? `<div class="ticket-meta" style="margin-top: 4px; color: var(--accent);"><i class="bi bi-box-seam"></i> Order #${t.order_id.substring(0, 8)}</div>` : ''}
+            </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        showToast('Failed to load tickets', 'error');
+    }
+}
+
+async function viewOpsTicket(ticketId, subject, customerName, status, orderId) {
+    activeOpsTicketId = ticketId;
+    document.getElementById('emptyChatState').style.display = 'none';
+    document.getElementById('activeTicketView').style.display = 'flex';
+
+    document.getElementById('opsTicketSubject').textContent = subject;
+    document.getElementById('opsTicketCustomer').textContent = customerName;
+    document.getElementById('opsTicketOrder').textContent = orderId && orderId !== 'null' ? `#${orderId.substring(0, 8)}` : 'No Order';
+    document.getElementById('opsTicketStatus').value = status;
+
+    loadOpsTicketMessages(ticketId);
+    socket.emit('join_ticket', ticketId);
+
+    // Refresh list to update active selection style
+    loadOpsTickets();
+}
+
+async function loadOpsTicketMessages(ticketId) {
+    const container = document.getElementById('opsChatMessages');
+    container.innerHTML = '<div style="display: flex; justify-content: center; padding: 20px;"><div class="spinner"></div></div>';
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const messages = await res.json();
+
+        container.innerHTML = messages.map(m => {
+            const isAdmin = m.sender_type === 'admin';
+            return `
+                <div class="message ${isAdmin ? 'admin' : 'customer'}">
+                    ${m.message_text}
+                    <div class="message-time">
+                        ${m.sender_name || (isAdmin ? 'Me' : 'Customer')} • ${new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        container.scrollTop = container.scrollHeight;
+    } catch (err) {
+        container.innerHTML = 'Failed to load messages';
+    }
+}
+
+async function sendOpsMessage() {
+    if (!activeOpsTicketId) return;
+    const input = document.getElementById('opsChatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${activeOpsTicketId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message_text: message })
+        });
+
+        if (res.ok) {
+            input.value = '';
+            // New message will come via socket
+        }
+    } catch (err) {
+        showToast('Failed to send message', 'error');
+    }
+}
+
+async function updateTicketStatus(status) {
+    if (!activeOpsTicketId) return;
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${activeOpsTicketId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (res.ok) {
+            showToast('Ticket status updated', 'success');
+            loadOpsTickets();
+        }
+    } catch (err) {
+        showToast('Failed to update status', 'error');
+    }
+}
+
+// Socket Listeners (Operations) - Initialize after socket is ready
+function initSupportSocketListeners() {
+    if (!socket) return;
+
+    socket.on('new_ticket', (data) => {
+        showToast(`New Ticket: ${data.ticket.subject}`, 'info');
+        loadOpsTickets();
+        if (typeof loadStats === 'function') loadStats();
+    });
+
+    socket.on('support_reply', (data) => {
+        if (activeOpsTicketId === data.ticket_id) {
+            showToast('New customer reply', 'info');
+            loadOpsTicketMessages(data.ticket_id); // Reload messages to see update
+        } else {
+            showToast('New customer reply', 'info');
+            loadOpsTickets();
+        }
+    });
+
+    socket.on('new_message', (message) => {
+        if (activeOpsTicketId === message.ticket_id) {
+            const container = document.getElementById('opsChatMessages');
+            const isAdmin = message.sender_type === 'admin';
+
+            container.insertAdjacentHTML('beforeend', `
+                <div class="message ${isAdmin ? 'admin' : 'customer'}">
+                    ${message.message_text}
+                    <div class="message-time">
+                        ${isAdmin ? 'Me' : 'Customer'} • ${new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                </div>
+            `);
+            container.scrollTop = container.scrollHeight;
+
+            loadOpsTickets(); // Update list preview
+        }
+    });
+}
+
+// Monkey patch switchSection
+const originalSwitchSection = window.switchSection || switchSection;
+window.switchSection = function (section) {
+    if (originalSwitchSection) originalSwitchSection(section);
+    if (section === 'support') loadOpsTickets();
+};
+
+// ============================================
+// GLOBAL SEARCH
+// ============================================
+let globalSearchTimeout = null;
+const searchInput = document.getElementById('globalSearchInput');
+const searchResultsDiv = document.getElementById('searchResults');
+
+// Initialize search on DOM ready
+if (searchInput) {
+    // Debounced search
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(globalSearchTimeout);
+
+        if (query.length < 2) {
+            searchResultsDiv.style.display = 'none';
+            return;
+        }
+
+        globalSearchTimeout = setTimeout(() => performGlobalSearch(query), 300);
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-container')) {
+            searchResultsDiv.style.display = 'none';
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        // Escape to close
+        if (e.key === 'Escape') {
+            searchResultsDiv.style.display = 'none';
+            searchInput.blur();
+        }
+    });
+
+    // '/' to focus when not in input
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+}
+
+async function performGlobalSearch(query) {
+    try {
+        const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.results && Object.keys(data.results).length > 0) {
+            renderSearchResults(data.results);
+        } else {
+            searchResultsDiv.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-muted);">No results found</div>';
+            searchResultsDiv.style.display = 'block';
+        }
+    } catch (err) {
+        console.error('Search error:', err);
+    }
+}
+
+function renderSearchResults(results) {
+    let html = '';
+
+    // Orders
+    if (results.orders && results.orders.length > 0) {
+        html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Orders</div>`;
+        html += results.orders.slice(0, 5).map(o => `
+            <div class="search-result-item" onclick="viewOrder('${o.order_id}'); searchResultsDiv.style.display='none';" 
+                 style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
+                 onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                <div>
+                    <div style="font-weight: 600; color: var(--accent);">#${o.order_number}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${o.car_make} ${o.car_model} - ${o.part_description?.slice(0, 30) || ''}</div>
+                </div>
+                <span class="order-status ${o.order_status.replace('_', '-')}" style="font-size: 10px;">${o.order_status}</span>
+            </div>
+        `).join('');
+    }
+
+    // Users
+    if (results.users && results.users.length > 0) {
+        html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Users</div>`;
+        html += results.users.slice(0, 5).map(u => `
+            <div class="search-result-item" onclick="switchSection('users'); searchResultsDiv.style.display='none';"
+                 style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
+                 onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                <div>
+                    <div style="font-weight: 600;">${u.full_name}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${u.email} | ${u.phone_number}</div>
+                </div>
+                <span style="font-size: 11px; color: var(--text-muted);">${u.user_type}</span>
+            </div>
+        `).join('');
+    }
+
+    // Disputes
+    if (results.disputes && results.disputes.length > 0) {
+        html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Disputes</div>`;
+        html += results.disputes.slice(0, 5).map(d => `
+            <div class="search-result-item" onclick="switchSection('disputes'); searchResultsDiv.style.display='none';"
+                 style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
+                 onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                <div>
+                    <div style="font-weight: 600;">#${d.order_number}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${d.reason} - ${d.customer_name}</div>
+                </div>
+                <span class="status-badge ${d.status}" style="font-size: 10px;">${d.status}</span>
+            </div>
+        `).join('');
+    }
+
+    // Requests
+    if (results.requests && results.requests.length > 0) {
+        html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Requests</div>`;
+        html += results.requests.slice(0, 5).map(r => `
+            <div class="search-result-item"
+                 style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
+                 onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                <div>
+                    <div style="font-weight: 600;">${r.car_make} ${r.car_model}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${r.part_description?.slice(0, 40) || ''}</div>
+                </div>
+                <span style="font-size: 11px; color: var(--text-muted);">${r.status}</span>
+            </div>
+        `).join('');
+    }
+
+    searchResultsDiv.innerHTML = html;
+    searchResultsDiv.style.display = 'block';
+}
+
+// ==========================================
+// REPORTS MODULE
+// ==========================================
+
+let currentReportData = null;
+
+// Initialize report dates on section load
+function initReportDates() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    document.getElementById('reportFromDate').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('reportToDate').value = now.toISOString().split('T')[0];
+    updateReportPreview();
+}
+
+// Update report preview based on selected options
+function updateReportPreview() {
+    const type = document.getElementById('reportType')?.value || 'orders';
+    const from = document.getElementById('reportFromDate')?.value || '';
+    const to = document.getElementById('reportToDate')?.value || '';
+
+    const previewInfo = document.getElementById('reportPreviewInfo');
+    if (previewInfo) {
+        const typeLabels = {
+            orders: 'Orders Report',
+            revenue: 'Revenue Report',
+            disputes: 'Disputes Report',
+            deliveries: 'Deliveries Report',
+            garages: 'Garages Performance Report'
+        };
+        previewInfo.innerHTML = `
+            <div style="display: flex; gap: 20px; align-items: center; color: var(--text-secondary); font-size: 13px;">
+                <span><i class="bi bi-file-earmark-text"></i> ${typeLabels[type] || type}</span>
+                <span><i class="bi bi-calendar"></i> ${from || 'Start'} to ${to || 'End'}</span>
+            </div>
+        `;
+    }
+}
+
+// Generate report
+async function generateReport() {
+    const type = document.getElementById('reportType').value;
+    const from = document.getElementById('reportFromDate').value;
+    const to = document.getElementById('reportToDate').value;
+
+    if (!from || !to) {
+        showToast('Please select date range', 'error');
+        return;
+    }
+
+    const reportContent = document.getElementById('reportContent');
+    reportContent.innerHTML = '<div style="text-align: center; padding: 60px;"><div class="spinner"></div><p>Generating report...</p></div>';
+
+    try {
+        const res = await fetch(`${API_URL}/reports/${type}?from=${from}&to=${to}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            currentReportData = data;
+            renderReport(type, data);
+        } else {
+            reportContent.innerHTML = `<div style="text-align: center; padding: 60px; color: #ef4444;"><i class="bi bi-exclamation-circle" style="font-size: 48px;"></i><p>${data.error || 'Failed to generate report'}</p></div>`;
+        }
+    } catch (err) {
+        reportContent.innerHTML = `<div style="text-align: center; padding: 60px; color: #ef4444;"><i class="bi bi-wifi-off" style="font-size: 48px;"></i><p>Connection error</p></div>`;
+    }
+}
+
+// Render report HTML
+function renderReport(type, data) {
+    const reportTitles = {
+        orders: 'ORDERS REPORT',
+        revenue: 'REVENUE REPORT',
+        disputes: 'DISPUTES REPORT',
+        deliveries: 'DELIVERY PERFORMANCE REPORT',
+        garages: 'GARAGE PERFORMANCE REPORT'
+    };
+
+    const fromDate = new Date(data.period.from).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const toDate = new Date(data.period.to).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const generatedAt = new Date(data.generated_at).toLocaleString();
+
+    let html = `
+        <style>
+            @media print {
+                body * { visibility: hidden; }
+                #reportContent, #reportContent * { visibility: visible; }
+                #reportContent { position: absolute; left: 0; top: 0; width: 100%; }
+                .no-print { display: none !important; }
+                .print-page-break { page-break-before: always; }
+            }
+            .report-header { border-bottom: 3px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }
+            .report-logo { display: flex; align-items: center; gap: 12px; }
+            .report-logo-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; }
+            .report-title { text-align: center; margin: 30px 0; }
+            .report-title h1 { font-size: 28px; font-weight: 700; color: #1f2937; margin: 0; letter-spacing: 1px; }
+            .report-title p { color: #6b7280; margin-top: 8px; }
+            .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px; }
+            .summary-card { background: #f9fafb; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #e5e7eb; }
+            .summary-card .value { font-size: 28px; font-weight: 700; color: #1f2937; }
+            .summary-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }
+            .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+            .data-table th { background: #f3f4f6; padding: 12px 10px; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; }
+            .data-table td { padding: 10px; border-bottom: 1px solid #e5e7eb; color: #4b5563; }
+            .data-table tr:nth-child(even) { background: #f9fafb; }
+            .data-table tr:hover { background: #f3f4f6; }
+            .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+            .status-completed { background: #d1fae5; color: #065f46; }
+            .status-pending { background: #fef3c7; color: #92400e; }
+            .status-cancelled { background: #fee2e2; color: #b91c1c; }
+            .report-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; }
+        </style>
+        
+        <div class="report-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="report-logo">
+                    <div class="report-logo-icon"><i class="bi bi-gear-wide-connected"></i></div>
+                    <div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1f2937;">QScrap</div>
+                        <div style="font-size: 12px; color: #6b7280;">Auto Parts Marketplace</div>
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 12px; color: #6b7280;">
+                    <div>Page 1 of 1</div>
+                    <div>${generatedAt}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="report-title">
+            <h1>${reportTitles[type]}</h1>
+            <p>${fromDate} — ${toDate}</p>
+        </div>
+    `;
+
+    // Add type-specific content
+    if (type === 'orders') {
+        html += renderOrdersReport(data);
+    } else if (type === 'revenue') {
+        html += renderRevenueReport(data);
+    } else if (type === 'disputes') {
+        html += renderDisputesReport(data);
+    } else if (type === 'deliveries') {
+        html += renderDeliveriesReport(data);
+    } else if (type === 'garages') {
+        html += renderGaragesReport(data);
+    }
+
+    html += `
+        <div class="report-footer">
+            <div>Generated by QScrap Operations Center</div>
+            <div>Confidential - Internal Use Only</div>
+        </div>
+    `;
+
+    document.getElementById('reportContent').innerHTML = html;
+}
+
+function renderOrdersReport(data) {
+    const s = data.summary;
+    return `
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value">${s.total_orders || 0}</div>
+                <div class="label">Total Orders</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${s.completed_orders || 0}</div>
+                <div class="label">Completed</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${s.cancelled_orders || 0}</div>
+                <div class="label">Cancelled</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${parseFloat(s.total_revenue || 0).toLocaleString()} QAR</div>
+                <div class="label">Total Revenue</div>
+            </div>
+        </div>
+        
+        <h3 style="margin: 30px 0 15px; color: #374151;"><i class="bi bi-table"></i> Order Details</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Garage</th>
+                    <th>Part</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.data.map((o, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${o.order_number || '—'}</strong></td>
+                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td>${o.customer_name || '—'}</td>
+                        <td>${o.garage_name || '—'}</td>
+                        <td>${o.part_description?.slice(0, 25) || '—'}${o.part_description?.length > 25 ? '...' : ''}</td>
+                        <td><strong>${parseFloat(o.total_amount || 0).toFixed(2)} QAR</strong></td>
+                        <td><span class="status-badge status-${o.order_status?.includes('cancelled') ? 'cancelled' : o.order_status === 'completed' ? 'completed' : 'pending'}">${o.order_status?.replace(/_/g, ' ') || '—'}</span></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderRevenueReport(data) {
+    const s = data.summary;
+    return `
+        <div class="summary-grid">
+            <div class="summary-card" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+                <div class="value" style="color: white;">${parseFloat(s.gross_revenue || 0).toLocaleString()} QAR</div>
+                <div class="label" style="color: rgba(255,255,255,0.8);">Gross Revenue</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${parseFloat(s.platform_revenue || 0).toLocaleString()} QAR</div>
+                <div class="label">Platform Fees</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${parseFloat(s.garage_payouts || 0).toLocaleString()} QAR</div>
+                <div class="label">Garage Payouts</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${s.total_transactions || 0}</div>
+                <div class="label">Transactions</div>
+            </div>
+        </div>
+        
+        <h3 style="margin: 30px 0 15px; color: #374151;"><i class="bi bi-graph-up"></i> Daily Breakdown</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Orders</th>
+                    <th>Revenue</th>
+                    <th>Platform Fees</th>
+                    <th>Garage Payouts</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.daily_breakdown.map(d => `
+                    <tr>
+                        <td>${new Date(d.date).toLocaleDateString()}</td>
+                        <td>${d.order_count}</td>
+                        <td>${parseFloat(d.revenue || 0).toFixed(2)} QAR</td>
+                        <td>${parseFloat(d.platform_fees || 0).toFixed(2)} QAR</td>
+                        <td>${parseFloat(d.garage_payouts || 0).toFixed(2)} QAR</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <h3 style="margin: 30px 0 15px; color: #374151;"><i class="bi bi-trophy"></i> Top Performing Garages</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Garage</th>
+                    <th>Orders</th>
+                    <th>Earnings</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.top_garages.map((g, i) => `
+                    <tr>
+                        <td><strong>#${i + 1}</strong></td>
+                        <td>${g.garage_name}</td>
+                        <td>${g.order_count}</td>
+                        <td><strong>${parseFloat(g.total_earnings || 0).toLocaleString()} QAR</strong></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderDisputesReport(data) {
+    const s = data.summary;
+    return `
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value">${s.total_disputes || 0}</div>
+                <div class="label">Total Disputes</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #10b981;">${s.resolved || 0}</div>
+                <div class="label">Resolved</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #f59e0b;">${s.pending || 0}</div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #ef4444;">${parseFloat(s.total_refunded || 0).toLocaleString()} QAR</div>
+                <div class="label">Total Refunded</div>
+            </div>
+        </div>
+        
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Garage</th>
+                    <th>Reason</th>
+                    <th>Resolution</th>
+                    <th>Refund</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.data.length > 0 ? data.data.map((d, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${d.order_number || '—'}</td>
+                        <td>${d.customer_name || '—'}</td>
+                        <td>${d.garage_name || '—'}</td>
+                        <td>${d.dispute_reason || '—'}</td>
+                        <td>${d.resolution_type || '—'}</td>
+                        <td>${parseFloat(d.refund_amount || 0).toFixed(2)} QAR</td>
+                        <td><span class="status-badge status-${d.status === 'resolved' ? 'completed' : 'pending'}">${d.status}</span></td>
+                    </tr>
+                `).join('') : '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #9ca3af;">No disputes in this period</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderDeliveriesReport(data) {
+    const s = data.summary;
+    return `
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value">${s.total_deliveries || 0}</div>
+                <div class="label">Total Deliveries</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #10b981;">${s.successful_deliveries || 0}</div>
+                <div class="label">Successful</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #3b82f6;">${s.in_transit || 0}</div>
+                <div class="label">In Transit</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">${parseFloat(s.avg_delivery_hours || 0).toFixed(1)} hrs</div>
+                <div class="label">Avg Delivery Time</div>
+            </div>
+        </div>
+        
+        <h3 style="margin: 30px 0 15px; color: #374151;"><i class="bi bi-people"></i> Driver Performance</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Driver</th>
+                    <th>Total Deliveries</th>
+                    <th>Completed</th>
+                    <th>Avg Time (hrs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.drivers.length > 0 ? data.drivers.map((d, i) => `
+                    <tr>
+                        <td><strong>#${i + 1}</strong></td>
+                        <td>${d.driver_name}</td>
+                        <td>${d.total_deliveries}</td>
+                        <td>${d.completed}</td>
+                        <td>${parseFloat(d.avg_hours_to_deliver || 0).toFixed(1)}</td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">No delivery data in this period</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderGaragesReport(data) {
+    return `
+        <h3 style="margin: 0 0 20px; color: #374151;"><i class="bi bi-building"></i> All Garages Performance</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Garage</th>
+                    <th>Rating</th>
+                    <th>Period Orders</th>
+                    <th>Period Earnings</th>
+                    <th>Completion Rate</th>
+                    <th>All-Time Orders</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.data.map((g, i) => `
+                    <tr>
+                        <td><strong>#${i + 1}</strong></td>
+                        <td><strong>${g.garage_name}</strong></td>
+                        <td>${parseFloat(g.rating_average || 0).toFixed(1)} ⭐ (${g.rating_count || 0})</td>
+                        <td>${g.period_orders || 0}</td>
+                        <td><strong>${parseFloat(g.period_earnings || 0).toLocaleString()} QAR</strong></td>
+                        <td>${g.completion_rate || 0}%</td>
+                        <td>${g.total_transactions || 0}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+// Print report
+function printReport() {
+    if (!currentReportData) {
+        showToast('Please generate a report first', 'error');
+        return;
+    }
+    window.print();
+}
+
+// Export to PDF (using browser print to PDF)
+function exportPDF() {
+    if (!currentReportData) {
+        showToast('Please generate a report first', 'error');
+        return;
+    }
+    showToast('Use Print dialog → Save as PDF', 'info');
+    window.print();
+}
+
+// Initialize reports section on load
+function loadReports() {
+    initReportDates();
+}
+
+// ============================================
+// FINANCE & PAYOUT MANAGEMENT
+// ============================================
+
+async function loadFinance() {
+    await Promise.all([
+        loadFinanceStats(),
+        loadPendingPayouts(),
+        loadRecentTransactions()
+    ]);
+}
+
+async function loadFinanceStats() {
+    try {
+        const res = await fetch(`${API_URL}/finance/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        // API returns 'stats' not 'summary'
+        if (data.stats) {
+            const s = data.stats;
+            // Platform Revenue = total_revenue (for admin/ops this is sum of platform fees)
+            document.getElementById('financeTotalRevenue').textContent =
+                parseFloat(s.total_revenue || 0).toLocaleString() + ' QAR';
+            // Pending Payouts
+            document.getElementById('financePendingPayouts').textContent =
+                parseFloat(s.pending_payouts || 0).toLocaleString() + ' QAR';
+            // Awaiting Confirmation (processing/awaiting_confirmation status)
+            document.getElementById('financeProcessingPayouts').textContent =
+                parseFloat(s.processing_payouts || 0).toLocaleString() + ' QAR';
+            // Paid Out Total (completed + confirmed)
+            document.getElementById('financeCompletedPayouts').textContent =
+                parseFloat(s.total_paid || s.completed_payouts || 0).toLocaleString() + ' QAR';
+        }
+    } catch (err) {
+        console.error('Failed to load finance stats:', err);
+    }
+}
+
+async function loadPendingPayouts() {
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('pendingPayoutsTable');
+
+        if (data.payouts && data.payouts.length > 0) {
+            tbody.innerHTML = data.payouts.map(p => {
+                const scheduledDate = p.scheduled_date ? new Date(p.scheduled_date).toLocaleDateString('en-GB', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                }) : 'Not scheduled';
+
+                const statusBadge = getPayoutStatusBadge(p.status);
+
+                return `
+                    <tr id="payout-row-${p.payout_id}">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                                    ${(p.garage_name || 'G').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${p.garage_name || 'Unknown Garage'}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">${p.garage_phone || ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="#" onclick="viewOrder('${p.order_id}'); return false;" style="color: var(--accent); font-weight: 600; text-decoration: none;">
+                                #${p.order_number || p.order_id?.slice(0, 8)}
+                            </a>
+                        </td>
+                        <td style="font-weight: 500;">${parseFloat(p.gross_amount || 0).toLocaleString()} QAR</td>
+                        <td style="color: var(--accent); font-weight: 500;">${parseFloat(p.commission_amount || 0).toLocaleString()} QAR</td>
+                        <td>
+                            <span style="font-size: 18px; font-weight: 700; color: var(--success);">
+                                ${parseFloat(p.net_amount || 0).toLocaleString()} QAR
+                            </span>
+                        </td>
+                        <td style="color: var(--text-secondary); font-size: 13px;">
+                            <i class="bi bi-calendar3"></i> ${scheduledDate}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn btn-sm" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || 'Garage'}', ${p.net_amount || 0}, '${p.order_number || ''}')" 
+                                        style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 5px;">
+                                    <i class="bi bi-send-fill"></i> Send Payment
+                                </button>
+                                <button class="btn btn-sm" onclick="holdPayout('${p.payout_id}')" 
+                                        style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 6px 10px; font-size: 12px; border-radius: 8px;">
+                                    <i class="bi bi-pause-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 60px 20px;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-check-circle-fill" style="font-size: 40px; color: white;"></i>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--text-primary); margin: 0 0 5px;">All caught up!</h4>
+                                <p style="color: var(--text-muted); margin: 0;">No pending payouts at the moment</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (err) {
+        console.error('Failed to load pending payouts:', err);
+        document.getElementById('pendingPayoutsTable').innerHTML = `
+            <tr><td colspan="7" class="empty-state"><i class="bi bi-exclamation-triangle"></i> Failed to load payouts</td></tr>
+        `;
+    }
+}
+
+function getPayoutStatusBadge(status) {
+    const styles = {
+        pending: { bg: '#fef3c7', color: '#d97706', icon: 'bi-clock', label: 'Pending' },
+        sent: { bg: '#dbeafe', color: '#2563eb', icon: 'bi-send', label: 'Sent' },
+        awaiting_confirmation: { bg: '#e0e7ff', color: '#4f46e5', icon: 'bi-hourglass-split', label: 'Awaiting Confirmation' },
+        confirmed: { bg: '#d1fae5', color: '#059669', icon: 'bi-check-circle-fill', label: 'Confirmed' },
+        completed: { bg: '#d1fae5', color: '#059669', icon: 'bi-check-circle', label: 'Completed' },
+        disputed: { bg: '#fee2e2', color: '#dc2626', icon: 'bi-exclamation-triangle', label: 'Disputed' },
+        held: { bg: '#f3f4f6', color: '#6b7280', icon: 'bi-pause-circle', label: 'On Hold' },
+        on_hold: { bg: '#f3f4f6', color: '#6b7280', icon: 'bi-pause-circle', label: 'On Hold' }
+    };
+    const s = styles[status] || styles.pending;
+    return `
+        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: ${s.bg}; color: ${s.color}; border-radius: 20px; font-size: 11px; font-weight: 600;">
+            <i class="bi ${s.icon}"></i> ${s.label}
+        </span>
+    `;
+}
+
+function openSendPaymentModal(payoutId, garageName, amount, orderNumber) {
+    const modal = document.createElement('div');
+    modal.id = 'sendPaymentModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 500px; border-radius: 16px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 24px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="bi bi-send-fill"></i> Send Payment
+                    </h2>
+                    <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Transfer funds to garage partner</p>
+                </div>
+                <button class="modal-close" onclick="document.getElementById('sendPaymentModal').remove()" style="color: white; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <!-- Payment Summary Card -->
+                <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #bbf7d0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <div style="font-size: 12px; color: #16a34a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Recipient</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #166534; margin-top: 4px;">${garageName}</div>
+                        </div>
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 24px;">
+                            ${garageName.charAt(0).toUpperCase()}
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 15px; border-top: 1px dashed #86efac;">
+                        <div>
+                            <div style="font-size: 11px; color: #16a34a; font-weight: 500;">Order Reference</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #166534;">#${orderNumber}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: #16a34a; font-weight: 500;">Amount to Send</div>
+                            <div style="font-size: 24px; font-weight: 800; color: #166534;">${parseFloat(amount).toLocaleString()} QAR</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text-primary);">
+                        <i class="bi bi-credit-card-2-front" style="color: var(--accent);"></i> Payment Method
+                    </label>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label class="payment-method-option" style="cursor: pointer;">
+                            <input type="radio" name="paymentMethod" value="bank_transfer" checked style="display: none;">
+                            <div class="payment-method-card" style="padding: 15px; border: 2px solid var(--accent); border-radius: 10px; text-align: center; transition: all 0.2s;">
+                                <i class="bi bi-bank" style="font-size: 24px; color: var(--accent);"></i>
+                                <div style="font-size: 12px; font-weight: 600; margin-top: 5px;">Bank Transfer</div>
+                            </div>
+                        </label>
+                        <label class="payment-method-option" style="cursor: pointer;">
+                            <input type="radio" name="paymentMethod" value="cash" style="display: none;">
+                            <div class="payment-method-card" style="padding: 15px; border: 2px solid var(--border); border-radius: 10px; text-align: center; transition: all 0.2s;">
+                                <i class="bi bi-cash-stack" style="font-size: 24px; color: var(--text-muted);"></i>
+                                <div style="font-size: 12px; font-weight: 600; margin-top: 5px; color: var(--text-secondary);">Cash</div>
+                            </div>
+                        </label>
+                        <label class="payment-method-option" style="cursor: pointer;">
+                            <input type="radio" name="paymentMethod" value="mobile_pay" style="display: none;">
+                            <div class="payment-method-card" style="padding: 15px; border: 2px solid var(--border); border-radius: 10px; text-align: center; transition: all 0.2s;">
+                                <i class="bi bi-phone" style="font-size: 24px; color: var(--text-muted);"></i>
+                                <div style="font-size: 12px; font-weight: 600; margin-top: 5px; color: var(--text-secondary);">Mobile Pay</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Reference Number -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
+                        <i class="bi bi-hash" style="color: var(--accent);"></i> Reference Number (Optional)
+                    </label>
+                    <input type="text" id="paymentReference" placeholder="e.g., TXN123456789" 
+                           style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
+                        <i class="bi bi-sticky" style="color: var(--accent);"></i> Notes (Optional)
+                    </label>
+                    <textarea id="paymentNotes" placeholder="Add any notes for this payment..." rows="2"
+                              style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; resize: none; background: var(--bg-tertiary); color: var(--text-primary);"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px 24px; background: var(--bg-secondary); border-top: 1px solid var(--border);">
+                <button class="btn btn-ghost" onclick="document.getElementById('sendPaymentModal').remove()" style="padding: 12px 24px; border-radius: 10px;">
+                    Cancel
+                </button>
+                <button class="btn btn-primary" id="confirmSendPaymentBtn" onclick="sendPayment('${payoutId}')" 
+                        style="background: linear-gradient(135deg, #10b981, #059669); padding: 12px 28px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-send-fill"></i> Confirm & Send Payment
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Add click handlers for payment method selection
+    modal.querySelectorAll('.payment-method-option input').forEach(input => {
+        input.addEventListener('change', () => {
+            modal.querySelectorAll('.payment-method-card').forEach(card => {
+                card.style.border = '2px solid var(--border)';
+                card.querySelector('i').style.color = 'var(--text-muted)';
+                card.querySelector('div').style.color = 'var(--text-secondary)';
+            });
+            const selectedCard = input.parentElement.querySelector('.payment-method-card');
+            selectedCard.style.border = '2px solid var(--accent)';
+            selectedCard.querySelector('i').style.color = 'var(--accent)';
+            selectedCard.querySelector('div').style.color = 'var(--text-primary)';
+        });
+    });
+}
+
+async function sendPayment(payoutId) {
+    const btn = document.getElementById('confirmSendPaymentBtn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'bank_transfer';
+    const reference = document.getElementById('paymentReference')?.value || '';
+    const notes = document.getElementById('paymentNotes')?.value || '';
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                payout_method: paymentMethod,
+                payout_reference: reference || `TXN-${Date.now()}`,
+                notes: notes
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('💸 Payment sent successfully! Awaiting garage confirmation.', 'success');
+            document.getElementById('sendPaymentModal').remove();
+            loadFinance(); // Refresh all finance data
+        } else {
+            showToast(data.error || 'Failed to send payment', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    } catch (err) {
+        console.error('Send payment error:', err);
+        showToast('Connection error. Please try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
+async function holdPayout(payoutId) {
+    if (!confirm('Put this payout on hold? You can release it later.')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: 'Held by operations for review' })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Payout placed on hold', 'success');
+            loadPendingPayouts();
+        } else {
+            showToast(data.error || 'Failed to hold payout', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function loadRecentTransactions() {
+    try {
+        const res = await fetch(`${API_URL}/finance/transactions?limit=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('transactionsTable');
+
+        if (data.transactions && data.transactions.length > 0) {
+            tbody.innerHTML = data.transactions.map(t => {
+                const date = new Date(t.created_at).toLocaleDateString('en-GB', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                });
+                const time = new Date(t.created_at).toLocaleTimeString('en-GB', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                const typeStyles = {
+                    payout: { bg: '#d1fae5', color: '#059669', icon: 'bi-arrow-up-right', label: 'Payout' },
+                    refund: { bg: '#fee2e2', color: '#dc2626', icon: 'bi-arrow-return-left', label: 'Refund' },
+                    commission: { bg: '#dbeafe', color: '#2563eb', icon: 'bi-percent', label: 'Commission' }
+                };
+                const typeStyle = typeStyles[t.transaction_type] || typeStyles.payout;
+
+                const statusStyle = getPayoutStatusBadge(t.status);
+
+                return `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500; color: var(--text-primary);">${date}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">${time}</div>
+                        </td>
+                        <td>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: ${typeStyle.bg}; color: ${typeStyle.color}; border-radius: 6px; font-size: 11px; font-weight: 600;">
+                                <i class="bi ${typeStyle.icon}"></i> ${typeStyle.label}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="#" onclick="viewOrder('${t.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 500;">
+                                #${t.order_number || t.order_id?.slice(0, 8)}
+                            </a>
+                        </td>
+                        <td style="color: var(--text-secondary);">${t.garage_name || '-'}</td>
+                        <td style="font-weight: 600; color: ${t.transaction_type === 'refund' ? 'var(--danger)' : 'var(--success)'};">
+                            ${t.transaction_type === 'refund' ? '-' : '+'}${parseFloat(t.amount || 0).toLocaleString()} QAR
+                        </td>
+                        <td>${statusStyle}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="bi bi-inbox" style="font-size: 32px;"></i>
+                        <p style="margin: 10px 0 0;">No transactions yet</p>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (err) {
+        console.error('Failed to load transactions:', err);
+    }
+}
+
+async function processAllPayouts() {
+    if (!confirm('Process all pending payouts now? This will send payments to all garages with pending payouts.')) {
+        return;
+    }
+
+    showToast('Processing all payouts...', 'info');
+
+    try {
+        // Get all pending payouts
+        const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!data.payouts || data.payouts.length === 0) {
+            showToast('No pending payouts to process', 'info');
+            return;
+        }
+
+        let successCount = 0;
+        let failCount = 0;
+        const batchId = `BATCH-${Date.now()}`;
+
+        for (let i = 0; i < data.payouts.length; i++) {
+            const payout = data.payouts[i];
+            try {
+                const sendRes = await fetch(`${API_URL}/finance/payouts/${payout.payout_id}/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payout_method: 'bank_transfer',
+                        payout_reference: `${batchId}-${i + 1}`,
+                        notes: 'Bulk processed by operations'
+                    })
+                });
+
+                if (sendRes.ok) {
+                    successCount++;
+                } else {
+                    const errData = await sendRes.json();
+                    console.error(`Payout ${payout.payout_id} failed:`, errData.error);
+                    failCount++;
+                }
+            } catch (err) {
+                console.error(`Payout ${payout.payout_id} error:`, err);
+                failCount++;
+            }
+        }
+
+        if (successCount > 0) {
+            showToast(`✅ ${successCount} payment(s) sent successfully!${failCount > 0 ? ` (${failCount} failed)` : ''}`, 'success');
+        } else {
+            showToast('Failed to process payouts', 'error');
+        }
+
+        loadFinance(); // Refresh
+    } catch (err) {
+        console.error('Process all payouts error:', err);
+        showToast('Failed to process payouts', 'error');
+    }
+}
+
+// ========================================
+// REVIEW MODERATION
+// ========================================
+
+let currentReviewStatus = 'pending';
+
+async function loadReviewModeration(status = currentReviewStatus) {
+    currentReviewStatus = status;
+    const tbody = document.getElementById('reviewModerationTable');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-hourglass-split"></i> Loading...</td></tr>';
+
+    try {
+        const endpoint = status === 'pending'
+            ? `${API_URL}/reviews/pending`
+            : `${API_URL}/reviews/all?status=${status}`;
+
+        const res = await fetch(endpoint, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const reviews = data.pending_reviews || data.reviews || [];
+
+        // Update badge
+        if (status === 'pending') {
+            const badge = document.getElementById('reviewModerationBadge');
+            if (badge) {
+                badge.textContent = reviews.length;
+                badge.style.display = reviews.length > 0 ? 'inline-flex' : 'none';
+            }
+        }
+
+        if (reviews.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No ${status} reviews</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = reviews.map(r => `
+            <tr>
+                <td>${r.customer_name || 'Customer'}</td>
+                <td>${r.garage_name || 'Garage'}</td>
+                <td>
+                    <div style="display: flex; gap: 2px;">
+                        ${[1, 2, 3, 4, 5].map(i => `<i class="bi bi-star${i <= r.overall_rating ? '-fill' : ''}" style="color: #f59e0b; font-size: 12px;"></i>`).join('')}
+                    </div>
+                </td>
+                <td style="max-width: 300px;">
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${(r.review_text || '').replace(/"/g, '&quot;')}">
+                        ${r.review_text ? `"${r.review_text.substring(0, 100)}${r.review_text.length > 100 ? '...' : ''}"` : '<span style="color: var(--text-muted);">No text</span>'}
+                    </div>
+                </td>
+                <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                <td>
+                    ${status === 'pending' ? `
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="approveReview('${r.review_id}')" class="btn-sm btn-success" title="Approve">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button onclick="openRejectReviewModal('${r.review_id}')" class="btn-sm btn-danger" title="Reject">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    ` : `
+                        <span class="badge badge-${r.moderation_status === 'approved' ? 'success' : 'danger'}">
+                            ${r.moderation_status}
+                        </span>
+                    `}
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Load review moderation error:', err);
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Failed to load reviews</td></tr>';
+    }
+}
+
+async function approveReview(reviewId) {
+    try {
+        const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: 'approve' })
+        });
+
+        if (res.ok) {
+            showToast('Review approved and now visible', 'success');
+            loadReviewModeration();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to approve', 'error');
+        }
+    } catch (err) {
+        console.error('Approve review error:', err);
+        showToast('Failed to approve review', 'error');
+    }
+}
+
+function openRejectReviewModal(reviewId) {
+    const reason = prompt('Enter rejection reason (required for transparency):');
+    if (reason && reason.trim()) {
+        rejectReview(reviewId, reason.trim());
+    }
+}
+
+async function rejectReview(reviewId, reason) {
+    try {
+        const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: 'reject', rejection_reason: reason })
+        });
+
+        if (res.ok) {
+            showToast('Review rejected', 'success');
+            loadReviewModeration();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to reject', 'error');
+        }
+    } catch (err) {
+        console.error('Reject review error:', err);
+        showToast('Failed to reject review', 'error');
+    }
+}
+
+// Review Tabs
+document.addEventListener('DOMContentLoaded', () => {
+    const reviewTabs = document.getElementById('reviewTabs');
+    if (reviewTabs) {
+        reviewTabs.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab')) {
+                reviewTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                loadReviewModeration(e.target.dataset.status);
+            }
+        });
+    }
+});

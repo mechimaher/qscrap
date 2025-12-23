@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#00d26a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="QScrap Driver">
+    <meta name="description" content="QScrap delivery driver mobile app">
+
+    <title>QScrap Driver</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/driver-app/manifest.json">
+
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/driver-app/icons/icon-192.png">
+    <link rel="icon" type="image/png" href="/driver-app/icons/icon-192.png">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="/css/shared.css">
+    <link rel="stylesheet" href="/driver-app/css/driver.css">
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Auth Screen -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-logo">🚚</div>
+        <h1 class="auth-title">QScrap Driver</h1>
+        <p class="auth-subtitle">Sign in to start delivering</p>
+
+        <form class="auth-form" id="loginForm">
+            <div class="auth-error" id="loginError"></div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="loginPhone" placeholder="+974 5XXX XXXX" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Sign In
+            </button>
+        </form>
+    </div>
+
+    <!-- Main App -->
+    <div class="app" id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <span class="header-logo">🚚</span>
+                <span class="header-title">QScrap</span>
+            </div>
+            <button class="header-status" id="statusToggle">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Offline</span>
+            </button>
+        </header>
+
+        <!-- GPS Status Bar -->
+        <div class="gps-status" id="gpsStatus">
+            <span class="gps-dot"></span>
+            <span id="gpsText">GPS: Waiting...</span>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <section class="tab-content active" id="tabDashboard">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statActive">0</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statToday">0</div>
+                    <div class="stat-label">Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statWeek">0</div>
+                    <div class="stat-label">This Week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statRating">-</div>
+                    <div class="stat-label">Rating</div>
+                </div>
+            </div>
+
+            <!-- Active Assignments -->
+            <div class="section-header">
+                <span class="section-title">ACTIVE ASSIGNMENTS</span>
+            </div>
+            <div class="assignments-list" id="assignmentsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Tab -->
+        <section class="tab-content" id="tabHistory">
+            <div class="section-header">
+                <span class="section-title">DELIVERY HISTORY</span>
+            </div>
+            <div id="historyList" style="padding: 0 20px;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Tab -->
+        <section class="tab-content" id="tabProfile">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar">🚚</div>
+                <div class="profile-name" id="profileName">-</div>
+                <div class="profile-phone" id="profilePhone">-</div>
+                <div class="profile-rating">
+                    <i class="bi bi-star-fill"></i>
+                    <span id="profileRating">-</span>
+                    <span style="color: var(--text-muted);">(<span id="profileRatingCount">0</span> reviews)</span>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="profile-earnings">
+                <div class="earnings-mini-stats"
+                    style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="mini-stat"
+                        style="background: var(--bg-secondary); padding: 15px; border-radius: 12px; text-align: center;">
+                        <div class="mini-stat-value" id="profileTotalDeliveries"
+                            style="font-size: 24px; font-weight: 700; color: var(--text-primary);">0</div>
+                        <div class="mini-stat-label"
+                            style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Total Deliveries
+                        </div>
+                    </div>
+                    <div class="mini-stat"
+                        style="background: var(--bg-secondary); padding: 15px; border-radius: 12px; text-align: center;">
+                        <div class="mini-stat-value" id="profileCompletionRate"
+                            style="font-size: 24px; font-weight: 700; color: var(--accent);">100%</div>
+                        <div class="mini-stat-label"
+                            style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Completion Rate
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Info Card -->
+            <div class="profile-section">
+                <div class="section-title-mini">MY VEHICLE</div>
+                <div class="vehicle-info-card" id="vehicleInfoCard">
+                    <div class="vehicle-icon">🚗</div>
+                    <div class="vehicle-details">
+                        <div class="vehicle-type" id="profileVehicleType">-</div>
+                        <div class="vehicle-plate" id="profileVehiclePlate">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-option" onclick="showDeliveryStats()">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Detailed Statistics</span>
+                    <i class="bi bi-chevron-right chevron"></i>
+                </div>
+                <div class="profile-option" onclick="requestNotificationPermission()">
+                    <i class="bi bi-bell"></i>
+                    <span>Enable Notifications</span>
+                    <i class="bi bi-chevron-right chevron"></i>
+                </div>
+            </div>
+
+            <button class="btn logout-btn" onclick="logout()">
+                <i class="bi bi-box-arrow-left"></i>
+                Sign Out
+            </button>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="tabDashboard">
+                <i class="bi bi-house-fill"></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-tab="tabHistory">
+                <i class="bi bi-clock-history"></i>
+                <span>History</span>
+            </button>
+            <button class="nav-item" data-tab="tabProfile">
+                <i class="bi bi-person-fill"></i>
+                <span>Profile</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Assignment Detail Modal -->
+    <div class="modal-overlay" id="assignmentModal" role="dialog" aria-modal="true"
+        aria-labelledby="assignmentModalTitle">
+        <div class="modal-header">
+            <span class="modal-title" id="assignmentModalTitle">Assignment</span>
+            <span id="modalOrderNumber"></span>
+            <button class="modal-close" onclick="closeModal()" aria-label="Close modal">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <div class="modal-content" id="modalContent">
+            <!-- Dynamic content -->
+        </div>
+
+        <div class="modal-actions" id="modalActions">
+            <!-- Dynamic buttons -->
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal-overlay" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle">
+        <div class="modal-header">
+            <span class="modal-title" id="statsModalTitle">Detailed Statistics</span>
+            <button class="modal-close" onclick="closeStatsModal()" aria-label="Close modal">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-content" id="statsModalContent">
+            <!-- Dynamic stats content -->
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeStatsModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Photo Capture Modal (for delivery proof) -->
+    <div class="modal-overlay" id="photoModal" role="dialog" aria-modal="true" aria-label="Delivery Photo">
+        <div class="modal-header">
+            <span class="modal-title">📸 Delivery Photo</span>
+            <button class="modal-close" onclick="closePhotoModal()" aria-label="Close modal">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <div class="photo-capture-container">
+            <!-- Camera Preview -->
+            <div class="camera-preview" id="cameraPreview">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <div class="camera-overlay">
+                    <div class="camera-frame"></div>
+                </div>
+            </div>
+
+            <!-- Photo Preview (after capture) -->
+            <div class="photo-preview" id="photoPreview" style="display: none;">
+                <img id="capturedPhoto" src="" alt="Captured delivery photo">
+            </div>
+
+            <p class="photo-hint" id="photoHint">
+                <i class="bi bi-info-circle"></i>
+                Take a clear photo of the delivered item with recipient
+            </p>
+
+            <!-- Camera Actions -->
+            <div class="photo-actions" id="photoActions">
+                <button class="btn btn-primary btn-large" onclick="capturePhoto()">
+                    <i class="bi bi-camera-fill"></i>
+                    Capture Photo
+                </button>
+            </div>
+
+            <!-- Post-capture Actions -->
+            <div class="photo-actions" id="photoCapturedActions" style="display: none;">
+                <button class="btn btn-outline" onclick="retakePhoto()">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Retake
+                </button>
+                <button class="btn btn-success" onclick="confirmDeliveryWithPhoto()">
+                    <i class="bi bi-check-circle"></i>
+                    Confirm Delivery
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-label="Confirm Delivery">
+        <div class="confirm-modal-content">
+            <div class="confirm-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h3>Confirm Delivery?</h3>
+            <p>Please confirm the customer has received the part in good condition.</p>
+
+            <div class="confirm-actions">
+                <button class="btn btn-outline" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn btn-success" onclick="finalizeDelivery()">
+                    <i class="bi bi-check"></i>
+                    Confirm Complete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Chat Modal -->
+    <div class="modal-overlay" id="chatModal" role="dialog" aria-modal="true" aria-label="Customer Chat">
+        <div class="chat-modal">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <span class="chat-customer-name" id="chatCustomerName">Customer</span>
+                    <span class="chat-order-number" id="chatOrderNumber">#-</span>
+                </div>
+                <button class="modal-close" onclick="closeChat()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will be dynamically inserted here -->
+                <div class="chat-empty">
+                    <i class="bi bi-chat-dots"></i>
+                    <p>No messages yet. Start the conversation!</p>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500">
+                <button class="chat-send-btn" onclick="sendChatMessage()">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Shared JS utilities -->
+    <script src="/js/shared/utils.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/modal.js"></script>
+    <script src="/driver-app/js/driver.js"></script>
+</body>
+
+</html>
