@@ -536,9 +536,19 @@
                             <h3 class="form-section-title"><i class="bi bi-card-text"></i> Part Details</h3>
                             <div class="form-group">
                                 <label class="form-label">Part Description *</label>
-                                <textarea class="form-control" id="partDesc"
-                                    placeholder="Describe the part you need in detail. Include any part numbers if known."
-                                    required></textarea>
+                                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                    <textarea class="form-control" id="partDesc" style="flex: 1;"
+                                        placeholder="Describe the part you need in detail. Include any part numbers if known."
+                                        required></textarea>
+                                    <button type="button" class="voice-input-btn" id="voiceInputBtn"
+                                        onclick="toggleVoiceInput()" title="Voice Input">
+                                        <i class="bi bi-mic"></i>
+                                    </button>
+                                </div>
+                                <small
+                                    style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                                    <i class="bi bi-mic"></i> Click the microphone button to speak your description
+                                </small>
                             </div>
                             <div class="form-row two">
                                 <div class="form-group">
