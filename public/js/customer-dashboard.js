@@ -3437,3 +3437,460 @@ window.addEventListener('load', () => {
         initChatSocketListeners();
     }, 1000);
 });
+
+// ============================================================================
+// PHASE B: ORDER TIMELINE VISUAL (2030 Level)
+// ============================================================================
+
+/**
+ * Generate visual timeline HTML for order progression
+ * @param {string} status - Current order status
+ * @returns {string} HTML for timeline
+ */
+function generateOrderTimeline(status) {
+    const stages = [
+        { key: 'confirmed', icon: 'check-circle', label: 'Confirmed' },
+        { key: 'preparing', icon: 'box-seam', label: 'Preparing' },
+        { key: 'qc_passed', icon: 'shield-check', label: 'QC Passed' },
+        { key: 'in_transit', icon: 'truck', label: 'In Transit' },
+        { key: 'delivered', icon: 'house-check', label: 'Delivered' }
+    ];
+
+    const statusOrder = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_in_progress', 'qc_passed', 'in_transit', 'delivered', 'completed'];
+    const currentIndex = statusOrder.indexOf(status);
+
+    const getStageState = (stageKey) => {
+        const stageToCheck = {
+            'confirmed': 0,
+            'preparing': 1,
+            'qc_passed': 2,
+            'in_transit': 3,
+            'delivered': 4
+        };
+        const mappedIndex = {
+            'confirmed': 0, 'preparing': 1, 'ready_for_pickup': 1,
+            'collected': 2, 'qc_in_progress': 2, 'qc_passed': 2,
+            'in_transit': 3, 'delivered': 4, 'completed': 4
+        }[status] || 0;
+
+        const stageIdx = stageToCheck[stageKey];
+        if (stageIdx < mappedIndex) return 'completed';
+        if (stageIdx === mappedIndex) return 'active';
+        return 'upcoming';
+    };
+
+    const progressPercent = Math.min(100, (currentIndex / (statusOrder.length - 1)) * 100);
+
+    return `
+        <div class="order-timeline">
+            <div class="timeline-progress" style="width: ${progressPercent}%;"></div>
+            ${stages.map(stage => `
+                <div class="timeline-step ${getStageState(stage.key)}">
+                    <div class="timeline-icon">
+                        <i class="bi bi-${stage.icon}"></i>
+                    </div>
+                    <span class="timeline-label">${stage.label}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// ============================================================================
+// PHASE C: PAGINATION COMPONENT
+// ============================================================================
+
+/**
+ * Render pagination controls
+ * @param {string} containerId - Container element ID
+ * @param {object} pagination - { page, limit, total, pages }
+ * @param {string} onPageChange - Function name to call on page change
+ */
+function renderPagination(containerId, pagination, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const { page, pages, total } = pagination;
+
+    if (!pages || pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '<div class="pagination">';
+
+    // Previous button
+    html += `<button class="pagination-btn" ${page <= 1 ? 'disabled' : ''} onclick="${onPageChange}(${page - 1})">
+        <i class="bi bi-chevron-left"></i>
+    </button>`;
+
+    // Page numbers with smart ellipsis
+    const showPages = [];
+    const addPage = (p) => { if (!showPages.includes(p)) showPages.push(p); };
+
+    addPage(1);
+    for (let i = Math.max(2, page - 1); i <= Math.min(pages - 1, page + 1); i++) {
+        addPage(i);
+    }
+    if (pages > 1) addPage(pages);
+
+    showPages.sort((a, b) => a - b);
+    let lastRendered = 0;
+
+    showPages.forEach(p => {
+        if (lastRendered && p - lastRendered > 1) {
+            html += '<span class="pagination-ellipsis">...</span>';
+        }
+        html += `<button class="pagination-btn ${p === page ? 'active' : ''}" onclick="${onPageChange}(${p})">${p}</button>`;
+        lastRendered = p;
+    });
+
+    // Next button
+    html += `<button class="pagination-btn" ${page >= pages ? 'disabled' : ''} onclick="${onPageChange}(${page + 1})">
+        <i class="bi bi-chevron-right"></i>
+    </button>`;
+
+    html += `<span class="pagination-info">Page ${page} of ${pages} (${total} items)</span>`;
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ============================================================================
+// SKELETON LOADERS
+// ============================================================================
+
+function showSkeletonLoader(containerId, count = 3, type = 'card') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        if (type === 'card') {
+            html += `
+                <div class="skeleton-card">
+                    <div class="skeleton-text title skeleton-shimmer"></div>
+                    <div class="skeleton-text long skeleton-shimmer"></div>
+                    <div class="skeleton-text medium skeleton-shimmer"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 16px;">
+                        <div class="skeleton-btn skeleton-shimmer"></div>
+                        <div class="skeleton-btn skeleton-shimmer"></div>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'row') {
+            html += `
+                <div class="skeleton-card" style="display: flex; align-items: center; gap: 16px; padding: 16px;">
+                    <div class="skeleton-avatar skeleton-shimmer"></div>
+                    <div style="flex: 1;">
+                        <div class="skeleton-text medium skeleton-shimmer"></div>
+                        <div class="skeleton-text short skeleton-shimmer"></div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    container.innerHTML = html;
+}
+
+function hideSkeletonLoader(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const skeletons = container.querySelectorAll('.skeleton-card');
+    skeletons.forEach(s => s.remove());
+}
+
+// ============================================================================
+// PHASE D: VOICE INPUT (Web Speech API - FREE)
+// ============================================================================
+
+let voiceRecognition = null;
+let isListening = false;
+
+function initVoiceInput() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        console.log('Voice input not supported');
+        return false;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    voiceRecognition = new SpeechRecognition();
+    voiceRecognition.continuous = false;
+    voiceRecognition.interimResults = true;
+    voiceRecognition.lang = 'en-US'; // Can switch to 'ar-QA' for Arabic
+
+    voiceRecognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join('');
+
+        const partDescInput = document.getElementById('partDescription');
+        if (partDescInput) {
+            partDescInput.value = transcript;
+        }
+    };
+
+    voiceRecognition.onend = () => {
+        isListening = false;
+        updateVoiceButtonState();
+    };
+
+    voiceRecognition.onerror = (event) => {
+        console.error('Voice recognition error:', event.error);
+        isListening = false;
+        updateVoiceButtonState();
+        showToast('Voice input error. Please try again.', 'error');
+    };
+
+    return true;
+}
+
+function toggleVoiceInput() {
+    if (!voiceRecognition) {
+        if (!initVoiceInput()) {
+            showToast('Voice input not supported in this browser', 'error');
+            return;
+        }
+    }
+
+    if (isListening) {
+        voiceRecognition.stop();
+        isListening = false;
+    } else {
+        voiceRecognition.start();
+        isListening = true;
+        showToast('Listening... Speak now', 'info');
+    }
+
+    updateVoiceButtonState();
+}
+
+function updateVoiceButtonState() {
+    const btn = document.getElementById('voiceInputBtn');
+    if (btn) {
+        if (isListening) {
+            btn.classList.add('listening');
+            btn.innerHTML = '<i class="bi bi-mic-fill"></i>';
+        } else {
+            btn.classList.remove('listening');
+            btn.innerHTML = '<i class="bi bi-mic"></i>';
+        }
+    }
+}
+
+// Switch voice language
+function setVoiceLanguage(lang) {
+    if (voiceRecognition) {
+        voiceRecognition.lang = lang; // 'en-US' or 'ar-QA'
+    }
+}
+
+// ============================================================================
+// PHASE D: BID URGENCY CALCULATION
+// ============================================================================
+
+/**
+ * Calculate urgency level for a request based on bid count and time
+ * @param {object} request - Request object
+ * @returns {object} { level: 'hot'|'warm'|'cool', label: string }
+ */
+function getBidUrgency(request) {
+    const bidCount = request.bid_count || 0;
+    const createdAt = new Date(request.created_at);
+    const hoursOld = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+
+    // Hot: many bids and relatively new
+    if (bidCount >= 5 || (bidCount >= 3 && hoursOld < 6)) {
+        return { level: 'hot', label: '🔥 Hot' };
+    }
+
+    // Warm: some interest
+    if (bidCount >= 2 || hoursOld < 12) {
+        return { level: 'warm', label: '⚡ Active' };
+    }
+
+    // Cool: low interest or old
+    return { level: 'cool', label: '✓ Open' };
+}
+
+/**
+ * Get time remaining until request expires (72h default)
+ * @param {string} createdAt - ISO date string
+ * @returns {object} { text: string, isUrgent: boolean }
+ */
+function getTimeRemaining(createdAt) {
+    const created = new Date(createdAt);
+    const expires = new Date(created.getTime() + 72 * 60 * 60 * 1000);
+    const hoursLeft = (expires - Date.now()) / (1000 * 60 * 60);
+
+    if (hoursLeft <= 0) {
+        return { text: 'Expired', isUrgent: true };
+    } else if (hoursLeft < 12) {
+        return { text: `${Math.floor(hoursLeft)}h left`, isUrgent: true };
+    } else if (hoursLeft < 24) {
+        return { text: `${Math.floor(hoursLeft)}h left`, isUrgent: false };
+    } else {
+        const days = Math.floor(hoursLeft / 24);
+        const hours = Math.floor(hoursLeft % 24);
+        return { text: `${days}d ${hours}h left`, isUrgent: false };
+    }
+}
+
+// ============================================================================
+// PHASE D: SMART RECOMMENDATIONS (Database-driven, no external AI)
+// ============================================================================
+
+let recentSearches = [];
+
+/**
+ * Track user search/request for recommendations
+ * @param {object} searchData - { car_make, car_model, part_category }
+ */
+function trackSearch(searchData) {
+    recentSearches.push({
+        ...searchData,
+        timestamp: Date.now()
+    });
+    // Keep only last 10
+    if (recentSearches.length > 10) {
+        recentSearches.shift();
+    }
+    localStorage.setItem('qscrap_searches', JSON.stringify(recentSearches));
+}
+
+/**
+ * Get recommendations based on user history
+ * @returns {array} Array of recommendation objects
+ */
+function getRecommendations() {
+    // Load from localStorage
+    const saved = localStorage.getItem('qscrap_searches');
+    if (saved) {
+        recentSearches = JSON.parse(saved);
+    }
+
+    // Extract patterns
+    const carMakes = recentSearches.map(s => s.car_make).filter(Boolean);
+    const categories = recentSearches.map(s => s.part_category).filter(Boolean);
+
+    // Return most common
+    const recommendations = [];
+
+    // Most searched car make
+    if (carMakes.length > 0) {
+        const topMake = mode(carMakes);
+        recommendations.push({
+            type: 'car',
+            label: `Parts for ${topMake}`,
+            action: () => document.getElementById('carMake').value = topMake
+        });
+    }
+
+    // Most searched category
+    if (categories.length > 0) {
+        const topCategory = mode(categories);
+        recommendations.push({
+            type: 'category',
+            label: `Popular: ${topCategory}`,
+            action: () => { selectedCategory = topCategory; }
+        });
+    }
+
+    return recommendations;
+}
+
+// Helper: find mode (most frequent) in array
+function mode(arr) {
+    const freq = {};
+    arr.forEach(item => freq[item] = (freq[item] || 0) + 1);
+    return Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b);
+}
+
+/**
+ * Render recommendations UI
+ */
+function renderRecommendations() {
+    const recommendations = getRecommendations();
+    if (recommendations.length === 0) return;
+
+    const container = document.getElementById('recommendationsContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="recommendation-card">
+            <div class="recommendation-title">
+                <i class="bi bi-lightbulb"></i> Quick Fill
+            </div>
+            <div class="recommendation-items">
+                ${recommendations.map((r, i) => `
+                    <div class="recommendation-item" onclick="applyRecommendation(${i})">
+                        <i class="bi bi-${r.type === 'car' ? 'car-front' : 'tag'}"></i>
+                        <span>${r.label}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function applyRecommendation(index) {
+    const recommendations = getRecommendations();
+    if (recommendations[index] && recommendations[index].action) {
+        recommendations[index].action();
+        showToast('Applied!', 'success');
+    }
+}
+
+// ============================================================================
+// PHASE D: PRICE ALERTS (Notify when bid below target)
+// ============================================================================
+
+let priceAlerts = [];
+
+function loadPriceAlerts() {
+    const saved = localStorage.getItem('qscrap_price_alerts');
+    if (saved) priceAlerts = JSON.parse(saved);
+}
+
+function savePriceAlerts() {
+    localStorage.setItem('qscrap_price_alerts', JSON.stringify(priceAlerts));
+}
+
+/**
+ * Set a price alert for a request
+ * @param {string} requestId 
+ * @param {number} targetPrice 
+ */
+function setPriceAlert(requestId, targetPrice) {
+    loadPriceAlerts();
+    priceAlerts = priceAlerts.filter(a => a.requestId !== requestId);
+    priceAlerts.push({ requestId, targetPrice, createdAt: Date.now() });
+    savePriceAlerts();
+    showToast(`Alert set! We'll notify you when a bid is ≤ ${targetPrice} QAR`, 'success');
+}
+
+/**
+ * Check if any bids meet price alert criteria
+ * @param {array} requests - Array of requests with bids
+ */
+function checkPriceAlerts(requests) {
+    loadPriceAlerts();
+
+    requests.forEach(req => {
+        const alert = priceAlerts.find(a => a.requestId === req.request_id);
+        if (!alert) return;
+
+        const lowestBid = Math.min(...(req.bids || []).map(b => b.price));
+        if (lowestBid <= alert.targetPrice) {
+            showToast(`🎉 Price Alert: A bid of ${lowestBid} QAR meets your target!`, 'success');
+            playNotificationSound();
+            // Remove triggered alert
+            priceAlerts = priceAlerts.filter(a => a.requestId !== req.request_id);
+            savePriceAlerts();
+        }
+    });
+}
+
+// Initialize recommendations on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderRecommendations, 1000);
+});
