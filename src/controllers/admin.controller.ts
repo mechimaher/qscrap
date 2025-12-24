@@ -442,7 +442,7 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
                 (SELECT COUNT(*) FROM users WHERE user_type = 'driver') as total_drivers,
                 (SELECT COUNT(*) FROM orders WHERE order_status IN ('confirmed', 'preparing', 'in_transit')) as active_orders,
                 (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as open_disputes,
-                (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE order_status = 'completed' AND created_at > NOW() - INTERVAL '30 days') as monthly_revenue
+                (SELECT COALESCE(SUM(platform_fee), 0) FROM orders WHERE order_status = 'completed' AND created_at > NOW() - INTERVAL '30 days') as monthly_revenue
         `);
 
         res.json({
