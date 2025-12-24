@@ -1,5 +1,5 @@
 // QScrap Driver App - Service Worker
-const CACHE_NAME = 'qscrap-driver-v1';
+const CACHE_NAME = 'qscrap-driver-v3';
 const ASSETS_TO_CACHE = [
     '/driver-app/',
     '/driver-app/index.html',

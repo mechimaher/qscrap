@@ -1123,6 +1123,22 @@ async function loadRequests() {
                                                             <button class="btn-accept" onclick="acceptBid('${b.bid_id}')">Accept Original</button>
                                                         </div>
                                                     `;
+                            } else if (b.last_garage_offer_amount && b.last_garage_offer_amount != b.bid_amount) {
+                                // Negotiation ended (rounds exhausted or declined) - show last garage offer
+                                return `
+                                                        <div class="counter-action-badge final-offer">
+                                                            <i class="bi bi-tag-fill"></i> 
+                                                            <span>Garage's Last Offer: <strong>${b.last_garage_offer_amount} QAR</strong></span>
+                                                        </div>
+                                                        <div class="bid-actions-grid">
+                                                            <button class="btn-reject" onclick="rejectBid('${b.bid_id}')">
+                                                                <i class="bi bi-x-lg"></i> Reject
+                                                            </button>
+                                                            <button class="btn-accept" onclick="acceptLastGarageOffer('${b.bid_id}')">
+                                                                <i class="bi bi-cart-check"></i> Accept ${b.last_garage_offer_amount} QAR
+                                                            </button>
+                                                        </div>
+                                                    `;
                             } else {
                                 // Normal state - can negotiate
                                 return `
@@ -1193,6 +1209,29 @@ async function acceptBid(bidId) {
             switchSection('orders');
         } else {
             showToast(data.error || 'Failed', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Accept garage's last offer (when negotiation rounds are exhausted)
+async function acceptLastGarageOffer(bidId) {
+    if (!confirm('Accept the garage\'s final offer and proceed to payment?')) return;
+    try {
+        const res = await fetch(`${API_URL}/negotiations/bids/${bidId}/accept-last-offer`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`Accepted at ${data.final_amount} QAR! Now accept the bid to create order.`, 'success');
+            loadRequests();
+        } else {
+            showToast(data.error || 'Failed to accept offer', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');
