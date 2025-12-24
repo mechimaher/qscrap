@@ -457,6 +457,28 @@ function renderAssignmentModal(a) {
         </div>
         `}
 
+        ${a.delivery_notes || a.driver_notes ? `
+        <div class="notes-banner" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <i class="bi bi-info-circle" style="font-size: 20px; margin-top: 2px;"></i>
+                <div>
+                    <div style="font-weight: 600;">Delivery Instructions</div>
+                    <div style="font-size: 13px; opacity: 0.95; margin-top: 4px;">${escapeHTML(a.delivery_notes || a.driver_notes)}</div>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+
+        ${a.estimated_delivery ? `
+        <div class="eta-banner" style="background: rgba(255,255,255,0.1); padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.2);">
+            <i class="bi bi-clock" style="font-size: 18px;"></i>
+            <div>
+                <span style="font-size: 12px; opacity: 0.8;">ETA</span>
+                <div style="font-weight: 600;">${formatDate(a.estimated_delivery)}</div>
+            </div>
+        </div>
+        ` : ''}
+
         <div class="detail-section">
             <div class="detail-section-title">Order Details</div>
             <div class="detail-card">
@@ -737,7 +759,7 @@ function stopGpsTracking() {
 }
 
 let lastLocationSent = 0;
-const LOCATION_INTERVAL = 15000; // 15 seconds to avoid rate limiting
+const LOCATION_INTERVAL = 5000; // 5 seconds - matches backend rate limit
 
 async function sendLocation(lat, lng, accuracy, heading, speed) {
     const now = Date.now();
