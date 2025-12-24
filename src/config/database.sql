@@ -43,14 +43,42 @@ CREATE TABLE IF NOT EXISTS garages (
     fulfillment_rate DECIMAL(5,2) DEFAULT 100.00,
     response_time_avg_minutes INT DEFAULT 0,
     is_verified BOOLEAN DEFAULT false,
-    -- Qatar Business Compliance (added via migration)
+    -- Qatar Business Compliance
     cr_number VARCHAR(50),              -- Commercial Registration Number
     bank_name VARCHAR(100),             -- Bank name for payouts
     bank_account VARCHAR(50),           -- Bank account number
     iban VARCHAR(50),                   -- International Bank Account Number
+    -- Admin Approval Workflow (Demo Trial System)
+    approval_status VARCHAR(20) DEFAULT 'demo' CHECK (approval_status IN ('pending', 'approved', 'rejected', 'demo', 'expired')),
+    approval_date TIMESTAMP,
+    approved_by UUID REFERENCES users(user_id),
+    rejection_reason TEXT,
+    demo_expires_at TIMESTAMP,          -- Auto-set to NOW() + 30 days on registration
+    admin_notes TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Garage approval workflow indexes
+CREATE INDEX IF NOT EXISTS idx_garages_approval_status ON garages(approval_status);
+CREATE INDEX IF NOT EXISTS idx_garages_approval_pending ON garages(approval_status, created_at) WHERE approval_status = 'pending';
+
+-- 1.3 Admin Audit Log (for tracking admin actions)
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+    log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    admin_id UUID REFERENCES users(user_id),
+    action_type VARCHAR(50) NOT NULL,
+    target_type VARCHAR(50) NOT NULL,
+    target_id UUID NOT NULL,
+    old_value JSONB,
+    new_value JSONB,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_admin ON admin_audit_log(admin_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_target ON admin_audit_log(target_type, target_id);
 
 -- 1.3 Customer Addresses
 CREATE TABLE IF NOT EXISTS customer_addresses (

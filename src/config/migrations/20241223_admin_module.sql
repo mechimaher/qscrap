@@ -6,7 +6,7 @@
 
 -- Add approval workflow columns to garages table
 ALTER TABLE garages ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) 
-    DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected', 'demo'));
+    DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected', 'demo', 'expired'));
 
 ALTER TABLE garages ADD COLUMN IF NOT EXISTS approval_date TIMESTAMP;
 ALTER TABLE garages ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES users(user_id);
