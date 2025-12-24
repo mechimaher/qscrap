@@ -100,50 +100,124 @@ async function loadDashboard() {
         const data = await res.json();
 
         if (data.stats) {
-            document.getElementById('statPending').textContent = data.stats.pending_approvals || 0;
-            document.getElementById('statApproved').textContent = data.stats.approved_garages || 0;
-            document.getElementById('statDemos').textContent = data.stats.active_demos || 0;
-            document.getElementById('statCustomers').textContent = data.stats.total_customers || 0;
-            document.getElementById('statDrivers').textContent = data.stats.total_drivers || 0;
-            document.getElementById('statActiveOrders').textContent = data.stats.active_orders || 0;
+            // Format revenue with currency
+            const revenue = parseFloat(data.stats.monthly_revenue || 0);
+            const formattedRevenue = revenue >= 1000
+                ? `${(revenue / 1000).toFixed(1)}K`
+                : revenue.toFixed(0);
+
+            // Animate stat updates for smooth UX
+            animateStat('statRevenue', `QAR ${formattedRevenue}`);
+            animateStat('statActiveOrders', data.stats.active_orders || 0);
+            animateStat('statPending', data.stats.pending_approvals || 0);
+            animateStat('statDisputes', data.stats.open_disputes || 0);
+            animateStat('statApproved', data.stats.approved_garages || 0);
+            animateStat('statDemos', data.stats.active_demos || 0);
+            animateStat('statExpired', data.stats.expired_demos || 0);
+            animateStat('statCustomers', data.stats.total_customers || 0);
+            animateStat('statDrivers', data.stats.total_drivers || 0);
 
             // Update pending badge
             const pendingCount = data.stats.pending_approvals || 0;
             const badge = document.getElementById('pendingBadge');
-            badge.textContent = pendingCount;
-            badge.style.display = pendingCount > 0 ? 'inline' : 'none';
+            if (badge) {
+                badge.textContent = pendingCount;
+                badge.style.display = pendingCount > 0 ? 'inline' : 'none';
+            }
+
+            // Highlight warning states
+            const disputeCard = document.querySelector('.stat-card.danger');
+            if (disputeCard && data.stats.open_disputes > 0) {
+                disputeCard.classList.add('pulse');
+            }
         }
     } catch (err) {
         console.error('Failed to load dashboard:', err);
     }
 }
 
+// Animate stat value updates for smooth UX
+function animateStat(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    el.style.opacity = '0.5';
+    el.style.transform = 'scale(0.95)';
+
+    setTimeout(() => {
+        el.textContent = value;
+        el.style.opacity = '1';
+        el.style.transform = 'scale(1)';
+    }, 150);
+}
+
 // ============================================
-// PENDING APPROVALS
+// PENDING APPROVALS / GARAGE APPROVALS
 // ============================================
 
-async function loadPendingGarages() {
+let approvalSearchDebounce = null;
+
+function debounceApprovalSearch() {
+    clearTimeout(approvalSearchDebounce);
+    approvalSearchDebounce = setTimeout(() => loadPendingGarages(1), 300);
+}
+
+async function loadPendingGarages(page = 1) {
     const container = document.getElementById('pendingList');
-    container.innerHTML = '<div class="empty-state"><i class="bi bi-hourglass"></i><p>Loading...</p></div>';
+    const statusFilter = document.getElementById('approvalStatusFilter')?.value || 'pending';
+    const search = document.getElementById('approvalSearch')?.value || '';
+
+    // Show skeleton loading state
+    container.innerHTML = Array(4).fill(0).map(() => `
+        <div class="garage-card skeleton-card">
+            <div class="skeleton skeleton-text medium"></div>
+            <div class="skeleton skeleton-text short"></div>
+            <div class="skeleton skeleton-text full" style="height: 60px; margin-top: 12px;"></div>
+        </div>
+    `).join('');
 
     try {
-        const res = await fetch(`${API_URL}/admin/garages/pending`, {
+        let url = `${API_URL}/admin/garages/pending?page=${page}&status=${statusFilter}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+
+        const res = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
 
         if (data.garages && data.garages.length > 0) {
-            container.innerHTML = data.garages.map(g => renderGarageCard(g, true)).join('');
+            container.innerHTML = data.garages.map(g => renderGarageCard(g, statusFilter === 'pending')).join('');
+            renderPagination('approvalsPagination', data.pagination, 'loadPendingGarages', { showInfo: true });
         } else {
+            const emptyMessages = {
+                pending: { icon: 'check-circle', text: 'No pending approvals! All caught up.' },
+                demo: { icon: 'clock-history', text: 'No garages currently in demo period.' },
+                expired: { icon: 'hourglass-bottom', text: 'No expired demos found.' },
+                rejected: { icon: 'x-circle', text: 'No rejected applications.' }
+            };
+            const msg = emptyMessages[statusFilter] || { icon: 'inbox', text: 'No garages found.' };
+
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="bi bi-check-circle"></i>
-                    <p>No pending approvals! All caught up.</p>
+                    <i class="bi bi-${msg.icon}"></i>
+                    <p>${msg.text}</p>
+                    ${search ? '<span style="font-size: 13px; color: var(--text-muted);">Try adjusting your search</span>' : ''}
                 </div>
             `;
+            document.getElementById('approvalsPagination').innerHTML = '';
         }
     } catch (err) {
-        container.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load</p></div>';
+        console.error('loadPendingGarages error:', err);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Failed to load garages</p>
+                <button class="btn btn-outline" onclick="loadPendingGarages(${page})">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
+        document.getElementById('approvalsPagination').innerHTML = '';
     }
 }
 

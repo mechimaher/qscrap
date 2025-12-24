@@ -91,6 +91,21 @@
 
                 <!-- Stats Grid -->
                 <div class="stats-grid" id="statsGrid">
+                    <!-- Row 1: Key Business Metrics -->
+                    <div class="stat-card revenue">
+                        <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statRevenue">-</span>
+                            <span class="stat-label">Revenue (30d)</span>
+                        </div>
+                    </div>
+                    <div class="stat-card primary">
+                        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statActiveOrders">-</span>
+                            <span class="stat-label">Active Orders</span>
+                        </div>
+                    </div>
                     <div class="stat-card pending">
                         <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
                         <div class="stat-content">
@@ -98,8 +113,17 @@
                             <span class="stat-label">Pending Approvals</span>
                         </div>
                     </div>
+                    <div class="stat-card danger">
+                        <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statDisputes">-</span>
+                            <span class="stat-label">Open Disputes</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: User/Garage Metrics -->
                     <div class="stat-card success">
-                        <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                        <div class="stat-icon"><i class="bi bi-shop"></i></div>
                         <div class="stat-content">
                             <span class="stat-value" id="statApproved">-</span>
                             <span class="stat-label">Approved Garages</span>
@@ -110,6 +134,13 @@
                         <div class="stat-content">
                             <span class="stat-value" id="statDemos">-</span>
                             <span class="stat-label">Active Demos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card expired">
+                        <div class="stat-icon"><i class="bi bi-hourglass-bottom"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statExpired">-</span>
+                            <span class="stat-label">Expired Demos</span>
                         </div>
                     </div>
                     <div class="stat-card info">
@@ -124,13 +155,6 @@
                         <div class="stat-content">
                             <span class="stat-value" id="statDrivers">-</span>
                             <span class="stat-label">Drivers</span>
-                        </div>
-                    </div>
-                    <div class="stat-card primary">
-                        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
-                        <div class="stat-content">
-                            <span class="stat-value" id="statActiveOrders">-</span>
-                            <span class="stat-label">Active Orders</span>
                         </div>
                     </div>
                 </div>
@@ -158,15 +182,20 @@
             <!-- Approvals Section -->
             <section class="section" id="sectionApprovals">
                 <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-person-check"></i> Pending Approvals</h1>
-                    <p>Review and approve new garage registrations</p>
-                </div>
-                <div id="pendingList" class="cards-grid">
-                    <div class="empty-state">
-                        <i class="bi bi-hourglass"></i>
-                        <p>Loading pending approvals...</p>
+                    <h1 class="page-title"><i class="bi bi-person-check"></i> Garage Approvals</h1>
+                    <div class="header-actions">
+                        <select id="approvalStatusFilter" onchange="loadPendingGarages(1)">
+                            <option value="pending">Pending Approval</option>
+                            <option value="demo">Active Demo</option>
+                            <option value="expired">Expired Demo</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <input type="text" id="approvalSearch" placeholder="Search garages..."
+                            onkeyup="debounceApprovalSearch()">
                     </div>
                 </div>
+                <div id="pendingList" class="cards-grid"></div>
+                <div id="approvalsPagination" class="pagination-container"></div>
             </section>
 
             <!-- Garages Section -->

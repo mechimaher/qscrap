@@ -15,10 +15,39 @@ const DEMO_PERIOD_DAYS = 30;
 // ============================================================================
 
 /**
- * Get pending garage approvals queue
+ * Get garage approvals with filters and pagination
  */
 export const getPendingGarages = async (req: AuthRequest, res: Response) => {
+    const { status = 'pending', search, page = 1, limit = 12 } = req.query;
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.min(50, Math.max(1, Number(limit)));
+    const offset = (pageNum - 1) * limitNum;
+
     try {
+        let whereClause = 'WHERE 1=1';
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        // Status filter
+        if (status && status !== 'all') {
+            whereClause += ` AND g.approval_status = $${paramIndex++}`;
+            params.push(status);
+        }
+
+        // Search filter
+        if (search) {
+            whereClause += ` AND (g.garage_name ILIKE $${paramIndex} OR u.phone_number ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+
+        // Get total count
+        const countResult = await pool.query(
+            `SELECT COUNT(*) FROM garages g JOIN users u ON g.garage_id = u.user_id ${whereClause}`,
+            params
+        );
+        const total = parseInt(countResult.rows[0].count);
+
         const result = await pool.query(`
             SELECT 
                 g.*,
@@ -27,20 +56,31 @@ export const getPendingGarages = async (req: AuthRequest, res: Response) => {
                 u.full_name,
                 u.created_at as registration_date,
                 u.is_active,
-                u.is_suspended
+                u.is_suspended,
+                CASE 
+                    WHEN g.demo_expires_at IS NOT NULL THEN 
+                        EXTRACT(DAYS FROM (g.demo_expires_at - NOW()))::int
+                    ELSE NULL 
+                END as demo_days_left
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
-            WHERE g.approval_status = 'pending' OR g.approval_status IS NULL
-            ORDER BY g.created_at ASC
-        `);
+            ${whereClause}
+            ORDER BY g.created_at DESC
+            LIMIT $${paramIndex++} OFFSET $${paramIndex}
+        `, [...params, limitNum, offset]);
 
         res.json({
-            pending_count: result.rows.length,
-            garages: result.rows
+            garages: result.rows,
+            pagination: {
+                current_page: pageNum,
+                total_pages: Math.ceil(total / limitNum),
+                total,
+                limit: limitNum
+            }
         });
     } catch (err: any) {
         console.error('[ADMIN] getPendingGarages error:', err);
-        res.status(500).json({ error: 'Failed to fetch pending garages' });
+        res.status(500).json({ error: 'Failed to fetch garages' });
     }
 };
 

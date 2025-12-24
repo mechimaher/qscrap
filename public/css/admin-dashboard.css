@@ -212,6 +212,38 @@
     background: linear-gradient(135deg, #6366f1, #4f46e5);
 }
 
+.stat-card.revenue .stat-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-card.danger .stat-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.stat-card.expired .stat-icon {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.stat-card.pulse {
+    animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+
+    0%,
+    100% {
+        box-shadow: var(--shadow-sm);
+    }
+
+    50% {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), var(--shadow-md);
+    }
+}
+
+.stat-value {
+    transition: all 0.15s ease;
+}
+
 .stat-value {
     font-size: 28px;
     font-weight: 800;
