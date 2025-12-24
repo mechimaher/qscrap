@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getDeliveryFeeForLocation } from './delivery.controller';
 
 // Get commission rate based on garage's status and subscription
 // BUSINESS LOGIC:
@@ -69,7 +70,19 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
         // Calculate Fees
         const part_price = parseFloat(bid.bid_amount);
         const platform_fee = Math.round(part_price * commissionRate * 100) / 100;
-        const delivery_fee = 25.00;
+
+        // Get zone-based delivery fee if GPS coordinates available
+        let delivery_fee = 25.00; // Default fallback
+        let delivery_zone_id: number | null = null;
+        if (request.delivery_latitude && request.delivery_longitude) {
+            const zoneInfo = await getDeliveryFeeForLocation(
+                parseFloat(request.delivery_latitude),
+                parseFloat(request.delivery_longitude)
+            );
+            delivery_fee = zoneInfo.fee;
+            delivery_zone_id = zoneInfo.zone_id;
+        }
+
         const total_amount = part_price + delivery_fee;
         const garage_payout = part_price - platform_fee;
 

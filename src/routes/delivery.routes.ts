@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import { authorizeOperations } from '../middleware/authorize.middleware';
+import { authorizeOperations, authorizeAdmin } from '../middleware/authorize.middleware';
 import {
     getDrivers,
     getDriverDetails,
@@ -15,12 +15,22 @@ import {
     updateDeliveryStatus,
     getDeliveryStats,
     updateDriverLocation,
-    getActiveDeliveries
+    getActiveDeliveries,
+    calculateDeliveryFee,
+    getDeliveryZones,
+    updateZoneFee
 } from '../controllers/delivery.controller';
 
 const router = Router();
 
-// All delivery routes require authentication AND operations authorization
+// Zone routes - Public (for customer fee preview) or authenticated
+router.get('/zones', authenticate, getDeliveryZones);
+router.post('/calculate-fee', authenticate, calculateDeliveryFee);
+
+// Admin-only zone management
+router.patch('/zones/:zone_id', authenticate, authorizeAdmin, updateZoneFee);
+
+// All other delivery routes require authentication AND operations authorization
 router.use(authenticate);
 router.use(authorizeOperations);
 

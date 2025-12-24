@@ -995,3 +995,173 @@ export const getActiveDeliveries = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// ============================================
+// ZONE-BASED DELIVERY FEES
+// ============================================
+
+// Haversine formula to calculate distance between two GPS coordinates
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+}
+
+// Get primary hub location
+async function getPrimaryHub(): Promise<{ latitude: number; longitude: number; hub_name: string }> {
+    const result = await pool.query(`
+        SELECT latitude, longitude, hub_name 
+        FROM hub_locations 
+        WHERE is_primary = true AND is_active = true 
+        LIMIT 1
+    `);
+
+    if (result.rows.length === 0) {
+        // Default to Industrial Area if no hub configured
+        return { latitude: 25.2348, longitude: 51.4839, hub_name: 'Industrial Area Hub' };
+    }
+
+    return result.rows[0];
+}
+
+// Calculate delivery fee based on GPS coordinates
+export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
+    const { latitude, longitude } = req.body;
+
+    if (!latitude || !longitude) {
+        return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    try {
+        const hub = await getPrimaryHub();
+        const distance = calculateDistance(
+            hub.latitude, hub.longitude,
+            parseFloat(latitude), parseFloat(longitude)
+        );
+
+        // Find matching zone based on distance
+        const zoneResult = await pool.query(`
+            SELECT zone_id, zone_name, delivery_fee, min_distance_km, max_distance_km
+            FROM delivery_zones
+            WHERE is_active = true AND $1 >= min_distance_km AND $1 < max_distance_km
+            ORDER BY min_distance_km ASC LIMIT 1
+        `, [distance]);
+
+        let zone;
+        if (zoneResult.rows.length === 0) {
+            // Default to highest zone if outside all zones
+            const defaultZone = await pool.query(`
+                SELECT zone_id, zone_name, delivery_fee, min_distance_km, max_distance_km
+                FROM delivery_zones WHERE is_active = true
+                ORDER BY max_distance_km DESC LIMIT 1
+            `);
+            zone = defaultZone.rows[0] || { zone_id: null, zone_name: 'Remote', delivery_fee: 50 };
+        } else {
+            zone = zoneResult.rows[0];
+        }
+
+        res.json({
+            success: true,
+            delivery_fee: parseFloat(zone.delivery_fee),
+            zone: {
+                zone_id: zone.zone_id,
+                zone_name: zone.zone_name,
+                min_km: zone.min_distance_km,
+                max_km: zone.max_distance_km
+            },
+            distance_km: Math.round(distance * 10) / 10,
+            hub: { name: hub.hub_name, latitude: hub.latitude, longitude: hub.longitude }
+        });
+    } catch (err: any) {
+        console.error('[DELIVERY] calculateDeliveryFee error:', err);
+        res.status(500).json({ error: 'Failed to calculate delivery fee' });
+    }
+};
+
+// Get all active delivery zones
+export const getDeliveryZones = async (_req: AuthRequest, res: Response) => {
+    try {
+        const result = await pool.query(`
+            SELECT zone_id, zone_name, min_distance_km, max_distance_km, delivery_fee
+            FROM delivery_zones WHERE is_active = true ORDER BY min_distance_km ASC
+        `);
+        const hub = await getPrimaryHub();
+        res.json({ zones: result.rows, hub });
+    } catch (err: any) {
+        console.error('[DELIVERY] getDeliveryZones error:', err);
+        res.status(500).json({ error: 'Failed to fetch delivery zones' });
+    }
+};
+
+// Admin: Update zone fee
+export const updateZoneFee = async (req: AuthRequest, res: Response) => {
+    const { zone_id } = req.params;
+    const { delivery_fee, reason } = req.body;
+    const adminId = req.user!.userId;
+
+    if (!delivery_fee || delivery_fee < 0) {
+        return res.status(400).json({ error: 'Valid delivery fee is required' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const currentResult = await client.query(
+            'SELECT delivery_fee FROM delivery_zones WHERE zone_id = $1', [zone_id]
+        );
+        if (currentResult.rows.length === 0) throw new Error('Zone not found');
+        const oldFee = currentResult.rows[0].delivery_fee;
+
+        const updateResult = await client.query(`
+            UPDATE delivery_zones SET delivery_fee = $1, updated_at = NOW()
+            WHERE zone_id = $2 RETURNING *
+        `, [delivery_fee, zone_id]);
+
+        await client.query(`
+            INSERT INTO delivery_zone_history (zone_id, old_fee, new_fee, changed_by, reason)
+            VALUES ($1, $2, $3, $4, $5)
+        `, [zone_id, oldFee, delivery_fee, adminId, reason || 'Admin update']);
+
+        await client.query('COMMIT');
+        res.json({ message: 'Zone fee updated successfully', zone: updateResult.rows[0] });
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        console.error('[DELIVERY] updateZoneFee error:', err);
+        res.status(400).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+};
+
+// Get delivery fee for an order (internal use - called from order.controller.ts)
+export async function getDeliveryFeeForLocation(lat: number, lng: number): Promise<{
+    fee: number; zone_id: number | null; zone_name: string; distance_km: number;
+}> {
+    const hub = await getPrimaryHub();
+    const distance = calculateDistance(hub.latitude, hub.longitude, lat, lng);
+
+    const zoneResult = await pool.query(`
+        SELECT zone_id, zone_name, delivery_fee FROM delivery_zones
+        WHERE is_active = true AND $1 >= min_distance_km AND $1 < max_distance_km
+        ORDER BY min_distance_km ASC LIMIT 1
+    `, [distance]);
+
+    if (zoneResult.rows.length === 0) {
+        const defaultZone = await pool.query(`
+            SELECT zone_id, zone_name, delivery_fee FROM delivery_zones
+            WHERE is_active = true ORDER BY max_distance_km DESC LIMIT 1
+        `);
+        const zone = defaultZone.rows[0] || { zone_id: null, zone_name: 'Remote', delivery_fee: 50 };
+        return { fee: parseFloat(zone.delivery_fee), zone_id: zone.zone_id, zone_name: zone.zone_name, distance_km: Math.round(distance * 10) / 10 };
+    }
+
+    const zone = zoneResult.rows[0];
+    return { fee: parseFloat(zone.delivery_fee), zone_id: zone.zone_id, zone_name: zone.zone_name, distance_km: Math.round(distance * 10) / 10 };
+}

@@ -14,7 +14,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
                 (SELECT COUNT(*) FROM orders WHERE order_status = 'in_transit') as in_transit,
                 (SELECT COUNT(*) FROM orders WHERE order_status = 'delivered') as awaiting_confirmation,
                 (SELECT COUNT(*) FROM orders WHERE order_status = 'ready_for_pickup') as ready_for_pickup,
-                (SELECT COALESCE(SUM(platform_fee), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as revenue_today,
+                (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as revenue_today,
                 (SELECT COUNT(*) FROM part_requests WHERE status = 'active') as pending_requests,
                 (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
                 (SELECT COUNT(*) FROM garages) as total_garages
@@ -679,15 +679,15 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
                 COUNT(*) FILTER (WHERE order_status = 'in_transit') as in_transit,
                 COUNT(*) FILTER (WHERE order_status = 'disputed') as disputed,
                 COUNT(*) FILTER (WHERE order_status = 'refunded') as refunded,
-                COALESCE(SUM(platform_fee), 0) as total_revenue,
-                COALESCE(SUM(platform_fee) FILTER (WHERE order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'refunded')), 0) as net_revenue
+                COALESCE(SUM(platform_fee + delivery_fee), 0) as total_revenue,
+                COALESCE(SUM(platform_fee + delivery_fee) FILTER (WHERE order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'refunded')), 0) as net_revenue
             FROM orders
             WHERE created_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL
         `, [daysBack]);
 
         // Orders by day for chart - PARAMETERIZED
         const ordersByDayResult = await pool.query(`
-            SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(platform_fee), 0) as revenue
+            SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(platform_fee + delivery_fee), 0) as revenue
             FROM orders
             WHERE created_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL
             GROUP BY DATE(created_at)
@@ -708,7 +708,7 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
 
         // Top garages by order count - PARAMETERIZED
         const topGaragesResult = await pool.query(`
-            SELECT g.garage_name, COUNT(*) as order_count, COALESCE(SUM(o.platform_fee), 0) as total_revenue
+            SELECT g.garage_name, COUNT(*) as order_count, COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as total_revenue
             FROM orders o
             JOIN garages g ON o.garage_id = g.garage_id
             WHERE o.created_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL
