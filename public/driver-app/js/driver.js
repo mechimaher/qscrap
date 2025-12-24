@@ -742,6 +742,8 @@ function startGpsTracking() {
                 const { latitude, longitude, accuracy, heading, speed } = position.coords;
                 updateGpsStatus('active', `GPS: Active (±${Math.round(accuracy)}m)`);
                 sendLocation(latitude, longitude, accuracy, heading, speed);
+                // Update map marker in real-time
+                updateDriverMarker(latitude, longitude);
             },
             (error) => {
                 console.error('GPS Error:', error);
@@ -1376,10 +1378,10 @@ function initDeliveryMap(containerId) {
         attributionControl: false
     }).setView([25.2854, 51.5310], 13); // Qatar default
 
-    // Dark theme map tiles (CartoDB Dark Matter)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // OpenStreetMap tiles (already allowed in CSP)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: 'abc'
     }).addTo(deliveryMap);
 
     // Add zoom control to bottom-right
@@ -1603,12 +1605,5 @@ function openGoogleMapsNavigation() {
     }
 }
 
-// Update GPS handler to also update map
-const originalSendLocation = sendLocation;
-async function sendLocation(lat, lng, accuracy, heading, speed) {
-    // Update map marker in real-time
-    updateDriverMarker(lat, lng);
-
-    // Call original function
-    await originalSendLocation.call(this, lat, lng, accuracy, heading, speed);
-}
+// NOTE: Map updates are triggered via updateDriverMarker() called from GPS watch
+// The sendLocation function already works; we call updateDriverMarker separately
