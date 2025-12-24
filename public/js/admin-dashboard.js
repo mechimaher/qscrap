@@ -86,6 +86,7 @@ function switchSection(section) {
     if (section === 'garages') loadGarages();
     if (section === 'users') loadUsers();
     if (section === 'audit') loadAuditLog();
+    if (section === 'reports') loadReports();
 }
 
 // ============================================
@@ -1395,3 +1396,298 @@ async function submitCreateUser() {
     }
 }
 
+// ============================================
+// REPORTS MODULE
+// ============================================
+
+let currentReportPeriod = '30d';
+let lastReportData = null;
+
+// Report column configurations
+const REPORT_COLUMNS = {
+    demo_garages: [
+        { key: 'garage_name', label: 'Garage Name' },
+        { key: 'phone_number', label: 'Phone' },
+        { key: 'days_left', label: 'Days Left', format: 'days' },
+        { key: 'total_bids', label: 'Bids' },
+        { key: 'total_orders', label: 'Orders' },
+        { key: 'total_revenue', label: 'Revenue', format: 'currency' }
+    ],
+    expired_demos: [
+        { key: 'garage_name', label: 'Garage Name' },
+        { key: 'phone_number', label: 'Phone' },
+        { key: 'days_since_expired', label: 'Days Since Expired' },
+        { key: 'total_bids', label: 'Bids' },
+        { key: 'total_orders', label: 'Orders' },
+        { key: 'activity_level', label: 'Activity', format: 'badge' }
+    ],
+    demo_conversions: [
+        { key: 'garage_name', label: 'Garage Name' },
+        { key: 'phone_number', label: 'Phone' },
+        { key: 'days_to_convert', label: 'Days to Convert' },
+        { key: 'plan_name', label: 'Plan' },
+        { key: 'lifetime_revenue', label: 'Lifetime Revenue', format: 'currency' }
+    ],
+    subscription_renewals: [
+        { key: 'garage_name', label: 'Garage Name' },
+        { key: 'phone_number', label: 'Phone' },
+        { key: 'plan_name', label: 'Plan' },
+        { key: 'days_until_expiry', label: 'Days Until Expiry', format: 'urgency' },
+        { key: 'months_subscribed', label: 'Months Subscribed' },
+        { key: 'total_revenue', label: 'Revenue', format: 'currency' }
+    ],
+    all_garages: [
+        { key: 'garage_name', label: 'Garage Name' },
+        { key: 'approval_status', label: 'Status', format: 'status' },
+        { key: 'phone_number', label: 'Phone' },
+        { key: 'subscription_plan', label: 'Plan' },
+        { key: 'total_orders', label: 'Orders' },
+        { key: 'total_revenue', label: 'Revenue', format: 'currency' }
+    ],
+    registrations: [
+        { key: 'date', label: 'Date' },
+        { key: 'user_type', label: 'User Type' },
+        { key: 'count', label: 'Count' }
+    ],
+    commission_revenue: [
+        { key: 'period', label: 'Period' },
+        { key: 'order_count', label: 'Orders' },
+        { key: 'gross_revenue', label: 'Gross Revenue', format: 'currency' },
+        { key: 'commission_revenue', label: 'Commission', format: 'currency' }
+    ]
+};
+
+// Initialize period tabs
+document.getElementById('reportPeriodTabs')?.addEventListener('click', e => {
+    if (e.target.classList.contains('tab')) {
+        document.querySelectorAll('#reportPeriodTabs .tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        currentReportPeriod = e.target.dataset.period;
+        loadReports(1);
+    }
+});
+
+async function loadReports(page = 1) {
+    const reportType = document.getElementById('reportType')?.value || 'demo_garages';
+    const content = document.getElementById('reportContent');
+    const summary = document.getElementById('reportSummary');
+
+    // Show loading
+    content.innerHTML = `
+        <div class="report-table-wrapper">
+            <div class="skeleton skeleton-text full" style="height: 40px;"></div>
+            ${Array(5).fill('<div class="skeleton skeleton-text full" style="height: 50px; margin-top: 8px;"></div>').join('')}
+        </div>
+    `;
+    summary.innerHTML = '';
+
+    try {
+        // Map report type to endpoint
+        const endpointMap = {
+            demo_garages: 'demo-garages',
+            expired_demos: 'expired-demos',
+            demo_conversions: 'demo-conversions',
+            subscription_renewals: 'subscription-renewals',
+            commission_revenue: 'commission-revenue',
+            all_garages: 'all-garages',
+            registrations: 'registrations'
+        };
+
+        const endpoint = endpointMap[reportType] || 'demo-garages';
+        const url = `${API_URL}/admin/reports/${endpoint}?page=${page}&period=${currentReportPeriod}&limit=20`;
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        lastReportData = data;
+
+        // Render summary cards
+        if (data.summary) {
+            summary.innerHTML = renderReportSummary(data.summary, reportType);
+        }
+
+        // Render table
+        const columns = REPORT_COLUMNS[reportType] || REPORT_COLUMNS.demo_garages;
+        const rows = data.data || data.breakdown || data.daily_breakdown || [];
+
+        if (rows.length > 0) {
+            content.innerHTML = renderReportTable(rows, columns);
+            if (data.pagination) {
+                renderPagination('reportsPagination', data.pagination, 'loadReports', { showInfo: true });
+            } else {
+                document.getElementById('reportsPagination').innerHTML = '';
+            }
+        } else {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-file-earmark-x"></i>
+                    <p>No data found for this report</p>
+                    <span style="font-size: 13px; color: var(--text-muted);">Try adjusting the time period</span>
+                </div>
+            `;
+            document.getElementById('reportsPagination').innerHTML = '';
+        }
+    } catch (err) {
+        console.error('loadReports error:', err);
+        content.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Failed to generate report</p>
+                <button class="btn btn-outline" onclick="loadReports(${page})">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+function renderReportSummary(summary, reportType) {
+    const cards = Object.entries(summary).map(([key, value]) => {
+        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const formattedValue = typeof value === 'number' && key.includes('revenue')
+            ? `${parseFloat(value).toLocaleString()} QAR`
+            : value;
+        return `
+            <div class="summary-card">
+                <span class="summary-value">${formattedValue}</span>
+                <span class="summary-label">${label}</span>
+            </div>
+        `;
+    });
+    return `<div class="summary-grid">${cards.join('')}</div>`;
+}
+
+function renderReportTable(rows, columns) {
+    const headerHTML = columns.map(c => `<th>${c.label}</th>`).join('');
+    const bodyHTML = rows.map(row => {
+        const cells = columns.map(c => {
+            let value = row[c.key];
+            value = formatCellValue(value, c.format);
+            return `<td>${value}</td>`;
+        }).join('');
+        return `<tr>${cells}</tr>`;
+    }).join('');
+
+    return `
+        <div class="report-table-wrapper" id="printableReport">
+            <table class="report-table">
+                <thead><tr>${headerHTML}</tr></thead>
+                <tbody>${bodyHTML}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+function formatCellValue(value, format) {
+    if (value === null || value === undefined) return '-';
+
+    switch (format) {
+        case 'currency':
+            return `${parseFloat(value).toLocaleString()} QAR`;
+        case 'days':
+            const days = parseInt(value);
+            if (days <= 3) return `<span class="badge danger">${days} days</span>`;
+            if (days <= 7) return `<span class="badge warning">${days} days</span>`;
+            return `<span class="badge success">${days} days</span>`;
+        case 'urgency':
+            const d = parseInt(value);
+            if (d <= 7) return `<span class="badge danger">${d} days</span>`;
+            if (d <= 14) return `<span class="badge warning">${d} days</span>`;
+            return `${d} days`;
+        case 'status':
+            const statusColors = {
+                pending: 'warning',
+                demo: 'info',
+                approved: 'success',
+                expired: 'danger',
+                rejected: 'danger'
+            };
+            return `<span class="badge ${statusColors[value] || ''}">${value}</span>`;
+        case 'badge':
+            const badgeColors = {
+                had_activity: 'success',
+                bids_only: 'warning',
+                no_activity: 'danger'
+            };
+            const label = value.replace(/_/g, ' ');
+            return `<span class="badge ${badgeColors[value] || ''}">${label}</span>`;
+        default:
+            return value;
+    }
+}
+
+function exportReport(format) {
+    const reportType = document.getElementById('reportType')?.value || 'demo_garages';
+
+    if (format === 'csv') {
+        const endpointMap = {
+            demo_garages: 'demo-garages',
+            expired_demos: 'expired-demos',
+            demo_conversions: 'demo-conversions',
+            subscription_renewals: 'subscription-renewals',
+            commission_revenue: 'commission-revenue',
+            all_garages: 'all-garages',
+            registrations: 'registrations'
+        };
+        const endpoint = endpointMap[reportType];
+        const url = `${API_URL}/admin/reports/${endpoint}?format=csv&period=${currentReportPeriod}&limit=1000`;
+
+        // Create temporary link and trigger download
+        fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.blob())
+            .then(blob => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${reportType}_report_${new Date().toISOString().slice(0, 10)}.csv`;
+                link.click();
+                showToast('Report exported successfully', 'success');
+            })
+            .catch(err => {
+                console.error('Export error:', err);
+                showToast('Failed to export report', 'error');
+            });
+    }
+}
+
+function printReport() {
+    const printContent = document.getElementById('printableReport');
+    if (!printContent) {
+        showToast('No report to print. Generate a report first.', 'error');
+        return;
+    }
+
+    const reportType = document.getElementById('reportType')?.value || 'Report';
+    const reportName = reportType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>QScrap Admin Report - ${reportName}</title>
+            <style>
+                body { font-family: -apple-system, system-ui, sans-serif; padding: 40px; }
+                h1 { font-size: 24px; margin-bottom: 8px; }
+                .meta { color: #666; margin-bottom: 24px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background: #f8f9fa; font-weight: 600; }
+                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                .badge.success { background: #d1fae5; color: #059669; }
+                .badge.warning { background: #fef3c7; color: #d97706; }
+                .badge.danger { background: #fee2e2; color: #dc2626; }
+                .badge.info { background: #dbeafe; color: #2563eb; }
+                @media print { body { padding: 20px; } }
+            </style>
+        </head>
+        <body>
+            <h1>QScrap Admin Report: ${reportName}</h1>
+            <p class="meta">Generated: ${new Date().toLocaleString()} | Period: ${currentReportPeriod}</p>
+            ${printContent.innerHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}

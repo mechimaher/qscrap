@@ -67,6 +67,10 @@
                     <i class="bi bi-journal-text"></i>
                     <span>Audit Log</span>
                 </button>
+                <button class="nav-item" data-section="reports">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <span>Reports</span>
+                </button>
                 <div class="nav-divider"></div>
                 <button class="nav-item create-user-btn" onclick="openCreateUserModal()">
                     <i class="bi bi-person-plus-fill"></i>
@@ -281,6 +285,66 @@
                 </div>
                 <div id="auditList" class="audit-list"></div>
                 <div id="auditPagination" class="pagination-container"></div>
+            </section>
+
+            <!-- Reports Section -->
+            <section class="section" id="sectionReports">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-file-earmark-bar-graph"></i> Reports</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="printReport()">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
+                        <button class="btn btn-primary" onclick="exportReport('csv')">
+                            <i class="bi bi-download"></i> Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Selector -->
+                <div class="report-toolbar">
+                    <div class="report-selector">
+                        <label>Report Type</label>
+                        <select id="reportType" onchange="loadReports(1)">
+                            <optgroup label="Garage Lifecycle">
+                                <option value="demo_garages">Demo Garages</option>
+                                <option value="expired_demos">Expired Demos</option>
+                                <option value="demo_conversions">Demo Conversions</option>
+                            </optgroup>
+                            <optgroup label="Subscriptions">
+                                <option value="subscription_renewals">Subscription Renewals</option>
+                            </optgroup>
+                            <optgroup label="Revenue">
+                                <option value="commission_revenue">Commission Revenue</option>
+                            </optgroup>
+                            <optgroup label="General">
+                                <option value="all_garages">All Garages</option>
+                                <option value="registrations">New Registrations</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="period-tabs" id="reportPeriodTabs">
+                        <button class="tab active" data-period="7d">7 Days</button>
+                        <button class="tab" data-period="30d">30 Days</button>
+                        <button class="tab" data-period="90d">90 Days</button>
+                        <button class="tab" data-period="all">All Time</button>
+                    </div>
+                </div>
+
+                <!-- Report Summary Cards -->
+                <div class="report-summary" id="reportSummary"></div>
+
+                <!-- Report Table -->
+                <div class="report-content" id="reportContent">
+                    <div class="empty-state">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <p>Select a report type to generate</p>
+                    </div>
+                </div>
+
+                <!-- Report Pagination -->
+                <div id="reportsPagination" class="pagination-container"></div>
             </section>
         </main>
     </div>

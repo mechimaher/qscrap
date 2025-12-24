@@ -26,6 +26,18 @@ import {
     adminCreateUser
 } from '../controllers/admin.controller';
 
+// Phase 5: Reports Module
+import {
+    getAvailableReports,
+    getDemoGaragesReport,
+    getExpiredDemosReport,
+    getDemoConversionsReport,
+    getSubscriptionRenewalsReport,
+    getCommissionRevenueReport,
+    getAllGaragesReport,
+    getRegistrationsReport
+} from '../controllers/admin-reports.controller';
+
 const router = Router();
 
 // ============================================================================
@@ -85,4 +97,17 @@ router.post('/users/:user_id/reset-password', adminResetPassword);
 // ============================================================================
 router.get('/audit', getAuditLog);
 
+// ============================================================================
+// PHASE 5: REPORTS MODULE
+// ============================================================================
+router.get('/reports', getAvailableReports);
+router.get('/reports/demo-garages', getDemoGaragesReport);
+router.get('/reports/expired-demos', getExpiredDemosReport);
+router.get('/reports/demo-conversions', getDemoConversionsReport);
+router.get('/reports/subscription-renewals', getSubscriptionRenewalsReport);
+router.get('/reports/commission-revenue', getCommissionRevenueReport);
+router.get('/reports/all-garages', getAllGaragesReport);
+router.get('/reports/registrations', getRegistrationsReport);
+
 export default router;
+
