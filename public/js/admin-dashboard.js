@@ -412,14 +412,28 @@ async function revokeAccess(garageId) {
 // AUDIT LOG
 // ============================================
 
-async function loadAuditLog() {
+async function loadAuditLog(page = 1) {
     const container = document.getElementById('auditList');
+    const actionFilter = document.getElementById('auditActionFilter')?.value || 'all';
+    const targetFilter = document.getElementById('auditTargetFilter')?.value || 'all';
 
-    // Show loading state
-    container.innerHTML = '<div class="empty-state"><div class="loading-spinner">Loading audit log...</div></div>';
+    // Show skeleton loading state
+    container.innerHTML = Array(5).fill(0).map(() => `
+        <div class="audit-item skeleton-row">
+            <div class="skeleton skeleton-avatar"></div>
+            <div style="flex: 1;">
+                <div class="skeleton skeleton-text medium"></div>
+                <div class="skeleton skeleton-text short"></div>
+            </div>
+        </div>
+    `).join('');
 
     try {
-        const res = await fetch(`${API_URL}/admin/audit`, {
+        let url = `${API_URL}/admin/audit?page=${page}&limit=20`;
+        if (actionFilter !== 'all') url += `&action_type=${actionFilter}`;
+        if (targetFilter !== 'all') url += `&target_type=${targetFilter}`;
+
+        const res = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -432,24 +446,35 @@ async function loadAuditLog() {
         if (data.logs && data.logs.length > 0) {
             container.innerHTML = data.logs.map(log => `
                 <div class="audit-item">
-                    <div class="audit-icon">
+                    <div class="audit-icon ${getAuditIconClass(log.action_type)}">
                         <i class="bi bi-${getAuditIcon(log.action_type)}"></i>
                     </div>
                     <div class="audit-content">
                         <div class="audit-action">${formatActionType(log.action_type)}</div>
-                        <div class="audit-details">By ${log.admin_name || 'Admin'} on ${log.target_type} ${log.target_id ? '(' + log.target_id.slice(0, 8) + '...)' : ''}</div>
+                        <div class="audit-details">
+                            By <strong>${log.admin_name || 'Admin'}</strong> on ${log.target_type} 
+                            ${log.target_id ? '<span class="audit-id">(' + log.target_id.slice(0, 8) + '...)</span>' : ''}
+                        </div>
                     </div>
                     <div class="audit-time">${formatDateTime(log.created_at)}</div>
                 </div>
             `).join('');
+
+            // Render pagination
+            renderPagination('auditPagination', data.pagination, 'loadAuditLog', { showInfo: true });
         } else {
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="bi bi-journal-bookmark"></i>
-                    <p>No audit logs yet</p>
-                    <span style="font-size: 13px; color: var(--text-muted);">Admin actions will appear here</span>
+                    <p>No audit logs found</p>
+                    <span style="font-size: 13px; color: var(--text-muted);">
+                        ${actionFilter !== 'all' || targetFilter !== 'all'
+                    ? 'Try adjusting your filters'
+                    : 'Admin actions will appear here'}
+                    </span>
                 </div>
             `;
+            document.getElementById('auditPagination').innerHTML = '';
         }
     } catch (err) {
         console.error('loadAuditLog error:', err);
@@ -457,12 +482,20 @@ async function loadAuditLog() {
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>Failed to load audit log</p>
-                <button class="btn btn-outline" onclick="loadAuditLog()">
+                <button class="btn btn-outline" onclick="loadAuditLog(${page})">
                     <i class="bi bi-arrow-clockwise"></i> Retry
                 </button>
             </div>
         `;
+        document.getElementById('auditPagination').innerHTML = '';
     }
+}
+
+function getAuditIconClass(action) {
+    if (action?.includes('approved') || action?.includes('activate')) return 'success';
+    if (action?.includes('rejected') || action?.includes('revoked') || action?.includes('suspended')) return 'danger';
+    if (action?.includes('demo') || action?.includes('created')) return 'info';
+    return '';
 }
 
 function getAuditIcon(action) {
@@ -513,6 +546,113 @@ function showToast(message, type = 'info') {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// ============================================
+// REUSABLE PAGINATION COMPONENT
+// ============================================
+
+/**
+ * Renders a premium pagination component
+ * @param {string} containerId - ID of the container element
+ * @param {object} pagination - { current_page, total_pages, total, limit }
+ * @param {string} loadFunctionName - Name of the function to call for page changes
+ * @param {object} options - { showPageSize: bool, showInfo: bool }
+ */
+function renderPagination(containerId, pagination, loadFunctionName, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const { showPageSize = false, showInfo = true } = options;
+    const { current_page, total_pages, total, limit = 20 } = pagination || {};
+
+    if (!pagination || total_pages <= 1) {
+        container.innerHTML = total > 0 ? `<div class="pagination-info-only">Showing all ${total} items</div>` : '';
+        return;
+    }
+
+    let html = '<div class="pagination">';
+
+    // Info section
+    if (showInfo) {
+        const startItem = (current_page - 1) * limit + 1;
+        const endItem = Math.min(current_page * limit, total);
+        html += `<span class="pagination-info">Showing ${startItem}-${endItem} of ${total}</span>`;
+    }
+
+    // Page size selector (optional)
+    if (showPageSize) {
+        html += `
+            <select class="pagination-size" onchange="${loadFunctionName}(1, this.value)">
+                <option value="10" ${limit == 10 ? 'selected' : ''}>10 / page</option>
+                <option value="20" ${limit == 20 ? 'selected' : ''}>20 / page</option>
+                <option value="50" ${limit == 50 ? 'selected' : ''}>50 / page</option>
+                <option value="100" ${limit == 100 ? 'selected' : ''}>100 / page</option>
+            </select>
+        `;
+    }
+
+    html += '<div class="pagination-buttons">';
+
+    // First page button
+    if (current_page > 2) {
+        html += `<button class="pagination-btn" onclick="${loadFunctionName}(1)" title="First page">
+            <i class="bi bi-chevron-double-left"></i>
+        </button>`;
+    }
+
+    // Previous button
+    if (current_page > 1) {
+        html += `<button class="pagination-btn" onclick="${loadFunctionName}(${current_page - 1})" title="Previous">
+            <i class="bi bi-chevron-left"></i>
+        </button>`;
+    }
+
+    // Page numbers with smart ellipsis
+    const pages = [];
+    const showEllipsisStart = current_page > 3;
+    const showEllipsisEnd = current_page < total_pages - 2;
+
+    // Always show first page
+    pages.push(1);
+
+    if (showEllipsisStart) pages.push('...');
+
+    // Show pages around current
+    for (let i = Math.max(2, current_page - 1); i <= Math.min(total_pages - 1, current_page + 1); i++) {
+        if (!pages.includes(i)) pages.push(i);
+    }
+
+    if (showEllipsisEnd) pages.push('...');
+
+    // Always show last page
+    if (total_pages > 1 && !pages.includes(total_pages)) pages.push(total_pages);
+
+    pages.forEach(p => {
+        if (p === '...') {
+            html += '<span class="pagination-ellipsis">...</span>';
+        } else {
+            html += `<button class="pagination-btn ${p === current_page ? 'active' : ''}" 
+                onclick="${loadFunctionName}(${p})">${p}</button>`;
+        }
+    });
+
+    // Next button
+    if (current_page < total_pages) {
+        html += `<button class="pagination-btn" onclick="${loadFunctionName}(${current_page + 1})" title="Next">
+            <i class="bi bi-chevron-right"></i>
+        </button>`;
+    }
+
+    // Last page button
+    if (current_page < total_pages - 1) {
+        html += `<button class="pagination-btn" onclick="${loadFunctionName}(${total_pages})" title="Last page">
+            <i class="bi bi-chevron-double-right"></i>
+        </button>`;
+    }
+
+    html += '</div></div>';
+    container.innerHTML = html;
 }
 
 // ============================================
@@ -617,30 +757,7 @@ function renderUserRow(user) {
 }
 
 function renderUsersPagination(pagination) {
-    if (!pagination || pagination.total_pages <= 1) {
-        document.getElementById('usersPagination').innerHTML = '';
-        return;
-    }
-
-    const { current_page, total_pages, total } = pagination;
-    let html = `<div class="pagination">
-        <span class="pagination-info">Showing page ${current_page} of ${total_pages} (${total} total)</span>
-        <div class="pagination-buttons">`;
-
-    if (current_page > 1) {
-        html += `<button class="btn btn-sm" onclick="loadUsers(${current_page - 1})"><i class="bi bi-chevron-left"></i></button>`;
-    }
-
-    for (let i = Math.max(1, current_page - 2); i <= Math.min(total_pages, current_page + 2); i++) {
-        html += `<button class="btn btn-sm ${i === current_page ? 'active' : ''}" onclick="loadUsers(${i})">${i}</button>`;
-    }
-
-    if (current_page < total_pages) {
-        html += `<button class="btn btn-sm" onclick="loadUsers(${current_page + 1})"><i class="bi bi-chevron-right"></i></button>`;
-    }
-
-    html += '</div></div>';
-    document.getElementById('usersPagination').innerHTML = html;
+    renderPagination('usersPagination', pagination, 'loadUsers', { showInfo: true, showPageSize: true });
 }
 
 async function viewUserDetails(userId) {

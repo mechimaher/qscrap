@@ -490,14 +490,36 @@ CREATE TRIGGER enforce_active_request_for_bid
     FOR EACH ROW
     EXECUTE FUNCTION check_request_active_for_bid();
 
--- 9.2 Check subscription and bid limits
+-- 9.2 Check subscription and bid limits (supports demo trial from garages table)
 CREATE OR REPLACE FUNCTION check_garage_can_bid()
 RETURNS TRIGGER AS $$
 DECLARE
     sub_record RECORD;
-    plan_record RECORD;
+    garage_record RECORD;
 BEGIN
-    -- Get active subscription (LEFT JOIN to allow trial without plan)
+    -- First check garage approval status for demo/expired
+    SELECT approval_status, demo_expires_at
+    INTO garage_record
+    FROM garages
+    WHERE garage_id = NEW.garage_id;
+    
+    -- Block expired garages
+    IF garage_record.approval_status = 'expired' THEN
+        RAISE EXCEPTION 'Your demo trial has expired. Please upgrade to a subscription to continue bidding.';
+    END IF;
+    
+    -- Allow demo garages with valid demo period (unlimited bids)
+    IF garage_record.approval_status = 'demo' THEN
+        IF garage_record.demo_expires_at IS NOT NULL AND garage_record.demo_expires_at > NOW() THEN
+            RETURN NEW;  -- Demo is valid, allow bid without subscription check
+        ELSE
+            -- Demo expired, update status and block
+            UPDATE garages SET approval_status = 'expired' WHERE garage_id = NEW.garage_id;
+            RAISE EXCEPTION 'Your demo trial has expired. Please upgrade to a subscription to continue bidding.';
+        END IF;
+    END IF;
+    
+    -- For non-demo garages, check subscription
     SELECT gs.*, sp.max_bids_per_month, COALESCE(sp.plan_name, 'Free Trial') as plan_name
     INTO sub_record
     FROM garage_subscriptions gs

@@ -233,9 +233,25 @@
             <section class="section" id="sectionAudit">
                 <div class="page-header">
                     <h1 class="page-title"><i class="bi bi-journal-text"></i> Audit Log</h1>
-                    <p>Track admin actions</p>
+                    <div class="header-actions">
+                        <select id="auditActionFilter" onchange="loadAuditLog(1)">
+                            <option value="all">All Actions</option>
+                            <option value="garage_approved">Approvals</option>
+                            <option value="garage_rejected">Rejections</option>
+                            <option value="garage_revoked">Revocations</option>
+                            <option value="user_suspended">Suspensions</option>
+                            <option value="user_created">User Created</option>
+                        </select>
+                        <select id="auditTargetFilter" onchange="loadAuditLog(1)">
+                            <option value="all">All Targets</option>
+                            <option value="garage">Garages</option>
+                            <option value="user">Users</option>
+                            <option value="subscription">Subscriptions</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="auditList" class="audit-list"></div>
+                <div id="auditPagination" class="pagination-container"></div>
             </section>
         </main>
     </div>

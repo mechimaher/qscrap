@@ -415,11 +415,13 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
 };
 
 /**
- * Get admin audit log
+ * Get admin audit log with pagination
  */
 export const getAuditLog = async (req: AuthRequest, res: Response) => {
-    const { page = 1, limit = 50, action_type, target_type } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+    const { page = 1, limit = 20, action_type, target_type } = req.query;
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.min(100, Math.max(1, Number(limit)));
+    const offset = (pageNum - 1) * limitNum;
 
     try {
         let whereClause = 'WHERE 1=1';
@@ -436,6 +438,13 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
             params.push(target_type);
         }
 
+        // Get total count
+        const countResult = await pool.query(
+            `SELECT COUNT(*) FROM admin_audit_log al ${whereClause}`,
+            params
+        );
+        const total = parseInt(countResult.rows[0].count);
+
         const result = await pool.query(`
             SELECT 
                 al.*,
@@ -446,9 +455,17 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
             ${whereClause}
             ORDER BY al.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `, [...params, limitNum, offset]);
 
-        res.json({ logs: result.rows });
+        res.json({
+            logs: result.rows,
+            pagination: {
+                current_page: pageNum,
+                total_pages: Math.ceil(total / limitNum),
+                total,
+                limit: limitNum
+            }
+        });
     } catch (err: any) {
         console.error('[ADMIN] getAuditLog error:', err);
         res.status(500).json({ error: 'Failed to fetch audit log' });
