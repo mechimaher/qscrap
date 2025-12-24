@@ -889,6 +889,66 @@ function updateDeliveryLocation(lat, lng) {
 
     // Reverse geocode to get address
     reverseGeocode(lat, lng);
+
+    // Calculate and show delivery fee preview
+    calculateDeliveryFeePreview(lat, lng);
+}
+
+// Calculate delivery fee based on GPS location and show preview
+async function calculateDeliveryFeePreview(lat, lng) {
+    try {
+        const res = await fetch(`${API_URL}/delivery/calculate-fee`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ latitude: lat, longitude: lng })
+        });
+
+        if (!res.ok) {
+            console.warn('Failed to calculate delivery fee, using default');
+            updateDeliveryFeeDisplay(25, 'Standard', null);
+            return;
+        }
+
+        const data = await res.json();
+
+        if (data.success) {
+            updateDeliveryFeeDisplay(data.delivery_fee, data.zone.zone_name, data.distance_km);
+        } else {
+            updateDeliveryFeeDisplay(25, 'Standard', null);
+        }
+    } catch (err) {
+        console.error('Delivery fee calculation error:', err);
+        updateDeliveryFeeDisplay(25, 'Standard', null);
+    }
+}
+
+// Update delivery fee preview display
+function updateDeliveryFeeDisplay(fee, zoneName, distanceKm) {
+    let feePreview = document.getElementById('deliveryFeePreview');
+
+    // Create preview element if doesn't exist
+    if (!feePreview) {
+        const addressInput = document.getElementById('deliveryAddress');
+        if (addressInput) {
+            feePreview = document.createElement('div');
+            feePreview.id = 'deliveryFeePreview';
+            feePreview.className = 'delivery-fee-preview';
+            feePreview.style.cssText = 'margin-top: 8px; padding: 10px 14px; background: linear-gradient(135deg, var(--primary-dark, #1a5a2a) 0%, var(--primary, #22c55e) 100%); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; color: white; font-weight: 500;';
+            addressInput.parentNode.insertBefore(feePreview, addressInput.nextSibling);
+        }
+    }
+
+    if (feePreview) {
+        const distanceText = distanceKm ? ` (${distanceKm} km)` : '';
+        feePreview.innerHTML = `
+            <span><i class="bi bi-truck"></i> ${zoneName}${distanceText}</span>
+            <span style="font-size: 1.2em; font-weight: 700;">${fee} QAR</span>
+        `;
+        feePreview.style.display = 'flex';
+    }
 }
 
 async function reverseGeocode(lat, lng) {

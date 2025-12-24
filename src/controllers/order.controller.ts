@@ -74,10 +74,10 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
         // Get zone-based delivery fee if GPS coordinates available
         let delivery_fee = 25.00; // Default fallback
         let delivery_zone_id: number | null = null;
-        if (request.delivery_latitude && request.delivery_longitude) {
+        if (request.delivery_lat && request.delivery_lng) {
             const zoneInfo = await getDeliveryFeeForLocation(
-                parseFloat(request.delivery_latitude),
-                parseFloat(request.delivery_longitude)
+                parseFloat(request.delivery_lat),
+                parseFloat(request.delivery_lng)
             );
             delivery_fee = zoneInfo.fee;
             delivery_zone_id = zoneInfo.zone_id;
