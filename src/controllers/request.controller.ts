@@ -311,8 +311,10 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         }
 
         // Get Bids with latest counter-offer info
+        // IMPORTANT: Include last garage offer even if negotiation ended (for customer to accept final price)
         const bidsResult = await pool.query(
             `SELECT b.*, g.garage_name, g.rating_average as garage_rating, g.rating_count as garage_review_count, g.total_transactions,
+                    -- Pending counter-offers from garage (awaiting customer response)
                     (SELECT co.proposed_amount 
                      FROM counter_offers co 
                      WHERE co.bid_id = b.bid_id 
@@ -330,7 +332,23 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
                      WHERE co.bid_id = b.bid_id 
                        AND co.offered_by_type = 'garage' 
                        AND co.status = 'pending'
-                     ORDER BY co.created_at DESC LIMIT 1) as garage_counter_id
+                     ORDER BY co.created_at DESC LIMIT 1) as garage_counter_id,
+                    -- LAST garage offer (regardless of status - customer can always accept this)
+                    (SELECT co.proposed_amount 
+                     FROM counter_offers co 
+                     WHERE co.bid_id = b.bid_id 
+                       AND co.offered_by_type = 'garage'
+                     ORDER BY co.created_at DESC LIMIT 1) as last_garage_offer_amount,
+                    (SELECT co.counter_offer_id 
+                     FROM counter_offers co 
+                     WHERE co.bid_id = b.bid_id 
+                       AND co.offered_by_type = 'garage'
+                     ORDER BY co.created_at DESC LIMIT 1) as last_garage_offer_id,
+                    -- Current negotiation round count
+                    (SELECT COUNT(*) FROM counter_offers co WHERE co.bid_id = b.bid_id) as negotiation_rounds,
+                    -- Is negotiation still active?
+                    (SELECT COUNT(*) > 0 FROM counter_offers co 
+                     WHERE co.bid_id = b.bid_id AND co.status = 'pending') as has_pending_negotiation
              FROM bids b
              JOIN garages g ON b.garage_id = g.garage_id
              WHERE b.request_id = $1 AND b.status = 'pending'

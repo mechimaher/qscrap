@@ -421,3 +421,84 @@ export const getPendingCounterOffers = async (req: AuthRequest, res: Response) =
         res.status(500).json({ error: err.message });
     }
 };
+
+/**
+ * Accept garage's last counter-offer (even after negotiation ended)
+ * This allows customer to accept the final price offered by garage
+ */
+export const acceptLastGarageOffer = async (req: AuthRequest, res: Response) => {
+    const { bid_id } = req.params;
+    const customerId = req.user!.userId;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Get the bid and last garage counter-offer
+        const bidResult = await client.query(
+            `SELECT b.*, pr.customer_id, pr.request_id,
+                    (SELECT co.proposed_amount 
+                     FROM counter_offers co 
+                     WHERE co.bid_id = b.bid_id 
+                       AND co.offered_by_type = 'garage'
+                     ORDER BY co.created_at DESC LIMIT 1) as last_garage_offer
+             FROM bids b 
+             JOIN part_requests pr ON b.request_id = pr.request_id 
+             WHERE b.bid_id = $1`,
+            [bid_id]
+        );
+
+        if (bidResult.rows.length === 0) {
+            throw new Error('Bid not found');
+        }
+
+        const bid = bidResult.rows[0];
+
+        // Verify customer owns the request
+        if (bid.customer_id !== customerId) {
+            throw new Error('Access denied');
+        }
+
+        // Check bid is still pending
+        if (bid.status !== 'pending') {
+            throw new Error('Bid is no longer available');
+        }
+
+        // Get the last garage offer amount (or use original bid if no counter-offers)
+        const finalAmount = bid.last_garage_offer || bid.bid_amount;
+
+        // Update bid amount to the last garage offer
+        await client.query(
+            `UPDATE bids SET bid_amount = $1, updated_at = NOW() WHERE bid_id = $2`,
+            [finalAmount, bid_id]
+        );
+
+        // Mark any pending counter-offers as expired
+        await client.query(
+            `UPDATE counter_offers SET status = 'accepted', responded_at = NOW()
+             WHERE bid_id = $1 AND status = 'pending'`,
+            [bid_id]
+        );
+
+        await client.query('COMMIT');
+
+        // Notify garage
+        const io = (global as any).io;
+        io.to(`garage_${bid.garage_id}`).emit('bid_accepted_at_final_price', {
+            bid_id: bid_id,
+            final_amount: finalAmount,
+            notification: `✅ Customer accepted your final price: ${finalAmount} QAR`
+        });
+
+        res.json({
+            message: 'Accepted at garage\'s final price',
+            final_amount: finalAmount,
+            bid_id: bid_id
+        });
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        res.status(400).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+};

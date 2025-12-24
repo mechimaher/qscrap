@@ -5,7 +5,8 @@ import {
     respondToCounterOffer,
     customerRespondToCounter,
     getNegotiationHistory,
-    getPendingCounterOffers
+    getPendingCounterOffers,
+    acceptLastGarageOffer
 } from '../controllers/negotiation.controller';
 
 const router = express.Router();
@@ -24,5 +25,8 @@ router.get('/bids/:bid_id/negotiations', authenticate, getNegotiationHistory);
 
 // Get pending counter-offers for garage (offers awaiting response)
 router.get('/pending-offers', authenticate, getPendingCounterOffers);
+
+// Customer accepts garage's last counter-offer (even after negotiation rounds ended)
+router.post('/bids/:bid_id/accept-last-offer', authenticate, acceptLastGarageOffer);
 
 export default router;
