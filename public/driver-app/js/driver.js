@@ -553,16 +553,22 @@ function renderAssignmentModal(a) {
     const status = a.status;
 
     if (status === 'assigned' || status === 'picked_up') {
-        // SIMPLIFIED: Both assigned and picked_up show same button → in_transit
+        // Both assigned and picked_up show Start Delivery + View Map
         actionsContainer.innerHTML = `
             <button class="btn btn-primary btn-large" onclick="updateStatus('in_transit')">
                 <i class="bi bi-truck"></i> Start Delivery
+            </button>
+            <button class="btn btn-map" onclick="openFullMap()">
+                <i class="bi bi-map"></i>
             </button>
         `;
     } else if (status === 'in_transit') {
         actionsContainer.innerHTML = `
             <button class="btn btn-success btn-large" onclick="completeDelivery()">
-                <i class="bi bi-check-circle"></i> Complete Delivery
+                <i class="bi bi-check-circle"></i> Complete
+            </button>
+            <button class="btn btn-map" onclick="openFullMap()">
+                <i class="bi bi-map"></i>
             </button>
             <button class="btn chat-button" onclick="openChat()">
                 <i class="bi bi-chat-dots"></i>
@@ -1310,4 +1316,299 @@ function playChatSound() {
     } catch (err) {
         console.log('Sound not played:', err);
     }
+}
+
+// ============================================================================
+// PREMIUM MAP MODULE - Uber/Talabat Quality
+// ============================================================================
+
+let deliveryMap = null;
+let mapDriverMarker = null;
+let mapPickupMarker = null;
+let mapDeliveryMarker = null;
+let mapRouteLine = null;
+let currentDriverPosition = null;
+
+// Custom SVG Markers for premium look
+const MARKER_ICONS = {
+    driver: L.divIcon({
+        className: 'driver-marker',
+        html: `<div class="driver-marker-inner">
+            <div class="driver-pulse"></div>
+            <div class="driver-car">🚗</div>
+        </div>`,
+        iconSize: [50, 50],
+        iconAnchor: [25, 25]
+    }),
+
+    pickup: L.divIcon({
+        className: 'location-marker pickup-marker',
+        html: `<div class="marker-pin pickup">
+            <i class="bi bi-shop"></i>
+        </div>
+        <div class="marker-label">Pickup</div>`,
+        iconSize: [40, 50],
+        iconAnchor: [20, 50]
+    }),
+
+    delivery: L.divIcon({
+        className: 'location-marker delivery-marker',
+        html: `<div class="marker-pin delivery">
+            <i class="bi bi-house-door-fill"></i>
+        </div>
+        <div class="marker-label">Delivery</div>`,
+        iconSize: [40, 50],
+        iconAnchor: [20, 50]
+    })
+};
+
+/**
+ * Initialize the Leaflet map with dark theme
+ */
+function initDeliveryMap(containerId) {
+    if (deliveryMap) {
+        deliveryMap.remove();
+    }
+
+    // Create map with dark theme tiles
+    deliveryMap = L.map(containerId, {
+        zoomControl: false,
+        attributionControl: false
+    }).setView([25.2854, 51.5310], 13); // Qatar default
+
+    // Dark theme map tiles (CartoDB Dark Matter)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+    }).addTo(deliveryMap);
+
+    // Add zoom control to bottom-right
+    L.control.zoom({ position: 'bottomright' }).addTo(deliveryMap);
+
+    return deliveryMap;
+}
+
+/**
+ * Update map with assignment locations
+ */
+function updateMapWithAssignment(assignment) {
+    if (!deliveryMap) return;
+
+    // Clear existing markers
+    if (mapPickupMarker) deliveryMap.removeLayer(mapPickupMarker);
+    if (mapDeliveryMarker) deliveryMap.removeLayer(mapDeliveryMarker);
+    if (mapRouteLine) deliveryMap.removeLayer(mapRouteLine);
+
+    const bounds = [];
+
+    // Add pickup marker (garage)
+    if (assignment.pickup_lat && assignment.pickup_lng) {
+        const pickupLatLng = [parseFloat(assignment.pickup_lat), parseFloat(assignment.pickup_lng)];
+        mapPickupMarker = L.marker(pickupLatLng, { icon: MARKER_ICONS.pickup })
+            .addTo(deliveryMap)
+            .bindPopup(`<b>${assignment.garage_name || 'Pickup'}</b><br>${assignment.pickup_address || ''}`);
+        bounds.push(pickupLatLng);
+    }
+
+    // Add delivery marker (customer)
+    if (assignment.delivery_lat && assignment.delivery_lng) {
+        const deliveryLatLng = [parseFloat(assignment.delivery_lat), parseFloat(assignment.delivery_lng)];
+        mapDeliveryMarker = L.marker(deliveryLatLng, { icon: MARKER_ICONS.delivery })
+            .addTo(deliveryMap)
+            .bindPopup(`<b>${assignment.customer_name || 'Delivery'}</b><br>${assignment.delivery_address || ''}`);
+        bounds.push(deliveryLatLng);
+    }
+
+    // Add driver marker if we have position
+    if (currentDriverPosition) {
+        updateDriverMarker(currentDriverPosition.lat, currentDriverPosition.lng);
+        bounds.push([currentDriverPosition.lat, currentDriverPosition.lng]);
+    }
+
+    // Draw route line
+    if (bounds.length >= 2) {
+        mapRouteLine = L.polyline(bounds, {
+            color: '#00d26a',
+            weight: 4,
+            opacity: 0.8,
+            dashArray: '10, 10',
+            lineCap: 'round'
+        }).addTo(deliveryMap);
+
+        // Fit map to show all points
+        deliveryMap.fitBounds(bounds, { padding: [50, 50] });
+    }
+}
+
+/**
+ * Update driver's position marker on the map
+ */
+function updateDriverMarker(lat, lng) {
+    if (!deliveryMap) return;
+
+    currentDriverPosition = { lat, lng };
+    const latLng = [lat, lng];
+
+    if (mapDriverMarker) {
+        // Smooth animation to new position
+        mapDriverMarker.setLatLng(latLng);
+    } else {
+        mapDriverMarker = L.marker(latLng, {
+            icon: MARKER_ICONS.driver,
+            zIndexOffset: 1000 // Keep driver on top
+        }).addTo(deliveryMap);
+    }
+
+    // Update ETA if we have delivery location
+    if (currentAssignment && currentAssignment.delivery_lat && currentAssignment.delivery_lng) {
+        const distance = calculateDistance(
+            lat, lng,
+            parseFloat(currentAssignment.delivery_lat),
+            parseFloat(currentAssignment.delivery_lng)
+        );
+        updateETADisplay(distance);
+    }
+}
+
+/**
+ * Calculate distance between two points (Haversine formula)
+ */
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+}
+
+/**
+ * Update ETA display based on distance
+ */
+function updateETADisplay(distanceKm) {
+    // Average speed 25 km/h in city traffic
+    const etaMinutes = Math.round(distanceKm * 60 / 25);
+    const etaElement = document.getElementById('liveETA');
+
+    if (etaElement) {
+        if (etaMinutes < 1) {
+            etaElement.textContent = 'Arriving now';
+        } else if (etaMinutes === 1) {
+            etaElement.textContent = '1 min away';
+        } else {
+            etaElement.textContent = `${etaMinutes} min away`;
+        }
+    }
+
+    // Also update distance display
+    const distanceElement = document.getElementById('liveDistance');
+    if (distanceElement) {
+        if (distanceKm < 1) {
+            distanceElement.textContent = `${Math.round(distanceKm * 1000)} m`;
+        } else {
+            distanceElement.textContent = `${distanceKm.toFixed(1)} km`;
+        }
+    }
+}
+
+/**
+ * Open the map in full-screen mode
+ */
+function openFullMap() {
+    if (!currentAssignment) return;
+
+    const modal = document.getElementById('mapModal');
+    if (!modal) {
+        // Create map modal dynamically
+        createMapModal();
+    }
+
+    document.getElementById('mapModal').classList.add('active');
+
+    // Initialize map after modal is visible
+    setTimeout(() => {
+        initDeliveryMap('fullMapContainer');
+        updateMapWithAssignment(currentAssignment);
+    }, 100);
+}
+
+/**
+ * Close full-screen map
+ */
+function closeMapModal() {
+    document.getElementById('mapModal').classList.remove('active');
+    if (deliveryMap) {
+        deliveryMap.remove();
+        deliveryMap = null;
+    }
+}
+
+/**
+ * Create map modal HTML dynamically
+ */
+function createMapModal() {
+    const modalHTML = `
+    <div class="modal-overlay map-modal" id="mapModal">
+        <div class="map-modal-container">
+            <div class="map-header">
+                <div class="map-info">
+                    <div class="map-eta" id="liveETA">Calculating...</div>
+                    <div class="map-distance" id="liveDistance">--</div>
+                </div>
+                <button class="map-close-btn" onclick="closeMapModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div id="fullMapContainer" class="full-map-container"></div>
+            <div class="map-bottom-bar">
+                <div class="map-addresses">
+                    <div class="map-address pickup">
+                        <i class="bi bi-circle-fill"></i>
+                        <span id="mapPickupAddress">Pickup location</span>
+                    </div>
+                    <div class="map-route-line"></div>
+                    <div class="map-address delivery">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span id="mapDeliveryAddress">Delivery location</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="openGoogleMapsNavigation()">
+                    <i class="bi bi-navigation-fill"></i>
+                    Open Google Maps
+                </button>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+/**
+ * Open Google Maps with turn-by-turn navigation
+ */
+function openGoogleMapsNavigation() {
+    if (!currentAssignment) return;
+
+    let url;
+    if (currentAssignment.delivery_lat && currentAssignment.delivery_lng) {
+        url = `https://www.google.com/maps/dir/?api=1&destination=${currentAssignment.delivery_lat},${currentAssignment.delivery_lng}&travelmode=driving`;
+    } else if (currentAssignment.delivery_address) {
+        url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentAssignment.delivery_address)}&travelmode=driving`;
+    }
+
+    if (url) {
+        window.open(url, '_blank');
+    }
+}
+
+// Update GPS handler to also update map
+const originalSendLocation = sendLocation;
+async function sendLocation(lat, lng, accuracy, heading, speed) {
+    // Update map marker in real-time
+    updateDriverMarker(lat, lng);
+
+    // Call original function
+    await originalSendLocation.call(this, lat, lng, accuracy, heading, speed);
 }
