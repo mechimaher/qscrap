@@ -104,30 +104,27 @@ export const register = async (req: Request, res: Response) => {
         const userId = userResult.rows[0].user_id;
 
 
-        // Insert Garage Profile if needed
+        // Insert Garage Profile if needed - AUTO-GRANT 30-DAY DEMO TRIAL
         if (user_type === 'garage') {
             if (!garage_name) {
                 await client.query('ROLLBACK');
                 return res.status(400).json({ error: 'Garage name is required for garage registration' });
             }
+
+            // Calculate demo expiry date (30 days from now)
+            const demoExpiresAt = new Date();
+            demoExpiresAt.setDate(demoExpiresAt.getDate() + TRIAL_DAYS);
+
+            // Create garage with auto demo trial
             await client.query(
-                'INSERT INTO garages (garage_id, garage_name, address) VALUES ($1, $2, $3)',
-                [userId, garage_name, address]
+                `INSERT INTO garages (garage_id, garage_name, address, approval_status, demo_expires_at) 
+                 VALUES ($1, $2, $3, 'demo', $4)`,
+                [userId, garage_name, address, demoExpiresAt]
             );
 
-            // Get starter plan for trial subscription
-            const planResult = await client.query(
-                "SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' AND is_active = true LIMIT 1"
-            );
-
-            const planId = planResult.rows.length > 0 ? planResult.rows[0].plan_id : null;
-
-            // Create free trial subscription with plan_id
-            await client.query(
-                `INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, trial_ends_at)
-                 VALUES ($1, $2, 'trial', CURRENT_DATE, CURRENT_DATE + $3, NOW() + INTERVAL '1 day' * $3)`,
-                [userId, planId, TRIAL_DAYS]
-            );
+            // Note: During demo, garage operates without formal subscription
+            // Commission = 0% during demo
+            // After demo expires, they must subscribe to continue
         }
 
         await client.query('COMMIT');
@@ -220,12 +217,48 @@ export const login = async (req: Request, res: Response) => {
                 if (approvalStatus === 'demo' && garage.demo_expires_at) {
                     const demoExpiry = new Date(garage.demo_expires_at);
                     if (demoExpiry < new Date()) {
-                        return res.status(403).json({
-                            error: 'demo_expired',
-                            message: 'Your demo period has expired. Please contact our team to activate your account.',
-                            status: 'demo_expired'
+                        // Auto-update status to 'expired'
+                        await pool.query(
+                            `UPDATE garages SET approval_status = 'expired' WHERE garage_id = $1`,
+                            [user.user_id]
+                        );
+
+                        // Allow login but with expired flag (grace period for upgrade)
+                        const token = jwt.sign(
+                            { userId: user.user_id, userType: user.user_type },
+                            getJwtSecret(),
+                            { expiresIn: TOKEN_EXPIRY_SECONDS }
+                        );
+
+                        await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
+
+                        return res.json({
+                            token,
+                            userType: user.user_type,
+                            userId: user.user_id,
+                            status: 'expired',
+                            message: 'Your demo trial has expired. Please upgrade to continue using all features.'
                         });
                     }
+                }
+
+                // Handle already-expired status (allow login with warning)
+                if (approvalStatus === 'expired') {
+                    const token = jwt.sign(
+                        { userId: user.user_id, userType: user.user_type },
+                        getJwtSecret(),
+                        { expiresIn: TOKEN_EXPIRY_SECONDS }
+                    );
+
+                    await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
+
+                    return res.json({
+                        token,
+                        userType: user.user_type,
+                        userId: user.user_id,
+                        status: 'expired',
+                        message: 'Your subscription has expired. Please upgrade to continue using all features.'
+                    });
                 }
 
                 // Approved and valid demo accounts can proceed

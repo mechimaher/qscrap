@@ -56,9 +56,18 @@ self.addEventListener('fetch', (event) => {
                 });
                 return response;
             })
-            .catch(() => {
+            .catch(async () => {
                 // Network failed, try cache
-                return caches.match(event.request);
+                const cachedResponse = await caches.match(event.request);
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                // Return a fallback response if not in cache
+                return new Response('Offline - content not available', {
+                    status: 503,
+                    statusText: 'Service Unavailable',
+                    headers: { 'Content-Type': 'text/plain' }
+                });
             })
     );
 });

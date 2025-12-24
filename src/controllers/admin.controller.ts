@@ -401,7 +401,7 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
                 (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
                 (SELECT COUNT(*) FROM users WHERE user_type = 'driver') as total_drivers,
                 (SELECT COUNT(*) FROM orders WHERE order_status IN ('confirmed', 'preparing', 'in_transit')) as active_orders,
-                (SELECT COUNT(*) FROM disputes WHERE dispute_status = 'open') as open_disputes,
+                (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as open_disputes,
                 (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE order_status = 'completed' AND created_at > NOW() - INTERVAL '30 days') as monthly_revenue
         `);
 
@@ -452,5 +452,778 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
     } catch (err: any) {
         console.error('[ADMIN] getAuditLog error:', err);
         res.status(500).json({ error: 'Failed to fetch audit log' });
+    }
+};
+
+// ============================================================================
+// PHASE 3: SUBSCRIPTION & PLAN MANAGEMENT
+// ============================================================================
+
+/**
+ * Get all subscription plans
+ */
+export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await pool.query(`
+            SELECT sp.*,
+                   (SELECT COUNT(*) FROM garage_subscriptions gs WHERE gs.plan_id = sp.plan_id AND gs.status = 'active') as active_count
+            FROM subscription_plans sp
+            WHERE sp.is_active = true
+            ORDER BY sp.display_order ASC
+        `);
+        res.json({ plans: result.rows });
+    } catch (err: any) {
+        console.error('[ADMIN] getSubscriptionPlans error:', err);
+        res.status(500).json({ error: 'Failed to fetch plans' });
+    }
+};
+
+/**
+ * Assign a plan to a garage (admin override)
+ */
+export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
+    const { garage_id } = req.params;
+    const { plan_id, months = 1, notes } = req.body;
+    const adminId = req.user?.userId;
+
+    if (!plan_id) {
+        return res.status(400).json({ error: 'Plan ID is required' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Verify plan exists
+            const planCheck = await client.query(
+                `SELECT * FROM subscription_plans WHERE plan_id = $1`,
+                [plan_id]
+            );
+            if (planCheck.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'Plan not found' });
+            }
+            const plan = planCheck.rows[0];
+
+            // Cancel existing active subscription
+            await client.query(`
+                UPDATE garage_subscriptions 
+                SET status = 'cancelled', updated_at = NOW()
+                WHERE garage_id = $1 AND status IN ('active', 'trial')
+            `, [garage_id]);
+
+            // Create new subscription
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setMonth(endDate.getMonth() + Number(months));
+
+            const subResult = await client.query(`
+                INSERT INTO garage_subscriptions 
+                (garage_id, plan_id, status, start_date, end_date, is_admin_granted, admin_notes)
+                VALUES ($1, $2, 'active', $3, $4, true, $5)
+                RETURNING *
+            `, [garage_id, plan_id, startDate, endDate, notes || 'Granted by admin']);
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
+                VALUES ($1, 'assign_plan', 'garage', $2, $3)
+            `, [adminId, garage_id, JSON.stringify({
+                plan_id,
+                plan_name: plan.plan_name,
+                months,
+                end_date: endDate
+            })]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: `${plan.plan_name} plan assigned for ${months} month(s)`,
+                subscription: subResult.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] assignPlanToGarage error:', err);
+        res.status(500).json({ error: 'Failed to assign plan' });
+    }
+};
+
+/**
+ * Revoke/cancel a garage's subscription
+ */
+export const revokeSubscription = async (req: AuthRequest, res: Response) => {
+    const { garage_id } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user?.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get current subscription
+            const currentSub = await client.query(`
+                SELECT gs.*, sp.plan_name 
+                FROM garage_subscriptions gs
+                JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+                WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
+            `, [garage_id]);
+
+            if (currentSub.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'No active subscription found' });
+            }
+
+            // Cancel subscription
+            await client.query(`
+                UPDATE garage_subscriptions 
+                SET status = 'cancelled', 
+                    admin_notes = $1,
+                    updated_at = NOW()
+                WHERE garage_id = $2 AND status IN ('active', 'trial')
+            `, [reason || 'Revoked by admin', garage_id]);
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, old_value, new_value)
+                VALUES ($1, 'revoke_subscription', 'garage', $2, $3, $4)
+            `, [
+                adminId,
+                garage_id,
+                JSON.stringify({ plan: currentSub.rows[0].plan_name }),
+                JSON.stringify({ status: 'cancelled', reason })
+            ]);
+
+            await client.query('COMMIT');
+
+            res.json({ message: 'Subscription revoked' });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] revokeSubscription error:', err);
+        res.status(500).json({ error: 'Failed to revoke subscription' });
+    }
+};
+
+/**
+ * Extend a subscription
+ */
+export const extendSubscription = async (req: AuthRequest, res: Response) => {
+    const { garage_id } = req.params;
+    const { months = 1, notes } = req.body;
+    const adminId = req.user?.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get current subscription
+            const currentSub = await client.query(`
+                SELECT * FROM garage_subscriptions 
+                WHERE garage_id = $1 AND status IN ('active', 'trial')
+            `, [garage_id]);
+
+            if (currentSub.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'No active subscription found' });
+            }
+
+            const currentEnd = new Date(currentSub.rows[0].end_date);
+            const newEnd = new Date(currentEnd);
+            newEnd.setMonth(newEnd.getMonth() + Number(months));
+
+            // Update subscription
+            const result = await client.query(`
+                UPDATE garage_subscriptions 
+                SET end_date = $1, admin_notes = $2, updated_at = NOW()
+                WHERE garage_id = $3 AND status IN ('active', 'trial')
+                RETURNING *
+            `, [newEnd, notes || `Extended by ${months} month(s)`, garage_id]);
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, old_value, new_value)
+                VALUES ($1, 'extend_subscription', 'garage', $2, $3, $4)
+            `, [
+                adminId,
+                garage_id,
+                JSON.stringify({ end_date: currentEnd }),
+                JSON.stringify({ end_date: newEnd, months_added: months })
+            ]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: `Subscription extended by ${months} month(s)`,
+                new_end_date: newEnd,
+                subscription: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] extendSubscription error:', err);
+        res.status(500).json({ error: 'Failed to extend subscription' });
+    }
+};
+
+/**
+ * Override commission rate for a garage
+ */
+export const overrideCommission = async (req: AuthRequest, res: Response) => {
+    const { garage_id } = req.params;
+    const { commission_rate, notes } = req.body;
+    const adminId = req.user?.userId;
+
+    if (commission_rate === undefined || commission_rate < 0 || commission_rate > 0.5) {
+        return res.status(400).json({ error: 'Commission rate must be between 0 and 0.5 (50%)' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get current subscription
+            const currentSub = await client.query(`
+                SELECT gs.*, sp.commission_rate as plan_rate
+                FROM garage_subscriptions gs
+                JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+                WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
+            `, [garage_id]);
+
+            if (currentSub.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'No active subscription found' });
+            }
+
+            // Add commission override column if not exists and update
+            await client.query(`
+                ALTER TABLE garage_subscriptions 
+                ADD COLUMN IF NOT EXISTS commission_override DECIMAL(4,3)
+            `);
+
+            const result = await client.query(`
+                UPDATE garage_subscriptions 
+                SET commission_override = $1, admin_notes = $2, updated_at = NOW()
+                WHERE garage_id = $3 AND status IN ('active', 'trial')
+                RETURNING *
+            `, [commission_rate, notes || `Commission override: ${(commission_rate * 100).toFixed(1)}%`, garage_id]);
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, old_value, new_value)
+                VALUES ($1, 'override_commission', 'garage', $2, $3, $4)
+            `, [
+                adminId,
+                garage_id,
+                JSON.stringify({ rate: currentSub.rows[0].plan_rate }),
+                JSON.stringify({ rate: commission_rate, notes })
+            ]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: `Commission rate set to ${(commission_rate * 100).toFixed(1)}%`,
+                subscription: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] overrideCommission error:', err);
+        res.status(500).json({ error: 'Failed to override commission' });
+    }
+};
+
+// ============================================================================
+// PHASE 4: USER MANAGEMENT
+// ============================================================================
+
+/**
+ * Get all users with filters and pagination
+ */
+export const getAllUsers = async (req: AuthRequest, res: Response) => {
+    const { type, user_type, status, search, page = 1, limit = 20 } = req.query;
+    const userTypeFilter = user_type || type; // Accept both parameter names
+    const offset = (Number(page) - 1) * Number(limit);
+
+    try {
+        let whereClause = 'WHERE 1=1';
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (userTypeFilter && userTypeFilter !== 'all') {
+            whereClause += ` AND user_type = $${paramIndex++}`;
+            params.push(userTypeFilter);
+        }
+
+        if (status === 'active') {
+            whereClause += ` AND is_active = true AND is_suspended = false`;
+        } else if (status === 'suspended') {
+            whereClause += ` AND is_suspended = true`;
+        } else if (status === 'inactive') {
+            whereClause += ` AND is_active = false`;
+        }
+
+        if (search) {
+            whereClause += ` AND (full_name ILIKE $${paramIndex} OR phone_number ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+
+        // Count
+        const countResult = await pool.query(
+            `SELECT COUNT(*) FROM users ${whereClause}`,
+            params
+        );
+        const total = parseInt(countResult.rows[0].count);
+
+        // Get users
+        const result = await pool.query(`
+            SELECT 
+                user_id, phone_number, email, full_name, user_type,
+                is_active, is_suspended, suspension_reason,
+                last_login_at, created_at
+            FROM users
+            ${whereClause}
+            ORDER BY created_at DESC
+            LIMIT $${paramIndex++} OFFSET $${paramIndex}
+        `, [...params, limit, offset]);
+
+        res.json({
+            users: result.rows,
+            pagination: {
+                current_page: Number(page),
+                limit: Number(limit),
+                total,
+                total_pages: Math.ceil(total / Number(limit))
+            }
+        });
+    } catch (err: any) {
+        console.error('[ADMIN] getAllUsers error:', err);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+};
+
+/**
+ * Get user details with activity
+ */
+export const getAdminUserDetails = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+
+    try {
+        // Get user
+        const userResult = await pool.query(`
+            SELECT user_id, phone_number, email, full_name, user_type,
+                   is_active, is_suspended, suspension_reason,
+                   last_login_at, created_at
+            FROM users WHERE user_id = $1
+        `, [user_id]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+        let additionalData: any = {};
+
+        // Get type-specific data
+        if (user.user_type === 'customer') {
+            const orders = await pool.query(`
+                SELECT COUNT(*) as total_orders,
+                       SUM(CASE WHEN order_status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
+                       COALESCE(SUM(total_amount), 0) as total_spent
+                FROM orders WHERE customer_id = $1
+            `, [user_id]);
+            additionalData = orders.rows[0];
+        } else if (user.user_type === 'garage') {
+            const garage = await pool.query(`
+                SELECT g.*, 
+                       (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id) as total_orders,
+                       (SELECT COUNT(*) FROM bids WHERE garage_id = g.garage_id) as total_bids
+                FROM garages g WHERE g.garage_id = $1
+            `, [user_id]);
+            additionalData = garage.rows[0] || {};
+        } else if (user.user_type === 'driver') {
+            const driver = await pool.query(`
+                SELECT COUNT(*) as total_deliveries,
+                       SUM(CASE WHEN da.status = 'delivered' THEN 1 ELSE 0 END) as completed_deliveries
+                FROM delivery_assignments da WHERE da.driver_id = $1
+            `, [user_id]);
+            additionalData = driver.rows[0];
+        }
+
+        // Get recent activity
+        const activity = await pool.query(`
+            SELECT * FROM admin_audit_log 
+            WHERE target_id = $1 
+            ORDER BY created_at DESC LIMIT 10
+        `, [user_id]);
+
+        res.json({
+            user,
+            ...additionalData,
+            recent_activity: activity.rows
+        });
+    } catch (err: any) {
+        console.error('[ADMIN] getAdminUserDetails error:', err);
+        res.status(500).json({ error: 'Failed to fetch user details' });
+    }
+};
+
+/**
+ * Update user details (admin)
+ */
+export const updateUserAdmin = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    const { full_name, email, phone_number } = req.body;
+    const adminId = req.user?.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get current values
+            const current = await client.query(
+                `SELECT full_name, email, phone_number FROM users WHERE user_id = $1`,
+                [user_id]
+            );
+
+            if (current.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            // Update
+            const result = await client.query(`
+                UPDATE users SET
+                    full_name = COALESCE($1, full_name),
+                    email = COALESCE($2, email),
+                    phone_number = COALESCE($3, phone_number),
+                    updated_at = NOW()
+                WHERE user_id = $4
+                RETURNING user_id, full_name, email, phone_number, user_type
+            `, [full_name, email, phone_number, user_id]);
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, old_value, new_value)
+                VALUES ($1, 'update_user', 'user', $2, $3, $4)
+            `, [
+                adminId,
+                user_id,
+                JSON.stringify(current.rows[0]),
+                JSON.stringify({ full_name, email, phone_number })
+            ]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: 'User updated successfully',
+                user: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] updateUserAdmin error:', err);
+        res.status(500).json({ error: 'Failed to update user' });
+    }
+};
+
+/**
+ * Admin suspend user
+ */
+export const adminSuspendUser = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user?.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const result = await client.query(`
+                UPDATE users SET
+                    is_suspended = true,
+                    suspension_reason = $1,
+                    updated_at = NOW()
+                WHERE user_id = $2
+                RETURNING user_id, full_name, user_type, is_suspended
+            `, [reason || 'Suspended by admin', user_id]);
+
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
+                VALUES ($1, 'suspend_user', 'user', $2, $3)
+            `, [adminId, user_id, JSON.stringify({ reason })]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: 'User suspended',
+                user: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] adminSuspendUser error:', err);
+        res.status(500).json({ error: 'Failed to suspend user' });
+    }
+};
+
+/**
+ * Admin activate user
+ */
+export const adminActivateUser = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    const adminId = req.user?.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const result = await client.query(`
+                UPDATE users SET
+                    is_active = true,
+                    is_suspended = false,
+                    suspension_reason = NULL,
+                    updated_at = NOW()
+                WHERE user_id = $1
+                RETURNING user_id, full_name, user_type, is_active, is_suspended
+            `, [user_id]);
+
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
+                VALUES ($1, 'activate_user', 'user', $2, $3)
+            `, [adminId, user_id, JSON.stringify({ status: 'activated' })]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: 'User activated',
+                user: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] adminActivateUser error:', err);
+        res.status(500).json({ error: 'Failed to activate user' });
+    }
+};
+
+/**
+ * Admin reset user password
+ */
+export const adminResetPassword = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    const { new_password } = req.body;
+    const adminId = req.user?.userId;
+
+    if (!new_password || new_password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    try {
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(new_password, 10);
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const result = await client.query(`
+                UPDATE users SET
+                    password_hash = $1,
+                    updated_at = NOW()
+                WHERE user_id = $2
+                RETURNING user_id, full_name, user_type
+            `, [hashedPassword, user_id]);
+
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            // Log action (don't log the actual password!)
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
+                VALUES ($1, 'reset_password', 'user', $2, $3)
+            `, [adminId, user_id, JSON.stringify({ action: 'password_reset' })]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: 'Password reset successfully',
+                user: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] adminResetPassword error:', err);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
+};
+
+// ============================================================================
+// ADMIN CREATE USER
+// ============================================================================
+
+/**
+ * Create a new user (admin only)
+ */
+export const adminCreateUser = async (req: AuthRequest, res: Response) => {
+    const adminId = req.user?.userId;
+    const {
+        phone_number,
+        password,
+        full_name,
+        email,
+        user_type,
+        is_active = true,
+        garage_data,
+        driver_data
+    } = req.body;
+
+    // Validation
+    if (!phone_number || !password || !full_name || !user_type) {
+        return res.status(400).json({ error: 'Phone, password, name, and user type are required' });
+    }
+
+    if (!['customer', 'garage', 'driver', 'admin'].includes(user_type)) {
+        return res.status(400).json({ error: 'Invalid user type' });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    if (user_type === 'garage' && (!garage_data || !garage_data.garage_name)) {
+        return res.status(400).json({ error: 'Garage name is required for garage users' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Check if phone already exists
+            const existingUser = await client.query(
+                `SELECT user_id FROM users WHERE phone_number = $1`,
+                [phone_number]
+            );
+            if (existingUser.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Phone number already registered' });
+            }
+
+            // Hash password
+            const bcrypt = require('bcryptjs');
+            const passwordHash = await bcrypt.hash(password, 10);
+
+            // Create user
+            const userResult = await client.query(`
+                INSERT INTO users (phone_number, password_hash, user_type, full_name, email, is_active)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING user_id, phone_number, full_name, email, user_type, is_active, created_at
+            `, [phone_number, passwordHash, user_type, full_name, email || null, is_active]);
+
+            const newUser = userResult.rows[0];
+
+            // Create garage record if user_type is garage
+            if (user_type === 'garage' && garage_data) {
+                const demoExpiresAt = garage_data.approval_status === 'demo'
+                    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                    : null;
+
+                await client.query(`
+                    INSERT INTO garages (
+                        garage_id, garage_name, trade_license_number, address, 
+                        cr_number, approval_status, demo_expires_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `, [
+                    newUser.user_id,
+                    garage_data.garage_name,
+                    garage_data.trade_license_number || null,
+                    garage_data.address || null,
+                    garage_data.cr_number || null,
+                    garage_data.approval_status || 'pending',
+                    demoExpiresAt
+                ]);
+            }
+
+            // Log action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
+                VALUES ($1, 'create_user', $2, $3, $4)
+            `, [adminId, user_type, newUser.user_id, JSON.stringify({
+                phone_number,
+                full_name,
+                user_type,
+                garage_name: garage_data?.garage_name
+            })]);
+
+            await client.query('COMMIT');
+
+            res.status(201).json({
+                message: `${user_type.charAt(0).toUpperCase() + user_type.slice(1)} created successfully`,
+                user: newUser
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] adminCreateUser error:', err);
+        res.status(500).json({ error: 'Failed to create user' });
     }
 };

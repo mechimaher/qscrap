@@ -76,9 +76,12 @@ export const getGarageProfile = async (req: AuthRequest, res: Response) => {
             `SELECT g.garage_id, g.garage_name, g.address, g.rating_average, g.rating_count,
                     g.total_transactions, g.created_at,
                     g.cr_number, g.trade_license_number, g.bank_name, g.bank_account, g.iban,
+                    g.approval_status, g.demo_expires_at,
                     u.phone_number,
                     gs.plan_id, gs.status as subscription_status, gs.trial_ends_at, gs.billing_cycle_end,
-                    COALESCE(sp.plan_name, 'Free Trial') as plan_name, 
+                    COALESCE(sp.plan_name, 
+                        CASE WHEN g.approval_status = 'demo' THEN 'Demo Trial' ELSE 'No Plan' END
+                    ) as plan_name, 
                     COALESCE(sp.commission_rate, 0.15) as commission_rate, 
                     sp.max_bids_per_month,
                     COALESCE((SELECT SUM(garage_payout_amount) FROM orders WHERE garage_id = g.garage_id AND order_status = 'completed'), 0) as total_revenue
@@ -94,7 +97,16 @@ export const getGarageProfile = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Garage not found' });
         }
 
-        res.json(result.rows[0]);
+        const profile = result.rows[0];
+
+        // If no subscription but has demo, set subscription info from demo
+        if (!profile.subscription_status && profile.approval_status === 'demo') {
+            profile.subscription_status = 'demo';
+            profile.plan_name = 'Demo Trial';
+            profile.billing_cycle_end = profile.demo_expires_at;
+        }
+
+        res.json(profile);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }

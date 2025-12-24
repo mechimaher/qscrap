@@ -23,6 +23,7 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
 
     try {
+        // First check for active subscription in garage_subscriptions table
         const result = await pool.query(
             `SELECT gs.*, sp.plan_code, sp.plan_name, sp.monthly_fee, 
                     sp.commission_rate, sp.max_bids_per_month, sp.features
@@ -34,21 +35,60 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
             [garageId]
         );
 
-        if (result.rows.length === 0) {
-            return res.json({ subscription: null, message: 'No active subscription' });
+        if (result.rows.length > 0) {
+            const sub = result.rows[0];
+            const bidsRemaining = sub.max_bids_per_month
+                ? sub.max_bids_per_month - sub.bids_used_this_cycle
+                : null;
+
+            return res.json({
+                subscription: {
+                    ...sub,
+                    bids_remaining: bidsRemaining
+                }
+            });
         }
 
-        const sub = result.rows[0];
-        const bidsRemaining = sub.max_bids_per_month
-            ? sub.max_bids_per_month - sub.bids_used_this_cycle
-            : null;
+        // No subscription found - check if garage has demo access
+        const demoResult = await pool.query(
+            `SELECT approval_status, demo_expires_at 
+             FROM garages 
+             WHERE garage_id = $1`,
+            [garageId]
+        );
 
-        res.json({
-            subscription: {
-                ...sub,
-                bids_remaining: bidsRemaining
-            }
-        });
+        if (demoResult.rows.length > 0 && demoResult.rows[0].approval_status === 'demo') {
+            const demo = demoResult.rows[0];
+            // Return demo as a virtual subscription (0% commission during demo)
+            return res.json({
+                subscription: {
+                    plan_name: 'Demo Trial',
+                    plan_code: 'demo',
+                    status: 'demo',
+                    monthly_fee: 0,
+                    commission_rate: 0, // 0% during demo - garage keeps 100%
+                    max_bids_per_month: null, // unlimited during demo
+                    bids_used_this_cycle: 0,
+                    bids_remaining: null,
+                    billing_cycle_end: demo.demo_expires_at,
+                    features: ['Full platform access', 'Unlimited bids', '0% platform commission', 'Demo period'],
+                    is_demo: true
+                }
+            });
+        }
+
+        // Check if garage is expired (demo ended, no subscription)
+        if (demoResult.rows.length > 0 && demoResult.rows[0].approval_status === 'expired') {
+            return res.json({
+                subscription: null,
+                status: 'expired',
+                message: 'Your demo trial has expired. Please subscribe to continue using the platform.',
+                can_bid: false
+            });
+        }
+
+        // No subscription and no demo
+        return res.json({ subscription: null, message: 'No active subscription' });
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }

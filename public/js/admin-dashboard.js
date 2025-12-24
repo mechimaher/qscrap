@@ -68,7 +68,9 @@ function showApp() {
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
         const section = btn.dataset.section;
-        switchSection(section);
+        if (section) {
+            switchSection(section);
+        }
     });
 });
 
@@ -82,6 +84,7 @@ function switchSection(section) {
     if (section === 'dashboard') loadDashboard();
     if (section === 'approvals') loadPendingGarages();
     if (section === 'garages') loadGarages();
+    if (section === 'users') loadUsers();
     if (section === 'audit') loadAuditLog();
 }
 
@@ -412,10 +415,18 @@ async function revokeAccess(garageId) {
 async function loadAuditLog() {
     const container = document.getElementById('auditList');
 
+    // Show loading state
+    container.innerHTML = '<div class="empty-state"><div class="loading-spinner">Loading audit log...</div></div>';
+
     try {
         const res = await fetch(`${API_URL}/admin/audit`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
         const data = await res.json();
 
         if (data.logs && data.logs.length > 0) {
@@ -426,16 +437,31 @@ async function loadAuditLog() {
                     </div>
                     <div class="audit-content">
                         <div class="audit-action">${formatActionType(log.action_type)}</div>
-                        <div class="audit-details">By ${log.admin_name || 'System'} on ${log.target_type}</div>
+                        <div class="audit-details">By ${log.admin_name || 'Admin'} on ${log.target_type} ${log.target_id ? '(' + log.target_id.slice(0, 8) + '...)' : ''}</div>
                     </div>
-                    <div class="audit-time">${formatDate(log.created_at)}</div>
+                    <div class="audit-time">${formatDateTime(log.created_at)}</div>
                 </div>
             `).join('');
         } else {
-            container.innerHTML = '<div class="empty-state"><i class="bi bi-journal"></i><p>No audit logs yet</p></div>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-journal-bookmark"></i>
+                    <p>No audit logs yet</p>
+                    <span style="font-size: 13px; color: var(--text-muted);">Admin actions will appear here</span>
+                </div>
+            `;
         }
     } catch (err) {
-        container.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load</p></div>';
+        console.error('loadAuditLog error:', err);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Failed to load audit log</p>
+                <button class="btn btn-outline" onclick="loadAuditLog()">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -488,3 +514,693 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+let userSearchDebounce = null;
+let currentUsersPage = 1;
+let currentUserData = null;
+
+function debounceUserSearch() {
+    clearTimeout(userSearchDebounce);
+    userSearchDebounce = setTimeout(() => loadUsers(), 300);
+}
+
+async function loadUsers(page = 1) {
+    currentUsersPage = page;
+    const tbody = document.getElementById('usersTableBody');
+    const userType = document.getElementById('userTypeFilter').value;
+    const status = document.getElementById('userStatusFilter').value;
+    const search = document.getElementById('userSearch').value;
+
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-cell"><i class="bi bi-hourglass"></i> Loading...</td></tr>';
+
+    try {
+        const params = new URLSearchParams({
+            user_type: userType,
+            status,
+            search,
+            page,
+            limit: 15
+        });
+        const res = await fetch(`${API_URL}/admin/users?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.users && data.users.length > 0) {
+            tbody.innerHTML = data.users.map(user => renderUserRow(user)).join('');
+            renderUsersPagination(data.pagination);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-cell"><i class="bi bi-people"></i> No users found</td></tr>';
+            document.getElementById('usersPagination').innerHTML = '';
+        }
+    } catch (err) {
+        console.error('loadUsers error:', err);
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-cell"><i class="bi bi-exclamation-triangle"></i> Failed to load users</td></tr>';
+    }
+}
+
+function renderUserRow(user) {
+    const statusClass = user.is_suspended ? 'suspended' : (user.is_active ? 'active' : 'inactive');
+    const statusLabel = user.is_suspended ? 'Suspended' : (user.is_active ? 'Active' : 'Inactive');
+    const typeIcon = user.user_type === 'customer' ? 'person' :
+        user.user_type === 'garage' ? 'shop' :
+            user.user_type === 'driver' ? 'truck' : 'person';
+
+    return `
+        <tr>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar"><i class="bi bi-${typeIcon}"></i></div>
+                    <div class="user-info">
+                        <span class="user-name">${escapeHtml(user.full_name || 'N/A')}</span>
+                        <span class="user-id">${user.user_id.slice(0, 8)}...</span>
+                    </div>
+                </div>
+            </td>
+            <td><span class="type-badge ${user.user_type}">${user.user_type}</span></td>
+            <td>
+                <div class="contact-info">
+                    <span><i class="bi bi-telephone"></i> ${user.phone_number || '-'}</span>
+                    <span><i class="bi bi-envelope"></i> ${user.email || '-'}</span>
+                </div>
+            </td>
+            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+            <td>${formatDate(user.created_at)}</td>
+            <td>
+                <div class="action-buttons-row">
+                    <button class="btn-icon" onclick="viewUserDetails('${user.user_id}')" title="View Details">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn-icon" onclick="openEditUserModal('${user.user_id}', '${escapeHtml(user.full_name || '')}', '${user.email || ''}', '${user.phone_number || ''}')" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    ${user.is_suspended ? `
+                        <button class="btn-icon success" onclick="activateUser('${user.user_id}')" title="Activate">
+                            <i class="bi bi-check-circle"></i>
+                        </button>
+                    ` : `
+                        <button class="btn-icon danger" onclick="suspendUser('${user.user_id}')" title="Suspend">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+                    `}
+                    <button class="btn-icon warning" onclick="openResetPasswordModal('${user.user_id}', '${escapeHtml(user.full_name || user.phone_number)}')" title="Reset Password">
+                        <i class="bi bi-key"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function renderUsersPagination(pagination) {
+    if (!pagination || pagination.total_pages <= 1) {
+        document.getElementById('usersPagination').innerHTML = '';
+        return;
+    }
+
+    const { current_page, total_pages, total } = pagination;
+    let html = `<div class="pagination">
+        <span class="pagination-info">Showing page ${current_page} of ${total_pages} (${total} total)</span>
+        <div class="pagination-buttons">`;
+
+    if (current_page > 1) {
+        html += `<button class="btn btn-sm" onclick="loadUsers(${current_page - 1})"><i class="bi bi-chevron-left"></i></button>`;
+    }
+
+    for (let i = Math.max(1, current_page - 2); i <= Math.min(total_pages, current_page + 2); i++) {
+        html += `<button class="btn btn-sm ${i === current_page ? 'active' : ''}" onclick="loadUsers(${i})">${i}</button>`;
+    }
+
+    if (current_page < total_pages) {
+        html += `<button class="btn btn-sm" onclick="loadUsers(${current_page + 1})"><i class="bi bi-chevron-right"></i></button>`;
+    }
+
+    html += '</div></div>';
+    document.getElementById('usersPagination').innerHTML = html;
+}
+
+async function viewUserDetails(userId) {
+    document.getElementById('userDetailContent').innerHTML = '<div class="loading-spinner">Loading...</div>';
+    document.getElementById('userDetailActions').innerHTML = '';
+    document.getElementById('userDetailModal').classList.add('active');
+
+    try {
+        const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.user) {
+            currentUserData = data.user;
+            renderUserDetails(data.user, data.type_data, data.activity);
+        } else {
+            document.getElementById('userDetailContent').innerHTML = '<p class="error">Failed to load user details</p>';
+        }
+    } catch (err) {
+        document.getElementById('userDetailContent').innerHTML = '<p class="error">Connection error</p>';
+    }
+}
+
+function renderUserDetails(user, typeData, activity) {
+    const statusClass = user.is_suspended ? 'suspended' : (user.is_active ? 'active' : 'inactive');
+    const statusLabel = user.is_suspended ? 'Suspended' : (user.is_active ? 'Active' : 'Inactive');
+
+    let html = `
+        <div class="detail-section">
+            <h4>Basic Information</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Full Name</label>
+                    <span>${escapeHtml(user.full_name || 'N/A')}</span>
+                </div>
+                <div class="detail-item">
+                    <label>User Type</label>
+                    <span class="type-badge ${user.user_type}">${user.user_type}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Phone</label>
+                    <span>${user.phone_number || '-'}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Email</label>
+                    <span>${user.email || '-'}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Status</label>
+                    <span class="status-badge ${statusClass}">${statusLabel}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Registered</label>
+                    <span>${formatDateTime(user.created_at)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Type-specific data
+    if (user.user_type === 'garage' && typeData) {
+        html += `
+            <div class="detail-section">
+                <h4>Garage Information</h4>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Garage Name</label>
+                        <span>${escapeHtml(typeData.garage_name || 'N/A')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Approval Status</label>
+                        <span class="status-badge ${typeData.approval_status || 'pending'}">${typeData.approval_status || 'Pending'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Address</label>
+                        <span>${escapeHtml(typeData.address || 'N/A')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Subscription</label>
+                        <span>${typeData.subscription_status || 'None'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Activity summary
+    if (activity) {
+        html += `
+            <div class="detail-section">
+                <h4>Activity Summary</h4>
+                <div class="activity-stats">
+                    ${activity.orders_count !== undefined ? `<div class="activity-stat"><span class="value">${activity.orders_count}</span><span class="label">Orders</span></div>` : ''}
+                    ${activity.bids_count !== undefined ? `<div class="activity-stat"><span class="value">${activity.bids_count}</span><span class="label">Bids</span></div>` : ''}
+                    ${activity.deliveries_count !== undefined ? `<div class="activity-stat"><span class="value">${activity.deliveries_count}</span><span class="label">Deliveries</span></div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById('userDetailContent').innerHTML = html;
+
+    // Action buttons
+    let actions = `<button class="btn btn-outline" onclick="closeModal('userDetailModal')">Close</button>`;
+
+    if (user.is_suspended) {
+        actions += `<button class="btn btn-success" onclick="activateUser('${user.user_id}'); closeModal('userDetailModal');"><i class="bi bi-check-circle"></i> Activate</button>`;
+    } else {
+        actions += `<button class="btn btn-danger" onclick="suspendUser('${user.user_id}'); closeModal('userDetailModal');"><i class="bi bi-slash-circle"></i> Suspend</button>`;
+    }
+
+    if (user.user_type === 'garage') {
+        actions += `<button class="btn btn-primary" onclick="openSubscriptionModal('${user.user_id}', '${escapeHtml(typeData?.garage_name || user.full_name)}')"><i class="bi bi-credit-card"></i> Manage Subscription</button>`;
+    }
+
+    document.getElementById('userDetailActions').innerHTML = actions;
+}
+
+function openEditUserModal(userId, name, email, phone) {
+    document.getElementById('editUserId').value = userId;
+    document.getElementById('editUserName').value = name;
+    document.getElementById('editUserEmail').value = email;
+    document.getElementById('editUserPhone').value = phone;
+    document.getElementById('editUserModal').classList.add('active');
+}
+
+async function confirmEditUser() {
+    const userId = document.getElementById('editUserId').value;
+    const name = document.getElementById('editUserName').value;
+    const email = document.getElementById('editUserEmail').value;
+    const phone = document.getElementById('editUserPhone').value;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ full_name: name, email, phone_number: phone })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('User updated successfully', 'success');
+            closeModal('editUserModal');
+            loadUsers(currentUsersPage);
+        } else {
+            showToast(data.error || 'Failed to update', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+function openResetPasswordModal(userId, userName) {
+    document.getElementById('resetPasswordUserId').value = userId;
+    document.getElementById('resetPasswordUserName').textContent = userName;
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+    document.getElementById('resetPasswordModal').classList.add('active');
+}
+
+async function confirmResetPassword() {
+    const userId = document.getElementById('resetPasswordUserId').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+    if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/admin/users/${userId}/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ new_password: newPassword })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Password reset successfully', 'success');
+            closeModal('resetPasswordModal');
+        } else {
+            showToast(data.error || 'Failed to reset password', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function suspendUser(userId) {
+    if (!confirm('Are you sure you want to suspend this user?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/users/${userId}/suspend`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: 'Suspended by admin' })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('User suspended', 'success');
+            loadUsers(currentUsersPage);
+        } else {
+            showToast(data.error || 'Failed to suspend', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function activateUser(userId) {
+    try {
+        const res = await fetch(`${API_URL}/admin/users/${userId}/activate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('User activated', 'success');
+            loadUsers(currentUsersPage);
+        } else {
+            showToast(data.error || 'Failed to activate', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// ============================================
+// SUBSCRIPTION MANAGEMENT
+// ============================================
+
+let subscriptionPlansCache = null;
+
+async function loadSubscriptionPlans() {
+    if (subscriptionPlansCache) return subscriptionPlansCache;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/subscriptions/plans`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        subscriptionPlansCache = data.plans || [];
+        return subscriptionPlansCache;
+    } catch (err) {
+        console.error('Failed to load plans:', err);
+        return [];
+    }
+}
+
+async function openSubscriptionModal(garageId, garageName) {
+    document.getElementById('subscriptionGarageId').value = garageId;
+    document.getElementById('subscriptionGarageName').textContent = garageName;
+    document.getElementById('subscriptionDays').value = 30;
+    document.getElementById('commissionOverride').value = '';
+    document.getElementById('subscriptionNotes').value = '';
+
+    const planSelect = document.getElementById('subscriptionPlan');
+    planSelect.innerHTML = '<option value="">Loading plans...</option>';
+
+    document.getElementById('subscriptionModal').classList.add('active');
+
+    const plans = await loadSubscriptionPlans();
+    planSelect.innerHTML = plans.map(p =>
+        `<option value="${p.plan_id}">${escapeHtml(p.plan_name)} - QAR ${p.monthly_price}/mo (${p.commission_rate}% commission)</option>`
+    ).join('');
+
+    if (plans.length === 0) {
+        planSelect.innerHTML = '<option value="">No plans available</option>';
+    }
+}
+
+async function confirmAssignSubscription() {
+    const garageId = document.getElementById('subscriptionGarageId').value;
+    const planId = document.getElementById('subscriptionPlan').value;
+    const days = document.getElementById('subscriptionDays').value;
+    const commission = document.getElementById('commissionOverride').value;
+    const notes = document.getElementById('subscriptionNotes').value;
+
+    if (!planId) {
+        showToast('Please select a plan', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/admin/garages/${garageId}/subscription`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: planId,
+                days: parseInt(days),
+                commission_override: commission ? parseFloat(commission) : null,
+                notes
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Subscription assigned successfully', 'success');
+            closeModal('subscriptionModal');
+            loadGarages();
+        } else {
+            showToast(data.error || 'Failed to assign subscription', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function revokeSubscription() {
+    const garageId = document.getElementById('subscriptionGarageId').value;
+
+    if (!confirm('Are you sure you want to revoke this subscription?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/garages/${garageId}/subscription/revoke`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: 'Revoked by admin' })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Subscription revoked', 'success');
+            closeModal('subscriptionModal');
+            loadGarages();
+        } else {
+            showToast(data.error || 'Failed to revoke', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+function openExtendSubscriptionModal(garageId, garageName) {
+    document.getElementById('extendGarageId').value = garageId;
+    document.getElementById('extendGarageName').textContent = garageName;
+    document.getElementById('extendDays').value = 30;
+    document.getElementById('extendReason').value = '';
+    document.getElementById('extendSubscriptionModal').classList.add('active');
+}
+
+async function confirmExtendSubscription() {
+    const garageId = document.getElementById('extendGarageId').value;
+    const days = document.getElementById('extendDays').value;
+    const reason = document.getElementById('extendReason').value;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/garages/${garageId}/subscription/extend`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ days: parseInt(days), reason })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Subscription extended by ${days} days`, 'success');
+            closeModal('extendSubscriptionModal');
+            loadGarages();
+        } else {
+            showToast(data.error || 'Failed to extend', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// ============================================
+// ENHANCED UTILITIES
+// ============================================
+
+function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ============================================
+// CREATE USER FUNCTIONALITY
+// ============================================
+
+let selectedUserType = null;
+
+function openCreateUserModal() {
+    // Reset modal state
+    selectedUserType = null;
+    document.getElementById('createUserStep1').style.display = 'block';
+    document.getElementById('createUserStep2').style.display = 'none';
+    document.getElementById('createUserActions').innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
+    `;
+
+    // Clear form
+    document.getElementById('createUserForm')?.reset();
+    document.querySelectorAll('.garage-fields, .driver-fields').forEach(el => el.style.display = 'none');
+
+    // Open modal
+    document.getElementById('createUserModal').classList.add('active');
+}
+
+function selectUserType(type) {
+    selectedUserType = type;
+
+    // Show step 2
+    document.getElementById('createUserStep1').style.display = 'none';
+    document.getElementById('createUserStep2').style.display = 'block';
+
+    // Update badge
+    const typeLabels = {
+        customer: 'Customer',
+        garage: 'Garage',
+        driver: 'Driver',
+        operations: 'Operations Staff'
+    };
+    document.getElementById('selectedTypeBadge').textContent = typeLabels[type] || type;
+
+    // Show type-specific fields
+    document.querySelectorAll('.garage-fields, .driver-fields').forEach(el => el.style.display = 'none');
+    if (type === 'garage') {
+        document.querySelector('.garage-fields').style.display = 'block';
+    } else if (type === 'driver') {
+        document.querySelector('.driver-fields').style.display = 'block';
+    }
+
+    // Update action buttons
+    document.getElementById('createUserActions').innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
+        <button class="btn btn-success" onclick="submitCreateUser()">
+            <i class="bi bi-person-plus"></i> Create ${typeLabels[type]}
+        </button>
+    `;
+}
+
+function backToTypeSelection() {
+    selectedUserType = null;
+    document.getElementById('createUserStep1').style.display = 'block';
+    document.getElementById('createUserStep2').style.display = 'none';
+    document.getElementById('createUserActions').innerHTML = `
+        <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
+    `;
+}
+
+async function submitCreateUser() {
+    // Gather common fields
+    const phone = document.getElementById('newUserPhone').value.trim();
+    const password = document.getElementById('newUserPassword').value;
+    const fullName = document.getElementById('newUserName').value.trim();
+    const email = document.getElementById('newUserEmail').value.trim();
+    const isActive = document.getElementById('newUserActive').checked;
+
+    // Validation
+    if (!phone) {
+        showToast('Phone number is required', 'error');
+        return;
+    }
+    if (password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+    }
+    if (!fullName) {
+        showToast('Full name is required', 'error');
+        return;
+    }
+
+    // Build request body
+    const userData = {
+        phone_number: phone,
+        password,
+        full_name: fullName,
+        email: email || null,
+        user_type: selectedUserType === 'operations' ? 'admin' : selectedUserType,
+        is_active: isActive
+    };
+
+    // Add garage-specific fields
+    if (selectedUserType === 'garage') {
+        const garageName = document.getElementById('newGarageName').value.trim();
+        if (!garageName) {
+            showToast('Garage name is required', 'error');
+            return;
+        }
+        userData.garage_data = {
+            garage_name: garageName,
+            trade_license_number: document.getElementById('newGarageLicense').value.trim(),
+            address: document.getElementById('newGarageAddress').value.trim(),
+            cr_number: document.getElementById('newGarageCR').value.trim(),
+            approval_status: document.getElementById('newGarageStatus').value
+        };
+    }
+
+    // Add driver-specific fields
+    if (selectedUserType === 'driver') {
+        userData.driver_data = {
+            vehicle_type: document.getElementById('newDriverVehicle').value,
+            license_plate: document.getElementById('newDriverPlate').value.trim()
+        };
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/admin/users/create`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`${selectedUserType.charAt(0).toUpperCase() + selectedUserType.slice(1)} created successfully!`, 'success');
+            closeModal('createUserModal');
+
+            // Refresh relevant section
+            if (selectedUserType === 'garage') {
+                loadGarages();
+                loadDashboard();
+            } else {
+                loadUsers();
+            }
+        } else {
+            showToast(data.error || 'Failed to create user', 'error');
+        }
+    } catch (err) {
+        console.error('Create user error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+

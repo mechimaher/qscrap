@@ -9,7 +9,21 @@ import {
     grantDemoAccess,
     revokeGarageAccess,
     getAdminDashboardStats,
-    getAuditLog
+    getAuditLog,
+    // Phase 3: Subscription Control
+    getSubscriptionPlans,
+    assignPlanToGarage,
+    revokeSubscription,
+    extendSubscription,
+    overrideCommission,
+    // Phase 4: User Management
+    getAllUsers,
+    getAdminUserDetails,
+    updateUserAdmin,
+    adminSuspendUser,
+    adminActivateUser,
+    adminResetPassword,
+    adminCreateUser
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -18,9 +32,6 @@ const router = Router();
 // ADMIN AUTHORIZATION MIDDLEWARE
 // ============================================================================
 
-/**
- * Require admin role for all admin routes
- */
 const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
     if (req.user?.userType !== 'admin') {
         return res.status(403).json({
@@ -31,44 +42,47 @@ const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
     next();
 };
 
-// Apply authentication and admin check to all routes
 router.use(authenticate);
 router.use(requireAdmin);
 
 // ============================================================================
 // DASHBOARD
 // ============================================================================
-
-// GET /api/admin/dashboard - Get admin dashboard stats
 router.get('/dashboard', getAdminDashboardStats);
 
 // ============================================================================
 // GARAGE APPROVAL WORKFLOW
 // ============================================================================
-
-// GET /api/admin/garages/pending - Get pending approval queue
 router.get('/garages/pending', getPendingGarages);
-
-// GET /api/admin/garages - Get all garages with filters
 router.get('/garages', getAllGaragesAdmin);
-
-// POST /api/admin/garages/:garage_id/approve - Approve a garage
 router.post('/garages/:garage_id/approve', approveGarage);
-
-// POST /api/admin/garages/:garage_id/reject - Reject a garage
 router.post('/garages/:garage_id/reject', rejectGarage);
-
-// POST /api/admin/garages/:garage_id/demo - Grant demo access
 router.post('/garages/:garage_id/demo', grantDemoAccess);
-
-// POST /api/admin/garages/:garage_id/revoke - Revoke access
 router.post('/garages/:garage_id/revoke', revokeGarageAccess);
+
+// ============================================================================
+// PHASE 3: SUBSCRIPTION CONTROL
+// ============================================================================
+router.get('/plans', getSubscriptionPlans);
+router.post('/garages/:garage_id/plan', assignPlanToGarage);
+router.post('/garages/:garage_id/plan/revoke', revokeSubscription);
+router.post('/garages/:garage_id/plan/extend', extendSubscription);
+router.post('/garages/:garage_id/commission', overrideCommission);
+
+// ============================================================================
+// PHASE 4: USER MANAGEMENT
+// ============================================================================
+router.get('/users', getAllUsers);
+router.post('/users/create', adminCreateUser);
+router.get('/users/:user_id', getAdminUserDetails);
+router.put('/users/:user_id', updateUserAdmin);
+router.post('/users/:user_id/suspend', adminSuspendUser);
+router.post('/users/:user_id/activate', adminActivateUser);
+router.post('/users/:user_id/reset-password', adminResetPassword);
 
 // ============================================================================
 // AUDIT LOG
 // ============================================================================
-
-// GET /api/admin/audit - Get admin audit log
 router.get('/audit', getAuditLog);
 
 export default router;

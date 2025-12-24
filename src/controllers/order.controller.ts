@@ -2,8 +2,23 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 
-// Get commission rate from garage's subscription
+// Get commission rate based on garage's status and subscription
+// BUSINESS LOGIC:
+// - Demo trial: 0% commission (garage keeps 100%)
+// - Subscribed/Approved: 15% commission (or plan-specific rate)
 const getGarageCommissionRate = async (garageId: string): Promise<number> => {
+    // First check if garage is in demo mode
+    const garageResult = await pool.query(
+        `SELECT approval_status FROM garages WHERE garage_id = $1`,
+        [garageId]
+    );
+
+    if (garageResult.rows.length > 0 && garageResult.rows[0].approval_status === 'demo') {
+        // Demo trial = 0% commission
+        return 0;
+    }
+
+    // Check for active subscription with custom commission rate
     const result = await pool.query(
         `SELECT sp.commission_rate 
          FROM garage_subscriptions gs
@@ -13,7 +28,7 @@ const getGarageCommissionRate = async (garageId: string): Promise<number> => {
         [garageId]
     );
 
-    // Default to 15% if no subscription found
+    // Use subscription rate if found, otherwise default 15%
     return result.rows.length > 0 ? parseFloat(result.rows[0].commission_rate) : 0.15;
 };
 
