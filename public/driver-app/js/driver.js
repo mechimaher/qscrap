@@ -1365,30 +1365,115 @@ const MARKER_ICONS = {
 };
 
 /**
- * Initialize the Leaflet map with dark theme
+ * Initialize the Leaflet map with premium features
  */
 function initDeliveryMap(containerId) {
     if (deliveryMap) {
         deliveryMap.remove();
     }
 
-    // Create map with dark theme tiles
+    // Create premium map with smooth animations
     deliveryMap = L.map(containerId, {
         zoomControl: false,
-        attributionControl: false
-    }).setView([25.2854, 51.5310], 13); // Qatar default
+        attributionControl: false,
+        zoomAnimation: true,
+        fadeAnimation: true,
+        markerZoomAnimation: true,
+        doubleClickZoom: true,
+        scrollWheelZoom: true,
+        touchZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        dragging: true,
+        minZoom: 8,
+        maxZoom: 19
+    }).setView([25.2854, 51.5310], 14); // Qatar default, closer zoom
 
-    // OpenStreetMap tiles (already allowed in CSP)
+    // OpenStreetMap tiles with smooth loading
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        subdomains: 'abc'
+        subdomains: 'abc',
+        updateWhenIdle: false,
+        updateWhenZooming: false,
+        keepBuffer: 4
     }).addTo(deliveryMap);
 
-    // Add zoom control to bottom-right
-    L.control.zoom({ position: 'bottomright' }).addTo(deliveryMap);
+    // Premium zoom controls (bottom-right)
+    L.control.zoom({
+        position: 'bottomright',
+        zoomInTitle: 'Zoom in',
+        zoomOutTitle: 'Zoom out'
+    }).addTo(deliveryMap);
+
+    // Custom control: Locate Me button
+    const LocateControl = L.Control.extend({
+        options: { position: 'bottomright' },
+        onAdd: function () {
+            const btn = L.DomUtil.create('button', 'map-control-btn locate-btn');
+            btn.innerHTML = '<i class="bi bi-crosshairs"></i>';
+            btn.title = 'Center on my location';
+            btn.onclick = function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                if (currentDriverPosition) {
+                    deliveryMap.flyTo([currentDriverPosition.lat, currentDriverPosition.lng], 16, {
+                        duration: 1
+                    });
+                }
+            };
+            return btn;
+        }
+    });
+    deliveryMap.addControl(new LocateControl());
+
+    // Custom control: Fit All button
+    const FitAllControl = L.Control.extend({
+        options: { position: 'bottomright' },
+        onAdd: function () {
+            const btn = L.DomUtil.create('button', 'map-control-btn fit-btn');
+            btn.innerHTML = '<i class="bi bi-arrows-angle-expand"></i>';
+            btn.title = 'Fit all locations';
+            btn.onclick = function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                fitMapToAllPoints();
+            };
+            return btn;
+        }
+    });
+    deliveryMap.addControl(new FitAllControl());
 
     return deliveryMap;
 }
+
+/**
+ * Fit map to show all points (driver, pickup, delivery)
+ */
+function fitMapToAllPoints() {
+    if (!deliveryMap) return;
+
+    const bounds = [];
+    if (currentDriverPosition) {
+        bounds.push([currentDriverPosition.lat, currentDriverPosition.lng]);
+    }
+    if (mapPickupMarker) {
+        bounds.push(mapPickupMarker.getLatLng());
+    }
+    if (mapDeliveryMarker) {
+        bounds.push(mapDeliveryMarker.getLatLng());
+    }
+
+    if (bounds.length >= 2) {
+        deliveryMap.flyToBounds(bounds, {
+            padding: [60, 60],
+            duration: 1,
+            maxZoom: 16
+        });
+    } else if (bounds.length === 1) {
+        deliveryMap.flyTo(bounds[0], 16, { duration: 1 });
+    }
+}
+
 
 /**
  * Update map with assignment locations
