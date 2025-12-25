@@ -26,11 +26,11 @@ export const API_ENDPOINTS = {
     CONFIRM_DELIVERY: (orderId: string) => `/orders/${orderId}/confirm-delivery`,
     SUBMIT_REVIEW: (orderId: string) => `/orders/${orderId}/review`,
 
-    // Counter-Offers (Negotiation)
-    COUNTER_OFFER: (bidId: string) => `/negotiation/bids/${bidId}/counter-offer`,
-    RESPOND_TO_COUNTER: (counterOfferId: string) => `/negotiation/counter-offers/${counterOfferId}/customer-respond`,
-    ACCEPT_LAST_OFFER: (bidId: string) => `/negotiation/bids/${bidId}/accept-last-offer`,
-    NEGOTIATION_HISTORY: (bidId: string) => `/negotiation/bids/${bidId}/negotiations`,
+    // Counter-Offers (Negotiation) - FIXED: backend uses /negotiations (plural)
+    COUNTER_OFFER: (bidId: string) => `/negotiations/bids/${bidId}/counter-offer`,
+    RESPOND_TO_COUNTER: (counterOfferId: string) => `/negotiations/counter-offers/${counterOfferId}/customer-respond`,
+    ACCEPT_LAST_OFFER: (bidId: string) => `/negotiations/bids/${bidId}/accept-last-offer`,
+    NEGOTIATION_HISTORY: (bidId: string) => `/negotiations/bids/${bidId}/negotiations`,
 
     // Dashboard
     STATS: '/dashboard/customer/stats',

@@ -120,13 +120,22 @@ export default function CounterOfferScreen() {
                     [{ text: 'OK', onPress: () => navigation.goBack() }]
                 );
             } else {
-                const data = await response.json();
-                const errorMsg = data.error || data.message || JSON.stringify(data);
-                throw new Error(errorMsg);
+                let errorMsg = 'Failed to send counter-offer';
+                try {
+                    const data = await response.json();
+                    errorMsg = data.error || data.message || `Server error ${response.status}`;
+                } catch {
+                    errorMsg = `Server error ${response.status}`;
+                }
+                Alert.alert('Error', errorMsg);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             }
-        } catch (error: any) {
-            const errorMessage = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
-            Alert.alert('Error', errorMessage);
+        } catch (error) {
+            let errorMsg = 'Network error - please check your connection';
+            if (error instanceof Error) {
+                errorMsg = error.message;
+            }
+            Alert.alert('Error', errorMsg);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSending(false);
