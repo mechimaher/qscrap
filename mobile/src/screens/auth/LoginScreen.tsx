@@ -1,4 +1,4 @@
-// QScrap Login Screen - Premium Design
+// QScrap Login Screen - Premium VIP Design
 import React, { useState } from 'react';
 import {
     View,
@@ -10,6 +10,7 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
+    Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -20,6 +21,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constan
 import { AuthStackParamList } from '../../../App';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -53,10 +55,7 @@ export default function LoginScreen() {
     };
 
     return (
-        <LinearGradient
-            colors={[Colors.dark.background, '#0a1a0a']}
-            style={styles.container}
-        >
+        <View style={styles.container}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -64,31 +63,35 @@ export default function LoginScreen() {
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
                 >
                     {/* Logo Section */}
                     <View style={styles.logoSection}>
-                        <Text style={styles.logoEmoji}>🔧</Text>
+                        <View style={styles.logoContainer}>
+                            <Text style={styles.logoEmoji}>🔧</Text>
+                        </View>
                         <Text style={styles.logoText}>QScrap</Text>
-                        <Text style={styles.tagline}>Auto Parts Marketplace</Text>
+                        <Text style={styles.tagline}>Qatar Auto Parts Marketplace</Text>
                     </View>
 
-                    {/* Form Section */}
-                    <View style={styles.formSection}>
+                    {/* Form Card */}
+                    <View style={styles.formCard}>
                         <Text style={styles.welcomeText}>Welcome Back</Text>
-                        <Text style={styles.subtitleText}>Sign in to continue</Text>
+                        <Text style={styles.subtitleText}>Sign in to your account</Text>
 
                         {error ? (
                             <View style={styles.errorContainer}>
+                                <Text style={styles.errorIcon}>⚠️</Text>
                                 <Text style={styles.errorText}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Phone Number</Text>
+                            <Text style={styles.inputLabel}>📱 Phone Number</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder="+974 XXXX XXXX"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 value={phone}
                                 onChangeText={setPhone}
                                 keyboardType="phone-pad"
@@ -97,25 +100,29 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Password</Text>
+                            <Text style={styles.inputLabel}>🔒 Password</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder="Enter password"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholder="Enter your password"
+                                placeholderTextColor="#999"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
                             />
                         </View>
 
+                        <TouchableOpacity style={styles.forgotPassword}>
+                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                        </TouchableOpacity>
+
                         <TouchableOpacity
                             style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
                             onPress={handleLogin}
                             disabled={isLoading}
-                            activeOpacity={0.8}
+                            activeOpacity={0.9}
                         >
                             <LinearGradient
-                                colors={Colors.gradients.primary}
+                                colors={[Colors.primary, '#B31D4A']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.loginButtonGradient}
@@ -127,13 +134,14 @@ export default function LoginScreen() {
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
+                    </View>
 
-                        <View style={styles.registerSection}>
-                            <Text style={styles.registerText}>Don't have an account?</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                                <Text style={styles.registerLink}>Sign Up</Text>
-                            </TouchableOpacity>
-                        </View>
+                    {/* Register Section */}
+                    <View style={styles.registerSection}>
+                        <Text style={styles.registerText}>Don't have an account?</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                            <Text style={styles.registerLink}>Create Account</Text>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Footer */}
@@ -146,13 +154,14 @@ export default function LoginScreen() {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </LinearGradient>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#FAFAFA',
     },
     keyboardView: {
         flex: 1,
@@ -164,34 +173,44 @@ const styles = StyleSheet.create({
     },
     logoSection: {
         alignItems: 'center',
-        marginBottom: Spacing.xxl,
+        marginBottom: Spacing.xl,
+    },
+    logoContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: Colors.primary + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+        ...Shadows.md,
     },
     logoEmoji: {
-        fontSize: 64,
-        marginBottom: Spacing.sm,
+        fontSize: 50,
     },
     logoText: {
-        fontSize: FontSizes.display,
+        fontSize: 42,
         fontWeight: '800',
         color: Colors.primary,
-        letterSpacing: 2,
+        letterSpacing: 1,
     },
     tagline: {
         fontSize: FontSizes.md,
         color: Colors.dark.textSecondary,
         marginTop: Spacing.xs,
     },
-    formSection: {
-        backgroundColor: Colors.dark.surface,
+    formCard: {
+        backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
-        padding: Spacing.lg,
+        padding: Spacing.xl,
         ...Shadows.lg,
     },
     welcomeText: {
         fontSize: FontSizes.xxl,
-        fontWeight: '700',
+        fontWeight: '800',
         color: Colors.dark.text,
         textAlign: 'center',
+        letterSpacing: -0.5,
     },
     subtitleText: {
         fontSize: FontSizes.md,
@@ -200,17 +219,23 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
     },
     errorContainer: {
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderRadius: BorderRadius.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEE2E2',
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.error,
+        borderColor: '#EF4444',
+    },
+    errorIcon: {
+        fontSize: 16,
+        marginRight: Spacing.sm,
     },
     errorText: {
-        color: Colors.error,
+        color: '#EF4444',
         fontSize: FontSizes.sm,
-        textAlign: 'center',
+        flex: 1,
     },
     inputContainer: {
         marginBottom: Spacing.md,
@@ -222,36 +247,45 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.xs,
     },
     input: {
-        backgroundColor: Colors.dark.background,
-        borderRadius: BorderRadius.md,
+        backgroundColor: '#F8F9FA',
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.lg,
         color: Colors.dark.text,
-        borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderWidth: 1.5,
+        borderColor: '#E8E8E8',
+    },
+    forgotPassword: {
+        alignSelf: 'flex-end',
+        marginBottom: Spacing.md,
+    },
+    forgotPasswordText: {
+        color: Colors.primary,
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
     },
     loginButton: {
-        marginTop: Spacing.md,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.xl,
         overflow: 'hidden',
+        ...Shadows.md,
     },
     loginButtonDisabled: {
         opacity: 0.7,
     },
     loginButtonGradient: {
-        paddingVertical: Spacing.md,
+        paddingVertical: Spacing.md + 4,
         alignItems: 'center',
     },
     loginButtonText: {
         fontSize: FontSizes.lg,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#fff',
     },
     registerSection: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Spacing.lg,
+        marginTop: Spacing.xl,
     },
     registerText: {
         fontSize: FontSizes.md,
@@ -271,8 +305,10 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         color: Colors.dark.textMuted,
         textAlign: 'center',
+        lineHeight: 18,
     },
     footerLink: {
         color: Colors.primary,
+        fontWeight: '600',
     },
 });

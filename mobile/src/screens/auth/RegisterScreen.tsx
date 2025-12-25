@@ -1,4 +1,4 @@
-// QScrap Register Screen - Premium Design
+// QScrap Register Screen - Premium VIP Design
 import React, { useState } from 'react';
 import {
     View,
@@ -75,10 +75,7 @@ export default function RegisterScreen() {
     };
 
     return (
-        <LinearGradient
-            colors={[Colors.dark.background, '#0a1a0a']}
-            style={styles.container}
-        >
+        <View style={styles.container}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -86,6 +83,7 @@ export default function RegisterScreen() {
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
                 >
                     {/* Header */}
                     <View style={styles.header}>
@@ -94,34 +92,39 @@ export default function RegisterScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Form Section */}
-                    <View style={styles.formSection}>
-                        <Text style={styles.welcomeText}>Create Account</Text>
-                        <Text style={styles.subtitleText}>Join QScrap today</Text>
+                    {/* Title Section */}
+                    <View style={styles.titleSection}>
+                        <Text style={styles.titleEmoji}>🚀</Text>
+                        <Text style={styles.titleText}>Join QScrap</Text>
+                        <Text style={styles.subtitleText}>Create your account in seconds</Text>
+                    </View>
 
+                    {/* Form Card */}
+                    <View style={styles.formCard}>
                         {error ? (
                             <View style={styles.errorContainer}>
+                                <Text style={styles.errorIcon}>⚠️</Text>
                                 <Text style={styles.errorText}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Full Name</Text>
+                            <Text style={styles.inputLabel}>👤 Full Name</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Enter your full name"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 value={name}
                                 onChangeText={setName}
                             />
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Phone Number</Text>
+                            <Text style={styles.inputLabel}>📱 Phone Number</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder="+974 XXXX XXXX"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 value={phone}
                                 onChangeText={setPhone}
                                 keyboardType="phone-pad"
@@ -129,11 +132,11 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Password</Text>
+                            <Text style={styles.inputLabel}>🔒 Password</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Min 6 characters"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -141,11 +144,11 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Confirm Password</Text>
+                            <Text style={styles.inputLabel}>🔒 Confirm Password</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Repeat password"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
                                 secureTextEntry
@@ -156,10 +159,10 @@ export default function RegisterScreen() {
                             style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
                             onPress={handleRegister}
                             disabled={isLoading}
-                            activeOpacity={0.8}
+                            activeOpacity={0.9}
                         >
                             <LinearGradient
-                                colors={Colors.gradients.primary}
+                                colors={[Colors.primary, '#B31D4A']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.registerButtonGradient}
@@ -172,68 +175,104 @@ export default function RegisterScreen() {
                             </LinearGradient>
                         </TouchableOpacity>
 
-                        <View style={styles.loginSection}>
-                            <Text style={styles.loginText}>Already have an account?</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                                <Text style={styles.loginLink}>Sign In</Text>
-                            </TouchableOpacity>
+                        {/* Benefits */}
+                        <View style={styles.benefits}>
+                            <View style={styles.benefitItem}>
+                                <Text style={styles.benefitIcon}>✓</Text>
+                                <Text style={styles.benefitText}>Free to join</Text>
+                            </View>
+                            <View style={styles.benefitItem}>
+                                <Text style={styles.benefitIcon}>✓</Text>
+                                <Text style={styles.benefitText}>No hidden fees</Text>
+                            </View>
+                            <View style={styles.benefitItem}>
+                                <Text style={styles.benefitIcon}>✓</Text>
+                                <Text style={styles.benefitText}>Verified sellers</Text>
+                            </View>
                         </View>
+                    </View>
+
+                    {/* Login Section */}
+                    <View style={styles.loginSection}>
+                        <Text style={styles.loginText}>Already have an account?</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text style={styles.loginLink}>Sign In</Text>
+                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </LinearGradient>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: {
+        flex: 1,
+        backgroundColor: '#FAFAFA',
+    },
     keyboardView: { flex: 1 },
     scrollContent: {
         flexGrow: 1,
         padding: Spacing.lg,
     },
     header: {
-        marginTop: Spacing.xxl,
-        marginBottom: Spacing.lg,
+        marginTop: Spacing.lg,
+        marginBottom: Spacing.md,
     },
     backButton: {
         padding: Spacing.sm,
+        backgroundColor: '#F5F5F5',
+        borderRadius: BorderRadius.md,
+        alignSelf: 'flex-start',
     },
     backText: {
         color: Colors.primary,
-        fontSize: FontSizes.lg,
+        fontSize: FontSizes.md,
         fontWeight: '600',
     },
-    formSection: {
-        backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.lg,
-        ...Shadows.lg,
+    titleSection: {
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
     },
-    welcomeText: {
-        fontSize: FontSizes.xxl,
-        fontWeight: '700',
+    titleEmoji: {
+        fontSize: 48,
+        marginBottom: Spacing.sm,
+    },
+    titleText: {
+        fontSize: FontSizes.xxl + 4,
+        fontWeight: '800',
         color: Colors.dark.text,
-        textAlign: 'center',
+        letterSpacing: -0.5,
     },
     subtitleText: {
         fontSize: FontSizes.md,
         color: Colors.dark.textSecondary,
-        textAlign: 'center',
-        marginBottom: Spacing.lg,
+        marginTop: Spacing.xs,
+    },
+    formCard: {
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        ...Shadows.lg,
     },
     errorContainer: {
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        borderRadius: BorderRadius.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEE2E2',
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.error,
+        borderColor: '#EF4444',
+    },
+    errorIcon: {
+        fontSize: 16,
+        marginRight: Spacing.sm,
     },
     errorText: {
-        color: Colors.error,
+        color: '#EF4444',
         fontSize: FontSizes.sm,
-        textAlign: 'center',
+        flex: 1,
     },
     inputContainer: {
         marginBottom: Spacing.md,
@@ -245,34 +284,56 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.xs,
     },
     input: {
-        backgroundColor: Colors.dark.background,
-        borderRadius: BorderRadius.md,
+        backgroundColor: '#F8F9FA',
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        fontSize: FontSizes.lg,
+        fontSize: FontSizes.md,
         color: Colors.dark.text,
-        borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderWidth: 1.5,
+        borderColor: '#E8E8E8',
     },
     registerButton: {
         marginTop: Spacing.md,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.xl,
         overflow: 'hidden',
+        ...Shadows.md,
     },
     registerButtonDisabled: { opacity: 0.7 },
     registerButtonGradient: {
-        paddingVertical: Spacing.md,
+        paddingVertical: Spacing.md + 4,
         alignItems: 'center',
     },
     registerButtonText: {
         fontSize: FontSizes.lg,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#fff',
+    },
+    benefits: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: Spacing.lg,
+        paddingTop: Spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+    },
+    benefitItem: {
+        alignItems: 'center',
+    },
+    benefitIcon: {
+        fontSize: 16,
+        color: '#22C55E',
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    benefitText: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textSecondary,
     },
     loginSection: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Spacing.lg,
+        marginTop: Spacing.xl,
     },
     loginText: {
         fontSize: FontSizes.md,
