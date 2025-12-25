@@ -292,6 +292,69 @@ class ApiService {
             method: 'PUT'
         });
     }
+
+    // Notifications
+    async getNotifications(): Promise<{ notifications: any[] }> {
+        return this.request(API_ENDPOINTS.NOTIFICATIONS);
+    }
+
+    async markNotificationRead(notificationId: string): Promise<any> {
+        return this.request(API_ENDPOINTS.MARK_NOTIFICATION_READ(notificationId), {
+            method: 'POST'
+        });
+    }
+
+    async markAllNotificationsRead(): Promise<any> {
+        return this.request(API_ENDPOINTS.MARK_ALL_NOTIFICATIONS_READ, {
+            method: 'POST'
+        });
+    }
+
+    // Profile Updates
+    async updateProfile(data: { full_name?: string; email?: string; phone_number?: string }): Promise<any> {
+        return this.request(API_ENDPOINTS.UPDATE_PROFILE, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async changePassword(currentPassword: string, newPassword: string): Promise<any> {
+        return this.request(API_ENDPOINTS.CHANGE_PASSWORD, {
+            method: 'POST',
+            body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+        });
+    }
+
+    // Support Tickets
+    async getTickets(): Promise<{ tickets: any[] }> {
+        return this.request(API_ENDPOINTS.TICKETS);
+    }
+
+    async createTicket(subject: string, message: string, category = 'general'): Promise<any> {
+        return this.request(API_ENDPOINTS.TICKETS, {
+            method: 'POST',
+            body: JSON.stringify({ subject, message, category })
+        });
+    }
+
+    async getTicketDetail(ticketId: string): Promise<any> {
+        return this.request(API_ENDPOINTS.TICKET_DETAIL(ticketId));
+    }
+
+    async sendTicketMessage(ticketId: string, message: string): Promise<any> {
+        return this.request(API_ENDPOINTS.TICKET_MESSAGES(ticketId), {
+            method: 'POST',
+            body: JSON.stringify({ message })
+        });
+    }
+
+    // Reviews
+    async submitReview(orderId: string, rating: number, review: string): Promise<any> {
+        return this.request(API_ENDPOINTS.SUBMIT_REVIEW(orderId), {
+            method: 'POST',
+            body: JSON.stringify({ rating, review })
+        });
+    }
 }
 
 export const api = new ApiService();

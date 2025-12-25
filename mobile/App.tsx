@@ -33,6 +33,8 @@ import EditProfileScreen from './src/screens/EditProfileScreen';
 import AddressesScreen from './src/screens/AddressesScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import CounterOfferScreen from './src/screens/CounterOfferScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import SupportScreen from './src/screens/SupportScreen';
 
 // Navigation Types
 export type RootStackParamList = {
@@ -47,6 +49,8 @@ export type RootStackParamList = {
   Addresses: { onSelect?: (address: Address) => void } | undefined;
   Settings: undefined;
   CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string };
+  Notifications: undefined;
+  Support: undefined;
 };
 
 export type AuthStackParamList = {
@@ -199,6 +203,16 @@ function RootNavigator() {
             <RootStack.Screen
               name="Settings"
               component={SettingsScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="Support"
+              component={SupportScreen}
               options={{ animation: 'slide_from_right' }}
             />
           </>

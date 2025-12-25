@@ -116,16 +116,34 @@ export default function ProfileScreen() {
                     <Text style={styles.menuTitle}>Account</Text>
                     <View style={styles.menuCard}>
                         <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses' as never)} />
-                        <MenuItem icon="🔔" label="Notifications" onPress={() => { }} />
-                        <MenuItem icon="🎨" label="Appearance" onPress={() => { }} />
+                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} />
+                        <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings' as never)} />
                     </View>
                 </View>
 
                 <View style={styles.menuSection}>
                     <Text style={styles.menuTitle}>Support</Text>
                     <View style={styles.menuCard}>
-                        <MenuItem icon="💬" label="Help Center" onPress={() => { }} />
-                        <MenuItem icon="📞" label="Contact Us" onPress={() => { }} />
+                        <MenuItem icon="🎫" label="Support Tickets" onPress={() => navigation.navigate('Support' as never)} />
+                        <MenuItem icon="💬" label="Help Center" onPress={() => Alert.alert(
+                            'Help Center',
+                            'How can we help you today?',
+                            [
+                                { text: 'FAQs', onPress: () => Alert.alert('FAQs', '• How to request a part?\nGo to Home > New Part Request\n\n• How long for delivery?\nTypically 1-3 business days\n\n• Payment methods?\nCash on delivery or card') },
+                                { text: 'Contact Support', onPress: () => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support') },
+                                { text: 'Cancel', style: 'cancel' }
+                            ]
+                        )} />
+                        <MenuItem icon="📞" label="Contact Us" onPress={() => Alert.alert(
+                            'Contact QScrap',
+                            'Choose how to reach us:',
+                            [
+                                { text: '📱 WhatsApp', onPress: () => Linking.openURL('https://wa.me/97412345678') },
+                                { text: '📞 Call Us', onPress: () => Linking.openURL('tel:+97412345678') },
+                                { text: '✉️ Email', onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
+                                { text: 'Cancel', style: 'cancel' }
+                            ]
+                        )} />
                     </View>
                 </View>
 

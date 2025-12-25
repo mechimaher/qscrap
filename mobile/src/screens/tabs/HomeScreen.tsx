@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     RefreshControl,
     ActivityIndicator,
+    Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { api, Stats } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
+import { LoadingStats } from '../../components/SkeletonLoading';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -110,7 +112,7 @@ export default function HomeScreen() {
                 <Text style={styles.sectionTitle}>Your Activity</Text>
 
                 {isLoading ? (
-                    <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 40 }} />
+                    <LoadingStats />
                 ) : (
                     <View style={styles.statsGrid}>
                         <View style={styles.statCard}>
@@ -169,7 +171,10 @@ export default function HomeScreen() {
                         <Text style={styles.actionLabel}>My Orders</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionCard}>
+                    <TouchableOpacity
+                        style={styles.actionCard}
+                        onPress={() => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support')}
+                    >
                         <Text style={styles.actionIcon}>💬</Text>
                         <Text style={styles.actionLabel}>Support</Text>
                     </TouchableOpacity>

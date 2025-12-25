@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { api, Request } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
+import { LoadingList } from '../../components/SkeletonLoading';
 
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -120,7 +121,7 @@ export default function RequestsScreen() {
             </View>
 
             {isLoading ? (
-                <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 60 }} />
+                <LoadingList count={4} />
             ) : (
                 <FlatList
                     data={requests}

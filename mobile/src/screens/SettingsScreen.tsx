@@ -8,6 +8,7 @@ import {
     ScrollView,
     Switch,
     Alert,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -259,19 +260,19 @@ export default function SettingsScreen() {
                         icon="ℹ️"
                         title="App Version"
                         value="1.0.0"
-                        onPress={() => { }}
+                        onPress={() => Alert.alert('QScrap', 'Version 1.0.0\nBuild: 2024.12.25\n\n🇶🇦 Made in Qatar with ❤️')}
                     />
 
                     <ActionRow
                         icon="📄"
                         title="Terms of Service"
-                        onPress={() => { }}
+                        onPress={() => Linking.openURL('http://192.168.1.59:3000/terms.html')}
                     />
 
                     <ActionRow
                         icon="🔒"
                         title="Privacy Policy"
-                        onPress={() => { }}
+                        onPress={() => Linking.openURL('http://192.168.1.59:3000/privacy.html')}
                     />
 
                     <ActionRow

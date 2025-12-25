@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     // Auth
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    CHANGE_PASSWORD: '/auth/change-password',
 
     // Requests
     REQUESTS: '/requests',
@@ -23,6 +24,7 @@ export const API_ENDPOINTS = {
     MY_ORDERS: '/orders/my',
     ACCEPT_BID: (bidId: string) => `/orders/accept-bid/${bidId}`,
     CONFIRM_DELIVERY: (orderId: string) => `/orders/${orderId}/confirm-delivery`,
+    SUBMIT_REVIEW: (orderId: string) => `/orders/${orderId}/review`,
 
     // Counter-Offers (Negotiation)
     COUNTER_OFFER: (bidId: string) => `/negotiation/bids/${bidId}/counter-offer`,
@@ -33,6 +35,12 @@ export const API_ENDPOINTS = {
     // Dashboard
     STATS: '/dashboard/customer/stats',
     PROFILE: '/dashboard/profile',
+    UPDATE_PROFILE: '/dashboard/profile',
+
+    // Notifications
+    NOTIFICATIONS: '/dashboard/notifications',
+    MARK_NOTIFICATION_READ: (notificationId: string) => `/dashboard/notifications/${notificationId}/read`,
+    MARK_ALL_NOTIFICATIONS_READ: '/dashboard/notifications/read-all',
 
     // Addresses
     ADDRESSES: '/addresses',
@@ -43,6 +51,8 @@ export const API_ENDPOINTS = {
 
     // Support
     TICKETS: '/support/tickets',
+    TICKET_DETAIL: (ticketId: string) => `/support/tickets/${ticketId}`,
+    TICKET_MESSAGES: (ticketId: string) => `/support/tickets/${ticketId}/messages`,
 
     // Chat
     CHAT_MESSAGES: (orderId: string) => `/chat/messages/${orderId}`,

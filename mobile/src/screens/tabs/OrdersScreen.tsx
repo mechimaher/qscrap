@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { api, Order } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
+import { LoadingList } from '../../components/SkeletonLoading';
 
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -135,7 +136,7 @@ export default function OrdersScreen() {
             </View>
 
             {isLoading ? (
-                <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 60 }} />
+                <LoadingList count={4} />
             ) : (
                 <FlatList
                     data={orders}
