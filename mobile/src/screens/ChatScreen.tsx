@@ -337,26 +337,26 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#FAFAFA',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.md,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: Colors.dark.border,
+        borderBottomColor: '#F0F0F0',
     },
     backButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
     },
     backText: {
-        fontSize: 24,
+        fontSize: 20,
         color: Colors.dark.text,
     },
     headerInfo: {
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: Colors.primary + '20',
+        backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -421,6 +421,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         marginBottom: Spacing.sm,
+        ...Shadows.sm,
     },
     myMessage: {
         alignSelf: 'flex-end',
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
     },
     theirMessage: {
         alignSelf: 'flex-start',
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#fff',
         borderBottomLeftRadius: 4,
     },
     senderName: {
@@ -462,12 +463,12 @@ const styles = StyleSheet.create({
         gap: Spacing.sm,
     },
     quickAction: {
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#fff',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderColor: '#E8E8E8',
     },
     quickActionText: {
         fontSize: FontSizes.sm,
@@ -478,13 +479,13 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         padding: Spacing.md,
         paddingBottom: Spacing.lg,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#fff',
         borderTopWidth: 1,
-        borderTopColor: Colors.dark.border,
+        borderTopColor: '#F0F0F0',
     },
     textInput: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
@@ -493,12 +494,15 @@ const styles = StyleSheet.create({
         color: Colors.dark.text,
         maxHeight: 100,
         marginRight: Spacing.sm,
+        borderWidth: 1,
+        borderColor: '#E8E8E8',
     },
     sendButton: {
         width: 48,
         height: 48,
         borderRadius: 24,
         overflow: 'hidden',
+        ...Shadows.sm,
     },
     sendButtonDisabled: {
         opacity: 0.5,
