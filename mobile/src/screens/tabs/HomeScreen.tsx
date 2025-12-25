@@ -1,4 +1,4 @@
-// QScrap Home Screen - Premium Dashboard
+// QScrap Home Screen - Premium VIP Dashboard
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
@@ -7,7 +7,7 @@ import {
     ScrollView,
     TouchableOpacity,
     RefreshControl,
-    ActivityIndicator,
+    Dimensions,
     Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +22,8 @@ import { RootStackParamList } from '../../../App';
 import { LoadingStats } from '../../components/SkeletonLoading';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const { width } = Dimensions.get('window');
+const cardWidth = (width - Spacing.lg * 3) / 2;
 
 export default function HomeScreen() {
     const navigation = useNavigation<HomeScreenNavigationProp>();
@@ -64,6 +66,15 @@ export default function HomeScreen() {
         return 'Good Evening';
     };
 
+    const getTimeEmoji = () => {
+        const hour = new Date().getHours();
+        if (hour < 6) return '🌙';
+        if (hour < 12) return '☀️';
+        if (hour < 17) return '🌤️';
+        if (hour < 20) return '🌅';
+        return '🌙';
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView
@@ -77,115 +88,177 @@ export default function HomeScreen() {
                     />
                 }
             >
-                {/* Header */}
+                {/* Premium Header */}
                 <View style={styles.header}>
-                    <View>
-                        <Text style={styles.greeting}>{greeting()}</Text>
+                    <View style={styles.headerLeft}>
+                        <Text style={styles.greetingSmall}>{getTimeEmoji()} {greeting()}</Text>
                         <Text style={styles.userName}>{user?.full_name || 'Customer'}</Text>
                     </View>
-                    <View style={styles.logoContainer}>
-                        <Text style={styles.logo}>🔧</Text>
-                    </View>
+                    <TouchableOpacity
+                        style={styles.notificationBtn}
+                        onPress={() => navigation.navigate('Notifications' as any)}
+                    >
+                        <Text style={styles.notificationIcon}>🔔</Text>
+                        <View style={styles.notificationBadge} />
+                    </TouchableOpacity>
                 </View>
 
-                {/* New Request Button */}
+                {/* Premium CTA Card */}
                 <TouchableOpacity
-                    style={styles.newRequestButton}
+                    style={styles.ctaCard}
                     onPress={handleNewRequest}
-                    activeOpacity={0.9}
+                    activeOpacity={0.95}
                 >
                     <LinearGradient
-                        colors={Colors.gradients.primary}
+                        colors={[Colors.primary, '#B31D4A']}
                         start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.newRequestGradient}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.ctaGradient}
                     >
-                        <Text style={styles.newRequestIcon}>+</Text>
-                        <View style={styles.newRequestText}>
-                            <Text style={styles.newRequestTitle}>New Part Request</Text>
-                            <Text style={styles.newRequestSubtitle}>Find any auto part you need</Text>
+                        <View style={styles.ctaContent}>
+                            <View style={styles.ctaTextContainer}>
+                                <Text style={styles.ctaTitle}>Find Your Part</Text>
+                                <Text style={styles.ctaSubtitle}>Get quotes from verified garages in Qatar</Text>
+                            </View>
+                            <View style={styles.ctaIconContainer}>
+                                <Text style={styles.ctaIcon}>+</Text>
+                            </View>
+                        </View>
+                        <View style={styles.ctaFooter}>
+                            <Text style={styles.ctaFooterText}>🚀 Average response time: 2 hours</Text>
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
 
-                {/* Stats Cards - 2 per row */}
-                <Text style={styles.sectionTitle}>Your Activity</Text>
+                {/* Stats Section */}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>📊 Your Activity</Text>
+                </View>
 
                 {isLoading ? (
                     <LoadingStats />
                 ) : (
-                    <View style={styles.statsGrid}>
-                        <View style={styles.statCard}>
-                            <LinearGradient
-                                colors={['#ffffff', '#f0f0f0']}
-                                style={[styles.statCardGradient, { borderWidth: 1, borderColor: '#e0e0e0' }]}
+                    <View style={styles.statsContainer}>
+                        {/* Row 1: Two cards */}
+                        <View style={styles.statsRow}>
+                            <TouchableOpacity
+                                style={styles.statCard}
+                                onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                                activeOpacity={0.8}
                             >
-                                <Text style={styles.statNumber}>{stats?.active_requests || 0}</Text>
-                                <Text style={styles.statLabel}>Active Requests</Text>
-                                <Text style={styles.statIcon}>🔍</Text>
-                            </LinearGradient>
+                                <LinearGradient
+                                    colors={['#FFF9E6', '#FFF3CC']}
+                                    style={styles.statCardInner}
+                                >
+                                    <View style={styles.statIconContainer}>
+                                        <Text style={styles.statEmoji}>🔍</Text>
+                                    </View>
+                                    <Text style={styles.statValue}>{stats?.active_requests || 0}</Text>
+                                    <Text style={styles.statLabel}>Active Requests</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.statCard}
+                                onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                                activeOpacity={0.8}
+                            >
+                                <LinearGradient
+                                    colors={['#E6F7FF', '#CCF0FF']}
+                                    style={styles.statCardInner}
+                                >
+                                    <View style={styles.statIconContainer}>
+                                        <Text style={styles.statEmoji}>🚚</Text>
+                                    </View>
+                                    <Text style={styles.statValue}>{stats?.pending_deliveries || 0}</Text>
+                                    <Text style={styles.statLabel}>In Progress</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
                         </View>
 
-                        <View style={styles.statCard}>
+                        {/* Row 2: Full width card */}
+                        <TouchableOpacity
+                            style={styles.statCardWide}
+                            onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                            activeOpacity={0.8}
+                        >
                             <LinearGradient
-                                colors={['#ffffff', '#f0f0f0']}
-                                style={[styles.statCardGradient, { borderWidth: 1, borderColor: '#e0e0e0' }]}
+                                colors={['#8A153815', '#8A153825']}
+                                style={styles.statCardWideInner}
                             >
-                                <Text style={styles.statNumber}>{stats?.pending_deliveries || 0}</Text>
-                                <Text style={styles.statLabel}>In Progress</Text>
-                                <Text style={styles.statIcon}>🚚</Text>
+                                <View style={styles.wideCardLeft}>
+                                    <Text style={styles.wideCardEmoji}>📦</Text>
+                                    <View>
+                                        <Text style={styles.wideCardValue}>{stats?.total_orders || 0}</Text>
+                                        <Text style={styles.wideCardLabel}>Total Orders Completed</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.wideCardBadge}>
+                                    <Text style={styles.wideCardBadgeText}>View All →</Text>
+                                </View>
                             </LinearGradient>
-                        </View>
-
-                        <View style={[styles.statCard, styles.statCardWide]}>
-                            <LinearGradient
-                                colors={['#8A153810', '#8A153820']}
-                                style={[styles.statCardGradient, { borderWidth: 1, borderColor: Colors.primary }]}
-                            >
-                                <Text style={[styles.statNumber, { color: Colors.primary }]}>
-                                    {stats?.total_orders || 0}
-                                </Text>
-                                <Text style={styles.statLabel}>Total Orders</Text>
-                                <Text style={styles.statIcon}>📦</Text>
-                            </LinearGradient>
-                        </View>
+                        </TouchableOpacity>
                     </View>
                 )}
 
                 {/* Quick Actions */}
-                <Text style={styles.sectionTitle}>Quick Actions</Text>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
+                </View>
+
                 <View style={styles.actionsGrid}>
                     <TouchableOpacity
                         style={styles.actionCard}
                         onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.actionIcon}>📋</Text>
-                        <Text style={styles.actionLabel}>My Requests</Text>
+                        <View style={[styles.actionIconBg, { backgroundColor: '#FFF3E0' }]}>
+                            <Text style={styles.actionEmoji}>📋</Text>
+                        </View>
+                        <Text style={styles.actionLabel}>Requests</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.actionCard}
                         onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.actionIcon}>📦</Text>
-                        <Text style={styles.actionLabel}>My Orders</Text>
+                        <View style={[styles.actionIconBg, { backgroundColor: '#E3F2FD' }]}>
+                            <Text style={styles.actionEmoji}>📦</Text>
+                        </View>
+                        <Text style={styles.actionLabel}>Orders</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.actionCard}
                         onPress={() => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support')}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.actionIcon}>💬</Text>
+                        <View style={[styles.actionIconBg, { backgroundColor: '#E8F5E9' }]}>
+                            <Text style={styles.actionEmoji}>💬</Text>
+                        </View>
                         <Text style={styles.actionLabel}>Support</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.actionCard}
                         onPress={() => navigation.navigate('Main', { screen: 'Profile' } as any)}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.actionIcon}>⚙️</Text>
+                        <View style={[styles.actionIconBg, { backgroundColor: '#F3E5F5' }]}>
+                            <Text style={styles.actionEmoji}>⚙️</Text>
+                        </View>
                         <Text style={styles.actionLabel}>Settings</Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* Pro Tip Card */}
+                <View style={styles.proTipCard}>
+                    <Text style={styles.proTipIcon}>💡</Text>
+                    <View style={styles.proTipContent}>
+                        <Text style={styles.proTipTitle}>Pro Tip</Text>
+                        <Text style={styles.proTipText}>Add your VIN number for faster & more accurate quotes</Text>
+                    </View>
                 </View>
 
                 <View style={{ height: 100 }} />
@@ -197,129 +270,258 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#FAFAFA',
     },
     scrollView: {
         flex: 1,
-        padding: Spacing.lg,
     },
+    // Header
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.lg,
     },
-    greeting: {
-        fontSize: FontSizes.md,
+    headerLeft: {
+        flex: 1,
+    },
+    greetingSmall: {
+        fontSize: FontSizes.sm,
         color: Colors.dark.textSecondary,
+        marginBottom: 4,
     },
     userName: {
         fontSize: FontSizes.xxl,
-        fontWeight: '700',
+        fontWeight: '800',
         color: Colors.dark.text,
+        letterSpacing: -0.5,
     },
-    logoContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: Colors.dark.surface,
+    notificationBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
+        ...Shadows.sm,
     },
-    logo: {
-        fontSize: 28,
+    notificationIcon: {
+        fontSize: 22,
     },
-    newRequestButton: {
+    notificationBadge: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: Colors.primary,
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    // CTA Card
+    ctaCard: {
+        marginHorizontal: Spacing.lg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         marginBottom: Spacing.xl,
-        ...Shadows.glow,
+        ...Shadows.lg,
     },
-    newRequestGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    ctaGradient: {
         padding: Spacing.lg,
     },
-    newRequestIcon: {
-        fontSize: 36,
-        fontWeight: '300',
-        color: '#fff',
-        marginRight: Spacing.md,
+    ctaContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    newRequestText: {
+    ctaTextContainer: {
         flex: 1,
     },
-    newRequestTitle: {
-        fontSize: FontSizes.xl,
-        fontWeight: '700',
+    ctaTitle: {
+        fontSize: FontSizes.xxl,
+        fontWeight: '800',
         color: '#fff',
+        marginBottom: 4,
     },
-    newRequestSubtitle: {
+    ctaSubtitle: {
         fontSize: FontSizes.sm,
-        color: 'rgba(255,255,255,0.8)',
+        color: 'rgba(255,255,255,0.85)',
+    },
+    ctaIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    ctaIcon: {
+        fontSize: 32,
+        color: '#fff',
+        fontWeight: '300',
+    },
+    ctaFooter: {
+        marginTop: Spacing.md,
+        paddingTop: Spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.2)',
+    },
+    ctaFooterText: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255,255,255,0.9)',
+    },
+    // Section Header
+    sectionHeader: {
+        paddingHorizontal: Spacing.lg,
+        marginBottom: Spacing.md,
     },
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: Colors.dark.text,
-        marginBottom: Spacing.md,
     },
-    statsGrid: {
+    // Stats
+    statsContainer: {
+        paddingHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+    },
+    statsRow: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
         justifyContent: 'space-between',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.md,
     },
     statCard: {
-        width: '48%',
+        width: cardWidth,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        marginBottom: Spacing.md,
+        ...Shadows.sm,
     },
-    statCardWide: {
-        width: '100%',
+    statCardInner: {
+        padding: Spacing.md,
+        alignItems: 'center',
+        minHeight: 120,
+        justifyContent: 'center',
     },
-    statCardGradient: {
-        padding: Spacing.lg,
-        minHeight: 100,
+    statIconContainer: {
+        marginBottom: Spacing.sm,
     },
-    statNumber: {
-        fontSize: FontSizes.xxxl,
+    statEmoji: {
+        fontSize: 28,
+    },
+    statValue: {
+        fontSize: 32,
         fontWeight: '800',
         color: Colors.dark.text,
     },
     statLabel: {
         fontSize: FontSizes.sm,
         color: Colors.dark.textSecondary,
-        marginTop: Spacing.xs,
+        marginTop: 4,
     },
-    statIcon: {
-        position: 'absolute',
-        right: Spacing.md,
-        top: Spacing.md,
+    statCardWide: {
+        width: '100%',
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        borderWidth: 1.5,
+        borderColor: Colors.primary,
+        ...Shadows.sm,
+    },
+    statCardWideInner: {
+        padding: Spacing.md,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    wideCardLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    wideCardEmoji: {
+        fontSize: 36,
+        marginRight: Spacing.md,
+    },
+    wideCardValue: {
         fontSize: 28,
-        opacity: 0.5,
+        fontWeight: '800',
+        color: Colors.primary,
     },
+    wideCardLabel: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textSecondary,
+    },
+    wideCardBadge: {
+        backgroundColor: Colors.primary + '20',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.full,
+    },
+    wideCardBadgeText: {
+        fontSize: FontSizes.xs,
+        color: Colors.primary,
+        fontWeight: '600',
+    },
+    // Actions Grid
     actionsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: Spacing.md,
+        justifyContent: 'space-between',
+        paddingHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
     },
     actionCard: {
-        width: '48%',
-        backgroundColor: Colors.dark.surface,
+        width: cardWidth,
+        backgroundColor: '#fff',
         borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
+        padding: Spacing.md,
         alignItems: 'center',
+        marginBottom: Spacing.md,
         ...Shadows.sm,
     },
-    actionIcon: {
-        fontSize: 32,
+    actionIconBg: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
         marginBottom: Spacing.sm,
     },
+    actionEmoji: {
+        fontSize: 24,
+    },
     actionLabel: {
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.sm,
         fontWeight: '600',
         color: Colors.dark.text,
+    },
+    // Pro Tip
+    proTipCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF8E1',
+        marginHorizontal: Spacing.lg,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        borderColor: '#FFE082',
+    },
+    proTipIcon: {
+        fontSize: 24,
+        marginRight: Spacing.md,
+    },
+    proTipContent: {
+        flex: 1,
+    },
+    proTipTitle: {
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+        color: '#F57C00',
+        marginBottom: 2,
+    },
+    proTipText: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textSecondary,
     },
 });
