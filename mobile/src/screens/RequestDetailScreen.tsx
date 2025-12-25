@@ -427,16 +427,23 @@ export default function RequestDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.dark.background },
+    container: { flex: 1, backgroundColor: '#FAFAFA' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
-    backButton: { padding: Spacing.sm },
-    backText: { color: Colors.primary, fontSize: FontSizes.lg, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '700', color: Colors.dark.text },
+    backButton: {
+        padding: Spacing.sm,
+        backgroundColor: '#F5F5F5',
+        borderRadius: BorderRadius.md,
+    },
+    backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text, letterSpacing: -0.5 },
     scrollView: { flex: 1, padding: Spacing.lg },
     errorText: {
         color: Colors.error,
@@ -445,7 +452,7 @@ const styles = StyleSheet.create({
         marginTop: 100
     },
     requestCard: {
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         ...Shadows.md,
@@ -455,28 +462,30 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
     },
-    carName: { fontSize: FontSizes.xxl, fontWeight: '700', color: Colors.dark.text },
-    carYear: { fontSize: FontSizes.md, color: Colors.primary },
+    carName: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.dark.text },
+    carYear: { fontSize: FontSizes.md, color: Colors.primary, fontWeight: '600' },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.full,
     },
     statusIcon: { fontSize: 12, marginRight: Spacing.xs },
     statusText: { fontSize: FontSizes.sm, fontWeight: '600' },
     divider: {
         height: 1,
-        backgroundColor: Colors.dark.border,
+        backgroundColor: '#F0F0F0',
         marginVertical: Spacing.lg,
     },
     sectionLabel: {
-        fontSize: FontSizes.sm,
-        fontWeight: '600',
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
         color: Colors.dark.textSecondary,
         marginBottom: Spacing.xs,
         marginTop: Spacing.md,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     partDescription: { fontSize: FontSizes.lg, color: Colors.dark.text, lineHeight: 24 },
     partNumber: { fontSize: FontSizes.md, color: Colors.dark.text, fontFamily: 'monospace' },
@@ -491,13 +500,13 @@ const styles = StyleSheet.create({
     requestImage: {
         width: 100,
         height: 100,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.lg,
         marginRight: Spacing.sm,
     },
     bidsSection: { marginTop: Spacing.xl },
     bidsTitle: {
         fontSize: FontSizes.xl,
-        fontWeight: '700',
+        fontWeight: '800',
         color: Colors.dark.text,
         marginBottom: Spacing.lg,
     },
@@ -505,17 +514,18 @@ const styles = StyleSheet.create({
     noBidsIcon: { fontSize: 48, marginBottom: Spacing.md },
     noBidsText: { fontSize: FontSizes.md, color: Colors.dark.textSecondary, textAlign: 'center' },
     bidCard: {
-        backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.lg,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderColor: '#E8E8E8',
+        ...Shadows.sm,
     },
     bidCardAccepted: {
         borderColor: Colors.success,
         borderWidth: 2,
-        backgroundColor: Colors.success + '10',
+        backgroundColor: '#E8F5E9',
     },
     acceptedBadge: {
         backgroundColor: Colors.success,
@@ -537,7 +547,7 @@ const styles = StyleSheet.create({
     ratingStar: { fontSize: 14, marginRight: Spacing.xs },
     ratingText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
     priceContainer: { alignItems: 'flex-end' },
-    priceLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    priceLabel: { fontSize: FontSizes.xs, color: Colors.dark.textSecondary },
     priceAmount: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.primary },
     bidDetails: { marginTop: Spacing.md },
     detailRow: {
@@ -547,11 +557,11 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.sm,
     },
     detailLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
-    detailValue: { fontSize: FontSizes.md, color: Colors.dark.text },
+    detailValue: { fontSize: FontSizes.md, color: Colors.dark.text, fontWeight: '500' },
     conditionBadge: {
         paddingHorizontal: Spacing.sm,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.sm
+        borderRadius: BorderRadius.full
     },
     conditionText: { fontSize: FontSizes.sm, fontWeight: '600' },
     notesContainer: { marginTop: Spacing.sm },
@@ -564,32 +574,33 @@ const styles = StyleSheet.create({
     },
     acceptButton: {
         flex: 1,
-        borderRadius: BorderRadius.md,
-        overflow: 'hidden'
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        ...Shadows.sm,
     },
     acceptButtonDisabled: { opacity: 0.7 },
     acceptGradient: { paddingVertical: Spacing.md, alignItems: 'center' },
     acceptText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
     counterButton: {
         flex: 0.8,
-        backgroundColor: Colors.primary + '20',
-        borderRadius: BorderRadius.md,
+        backgroundColor: Colors.primary + '15',
+        borderRadius: BorderRadius.lg,
         paddingVertical: Spacing.md,
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: Colors.primary,
     },
     counterText: {
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '700',
         color: Colors.primary,
     },
     rejectButton: {
         width: 44,
         height: 44,
-        backgroundColor: Colors.dark.border,
-        borderRadius: BorderRadius.md,
+        backgroundColor: '#FEE2E2',
+        borderRadius: BorderRadius.lg,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -599,8 +610,8 @@ const styles = StyleSheet.create({
         color: Colors.error
     },
     cancelRequestButton: {
-        backgroundColor: Colors.error + '20',
-        borderRadius: BorderRadius.md,
+        backgroundColor: '#FEE2E2',
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginTop: Spacing.lg,
         alignItems: 'center',
@@ -609,7 +620,7 @@ const styles = StyleSheet.create({
     },
     cancelRequestText: {
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '700',
         color: Colors.error,
     },
 });
