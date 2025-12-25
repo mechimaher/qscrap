@@ -114,16 +114,35 @@ export default function NewRequestScreen() {
         }
     };
 
-    const handleSelectAddress = () => {
+    const handleSelectAddress = async () => {
         navigation.navigate('Addresses', {
-            onSelect: (address: Address) => {
+            onSelect: async (address: Address) => {
+                console.log('[NewRequest] Address selected:', address);
                 setDeliveryAddress(address.address_text);
+
+                // Calculate delivery fee if coordinates available
                 if (address.latitude && address.longitude) {
                     setLocation({ lat: address.latitude, lng: address.longitude });
-                    // Recalculate fee if needed
-                    api.calculateDeliveryFee(address.latitude, address.longitude).then(res => {
-                        if (res.success) setDeliveryFee(res.delivery_fee);
-                    });
+                    try {
+                        const res = await api.calculateDeliveryFee(address.latitude, address.longitude);
+                        console.log('[NewRequest] Fee calculated:', res);
+                        if (res.success) {
+                            setDeliveryFee(res.delivery_fee);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        } else {
+                            // If calculation fails, set default fee
+                            setDeliveryFee(25);
+                            Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
+                        }
+                    } catch (error) {
+                        console.log('[NewRequest] Fee calculation error:', error);
+                        setDeliveryFee(25);
+                        Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
+                    }
+                } else {
+                    // No coordinates - use default fee
+                    setDeliveryFee(25);
+                    Alert.alert('Note', 'Address has no coordinates. Using standard delivery fee (25 QAR)');
                 }
             }
         } as any);

@@ -73,6 +73,11 @@ export const createCounterOffer = async (req: AuthRequest, res: Response) => {
 
         // Notify garage
         const io = (global as any).io;
+        console.log(`[COUNTER-OFFER] Emitting to garage_${bid.garage_id}`, {
+            counter_offer_id: result.rows[0].counter_offer_id,
+            proposed_amount,
+            original_amount: bid.bid_amount
+        });
         io.to(`garage_${bid.garage_id}`).emit('counter_offer_received', {
             counter_offer_id: result.rows[0].counter_offer_id,
             bid_id: bid_id,

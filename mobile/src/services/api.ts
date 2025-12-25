@@ -81,6 +81,7 @@ export interface Stats {
     active_requests: number;
     total_orders: number;
     pending_deliveries: number;
+    completed_orders: number;
 }
 
 export interface Address {

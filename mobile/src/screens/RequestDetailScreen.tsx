@@ -35,15 +35,49 @@ export default function RequestDetailScreen() {
     const [isViewerVisible, setIsViewerVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    // Load data on mount
     useEffect(() => {
         loadRequestDetails();
     }, []);
+
+    // Real-time socket listener for new bids
+    useEffect(() => {
+        // Import socket context to listen for new_bid events
+        const { io } = require('socket.io-client');
+        const { SOCKET_URL } = require('../config/api');
+
+        // Create a socket connection for this screen
+        const socket = io(SOCKET_URL, {
+            transports: ['websocket', 'polling'],
+        });
+
+        // Listen for new bids on this request
+        socket.on('new_bid', (data: any) => {
+            console.log('[RequestDetail] New bid received:', data);
+            if (data.request_id === requestId) {
+                // Refresh bids when a new bid arrives for this request
+                loadRequestDetails();
+            }
+        });
+
+        // Listen for bid updates (counter-offers)
+        socket.on('bid_updated', (data: any) => {
+            console.log('[RequestDetail] Bid updated:', data);
+            loadRequestDetails();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [requestId]);
 
     const loadRequestDetails = async () => {
         try {
             const data = await api.getRequestDetails(requestId);
             setRequest(data.request);
-            setBids(data.bids || []);
+            // Sort bids by amount (lowest first for customer benefit)
+            const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => a.bid_amount - b.bid_amount);
+            setBids(sortedBids);
         } catch (error) {
             console.log('Failed to load request:', error);
             Alert.alert('Error', 'Failed to load request details');
