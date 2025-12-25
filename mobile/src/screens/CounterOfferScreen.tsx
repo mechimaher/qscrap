@@ -121,10 +121,12 @@ export default function CounterOfferScreen() {
                 );
             } else {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to send counter-offer');
+                const errorMsg = data.error || data.message || JSON.stringify(data);
+                throw new Error(errorMsg);
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to send counter-offer');
+            const errorMessage = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+            Alert.alert('Error', errorMessage);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSending(false);

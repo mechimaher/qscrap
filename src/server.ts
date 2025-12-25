@@ -38,6 +38,25 @@ io.on('connection', (socket) => {
 
     socket.on('join_user_room', (userId) => {
         socket.join(`user_${userId}`);
+        console.log(`[SOCKET] User ${userId} joined room user_${userId}`);
+    });
+
+    // Mobile app customer room join - extracts user ID from auth token
+    socket.on('join_customer_room', async () => {
+        try {
+            const token = socket.handshake.auth?.token;
+            if (token) {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+                const userId = decoded.userId || decoded.user_id;
+                if (userId) {
+                    socket.join(`user_${userId}`);
+                    console.log(`[SOCKET] Customer ${userId} joined room user_${userId}`);
+                }
+            }
+        } catch (err) {
+            console.error('[SOCKET] join_customer_room error:', err);
+        }
     });
 
     socket.on('join_garage_room', (garageId) => {
