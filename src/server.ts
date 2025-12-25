@@ -64,6 +64,24 @@ io.on('connection', (socket) => {
         socket.leave(`chat_${assignmentId}`);
     });
 
+    // Mobile app chat handlers
+    socket.on('join_order_chat', (data) => {
+        const orderId = data?.order_id || data;
+        socket.join(`order_${orderId}`);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[${NODE_ID}] User joined order chat: order_${orderId}`);
+        }
+    });
+
+    socket.on('join_room', (roomName) => {
+        socket.join(roomName);
+    });
+
+    socket.on('track_order', (data) => {
+        const orderId = data?.order_id || data;
+        socket.join(`tracking_${orderId}`);
+    });
+
     socket.on('disconnect', () => {
         // Silent in production
     });

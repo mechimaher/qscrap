@@ -351,8 +351,10 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
                      WHERE co.bid_id = b.bid_id AND co.status = 'pending') as has_pending_negotiation
              FROM bids b
              JOIN garages g ON b.garage_id = g.garage_id
-             WHERE b.request_id = $1 AND b.status = 'pending'
-             ORDER BY b.created_at ASC`,
+             WHERE b.request_id = $1 AND b.status IN ('pending', 'accepted')
+             ORDER BY 
+                 CASE WHEN b.status = 'accepted' THEN 0 ELSE 1 END,
+                 b.bid_amount ASC`,
             [request_id]
         );
 
@@ -373,6 +375,47 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
     } catch (err: any) {
         console.error('[REQUEST] Get request details error:', err);
         res.status(500).json({ error: 'Failed to fetch request details' });
+    }
+};
+
+// ============================================
+// CUSTOMER: CANCEL REQUEST
+// ============================================
+
+/**
+ * Cancel a request - only the owner can cancel their own active request
+ */
+export const cancelRequest = async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+    const { request_id } = req.params;
+
+    try {
+        // Verify ownership and status
+        const requestResult = await pool.query(
+            'SELECT * FROM part_requests WHERE request_id = $1 AND customer_id = $2',
+            [request_id, userId]
+        );
+
+        if (requestResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Request not found or access denied' });
+        }
+
+        const request = requestResult.rows[0];
+
+        if (request.status !== 'active') {
+            return res.status(400).json({ error: 'Only active requests can be cancelled' });
+        }
+
+        // Update status to cancelled
+        await pool.query(
+            `UPDATE part_requests SET status = 'cancelled', updated_at = NOW() WHERE request_id = $1`,
+            [request_id]
+        );
+
+        res.json({ success: true, message: 'Request cancelled successfully' });
+    } catch (err: any) {
+        console.error('[REQUEST] Cancel request error:', err);
+        res.status(500).json({ error: 'Failed to cancel request' });
     }
 };
 

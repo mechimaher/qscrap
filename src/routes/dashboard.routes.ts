@@ -6,9 +6,6 @@ import {
     getCustomerStats,
     getCustomerProfile,
     updateCustomerProfile,
-    addAddress,
-    deleteAddress,
-    setDefaultAddress,
     getNotifications,
     markNotificationRead,
     markAllNotificationsRead
@@ -33,10 +30,8 @@ router.get('/customer/stats', authenticate, requireRole('customer'), getCustomer
 router.get('/profile', authenticate, getCustomerProfile);
 router.put('/profile', authenticate, updateCustomerProfile);
 
-// Customer: Addresses
-router.post('/addresses', authenticate, addAddress);
-router.delete('/addresses/:addressId', authenticate, deleteAddress);
-router.post('/addresses/:addressId/default', authenticate, setDefaultAddress);
+// Customer: Addresses - DEPRECATED: Use /api/addresses instead
+// Routes kept for backwards compatibility but should migrate to dedicated address routes
 
 // Notifications (for any user type)
 router.get('/notifications', authenticate, getNotifications);

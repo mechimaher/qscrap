@@ -21,11 +21,18 @@ const getJwtSecret = (): string => {
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
+    let token: string | undefined;
+
+    if (authHeader) {
+        token = authHeader.split(' ')[1];
+    } else if (req.query.token) {
+        token = req.query.token as string;
+    }
+
+    if (!token) {
         return res.status(401).json({ error: 'No token provided' });
     }
 
-    const token = authHeader.split(' ')[1];
     try {
         const payload = jwt.verify(token, getJwtSecret()) as AuthPayload;
         req.user = payload;

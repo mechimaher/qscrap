@@ -1,0 +1,245 @@
+// QScrap Customer App - Premium React Native with Full Features
+import React from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { SocketProvider } from './src/hooks/useSocket';
+import { Colors } from './src/constants/theme';
+import NotificationOverlay from './src/components/NotificationOverlay';
+import { Address } from './src/services/api';
+
+// Import Auth screens
+import LoginScreen from './src/screens/auth/LoginScreen';
+import RegisterScreen from './src/screens/auth/RegisterScreen';
+
+// Import Tab screens
+import HomeScreen from './src/screens/tabs/HomeScreen';
+import RequestsScreen from './src/screens/tabs/RequestsScreen';
+import OrdersScreen from './src/screens/tabs/OrdersScreen';
+import ProfileScreen from './src/screens/tabs/ProfileScreen';
+
+// Import Modal/Stack screens
+import NewRequestScreen from './src/screens/NewRequestScreen';
+import RequestDetailScreen from './src/screens/RequestDetailScreen';
+import OrderDetailScreen from './src/screens/OrderDetailScreen';
+import TrackingScreen from './src/screens/TrackingScreen';
+import ChatScreen from './src/screens/ChatScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
+import AddressesScreen from './src/screens/AddressesScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import CounterOfferScreen from './src/screens/CounterOfferScreen';
+
+// Navigation Types
+export type RootStackParamList = {
+  Auth: undefined;
+  Main: undefined;
+  NewRequest: undefined;
+  RequestDetail: { requestId: string };
+  OrderDetail: { orderId: string };
+  Tracking: { orderId: string; orderNumber: string; deliveryAddress?: string };
+  Chat: { orderId: string; orderNumber: string; recipientName: string; recipientType: 'driver' | 'garage' };
+  EditProfile: undefined;
+  Addresses: { onSelect?: (address: Address) => void } | undefined;
+  Settings: undefined;
+  CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string };
+};
+
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+export type MainTabParamList = {
+  Home: undefined;
+  Requests: undefined;
+  Orders: undefined;
+  Profile: undefined;
+};
+
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// Tab Navigator with premium styling
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors.dark.surface,
+          borderTopColor: Colors.dark.border,
+          borderTopWidth: 1,
+          height: 85,
+          paddingBottom: 25,
+          paddingTop: 10,
+        },
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.dark.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Requests"
+        component={RequestsScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🔍</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>📦</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// Auth Navigator
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Register" component={RegisterScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
+// Root Navigator with all screens
+function RootNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>QScrap</Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        {!isAuthenticated ? (
+          <RootStack.Screen name="Auth" component={AuthNavigator} />
+        ) : (
+          <>
+            <RootStack.Screen name="Main" component={MainTabs} />
+
+            {/* Request Flow */}
+            <RootStack.Screen
+              name="NewRequest"
+              component={NewRequestScreen}
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+            <RootStack.Screen
+              name="RequestDetail"
+              component={RequestDetailScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="CounterOffer"
+              component={CounterOfferScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+
+            {/* Order Flow */}
+            <RootStack.Screen
+              name="OrderDetail"
+              component={OrderDetailScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="Tracking"
+              component={TrackingScreen}
+              options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
+            />
+            <RootStack.Screen
+              name="Chat"
+              component={ChatScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+
+            {/* Profile/Settings */}
+            <RootStack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="Addresses"
+              component={AddressesScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+          </>
+        )}
+      </RootStack.Navigator>
+
+      {/* Notification Overlay - Shows above all screens when authenticated */}
+      {isAuthenticated && <NotificationOverlay />}
+    </>
+  );
+}
+
+// Main App with all providers
+export default function App() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <SocketProvider>
+            <NavigationContainer>
+              <StatusBar style="light" />
+              <RootNavigator />
+            </NavigationContainer>
+          </SocketProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: Colors.primary,
+    fontSize: 28,
+    fontWeight: '700',
+    marginTop: 16,
+  },
+});
