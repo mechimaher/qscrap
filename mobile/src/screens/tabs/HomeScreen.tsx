@@ -137,7 +137,7 @@ export default function HomeScreen() {
                             </LinearGradient>
                         </View>
 
-                        <View style={styles.statCard}>
+                        <View style={[styles.statCard, styles.statCardWide]}>
                             <LinearGradient
                                 colors={['#8A153810', '#8A153820']}
                                 style={[styles.statCardGradient, { borderWidth: 1, borderColor: Colors.primary }]}
@@ -147,17 +147,6 @@ export default function HomeScreen() {
                                 </Text>
                                 <Text style={styles.statLabel}>Total Orders</Text>
                                 <Text style={styles.statIcon}>📦</Text>
-                            </LinearGradient>
-                        </View>
-
-                        <View style={styles.statCard}>
-                            <LinearGradient
-                                colors={['#ffffff', '#f0f0f0']}
-                                style={[styles.statCardGradient, { borderWidth: 1, borderColor: '#e0e0e0' }]}
-                            >
-                                <Text style={styles.statNumber}>{stats?.completed_orders || 0}</Text>
-                                <Text style={styles.statLabel}>Completed</Text>
-                                <Text style={styles.statIcon}>✅</Text>
                             </LinearGradient>
                         </View>
                     </View>
@@ -278,13 +267,14 @@ const styles = StyleSheet.create({
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: Spacing.md,
+        justifyContent: 'space-between',
         marginBottom: Spacing.xl,
     },
     statCard: {
         width: '48%',
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
+        marginBottom: Spacing.md,
     },
     statCardWide: {
         width: '100%',
