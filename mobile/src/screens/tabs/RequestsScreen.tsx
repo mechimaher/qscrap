@@ -1,4 +1,4 @@
-// QScrap Requests Screen - View and manage part requests
+// QScrap Requests Screen - Premium VIP Design
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
@@ -7,11 +7,12 @@ import {
     FlatList,
     TouchableOpacity,
     RefreshControl,
-    ActivityIndicator,
+    Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { api, Request } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
@@ -19,6 +20,7 @@ import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
 
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const { width } = Dimensions.get('window');
 
 export default function RequestsScreen() {
     const navigation = useNavigation<RequestsScreenNavigationProp>();
@@ -48,80 +50,112 @@ export default function RequestsScreen() {
         loadRequests();
     }, []);
 
-    const getStatusColor = (status: string) => {
+    const getStatusConfig = (status: string) => {
         switch (status) {
-            case 'active': return Colors.success;
-            case 'accepted': return Colors.info;
-            case 'expired': return Colors.dark.textMuted;
-            default: return Colors.dark.textSecondary;
+            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
+            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Accepted' };
+            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: 'Expired' };
+            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: 'Cancelled' };
+            default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
         }
     };
 
-    const renderRequest = ({ item }: { item: Request }) => (
-        <TouchableOpacity
-            style={styles.requestCard}
-            onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate('RequestDetail', { requestId: item.request_id });
-            }}
-            activeOpacity={0.7}
-        >
-            <View style={styles.cardHeader}>
-                <View style={styles.carInfo}>
-                    <Text style={styles.carName}>{item.car_make} {item.car_model}</Text>
-                    <Text style={styles.carYear}>{item.car_year}</Text>
+    const renderRequest = ({ item }: { item: Request }) => {
+        const statusConfig = getStatusConfig(item.status);
+
+        return (
+            <TouchableOpacity
+                style={styles.requestCard}
+                onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    navigation.navigate('RequestDetail', { requestId: item.request_id });
+                }}
+                activeOpacity={0.8}
+            >
+                <View style={styles.cardHeader}>
+                    <View style={styles.carInfo}>
+                        <Text style={styles.carEmoji}>🚗</Text>
+                        <View>
+                            <Text style={styles.carName}>{item.car_make} {item.car_model}</Text>
+                            <Text style={styles.carYear}>{item.car_year}</Text>
+                        </View>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                        <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                            {statusConfig.icon} {statusConfig.label}
+                        </Text>
+                    </View>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                        {item.status.replace('_', ' ')}
+
+                <Text style={styles.partDescription} numberOfLines={2}>
+                    {item.part_description}
+                </Text>
+
+                <View style={styles.cardDivider} />
+
+                <View style={styles.cardFooter}>
+                    <View style={styles.bidCount}>
+                        <View style={styles.bidIconBg}>
+                            <Text style={styles.bidIcon}>💬</Text>
+                        </View>
+                        <Text style={styles.bidCountText}>{item.bid_count} bids received</Text>
+                    </View>
+                    <Text style={styles.dateText}>
+                        {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </Text>
                 </View>
-            </View>
-
-            <Text style={styles.partDescription} numberOfLines={2}>
-                {item.part_description}
-            </Text>
-
-            <View style={styles.cardFooter}>
-                <View style={styles.bidCount}>
-                    <Text style={styles.bidIcon}>💬</Text>
-                    <Text style={styles.bidCountText}>{item.bid_count} bids</Text>
-                </View>
-                <Text style={styles.dateText}>
-                    {new Date(item.created_at).toLocaleDateString()}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+            </TouchableOpacity>
+        );
+    };
 
     const EmptyState = () => (
         <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📋</Text>
+            <View style={styles.emptyIconContainer}>
+                <Text style={styles.emptyIcon}>📋</Text>
+            </View>
             <Text style={styles.emptyTitle}>No Requests Yet</Text>
-            <Text style={styles.emptyText}>Create your first part request to get started</Text>
+            <Text style={styles.emptyText}>Create your first part request and get quotes from verified garages</Text>
             <TouchableOpacity
                 style={styles.emptyButton}
                 onPress={() => navigation.navigate('NewRequest')}
             >
-                <Text style={styles.emptyButtonText}>+ New Request</Text>
+                <LinearGradient
+                    colors={[Colors.primary, '#B31D4A']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.emptyButtonGradient}
+                >
+                    <Text style={styles.emptyButtonText}>+ Create Request</Text>
+                </LinearGradient>
             </TouchableOpacity>
         </View>
     );
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            {/* Premium Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>My Requests</Text>
+                <View>
+                    <Text style={styles.headerTitle}>My Requests</Text>
+                    <Text style={styles.headerSubtitle}>{requests.length} total requests</Text>
+                </View>
                 <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => navigation.navigate('NewRequest')}
                 >
-                    <Text style={styles.addButtonText}>+</Text>
+                    <LinearGradient
+                        colors={[Colors.primary, '#B31D4A']}
+                        style={styles.addButtonGradient}
+                    >
+                        <Text style={styles.addButtonText}>+</Text>
+                    </LinearGradient>
                 </TouchableOpacity>
             </View>
 
             {isLoading ? (
-                <LoadingList count={4} />
+                <View style={styles.loadingContainer}>
+                    <LoadingList count={4} />
+                </View>
             ) : (
                 <FlatList
                     data={requests}
@@ -146,39 +180,54 @@ export default function RequestsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#FAFAFA',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: Spacing.lg,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.md,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
-        fontWeight: '700',
+        fontWeight: '800',
         color: Colors.dark.text,
+        letterSpacing: -0.5,
+    },
+    headerSubtitle: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textSecondary,
+        marginTop: 2,
     },
     addButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: Colors.primary,
+        borderRadius: 24,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    addButtonGradient: {
+        width: 48,
+        height: 48,
         justifyContent: 'center',
         alignItems: 'center',
     },
     addButtonText: {
-        fontSize: 24,
+        fontSize: 28,
         color: '#fff',
         fontWeight: '300',
     },
+    loadingContainer: {
+        padding: Spacing.lg,
+    },
     listContent: {
         padding: Spacing.lg,
-        paddingTop: 0,
     },
     requestCard: {
-        backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.lg,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         marginBottom: Spacing.md,
         ...Shadows.sm,
@@ -187,10 +236,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.md,
     },
     carInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
         flex: 1,
+    },
+    carEmoji: {
+        fontSize: 32,
+        marginRight: Spacing.md,
     },
     carName: {
         fontSize: FontSizes.lg,
@@ -200,21 +255,26 @@ const styles = StyleSheet.create({
     carYear: {
         fontSize: FontSizes.sm,
         color: Colors.dark.textSecondary,
+        marginTop: 2,
     },
     statusBadge: {
-        paddingHorizontal: Spacing.sm,
+        paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.full,
     },
     statusText: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
-        textTransform: 'uppercase',
     },
     partDescription: {
         fontSize: FontSizes.md,
         color: Colors.dark.textSecondary,
-        marginBottom: Spacing.md,
+        lineHeight: 22,
+    },
+    cardDivider: {
+        height: 1,
+        backgroundColor: '#F0F0F0',
+        marginVertical: Spacing.md,
     },
     cardFooter: {
         flexDirection: 'row',
@@ -225,9 +285,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
+    bidIconBg: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: Colors.primary + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: Spacing.sm,
+    },
     bidIcon: {
         fontSize: 14,
-        marginRight: Spacing.xs,
     },
     bidCountText: {
         fontSize: FontSizes.sm,
@@ -240,11 +308,20 @@ const styles = StyleSheet.create({
     },
     emptyState: {
         alignItems: 'center',
-        paddingVertical: Spacing.xxl,
+        paddingVertical: Spacing.xxl * 2,
+        paddingHorizontal: Spacing.xl,
+    },
+    emptyIconContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#FFF3E0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
     },
     emptyIcon: {
-        fontSize: 64,
-        marginBottom: Spacing.md,
+        fontSize: 48,
     },
     emptyTitle: {
         fontSize: FontSizes.xl,
@@ -255,17 +332,22 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: FontSizes.md,
         color: Colors.dark.textSecondary,
-        marginBottom: Spacing.lg,
+        textAlign: 'center',
+        marginBottom: Spacing.xl,
+        lineHeight: 22,
     },
     emptyButton: {
-        backgroundColor: Colors.primary,
-        paddingHorizontal: Spacing.lg,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        ...Shadows.md,
+    },
+    emptyButtonGradient: {
+        paddingHorizontal: Spacing.xl,
         paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.md,
     },
     emptyButtonText: {
         color: '#fff',
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '700',
     },
 });

@@ -1,4 +1,4 @@
-// QScrap Profile Screen - User settings and account
+// QScrap Profile Screen - Premium VIP Design
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -22,7 +22,7 @@ import { RootStackParamList } from '../../../App';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const { user, logout, refreshUser } = useAuth();
+    const { user, logout } = useAuth();
     const [profile, setProfile] = useState<any>(null);
 
     useEffect(() => {
@@ -61,17 +61,33 @@ export default function ProfileScreen() {
         label,
         onPress,
         showArrow = true,
-        danger = false
+        danger = false,
+        badge = ''
     }: {
         icon: string;
         label: string;
         onPress: () => void;
         showArrow?: boolean;
         danger?: boolean;
+        badge?: string;
     }) => (
-        <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-            <Text style={styles.menuIcon}>{icon}</Text>
+        <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onPress();
+            }}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger]}>
+                <Text style={styles.menuIcon}>{icon}</Text>
+            </View>
             <Text style={[styles.menuLabel, danger && styles.menuLabelDanger]}>{label}</Text>
+            {badge ? (
+                <View style={styles.menuBadge}>
+                    <Text style={styles.menuBadgeText}>{badge}</Text>
+                </View>
+            ) : null}
             {showArrow && <Text style={styles.menuArrow}>›</Text>}
         </TouchableOpacity>
     );
@@ -79,48 +95,65 @@ export default function ProfileScreen() {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Header */}
+                {/* Premium Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
+                    <TouchableOpacity style={styles.editButton}>
+                        <Text style={styles.editButtonText}>Edit</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Profile Card */}
+                {/* Premium Profile Card */}
                 <View style={styles.profileCard}>
                     <LinearGradient
-                        colors={Colors.gradients.primaryDark}
+                        colors={[Colors.primary, '#B31D4A']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
                         style={styles.profileGradient}
                     >
                         <View style={styles.avatarContainer}>
-                            <Text style={styles.avatar}>👤</Text>
+                            <Text style={styles.avatar}>
+                                {user?.full_name?.charAt(0)?.toUpperCase() || '👤'}
+                            </Text>
                         </View>
                         <Text style={styles.userName}>{user?.full_name || 'Customer'}</Text>
                         <Text style={styles.userPhone}>{user?.phone_number}</Text>
-                        {profile?.stats && (
-                            <View style={styles.profileStats}>
-                                <View style={styles.profileStat}>
-                                    <Text style={styles.profileStatNumber}>{profile.stats.total_requests || 0}</Text>
-                                    <Text style={styles.profileStatLabel}>Requests</Text>
-                                </View>
-                                <View style={styles.profileStatDivider} />
-                                <View style={styles.profileStat}>
-                                    <Text style={styles.profileStatNumber}>{profile.stats.total_orders || 0}</Text>
-                                    <Text style={styles.profileStatLabel}>Orders</Text>
-                                </View>
+
+                        {/* Stats Row */}
+                        <View style={styles.profileStats}>
+                            <View style={styles.profileStat}>
+                                <Text style={styles.profileStatNumber}>
+                                    {profile?.stats?.total_requests || 0}
+                                </Text>
+                                <Text style={styles.profileStatLabel}>Requests</Text>
                             </View>
-                        )}
+                            <View style={styles.profileStatDivider} />
+                            <View style={styles.profileStat}>
+                                <Text style={styles.profileStatNumber}>
+                                    {profile?.stats?.total_orders || 0}
+                                </Text>
+                                <Text style={styles.profileStatLabel}>Orders</Text>
+                            </View>
+                            <View style={styles.profileStatDivider} />
+                            <View style={styles.profileStat}>
+                                <Text style={styles.profileStatNumber}>⭐</Text>
+                                <Text style={styles.profileStatLabel}>VIP</Text>
+                            </View>
+                        </View>
                     </LinearGradient>
                 </View>
 
-                {/* Menu Section */}
+                {/* Account Section */}
                 <View style={styles.menuSection}>
                     <Text style={styles.menuTitle}>Account</Text>
                     <View style={styles.menuCard}>
                         <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses' as never)} />
-                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} />
+                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} badge="3" />
                         <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings' as never)} />
                     </View>
                 </View>
 
+                {/* Support Section */}
                 <View style={styles.menuSection}>
                     <Text style={styles.menuTitle}>Support</Text>
                     <View style={styles.menuCard}>
@@ -147,22 +180,16 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
+                {/* Legal Section */}
                 <View style={styles.menuSection}>
                     <Text style={styles.menuTitle}>Legal</Text>
                     <View style={styles.menuCard}>
-                        <MenuItem
-                            icon="🔒"
-                            label="Privacy Policy"
-                            onPress={() => Linking.openURL(PRIVACY_URL)}
-                        />
-                        <MenuItem
-                            icon="📄"
-                            label="Terms of Service"
-                            onPress={() => Linking.openURL(TERMS_URL)}
-                        />
+                        <MenuItem icon="🔒" label="Privacy Policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
+                        <MenuItem icon="📄" label="Terms of Service" onPress={() => Linking.openURL(TERMS_URL)} />
                     </View>
                 </View>
 
+                {/* Sign Out */}
                 <View style={styles.menuSection}>
                     <View style={styles.menuCard}>
                         <MenuItem
@@ -175,10 +202,13 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                {/* Version */}
+                {/* Version Footer */}
                 <View style={styles.versionContainer}>
-                    <Text style={styles.versionText}>QScrap v{APP_VERSION}</Text>
+                    <View style={styles.versionBadge}>
+                        <Text style={styles.versionText}>QScrap v{APP_VERSION}</Text>
+                    </View>
                     <Text style={styles.copyrightText}>© 2024 QScrap. All rights reserved.</Text>
+                    <Text style={styles.madeWithText}>Made with ❤️ in Qatar</Text>
                 </View>
 
                 <View style={{ height: 100 }} />
@@ -190,21 +220,41 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#FAFAFA',
     },
     scrollView: {
         flex: 1,
     },
     header: {
-        padding: Spacing.lg,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.md,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
-        fontWeight: '700',
+        fontWeight: '800',
         color: Colors.dark.text,
+        letterSpacing: -0.5,
+    },
+    editButton: {
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        backgroundColor: Colors.primary + '15',
+        borderRadius: BorderRadius.full,
+    },
+    editButtonText: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        color: Colors.primary,
     },
     profileCard: {
         marginHorizontal: Spacing.lg,
+        marginTop: Spacing.lg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         ...Shadows.lg,
@@ -214,33 +264,39 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     avatarContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: Colors.dark.surface,
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: 'rgba(255,255,255,0.25)',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: Spacing.md,
+        borderWidth: 3,
+        borderColor: 'rgba(255,255,255,0.5)',
     },
     avatar: {
-        fontSize: 40,
+        fontSize: 42,
+        color: '#fff',
+        fontWeight: '700',
     },
     userName: {
-        fontSize: FontSizes.xl,
-        fontWeight: '700',
+        fontSize: FontSizes.xxl,
+        fontWeight: '800',
         color: '#fff',
+        letterSpacing: -0.5,
     },
     userPhone: {
         fontSize: FontSizes.md,
-        color: 'rgba(255,255,255,0.8)',
+        color: 'rgba(255,255,255,0.85)',
         marginTop: Spacing.xs,
     },
     profileStats: {
         flexDirection: 'row',
         marginTop: Spacing.lg,
-        backgroundColor: 'rgba(0,0,0,0.2)',
-        borderRadius: BorderRadius.md,
-        padding: Spacing.md,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: BorderRadius.lg,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.lg,
     },
     profileStat: {
         alignItems: 'center',
@@ -248,12 +304,13 @@ const styles = StyleSheet.create({
     },
     profileStatNumber: {
         fontSize: FontSizes.xxl,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#fff',
     },
     profileStatLabel: {
-        fontSize: FontSizes.sm,
-        color: 'rgba(255,255,255,0.7)',
+        fontSize: FontSizes.xs,
+        color: 'rgba(255,255,255,0.8)',
+        marginTop: 2,
     },
     profileStatDivider: {
         width: 1,
@@ -264,49 +321,88 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
     },
     menuTitle: {
-        fontSize: FontSizes.sm,
-        fontWeight: '600',
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
         color: Colors.dark.textSecondary,
         marginBottom: Spacing.sm,
         textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     menuCard: {
-        backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.lg,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
         overflow: 'hidden',
+        ...Shadows.sm,
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: Colors.dark.border,
+        borderBottomColor: '#F5F5F5',
+    },
+    menuIconBg: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: Spacing.md,
+    },
+    menuIconBgDanger: {
+        backgroundColor: '#FEE2E2',
     },
     menuIcon: {
-        fontSize: 20,
-        marginRight: Spacing.md,
+        fontSize: 18,
     },
     menuLabel: {
         flex: 1,
         fontSize: FontSizes.md,
+        fontWeight: '500',
         color: Colors.dark.text,
     },
     menuLabelDanger: {
-        color: Colors.error,
+        color: '#EF4444',
+    },
+    menuBadge: {
+        backgroundColor: Colors.primary,
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+        marginRight: Spacing.sm,
+    },
+    menuBadgeText: {
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+        color: '#fff',
     },
     menuArrow: {
-        fontSize: 20,
+        fontSize: 22,
         color: Colors.dark.textMuted,
     },
     versionContainer: {
         alignItems: 'center',
         marginTop: Spacing.xl,
+        paddingHorizontal: Spacing.lg,
+    },
+    versionBadge: {
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.full,
+        marginBottom: Spacing.sm,
     },
     versionText: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textMuted,
+        fontWeight: '600',
+        color: Colors.dark.textSecondary,
     },
     copyrightText: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textMuted,
+    },
+    madeWithText: {
         fontSize: FontSizes.xs,
         color: Colors.dark.textMuted,
         marginTop: Spacing.xs,
