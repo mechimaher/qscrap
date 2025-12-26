@@ -295,6 +295,13 @@ class ApiService {
         });
     }
 
+    async updateAddress(addressId: string, data: { label: string; address_text: string; latitude?: number; longitude?: number; is_default?: boolean }): Promise<any> {
+        return this.request(`${API_ENDPOINTS.ADDRESSES}/${addressId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
     // Notifications
     async getNotifications(): Promise<{ notifications: any[] }> {
         return this.request(API_ENDPOINTS.NOTIFICATIONS);

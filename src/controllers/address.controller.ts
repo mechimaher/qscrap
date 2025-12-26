@@ -87,6 +87,58 @@ export const deleteAddress = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const updateAddress = async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+    const { address_id } = req.params;
+    const { label, address_text, latitude, longitude, is_default } = req.body;
+
+    if (!label || !address_text) {
+        return res.status(400).json({ error: 'Label and address text are required' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Verify ownership
+        const check = await client.query(
+            'SELECT 1 FROM user_addresses WHERE address_id = $1 AND user_id = $2',
+            [address_id, userId]
+        );
+        if (check.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Address not found' });
+        }
+
+        // If setting as default, unset others first
+        if (is_default) {
+            await client.query(
+                `UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        // Update the address
+        const result = await client.query(
+            `UPDATE user_addresses 
+             SET label = $1, address_text = $2, latitude = $3, longitude = $4, is_default = COALESCE($5, is_default), updated_at = NOW()
+             WHERE address_id = $6 AND user_id = $7
+             RETURNING *`,
+            [label, address_text, latitude || null, longitude || null, is_default, address_id, userId]
+        );
+
+        await client.query('COMMIT');
+        res.json({ address: result.rows[0] });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('[ADDRESS] Update address error:', err);
+        res.status(500).json({ error: 'Failed to update address' });
+    } finally {
+        client.release();
+    }
+};
+
 export const setDefaultAddress = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId;
     const { address_id } = req.params;

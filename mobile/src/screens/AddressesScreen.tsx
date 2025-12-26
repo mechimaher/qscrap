@@ -33,8 +33,9 @@ export default function AddressBookScreen() {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
+    const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
-    // Add Form State
+    // Add/Edit Form State
     const [label, setLabel] = useState('');
     const [addressText, setAddressText] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -83,6 +84,47 @@ export default function AddressBookScreen() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleEdit = (address: Address) => {
+        setEditingAddress(address);
+        setLabel(address.label);
+        setAddressText(address.address_text);
+        setIsAdding(true);
+    };
+
+    const handleUpdateAddress = async () => {
+        if (!editingAddress || !label || !addressText) {
+            Alert.alert('Missing Fields', 'Please fill in all fields');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await api.updateAddress(editingAddress.address_id, { label, address_text: addressText });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setLabel('');
+            setAddressText('');
+            setEditingAddress(null);
+            setIsAdding(false);
+            loadAddresses();
+        } catch (error: any) {
+            console.log('Update address error:', error);
+            let errorMessage = 'Failed to update address';
+            if (error?.message) {
+                errorMessage = error.message;
+            }
+            Alert.alert('Error', errorMessage);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setIsAdding(false);
+        setEditingAddress(null);
+        setLabel('');
+        setAddressText('');
     };
 
     const handleDelete = async (id: string) => {
@@ -142,9 +184,14 @@ export default function AddressBookScreen() {
             </View>
 
             {!isSelectionMode && (
-                <TouchableOpacity onPress={() => handleDelete(item.address_id)} style={styles.deleteButton}>
-                    <Text style={styles.deleteText}>✕</Text>
-                </TouchableOpacity>
+                <View style={styles.cardActions}>
+                    <TouchableOpacity onPress={() => handleEdit(item)} style={styles.editButton}>
+                        <Text style={styles.editText}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(item.address_id)} style={styles.deleteButton}>
+                        <Text style={styles.deleteText}>✕</Text>
+                    </TouchableOpacity>
+                </View>
             )}
         </TouchableOpacity>
     );
@@ -182,7 +229,7 @@ export default function AddressBookScreen() {
                     style={styles.modalOverlay}
                 >
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>New Address</Text>
+                        <Text style={styles.modalTitle}>{editingAddress ? 'Edit Address' : 'New Address'}</Text>
 
                         <Text style={styles.inputLabel}>Label (e.g. Home, Office)</Text>
                         <TextInput
@@ -208,11 +255,11 @@ export default function AddressBookScreen() {
                         </View>
 
                         <View style={styles.modalActions}>
-                            <TouchableOpacity onPress={() => setIsAdding(false)} style={styles.cancelButton}>
+                            <TouchableOpacity onPress={handleCloseModal} style={styles.cancelButton}>
                                 <Text style={styles.cancelText}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                onPress={handleAddAddress}
+                                onPress={editingAddress ? handleUpdateAddress : handleAddAddress}
                                 style={styles.saveButton}
                                 disabled={isSaving}
                             >
@@ -223,7 +270,7 @@ export default function AddressBookScreen() {
                                     {isSaving ? (
                                         <ActivityIndicator color="#fff" />
                                     ) : (
-                                        <Text style={styles.saveText}>Save Address</Text>
+                                        <Text style={styles.saveText}>{editingAddress ? 'Update' : 'Save Address'}</Text>
                                     )}
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -287,6 +334,9 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     addressText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    cardActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    editButton: { padding: Spacing.sm },
+    editText: { fontSize: 18 },
     deleteButton: { padding: Spacing.sm },
     deleteText: { color: Colors.error, fontSize: 18 },
     emptyText: { textAlign: 'center', color: Colors.dark.textMuted, marginTop: 50, fontSize: FontSizes.md },
