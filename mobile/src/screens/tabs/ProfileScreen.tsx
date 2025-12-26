@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
+import { useTheme } from '../../contexts/ThemeContext';
 import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -23,6 +24,7 @@ import { RootStackParamList } from '../../../App';
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { user, logout, refreshUser } = useAuth();
+    const { colors } = useTheme();
     const [profile, setProfile] = useState<any>(null);
     const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
 
@@ -134,11 +136,11 @@ export default function ProfileScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Premium Header */}
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Profile</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
                     <TouchableOpacity
                         style={styles.editButton}
                         onPress={() => {

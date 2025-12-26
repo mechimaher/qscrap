@@ -41,7 +41,7 @@ const defaultSettings: SettingsState = {
 
 export default function SettingsScreen() {
     const navigation = useNavigation();
-    const { isDarkMode, toggleTheme } = useTheme();
+    const { isDarkMode, toggleTheme, colors } = useTheme();
     const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode });
 
     useEffect(() => {
@@ -118,8 +118,8 @@ export default function SettingsScreen() {
         <View style={styles.settingRow}>
             <Text style={styles.settingIcon}>{icon}</Text>
             <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>{title}</Text>
-                {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+                <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
+                {subtitle && <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
             </View>
             <Switch
                 value={value}
@@ -144,7 +144,7 @@ export default function SettingsScreen() {
         <TouchableOpacity style={styles.settingRow} onPress={onPress}>
             <Text style={styles.settingIcon}>{icon}</Text>
             <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>{title}</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
             </View>
             <View style={styles.actionValue}>
                 {value && <Text style={styles.valueText}>{value}</Text>}
@@ -154,20 +154,20 @@ export default function SettingsScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Settings</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
                 <View style={{ width: 60 }} />
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Notifications Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Notifications</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notifications</Text>
 
                     <SettingRow
                         icon="🔔"

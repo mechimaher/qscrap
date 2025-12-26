@@ -72,20 +72,21 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Tab Navigator with premium styling
 function MainTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.dark.surface,
-          borderTopColor: Colors.dark.border,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 85,
           paddingBottom: 25,
           paddingTop: 10,
         },
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.dark.textMuted,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',

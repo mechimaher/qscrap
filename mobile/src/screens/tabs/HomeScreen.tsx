@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { api, Stats } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
@@ -28,6 +29,7 @@ const cardWidth = (width - Spacing.lg * 3) / 2;
 export default function HomeScreen() {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const { user } = useAuth();
+    const { colors, isDarkMode } = useTheme();
     const [stats, setStats] = useState<Stats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -76,7 +78,7 @@ export default function HomeScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
@@ -91,11 +93,11 @@ export default function HomeScreen() {
                 {/* Premium Header */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        <Text style={styles.greetingSmall}>{getTimeEmoji()} {greeting()}</Text>
-                        <Text style={styles.userName}>{user?.full_name || 'Customer'}</Text>
+                        <Text style={[styles.greetingSmall, { color: colors.textSecondary }]}>{getTimeEmoji()} {greeting()}</Text>
+                        <Text style={[styles.userName, { color: colors.text }]}>{user?.full_name || 'Customer'}</Text>
                     </View>
                     <TouchableOpacity
-                        style={styles.notificationBtn}
+                        style={[styles.notificationBtn, { backgroundColor: colors.surface }]}
                         onPress={() => navigation.navigate('Notifications' as any)}
                     >
                         <Text style={styles.notificationIcon}>🔔</Text>
