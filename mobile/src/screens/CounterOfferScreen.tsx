@@ -36,6 +36,7 @@ interface NegotiationParams {
     garageName: string;
     currentAmount: number;
     partDescription: string;
+    garageCounterId?: string | null; // Passed when responding to a garage counter-offer
 }
 
 const MAX_ROUNDS = 3;
@@ -43,7 +44,7 @@ const MAX_ROUNDS = 3;
 export default function CounterOfferScreen() {
     const navigation = useNavigation();
     const route = useRoute();
-    const { bidId, garageName, currentAmount, partDescription } = route.params as NegotiationParams;
+    const { bidId, garageName, currentAmount, partDescription, garageCounterId } = route.params as NegotiationParams;
     const { socket } = useSocketContext();
 
     const [history, setHistory] = useState<CounterOffer[]>([]);
@@ -54,7 +55,8 @@ export default function CounterOfferScreen() {
     const [currentRound, setCurrentRound] = useState(0);
     const [pendingOffer, setPendingOffer] = useState<CounterOffer | null>(null);
     // Track if we're responding to a garage counter-offer (vs creating a new one)
-    const [respondingToOfferId, setRespondingToOfferId] = useState<string | null>(null);
+    // Initialize from route params if we're navigating directly to respond
+    const [respondingToOfferId, setRespondingToOfferId] = useState<string | null>(garageCounterId || null);
 
     useEffect(() => {
         loadNegotiationHistory();
@@ -117,9 +119,19 @@ export default function CounterOfferScreen() {
                 const pending = data.history?.find(
                     (h: CounterOffer) => h.status === 'pending' && h.offered_by_type === 'garage'
                 );
-                setPendingOffer(pending || null);
-                // Reset responding state when we reload
-                setRespondingToOfferId(null);
+
+                // If we came with a garageCounterId from route params, don't show pending card
+                // Just keep the form visible for responding
+                if (garageCounterId) {
+                    setPendingOffer(null);
+                    // Keep respondingToOfferId from initialization
+                } else {
+                    setPendingOffer(pending || null);
+                    // Only reset if this is a fresh reload (not from clicking Counter)
+                    if (pending) {
+                        setRespondingToOfferId(null);
+                    }
+                }
             }
         } catch (error) {
             console.log('Failed to load negotiation history:', error);

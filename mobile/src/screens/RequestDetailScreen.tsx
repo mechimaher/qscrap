@@ -351,6 +351,8 @@ export default function RequestDetailScreen() {
                                 garageName: bid.garage_name,
                                 currentAmount: displayPrice,
                                 partDescription: request.part_description,
+                                // Pass garage counter ID if responding to a pending offer
+                                garageCounterId: (bid as any).garage_counter_id || null,
                             })}
                         >
                             <Text style={styles.counterText}>↩ Counter</Text>
