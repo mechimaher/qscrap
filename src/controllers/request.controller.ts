@@ -314,12 +314,8 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         // IMPORTANT: Include last garage offer even if negotiation ended (for customer to accept final price)
         const bidsResult = await pool.query(
             `SELECT b.*, g.garage_name, g.rating_average as garage_rating, g.rating_count as garage_review_count, g.total_transactions,
-                    -- Original bid amount: if notes contain negotiation info, try to extract; otherwise use current
-                    CASE 
-                        WHEN b.notes LIKE '%[Negotiated from % QAR]%' THEN
-                            CAST(SUBSTRING(b.notes FROM '\\[Negotiated from ([0-9.]+) QAR\\]') AS NUMERIC)
-                        ELSE b.bid_amount
-                    END as original_bid_amount,
+                    -- Original bid amount (TODO: store separately in future, for now use current bid_amount)
+                    b.bid_amount as original_bid_amount,
                     -- Pending counter-offers from garage (awaiting customer response)
                     (SELECT co.proposed_amount 
                      FROM counter_offers co 
