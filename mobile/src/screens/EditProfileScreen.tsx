@@ -9,10 +9,12 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +27,7 @@ export default function EditProfileScreen() {
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
+    const [avatarUri, setAvatarUri] = useState<string | null>(null);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -87,6 +90,57 @@ export default function EditProfileScreen() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleChangePhoto = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            'Change Photo',
+            'Choose an option',
+            [
+                {
+                    text: '📷 Take Photo',
+                    onPress: async () => {
+                        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                        if (status !== 'granted') {
+                            Alert.alert('Permission Required', 'Camera access is needed to take photos.');
+                            return;
+                        }
+                        const result = await ImagePicker.launchCameraAsync({
+                            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                            allowsEditing: true,
+                            aspect: [1, 1],
+                            quality: 0.8,
+                        });
+                        if (!result.canceled && result.assets[0]) {
+                            setAvatarUri(result.assets[0].uri);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }
+                    },
+                },
+                {
+                    text: '🖼️ Choose from Gallery',
+                    onPress: async () => {
+                        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                        if (status !== 'granted') {
+                            Alert.alert('Permission Required', 'Gallery access is needed to select photos.');
+                            return;
+                        }
+                        const result = await ImagePicker.launchImageLibraryAsync({
+                            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                            allowsEditing: true,
+                            aspect: [1, 1],
+                            quality: 0.8,
+                        });
+                        if (!result.canceled && result.assets[0]) {
+                            setAvatarUri(result.assets[0].uri);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }
+                    },
+                },
+                { text: 'Cancel', style: 'cancel' },
+            ]
+        );
     };
 
     const handleChangePassword = async () => {
@@ -163,12 +217,16 @@ export default function EditProfileScreen() {
                 {/* Profile Avatar */}
                 <View style={styles.avatarSection}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
-                            {fullName.charAt(0).toUpperCase() || '👤'}
-                        </Text>
+                        {avatarUri ? (
+                            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                        ) : (
+                            <Text style={styles.avatarText}>
+                                {fullName.charAt(0).toUpperCase() || '👤'}
+                            </Text>
+                        )}
                     </View>
-                    <TouchableOpacity style={styles.changePhotoButton}>
-                        <Text style={styles.changePhotoText}>Change Photo</Text>
+                    <TouchableOpacity style={styles.changePhotoButton} onPress={handleChangePhoto}>
+                        <Text style={styles.changePhotoText}>📷 Change Photo</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -319,6 +377,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 3,
         borderColor: Colors.primary,
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 50,
     },
     avatarText: { fontSize: 40, color: Colors.primary },
     changePhotoButton: { marginTop: Spacing.md },
