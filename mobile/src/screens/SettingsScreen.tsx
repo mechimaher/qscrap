@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -40,7 +41,8 @@ const defaultSettings: SettingsState = {
 
 export default function SettingsScreen() {
     const navigation = useNavigation();
-    const [settings, setSettings] = useState<SettingsState>(defaultSettings);
+    const { isDarkMode, toggleTheme } = useTheme();
+    const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode });
 
     useEffect(() => {
         loadSettings();
@@ -229,8 +231,11 @@ export default function SettingsScreen() {
                         icon="🌙"
                         title="Dark Mode"
                         subtitle="Use dark theme"
-                        value={settings.darkMode}
-                        onToggle={() => updateSetting('darkMode', !settings.darkMode)}
+                        value={isDarkMode}
+                        onToggle={() => {
+                            toggleTheme();
+                            updateSetting('darkMode', !isDarkMode);
+                        }}
                     />
 
                     <ActionRow
