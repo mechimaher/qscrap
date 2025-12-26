@@ -213,8 +213,12 @@ export default function RequestDetailScreen() {
         const isNegotiationAgreed = customerCounterStatus === 'accepted';
         const agreedPrice = isNegotiationAgreed ? customerCounterAmount : null;
 
-        // Display price: agreed price if negotiation complete, counter-offer if pending, otherwise original bid
-        const displayPrice = agreedPrice || (hasGarageCounterOffer ? garageCounterAmount : bid.bid_amount);
+        // Current garage offer - priority: pending counter-offer > last accepted offer > original bid
+        const currentGarageOffer = garageCounterAmount || lastGarageOfferAmount || bid.bid_amount;
+        const hasNegotiatedPrice = !!(garageCounterAmount || lastGarageOfferAmount);
+
+        // Display price: agreed price if negotiation complete, otherwise current garage offer
+        const displayPrice = agreedPrice || currentGarageOffer;
 
         return (
             <View key={bid.bid_id} style={[
@@ -263,11 +267,13 @@ export default function RequestDetailScreen() {
                         )}
                     </View>
                     <View style={styles.priceContainer}>
-                        {hasGarageCounterOffer ? (
+                        {hasNegotiatedPrice ? (
                             <>
                                 <Text style={styles.originalPriceStrike}>{bid.bid_amount} QAR</Text>
-                                <Text style={styles.counterPriceLabel}>Garage Offers</Text>
-                                <Text style={styles.counterPriceAmount}>{garageCounterAmount} QAR</Text>
+                                <Text style={styles.counterPriceLabel}>
+                                    {hasGarageCounterOffer ? 'Garage Offers' : 'Current Price'}
+                                </Text>
+                                <Text style={styles.counterPriceAmount}>{currentGarageOffer} QAR</Text>
                             </>
                         ) : (
                             <>
