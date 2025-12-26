@@ -247,6 +247,7 @@ export default function ProfileScreen() {
                             label="Sign Out"
                             onPress={handleLogout}
                             showArrow={false}
+                            danger
                         />
                         <View style={{ height: 1, backgroundColor: colors.border }} />
                         <MenuItem

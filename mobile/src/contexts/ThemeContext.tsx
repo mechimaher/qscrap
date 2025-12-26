@@ -47,14 +47,14 @@ const lightColors: ThemeColors = {
 };
 
 const darkColors: ThemeColors = {
-    background: '#0a0a0a',
-    surface: '#1a1a1a',
-    surfaceElevated: '#262626',
-    card: '#1a1a1a',
-    border: '#333333',
+    background: '#121212',
+    surface: '#1e1e1e',
+    surfaceElevated: '#2a2a2a',
+    card: '#252525',
+    border: '#3a3a3a',
     text: '#ffffff',
-    textSecondary: '#a3a3a3',
-    textMuted: '#737373',
+    textSecondary: '#b0b0b0',
+    textMuted: '#808080',
     primary: '#8A1538',
     primaryDark: '#6B102C',
     primaryLight: '#A82050',

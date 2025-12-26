@@ -19,11 +19,13 @@ import { useNavigation } from '@react-navigation/native';
 import { api } from '../services/api';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
     const { user, refreshUser } = useAuth();
+    const { colors } = useTheme();
 
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -213,13 +215,13 @@ export default function EditProfileScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -241,8 +243,8 @@ export default function EditProfileScreen() {
                 </View>
 
                 {/* Personal Info Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Personal Information</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Personal Information</Text>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Full Name</Text>
@@ -299,8 +301,8 @@ export default function EditProfileScreen() {
                 </View>
 
                 {/* Change Password Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Change Password</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Change Password</Text>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Current Password</Text>
@@ -348,7 +350,7 @@ export default function EditProfileScreen() {
                 </View>
 
                 {/* Danger Zone */}
-                <View style={styles.section}>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <Text style={[styles.sectionTitle, { color: Colors.error }]}>Danger Zone</Text>
 
                     <TouchableOpacity style={styles.deleteAccountButton}>
