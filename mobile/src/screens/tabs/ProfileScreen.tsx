@@ -140,7 +140,7 @@ export default function ProfileScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Premium Header */}
-                <View style={styles.header}>
+                <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
                     <TouchableOpacity
                         style={styles.editButton}
