@@ -65,7 +65,8 @@ export default function EditProfileScreen() {
 
         try {
             const token = await api.getToken();
-            const response = await fetch(`http://192.168.1.59:3000/api/customers/profile`, {
+            // Use correct endpoint: /api/dashboard/profile
+            const response = await fetch(`http://192.168.1.59:3000/api/dashboard/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -77,15 +78,19 @@ export default function EditProfileScreen() {
                 }),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 Alert.alert('Success', 'Profile updated successfully');
             } else {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to update');
+                throw new Error(data.error || data.message || 'Failed to update profile');
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to update profile');
+            const errorMessage = typeof error === 'string'
+                ? error
+                : error?.message || 'Failed to update profile';
+            Alert.alert('Error', errorMessage);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSaving(false);
