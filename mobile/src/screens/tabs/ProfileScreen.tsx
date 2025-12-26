@@ -110,7 +110,13 @@ export default function ProfileScreen() {
                 {/* Premium Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
-                    <TouchableOpacity style={styles.editButton}>
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.navigate('EditProfile' as never);
+                        }}
+                    >
                         <Text style={styles.editButtonText}>Edit</Text>
                     </TouchableOpacity>
                 </View>
