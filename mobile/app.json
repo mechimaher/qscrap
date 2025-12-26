@@ -1,33 +1,72 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "QScrap",
+    "slug": "qscrap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1a1a2e"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "qa.qscrap.app",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "QScrap needs camera access to take photos of car parts for your spare parts requests",
+        "NSPhotoLibraryUsageDescription": "QScrap needs photo library access to upload images of car parts you're looking for",
+        "NSLocationWhenInUseUsageDescription": "QScrap needs your location to find nearby garages and calculate accurate delivery fees for your area"
+      }
     },
     "android": {
+      "package": "qa.qscrap.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1a1a2e"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "QScrap needs your location to find nearby garages and calculate delivery fees."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "QScrap needs camera access to take photos of car parts."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "QScrap needs photo library access to upload part images."
+        }
+      ]
+    ],
+    "extra": {
+      "privacyPolicyUrl": "https://qscrap.qa/privacy",
+      "termsOfServiceUrl": "https://qscrap.qa/terms",
+      "supportEmail": "support@qscrap.qa"
+    }
   }
 }

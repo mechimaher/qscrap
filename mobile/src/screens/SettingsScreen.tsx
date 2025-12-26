@@ -271,13 +271,13 @@ export default function SettingsScreen() {
                     <ActionRow
                         icon="📄"
                         title="Terms of Service"
-                        onPress={() => Linking.openURL('http://192.168.1.59:3000/terms.html')}
+                        onPress={() => Linking.openURL('https://qscrap.qa/terms')}
                     />
 
                     <ActionRow
                         icon="🔒"
                         title="Privacy Policy"
-                        onPress={() => Linking.openURL('http://192.168.1.59:3000/privacy.html')}
+                        onPress={() => Linking.openURL('https://qscrap.qa/privacy')}
                     />
 
                     <ActionRow
