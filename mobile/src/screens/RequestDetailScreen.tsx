@@ -364,20 +364,22 @@ export default function RequestDetailScreen() {
                             </LinearGradient>
                         </TouchableOpacity>
 
-                        {/* Counter-Offer Button */}
-                        <TouchableOpacity
-                            style={styles.counterButton}
-                            onPress={() => navigation.navigate('CounterOffer', {
-                                bidId: bid.bid_id,
-                                garageName: bid.garage_name,
-                                currentAmount: displayPrice,
-                                partDescription: request.part_description,
-                                // Pass garage counter ID if responding to a pending offer
-                                garageCounterId: (bid as any).garage_counter_id || null,
-                            })}
-                        >
-                            <Text style={styles.counterText}>↩ Counter</Text>
-                        </TouchableOpacity>
+                        {/* Counter-Offer Button - hide when max rounds reached */}
+                        {negotiationRounds < 3 && (
+                            <TouchableOpacity
+                                style={styles.counterButton}
+                                onPress={() => navigation.navigate('CounterOffer', {
+                                    bidId: bid.bid_id,
+                                    garageName: bid.garage_name,
+                                    currentAmount: displayPrice,
+                                    partDescription: request.part_description,
+                                    // Pass garage counter ID if responding to a pending offer
+                                    garageCounterId: (bid as any).garage_counter_id || null,
+                                })}
+                            >
+                                <Text style={styles.counterText}>↩ Counter</Text>
+                            </TouchableOpacity>
+                        )}
 
                         {/* Reject Button */}
                         <TouchableOpacity
