@@ -17,6 +17,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Request, Bid } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { API_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
@@ -29,6 +30,7 @@ export default function RequestDetailScreen() {
     const route = useRoute();
     const { requestId } = route.params as { requestId: string };
     const { socket, newBids } = useSocketContext();
+    const { colors } = useTheme();
 
     const [request, setRequest] = useState<Request | null>(null);
     const [bids, setBids] = useState<Bid[]>([]);
@@ -217,6 +219,7 @@ export default function RequestDetailScreen() {
         return (
             <View key={bid.bid_id} style={[
                 styles.bidCard,
+                { backgroundColor: colors.surface },
                 isAccepted && styles.bidCardAccepted,
                 isNegotiationAgreed && !isAccepted && styles.bidCardAgreed,
                 hasGarageCounterOffer && !isNegotiationAgreed && styles.bidCardCounterOffer
@@ -244,7 +247,7 @@ export default function RequestDetailScreen() {
 
                 <View style={styles.bidHeader}>
                     <View style={styles.garageInfo}>
-                        <Text style={styles.garageName}>{bid.garage_name}</Text>
+                        <Text style={[styles.garageName, { color: colors.text }]}>{bid.garage_name}</Text>
                         {bid.rating_average && (
                             <View style={styles.ratingContainer}>
                                 <Text style={styles.ratingStar}>⭐</Text>
@@ -402,22 +405,22 @@ export default function RequestDetailScreen() {
     const statusInfo = getStatusInfo(request.status);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Request Details</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Request Details</Text>
                 <View style={{ width: 60 }} />
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Request Card */}
-                <View style={styles.requestCard}>
+                <View style={[styles.requestCard, { backgroundColor: colors.surface }]}>
                     <View style={styles.requestHeader}>
                         <View>
-                            <Text style={styles.carName}>{request.car_make} {request.car_model}</Text>
+                            <Text style={[styles.carName, { color: colors.text }]}>{request.car_make} {request.car_model}</Text>
                             <Text style={styles.carYear}>{request.car_year}</Text>
                         </View>
                         <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
@@ -428,10 +431,10 @@ export default function RequestDetailScreen() {
                         </View>
                     </View>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                    <Text style={styles.sectionLabel}>Part Needed</Text>
-                    <Text style={styles.partDescription}>{request.part_description}</Text>
+                    <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Part Needed</Text>
+                    <Text style={[styles.partDescription, { color: colors.text }]}>{request.part_description}</Text>
 
                     {request.part_number && (
                         <>

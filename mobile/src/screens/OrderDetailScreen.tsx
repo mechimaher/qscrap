@@ -19,6 +19,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Order } from '../services/api';
 import { SOCKET_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -27,6 +28,7 @@ export default function OrderDetailScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute();
     const { orderId } = route.params as { orderId: string };
+    const { colors } = useTheme();
 
     const [order, setOrder] = useState<Order | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -220,13 +222,13 @@ export default function OrderDetailScreen() {
     const stepProgress = getStepProgress(order.order_status);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Order #{order.order_number}</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Order #{order.order_number}</Text>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -246,8 +248,8 @@ export default function OrderDetailScreen() {
                 </View>
 
                 {/* Progress Steps */}
-                <View style={styles.progressContainer}>
-                    <Text style={styles.sectionTitle}>Order Progress</Text>
+                <View style={[styles.progressContainer, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Progress</Text>
                     <View style={styles.progressSteps}>
                         {['Confirmed', 'Preparing', 'Ready', 'Picked Up', 'On Way', 'Delivered', 'Complete'].map((step, index) => (
                             <View key={step} style={styles.progressStep}>
@@ -323,12 +325,12 @@ export default function OrderDetailScreen() {
                 )}
 
                 {/* Order Details */}
-                <View style={styles.detailsCard}>
-                    <Text style={styles.sectionTitle}>Order Details</Text>
+                <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Details</Text>
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Garage</Text>
-                        <Text style={styles.detailValue}>{order.garage_name}</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Garage</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>{order.garage_name}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
@@ -338,11 +340,11 @@ export default function OrderDetailScreen() {
                         </Text>
                     </View>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Part Price</Text>
-                        <Text style={styles.detailValue}>{order.part_price} QAR</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Part Price</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>{order.part_price} QAR</Text>
                     </View>
 
                     <View style={styles.detailRow}>
@@ -385,8 +387,8 @@ export default function OrderDetailScreen() {
 
                 {/* Delivery Address */}
                 {order.delivery_address && (
-                    <View style={styles.addressCard}>
-                        <Text style={styles.sectionTitle}>Delivery Address</Text>
+                    <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Address</Text>
                         <View style={styles.addressRow}>
                             <Text style={styles.addressIcon}>📍</Text>
                             <Text style={styles.addressText}>{order.delivery_address}</Text>
