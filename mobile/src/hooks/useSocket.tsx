@@ -114,6 +114,26 @@ export function useSocket() {
                 );
             });
 
+            // === COUNTER-OFFER EVENTS ===
+
+            // Garage sent a counter-offer
+            socket.current.on('garage_counter_offer', (data: any) => {
+                console.log('[Socket] Garage counter-offer:', data);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            });
+
+            // Counter-offer accepted by garage
+            socket.current.on('counter_offer_accepted', (data: any) => {
+                console.log('[Socket] Counter-offer accepted:', data);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            });
+
+            // Counter-offer rejected by garage
+            socket.current.on('counter_offer_rejected', (data: any) => {
+                console.log('[Socket] Counter-offer rejected:', data);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            });
+
             // === ORDER EVENTS ===
 
             // Order status changed
@@ -226,6 +246,7 @@ export function useSocket() {
 import React, { createContext, useContext, ReactNode } from 'react';
 
 interface SocketContextType {
+    socket: Socket | null;
     isConnected: boolean;
     newBids: BidNotification[];
     orderUpdates: OrderStatusUpdate[];

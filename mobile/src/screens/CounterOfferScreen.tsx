@@ -15,9 +15,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { api } from '../services/api';
-import { API_BASE_URL, API_ENDPOINTS, SOCKET_URL } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import { io, Socket } from 'socket.io-client';
+import { useSocketContext } from '../hooks/useSocket';
 
 interface CounterOffer {
     counter_offer_id: string;
@@ -44,6 +44,7 @@ export default function CounterOfferScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const { bidId, garageName, currentAmount, partDescription } = route.params as NegotiationParams;
+    const { socket } = useSocketContext();
 
     const [history, setHistory] = useState<CounterOffer[]>([]);
     const [proposedAmount, setProposedAmount] = useState('');
@@ -57,44 +58,45 @@ export default function CounterOfferScreen() {
         loadNegotiationHistory();
     }, []);
 
-    // Real-time socket listener for counter-offer updates
+    // Listen for counter-offer events on the authenticated socket
     useEffect(() => {
-        const socket = io(SOCKET_URL, {
-            transports: ['websocket', 'polling'],
-        });
+        if (!socket) return;
 
-        // Listen for garage counter-offers (new round from garage)
-        socket.on('garage_counter_offer', (data: any) => {
+        const handleGarageCounterOffer = (data: any) => {
             console.log('[CounterOffer] Garage counter-offer received:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
-        });
+        };
 
-        // Listen for counter-offer accepted by garage
-        socket.on('counter_offer_accepted', (data: any) => {
+        const handleCounterOfferAccepted = (data: any) => {
             console.log('[CounterOffer] Counter-offer accepted:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 Alert.alert('Offer Accepted!', 'The garage has accepted your counter-offer.');
             }
-        });
+        };
 
-        // Listen for counter-offer rejected by garage
-        socket.on('counter_offer_rejected', (data: any) => {
+        const handleCounterOfferRejected = (data: any) => {
             console.log('[CounterOffer] Counter-offer rejected:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             }
-        });
+        };
+
+        socket.on('garage_counter_offer', handleGarageCounterOffer);
+        socket.on('counter_offer_accepted', handleCounterOfferAccepted);
+        socket.on('counter_offer_rejected', handleCounterOfferRejected);
 
         return () => {
-            socket.disconnect();
+            socket.off('garage_counter_offer', handleGarageCounterOffer);
+            socket.off('counter_offer_accepted', handleCounterOfferAccepted);
+            socket.off('counter_offer_rejected', handleCounterOfferRejected);
         };
-    }, [bidId]);
+    }, [socket, bidId]);
 
     const loadNegotiationHistory = async () => {
         setIsLoading(true);

@@ -20,6 +20,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { API_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
+import { useSocketContext } from '../hooks/useSocket';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,6 +28,7 @@ export default function RequestDetailScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute();
     const { requestId } = route.params as { requestId: string };
+    const { socket, newBids } = useSocketContext();
 
     const [request, setRequest] = useState<Request | null>(null);
     const [bids, setBids] = useState<Bid[]>([]);
@@ -46,54 +48,35 @@ export default function RequestDetailScreen() {
         return unsubscribe;
     }, [navigation]);
 
-    // Real-time socket listener for new bids and counter-offers
+    // Reload when new bids arrive for this request (from global socket context)
     useEffect(() => {
-        // Import socket context to listen for new_bid events
-        const { io } = require('socket.io-client');
-        const { SOCKET_URL } = require('../config/api');
-
-        // Create a socket connection for this screen
-        const socket = io(SOCKET_URL, {
-            transports: ['websocket', 'polling'],
-        });
-
-        // Listen for new bids on this request
-        socket.on('new_bid', (data: any) => {
-            console.log('[RequestDetail] New bid received:', data);
-            if (data.request_id === requestId) {
-                // Refresh bids when a new bid arrives for this request
-                loadRequestDetails();
-            }
-        });
-
-        // Listen for bid updates (counter-offers)
-        socket.on('bid_updated', (data: any) => {
-            console.log('[RequestDetail] Bid updated:', data);
+        const hasNewBidForThisRequest = newBids.some(b => b.request_id === requestId);
+        if (hasNewBidForThisRequest) {
             loadRequestDetails();
-        });
+        }
+    }, [newBids, requestId]);
 
-        // Listen for garage counter-offers (new round from garage)
-        socket.on('garage_counter_offer', (data: any) => {
-            console.log('[RequestDetail] Garage counter-offer received:', data);
-            loadRequestDetails();
-        });
+    // Listen for counter-offer events on the authenticated socket
+    useEffect(() => {
+        if (!socket) return;
 
-        // Listen for counter-offer accepted by garage
-        socket.on('counter_offer_accepted', (data: any) => {
-            console.log('[RequestDetail] Counter-offer accepted:', data);
+        const handleCounterOfferEvent = (data: any) => {
+            console.log('[RequestDetail] Counter-offer event received:', data);
             loadRequestDetails();
-        });
+        };
 
-        // Listen for counter-offer rejected by garage
-        socket.on('counter_offer_rejected', (data: any) => {
-            console.log('[RequestDetail] Counter-offer rejected:', data);
-            loadRequestDetails();
-        });
+        socket.on('garage_counter_offer', handleCounterOfferEvent);
+        socket.on('counter_offer_accepted', handleCounterOfferEvent);
+        socket.on('counter_offer_rejected', handleCounterOfferEvent);
+        socket.on('bid_updated', handleCounterOfferEvent);
 
         return () => {
-            socket.disconnect();
+            socket.off('garage_counter_offer', handleCounterOfferEvent);
+            socket.off('counter_offer_accepted', handleCounterOfferEvent);
+            socket.off('counter_offer_rejected', handleCounterOfferEvent);
+            socket.off('bid_updated', handleCounterOfferEvent);
         };
-    }, [requestId]);
+    }, [socket, requestId]);
 
     const loadRequestDetails = async () => {
         try {
