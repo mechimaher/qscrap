@@ -207,24 +207,36 @@ export default function RequestDetailScreen() {
         const customerCounterAmount = (bid as any).customer_counter_amount;
         const customerCounterStatus = (bid as any).customer_counter_status;
 
-        // Display price: counter-offer if pending, otherwise original bid
-        const displayPrice = hasGarageCounterOffer ? garageCounterAmount : bid.bid_amount;
+        // Check if garage accepted the customer's counter-offer (negotiation complete, waiting for customer to finalize)
+        const isNegotiationAgreed = customerCounterStatus === 'accepted';
+        const agreedPrice = isNegotiationAgreed ? customerCounterAmount : null;
+
+        // Display price: agreed price if negotiation complete, counter-offer if pending, otherwise original bid
+        const displayPrice = agreedPrice || (hasGarageCounterOffer ? garageCounterAmount : bid.bid_amount);
 
         return (
             <View key={bid.bid_id} style={[
                 styles.bidCard,
                 isAccepted && styles.bidCardAccepted,
-                hasGarageCounterOffer && styles.bidCardCounterOffer
+                isNegotiationAgreed && !isAccepted && styles.bidCardAgreed,
+                hasGarageCounterOffer && !isNegotiationAgreed && styles.bidCardCounterOffer
             ]}>
-                {/* Accepted Badge */}
+                {/* Accepted Badge (ORDER CREATED) */}
                 {isAccepted && (
                     <View style={styles.acceptedBadge}>
                         <Text style={styles.acceptedBadgeText}>✓ ACCEPTED</Text>
                     </View>
                 )}
 
+                {/* Price Agreed Badge (negotiation complete, waiting for customer to create order) */}
+                {isNegotiationAgreed && !isAccepted && (
+                    <View style={styles.agreedBadge}>
+                        <Text style={styles.agreedBadgeText}>✓ PRICE AGREED - Click Accept!</Text>
+                    </View>
+                )}
+
                 {/* Counter-Offer Badge */}
-                {hasGarageCounterOffer && !isAccepted && (
+                {hasGarageCounterOffer && !isAccepted && !isNegotiationAgreed && (
                     <View style={styles.counterOfferBadge}>
                         <Text style={styles.counterOfferBadgeText}>🔄 NEW COUNTER-OFFER</Text>
                     </View>
@@ -632,6 +644,25 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     counterOfferBadgeText: {
+        color: '#fff',
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+    },
+    // Price agreed styles (garage accepted customer's counter)
+    bidCardAgreed: {
+        borderColor: Colors.success,
+        borderWidth: 2,
+        backgroundColor: '#E8F5E9',
+    },
+    agreedBadge: {
+        backgroundColor: Colors.success,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.full,
+        alignSelf: 'flex-start',
+        marginBottom: Spacing.md,
+    },
+    agreedBadgeText: {
         color: '#fff',
         fontSize: FontSizes.sm,
         fontWeight: '700',
