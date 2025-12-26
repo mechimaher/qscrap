@@ -240,22 +240,29 @@ export default function SupportScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.dark.background },
+    container: { flex: 1, backgroundColor: '#FAFAFA' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
-    backButton: { padding: Spacing.sm },
-    backText: { color: Colors.primary, fontSize: FontSizes.lg, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '700', color: Colors.dark.text },
+    backButton: {
+        padding: Spacing.sm,
+        backgroundColor: '#F5F5F5',
+        borderRadius: BorderRadius.md,
+    },
+    backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
     newTicketButton: {
         marginHorizontal: Spacing.lg,
-        marginBottom: Spacing.lg,
-        borderRadius: BorderRadius.lg,
+        marginVertical: Spacing.md,
+        borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.glow,
+        ...Shadows.md,
     },
     newTicketGradient: {
         flexDirection: 'row',
@@ -267,10 +274,12 @@ const styles = StyleSheet.create({
     newTicketText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
     list: { padding: Spacing.lg, paddingTop: 0 },
     ticketCard: {
-        backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.lg,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         marginBottom: Spacing.md,
+        borderWidth: 1,
+        borderColor: '#E8E8E8',
         ...Shadows.sm,
     },
     ticketHeader: {
@@ -289,7 +298,7 @@ const styles = StyleSheet.create({
     statusBadge: {
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.full,
     },
     statusText: { fontSize: FontSizes.xs, fontWeight: '600' },
     ticketMessage: {
@@ -321,10 +330,10 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#fff',
         borderTopLeftRadius: BorderRadius.xl,
         borderTopRightRadius: BorderRadius.xl,
         padding: Spacing.lg,
@@ -336,25 +345,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.lg,
     },
-    modalTitle: { fontSize: FontSizes.xl, fontWeight: '700', color: Colors.dark.text },
+    modalTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
     closeButton: { fontSize: 24, color: Colors.dark.textMuted },
     input: {
-        backgroundColor: Colors.dark.background,
-        borderRadius: BorderRadius.md,
+        backgroundColor: '#F8F9FA',
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
         color: Colors.dark.text,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderColor: '#E8E8E8',
     },
     textArea: {
         height: 120,
     },
     submitButton: {
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         alignItems: 'center',
+        ...Shadows.sm,
     },
     submitText: { color: '#fff', fontSize: FontSizes.md, fontWeight: '700' },
 });

@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -289,26 +289,36 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.dark.background },
+    container: { flex: 1, backgroundColor: '#FAFAFA' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
-    backButton: { padding: Spacing.sm },
-    backText: { color: Colors.primary, fontSize: FontSizes.lg, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '700', color: Colors.dark.text },
+    backButton: {
+        padding: Spacing.sm,
+        backgroundColor: '#F5F5F5',
+        borderRadius: BorderRadius.md,
+    },
+    backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
     scrollView: { flex: 1, padding: Spacing.lg },
     section: {
-        backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.lg,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
         padding: Spacing.md,
         marginBottom: Spacing.lg,
+        borderWidth: 1,
+        borderColor: '#E8E8E8',
+        ...Shadows.sm,
     },
     sectionTitle: {
         fontSize: FontSizes.sm,
-        fontWeight: '600',
+        fontWeight: '700',
         color: Colors.dark.textSecondary,
         marginBottom: Spacing.md,
         marginLeft: Spacing.sm,
@@ -319,7 +329,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.md,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.lg,
     },
     settingIcon: { fontSize: 22, marginRight: Spacing.md },
     settingInfo: { flex: 1 },
