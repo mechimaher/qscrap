@@ -67,8 +67,30 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
         // Get dynamic commission rate based on garage subscription
         const commissionRate = await getGarageCommissionRate(bid.garage_id);
 
-        // Calculate Fees
-        const part_price = parseFloat(bid.bid_amount);
+        // CRITICAL: Get the final negotiated price, not the original bid amount
+        // Priority: accepted customer counter > pending garage counter > last garage offer > original bid
+        const negotiatedPriceResult = await client.query(
+            `SELECT 
+                COALESCE(
+                    -- First check for accepted customer counter-offer (negotiation complete)
+                    (SELECT customer_amount FROM counter_offers 
+                     WHERE bid_id = $1 AND status = 'accepted' AND customer_amount IS NOT NULL
+                     ORDER BY created_at DESC LIMIT 1),
+                    -- Then check for pending garage counter-offer
+                    (SELECT garage_amount FROM counter_offers 
+                     WHERE bid_id = $1 AND status = 'pending' AND garage_amount IS NOT NULL
+                     ORDER BY created_at DESC LIMIT 1),
+                    -- Then check for last garage offer (from any round)
+                    (SELECT garage_amount FROM counter_offers 
+                     WHERE bid_id = $1 AND garage_amount IS NOT NULL
+                     ORDER BY created_at DESC LIMIT 1),
+                    -- Fall back to original bid amount
+                    $2
+                ) as final_price`,
+            [bid_id, bid.bid_amount]
+        );
+
+        const part_price = parseFloat(negotiatedPriceResult.rows[0].final_price);
         const platform_fee = Math.round(part_price * commissionRate * 100) / 100;
 
         // Get zone-based delivery fee if GPS coordinates available
