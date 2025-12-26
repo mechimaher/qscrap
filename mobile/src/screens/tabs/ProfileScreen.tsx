@@ -126,7 +126,7 @@ export default function ProfileScreen() {
             >
                 <Text style={styles.menuIcon}>{icon}</Text>
             </View>
-            <Text style={[styles.menuLabel, danger && styles.menuLabelDanger, { color: danger ? undefined : colors.text }]}>{label}</Text>
+            <Text style={[styles.menuLabel, { color: danger ? '#EF4444' : colors.text }]}>{label}</Text>
             {badge ? (
                 <View style={styles.menuBadge}>
                     <Text style={styles.menuBadgeText}>{badge}</Text>
