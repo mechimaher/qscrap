@@ -73,16 +73,16 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
             `SELECT 
                 COALESCE(
                     -- First check for accepted customer counter-offer (negotiation complete)
-                    (SELECT customer_amount FROM counter_offers 
-                     WHERE bid_id = $1 AND status = 'accepted' AND customer_amount IS NOT NULL
+                    (SELECT proposed_amount FROM counter_offers 
+                     WHERE bid_id = $1 AND status = 'accepted' AND offered_by_type = 'customer'
                      ORDER BY created_at DESC LIMIT 1),
                     -- Then check for pending garage counter-offer
-                    (SELECT garage_amount FROM counter_offers 
-                     WHERE bid_id = $1 AND status = 'pending' AND garage_amount IS NOT NULL
+                    (SELECT proposed_amount FROM counter_offers 
+                     WHERE bid_id = $1 AND status = 'pending' AND offered_by_type = 'garage'
                      ORDER BY created_at DESC LIMIT 1),
                     -- Then check for last garage offer (from any round)
-                    (SELECT garage_amount FROM counter_offers 
-                     WHERE bid_id = $1 AND garage_amount IS NOT NULL
+                    (SELECT proposed_amount FROM counter_offers 
+                     WHERE bid_id = $1 AND offered_by_type = 'garage'
                      ORDER BY created_at DESC LIMIT 1),
                     -- Fall back to original bid amount
                     $2
