@@ -364,6 +364,13 @@ class ApiService {
             body: JSON.stringify({ rating, review })
         });
     }
+
+    // Account Deletion
+    async deleteAccount(): Promise<any> {
+        return this.request(API_ENDPOINTS.DELETE_ACCOUNT, {
+            method: 'DELETE'
+        });
+    }
 }
 
 export const api = new ApiService();

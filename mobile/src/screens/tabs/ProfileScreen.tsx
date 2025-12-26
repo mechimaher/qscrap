@@ -73,6 +73,30 @@ export default function ProfileScreen() {
         );
     };
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Delete Account',
+            'Are you sure you want to delete your account? This action is permanent and cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await api.deleteAccount();
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            await logout();
+                            Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
+                        } catch (error: any) {
+                            Alert.alert('Error', error.message || 'Failed to delete account');
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     const MenuItem = ({
         icon,
         label,
@@ -219,6 +243,13 @@ export default function ProfileScreen() {
                             icon="🚪"
                             label="Sign Out"
                             onPress={handleLogout}
+                            showArrow={false}
+                        />
+                        <View style={{ height: 1, backgroundColor: '#f0f0f0' }} />
+                        <MenuItem
+                            icon="🗑️"
+                            label="Delete Account"
+                            onPress={handleDeleteAccount}
                             showArrow={false}
                             danger
                         />

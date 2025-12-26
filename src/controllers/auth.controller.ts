@@ -280,3 +280,62 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Login failed. Please try again.' });
     }
 };
+
+export const deleteAccount = async (req: Request, res: Response) => {
+    // @ts-ignore
+    const userId = req.user?.userId;
+
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Check if user exists
+        const userResult = await client.query('SELECT user_type FROM users WHERE user_id = $1', [userId]);
+        if (userResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Log the deletion for audit
+        console.log(`[AUTH] Deleting account for user ${userId}`);
+
+        // anonymize user data (Soft Delete)
+        const anonymizedPhone = `deleted_${userId}_${Date.now()}`;
+        const anonymizedName = 'Deleted User';
+
+        await client.query(
+            `UPDATE users 
+             SET phone_number = $1, 
+                 full_name = $2, 
+                 is_active = false, 
+                 password_hash = 'deleted',
+                 fcm_token = NULL
+             WHERE user_id = $3`,
+            [anonymizedPhone, anonymizedName, userId]
+        );
+
+        if (userResult.rows[0].user_type === 'garage') {
+            await client.query(
+                `UPDATE garages 
+                 SET approval_status = 'rejected', 
+                     garage_name = $1 
+                 WHERE garage_id = $2`,
+                [`Deleted Garage ${userId}`, userId]
+            );
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Account deleted successfully' });
+
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        console.error('[AUTH] Delete account error:', err);
+        res.status(500).json({ error: 'Failed to delete account' });
+    } finally {
+        client.release();
+    }
+};
