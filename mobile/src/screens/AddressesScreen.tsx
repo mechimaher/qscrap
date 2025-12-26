@@ -230,26 +230,26 @@ export default function AddressBookScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.modalOverlay}
                 >
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{editingAddress ? 'Edit Address' : 'New Address'}</Text>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>{editingAddress ? 'Edit Address' : 'New Address'}</Text>
 
-                        <Text style={styles.inputLabel}>Label (e.g. Home, Office)</Text>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Label (e.g. Home, Office)</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                             value={label}
                             onChangeText={setLabel}
                             placeholder="Home"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor={colors.textMuted}
                         />
 
-                        <Text style={styles.inputLabel}>Address</Text>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Address</Text>
                         <View style={styles.addressRow}>
                             <TextInput
-                                style={[styles.input, { flex: 1 }]}
+                                style={[styles.input, { flex: 1, backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                                 value={addressText}
                                 onChangeText={setAddressText}
                                 placeholder="Street, City..."
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor={colors.textMuted}
                             />
                             <TouchableOpacity style={styles.locButton} onPress={handleUseCurrentLocation}>
                                 <Text>📍</Text>
@@ -257,8 +257,8 @@ export default function AddressBookScreen() {
                         </View>
 
                         <View style={styles.modalActions}>
-                            <TouchableOpacity onPress={handleCloseModal} style={styles.cancelButton}>
-                                <Text style={styles.cancelText}>Cancel</Text>
+                            <TouchableOpacity onPress={handleCloseModal} style={[styles.cancelButton, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                                <Text style={[styles.cancelText, { color: colors.text }]}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={editingAddress ? handleUpdateAddress : handleAddAddress}

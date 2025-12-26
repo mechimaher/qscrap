@@ -189,27 +189,27 @@ export default function SupportScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.modalOverlay}
                 >
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>New Support Ticket</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>New Support Ticket</Text>
                             <TouchableOpacity onPress={() => setShowNewTicket(false)}>
-                                <Text style={styles.closeButton}>✕</Text>
+                                <Text style={[styles.closeButton, { color: colors.textMuted }]}>✕</Text>
                             </TouchableOpacity>
                         </View>
 
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                             placeholder="Subject"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor={colors.textMuted}
                             value={subject}
                             onChangeText={setSubject}
                             maxLength={100}
                         />
 
                         <TextInput
-                            style={[styles.input, styles.textArea]}
+                            style={[styles.input, styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                             placeholder="Describe your issue..."
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor={colors.textMuted}
                             value={message}
                             onChangeText={setMessage}
                             multiline
