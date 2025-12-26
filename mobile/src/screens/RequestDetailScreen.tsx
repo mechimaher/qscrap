@@ -95,10 +95,10 @@ export default function RequestDetailScreen() {
         }
     };
 
-    const handleAcceptBid = async (bid: Bid) => {
+    const handleAcceptBid = async (bid: Bid, priceToShow: number) => {
         Alert.alert(
             'Accept Bid',
-            `Accept bid from ${bid.garage_name} for ${bid.bid_amount} QAR?`,
+            `Accept bid from ${bid.garage_name} for ${priceToShow} QAR?`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -351,7 +351,7 @@ export default function RequestDetailScreen() {
                         {/* Accept Button - show counter amount if available */}
                         <TouchableOpacity
                             style={[styles.acceptButton, isAccepting && styles.acceptButtonDisabled]}
-                            onPress={() => handleAcceptBid(bid)}
+                            onPress={() => handleAcceptBid(bid, displayPrice)}
                             disabled={isAccepting}
                         >
                             <LinearGradient
