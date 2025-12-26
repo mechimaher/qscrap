@@ -203,6 +203,10 @@ export default function RequestDetailScreen() {
         const lastGarageOfferAmount = (bid as any).last_garage_offer_amount;
         const negotiationRounds = parseInt((bid as any).negotiation_rounds) || 0;
 
+        // Customer's last counter-offer
+        const customerCounterAmount = (bid as any).customer_counter_amount;
+        const customerCounterStatus = (bid as any).customer_counter_status;
+
         // Display price: counter-offer if pending, otherwise original bid
         const displayPrice = hasGarageCounterOffer ? garageCounterAmount : bid.bid_amount;
 
@@ -247,7 +251,7 @@ export default function RequestDetailScreen() {
                         {hasGarageCounterOffer ? (
                             <>
                                 <Text style={styles.originalPriceStrike}>{bid.bid_amount} QAR</Text>
-                                <Text style={styles.counterPriceLabel}>Counter Offer</Text>
+                                <Text style={styles.counterPriceLabel}>Garage Offers</Text>
                                 <Text style={styles.counterPriceAmount}>{garageCounterAmount} QAR</Text>
                             </>
                         ) : (
@@ -258,6 +262,36 @@ export default function RequestDetailScreen() {
                         )}
                     </View>
                 </View>
+
+                {/* Negotiation Summary - shows customer's offer */}
+                {negotiationRounds > 0 && (
+                    <View style={styles.negotiationSummary}>
+                        {customerCounterAmount && (
+                            <View style={styles.negotiationRow}>
+                                <Text style={styles.negotiationLabel}>👤 You offered:</Text>
+                                <Text style={[
+                                    styles.negotiationValue,
+                                    customerCounterStatus === 'pending' && styles.negotiationPending,
+                                    customerCounterStatus === 'accepted' && styles.negotiationAccepted,
+                                    customerCounterStatus === 'rejected' && styles.negotiationRejected,
+                                    customerCounterStatus === 'countered' && styles.negotiationCountered,
+                                ]}>
+                                    {customerCounterAmount} QAR
+                                    {customerCounterStatus === 'pending' && ' (waiting)'}
+                                    {customerCounterStatus === 'countered' && ' (countered)'}
+                                </Text>
+                            </View>
+                        )}
+                        {hasGarageCounterOffer && (
+                            <View style={styles.negotiationRow}>
+                                <Text style={styles.negotiationLabel}>🏭 Garage countered:</Text>
+                                <Text style={[styles.negotiationValue, styles.negotiationPending]}>
+                                    {garageCounterAmount} QAR (waiting for you)
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 <View style={styles.bidDetails}>
                     <View style={styles.detailRow}>
@@ -630,6 +664,42 @@ const styles = StyleSheet.create({
     priceContainer: { alignItems: 'flex-end' },
     priceLabel: { fontSize: FontSizes.xs, color: Colors.dark.textSecondary },
     priceAmount: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.primary },
+    // Negotiation summary styles
+    negotiationSummary: {
+        backgroundColor: '#F8F9FA',
+        borderRadius: BorderRadius.md,
+        padding: Spacing.sm,
+        marginTop: Spacing.md,
+        borderLeftWidth: 3,
+        borderLeftColor: Colors.primary,
+    },
+    negotiationRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.xs,
+    },
+    negotiationLabel: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textSecondary,
+    },
+    negotiationValue: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        color: Colors.dark.text,
+    },
+    negotiationPending: {
+        color: Colors.warning,
+    },
+    negotiationAccepted: {
+        color: Colors.success,
+    },
+    negotiationRejected: {
+        color: Colors.error,
+    },
+    negotiationCountered: {
+        color: Colors.info,
+    },
     bidDetails: { marginTop: Spacing.md },
     detailRow: {
         flexDirection: 'row',

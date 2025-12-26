@@ -344,6 +344,17 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
                      WHERE co.bid_id = b.bid_id 
                        AND co.offered_by_type = 'garage'
                      ORDER BY co.created_at DESC LIMIT 1) as last_garage_offer_id,
+                    -- LAST customer counter-offer (what customer proposed)
+                    (SELECT co.proposed_amount 
+                     FROM counter_offers co 
+                     WHERE co.bid_id = b.bid_id 
+                       AND co.offered_by_type = 'customer'
+                     ORDER BY co.created_at DESC LIMIT 1) as customer_counter_amount,
+                    (SELECT co.status 
+                     FROM counter_offers co 
+                     WHERE co.bid_id = b.bid_id 
+                       AND co.offered_by_type = 'customer'
+                     ORDER BY co.created_at DESC LIMIT 1) as customer_counter_status,
                     -- Current negotiation round count
                     (SELECT COUNT(*) FROM counter_offers co WHERE co.bid_id = b.bid_id) as negotiation_rounds,
                     -- Is negotiation still active?
