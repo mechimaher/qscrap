@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { api, Order } from '../../services/api';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
@@ -24,6 +25,7 @@ const { width } = Dimensions.get('window');
 
 export default function OrdersScreen() {
     const navigation = useNavigation<OrdersScreenNavigationProp>();
+    const { colors } = useTheme();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,7 +70,7 @@ export default function OrdersScreen() {
 
         return (
             <TouchableOpacity
-                style={styles.orderCard}
+                style={[styles.orderCard, { backgroundColor: colors.surface }]}
                 onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     navigation.navigate('OrderDetail', { orderId: item.order_id });
@@ -82,7 +84,7 @@ export default function OrdersScreen() {
                             <Text style={styles.orderIcon}>📦</Text>
                         </View>
                         <View>
-                            <Text style={styles.orderNumber}>Order #{item.order_number}</Text>
+                            <Text style={[styles.orderNumber, { color: colors.text }]}>Order #{item.order_number}</Text>
                             <Text style={styles.garageName}>{item.garage_name}</Text>
                         </View>
                     </View>
@@ -94,12 +96,12 @@ export default function OrdersScreen() {
                 </View>
 
                 {/* Car Info */}
-                <View style={styles.carInfo}>
+                <View style={[styles.carInfo, { backgroundColor: colors.background }]}>
                     <Text style={styles.carEmoji}>🚗</Text>
-                    <Text style={styles.carText}>{item.car_make} {item.car_model} ({item.car_year})</Text>
+                    <Text style={[styles.carText, { color: colors.textSecondary }]}>{item.car_make} {item.car_model} ({item.car_year})</Text>
                 </View>
 
-                <View style={styles.cardDivider} />
+                <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
 
                 {/* Footer with Price */}
                 <View style={styles.cardFooter}>
@@ -108,8 +110,8 @@ export default function OrdersScreen() {
                         <Text style={styles.totalAmount}>{item.total_amount} QAR</Text>
                     </View>
                     <View style={styles.dateContainer}>
-                        <Text style={styles.dateLabel}>Ordered</Text>
-                        <Text style={styles.dateText}>
+                        <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Ordered</Text>
+                        <Text style={[styles.dateText, { color: colors.text }]}>
                             {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </Text>
                     </View>
@@ -162,12 +164,12 @@ export default function OrdersScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Premium Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <View>
-                    <Text style={styles.headerTitle}>My Orders</Text>
-                    <Text style={styles.headerSubtitle}>{orders.length} total orders</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>My Orders</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{orders.length} total orders</Text>
                 </View>
                 <View style={styles.headerBadge}>
                     <Text style={styles.headerBadgeText}>📦 {orders.filter(o => o.order_status === 'in_transit').length} active</Text>

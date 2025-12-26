@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { api, Request } from '../../services/api';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
@@ -24,6 +25,7 @@ const { width } = Dimensions.get('window');
 
 export default function RequestsScreen() {
     const navigation = useNavigation<RequestsScreenNavigationProp>();
+    const { colors } = useTheme();
     const [requests, setRequests] = useState<Request[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -65,7 +67,7 @@ export default function RequestsScreen() {
 
         return (
             <TouchableOpacity
-                style={styles.requestCard}
+                style={[styles.requestCard, { backgroundColor: colors.surface }]}
                 onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     navigation.navigate('RequestDetail', { requestId: item.request_id });
@@ -76,8 +78,8 @@ export default function RequestsScreen() {
                     <View style={styles.carInfo}>
                         <Text style={styles.carEmoji}>🚗</Text>
                         <View>
-                            <Text style={styles.carName}>{item.car_make} {item.car_model}</Text>
-                            <Text style={styles.carYear}>{item.car_year}</Text>
+                            <Text style={[styles.carName, { color: colors.text }]}>{item.car_make} {item.car_model}</Text>
+                            <Text style={[styles.carYear, { color: colors.textSecondary }]}>{item.car_year}</Text>
                         </View>
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
@@ -87,11 +89,11 @@ export default function RequestsScreen() {
                     </View>
                 </View>
 
-                <Text style={styles.partDescription} numberOfLines={2}>
+                <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
                     {item.part_description}
                 </Text>
 
-                <View style={styles.cardDivider} />
+                <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
 
                 <View style={styles.cardFooter}>
                     <View style={styles.bidCount}>
@@ -132,12 +134,12 @@ export default function RequestsScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Premium Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <View>
-                    <Text style={styles.headerTitle}>My Requests</Text>
-                    <Text style={styles.headerSubtitle}>{requests.length} total requests</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>My Requests</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{requests.length} total requests</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.addButton}

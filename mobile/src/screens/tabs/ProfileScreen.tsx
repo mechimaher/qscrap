@@ -122,10 +122,11 @@ export default function ProfileScreen() {
             }}
             activeOpacity={0.7}
         >
-            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger]}>
+            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger]}
+            >
                 <Text style={styles.menuIcon}>{icon}</Text>
             </View>
-            <Text style={[styles.menuLabel, danger && styles.menuLabelDanger]}>{label}</Text>
+            <Text style={[styles.menuLabel, danger && styles.menuLabelDanger, { color: danger ? undefined : colors.text }]}>{label}</Text>
             {badge ? (
                 <View style={styles.menuBadge}>
                     <Text style={styles.menuBadgeText}>{badge}</Text>
@@ -194,8 +195,8 @@ export default function ProfileScreen() {
 
                 {/* Account Section */}
                 <View style={styles.menuSection}>
-                    <Text style={styles.menuTitle}>Account</Text>
-                    <View style={styles.menuCard}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Account</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses' as never)} />
                         <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
                         <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings' as never)} />
@@ -204,8 +205,8 @@ export default function ProfileScreen() {
 
                 {/* Support Section */}
                 <View style={styles.menuSection}>
-                    <Text style={styles.menuTitle}>Support</Text>
-                    <View style={styles.menuCard}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Support</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem icon="🎫" label="Support Tickets" onPress={() => navigation.navigate('Support' as never)} />
                         <MenuItem icon="💬" label="Help Center" onPress={() => Alert.alert(
                             'Help Center',
@@ -231,8 +232,8 @@ export default function ProfileScreen() {
 
                 {/* Legal Section */}
                 <View style={styles.menuSection}>
-                    <Text style={styles.menuTitle}>Legal</Text>
-                    <View style={styles.menuCard}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Legal</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem icon="🔒" label="Privacy Policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
                         <MenuItem icon="📄" label="Terms of Service" onPress={() => Linking.openURL(TERMS_URL)} />
                     </View>
@@ -240,14 +241,14 @@ export default function ProfileScreen() {
 
                 {/* Sign Out */}
                 <View style={styles.menuSection}>
-                    <View style={styles.menuCard}>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
                             icon="🚪"
                             label="Sign Out"
                             onPress={handleLogout}
                             showArrow={false}
                         />
-                        <View style={{ height: 1, backgroundColor: '#f0f0f0' }} />
+                        <View style={{ height: 1, backgroundColor: colors.border }} />
                         <MenuItem
                             icon="🗑️"
                             label="Delete Account"

@@ -203,8 +203,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Sound & Haptics */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Sound & Haptics</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Sound & Haptics</Text>
 
                     <SettingRow
                         icon="🔊"
@@ -224,8 +224,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Appearance */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Appearance</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Appearance</Text>
 
                     <SettingRow
                         icon="🌙"
@@ -247,8 +247,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Storage */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Storage</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Storage</Text>
 
                     <ActionRow
                         icon="🗑️"
@@ -258,8 +258,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* About */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>About</Text>
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>About</Text>
 
                     <ActionRow
                         icon="ℹ️"
