@@ -24,9 +24,11 @@ export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { user, logout } = useAuth();
     const [profile, setProfile] = useState<any>(null);
+    const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
 
     useEffect(() => {
         loadProfile();
+        loadUnreadCount();
     }, []);
 
     const loadProfile = async () => {
@@ -35,6 +37,16 @@ export default function ProfileScreen() {
             setProfile(data);
         } catch (error) {
             console.log('Failed to load profile:', error);
+        }
+    };
+
+    const loadUnreadCount = async () => {
+        try {
+            const data = await api.getNotifications();
+            const unreadCount = (data.notifications || []).filter((n: any) => !n.is_read).length;
+            setUnreadNotifications(unreadCount);
+        } catch (error) {
+            console.log('Failed to load notifications:', error);
         }
     };
 
@@ -148,7 +160,7 @@ export default function ProfileScreen() {
                     <Text style={styles.menuTitle}>Account</Text>
                     <View style={styles.menuCard}>
                         <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses' as never)} />
-                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} badge="3" />
+                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
                         <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings' as never)} />
                     </View>
                 </View>
