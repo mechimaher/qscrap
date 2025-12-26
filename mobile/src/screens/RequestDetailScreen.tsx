@@ -197,15 +197,32 @@ export default function RequestDetailScreen() {
         const isAccepting = acceptingBid === bid.bid_id;
         const isAccepted = bid.status === 'accepted';
 
+        // Check for garage counter-offer (pending response from customer) or last garage offer
+        const hasGarageCounterOffer = !!(bid as any).garage_counter_amount;
+        const garageCounterAmount = (bid as any).garage_counter_amount;
+        const lastGarageOfferAmount = (bid as any).last_garage_offer_amount;
+        const negotiationRounds = parseInt((bid as any).negotiation_rounds) || 0;
+
+        // Display price: counter-offer if pending, otherwise original bid
+        const displayPrice = hasGarageCounterOffer ? garageCounterAmount : bid.bid_amount;
+
         return (
             <View key={bid.bid_id} style={[
                 styles.bidCard,
-                isAccepted && styles.bidCardAccepted
+                isAccepted && styles.bidCardAccepted,
+                hasGarageCounterOffer && styles.bidCardCounterOffer
             ]}>
                 {/* Accepted Badge */}
                 {isAccepted && (
                     <View style={styles.acceptedBadge}>
                         <Text style={styles.acceptedBadgeText}>✓ ACCEPTED</Text>
+                    </View>
+                )}
+
+                {/* Counter-Offer Badge */}
+                {hasGarageCounterOffer && !isAccepted && (
+                    <View style={styles.counterOfferBadge}>
+                        <Text style={styles.counterOfferBadgeText}>🔄 NEW COUNTER-OFFER</Text>
                     </View>
                 )}
 
@@ -220,10 +237,25 @@ export default function RequestDetailScreen() {
                                 </Text>
                             </View>
                         )}
+                        {negotiationRounds > 0 && (
+                            <Text style={styles.negotiationRounds}>
+                                Round {negotiationRounds}/3
+                            </Text>
+                        )}
                     </View>
                     <View style={styles.priceContainer}>
-                        <Text style={styles.priceLabel}>{isAccepted ? 'Final Price' : 'Price'}</Text>
-                        <Text style={styles.priceAmount}>{bid.bid_amount} QAR</Text>
+                        {hasGarageCounterOffer ? (
+                            <>
+                                <Text style={styles.originalPriceStrike}>{bid.bid_amount} QAR</Text>
+                                <Text style={styles.counterPriceLabel}>Counter Offer</Text>
+                                <Text style={styles.counterPriceAmount}>{garageCounterAmount} QAR</Text>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={styles.priceLabel}>{isAccepted ? 'Final Price' : 'Price'}</Text>
+                                <Text style={styles.priceAmount}>{bid.bid_amount} QAR</Text>
+                            </>
+                        )}
                     </View>
                 </View>
 
@@ -255,7 +287,7 @@ export default function RequestDetailScreen() {
                 {/* Only show actions for active requests with pending bids */}
                 {request?.status === 'active' && !isAccepted && (
                     <View style={styles.bidActions}>
-                        {/* Accept Button */}
+                        {/* Accept Button - show counter amount if available */}
                         <TouchableOpacity
                             style={[styles.acceptButton, isAccepting && styles.acceptButtonDisabled]}
                             onPress={() => handleAcceptBid(bid)}
@@ -270,7 +302,9 @@ export default function RequestDetailScreen() {
                                 {isAccepting ? (
                                     <ActivityIndicator color="#fff" size="small" />
                                 ) : (
-                                    <Text style={styles.acceptText}>✓ Accept</Text>
+                                    <Text style={styles.acceptText}>
+                                        ✓ Accept {hasGarageCounterOffer ? `${garageCounterAmount} QAR` : ''}
+                                    </Text>
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
@@ -281,7 +315,7 @@ export default function RequestDetailScreen() {
                             onPress={() => navigation.navigate('CounterOffer', {
                                 bidId: bid.bid_id,
                                 garageName: bid.garage_name,
-                                currentAmount: bid.bid_amount,
+                                currentAmount: displayPrice,
                                 partDescription: request.part_description,
                             })}
                         >
@@ -546,6 +580,46 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: FontSizes.sm,
         fontWeight: '700',
+    },
+    // Counter-offer styles
+    bidCardCounterOffer: {
+        borderColor: Colors.warning,
+        borderWidth: 2,
+        backgroundColor: '#FFF8E1',
+    },
+    counterOfferBadge: {
+        backgroundColor: Colors.warning,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.full,
+        alignSelf: 'flex-start',
+        marginBottom: Spacing.md,
+    },
+    counterOfferBadgeText: {
+        color: '#fff',
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+    },
+    originalPriceStrike: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textMuted,
+        textDecorationLine: 'line-through',
+    },
+    counterPriceLabel: {
+        fontSize: FontSizes.xs,
+        color: Colors.warning,
+        fontWeight: '600',
+    },
+    counterPriceAmount: {
+        fontSize: FontSizes.xxl,
+        fontWeight: '800',
+        color: Colors.warning,
+    },
+    negotiationRounds: {
+        fontSize: FontSizes.xs,
+        color: Colors.primary,
+        fontWeight: '600',
+        marginTop: Spacing.xs,
     },
     bidHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     garageInfo: { flex: 1 },
