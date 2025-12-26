@@ -35,12 +35,18 @@ export default function RequestDetailScreen() {
     const [isViewerVisible, setIsViewerVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    // Load data on mount
+    // Load data on mount and when screen regains focus (e.g., after CounterOfferScreen)
     useEffect(() => {
         loadRequestDetails();
-    }, []);
 
-    // Real-time socket listener for new bids
+        // Also reload when screen comes back into focus
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadRequestDetails();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
+    // Real-time socket listener for new bids and counter-offers
     useEffect(() => {
         // Import socket context to listen for new_bid events
         const { io } = require('socket.io-client');
@@ -63,6 +69,24 @@ export default function RequestDetailScreen() {
         // Listen for bid updates (counter-offers)
         socket.on('bid_updated', (data: any) => {
             console.log('[RequestDetail] Bid updated:', data);
+            loadRequestDetails();
+        });
+
+        // Listen for garage counter-offers (new round from garage)
+        socket.on('garage_counter_offer', (data: any) => {
+            console.log('[RequestDetail] Garage counter-offer received:', data);
+            loadRequestDetails();
+        });
+
+        // Listen for counter-offer accepted by garage
+        socket.on('counter_offer_accepted', (data: any) => {
+            console.log('[RequestDetail] Counter-offer accepted:', data);
+            loadRequestDetails();
+        });
+
+        // Listen for counter-offer rejected by garage
+        socket.on('counter_offer_rejected', (data: any) => {
+            console.log('[RequestDetail] Counter-offer rejected:', data);
             loadRequestDetails();
         });
 

@@ -15,8 +15,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { api } from '../services/api';
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS, SOCKET_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { io, Socket } from 'socket.io-client';
 
 interface CounterOffer {
     counter_offer_id: string;
@@ -55,6 +56,45 @@ export default function CounterOfferScreen() {
     useEffect(() => {
         loadNegotiationHistory();
     }, []);
+
+    // Real-time socket listener for counter-offer updates
+    useEffect(() => {
+        const socket = io(SOCKET_URL, {
+            transports: ['websocket', 'polling'],
+        });
+
+        // Listen for garage counter-offers (new round from garage)
+        socket.on('garage_counter_offer', (data: any) => {
+            console.log('[CounterOffer] Garage counter-offer received:', data);
+            if (data.bid_id === bidId) {
+                loadNegotiationHistory();
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+        });
+
+        // Listen for counter-offer accepted by garage
+        socket.on('counter_offer_accepted', (data: any) => {
+            console.log('[CounterOffer] Counter-offer accepted:', data);
+            if (data.bid_id === bidId) {
+                loadNegotiationHistory();
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert('Offer Accepted!', 'The garage has accepted your counter-offer.');
+            }
+        });
+
+        // Listen for counter-offer rejected by garage
+        socket.on('counter_offer_rejected', (data: any) => {
+            console.log('[CounterOffer] Counter-offer rejected:', data);
+            if (data.bid_id === bidId) {
+                loadNegotiationHistory();
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            }
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [bidId]);
 
     const loadNegotiationHistory = async () => {
         setIsLoading(true);
