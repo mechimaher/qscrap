@@ -364,7 +364,7 @@ export default function RequestDetailScreen() {
                                     <ActivityIndicator color="#fff" size="small" />
                                 ) : (
                                     <Text style={styles.acceptText}>
-                                        ✓ Accept {hasGarageCounterOffer ? `${garageCounterAmount} QAR` : ''}
+                                        ✓ Accept {hasNegotiatedPrice ? `${displayPrice} QAR` : ''}
                                     </Text>
                                 )}
                             </LinearGradient>
