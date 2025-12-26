@@ -168,6 +168,7 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
 };
 
 // Update order status (admin override)
+// Special handling for 'completed' status: creates payout, frees driver
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const { order_id } = req.params;
     const { new_status, notes } = req.body;
@@ -177,9 +178,11 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     try {
         await client.query('BEGIN');
 
-        // Get current status
+        // Get current status with all needed fields
         const orderResult = await client.query(
-            `SELECT order_status, customer_id, garage_id, order_number FROM orders WHERE order_id = $1`,
+            `SELECT o.order_status, o.customer_id, o.garage_id, o.order_number, 
+                    o.part_price, o.platform_fee, o.garage_payout_amount, o.driver_id
+             FROM orders o WHERE o.order_id = $1`,
             [order_id]
         );
 
@@ -190,39 +193,109 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         const oldStatus = orderResult.rows[0].order_status;
         const order = orderResult.rows[0];
 
-        // Update order status
-        await client.query(
-            `UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2`,
-            [new_status, order_id]
-        );
+        // Build the update query based on new_status
+        let updateQuery = `UPDATE orders SET order_status = $1, updated_at = NOW()`;
+        const updateParams: any[] = [new_status];
+
+        // Special handling for 'completed' status
+        if (new_status === 'completed') {
+            updateQuery += `, completed_at = NOW(), payment_status = 'paid'`;
+        }
+
+        updateQuery += ` WHERE order_id = $${updateParams.length + 1}`;
+        updateParams.push(order_id);
+
+        await client.query(updateQuery, updateParams);
 
         // Record in history
         await client.query(
             `INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, reason, changed_by_type)
-             VALUES ($1, $2, $3, $4, $5, 'admin')`,
-            [order_id, oldStatus, new_status, staffId, notes || 'Updated by operations']
+             VALUES ($1, $2, $3, $4, $5, 'operations')`,
+            [order_id, oldStatus, new_status, staffId, notes || 'Manually updated by Operations']
         );
+
+        // If completing the order, create payout and free driver
+        if (new_status === 'completed') {
+            // Create payout record for garage (skip if already exists)
+            await client.query(
+                `INSERT INTO garage_payouts 
+                 (garage_id, order_id, gross_amount, commission_amount, net_amount, scheduled_for)
+                 SELECT garage_id, order_id, part_price, platform_fee, garage_payout_amount, 
+                        CURRENT_DATE + INTERVAL '7 days'
+                 FROM orders o WHERE o.order_id = $1
+                 AND NOT EXISTS (SELECT 1 FROM garage_payouts gp WHERE gp.order_id = o.order_id)`,
+                [order_id]
+            );
+
+            // Free up the driver - set status back to available if no other active assignments
+            if (order.driver_id) {
+                await client.query(
+                    `UPDATE drivers 
+                     SET status = 'available', updated_at = NOW()
+                     WHERE driver_id = $1
+                     AND NOT EXISTS (
+                         SELECT 1 FROM delivery_assignments 
+                         WHERE driver_id = drivers.driver_id 
+                         AND status IN ('assigned', 'picked_up', 'in_transit')
+                         AND order_id != $2
+                     )`,
+                    [order.driver_id, order_id]
+                );
+            }
+        }
 
         await client.query('COMMIT');
 
         // Notify customer and garage
         const io = (global as any).io;
+
+        const customerNotification = new_status === 'completed'
+            ? `✅ Order #${order.order_number} has been marked as completed by Operations.`
+            : `Order #${order.order_number} status updated to ${new_status}`;
+
+        const garageNotification = new_status === 'completed'
+            ? `✅ Order #${order.order_number} completed. Payment will be processed soon.`
+            : `Order #${order.order_number} status updated to ${new_status}`;
+
         io.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
             old_status: oldStatus,
             new_status,
-            notification: `Order #${order.order_number} status updated to ${new_status}`
+            notification: customerNotification
         });
+
         io.to(`garage_${order.garage_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
             old_status: oldStatus,
             new_status,
-            notification: `Order #${order.order_number} status updated to ${new_status}`
+            notification: garageNotification
         });
 
-        res.json({ message: 'Status updated', old_status: oldStatus, new_status });
+        // Notify Operations about completion and pending payout
+        if (new_status === 'completed') {
+            io.to('operations').emit('order_completed', {
+                order_id,
+                order_number: order.order_number,
+                notification: `Order #${order.order_number} manually completed by Operations`
+            });
+
+            io.to('operations').emit('payout_pending', {
+                order_id,
+                order_number: order.order_number,
+                garage_id: order.garage_id,
+                payout_amount: order.garage_payout_amount,
+                notification: `💰 Order #${order.order_number} complete - payout pending`
+            });
+        }
+
+        res.json({
+            message: 'Status updated',
+            old_status: oldStatus,
+            new_status,
+            payout_created: new_status === 'completed'
+        });
     } catch (err: any) {
         await client.query('ROLLBACK');
         res.status(400).json({ error: err.message });
