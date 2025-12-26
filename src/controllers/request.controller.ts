@@ -312,8 +312,17 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
 
         // Get Bids with latest counter-offer info
         // IMPORTANT: Include last garage offer even if negotiation ended (for customer to accept final price)
+        // Also get the ORIGINAL bid amount (before any negotiation updates)
         const bidsResult = await pool.query(
             `SELECT b.*, g.garage_name, g.rating_average as garage_rating, g.rating_count as garage_review_count, g.total_transactions,
+                    -- ORIGINAL bid amount (from first counter-offer or current if no negotiation)
+                    COALESCE(
+                        (SELECT CAST(REGEXP_REPLACE(co.message, '.*was ([0-9.]+) QAR.*', '\\1') AS NUMERIC)
+                         FROM counter_offers co 
+                         WHERE co.bid_id = b.bid_id AND co.round_number = 1
+                         LIMIT 1),
+                        b.bid_amount
+                    ) as original_bid_amount,
                     -- Pending counter-offers from garage (awaiting customer response)
                     (SELECT co.proposed_amount 
                      FROM counter_offers co 

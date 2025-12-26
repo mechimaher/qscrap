@@ -205,6 +205,9 @@ export default function RequestDetailScreen() {
         const lastGarageOfferAmount = (bid as any).last_garage_offer_amount;
         const negotiationRounds = parseInt((bid as any).negotiation_rounds) || 0;
 
+        // Original bid amount (before any negotiation) - for strikethrough display
+        const originalBidAmount = (bid as any).original_bid_amount || bid.bid_amount;
+
         // Customer's last counter-offer
         const customerCounterAmount = (bid as any).customer_counter_amount;
         const customerCounterStatus = (bid as any).customer_counter_status;
@@ -213,10 +216,9 @@ export default function RequestDetailScreen() {
         const isNegotiationAgreed = customerCounterStatus === 'accepted';
 
         // Determine the CURRENT GARAGE PRICE (what customer will pay if they accept)
-        // Priority: pending garage counter-offer > last garage offer > original bid
-        // NOTE: We show garage's price, not customer's counter (customer's counter is what THEY offered)
+        // Priority: pending garage counter-offer > last garage offer > current bid amount
         const currentGaragePrice = garageCounterAmount || lastGarageOfferAmount || bid.bid_amount;
-        const hasNegotiatedPrice = !!(garageCounterAmount || lastGarageOfferAmount);
+        const hasNegotiatedPrice = !!(garageCounterAmount || lastGarageOfferAmount || negotiationRounds > 0);
 
         // Agreed price is customer's counter if garage accepted it (customer needs to finalize)
         const agreedPrice = isNegotiationAgreed ? customerCounterAmount : null;
@@ -273,7 +275,7 @@ export default function RequestDetailScreen() {
                     <View style={styles.priceContainer}>
                         {hasNegotiatedPrice ? (
                             <>
-                                <Text style={styles.originalPriceStrike}>{bid.bid_amount} QAR</Text>
+                                <Text style={styles.originalPriceStrike}>{originalBidAmount} QAR</Text>
                                 <Text style={styles.counterPriceLabel}>
                                     {isNegotiationAgreed ? 'Agreed Price' : (hasGarageCounterOffer ? 'Garage Offers' : 'Garage Price')}
                                 </Text>
