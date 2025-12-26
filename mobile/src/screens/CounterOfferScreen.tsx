@@ -53,6 +53,8 @@ export default function CounterOfferScreen() {
     const [isSending, setIsSending] = useState(false);
     const [currentRound, setCurrentRound] = useState(0);
     const [pendingOffer, setPendingOffer] = useState<CounterOffer | null>(null);
+    // Track if we're responding to a garage counter-offer (vs creating a new one)
+    const [respondingToOfferId, setRespondingToOfferId] = useState<string | null>(null);
 
     useEffect(() => {
         loadNegotiationHistory();
@@ -116,6 +118,8 @@ export default function CounterOfferScreen() {
                     (h: CounterOffer) => h.status === 'pending' && h.offered_by_type === 'garage'
                 );
                 setPendingOffer(pending || null);
+                // Reset responding state when we reload
+                setRespondingToOfferId(null);
             }
         } catch (error) {
             console.log('Failed to load negotiation history:', error);
@@ -142,17 +146,39 @@ export default function CounterOfferScreen() {
 
         try {
             const token = await api.getToken();
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    proposed_amount: amount,
-                    message: message.trim() || undefined,
-                }),
-            });
+            let response;
+
+            if (respondingToOfferId) {
+                // We're responding to a garage counter-offer
+                response = await fetch(
+                    `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            action: 'counter',
+                            counter_amount: amount,
+                            message: message.trim() || undefined,
+                        }),
+                    }
+                );
+            } else {
+                // Initial counter-offer (no pending garage offer)
+                response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        proposed_amount: amount,
+                        message: message.trim() || undefined,
+                    }),
+                });
+            }
 
             if (response.ok) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -188,7 +214,8 @@ export default function CounterOfferScreen() {
         if (!pendingOffer) return;
 
         if (action === 'counter') {
-            // Clear pending to show counter form
+            // Remember which offer we're responding to, then show counter form
+            setRespondingToOfferId(pendingOffer.counter_offer_id);
             setPendingOffer(null);
             setProposedAmount('');
             setMessage('');
