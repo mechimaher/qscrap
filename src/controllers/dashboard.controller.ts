@@ -149,7 +149,7 @@ export const getCustomerStats = async (req: AuthRequest, res: Response) => {
     const customerId = req.user!.userId;
 
     try {
-        const [activeRequests, totalOrders, pendingDeliveries] = await Promise.all([
+        const [activeRequests, totalOrders, inProgressOrders, awaitingConfirmation] = await Promise.all([
             pool.query(
                 `SELECT COUNT(*) as count FROM part_requests WHERE customer_id = $1 AND status = 'active'`,
                 [customerId]
@@ -158,9 +158,16 @@ export const getCustomerStats = async (req: AuthRequest, res: Response) => {
                 `SELECT COUNT(*) as count FROM orders WHERE customer_id = $1`,
                 [customerId]
             ),
+            // In Progress = orders that are actively being processed (NOT delivered/completed/cancelled)
             pool.query(
                 `SELECT COUNT(*) as count FROM orders 
-                 WHERE customer_id = $1 AND order_status IN ('in_transit', 'delivered')`,
+                 WHERE customer_id = $1 AND order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_in_progress', 'qc_passed', 'in_transit')`,
+                [customerId]
+            ),
+            // Awaiting Confirmation = delivered but not yet confirmed by customer
+            pool.query(
+                `SELECT COUNT(*) as count FROM orders 
+                 WHERE customer_id = $1 AND order_status = 'delivered'`,
                 [customerId]
             )
         ]);
@@ -169,7 +176,8 @@ export const getCustomerStats = async (req: AuthRequest, res: Response) => {
             stats: {
                 active_requests: parseInt(activeRequests.rows[0].count),
                 total_orders: parseInt(totalOrders.rows[0].count),
-                pending_deliveries: parseInt(pendingDeliveries.rows[0].count)
+                pending_deliveries: parseInt(inProgressOrders.rows[0].count), // Renamed: truly in-progress
+                awaiting_confirmation: parseInt(awaitingConfirmation.rows[0].count) // NEW: delivered, needs confirmation
             }
         });
     } catch (err: any) {

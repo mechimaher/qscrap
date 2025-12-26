@@ -82,6 +82,7 @@ export interface Stats {
     total_orders: number;
     pending_deliveries: number;
     completed_orders: number;
+    awaiting_confirmation?: number; // Delivered orders pending customer confirmation
 }
 
 export interface Address {
