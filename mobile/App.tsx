@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
 import { SocketProvider } from './src/hooks/useSocket';
 import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
@@ -73,6 +74,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 // Tab Navigator with premium styling
 function MainTabs() {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -97,6 +99,7 @@ function MainTabs() {
         name="Home"
         component={HomeScreen}
         options={{
+          tabBarLabel: t('nav.home'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
         }}
       />
@@ -104,6 +107,7 @@ function MainTabs() {
         name="Requests"
         component={RequestsScreen}
         options={{
+          tabBarLabel: t('nav.requests'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🔍</Text>,
         }}
       />
@@ -111,6 +115,7 @@ function MainTabs() {
         name="Orders"
         component={OrdersScreen}
         options={{
+          tabBarLabel: t('nav.orders'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>📦</Text>,
         }}
       />
@@ -118,6 +123,7 @@ function MainTabs() {
         name="Profile"
         component={ProfileScreen}
         options={{
+          tabBarLabel: t('nav.profile'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
         }}
       />
@@ -232,15 +238,17 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <NavigationContainer>
-                <ThemedApp />
-              </NavigationContainer>
-            </SocketProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <SocketProvider>
+                <NavigationContainer>
+                  <ThemedApp />
+                </NavigationContainer>
+              </SocketProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </LanguageProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

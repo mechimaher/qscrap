@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -42,6 +43,7 @@ const defaultSettings: SettingsState = {
 export default function SettingsScreen() {
     const navigation = useNavigation();
     const { isDarkMode, toggleTheme, colors } = useTheme();
+    const languageContext = useLanguage();
     const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode });
 
     useEffect(() => {
@@ -73,13 +75,14 @@ export default function SettingsScreen() {
     };
 
     const handleLanguageChange = () => {
+        const { t } = languageContext;
         Alert.alert(
-            'Select Language',
-            'Choose your preferred language',
+            t('alerts.selectLanguage'),
+            t('alerts.chooseLanguage'),
             [
-                { text: 'English', onPress: () => updateSetting('language', 'en') },
-                { text: 'العربية', onPress: () => updateSetting('language', 'ar') },
-                { text: 'Cancel', style: 'cancel' },
+                { text: 'English', onPress: () => languageContext.setLanguage('en') },
+                { text: 'العربية', onPress: () => languageContext.setLanguage('ar') },
+                { text: t('common.cancel'), style: 'cancel' },
             ]
         );
     };
