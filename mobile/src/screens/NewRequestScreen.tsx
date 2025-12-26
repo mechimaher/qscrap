@@ -316,12 +316,13 @@ export default function NewRequestScreen() {
                         />
 
                         {/* VIN */}
-                        <Text style={styles.inputLabel}>VIN (Chassis Number)</Text>
+                        <Text style={styles.inputLabel}>VIN / Chassis Number (Optional)</Text>
+                        <Text style={styles.inputHint}>Example: 1HGCG5655WA042039</Text>
                         <View style={styles.vinContainer}>
                             <TextInput
                                 style={styles.vinInput}
-                                placeholder="17-Digit VIN (Optional)"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholder="Enter 17-character VIN"
+                                placeholderTextColor={Colors.dark.textSecondary}
                                 value={vinNumber}
                                 onChangeText={setVinNumber}
                                 autoCapitalize="characters"
@@ -564,6 +565,12 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: Colors.dark.textSecondary,
         marginBottom: Spacing.xs,
+    },
+    inputHint: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textMuted,
+        marginBottom: Spacing.sm,
+        fontStyle: 'italic',
     },
     input: {
         backgroundColor: '#F8F9FA',
