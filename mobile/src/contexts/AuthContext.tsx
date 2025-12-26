@@ -76,13 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshUser = async () => {
         try {
-            const profile = await api.getProfile();
-            if (profile.user) {
-                setUser({
-                    ...user!,
-                    full_name: profile.user.full_name,
-                    email: profile.user.email,
-                });
+            const response = await api.getProfile();
+            if (response.user) {
+                const updatedUser = {
+                    user_id: response.user.user_id,
+                    full_name: response.user.full_name,
+                    phone_number: response.user.phone_number,
+                    email: response.user.email,
+                    user_type: 'customer' as const,
+                };
+                setUser(updatedUser);
+                // Also persist to storage for next launch
+                await api.saveUser(updatedUser);
             }
         } catch (error) {
             console.log('Failed to refresh user:', error);

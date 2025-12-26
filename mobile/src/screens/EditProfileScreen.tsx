@@ -22,7 +22,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
 
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -81,8 +81,12 @@ export default function EditProfileScreen() {
             const data = await response.json();
 
             if (response.ok) {
+                // Refresh user data in AuthContext so ProfileScreen shows updated name
+                await refreshUser();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert('Success', 'Profile updated successfully');
+                Alert.alert('Success', 'Profile updated successfully', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
             } else {
                 throw new Error(data.error || data.message || 'Failed to update profile');
             }

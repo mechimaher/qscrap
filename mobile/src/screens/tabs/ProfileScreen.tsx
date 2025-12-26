@@ -22,14 +22,19 @@ import { RootStackParamList } from '../../../App';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const { user, logout } = useAuth();
+    const { user, logout, refreshUser } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
 
+    // Reload profile when screen comes into focus (e.g., after editing)
     useEffect(() => {
-        loadProfile();
-        loadUnreadCount();
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadProfile();
+            loadUnreadCount();
+            refreshUser();
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const loadProfile = async () => {
         try {
@@ -131,11 +136,11 @@ export default function ProfileScreen() {
                     >
                         <View style={styles.avatarContainer}>
                             <Text style={styles.avatar}>
-                                {user?.full_name?.charAt(0)?.toUpperCase() || '👤'}
+                                {(profile?.user?.full_name || user?.full_name)?.charAt(0)?.toUpperCase() || '👤'}
                             </Text>
                         </View>
-                        <Text style={styles.userName}>{user?.full_name || 'Customer'}</Text>
-                        <Text style={styles.userPhone}>{user?.phone_number}</Text>
+                        <Text style={styles.userName}>{profile?.user?.full_name || user?.full_name || 'Customer'}</Text>
+                        <Text style={styles.userPhone}>{profile?.user?.phone_number || user?.phone_number}</Text>
 
                         {/* Stats Row */}
                         <View style={styles.profileStats}>
