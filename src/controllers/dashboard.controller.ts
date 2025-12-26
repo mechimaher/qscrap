@@ -24,7 +24,7 @@ export const getGarageStats = async (req: AuthRequest, res: Response) => {
             // Active orders
             pool.query(
                 `SELECT COUNT(*) as count FROM orders 
-                 WHERE garage_id = $1 AND order_status NOT IN ('completed', 'cancelled_by_customer', 'cancelled_by_garage')`,
+                 WHERE garage_id = $1 AND order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')`,
                 [garageId]
             ),
             // Completed orders this month
