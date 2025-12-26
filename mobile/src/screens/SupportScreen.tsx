@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 interface Ticket {
@@ -33,6 +34,7 @@ interface Ticket {
 
 export default function SupportScreen() {
     const navigation = useNavigation();
+    const { colors } = useTheme();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -111,31 +113,31 @@ export default function SupportScreen() {
 
     const renderTicket = ({ item }: { item: Ticket }) => (
         <TouchableOpacity
-            style={styles.ticketCard}
+            style={[styles.ticketCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => Alert.alert(item.subject, item.message)}
             activeOpacity={0.7}
         >
             <View style={styles.ticketHeader}>
-                <Text style={styles.ticketSubject} numberOfLines={1}>{item.subject}</Text>
+                <Text style={[styles.ticketSubject, { color: colors.text }]} numberOfLines={1}>{item.subject}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
                     <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
                         {getStatusLabel(item.status)}
                     </Text>
                 </View>
             </View>
-            <Text style={styles.ticketMessage} numberOfLines={2}>{item.message}</Text>
-            <Text style={styles.ticketDate}>{formatDate(item.created_at)}</Text>
+            <Text style={[styles.ticketMessage, { color: colors.textSecondary }]} numberOfLines={2}>{item.message}</Text>
+            <Text style={[styles.ticketDate, { color: colors.textMuted }]}>{formatDate(item.created_at)}</Text>
         </TouchableOpacity>
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Support</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Support</Text>
                 <View style={{ width: 60 }} />
             </View>
 

@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 interface Notification {
@@ -31,6 +32,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function NotificationsScreen() {
     const navigation = useNavigation<NavigationProp>();
+    const { colors } = useTheme();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -119,7 +121,7 @@ export default function NotificationsScreen() {
 
     const renderNotification = ({ item }: { item: Notification }) => (
         <TouchableOpacity
-            style={[styles.notificationCard, !item.is_read && styles.unreadCard]}
+            style={[styles.notificationCard, { backgroundColor: colors.surface, borderColor: colors.border }, !item.is_read && styles.unreadCard]}
             onPress={() => handleNotificationPress(item)}
             activeOpacity={0.7}
         >
@@ -127,9 +129,9 @@ export default function NotificationsScreen() {
                 <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
             </View>
             <View style={styles.content}>
-                <Text style={[styles.title, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
-                <Text style={styles.message} numberOfLines={2}>{item.message}</Text>
-                <Text style={styles.time}>{formatTime(item.created_at)}</Text>
+                <Text style={[styles.title, { color: colors.text }, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
+                <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={2}>{item.message}</Text>
+                <Text style={[styles.time, { color: colors.textMuted }]}>{formatTime(item.created_at)}</Text>
             </View>
             {!item.is_read && <View style={styles.unreadDot} />}
         </TouchableOpacity>
@@ -138,13 +140,13 @@ export default function NotificationsScreen() {
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Notifications</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
                 {unreadCount > 0 ? (
                     <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
                         <Text style={styles.markAllText}>Read All</Text>

@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { api, Address } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
@@ -29,6 +30,7 @@ export default function AddressBookScreen() {
     const route = useRoute();
     const params = route.params as { onSelect?: (address: Address) => void } | undefined;
     const isSelectionMode = !!params?.onSelect;
+    const { colors } = useTheme();
 
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -171,16 +173,16 @@ export default function AddressBookScreen() {
 
     const renderItem = ({ item }: { item: Address }) => (
         <TouchableOpacity
-            style={[styles.card, item.is_default && styles.defaultCard]}
+            style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, item.is_default && styles.defaultCard]}
             onPress={() => isSelectionMode ? handleSelect(item) : null}
             disabled={!isSelectionMode}
         >
             <View style={{ flex: 1 }}>
                 <View style={styles.cardHeader}>
-                    <Text style={styles.label}>{item.label}</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>{item.label}</Text>
                     {item.is_default && <Text style={styles.defaultBadge}>Default</Text>}
                 </View>
-                <Text style={styles.addressText}>{item.address_text}</Text>
+                <Text style={[styles.addressText, { color: colors.textSecondary }]}>{item.address_text}</Text>
             </View>
 
             {!isSelectionMode && (
@@ -197,12 +199,12 @@ export default function AddressBookScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.title}>{isSelectionMode ? 'Select Address' : 'Address Book'}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>{isSelectionMode ? 'Select Address' : 'Address Book'}</Text>
                 <TouchableOpacity onPress={() => setIsAdding(true)} style={styles.addButton}>
                     <Text style={styles.addText}>+</Text>
                 </TouchableOpacity>
