@@ -1,5 +1,5 @@
 // QScrap Home Screen - Premium VIP Dashboard
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -21,6 +21,7 @@ import { api, Stats } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { LoadingStats } from '../../components/SkeletonLoading';
+import { useSocketContext } from '../../hooks/useSocket';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -30,6 +31,7 @@ export default function HomeScreen() {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const { user } = useAuth();
     const { colors, isDarkMode } = useTheme();
+    const { newBids, orderUpdates } = useSocketContext();
     const [stats, setStats] = useState<Stats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -52,6 +54,14 @@ export default function HomeScreen() {
             loadStats();
         }, [loadStats])
     );
+
+    // Real-time: Reload stats when socket receives new bids or order updates
+    useEffect(() => {
+        if (newBids.length > 0 || orderUpdates.length > 0) {
+            console.log('[HomeScreen] Socket event received, refreshing stats...');
+            loadStats();
+        }
+    }, [newBids, orderUpdates, loadStats]);
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);

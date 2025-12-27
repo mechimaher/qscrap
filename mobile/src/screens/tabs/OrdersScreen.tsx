@@ -1,5 +1,5 @@
 // QScrap Orders Screen - Premium VIP Design
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -19,6 +19,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
+import { useSocketContext } from '../../hooks/useSocket';
 
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -26,6 +27,7 @@ const { width } = Dimensions.get('window');
 export default function OrdersScreen() {
     const navigation = useNavigation<OrdersScreenNavigationProp>();
     const { colors } = useTheme();
+    const { orderUpdates } = useSocketContext();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -48,6 +50,14 @@ export default function OrdersScreen() {
             loadOrders();
         }, [loadOrders])
     );
+
+    // Real-time: Reload when socket receives order status update
+    useEffect(() => {
+        if (orderUpdates.length > 0) {
+            console.log('[OrdersScreen] Socket order update received, refreshing...');
+            loadOrders();
+        }
+    }, [orderUpdates, loadOrders]);
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);
