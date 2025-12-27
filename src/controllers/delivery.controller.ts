@@ -331,6 +331,14 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             notification: `📦 Order #${order.order_number} has been collected for QC inspection`
         });
 
+        // Notify operations dashboard to update Quality badge
+        io.to('operations').emit('order_collected', {
+            order_id,
+            order_number: order.order_number,
+            driver_name: assignedDriver?.full_name,
+            notification: `📦 Order #${order.order_number} collected - ready for QC!`
+        });
+
         io.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
