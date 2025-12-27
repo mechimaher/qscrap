@@ -100,7 +100,7 @@ async function showDashboard() {
     // Load initial data
     await loadStats();
     await loadOrders();
-    loadQualityStats(); // Populate Quality badge
+    await loadQualityStats(); // Populate Quality badge - must await to ensure badge shows
 }
 
 /**
@@ -120,9 +120,11 @@ function setupSocketListeners() {
     socket.off('payout_completed');
     socket.off('payout_pending');
     socket.off('new_review_pending');
+    socket.off('order_collected');
+    socket.off('qc_completed');
 
     // Bind listeners
-    socket.on('order_status_updated', () => { loadStats(); loadOrders(); });
+    socket.on('order_status_updated', () => { loadStats(); loadOrders(); loadQualityStats(); });
     socket.on('delivery_status_updated', (data) => {
         if (data.new_status === 'delivered') {
             showToast(`📦 Order #${data.order_number} delivered by driver!`, 'success');
@@ -132,6 +134,22 @@ function setupSocketListeners() {
     });
     socket.on('dispute_created', () => { loadStats(); loadDisputes(); });
     socket.on('new_order', () => { loadStats(); loadOrders(); });
+
+    // QC Events - update quality badge in real-time
+    socket.on('order_collected', (data) => {
+        showToast(`📦 Order #${data.order_number || ''} collected - ready for QC!`, 'info');
+        loadQualityStats();
+        loadOrders();
+    });
+    socket.on('qc_completed', (data) => {
+        const msg = data.result === 'passed'
+            ? `✅ QC Passed: Order #${data.order_number}`
+            : `❌ QC Failed: Order #${data.order_number}`;
+        showToast(msg, data.result === 'passed' ? 'success' : 'warning');
+        loadQualityStats();
+        loadOrders();
+        loadStats();
+    });
 
     // Order ready for pickup notification (from garage)
     socket.on('order_ready_for_pickup', (data) => {
