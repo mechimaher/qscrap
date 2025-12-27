@@ -43,6 +43,7 @@ export function useSocket() {
     const [orderUpdates, setOrderUpdates] = useState<OrderStatusUpdate[]>([]);
     const reconnectAttempts = useRef(0);
     const maxReconnectAttempts = 5;
+    const hasShownInitialNotification = useRef(false);
 
     // Connect to socket server
     const connect = useCallback(async () => {
@@ -81,6 +82,10 @@ export function useSocket() {
             socket.current.on('disconnect', (reason) => {
                 console.log('[Socket] Disconnected:', reason);
                 setIsConnected(false);
+                // Clear notifications on disconnect to prevent ghost notifications on re-login
+                setNewBids([]);
+                setOrderUpdates([]);
+                hasShownInitialNotification.current = false;
             });
 
             socket.current.on('connect_error', (error) => {
@@ -88,15 +93,24 @@ export function useSocket() {
                 reconnectAttempts.current++;
             });
 
-            // === BID EVENTS ===
-
             // New bid received on your request
             socket.current.on('new_bid', (data: BidNotification) => {
                 console.log('[Socket] New bid received:', data.garage_name, data.bid_amount);
+
+                // Validate the bid has required fields before showing
+                if (!data.bid_id || !data.request_id || !data.garage_name) {
+                    console.log('[Socket] Invalid bid data, skipping notification');
+                    return;
+                }
+
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Add to queue, sorted by amount (lowest first)
                 setNewBids(prev => {
+                    // Prevent duplicate bids
+                    if (prev.some(b => b.bid_id === data.bid_id)) {
+                        return prev;
+                    }
                     const updated = [...prev, data];
                     return updated.sort((a, b) => a.bid_amount - b.bid_amount);
                 });
@@ -205,6 +219,18 @@ export function useSocket() {
         setOrderUpdates(prev => prev.filter(update => update.order_id !== orderId));
     }, []);
 
+    // Dismiss a specific bid notification
+    const dismissBid = useCallback((bidId: string) => {
+        setNewBids(prev => prev.filter(bid => bid.bid_id !== bidId));
+    }, []);
+
+    // Clear all notifications (for logout)
+    const clearAllNotifications = useCallback(() => {
+        setNewBids([]);
+        setOrderUpdates([]);
+        hasShownInitialNotification.current = false;
+    }, []);
+
     // Handle app state changes (reconnect when app becomes active)
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
@@ -239,6 +265,8 @@ export function useSocket() {
         stopTrackingOrder,
         clearBidsForRequest,
         clearOrderUpdate,
+        dismissBid,
+        clearAllNotifications,
     };
 }
 
@@ -254,6 +282,8 @@ interface SocketContextType {
     stopTrackingOrder: (orderId: string) => void;
     clearBidsForRequest: (requestId: string) => void;
     clearOrderUpdate: (orderId: string) => void;
+    dismissBid: (bidId: string) => void;
+    clearAllNotifications: () => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);

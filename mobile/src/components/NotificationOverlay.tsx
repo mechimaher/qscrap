@@ -30,19 +30,32 @@ interface BidNotification {
 
 export default function NotificationOverlay() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const { newBids, clearBidsForRequest } = useSocketContext();
+    const { newBids, dismissBid, clearBidsForRequest } = useSocketContext();
     const [currentBid, setCurrentBid] = useState<BidNotification | null>(null);
+    const [shownBidIds, setShownBidIds] = useState<Set<string>>(new Set());
 
     const slideAnim = useRef(new Animated.Value(-150)).current;
     const shakeAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const glowAnim = useRef(new Animated.Value(0)).current;
 
-    // Watch for new bids
+    // Watch for new bids - only show bids that haven't been shown yet
     useEffect(() => {
         if (newBids.length > 0 && !currentBid) {
-            const latestBid = newBids[newBids.length - 1];
-            showNotification(latestBid);
+            // Find the first bid that hasn't been shown yet
+            const unseenBid = newBids.find(bid => !shownBidIds.has(bid.bid_id));
+            if (unseenBid) {
+                // Mark as shown before displaying
+                setShownBidIds(prev => new Set([...prev, unseenBid.bid_id]));
+                showNotification(unseenBid);
+            }
+        }
+    }, [newBids, currentBid, shownBidIds]);
+
+    // Clear shown bid IDs when newBids is cleared (e.g., on disconnect)
+    useEffect(() => {
+        if (newBids.length === 0) {
+            setShownBidIds(new Set());
         }
     }, [newBids]);
 
@@ -100,11 +113,13 @@ export default function NotificationOverlay() {
 
         // Auto-hide after 10 seconds
         setTimeout(() => {
-            hideNotification();
+            hideNotificationAndDismiss();
         }, 10000);
     };
 
-    const hideNotification = () => {
+    const hideNotificationAndDismiss = () => {
+        const bidToRemove = currentBid;
+
         Animated.timing(slideAnim, {
             toValue: -150,
             duration: 300,
@@ -114,20 +129,26 @@ export default function NotificationOverlay() {
             shakeAnim.setValue(0);
             pulseAnim.setValue(1);
             glowAnim.setValue(0);
+
+            // Remove from queue after animation completes
+            if (bidToRemove) {
+                dismissBid(bidToRemove.bid_id);
+            }
         });
     };
 
     const handlePress = () => {
         if (currentBid) {
+            const requestId = currentBid.request_id;
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            hideNotification();
-            navigation.navigate('RequestDetail', { requestId: currentBid.request_id });
+            hideNotificationAndDismiss();
+            navigation.navigate('RequestDetail', { requestId });
         }
     };
 
     const handleDismiss = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        hideNotification();
+        hideNotificationAndDismiss();
     };
 
     if (!currentBid) return null;
