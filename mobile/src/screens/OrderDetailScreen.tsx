@@ -1,5 +1,5 @@
 // QScrap Order Detail Screen - Full Featured with Tracking
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,13 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Order } from '../services/api';
 import { SOCKET_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { RootStackParamList } from '../../App';
+import { useSocketContext } from '../hooks/useSocket';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -29,17 +30,14 @@ export default function OrderDetailScreen() {
     const route = useRoute();
     const { orderId } = route.params as { orderId: string };
     const { colors } = useTheme();
+    const { orderUpdates } = useSocketContext();
 
     const [order, setOrder] = useState<Order | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
     const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
-    useEffect(() => {
-        loadOrderDetails();
-    }, []);
-
-    const loadOrderDetails = async () => {
+    const loadOrderDetails = useCallback(async () => {
         try {
             const data = await api.getMyOrders();
             const foundOrder = data.orders?.find((o: Order) => o.order_id === orderId);
@@ -50,7 +48,26 @@ export default function OrderDetailScreen() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [orderId]);
+
+    // Auto-refresh when screen gains focus
+    useFocusEffect(
+        useCallback(() => {
+            loadOrderDetails();
+        }, [loadOrderDetails])
+    );
+
+    // Real-time: Reload when socket receives order status update
+    useEffect(() => {
+        if (orderUpdates.length > 0) {
+            // Check if any update is for this order
+            const relevantUpdate = orderUpdates.find((u: any) => u.order_id === orderId);
+            if (relevantUpdate) {
+                console.log('[OrderDetail] Socket order update received for this order, refreshing...');
+                loadOrderDetails();
+            }
+        }
+    }, [orderUpdates, orderId, loadOrderDetails]);
 
     const handleConfirmDelivery = async () => {
         Alert.alert(
