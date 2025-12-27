@@ -245,11 +245,29 @@ export default function OrderDetailScreen() {
                 label: 'Ready for Pickup',
                 description: 'Driver will pick up soon'
             };
-            case 'picked_up': return {
+            case 'collected': return {
                 color: Colors.info,
                 icon: '🚚',
-                label: 'Picked Up',
-                description: 'Driver has picked up your part'
+                label: 'Collected',
+                description: 'Part collected, heading to quality check'
+            };
+            case 'qc_in_progress': return {
+                color: Colors.warning,
+                icon: '🔍',
+                label: 'Quality Check',
+                description: 'Part is being inspected'
+            };
+            case 'qc_passed': return {
+                color: Colors.success,
+                icon: '✅',
+                label: 'QC Passed',
+                description: 'Quality verified! Ready for delivery'
+            };
+            case 'qc_failed': return {
+                color: Colors.error,
+                icon: '❌',
+                label: 'QC Failed',
+                description: 'Quality issue - being resolved'
             };
             case 'in_transit': return {
                 color: Colors.primary,
@@ -265,7 +283,7 @@ export default function OrderDetailScreen() {
             };
             case 'completed': return {
                 color: Colors.success,
-                icon: '✅',
+                icon: '🎉',
                 label: 'Completed',
                 description: 'Order completed successfully'
             };
@@ -279,9 +297,26 @@ export default function OrderDetailScreen() {
     };
 
     const getStepProgress = (status: string) => {
-        const steps = ['confirmed', 'preparing', 'ready_for_pickup', 'picked_up', 'in_transit', 'delivered', 'completed'];
+        // Complete order lifecycle in correct sequence
+        const steps = [
+            'confirmed',        // 0 - Order created
+            'preparing',        // 1 - Garage working
+            'ready_for_pickup', // 2 - Ready for collection
+            'collected',        // 3 - Collected by QScrap
+            'qc_in_progress',   // 4 - Quality check
+            'qc_passed',        // 5 - QC passed
+            'in_transit',       // 6 - Driver delivering
+            'delivered',        // 7 - Arrived
+            'completed'         // 8 - Confirmed by customer
+        ];
         const currentIndex = steps.indexOf(status);
-        return currentIndex >= 0 ? currentIndex : 0;
+        // If status not found (like qc_failed), return last known step or keep at collected
+        if (currentIndex < 0) {
+            // Handle edge cases
+            if (status === 'qc_failed') return 4; // Stay at QC step
+            return 0;
+        }
+        return currentIndex;
     };
 
     if (isLoading) {
@@ -333,7 +368,7 @@ export default function OrderDetailScreen() {
                 <View style={[styles.progressContainer, { backgroundColor: colors.surface }]}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Progress</Text>
                     <View style={styles.progressSteps}>
-                        {['Confirmed', 'Preparing', 'Ready', 'Picked Up', 'On Way', 'Delivered', 'Complete'].map((step, index) => (
+                        {['Confirmed', 'Preparing', 'Ready', 'Collected', 'QC', 'Verified', 'Transit', 'Delivered', 'Done'].map((step, index) => (
                             <View key={step} style={styles.progressStep}>
                                 <View style={[
                                     styles.progressDot,
@@ -341,7 +376,7 @@ export default function OrderDetailScreen() {
                                 ]}>
                                     {index <= stepProgress && <Text style={styles.progressCheck}>✓</Text>}
                                 </View>
-                                {index < 6 && (
+                                {index < 8 && (
                                     <View style={[
                                         styles.progressLine,
                                         index < stepProgress && styles.progressLineActive
@@ -351,11 +386,11 @@ export default function OrderDetailScreen() {
                         ))}
                     </View>
                     <View style={styles.progressLabels}>
-                        {['Confirmed', 'Preparing', 'Ready', 'Picked', 'Transit', 'Delivered', 'Done'].map((step, index) => (
-                            <Text key={step} style={[
+                        {['✓', '🔧', '📦', '🚚', '🔍', '✅', '🚗', '📍', '🎉'].map((icon, index) => (
+                            <Text key={index} style={[
                                 styles.progressLabel,
                                 index <= stepProgress && styles.progressLabelActive
-                            ]}>{step}</Text>
+                            ]}>{icon}</Text>
                         ))}
                     </View>
                 </View>
