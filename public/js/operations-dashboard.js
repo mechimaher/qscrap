@@ -318,8 +318,25 @@ async function loadStats() {
             updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
             updateBadge('ordersBadge', s.active_orders);
         }
+
+        // Also load review badge
+        loadReviewBadge();
     } catch (err) {
         console.error('Failed to load stats:', err);
+    }
+}
+
+async function loadReviewBadge() {
+    try {
+        const res = await fetch(`${API_URL}/reviews/pending?limit=1`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.pagination) {
+            updateBadge('reviewModerationBadge', data.pagination.total);
+        }
+    } catch (err) {
+        console.error('Failed to load review badge:', err);
     }
 }
 
