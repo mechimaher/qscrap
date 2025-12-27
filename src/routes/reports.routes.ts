@@ -1,5 +1,6 @@
 import express from 'express';
-import { authenticate, requireRole } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
+import { authorizeOperations } from '../middleware/authorize.middleware';
 import {
     getOrdersReport,
     getRevenueReport,
@@ -10,8 +11,9 @@ import {
 
 const router = express.Router();
 
-// All reports require authentication and operations role
-router.use(authenticate, requireRole('operations'));
+// All reports require authentication and operations/admin role
+router.use(authenticate);
+router.use(authorizeOperations);
 
 // Report endpoints
 router.get('/orders', getOrdersReport);

@@ -6,7 +6,8 @@ import {
     sendMessage,
     updateTicketStatus
 } from '../controllers/support.controller';
-import { authenticate, authorizeOperations } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
+import { authorizeOperations } from '../middleware/authorize.middleware';
 
 const router = Router();
 
