@@ -1,5 +1,5 @@
 // QScrap Requests Screen - Premium VIP Design with Swipe-to-Delete
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -11,7 +11,7 @@ import {
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -32,7 +32,7 @@ export default function RequestsScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const loadRequests = async () => {
+    const loadRequests = useCallback(async () => {
         try {
             const data = await api.getMyRequests();
             setRequests(data.requests || []);
@@ -42,11 +42,14 @@ export default function RequestsScreen() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
-
-    useEffect(() => {
-        loadRequests();
     }, []);
+
+    // Auto-refresh when screen gains focus (e.g., after creating/viewing request)
+    useFocusEffect(
+        useCallback(() => {
+            loadRequests();
+        }, [loadRequests])
+    );
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);

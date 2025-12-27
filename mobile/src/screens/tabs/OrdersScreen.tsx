@@ -1,5 +1,5 @@
 // QScrap Orders Screen - Premium VIP Design
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,7 +10,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -30,7 +30,7 @@ export default function OrdersScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         try {
             const data = await api.getMyOrders();
             setOrders(data.orders || []);
@@ -40,11 +40,14 @@ export default function OrdersScreen() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
-
-    useEffect(() => {
-        loadOrders();
     }, []);
+
+    // Auto-refresh when screen gains focus (e.g., after order status changes)
+    useFocusEffect(
+        useCallback(() => {
+            loadOrders();
+        }, [loadOrders])
+    );
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);

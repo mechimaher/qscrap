@@ -1,5 +1,5 @@
 // QScrap Home Screen - Premium VIP Dashboard
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
@@ -34,7 +34,7 @@ export default function HomeScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
             const data = await api.getStats();
             setStats(data.stats);
@@ -44,11 +44,14 @@ export default function HomeScreen() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
-
-    useEffect(() => {
-        loadStats();
     }, []);
+
+    // Auto-refresh stats when screen gains focus (e.g., after creating request)
+    useFocusEffect(
+        useCallback(() => {
+            loadStats();
+        }, [loadStats])
+    );
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);
