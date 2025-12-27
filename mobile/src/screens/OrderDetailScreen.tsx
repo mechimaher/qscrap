@@ -246,28 +246,28 @@ export default function OrderDetailScreen() {
                 description: 'Driver will pick up soon'
             };
             case 'collected': return {
-                color: Colors.info,
+                color: Colors.primary,
                 icon: '🚚',
-                label: 'Collected',
-                description: 'Part collected, heading to quality check'
+                label: 'In Transit',
+                description: 'Your part is being processed'
             };
             case 'qc_in_progress': return {
-                color: Colors.warning,
-                icon: '🔍',
-                label: 'Quality Check',
-                description: 'Part is being inspected'
+                color: Colors.primary,
+                icon: '🚚',
+                label: 'In Transit',
+                description: 'Your part is being verified'
             };
             case 'qc_passed': return {
-                color: Colors.success,
-                icon: '✅',
-                label: 'QC Passed',
-                description: 'Quality verified! Ready for delivery'
+                color: Colors.primary,
+                icon: '🚚',
+                label: 'In Transit',
+                description: 'Quality verified - on the way soon!'
             };
             case 'qc_failed': return {
-                color: Colors.error,
-                icon: '❌',
-                label: 'QC Failed',
-                description: 'Quality issue - being resolved'
+                color: Colors.warning,
+                icon: '⏳',
+                label: 'Processing',
+                description: 'We\'re resolving an issue with your order'
             };
             case 'in_transit': return {
                 color: Colors.primary,
@@ -297,26 +297,21 @@ export default function OrderDetailScreen() {
     };
 
     const getStepProgress = (status: string) => {
-        // Complete order lifecycle in correct sequence
-        const steps = [
-            'confirmed',        // 0 - Order created
-            'preparing',        // 1 - Garage working
-            'ready_for_pickup', // 2 - Ready for collection
-            'collected',        // 3 - Collected by QScrap
-            'qc_in_progress',   // 4 - Quality check
-            'qc_passed',        // 5 - QC passed
-            'in_transit',       // 6 - Driver delivering
-            'delivered',        // 7 - Arrived
-            'completed'         // 8 - Confirmed by customer
-        ];
-        const currentIndex = steps.indexOf(status);
-        // If status not found (like qc_failed), return last known step or keep at collected
-        if (currentIndex < 0) {
-            // Handle edge cases
-            if (status === 'qc_failed') return 4; // Stay at QC step
-            return 0;
-        }
-        return currentIndex;
+        // Simplified 5-step customer view:
+        // 0: Confirmed, 1: Preparing, 2: Ready, 3: In Transit (includes QC), 4: Delivered/Complete
+        const statusToStep: Record<string, number> = {
+            'confirmed': 0,
+            'preparing': 1,
+            'ready_for_pickup': 2,
+            'collected': 3,        // Internal: maps to "In Transit"
+            'qc_in_progress': 3,   // Internal: maps to "In Transit"
+            'qc_passed': 3,        // Internal: maps to "In Transit"
+            'qc_failed': 3,        // Internal: maps to "In Transit"
+            'in_transit': 3,
+            'delivered': 4,
+            'completed': 4,
+        };
+        return statusToStep[status] ?? 0;
     };
 
     if (isLoading) {
@@ -364,11 +359,11 @@ export default function OrderDetailScreen() {
                     </LinearGradient>
                 </View>
 
-                {/* Progress Steps */}
+                {/* Progress Steps - Simplified 5-step customer view */}
                 <View style={[styles.progressContainer, { backgroundColor: colors.surface }]}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Progress</Text>
                     <View style={styles.progressSteps}>
-                        {['Confirmed', 'Preparing', 'Ready', 'Collected', 'QC', 'Verified', 'Transit', 'Delivered', 'Done'].map((step, index) => (
+                        {['Confirmed', 'Preparing', 'Ready', 'In Transit', 'Delivered'].map((step, index) => (
                             <View key={step} style={styles.progressStep}>
                                 <View style={[
                                     styles.progressDot,
@@ -376,7 +371,7 @@ export default function OrderDetailScreen() {
                                 ]}>
                                     {index <= stepProgress && <Text style={styles.progressCheck}>✓</Text>}
                                 </View>
-                                {index < 8 && (
+                                {index < 4 && (
                                     <View style={[
                                         styles.progressLine,
                                         index < stepProgress && styles.progressLineActive
@@ -386,7 +381,7 @@ export default function OrderDetailScreen() {
                         ))}
                     </View>
                     <View style={styles.progressLabels}>
-                        {['✓', '🔧', '📦', '🚚', '🔍', '✅', '🚗', '📍', '🎉'].map((icon, index) => (
+                        {['✓', '🔧', '📦', '🚚', '✅'].map((icon, index) => (
                             <Text key={index} style={[
                                 styles.progressLabel,
                                 index <= stepProgress && styles.progressLabelActive
