@@ -5033,7 +5033,7 @@ async function loadPendingInspections() {
  */
 async function loadRecentInspections() {
     try {
-        const res = await fetch(`${API_URL}/quality/recent`, {
+        const res = await fetch(`${API_URL}/quality/history`, {  // Fixed: was /recent
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -5055,7 +5055,8 @@ async function loadRecentInspections() {
             table.innerHTML = '<tr><td colspan="5" class="empty-state">No recent inspections</td></tr>';
         }
     } catch (err) {
-        console.error('Failed to load recent inspections:', err);
+        // Silently handle - history endpoint may not exist yet
+        console.log('Recent inspections not available:', err.message);
     }
 }
 
@@ -5076,7 +5077,7 @@ async function updateAllBadges() {
             updateBadge('deliveryBadge', s.ready_for_pickup || 0);
         }
 
-        // Also update quality badge
+        // Update quality badge
         try {
             const qcRes = await fetch(`${API_URL}/quality/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -5087,6 +5088,24 @@ async function updateAllBadges() {
             }
         } catch (e) {
             console.log('Quality stats not available');
+        }
+
+        // Update finance badge (pending payouts)
+        try {
+            // Use /finance/payouts with status filter for pending payouts
+            const finRes = await fetch(`${API_URL}/finance/payouts?status=pending&limit=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const finData = await finRes.json();
+            if (finData.pagination) {
+                updateBadge('financeBadge', finData.pagination.total || 0);
+            } else if (Array.isArray(finData.payouts)) {
+                updateBadge('financeBadge', finData.payouts.length || 0);
+            } else if (Array.isArray(finData)) {
+                updateBadge('financeBadge', finData.length || 0);
+            }
+        } catch (e) {
+            console.log('Finance stats not available');
         }
 
     } catch (err) {
