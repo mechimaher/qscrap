@@ -10,6 +10,8 @@ import {
     Alert,
     Linking,
     Platform,
+    Modal,
+    TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,6 +38,15 @@ export default function OrderDetailScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
     const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+
+    // Review modal state
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [overallRating, setOverallRating] = useState(5);
+    const [partQualityRating, setPartQualityRating] = useState(5);
+    const [communicationRating, setCommunicationRating] = useState(5);
+    const [deliveryRating, setDeliveryRating] = useState(5);
+    const [reviewText, setReviewText] = useState('');
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     const loadOrderDetails = useCallback(async () => {
         try {
@@ -82,11 +93,9 @@ export default function OrderDetailScreen() {
                         try {
                             await api.confirmDelivery(orderId);
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert(
-                                'Order Completed!',
-                                'Thank you for using QScrap. Your order is now complete.',
-                                [{ text: 'OK', onPress: () => navigation.goBack() }]
-                            );
+                            loadOrderDetails(); // Reload to get completed status
+                            // Show review modal after successful confirmation
+                            setShowReviewModal(true);
                         } catch (error: any) {
                             Alert.alert('Error', error.message || 'Failed to confirm delivery');
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -98,6 +107,62 @@ export default function OrderDetailScreen() {
             ]
         );
     };
+
+    const handleSubmitReview = async () => {
+        setIsSubmittingReview(true);
+        try {
+            await api.submitReview(orderId, {
+                overall_rating: overallRating,
+                part_quality_rating: partQualityRating,
+                communication_rating: communicationRating,
+                delivery_rating: deliveryRating,
+                review_text: reviewText.trim() || undefined,
+            });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setShowReviewModal(false);
+            Alert.alert(
+                'Thank You! 🌟',
+                'Your review has been submitted and will be visible after moderation.',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to submit review');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
+
+    const handleSkipReview = () => {
+        setShowReviewModal(false);
+        Alert.alert(
+            'Order Completed!',
+            'Thank you for using QScrap. You can leave a review later.',
+            [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+    };
+
+    // Star rating component
+    const StarRating = ({ rating, onRatingChange, label }: { rating: number; onRatingChange: (r: number) => void; label: string }) => (
+        <View style={styles.ratingRow}>
+            <Text style={[styles.ratingLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                        key={star}
+                        onPress={() => {
+                            onRatingChange(star);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }}
+                    >
+                        <Text style={[styles.star, { color: star <= rating ? '#FFD700' : colors.border }]}>
+                            ★
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
 
     const handleCallDriver = () => {
         if (order?.driver_phone) {
@@ -448,6 +513,95 @@ export default function OrderDetailScreen() {
 
                 <View style={{ height: 100 }} />
             </ScrollView>
+
+            {/* Review Modal */}
+            <Modal
+                visible={showReviewModal}
+                transparent
+                animationType="slide"
+                onRequestClose={handleSkipReview}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>
+                            ⭐ Rate Your Experience
+                        </Text>
+                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                            How was your experience with {order?.garage_name}?
+                        </Text>
+
+                        <ScrollView style={styles.ratingsScroll} showsVerticalScrollIndicator={false}>
+                            <StarRating
+                                rating={overallRating}
+                                onRatingChange={setOverallRating}
+                                label="Overall Experience"
+                            />
+                            <StarRating
+                                rating={partQualityRating}
+                                onRatingChange={setPartQualityRating}
+                                label="Part Quality"
+                            />
+                            <StarRating
+                                rating={communicationRating}
+                                onRatingChange={setCommunicationRating}
+                                label="Communication"
+                            />
+                            <StarRating
+                                rating={deliveryRating}
+                                onRatingChange={setDeliveryRating}
+                                label="Delivery Speed"
+                            />
+
+                            <Text style={[styles.reviewInputLabel, { color: colors.textSecondary }]}>
+                                Write a review (optional)
+                            </Text>
+                            <TextInput
+                                style={[styles.reviewInput, {
+                                    backgroundColor: colors.background,
+                                    color: colors.text,
+                                    borderColor: colors.border
+                                }]}
+                                placeholder="Share your experience..."
+                                placeholderTextColor={colors.textMuted}
+                                value={reviewText}
+                                onChangeText={setReviewText}
+                                multiline
+                                numberOfLines={4}
+                                textAlignVertical="top"
+                            />
+                        </ScrollView>
+
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.skipButton, { borderColor: colors.border }]}
+                                onPress={handleSkipReview}
+                            >
+                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>
+                                    Skip
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.submitButton, isSubmittingReview && styles.submitButtonDisabled]}
+                                onPress={handleSubmitReview}
+                                disabled={isSubmittingReview}
+                            >
+                                <LinearGradient
+                                    colors={[Colors.primary, Colors.primaryDark || '#6366F1']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.submitGradient}
+                                >
+                                    {isSubmittingReview ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <Text style={styles.submitButtonText}>Submit Review</Text>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -636,6 +790,100 @@ const styles = StyleSheet.create({
         marginRight: Spacing.sm,
     },
     invoiceText: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    // Review Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: BorderRadius.xl * 1.5,
+        borderTopRightRadius: BorderRadius.xl * 1.5,
+        padding: Spacing.xl,
+        maxHeight: '85%',
+    },
+    modalTitle: {
+        fontSize: FontSizes.xxl,
+        fontWeight: '800',
+        textAlign: 'center',
+        marginBottom: Spacing.xs,
+    },
+    modalSubtitle: {
+        fontSize: FontSizes.md,
+        textAlign: 'center',
+        marginBottom: Spacing.lg,
+    },
+    ratingsScroll: {
+        maxHeight: 350,
+    },
+    ratingRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    ratingLabel: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+    },
+    starsContainer: {
+        flexDirection: 'row',
+        gap: Spacing.xs,
+    },
+    star: {
+        fontSize: 28,
+        marginHorizontal: 2,
+    },
+    reviewInputLabel: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        marginTop: Spacing.lg,
+        marginBottom: Spacing.sm,
+    },
+    reviewInput: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        fontSize: FontSizes.md,
+        minHeight: 100,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        marginTop: Spacing.lg,
+    },
+    skipButton: {
+        flex: 1,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        alignItems: 'center',
+    },
+    skipButtonText: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+    },
+    submitButton: {
+        flex: 2,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+    },
+    submitButtonDisabled: {
+        opacity: 0.7,
+    },
+    submitGradient: {
+        paddingVertical: Spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    submitButtonText: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#fff',

@@ -364,10 +364,16 @@ class ApiService {
     }
 
     // Reviews
-    async submitReview(orderId: string, rating: number, review: string): Promise<any> {
+    async submitReview(orderId: string, reviewData: {
+        overall_rating: number;
+        part_quality_rating?: number;
+        communication_rating?: number;
+        delivery_rating?: number;
+        review_text?: string;
+    }): Promise<any> {
         return this.request(API_ENDPOINTS.SUBMIT_REVIEW(orderId), {
             method: 'POST',
-            body: JSON.stringify({ rating, review })
+            body: JSON.stringify(reviewData)
         });
     }
 
