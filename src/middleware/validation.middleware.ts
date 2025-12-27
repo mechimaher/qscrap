@@ -192,8 +192,45 @@ export const createRequestSchema = z.object({
     photo_urls: z.array(z.string()).max(5).optional()
 });
 
-// --- UUID PARAM SCHEMA ---
+// --- UUID PARAM SCHEMAS ---
 
 export const uuidParamSchema = z.object({
     id: z.string().uuid('Invalid ID format')
+});
+
+// Specific param schemas for common routes
+export const orderIdParamSchema = z.object({
+    order_id: z.string().uuid('Invalid order ID format')
+});
+
+export const bidIdParamSchema = z.object({
+    bid_id: z.string().uuid('Invalid bid ID format')
+});
+
+export const requestIdParamSchema = z.object({
+    request_id: z.string().uuid('Invalid request ID format')
+});
+
+export const userIdParamSchema = z.object({
+    user_id: z.string().uuid('Invalid user ID format')
+});
+
+export const disputeIdParamSchema = z.object({
+    dispute_id: z.string().uuid('Invalid dispute ID format')
+});
+
+export const payoutIdParamSchema = z.object({
+    payout_id: z.string().uuid('Invalid payout ID format')
+});
+
+export const assignmentIdParamSchema = z.object({
+    assignment_id: z.string().uuid('Invalid assignment ID format')
+});
+
+export const ticketIdParamSchema = z.object({
+    ticket_id: z.string().uuid('Invalid ticket ID format')
+});
+
+export const counterOfferIdParamSchema = z.object({
+    counter_offer_id: z.string().uuid('Invalid counter offer ID format')
 });

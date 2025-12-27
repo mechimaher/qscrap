@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { authenticate } from '../middleware/auth.middleware';
+import { validateParams, disputeIdParamSchema } from '../middleware/validation.middleware';
 import {
     createDispute,
     getMyDisputes,
@@ -31,9 +32,9 @@ router.get('/my', authenticate, getMyDisputes);
 router.get('/pending-count', authenticate, getPendingDisputesCount);
 
 // Get dispute details
-router.get('/:dispute_id', authenticate, getDisputeDetails);
+router.get('/:dispute_id', authenticate, validateParams(disputeIdParamSchema), getDisputeDetails);
 
 // Garage responds to dispute
-router.post('/:dispute_id/garage-respond', authenticate, garageRespondToDispute);
+router.post('/:dispute_id/garage-respond', authenticate, validateParams(disputeIdParamSchema), garageRespondToDispute);
 
 export default router;
