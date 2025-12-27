@@ -151,8 +151,8 @@ export function useSocket() {
             // === ORDER EVENTS ===
 
             // Order status changed
-            socket.current.on('order_status_update', (data: OrderStatusUpdate) => {
-                console.log('[Socket] Order status update:', data.order_number, data.new_status);
+            socket.current.on('order_status_updated', (data: OrderStatusUpdate) => {
+                console.log('[Socket] Order status updated:', data.order_number, data.new_status);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 setOrderUpdates(prev => {
