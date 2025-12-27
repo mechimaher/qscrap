@@ -250,6 +250,15 @@ export const submitInspection = async (req: AuthRequest, res: Response) => {
                 notification: `✅ Your part passed quality inspection! Delivery will be assigned soon.`
             });
 
+            // Also emit order_status_updated for mobile app real-time updates
+            io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+                order_id,
+                order_number: order.order_number,
+                old_status: 'collected',
+                new_status: 'qc_passed',
+                notification: `✅ Quality verified - on the way soon!`
+            });
+
             // Notify garage - their part passed
             io.to(`garage_${order.garage_id}`).emit('qc_passed', {
                 order_id,
@@ -265,6 +274,15 @@ export const submitInspection = async (req: AuthRequest, res: Response) => {
                 order_number: order.order_number,
                 failure_reason: failure_reason,
                 notification: `❌ QC Failed: ${failure_reason || 'Part did not meet quality standards'}. Order will be cancelled and refunded.`
+            });
+
+            // Also emit order_status_updated for mobile app real-time updates
+            io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+                order_id,
+                order_number: order.order_number,
+                old_status: 'collected',
+                new_status: 'qc_failed',
+                notification: `We're resolving an issue with your order`
             });
 
             // Garage notification - part rejected, needs return

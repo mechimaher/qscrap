@@ -537,6 +537,15 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
             notification: `🚚 Driver ${driver.full_name} is on the way with your part!`
         });
 
+        // Also emit order_status_updated for mobile app real-time updates
+        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+            order_id,
+            order_number: order.order_number,
+            old_status: 'qc_passed',
+            new_status: 'in_transit',
+            notification: `🚚 Your order is on the way!`
+        });
+
         // Notify garage that delivery started
         io.to(`garage_${order.garage_id}`).emit('delivery_started', {
             order_id,
