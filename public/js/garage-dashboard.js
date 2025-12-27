@@ -2986,10 +2986,7 @@ async function downloadPayoutStatement(orderId) {
     }
 }
 
-// (Counter-offer handlers defined earlier in file - see lines 826-1968) else if (badge) {
-        badge.style.display = 'none';
-    }
-}
+// (Counter-offer handlers defined earlier in file - see lines 826-1968)
 
 // ==========================================
 // REUSABLE PAGINATION COMPONENT
