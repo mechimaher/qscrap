@@ -185,7 +185,9 @@ export default function OrdersScreen() {
                     <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{orders.length} total orders</Text>
                 </View>
                 <View style={styles.headerBadge}>
-                    <Text style={styles.headerBadgeText}>📦 {orders.filter(o => o.order_status === 'in_transit').length} active</Text>
+                    <Text style={styles.headerBadgeText}>📦 {orders.filter(o =>
+                        !['completed', 'cancelled', 'refunded', 'cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_operations'].includes(o.order_status)
+                    ).length} active</Text>
                 </View>
             </View>
 
