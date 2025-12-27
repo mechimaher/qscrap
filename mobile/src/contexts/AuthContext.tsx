@@ -70,8 +70,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
-        await api.clearToken();
-        setUser(null);
+        try {
+            // Clear all authentication tokens and user data
+            await api.clearToken();
+
+            // Clear any cached data from AsyncStorage
+            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+            const keysToRemove = [
+                'qscrap_cache',
+                'qscrap_settings',
+                'qscrap_notifications',
+            ];
+            await AsyncStorage.multiRemove(keysToRemove);
+
+            // Reset user state
+            setUser(null);
+
+            console.log('[Auth] Logout complete - all data cleared');
+        } catch (error) {
+            console.error('[Auth] Logout error:', error);
+            // Still reset user even if cleanup fails
+            setUser(null);
+        }
     };
 
     const refreshUser = async () => {

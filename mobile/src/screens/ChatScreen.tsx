@@ -11,11 +11,11 @@ import {
     Platform,
     ActivityIndicator,
     Linking,
+    Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
@@ -55,22 +55,15 @@ export default function ChatScreen() {
     const [isConnected, setIsConnected] = useState(false);
     const [userId, setUserId] = useState<string>('');
 
-    // Play notification sound for incoming messages
-    const playMessageSound = async () => {
+    // Play notification feedback for incoming messages (using haptics + vibration)
+    const playMessageNotification = () => {
         try {
-            // Use a simple notification sound from a public source
-            const { sound } = await Audio.Sound.createAsync(
-                { uri: 'https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3' },
-                { shouldPlay: true, volume: 1.0 }
-            );
-            // Unload sound after playing to prevent memory leaks
-            sound.setOnPlaybackStatusUpdate((status) => {
-                if (status.isLoaded && status.didJustFinish) {
-                    sound.unloadAsync();
-                }
-            });
+            // Strong haptic feedback for notification feel
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            // Short vibration pattern for additional feedback
+            Vibration.vibrate([0, 100, 50, 100]);
         } catch (error) {
-            console.log('Could not play sound, using haptic fallback:', error);
+            console.log('Notification feedback error:', error);
         }
     };
 
@@ -136,7 +129,7 @@ export default function ChatScreen() {
                     // Only play sound for messages from others (not self)
                     if (data.sender_id !== userId) {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        playMessageSound();
+                        playMessageNotification();
                     } else {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
