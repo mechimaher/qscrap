@@ -4951,3 +4951,200 @@ if (typeof socket !== 'undefined' && socket) {
         }
     });
 }
+
+// ==========================================
+// QUALITY STATS & BADGES - REAL-TIME UPDATES
+// ==========================================
+
+/**
+ * Load Quality Control stats and update quality badge
+ */
+async function loadQualityStats() {
+    try {
+        const res = await fetch(`${API_URL}/quality/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.stats) {
+            const s = data.stats;
+            // Update Quality section stats
+            const pendingEl = document.getElementById('qcPendingInspection');
+            const passedEl = document.getElementById('qcPassedToday');
+            const failedEl = document.getElementById('qcFailedToday');
+            const rateEl = document.getElementById('qcPassRate');
+
+            if (pendingEl) pendingEl.textContent = s.pending_inspection || 0;
+            if (passedEl) passedEl.textContent = s.passed_today || 0;
+            if (failedEl) failedEl.textContent = s.failed_today || 0;
+            if (rateEl) rateEl.textContent = (s.pass_rate || 0) + '%';
+
+            // Update quality badge in nav
+            updateBadge('qualityBadge', s.pending_inspection || 0);
+        }
+
+        // Load pending inspections table
+        await loadPendingInspections();
+        await loadRecentInspections();
+
+    } catch (err) {
+        console.error('Failed to load quality stats:', err);
+    }
+}
+
+/**
+ * Load pending inspections for QC table
+ */
+async function loadPendingInspections() {
+    try {
+        const res = await fetch(`${API_URL}/quality/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const table = document.getElementById('qcPendingTable');
+        if (!table) return;
+
+        if (data.orders && data.orders.length) {
+            table.innerHTML = data.orders.map(o => `
+                <tr>
+                    <td><strong>#${o.order_number || o.order_id?.slice(0, 8)}</strong></td>
+                    <td>${escapeHTML(o.part_description?.slice(0, 30))}...</td>
+                    <td>${escapeHTML(o.garage_name)}</td>
+                    <td><span class="status-badge collected">Collected</span></td>
+                    <td>${getTimeAgo(o.collected_at || o.updated_at)}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="openInspection('${o.order_id}', '#${o.order_number || ''}', '${escapeHTML(o.part_description || '')}', '${escapeHTML(o.garage_name || '')}')">
+                            <i class="bi bi-clipboard-check"></i> Inspect
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-all"></i><h4>No pending inspections</h4></td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load pending inspections:', err);
+    }
+}
+
+/**
+ * Load recent inspections history
+ */
+async function loadRecentInspections() {
+    try {
+        const res = await fetch(`${API_URL}/quality/recent`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const table = document.getElementById('qcRecentTable');
+        if (!table) return;
+
+        if (data.inspections && data.inspections.length) {
+            table.innerHTML = data.inspections.map(i => `
+                <tr>
+                    <td><strong>#${i.order_number || i.order_id?.slice(0, 8)}</strong></td>
+                    <td>${escapeHTML(i.part_description?.slice(0, 30))}...</td>
+                    <td><span class="status-badge ${i.result === 'passed' ? 'completed' : 'cancelled'}">${i.result?.toUpperCase()}</span></td>
+                    <td>${escapeHTML(i.inspector_name || 'System')}</td>
+                    <td>${new Date(i.inspected_at).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        } else {
+            table.innerHTML = '<tr><td colspan="5" class="empty-state">No recent inspections</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load recent inspections:', err);
+    }
+}
+
+/**
+ * Update all nav badges based on current stats
+ */
+async function updateAllBadges() {
+    try {
+        const res = await fetch(`${API_URL}/operations/dashboard/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.stats) {
+            const s = data.stats;
+            updateBadge('ordersBadge', s.active_orders || 0);
+            updateBadge('disputesBadge', (parseInt(s.pending_disputes) || 0) + (parseInt(s.contested_disputes) || 0));
+            updateBadge('deliveryBadge', s.ready_for_pickup || 0);
+        }
+
+        // Also update quality badge
+        try {
+            const qcRes = await fetch(`${API_URL}/quality/stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const qcData = await qcRes.json();
+            if (qcData.stats) {
+                updateBadge('qualityBadge', qcData.stats.pending_inspection || 0);
+            }
+        } catch (e) {
+            console.log('Quality stats not available');
+        }
+
+    } catch (err) {
+        console.error('Failed to update badges:', err);
+    }
+}
+
+/**
+ * Helper: Get time ago string
+ */
+function getTimeAgo(dateStr) {
+    if (!dateStr) return 'Unknown';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+}
+
+// ==========================================
+// QC SOCKET EVENT LISTENERS
+// ==========================================
+if (typeof socket !== 'undefined' && socket) {
+    // Order collected - part ready for QC
+    socket.on('order_collected', (data) => {
+        showToast(`📦 Order #${data.order_number} collected - ready for QC inspection!`, 'info');
+        loadQualityStats();
+        updateBadge('qualityBadge', (parseInt(document.getElementById('qualityBadge')?.textContent) || 0) + 1);
+    });
+
+    // QC result - passed or failed
+    socket.on('qc_completed', (data) => {
+        if (data.result === 'passed') {
+            showToast(`✅ QC Passed: Order #${data.order_number} - Grade ${data.grade}`, 'success');
+        } else {
+            showToast(`❌ QC Failed: Order #${data.order_number}`, 'warning');
+        }
+        loadQualityStats();
+        loadOrders();
+        loadStats();
+    });
+
+    // Support ticket created
+    socket.on('ticket_created', (data) => {
+        showToast(data.notification || 'New support ticket received', 'info');
+        updateBadge('supportBadge', (parseInt(document.getElementById('supportBadge')?.textContent) || 0) + 1);
+    });
+}
+
+// Initial badge update on page load (already connected socket)
+setTimeout(() => {
+    if (token) {
+        updateAllBadges();
+    }
+}, 2000);
