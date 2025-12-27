@@ -26,6 +26,7 @@ import chatRoutes from './routes/chat.routes';
 import adminRoutes from './routes/admin.routes';
 import addressRoutes from './routes/address.routes';
 
+
 // Middleware imports
 import { requestContext } from './middleware/requestContext.middleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.middleware';
@@ -143,9 +144,9 @@ app.use('/api/driver', driverRoutes);
 app.use('/api/chat', chatRoutes);
 
 // Admin Routes (platform administration)
-// Admin Routes (platform administration)
 app.use('/api/admin', adminRoutes);
 app.use('/api/addresses', addressRoutes);
+
 
 // ==========================================
 // HEALTH CHECK (Enhanced for Phase 1/2)

@@ -383,6 +383,7 @@ class ApiService {
             method: 'DELETE'
         });
     }
+
 }
 
 export const api = new ApiService();

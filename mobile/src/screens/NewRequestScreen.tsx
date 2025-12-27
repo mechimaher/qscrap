@@ -24,7 +24,7 @@ import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import SearchableDropdown from '../components/SearchableDropdown';
-import VINScanner from '../components/VINScanner';
+
 import ImageViewerModal from '../components/ImageViewerModal';
 import { CAR_MAKES, CAR_MODELS, YEARS } from '../constants/carData';
 import { Address } from '../services/api';
@@ -58,7 +58,7 @@ export default function NewRequestScreen() {
     const [isLoading, setIsLoading] = useState(false);
 
     // UI State
-    const [showVINScanner, setShowVINScanner] = useState(false);
+
     const [imageViewerVisible, setImageViewerVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -179,11 +179,7 @@ export default function NewRequestScreen() {
         }
     };
 
-    const handleVINScan = (scannedVIN: string) => {
-        setVinNumber(scannedVIN);
-        // Bonus: If we had a real VIN decoder API, we could auto-fill Make/Model/Year here!
-        // For now, just filling the VIN is a huge win.
-    };
+
 
     const handleSubmit = async () => {
         if (!carMake || !carModel || !carYear) {
@@ -328,18 +324,7 @@ export default function NewRequestScreen() {
                                 autoCapitalize="characters"
                                 maxLength={17}
                             />
-                            <TouchableOpacity
-                                style={styles.scanButton}
-                                onPress={() => setShowVINScanner(true)}
-                            >
-                                <LinearGradient
-                                    colors={Colors.gradients.primary}
-                                    style={styles.scanButtonGradient}
-                                >
-                                    <Text style={styles.scanIcon}>📷</Text>
-                                    <Text style={styles.scanText}>SCAN</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
+
                         </View>
                     </View>
 
@@ -505,12 +490,7 @@ export default function NewRequestScreen() {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Simulated VIN Scanner Modal */}
-            <VINScanner
-                visible={showVINScanner}
-                onClose={() => setShowVINScanner(false)}
-                onScan={handleVINScan}
-            />
+
 
             {/* Image Viewer */}
             <ImageViewerModal
