@@ -1,5 +1,5 @@
-// QScrap Requests Screen - Premium VIP Design
-import React, { useState, useEffect, useCallback } from 'react';
+// QScrap Requests Screen - Premium VIP Design with Swipe-to-Delete
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -8,12 +8,15 @@ import {
     TouchableOpacity,
     RefreshControl,
     Dimensions,
+    Alert,
+    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { Swipeable } from 'react-native-gesture-handler';
 import { api, Request } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
@@ -52,6 +55,64 @@ export default function RequestsScreen() {
         loadRequests();
     }, []);
 
+    // Swipe-to-delete handler
+    const handleDeleteRequest = async (request: Request, closeSwipeable: () => void) => {
+        // Only allow deletion for requests that can be deleted
+        if (request.status === 'accepted') {
+            Alert.alert('Cannot Delete', 'This request has been accepted and has an order. It cannot be deleted.');
+            closeSwipeable();
+            return;
+        }
+
+        Alert.alert(
+            'Delete Request',
+            `Are you sure you want to permanently delete this request for ${request.car_make} ${request.car_model}?\n\nThis will remove all bids and cannot be undone.`,
+            [
+                { text: 'Cancel', style: 'cancel', onPress: closeSwipeable },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            await api.deleteRequest(request.request_id);
+
+                            // Remove from local state immediately
+                            setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
+
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            Alert.alert('Deleted', 'Request has been permanently deleted');
+                        } catch (error: any) {
+                            Alert.alert('Error', error.message || 'Failed to delete request');
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    // Render swipe action (delete button)
+    const renderRightActions = (request: Request, closeSwipeable: () => void) => {
+        // Don't show delete for accepted requests
+        if (request.status === 'accepted') return null;
+
+        return (
+            <TouchableOpacity
+                style={styles.deleteAction}
+                onPress={() => handleDeleteRequest(request, closeSwipeable)}
+            >
+                <LinearGradient
+                    colors={['#EF4444', '#DC2626']}
+                    style={styles.deleteGradient}
+                >
+                    <Text style={styles.deleteIcon}>🗑️</Text>
+                    <Text style={styles.deleteText}>Delete</Text>
+                </LinearGradient>
+            </TouchableOpacity>
+        );
+    };
+
     const getStatusConfig = (status: string) => {
         switch (status) {
             case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
@@ -64,49 +125,68 @@ export default function RequestsScreen() {
 
     const renderRequest = ({ item }: { item: Request }) => {
         const statusConfig = getStatusConfig(item.status);
+        let swipeableRef: Swipeable | null = null;
+
+        const closeSwipeable = () => {
+            if (swipeableRef) swipeableRef.close();
+        };
 
         return (
-            <TouchableOpacity
-                style={[styles.requestCard, { backgroundColor: colors.surface }]}
-                onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    navigation.navigate('RequestDetail', { requestId: item.request_id });
-                }}
-                activeOpacity={0.8}
+            <Swipeable
+                ref={(ref) => { swipeableRef = ref; }}
+                renderRightActions={() => renderRightActions(item, closeSwipeable)}
+                overshootRight={false}
+                friction={2}
+                rightThreshold={40}
+                onSwipeableOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
             >
-                <View style={styles.cardHeader}>
-                    <View style={styles.carInfo}>
-                        <Text style={styles.carEmoji}>🚗</Text>
-                        <View>
-                            <Text style={[styles.carName, { color: colors.text }]}>{item.car_make} {item.car_model}</Text>
-                            <Text style={[styles.carYear, { color: colors.textSecondary }]}>{item.car_year}</Text>
+                <TouchableOpacity
+                    style={[styles.requestCard, { backgroundColor: colors.surface }]}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.navigate('RequestDetail', { requestId: item.request_id });
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.cardHeader}>
+                        <View style={styles.carInfo}>
+                            <Text style={styles.carEmoji}>🚗</Text>
+                            <View>
+                                <Text style={[styles.carName, { color: colors.text }]}>{item.car_make} {item.car_model}</Text>
+                                <Text style={[styles.carYear, { color: colors.textSecondary }]}>{item.car_year}</Text>
+                            </View>
+                        </View>
+                        <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                            <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                                {statusConfig.icon} {statusConfig.label}
+                            </Text>
                         </View>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                        <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                            {statusConfig.icon} {statusConfig.label}
+
+                    <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
+                        {item.part_description}
+                    </Text>
+
+                    <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
+
+                    <View style={styles.cardFooter}>
+                        <View style={styles.bidCount}>
+                            <View style={styles.bidIconBg}>
+                                <Text style={styles.bidIcon}>💬</Text>
+                            </View>
+                            <Text style={styles.bidCountText}>{item.bid_count} bids received</Text>
+                        </View>
+                        <Text style={styles.dateText}>
+                            {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </Text>
                     </View>
-                </View>
 
-                <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {item.part_description}
-                </Text>
-
-                <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
-
-                <View style={styles.cardFooter}>
-                    <View style={styles.bidCount}>
-                        <View style={styles.bidIconBg}>
-                            <Text style={styles.bidIcon}>💬</Text>
-                        </View>
-                        <Text style={styles.bidCountText}>{item.bid_count} bids received</Text>
-                    </View>
-                    <Text style={styles.dateText}>
-                        {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </Text>
-                </View>
-            </TouchableOpacity>
+                    {/* Swipe hint for active requests */}
+                    {item.status === 'active' && (
+                        <Text style={styles.swipeHint}>← Swipe to delete</Text>
+                    )}
+                </TouchableOpacity>
+            </Swipeable>
         );
     };
 
@@ -351,5 +431,36 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: FontSizes.md,
         fontWeight: '700',
+    },
+    // Swipe-to-delete styles
+    deleteAction: {
+        marginHorizontal: Spacing.md,
+        marginVertical: Spacing.sm,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+    },
+    deleteGradient: {
+        width: 80,
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.md,
+    },
+    deleteIcon: {
+        fontSize: 24,
+        marginBottom: 4,
+    },
+    deleteText: {
+        color: '#fff',
+        fontSize: FontSizes.xs,
+        fontWeight: '600',
+    },
+    swipeHint: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textMuted,
+        textAlign: 'right',
+        marginTop: Spacing.xs,
+        fontStyle: 'italic',
+        opacity: 0.6,
     },
 });

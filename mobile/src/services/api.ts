@@ -241,6 +241,12 @@ class ApiService {
         });
     }
 
+    async deleteRequest(requestId: string): Promise<any> {
+        return this.request(API_ENDPOINTS.DELETE_REQUEST(requestId), {
+            method: 'DELETE',
+        });
+    }
+
     async confirmDelivery(orderId: string): Promise<any> {
         return this.request(API_ENDPOINTS.CONFIRM_DELIVERY(orderId), {
             method: 'POST',

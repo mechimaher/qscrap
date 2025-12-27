@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { createRequest, getActiveRequests, getMyRequests, getRequestDetails, ignoreRequest, getIgnoredRequests, cancelRequest } from '../controllers/request.controller';
+import { createRequest, getActiveRequests, getMyRequests, getRequestDetails, ignoreRequest, getIgnoredRequests, cancelRequest, deleteRequest } from '../controllers/request.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { upload } from '../middleware/file.middleware';
 
@@ -31,8 +31,11 @@ router.get('/pending', authenticate, requireRole('garage'), getActiveRequests);
 // Details (Shared but with logic inside)
 router.get('/:request_id', authenticate, getRequestDetails);
 
-// Customer: Cancel their own request
+// Customer: Cancel their own request (soft - changes status to cancelled)
 router.post('/:request_id/cancel', authenticate, requireRole('customer'), cancelRequest);
+
+// Customer: Delete their own request (hard - removes from database, only if no orders)
+router.delete('/:request_id', authenticate, requireRole('customer'), deleteRequest);
 
 // Garage: Ignore a request (per-garage, request still visible to others)
 router.post('/:request_id/ignore', authenticate, requireRole('garage'), ignoreRequest);

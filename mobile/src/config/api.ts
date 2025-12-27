@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
     REQUESTS: '/requests',
     MY_REQUESTS: '/requests/my',
     CANCEL_REQUEST: (requestId: string) => `/requests/${requestId}/cancel`,
+    DELETE_REQUEST: (requestId: string) => `/requests/${requestId}`,
 
     // Bids
     REJECT_BID: (bidId: string) => `/bids/${bidId}/reject`,

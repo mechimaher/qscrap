@@ -433,6 +433,100 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
 };
 
 // ============================================
+// CUSTOMER: DELETE REQUEST (permanent)
+// ============================================
+
+/**
+ * Permanently delete a request - only allowed if NO orders exist
+ * This is different from cancel - it removes all data including bids
+ */
+export const deleteRequest = async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+    const { request_id } = req.params;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Verify ownership
+        const requestResult = await client.query(
+            'SELECT * FROM part_requests WHERE request_id = $1 AND customer_id = $2 FOR UPDATE',
+            [request_id, userId]
+        );
+
+        if (requestResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Request not found or access denied' });
+        }
+
+        const request = requestResult.rows[0];
+
+        // Check if any orders exist for this request
+        const orderCheck = await client.query(
+            'SELECT order_id FROM orders WHERE request_id = $1 LIMIT 1',
+            [request_id]
+        );
+
+        if (orderCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+                error: 'Cannot delete request with existing orders',
+                hint: 'Orders exist for this request. You can only cancel, not delete.'
+            });
+        }
+
+        // Get garage IDs for notification before deletion
+        const bidsResult = await client.query(
+            'SELECT DISTINCT garage_id FROM bids WHERE request_id = $1',
+            [request_id]
+        );
+        const garageIds = bidsResult.rows.map(r => r.garage_id);
+
+        // Delete counter-offers first (foreign key constraint)
+        await client.query('DELETE FROM counter_offers WHERE request_id = $1', [request_id]);
+
+        // Delete bids (foreign key constraint)
+        await client.query('DELETE FROM bids WHERE request_id = $1', [request_id]);
+
+        // Delete from garage ignored requests
+        await client.query('DELETE FROM garage_ignored_requests WHERE request_id = $1', [request_id]);
+
+        // Finally delete the request
+        await client.query('DELETE FROM part_requests WHERE request_id = $1', [request_id]);
+
+        await client.query('COMMIT');
+
+        // Notify all garages that had bids that the request is gone
+        const io = (global as any).io;
+        garageIds.forEach((garageId: string) => {
+            io.to(`garage_${garageId}`).emit('request_deleted', {
+                request_id,
+                notification: 'A request you bid on has been deleted by the customer'
+            });
+        });
+
+        // Also broadcast to all garages that this request no longer exists
+        io.emit('request_removed', { request_id });
+
+        res.json({
+            success: true,
+            message: 'Request permanently deleted',
+            deleted: {
+                request_id,
+                car: `${request.car_make} ${request.car_model}`,
+                part: request.part_description
+            }
+        });
+    } catch (err: any) {
+        await client.query('ROLLBACK');
+        console.error('[REQUEST] Delete request error:', err);
+        res.status(500).json({ error: 'Failed to delete request' });
+    } finally {
+        client.release();
+    }
+};
+
+// ============================================
 // GARAGE: IGNORE REQUEST (per-garage)
 // ============================================
 
