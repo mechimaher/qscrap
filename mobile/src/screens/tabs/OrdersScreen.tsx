@@ -70,7 +70,11 @@ export default function OrdersScreen() {
             case 'confirmed': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Confirmed' };
             case 'preparing': return { color: '#F59E0B', bg: '#FEF3C7', icon: '🔧', label: 'Preparing' };
             case 'ready_for_pickup': return { color: '#8B5CF6', bg: '#EDE9FE', icon: '📦', label: 'Ready' };
-            case 'picked_up': return { color: '#06B6D4', bg: '#CFFAFE', icon: '🚚', label: 'Picked Up' };
+            // Internal QC statuses - show as "In Transit" to customers
+            case 'collected': return { color: Colors.primary, bg: Colors.primary + '20', icon: '🚚', label: 'In Transit' };
+            case 'qc_in_progress': return { color: Colors.primary, bg: Colors.primary + '20', icon: '🚚', label: 'In Transit' };
+            case 'qc_passed': return { color: Colors.primary, bg: Colors.primary + '20', icon: '🚚', label: 'In Transit' };
+            case 'qc_failed': return { color: '#F59E0B', bg: '#FEF3C7', icon: '⏳', label: 'Processing' };
             case 'in_transit': return { color: Colors.primary, bg: Colors.primary + '20', icon: '🚗', label: 'On The Way' };
             case 'delivered': return { color: '#22C55E', bg: '#DCFCE7', icon: '📍', label: 'Delivered' };
             case 'completed': return { color: '#22C55E', bg: '#DCFCE7', icon: '✅', label: 'Completed' };
