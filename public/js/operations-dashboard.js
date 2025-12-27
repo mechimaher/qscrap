@@ -3393,7 +3393,10 @@ async function loadOpsTickets() {
         const res = await fetch(`${API_URL}/support/tickets`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const tickets = await res.json();
+        const data = await res.json();
+
+        // Handle paginated response format {tickets: [...]} or legacy array format
+        const tickets = Array.isArray(data) ? data : (data.tickets || []);
         const container = document.getElementById('supportTicketList');
 
         if (tickets.length === 0) {
@@ -3402,25 +3405,29 @@ async function loadOpsTickets() {
         }
 
         container.innerHTML = tickets.map(t => {
-            const lastMsg = t.last_message ? t.last_message.message_text : 'No messages';
+            const lastMsg = t.last_message ? t.last_message.message_text || t.last_message : 'No messages';
             const activeClass = activeOpsTicketId === t.ticket_id ? 'active' : '';
             return `
-            <div class="ticket-item ${activeClass}" onclick="viewOpsTicket('${t.ticket_id}', '${t.subject}', '${t.customer_name}', '${t.status}', '${t.order_id}')">
+            <div class="ticket-item ${activeClass}" onclick="viewOpsTicket('${t.ticket_id}', '${escapeHTML(t.subject || '')}', '${escapeHTML(t.customer_name || '')}', '${t.status}', '${t.order_id || ''}')">
                 <div class="ticket-header">
-                    <span class="ticket-subject">${t.subject}</span>
+                    <span class="ticket-subject">${escapeHTML(t.subject || 'No Subject')}</span>
                     <span class="ticket-status status-${t.status}">${t.status}</span>
                 </div>
                 <div class="ticket-meta">
-                    <span>${t.customer_name}</span>
+                    <span>${escapeHTML(t.customer_name || 'Unknown')}</span>
                     <span>${new Date(t.created_at).toLocaleDateString()}</span>
                 </div>
-                <div class="ticket-preview">${lastMsg}</div>
+                <div class="ticket-preview">${escapeHTML(String(lastMsg).slice(0, 50))}</div>
                 ${t.order_id ? `<div class="ticket-meta" style="margin-top: 4px; color: var(--accent);"><i class="bi bi-box-seam"></i> Order #${t.order_id.substring(0, 8)}</div>` : ''}
             </div>
             `;
         }).join('');
 
+        // Update support badge
+        updateBadge('supportBadge', tickets.filter(t => t.status === 'open').length);
+
     } catch (err) {
+        console.error('Failed to load tickets:', err);
         showToast('Failed to load tickets', 'error');
     }
 }
