@@ -6,7 +6,7 @@
 -- 1. Fix users table - add 'operations' user type
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_user_type_check;
 ALTER TABLE users ADD CONSTRAINT users_user_type_check 
-    CHECK (user_type IN ('customer', 'garage', 'driver', 'admin', 'operations'));
+    CHECK (user_type IN ('customer', 'garage', 'driver', 'admin', 'operations', 'staff'));
 
 -- 2. Fix order_status_history - add 'operations' to changed_by_type
 ALTER TABLE order_status_history DROP CONSTRAINT IF EXISTS order_status_history_changed_by_type_check;

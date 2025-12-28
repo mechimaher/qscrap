@@ -1,0 +1,1332 @@
+Debug log started
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] POST /payouts/116f8746-c8ef-4099-b0ca-42776f9c9415/send - Body: {"payout_method":"cash","payout_reference":"rtertert","notes":"retertert"}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE] sendPayment request body: {"payout_method":"cash","payout_reference":"rtertert","notes":"retertert"}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] POST /payouts/116f8746-c8ef-4099-b0ca-42776f9c9415/send - Body: {"payout_method":"bank_transfer","payout_reference":"dfdfdfdf","notes":"fdgdggfg"}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE] sendPayment request body: {"payout_method":"bank_transfer","payout_reference":"dfdfdfdf","notes":"fdgdggfg"}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] POST /payouts/116f8746-c8ef-4099-b0ca-42776f9c9415/confirm - Body: {"notes":"Payment received and confirmed"}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts?status=disputed - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766390670,"exp":1768982670}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766391278,"exp":1768983278}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397184,"exp":1768989184}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397073,"exp":1768989073}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397256,"exp":1768989256}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397272,"exp":1768989272}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766392346,"exp":1768984346}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397540,"exp":1768989540}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766397540,"exp":1768989540}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] POST /payouts/59c5ad64-658d-454f-be22-9873d5390b45/send - Body: {"payout_method":"bank_transfer","payout_reference":"vfxgfg","notes":"fgfgfg"}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE] sendPayment request body: {"payout_method":"bank_transfer","payout_reference":"vfxgfg","notes":"fgfgfg"}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] POST /payouts/59c5ad64-658d-454f-be22-9873d5390b45/confirm - Body: {"notes":"Payment received and confirmed"}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766397309,"exp":1768989309}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766397581,"exp":1768989581}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTHZ] Access denied for role: garage
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398095,"exp":1768990095}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398076,"exp":1768990076}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398116,"exp":1768990116}
+[AUTHZ] Access denied for role: garage
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398106,"exp":1768990106}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE ROUTE] GET /payouts?status=pending&limit=1 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] POST /payouts/2babe196-d652-48a2-89b7-60a90be0d2db/send - Body: {"payout_method":"bank_transfer","payout_reference":"fgfdgfdgfdg","notes":"fgfdgbgfdhfdhb"}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[FINANCE] sendPayment request body: {"payout_method":"bank_transfer","payout_reference":"fgfdgfdgfdg","notes":"fgfdgbgfdhfdhb"}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] POST /payouts/2babe196-d652-48a2-89b7-60a90be0d2db/confirm - Body: {"notes":"Payment received and confirmed"}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts/summary - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /stats - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /transactions?limit=20 - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts?status=pending - Body: {}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[FINANCE ROUTE] GET /payouts - Body: {}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"c2ee6e67-75e3-46d4-a76a-eb427d75a3b7","userType":"operations","iat":1766398266,"exp":1768990266}
+[AUTHZ] Access granted for user: c2ee6e67-75e3-46d4-a76a-eb427d75a3b7
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"5064d8ae-e548-4161-8aac-cd2e7ead05d5","userType":"garage","iat":1766398198,"exp":1768990198}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"a24db296-8b2e-42d2-a5f7-ae6aa8468d43","userType":"customer","iat":1766398329,"exp":1768990329}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476361,"exp":1769068361}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476361,"exp":1769068361}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476361,"exp":1769068361}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476793,"exp":1769068793}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476793,"exp":1769068793}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476793,"exp":1769068793}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766476793,"exp":1769068793}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477244,"exp":1769069244}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477244,"exp":1769069244}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477244,"exp":1769069244}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766477480,"exp":1769069480}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766478050,"exp":1769070050}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766479886,"exp":1769071886}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766481087,"exp":1769073087}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[FINANCE ROUTE] GET /payouts/awaiting-confirmation - Body: {}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"0a716ced-a93c-4dd4-8179-1b84ef80955c","userType":"garage","iat":1766476897,"exp":1769068897}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}
+[AUTH] Authenticated user: {"userId":"5d413557-2cf2-4a45-a140-829f0e1292bf","userType":"customer","iat":1766484373,"exp":1769076373}

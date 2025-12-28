@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS delivery_chats (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Ensure read_at column exists (in case table existed without it)
+ALTER TABLE delivery_chats ADD COLUMN IF NOT EXISTS read_at TIMESTAMP;
+
 -- Indexes for chat
 CREATE INDEX IF NOT EXISTS idx_delivery_chats_assignment ON delivery_chats(assignment_id);
 CREATE INDEX IF NOT EXISTS idx_delivery_chats_created ON delivery_chats(created_at);

@@ -43,7 +43,7 @@ export const requireRole = (role: string) => {
     };
 };
 export const authorizeOperations = (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || (req.user.userType !== 'operations' && req.user.userType !== 'admin')) {
+    if (!req.user || (req.user.userType !== 'operations' && req.user.userType !== 'admin' && req.user.userType !== 'staff')) {
         return res.status(403).json({ error: 'Operations access required' });
     }
     next();

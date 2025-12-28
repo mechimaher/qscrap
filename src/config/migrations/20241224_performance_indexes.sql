@@ -40,15 +40,15 @@ ON orders(order_number);
 
 -- Active requests (garage dashboard)
 CREATE INDEX IF NOT EXISTS idx_requests_status 
-ON requests(status);
+ON part_requests(status);
 
 -- Customer requests (customer dashboard)
 CREATE INDEX IF NOT EXISTS idx_requests_customer_created 
-ON requests(customer_id, created_at DESC);
+ON part_requests(customer_id, created_at DESC);
 
 -- Open requests for bidding
 CREATE INDEX IF NOT EXISTS idx_requests_open 
-ON requests(status, created_at DESC) 
+ON part_requests(status, created_at DESC) 
 WHERE status IN ('pending', 'bidding');
 
 -- ============================================
@@ -65,7 +65,7 @@ ON bids(garage_id, created_at DESC);
 
 -- Bid status filtering
 CREATE INDEX IF NOT EXISTS idx_bids_status 
-ON bids(bid_status);
+ON bids(status);
 
 -- ============================================
 -- 4. DELIVERY ASSIGNMENTS INDEXES
@@ -116,7 +116,7 @@ WHERE approval_status = 'pending' OR approval_status IS NULL;
 -- Demo garages expiring
 CREATE INDEX IF NOT EXISTS idx_garages_demo_expiry 
 ON garages(demo_expires_at ASC) 
-WHERE approval_status = 'demo' AND demo_expires_at > NOW();
+WHERE approval_status = 'demo';
 
 -- Garage search/listing
 CREATE INDEX IF NOT EXISTS idx_garages_name_search 
@@ -172,7 +172,7 @@ CREATE INDEX IF NOT EXISTS idx_qc_order
 ON quality_inspections(order_id);
 
 CREATE INDEX IF NOT EXISTS idx_qc_passed 
-ON quality_inspections(passed, created_at DESC);
+ON quality_inspections(result, created_at DESC);
 
 -- ============================================
 -- 11. REVIEWS TABLE INDEXES
@@ -192,14 +192,14 @@ CREATE INDEX IF NOT EXISTS idx_tickets_status
 ON support_tickets(status);
 
 CREATE INDEX IF NOT EXISTS idx_tickets_user 
-ON support_tickets(user_id, created_at DESC);
+ON support_tickets(customer_id, created_at DESC);
 
 -- ============================================
 -- ANALYZE TABLES (Update Statistics)
 -- ============================================
 
 ANALYZE orders;
-ANALYZE requests;
+ANALYZE part_requests;
 ANALYZE bids;
 ANALYZE delivery_assignments;
 ANALYZE users;

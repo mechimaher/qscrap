@@ -38,12 +38,16 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
     const { request_id } = req.params;
     const { request_id: bodyRequestId, bid_amount, warranty_days, notes, part_condition, brand_name, part_number } = req.body;
 
+    console.log('[BID] Submit request body:', JSON.stringify(req.body, null, 2));
+    console.log('[BID] Submit request files:', req.files ? (req.files as any[]).length : 0);
+
     const targetRequestId = request_id || bodyRequestId;
     const garageId = req.user!.userId;
 
     // Validate bid amount
     const amountCheck = validateBidAmount(bid_amount);
     if (!amountCheck.valid) {
+        console.log('[BID] Amount validation failed:', amountCheck.message);
         return res.status(400).json({ error: amountCheck.message });
     }
 
@@ -52,6 +56,7 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
 
     // Part condition validation (REQUIRED - must be new, used, or refurbished)
     if (!part_condition || !VALID_PART_CONDITIONS.includes(part_condition)) {
+        console.log('[BID] Condition validation failed:', part_condition);
         return res.status(400).json({ error: `Part condition is required. Must be one of: ${VALID_PART_CONDITIONS.join(', ')}` });
     }
 
@@ -166,6 +171,8 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
         else if (err.message.includes('not active')) userMessage = 'Request is no longer active';
         else if (err.message.includes('already submitted')) userMessage = 'You already bid on this request';
         else if (err.message.includes('limit reached')) userMessage = err.message;
+        else if (err.message.includes('No active subscription')) userMessage = err.message;
+        else if (err.message.includes('demo trial has expired')) userMessage = err.message;
 
         res.status(400).json({ error: userMessage });
     } finally {

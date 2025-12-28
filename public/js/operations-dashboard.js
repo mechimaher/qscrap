@@ -101,6 +101,9 @@ async function showDashboard() {
     await loadStats();
     await loadOrders();
     await loadQualityStats(); // Populate Quality badge - must await to ensure badge shows
+
+    // Initialize premium VVIP features
+    initializePremiumFeatures();
 }
 
 /**
@@ -5209,3 +5212,467 @@ setTimeout(() => {
         updateAllBadges();
     }
 }, 2000);
+
+// ==========================================
+// PREMIUM VVIP FEATURES
+// ==========================================
+
+let autoRefreshInterval = null;
+let lastActivityTime = Date.now();
+let currentSection = 'overview';
+
+/**
+ * Initialize all premium features after login
+ */
+function initializePremiumFeatures() {
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    updateGreeting();
+    startAutoRefresh();
+    setupKeyboardShortcuts();
+    setupActivityTracking();
+    loadHeaderNotifications();
+
+    // Update operator name from stored user info
+    const userName = localStorage.getItem('opsUserName') || 'Operator';
+    const nameEl = document.getElementById('operatorName');
+    if (nameEl) nameEl.textContent = userName;
+}
+
+/**
+ * Update live date and time in header
+ */
+function updateDateTime() {
+    const now = new Date();
+    const options = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+    const dateTimeEl = document.getElementById('headerDateTime');
+    if (dateTimeEl) {
+        dateTimeEl.textContent = now.toLocaleDateString('en-US', options);
+    }
+}
+
+/**
+ * Update greeting based on time of day
+ */
+function updateGreeting() {
+    const hour = new Date().getHours();
+    let greeting = 'Good morning';
+    if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
+    else if (hour >= 17) greeting = 'Good evening';
+
+    const greetingEl = document.getElementById('greetingText');
+    if (greetingEl) greetingEl.textContent = greeting;
+}
+
+/**
+ * Start auto-refresh of dashboard data every 30 seconds
+ */
+function startAutoRefresh() {
+    stopAutoRefresh();
+    autoRefreshInterval = setInterval(() => {
+        // Only refresh if page is visible and no modals open
+        if (document.visibilityState === 'visible' && !document.querySelector('.modal:not([style*="display: none"])')) {
+            refreshCurrentSection();
+            loadHeaderNotifications();
+        }
+    }, 30000);
+}
+
+/**
+ * Stop auto-refresh
+ */
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+/**
+ * Setup keyboard shortcuts
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ignore if typing in input/textarea or modal is open
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            return;
+        }
+
+        // Section navigation (1-9)
+        const sections = ['overview', 'orders', 'quality', 'delivery', 'disputes', 'reviewModeration', 'support', 'users', 'finance'];
+        if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const index = parseInt(e.key) - 1;
+            if (sections[index]) {
+                e.preventDefault();
+                switchSection(sections[index]);
+            }
+        }
+
+        // R - Refresh
+        if (e.key === 'r' || e.key === 'R') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                refreshCurrentSection();
+            }
+        }
+
+        // ? - Show shortcuts
+        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+            e.preventDefault();
+            showKeyboardShortcuts();
+        }
+
+        // Esc - Close modals
+        if (e.key === 'Escape') {
+            closeAllModals();
+        }
+
+        // Ctrl+K - Focus global search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const searchInput = document.getElementById('globalSearchInput');
+            if (searchInput) searchInput.focus();
+        }
+    });
+}
+
+/**
+ * Show keyboard shortcuts modal
+ */
+function showKeyboardShortcuts() {
+    const modal = document.getElementById('keyboardShortcutsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+}
+
+/**
+ * Close all modals
+ */
+function closeAllModals() {
+    const shortcutsModal = document.getElementById('keyboardShortcutsModal');
+    if (shortcutsModal) {
+        shortcutsModal.style.display = 'none';
+        shortcutsModal.classList.remove('active');
+    }
+
+    const notificationsDropdown = document.getElementById('notificationsDropdown');
+    if (notificationsDropdown) {
+        notificationsDropdown.classList.remove('show');
+    }
+
+    // Close other modals
+    document.querySelectorAll('.modal-overlay.active, .modal[style*="display: flex"]').forEach(modal => {
+        if (!modal.id?.includes('keyboardShortcuts')) {
+            modal.remove();
+        }
+    });
+}
+/**
+ * Load recent orders for overview
+ */
+async function loadRecentOrders() {
+    try {
+        const res = await fetch(`${API_URL}/operations/orders?limit=5`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const statusLabels = {
+            confirmed: 'Confirmed',
+            preparing: 'Preparing',
+            ready_for_pickup: 'Ready for Pickup',
+            collected: 'Collected',
+            qc_in_progress: 'QC In Progress',
+            qc_passed: 'QC Passed',
+            qc_failed: 'QC Failed',
+            in_transit: 'In Transit',
+            delivered: 'Delivered',
+            completed: 'Completed',
+            disputed: 'Disputed',
+            refunded: 'Refunded',
+            cancelled_by_customer: 'Cancelled (Customer)',
+            cancelled_by_garage: 'Cancelled (Garage)',
+            cancelled_by_operations: 'Cancelled (Ops)'
+        };
+
+        const statusClass = {
+            confirmed: 'confirmed',
+            preparing: 'preparing',
+            ready_for_pickup: 'ready',
+            collected: 'collected',
+            qc_in_progress: 'pending',
+            qc_passed: 'completed',
+            qc_failed: 'cancelled',
+            in_transit: 'in-transit',
+            delivered: 'delivered',
+            completed: 'completed',
+            disputed: 'pending',
+            refunded: 'refunded',
+            cancelled_by_customer: 'cancelled',
+            cancelled_by_garage: 'cancelled',
+            cancelled_by_operations: 'cancelled'
+        };
+
+        const table = document.getElementById('recentOrdersTable');
+        if (table && data.orders && data.orders.length) {
+            table.innerHTML = data.orders.map(o => `
+                <tr>
+                    <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
+                    <td>${o.customer_name}</td>
+                    <td>${o.part_description?.slice(0, 25)}...</td>
+                    <td><span class="status-badge ${statusClass[o.order_status] || ''}">${statusLabels[o.order_status] || o.order_status}</span></td>
+                    <td>${o.total_amount} QAR</td>
+                    <td>${getOrderActions(o)}</td>
+                </tr>
+            `).join('');
+        } else if (table) {
+            table.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-inbox"></i><h4>No recent orders</h4></td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load recent orders:', err);
+    }
+}
+
+/**
+ * Refresh current section data with animation
+ */
+function refreshCurrentSection() {
+    const refreshIcon = document.getElementById('refreshIcon');
+    if (refreshIcon) {
+        refreshIcon.parentElement.classList.add('spinning');
+        setTimeout(() => refreshIcon.parentElement.classList.remove('spinning'), 1000);
+    }
+
+    // Find active section
+    const activeNav = document.querySelector('.nav-item.active');
+    const section = activeNav?.dataset?.section || 'overview';
+
+    switch (section) {
+        case 'overview':
+            loadStats();
+            loadRecentOrders();
+            break;
+        case 'orders':
+            loadOrders();
+            break;
+        case 'quality':
+            loadQualityStats();
+            break;
+        case 'delivery':
+            loadDeliveryData();
+            break;
+        case 'disputes':
+            loadDisputes();
+            break;
+        case 'reviewModeration':
+            loadReviewModeration();
+            break;
+        case 'support':
+            loadSupportTickets();
+            break;
+        case 'users':
+            loadUsers();
+            break;
+        case 'finance':
+            loadFinance();
+            break;
+        default:
+            loadStats();
+    }
+
+    showToast('Data refreshed', 'info');
+}
+
+/**
+ * Toggle notifications dropdown
+ */
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+/**
+ * Mark all notifications as read
+ */
+function markAllRead() {
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+        badge.style.display = 'none';
+        badge.textContent = '0';
+    }
+
+    const list = document.getElementById('notificationsList');
+    if (list) {
+        list.innerHTML = '<div class="notification-empty">No new notifications</div>';
+    }
+
+    toggleNotifications();
+}
+
+/**
+ * Load notifications for header dropdown
+ */
+async function loadHeaderNotifications() {
+    const notifications = [];
+
+    try {
+        // Get stats for notifications
+        const res = await fetch(`${API_URL}/operations/dashboard/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.stats) {
+            const s = data.stats;
+
+            if (s.ready_for_pickup > 0) {
+                notifications.push({
+                    icon: 'warning',
+                    title: `${s.ready_for_pickup} order(s) ready for pickup`,
+                    section: 'delivery',
+                    time: 'Now'
+                });
+            }
+
+            if (s.pending_disputes > 0) {
+                notifications.push({
+                    icon: 'danger',
+                    title: `${s.pending_disputes} pending dispute(s)`,
+                    section: 'disputes',
+                    time: 'Active'
+                });
+            }
+
+            if (s.contested_disputes > 0) {
+                notifications.push({
+                    icon: 'danger',
+                    title: `${s.contested_disputes} contested dispute(s)`,
+                    section: 'disputes',
+                    time: 'Urgent'
+                });
+            }
+        }
+
+        // Check support tickets
+        const supportBadge = document.getElementById('supportBadge');
+        if (supportBadge && supportBadge.textContent && parseInt(supportBadge.textContent) > 0) {
+            notifications.push({
+                icon: 'info',
+                title: `${supportBadge.textContent} open support ticket(s)`,
+                section: 'support',
+                time: 'Active'
+            });
+        }
+
+    } catch (err) {
+        console.log('Failed to load notifications:', err);
+    }
+
+    renderNotifications(notifications);
+}
+
+/**
+ * Render notifications in dropdown
+ */
+function renderNotifications(notifications) {
+    const list = document.getElementById('notificationsList');
+    const badge = document.getElementById('notificationBadge');
+
+    if (!list) return;
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<div class="notification-empty">No new notifications</div>';
+        if (badge) badge.style.display = 'none';
+        return;
+    }
+
+    if (badge) {
+        badge.textContent = notifications.length;
+        badge.style.display = 'flex';
+    }
+
+    list.innerHTML = notifications.map(n => `
+        <div class="notification-item" onclick="handleNotificationClick('${n.section}')" style="display: flex; align-items: center;">
+            <div class="icon ${n.icon}">
+                <i class="bi bi-${n.icon === 'warning' ? 'exclamation-triangle' : n.icon === 'danger' ? 'x-circle' : 'info-circle'}"></i>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 500; color: var(--text-primary);">${n.title}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${n.time}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Handle notification click - navigate to section
+ */
+function handleNotificationClick(section) {
+    toggleNotifications();
+    if (section) {
+        switchSection(section);
+    }
+}
+
+/**
+ * Setup activity tracking for session timeout
+ */
+function setupActivityTracking() {
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+
+    activityEvents.forEach(event => {
+        document.addEventListener(event, () => {
+            lastActivityTime = Date.now();
+        }, { passive: true });
+    });
+
+    // Check for inactivity every minute
+    setInterval(checkInactivity, 60000);
+}
+
+/**
+ * Check for user inactivity and warn/logout
+ */
+function checkInactivity() {
+    const inactiveTime = Date.now() - lastActivityTime;
+    const warningTime = 25 * 60 * 1000; // 25 minutes
+    const logoutTime = 30 * 60 * 1000; // 30 minutes
+
+    if (inactiveTime >= logoutTime) {
+        showToast('Session expired due to inactivity', 'error');
+        logout();
+    } else if (inactiveTime >= warningTime) {
+        showToast('⚠️ Session will expire in 5 minutes due to inactivity', 'warning');
+    }
+}
+
+// Click outside to close notifications dropdown
+document.addEventListener('click', (e) => {
+    const notificationsContainer = document.querySelector('.header-notifications');
+    const dropdown = document.getElementById('notificationsDropdown');
+
+    if (notificationsContainer && dropdown && !notificationsContainer.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// Click outside to close shortcuts modal
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('keyboardShortcutsModal');
+    if (modal && e.target === modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+});

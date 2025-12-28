@@ -65,7 +65,7 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
         if (userType === 'customer') {
             whereClause = `WHERE t.customer_id = $${paramIndex++}`;
             params.push(userId);
-        } else if (userType === 'admin' || userType === 'operations') {
+        } else if (userType === 'admin' || userType === 'operations' || userType === 'staff') {
             // Operations sees all - no customer filter
             whereClause = 'WHERE 1=1';
         } else {

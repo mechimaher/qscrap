@@ -1823,10 +1823,18 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
             formData.append('warranty_days', warranty);
             formData.append('notes', notes);
 
+            // Add optional fields
+            const brand = document.getElementById('bidBrand').value;
+            const partNumber = document.getElementById('bidPartNumber').value;
+            if (brand) formData.append('brand_name', brand);
+            if (partNumber) formData.append('part_number', partNumber);
+
             // Append photos
             bidPhotos.forEach(photo => {
                 formData.append('images', photo.file);
             });
+
+            console.log('Submitting bid:', { reqId, amount, condition, brand, partNumber, photos: bidPhotos.length });
 
             res = await fetch(`${API_URL}/bids`, {
                 method: 'POST',

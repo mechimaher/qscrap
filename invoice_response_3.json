@@ -1,0 +1,19 @@
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:3000...
+* Connected to localhost (::1) port 3000
+* using HTTP/1.x
+> POST /api/documents/invoice/3226e2a6-229f-4ad7-8557-656125ef8274 HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.14.1
+> Accept: */*
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxODc4ZjQ5NS1mNjI3LTQ2ZTUtOTllNC05ZGQxNDViMzJlMTciLCJ1c2VyVHlwZSI6ImN1c3RvbWVyIiwiaWF0IjoxNzY1OTU1ODI1LCJleHAiOjE3Njg1NDc4MjV9.5rfUYeE3NUce3x88xSLKrlpRh1hGrd783dS_rLpv2oo
+> 
+* Request completely sent off
+* Empty reply from server
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+* shutting down connection #0
+curl: (52) Empty reply from server

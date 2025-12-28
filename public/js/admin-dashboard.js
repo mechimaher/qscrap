@@ -7,6 +7,8 @@ const API_URL = '/api';
 let token = localStorage.getItem('adminToken');
 let currentGarageId = null;
 let searchDebounce = null;
+let autoRefreshInterval = null;
+let lastActivityTime = Date.now();
 
 // ============================================
 // INITIALIZATION
@@ -14,6 +16,7 @@ let searchDebounce = null;
 
 if (token) {
     showApp();
+    initializePremiumFeatures();
 } else {
     document.getElementById('authScreen').style.display = 'flex';
 }
@@ -1933,4 +1936,311 @@ function printReport() {
     `);
     printWindow.document.close();
     printWindow.print();
+}
+
+// ============================================
+// PREMIUM FEATURES
+// ============================================
+
+function initializePremiumFeatures() {
+    // Start live datetime update
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // Start auto-refresh every 30 seconds
+    startAutoRefresh();
+
+    // Setup keyboard shortcuts
+    setupKeyboardShortcuts();
+
+    // Setup activity tracking for session timeout
+    setupActivityTracking();
+
+    // Update greeting based on time of day
+    updateGreeting();
+
+    // Load notifications
+    loadNotifications();
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.header-notifications')) {
+            document.getElementById('notificationsDropdown')?.classList.remove('active');
+        }
+    });
+}
+
+// ============================================
+// LIVE DATETIME
+// ============================================
+
+function updateDateTime() {
+    const el = document.getElementById('liveDateTime');
+    if (!el) return;
+
+    const now = new Date();
+    const options = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+    el.textContent = now.toLocaleString('en-US', options);
+}
+
+function updateGreeting() {
+    const el = document.getElementById('headerGreeting');
+    if (!el) return;
+
+    const hour = new Date().getHours();
+    let greeting = 'Good evening';
+    if (hour >= 5 && hour < 12) greeting = 'Good morning';
+    else if (hour >= 12 && hour < 18) greeting = 'Good afternoon';
+
+    el.textContent = `${greeting}, Admin`;
+}
+
+// ============================================
+// AUTO REFRESH
+// ============================================
+
+function startAutoRefresh() {
+    // Refresh dashboard every 30 seconds
+    autoRefreshInterval = setInterval(() => {
+        // Only refresh if on dashboard section and no modals open
+        const dashboardVisible = document.getElementById('sectionDashboard')?.classList.contains('active');
+        const anyModalOpen = document.querySelector('.modal-overlay.active');
+
+        if (dashboardVisible && !anyModalOpen) {
+            loadDashboard();
+            loadNotifications();
+        }
+    }, 30000);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Skip if typing in an input
+        if (e.target.matches('input, textarea, select')) return;
+
+        // Skip if modifier keys are pressed (except for ?)
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+        const key = e.key.toLowerCase();
+
+        // Section navigation with numbers
+        const sections = ['dashboard', 'approvals', 'garages', 'users', 'staff', 'drivers', 'audit', 'reports'];
+        const numKey = parseInt(key);
+        if (numKey >= 1 && numKey <= 8) {
+            e.preventDefault();
+            switchSection(sections[numKey - 1]);
+            return;
+        }
+
+        // Action shortcuts
+        switch (key) {
+            case 'n':
+                e.preventDefault();
+                openCreateUserModal();
+                break;
+            case 'r':
+                e.preventDefault();
+                refreshCurrentSection();
+                break;
+            case '?':
+                e.preventDefault();
+                showKeyboardShortcuts();
+                break;
+            case 'escape':
+                closeAllModals();
+                break;
+        }
+    });
+}
+
+function showKeyboardShortcuts() {
+    document.getElementById('keyboardShortcutsModal')?.classList.add('active');
+}
+
+function closeAllModals() {
+    document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+        modal.classList.remove('active');
+    });
+}
+
+function refreshCurrentSection() {
+    const icon = document.getElementById('refreshIcon');
+    if (icon) {
+        icon.classList.add('spinning');
+        setTimeout(() => icon.classList.remove('spinning'), 800);
+    }
+
+    // Determine active section and refresh
+    const activeSection = document.querySelector('.section.active');
+    const sectionId = activeSection?.id || 'sectionDashboard';
+
+    switch (sectionId) {
+        case 'sectionDashboard': loadDashboard(); break;
+        case 'sectionApprovals': loadPendingGarages(); break;
+        case 'sectionGarages': loadGarages(); break;
+        case 'sectionUsers': loadUsers(); break;
+        case 'sectionStaff': loadStaff(); break;
+        case 'sectionDrivers': loadDrivers(); break;
+        case 'sectionAudit': loadAuditLog(); break;
+        case 'sectionReports': loadReports(); break;
+    }
+
+    showToast('Data refreshed', 'success');
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    dropdown?.classList.toggle('active');
+}
+
+function markAllRead() {
+    document.getElementById('notificationDot').style.display = 'none';
+    const list = document.getElementById('notificationsList');
+    list.innerHTML = `
+        <div class="notification-empty">
+            <i class="bi bi-bell-slash"></i>
+            <span>No new notifications</span>
+        </div>
+    `;
+    toggleNotifications();
+}
+
+async function loadNotifications() {
+    try {
+        // Get pending approvals and expiring demos
+        const res = await fetch(`${API_URL}/admin/dashboard`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const notifications = [];
+
+        if (data.stats?.pending_approvals > 0) {
+            notifications.push({
+                type: 'warning',
+                icon: 'bi-hourglass-split',
+                title: `${data.stats.pending_approvals} pending approvals`,
+                time: 'Review required',
+                action: () => switchSection('approvals')
+            });
+        }
+
+        if (data.stats?.expiring_soon > 0) {
+            notifications.push({
+                type: 'danger',
+                icon: 'bi-exclamation-diamond',
+                title: `${data.stats.expiring_soon} demos expiring soon`,
+                time: 'Within 7 days',
+                action: () => switchSection('approvals')
+            });
+        }
+
+        if (data.stats?.open_disputes > 0) {
+            notifications.push({
+                type: 'danger',
+                icon: 'bi-exclamation-triangle',
+                title: `${data.stats.open_disputes} open disputes`,
+                time: 'Needs attention',
+                action: () => switchSection('audit')
+            });
+        }
+
+        renderNotifications(notifications);
+    } catch (err) {
+        console.error('Failed to load notifications:', err);
+    }
+}
+
+function renderNotifications(notifications) {
+    const list = document.getElementById('notificationsList');
+    const dot = document.getElementById('notificationDot');
+
+    if (!list || !dot) return;
+
+    if (notifications.length === 0) {
+        list.innerHTML = `
+            <div class="notification-empty">
+                <i class="bi bi-bell-slash"></i>
+                <span>No new notifications</span>
+            </div>
+        `;
+        dot.style.display = 'none';
+    } else {
+        list.innerHTML = notifications.map((n, i) => `
+            <div class="notification-item" onclick="handleNotificationClick(${i})">
+                <div class="icon ${n.type}">
+                    <i class="bi ${n.icon}"></i>
+                </div>
+                <div class="content">
+                    <div class="title">${n.title}</div>
+                    <div class="time">${n.time}</div>
+                </div>
+            </div>
+        `).join('');
+        dot.style.display = 'block';
+
+        // Store notification actions
+        window._notificationActions = notifications.map(n => n.action);
+    }
+}
+
+function handleNotificationClick(index) {
+    const action = window._notificationActions?.[index];
+    if (action) {
+        toggleNotifications();
+        action();
+    }
+}
+
+// ============================================
+// SESSION & ACTIVITY TRACKING
+// ============================================
+
+function setupActivityTracking() {
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.addEventListener(event, () => {
+            lastActivityTime = Date.now();
+        }, { passive: true });
+    });
+
+    // Check for inactivity every minute
+    setInterval(checkInactivity, 60000);
+}
+
+function checkInactivity() {
+    const inactiveMinutes = (Date.now() - lastActivityTime) / 60000;
+
+    // Warn after 25 minutes of inactivity
+    if (inactiveMinutes >= 25 && inactiveMinutes < 30) {
+        showToast('Session will expire in 5 minutes due to inactivity', 'info');
+    }
+
+    // Auto-logout after 30 minutes
+    if (inactiveMinutes >= 30) {
+        showToast('Session expired due to inactivity', 'error');
+        setTimeout(logout, 2000);
+    }
 }

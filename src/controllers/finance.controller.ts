@@ -312,7 +312,7 @@ export const getRevenueReport = async (req: AuthRequest, res: Response) => {
         const topGaragesResult = await pool.query(`
             SELECT g.garage_name, 
                    COUNT(DISTINCT gp.order_id) as orders,
-                   COALESCE(SUM(gp.gross_amount), 0) as revenue
+                   COALESCE(SUM(gp.net_amount), 0) as revenue
             FROM garage_payouts gp
             JOIN garages g ON gp.garage_id = g.garage_id
             WHERE gp.created_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL

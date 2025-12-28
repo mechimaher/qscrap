@@ -10,8 +10,8 @@ export const authorizeOperations = (req: AuthRequest, res: Response, next: NextF
         return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Allow admin and operations user types
-    const allowedRoles = ['admin', 'operations'];
+    // Allow admin, operations, and staff user types
+    const allowedRoles = ['admin', 'operations', 'staff'];
 
     if (!allowedRoles.includes(req.user.userType)) {
         return res.status(403).json({ error: 'Access denied. Operations staff only.' });

@@ -84,7 +84,7 @@ export const getDemoGaragesReport = async (req: AuthRequest, res: Response) => {
                 g.created_at as registered_at,
                 (SELECT COUNT(*) FROM bids b WHERE b.garage_id = g.garage_id) as total_bids,
                 (SELECT COUNT(*) FROM orders o WHERE o.garage_id = g.garage_id) as total_orders,
-                (SELECT COALESCE(SUM(total_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_revenue,
+                (SELECT COALESCE(SUM(garage_payout_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_revenue,
                 u.last_login_at
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
@@ -247,7 +247,7 @@ export const getDemoConversionsReport = async (req: AuthRequest, res: Response) 
                 (SELECT COUNT(*) FROM bids b WHERE b.garage_id = g.garage_id AND b.created_at <= g.approval_date) as bids_before_convert,
                 (SELECT COUNT(*) FROM orders o WHERE o.garage_id = g.garage_id AND o.created_at <= g.approval_date) as orders_before_convert,
                 sp.plan_name,
-                (SELECT COALESCE(SUM(total_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as lifetime_revenue
+                (SELECT COALESCE(SUM(garage_payout_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as lifetime_revenue
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
             LEFT JOIN garage_subscriptions gs ON gs.garage_id = g.garage_id AND gs.status = 'active'
@@ -344,7 +344,7 @@ export const getSubscriptionRenewalsReport = async (req: AuthRequest, res: Respo
                 gs.created_at as subscription_start,
                 EXTRACT(MONTHS FROM AGE(NOW(), gs.created_at))::int as months_subscribed,
                 (SELECT COUNT(*) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_orders,
-                (SELECT COALESCE(SUM(total_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_revenue
+                (SELECT COALESCE(SUM(garage_payout_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_revenue
             FROM garage_subscriptions gs
             JOIN garages g ON gs.garage_id = g.garage_id
             JOIN users u ON g.garage_id = u.user_id
@@ -522,7 +522,7 @@ export const getAllGaragesReport = async (req: AuthRequest, res: Response) => {
                 END as demo_days_left,
                 (SELECT COUNT(*) FROM bids b WHERE b.garage_id = g.garage_id) as total_bids,
                 (SELECT COUNT(*) FROM orders o WHERE o.garage_id = g.garage_id) as total_orders,
-                (SELECT COALESCE(SUM(total_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_revenue,
+                (SELECT COALESCE(SUM(garage_payout_amount), 0) FROM orders o WHERE o.garage_id = g.garage_id AND o.order_status = 'completed') as total_revenue,
                 g.rating_average,
                 sp.plan_name as subscription_plan
             FROM garages g

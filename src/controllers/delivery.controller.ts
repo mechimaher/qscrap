@@ -215,6 +215,8 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
     const { order_id } = req.params;
     const { notes, driver_id } = req.body;
 
+    console.log('[DELIVERY] collectOrder called:', { order_id, driver_id, notes });
+
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -250,7 +252,7 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
         if (driver_id) {
             // Check driver availability
             const driverResult = await client.query(
-                'SELECT driver_id, status, full_name, phone, vehicle_type, vehicle_plate FROM drivers WHERE driver_id = $1',
+                'SELECT driver_id, user_id, status, full_name, phone, vehicle_type, vehicle_plate FROM drivers WHERE driver_id = $1',
                 [driver_id]
             );
 
@@ -270,10 +272,10 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
                 ['busy', driver_id]
             );
 
-            // Update order with driver
+            // Update order with driver (orders.driver_id references users.user_id)
             await client.query(
                 'UPDATE orders SET driver_id = $1, updated_at = NOW() WHERE order_id = $2',
-                [driver_id, order_id]
+                [driver.user_id, order_id]
             );
 
             // Create collection assignment record
@@ -370,6 +372,7 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
     } catch (err: any) {
         await client.query('ROLLBACK');
         console.error('collectOrder Error:', err);
+        console.log('[DELIVERY] collectOrder failed:', err.message, err.stack);
         res.status(500).json({ error: err.message });
     } finally {
         client.release();
@@ -493,7 +496,7 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
         // Update order status to in_transit
         await client.query(
             'UPDATE orders SET order_status = $1, driver_id = $2, updated_at = NOW() WHERE order_id = $3',
-            ['in_transit', driver_id, order_id]
+            ['in_transit', driver.user_id, order_id]
         );
 
         // Add to status history
@@ -656,7 +659,7 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
         // Update orders table driver reference
         await client.query(
             'UPDATE orders SET driver_id = $1, updated_at = NOW() WHERE order_id = $2',
-            [new_driver_id, assignment.order_id]
+            [newDriver.user_id, assignment.order_id]
         );
 
         // Set OLD driver status back to available
