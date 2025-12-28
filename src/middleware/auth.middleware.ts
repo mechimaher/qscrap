@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/security';
 
 interface AuthPayload {
     userId: string;
@@ -9,15 +10,6 @@ interface AuthPayload {
 export interface AuthRequest extends Request {
     user?: AuthPayload;
 }
-
-// Get JWT secret with security check
-const getJwtSecret = (): string => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret && process.env.NODE_ENV === 'production') {
-        throw new Error('JWT_SECRET environment variable is required in production');
-    }
-    return secret || 'dev-secret-not-for-production';
-};
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;

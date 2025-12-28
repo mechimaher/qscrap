@@ -6,6 +6,7 @@ import jobs from './config/jobs';
 import { closeRedis, initializeRedis } from './config/redis';
 import { initializeSocketAdapter, getGlobalSocketCount } from './config/socketAdapter';
 import { initializeJobQueues, closeJobQueues, createJobWorker, scheduleRecurringJob } from './config/jobQueue';
+import { performStartupSecurityChecks } from './config/security';
 
 const PORT = process.env.PORT || 3000;
 const NODE_ID = process.env.NODE_ID || `node-${process.pid}`;
@@ -165,6 +166,10 @@ server.listen(PORT, async () => {
     console.log(`   Env:  ${process.env.NODE_ENV || 'development'}`);
     console.log(`   PID:  ${process.pid}`);
     console.log('');
+
+    // Perform security validation before anything else
+    // This will throw in production if critical checks fail
+    performStartupSecurityChecks();
 
     // Initialize Redis (for caching)
     const redisClient = await initializeRedis();

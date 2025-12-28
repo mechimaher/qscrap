@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../config/db';
-
-// ============================================
-// CONFIGURATION
-// ============================================
-const TRIAL_DAYS = parseInt(process.env.TRIAL_DAYS || '30', 10);
-const TOKEN_EXPIRY_SECONDS = 30 * 24 * 60 * 60; // 30 days in seconds
+import {
+    getJwtSecret,
+    BCRYPT_ROUNDS,
+    TRIAL_DAYS,
+    TOKEN_EXPIRY_SECONDS
+} from '../config/security';
 
 // ============================================
 // VALIDATION HELPERS
@@ -39,18 +39,7 @@ const isStrongPassword = (password: string): { valid: boolean; message?: string 
     return { valid: true };
 };
 
-// JWT secret - MUST be set in production
-const getJwtSecret = (): string => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        if (process.env.NODE_ENV === 'production') {
-            throw new Error('FATAL: JWT_SECRET environment variable is required in production');
-        }
-        console.warn('[AUTH] WARNING: Using development JWT secret. Set JWT_SECRET in production!');
-        return 'dev-secret-not-for-production-use-only';
-    }
-    return secret;
-};
+// Note: JWT secret handling is now centralized in config/security.ts
 
 // ============================================
 // CONTROLLERS
@@ -94,7 +83,7 @@ export const register = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'User with this phone number already exists' });
         }
 
-        const hash = await bcrypt.hash(password, 12); // Increased from 10 to 12 rounds
+        const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
         // Insert User
         const userResult = await client.query(

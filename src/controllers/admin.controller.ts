@@ -434,15 +434,22 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
     try {
         const stats = await pool.query(`
             SELECT
+                -- Critical metrics
                 (SELECT COUNT(*) FROM garages WHERE approval_status = 'pending' OR approval_status IS NULL) as pending_approvals,
+                (SELECT COUNT(*) FROM orders WHERE order_status IN ('confirmed', 'preparing', 'in_transit')) as active_orders,
+                (SELECT COUNT(*) FROM disputes WHERE status IN ('pending', 'under_review')) as open_disputes,
+                (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE order_status = 'completed' AND created_at > NOW() - INTERVAL '30 days') as monthly_revenue,
+                
+                -- Garage metrics
                 (SELECT COUNT(*) FROM garages WHERE approval_status = 'approved') as approved_garages,
                 (SELECT COUNT(*) FROM garages WHERE approval_status = 'demo' AND demo_expires_at > NOW()) as active_demos,
-                (SELECT COUNT(*) FROM garages WHERE approval_status = 'demo' AND demo_expires_at <= NOW()) as expired_demos,
-                (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
-                (SELECT COUNT(*) FROM users WHERE user_type = 'driver') as total_drivers,
-                (SELECT COUNT(*) FROM orders WHERE order_status IN ('confirmed', 'preparing', 'in_transit')) as active_orders,
-                (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as open_disputes,
-                (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE order_status = 'completed' AND created_at > NOW() - INTERVAL '30 days') as monthly_revenue
+                (SELECT COUNT(*) FROM garages WHERE approval_status = 'demo' AND demo_expires_at > NOW() AND demo_expires_at <= NOW() + INTERVAL '7 days') as expiring_soon,
+                
+                -- User metrics
+                (SELECT COUNT(*) FROM users WHERE user_type = 'staff') as total_staff,
+                (SELECT COUNT(*) FROM users WHERE user_type IN ('customer', 'garage', 'driver')) as total_users,
+                (SELECT COUNT(*) FROM drivers d JOIN users u ON d.user_id = u.user_id WHERE d.status = 'available' AND u.is_suspended = false) as active_drivers,
+                (SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURRENT_DATE) as today_signups
         `);
 
         res.json({
@@ -1186,7 +1193,8 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
         user_type,
         is_active = true,
         garage_data,
-        driver_data
+        driver_data,
+        staff_data
     } = req.body;
 
     // Validation
@@ -1194,7 +1202,7 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Phone, password, name, and user type are required' });
     }
 
-    if (!['customer', 'garage', 'driver', 'admin'].includes(user_type)) {
+    if (!['customer', 'garage', 'driver', 'admin', 'staff'].includes(user_type)) {
         return res.status(400).json({ error: 'Invalid user type' });
     }
 
@@ -1204,6 +1212,13 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
 
     if (user_type === 'garage' && (!garage_data || !garage_data.garage_name)) {
         return res.status(400).json({ error: 'Garage name is required for garage users' });
+    }
+
+    if (user_type === 'staff' && (!staff_data || !staff_data.role)) {
+        return res.status(400).json({
+            error: 'Staff role is required',
+            valid_roles: ['operations', 'accounting', 'customer_service', 'quality_control', 'logistics', 'hr', 'management']
+        });
     }
 
     try {
@@ -1253,6 +1268,40 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
                     garage_data.cr_number || null,
                     garage_data.approval_status || 'pending',
                     demoExpiresAt
+                ]);
+            }
+
+            // Create driver record if user_type is driver
+            if (user_type === 'driver') {
+                await client.query(`
+                    INSERT INTO drivers (
+                        user_id, full_name, phone, email,
+                        vehicle_type, vehicle_plate, vehicle_model,
+                        status, is_active
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'available', true)
+                `, [
+                    newUser.user_id,
+                    full_name,
+                    phone_number,
+                    email || null,
+                    driver_data?.vehicle_type || 'motorcycle',
+                    driver_data?.vehicle_plate || null,
+                    driver_data?.vehicle_model || null
+                ]);
+            }
+
+            // Create staff profile if user_type is staff
+            if (user_type === 'staff' && staff_data) {
+                await client.query(`
+                    INSERT INTO staff_profiles (
+                        user_id, role, department, employee_id, hire_date
+                    ) VALUES ($1, $2, $3, $4, $5)
+                `, [
+                    newUser.user_id,
+                    staff_data.role,
+                    staff_data.department || null,
+                    staff_data.employee_id || null,
+                    staff_data.hire_date || new Date()
                 ]);
             }
 

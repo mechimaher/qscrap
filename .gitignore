@@ -37,6 +37,3 @@ coverage/
 tmp/
 temp/
 *.tmp
-
-# Tesseract
-*.traineddata

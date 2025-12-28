@@ -63,6 +63,15 @@
                     <i class="bi bi-people"></i>
                     <span>Users</span>
                 </button>
+                <button class="nav-item" data-section="staff">
+                    <i class="bi bi-briefcase"></i>
+                    <span>Staff</span>
+                    <span class="nav-badge staff-badge" id="staffBadge">0</span>
+                </button>
+                <button class="nav-item" data-section="drivers">
+                    <i class="bi bi-truck"></i>
+                    <span>Drivers</span>
+                </button>
                 <button class="nav-item" data-section="audit">
                     <i class="bi bi-journal-text"></i>
                     <span>Audit Log</span>
@@ -95,70 +104,81 @@
 
                 <!-- Stats Grid -->
                 <div class="stats-grid" id="statsGrid">
-                    <!-- Row 1: Key Business Metrics -->
-                    <div class="stat-card revenue">
+                    <!-- Row 1: Critical Business Metrics -->
+                    <div class="stat-card revenue clickable" onclick="switchSection('reports')">
                         <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
                         <div class="stat-content">
                             <span class="stat-value" id="statRevenue">-</span>
                             <span class="stat-label">Revenue (30d)</span>
                         </div>
                     </div>
-                    <div class="stat-card primary">
+                    <div class="stat-card primary clickable" onclick="switchSection('garages')">
                         <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
                         <div class="stat-content">
                             <span class="stat-value" id="statActiveOrders">-</span>
                             <span class="stat-label">Active Orders</span>
                         </div>
                     </div>
-                    <div class="stat-card pending">
-                        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                        <div class="stat-content">
-                            <span class="stat-value" id="statPending">-</span>
-                            <span class="stat-label">Pending Approvals</span>
-                        </div>
-                    </div>
-                    <div class="stat-card danger">
+                    <div class="stat-card danger clickable" onclick="switchSection('audit')">
                         <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
                         <div class="stat-content">
                             <span class="stat-value" id="statDisputes">-</span>
                             <span class="stat-label">Open Disputes</span>
                         </div>
                     </div>
-
-                    <!-- Row 2: User/Garage Metrics -->
-                    <div class="stat-card success">
-                        <div class="stat-icon"><i class="bi bi-shop"></i></div>
+                    <div class="stat-card pending clickable" onclick="switchSection('approvals')">
+                        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
                         <div class="stat-content">
-                            <span class="stat-value" id="statApproved">-</span>
-                            <span class="stat-label">Approved Garages</span>
+                            <span class="stat-value" id="statPending">-</span>
+                            <span class="stat-label">Pending Approvals</span>
                         </div>
                     </div>
-                    <div class="stat-card demo">
+
+                    <!-- Row 2: Garage Metrics -->
+                    <div class="stat-card success clickable" onclick="switchSection('garages')">
+                        <div class="stat-icon"><i class="bi bi-shop-window"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statApproved">-</span>
+                            <span class="stat-label">Active Garages</span>
+                        </div>
+                    </div>
+                    <div class="stat-card demo clickable"
+                        onclick="switchSection('approvals'); document.getElementById('approvalStatusFilter').value='demo';">
                         <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
                         <div class="stat-content">
                             <span class="stat-value" id="statDemos">-</span>
                             <span class="stat-label">Active Demos</span>
                         </div>
                     </div>
-                    <div class="stat-card expired">
-                        <div class="stat-icon"><i class="bi bi-hourglass-bottom"></i></div>
+                    <div class="stat-card expired clickable"
+                        onclick="switchSection('approvals'); document.getElementById('approvalStatusFilter').value='expired';">
+                        <div class="stat-icon"><i class="bi bi-exclamation-diamond"></i></div>
                         <div class="stat-content">
-                            <span class="stat-value" id="statExpired">-</span>
-                            <span class="stat-label">Expired Demos</span>
+                            <span class="stat-value" id="statExpiringSoon">-</span>
+                            <span class="stat-label">Expiring in 7d</span>
                         </div>
                     </div>
-                    <div class="stat-card info">
+
+                    <!-- Row 3: User Metrics -->
+                    <div class="stat-card info clickable" onclick="switchSection('users')">
                         <div class="stat-icon"><i class="bi bi-people"></i></div>
                         <div class="stat-content">
-                            <span class="stat-value" id="statCustomers">-</span>
-                            <span class="stat-label">Customers</span>
+                            <span class="stat-value" id="statTotalUsers">-</span>
+                            <span class="stat-label">Total Users</span>
                         </div>
                     </div>
-                    <div class="stat-card warning">
+                    <div class="stat-card warning clickable" onclick="switchSection('drivers')">
                         <div class="stat-icon"><i class="bi bi-truck"></i></div>
                         <div class="stat-content">
-                            <span class="stat-value" id="statDrivers">-</span>
-                            <span class="stat-label">Drivers</span>
+                            <span class="stat-value" id="statActiveDrivers">-</span>
+                            <span class="stat-label">Active Drivers</span>
+                        </div>
+                    </div>
+                    <div class="stat-card staff">
+                        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statTodaySignups">-</span>
+                            <span class="stat-label">Today's Signups</span>
                         </div>
                     </div>
                 </div>
@@ -168,16 +188,28 @@
                     <h3>Quick Actions</h3>
                     <div class="action-buttons">
                         <button class="action-btn" onclick="switchSection('approvals')">
-                            <i class="bi bi-person-plus"></i>
+                            <i class="bi bi-person-check"></i>
                             Review Pending
                         </button>
                         <button class="action-btn" onclick="switchSection('garages')">
                             <i class="bi bi-shop"></i>
                             Manage Garages
                         </button>
+                        <button class="action-btn" onclick="switchSection('staff')">
+                            <i class="bi bi-briefcase"></i>
+                            View Staff
+                        </button>
+                        <button class="action-btn" onclick="switchSection('drivers')">
+                            <i class="bi bi-truck"></i>
+                            Manage Drivers
+                        </button>
+                        <button class="action-btn" onclick="openCreateUserModal()">
+                            <i class="bi bi-person-plus"></i>
+                            Create User
+                        </button>
                         <button class="action-btn" onclick="switchSection('audit')">
                             <i class="bi bi-journal-text"></i>
-                            View Audit Log
+                            Audit Log
                         </button>
                     </div>
                 </div>
@@ -231,6 +263,8 @@
                             <option value="customer">Customers</option>
                             <option value="garage">Garages</option>
                             <option value="driver">Drivers</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admins</option>
                         </select>
                         <select id="userStatusFilter" onchange="loadUsers()">
                             <option value="all">All Status</option>
@@ -260,6 +294,77 @@
                     </table>
                 </div>
                 <div id="usersPagination" class="pagination-container"></div>
+            </section>
+
+            <!-- Staff Section -->
+            <section class="section" id="sectionStaff">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-briefcase"></i> Staff Management</h1>
+                    <div class="header-actions">
+                        <select id="staffRoleFilter" onchange="loadStaff()">
+                            <option value="all">All Roles</option>
+                            <option value="operations">🎯 Operations</option>
+                            <option value="accounting">💰 Accounting</option>
+                            <option value="customer_service">🎧 Customer Service</option>
+                            <option value="quality_control">✅ Quality Control</option>
+                            <option value="logistics">🚚 Logistics</option>
+                            <option value="hr">👥 HR</option>
+                            <option value="management">📊 Management</option>
+                        </select>
+                        <input type="text" id="staffSearch" placeholder="Search staff..."
+                            onkeyup="debounceStaffSearch()">
+                        <button class="btn btn-primary"
+                            onclick="openCreateUserModal(); setTimeout(() => selectUserType('staff'), 100);">
+                            <i class="bi bi-person-plus"></i> Add Staff
+                        </button>
+                    </div>
+                </div>
+                <div class="staff-cards-grid" id="staffGrid">
+                    <div class="loading-spinner">Loading staff...</div>
+                </div>
+                <div id="staffPagination" class="pagination-container"></div>
+            </section>
+
+            <!-- Drivers Section -->
+            <section class="section" id="sectionDrivers">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-truck"></i> Driver Management</h1>
+                    <div class="header-actions">
+                        <select id="driverStatusFilter" onchange="loadDrivers()">
+                            <option value="all">All Status</option>
+                            <option value="available">🟢 Available</option>
+                            <option value="busy">🟡 Busy</option>
+                            <option value="offline">⚫ Offline</option>
+                        </select>
+                        <input type="text" id="driverSearch" placeholder="Search drivers..."
+                            onkeyup="debounceDriverSearch()">
+                        <button class="btn btn-primary"
+                            onclick="openCreateUserModal(); setTimeout(() => selectUserType('driver'), 100);">
+                            <i class="bi bi-person-plus"></i> Add Driver
+                        </button>
+                    </div>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="driversTable">
+                        <thead>
+                            <tr>
+                                <th>Driver</th>
+                                <th>Phone</th>
+                                <th>Vehicle</th>
+                                <th>Status</th>
+                                <th>Deliveries</th>
+                                <th>Rating</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="driversTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-cell">Loading drivers...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="driversPagination" class="pagination-container"></div>
             </section>
 
             <!-- Audit Log Section -->
@@ -614,10 +719,15 @@
                             <span>Driver</span>
                             <small>Delivery personnel</small>
                         </div>
-                        <div class="user-type-card" onclick="selectUserType('operations')">
-                            <i class="bi bi-headset"></i>
-                            <span>Operations</span>
-                            <small>Customer service staff</small>
+                        <div class="user-type-card staff-card" onclick="selectUserType('staff')">
+                            <i class="bi bi-briefcase"></i>
+                            <span>Staff</span>
+                            <small>Internal employees</small>
+                        </div>
+                        <div class="user-type-card admin-card" onclick="selectUserType('admin')">
+                            <i class="bi bi-shield-check"></i>
+                            <span>Admin</span>
+                            <small>System administrator</small>
                         </div>
                     </div>
                 </div>
@@ -706,6 +816,40 @@
                                 <div class="form-group">
                                     <label>License Plate</label>
                                     <input type="text" id="newDriverPlate" placeholder="Vehicle plate number">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff-specific Fields -->
+                        <div class="form-section staff-fields" style="display: none;">
+                            <h4>Staff Information</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Staff Role *</label>
+                                    <select id="newStaffRole" required>
+                                        <option value="">Select Role...</option>
+                                        <option value="operations">🎯 Operations</option>
+                                        <option value="accounting">💰 Accounting</option>
+                                        <option value="customer_service">🎧 Customer Service</option>
+                                        <option value="quality_control">✅ Quality Control</option>
+                                        <option value="logistics">🚚 Logistics</option>
+                                        <option value="hr">👥 HR</option>
+                                        <option value="management">📊 Management</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Department</label>
+                                    <input type="text" id="newStaffDepartment" placeholder="e.g., Customer Support">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Employee ID</label>
+                                    <input type="text" id="newStaffEmployeeId" placeholder="e.g., EMP001">
+                                </div>
+                                <div class="form-group">
+                                    <label>Hire Date</label>
+                                    <input type="date" id="newStaffHireDate">
                                 </div>
                             </div>
                         </div>

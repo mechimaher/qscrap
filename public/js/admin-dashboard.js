@@ -85,6 +85,8 @@ function switchSection(section) {
     if (section === 'approvals') loadPendingGarages();
     if (section === 'garages') loadGarages();
     if (section === 'users') loadUsers();
+    if (section === 'staff') loadStaff();
+    if (section === 'drivers') loadDrivers();
     if (section === 'audit') loadAuditLog();
     if (section === 'reports') loadReports();
 }
@@ -107,16 +109,21 @@ async function loadDashboard() {
                 ? `${(revenue / 1000).toFixed(1)}K`
                 : revenue.toFixed(0);
 
-            // Animate stat updates for smooth UX
+            // Row 1: Critical Business Metrics
             animateStat('statRevenue', `QAR ${formattedRevenue}`);
             animateStat('statActiveOrders', data.stats.active_orders || 0);
-            animateStat('statPending', data.stats.pending_approvals || 0);
             animateStat('statDisputes', data.stats.open_disputes || 0);
+            animateStat('statPending', data.stats.pending_approvals || 0);
+
+            // Row 2: Garage Metrics
             animateStat('statApproved', data.stats.approved_garages || 0);
             animateStat('statDemos', data.stats.active_demos || 0);
-            animateStat('statExpired', data.stats.expired_demos || 0);
-            animateStat('statCustomers', data.stats.total_customers || 0);
-            animateStat('statDrivers', data.stats.total_drivers || 0);
+            animateStat('statExpiringSoon', data.stats.expiring_soon || 0);
+
+            // Row 3: User Metrics
+            animateStat('statTotalUsers', data.stats.total_users || 0);
+            animateStat('statActiveDrivers', data.stats.active_drivers || 0);
+            animateStat('statTodaySignups', data.stats.today_signups || 0);
 
             // Update pending badge
             const pendingCount = data.stats.pending_approvals || 0;
@@ -124,6 +131,14 @@ async function loadDashboard() {
             if (badge) {
                 badge.textContent = pendingCount;
                 badge.style.display = pendingCount > 0 ? 'inline' : 'none';
+            }
+
+            // Update staff badge
+            const staffCount = data.stats.total_staff || 0;
+            const staffBadge = document.getElementById('staffBadge');
+            if (staffBadge) {
+                staffBadge.textContent = staffCount;
+                staffBadge.style.display = staffCount > 0 ? 'inline' : 'none'; // Optional: hide if 0
             }
 
             // Highlight warning states
@@ -1261,7 +1276,7 @@ function openCreateUserModal() {
 
     // Clear form
     document.getElementById('createUserForm')?.reset();
-    document.querySelectorAll('.garage-fields, .driver-fields').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.garage-fields, .driver-fields, .staff-fields').forEach(el => el.style.display = 'none');
 
     // Open modal
     document.getElementById('createUserModal').classList.add('active');
@@ -1279,16 +1294,19 @@ function selectUserType(type) {
         customer: 'Customer',
         garage: 'Garage',
         driver: 'Driver',
-        operations: 'Operations Staff'
+        staff: 'Staff Member',
+        admin: 'Administrator'
     };
     document.getElementById('selectedTypeBadge').textContent = typeLabels[type] || type;
 
     // Show type-specific fields
-    document.querySelectorAll('.garage-fields, .driver-fields').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.garage-fields, .driver-fields, .staff-fields').forEach(el => el.style.display = 'none');
     if (type === 'garage') {
         document.querySelector('.garage-fields').style.display = 'block';
     } else if (type === 'driver') {
         document.querySelector('.driver-fields').style.display = 'block';
+    } else if (type === 'staff') {
+        document.querySelector('.staff-fields').style.display = 'block';
     }
 
     // Update action buttons
@@ -1337,7 +1355,7 @@ async function submitCreateUser() {
         password,
         full_name: fullName,
         email: email || null,
-        user_type: selectedUserType === 'operations' ? 'admin' : selectedUserType,
+        user_type: selectedUserType,
         is_active: isActive
     };
 
@@ -1362,6 +1380,21 @@ async function submitCreateUser() {
         userData.driver_data = {
             vehicle_type: document.getElementById('newDriverVehicle').value,
             license_plate: document.getElementById('newDriverPlate').value.trim()
+        };
+    }
+
+    // Add staff-specific fields
+    if (selectedUserType === 'staff') {
+        const staffRole = document.getElementById('newStaffRole').value;
+        if (!staffRole) {
+            showToast('Please select a staff role', 'error');
+            return;
+        }
+        userData.staff_data = {
+            role: staffRole,
+            department: document.getElementById('newStaffDepartment').value.trim(),
+            employee_id: document.getElementById('newStaffEmployeeId').value.trim(),
+            hire_date: document.getElementById('newStaffHireDate').value || null
         };
     }
 
@@ -1394,6 +1427,216 @@ async function submitCreateUser() {
         console.error('Create user error:', err);
         showToast('Connection error', 'error');
     }
+}
+
+// ============================================
+// STAFF MANAGEMENT
+// ============================================
+
+let staffSearchDebounce = null;
+const STAFF_ROLE_ICONS = {
+    operations: '🎯',
+    accounting: '💰',
+    customer_service: '🎧',
+    quality_control: '✅',
+    logistics: '🚚',
+    hr: '👥',
+    management: '📊'
+};
+
+function debounceStaffSearch() {
+    clearTimeout(staffSearchDebounce);
+    staffSearchDebounce = setTimeout(() => loadStaff(), 300);
+}
+
+async function loadStaff(page = 1) {
+    const container = document.getElementById('staffGrid');
+    const roleFilter = document.getElementById('staffRoleFilter')?.value || 'all';
+    const search = document.getElementById('staffSearch')?.value || '';
+
+    container.innerHTML = '<div class="loading-spinner"><i class="bi bi-hourglass"></i> Loading staff...</div>';
+
+    try {
+        const params = new URLSearchParams({
+            user_type: 'staff',
+            search,
+            page,
+            limit: 12
+        });
+
+        const res = await fetch(`${API_URL}/admin/users?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.users && data.users.length > 0) {
+            // Filter by role if needed (client-side for now)
+            let staffUsers = data.users;
+
+            container.innerHTML = staffUsers.map(staff => renderStaffCard(staff)).join('');
+
+            // Update staff badge count
+            const staffBadge = document.getElementById('staffBadge');
+            if (staffBadge) {
+                staffBadge.textContent = data.pagination?.total || staffUsers.length;
+                staffBadge.style.display = 'inline';
+            }
+
+            renderPagination('staffPagination', data.pagination, 'loadStaff', { showInfo: true });
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-briefcase"></i>
+                    <p>No staff members found</p>
+                    <button class="btn btn-primary" onclick="openCreateUserModal(); setTimeout(() => selectUserType('staff'), 100);">
+                        <i class="bi bi-person-plus"></i> Add Staff Member
+                    </button>
+                </div>
+            `;
+            document.getElementById('staffPagination').innerHTML = '';
+        }
+    } catch (err) {
+        console.error('loadStaff error:', err);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Failed to load staff</p>
+                <button class="btn btn-outline" onclick="loadStaff(${page})">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+function renderStaffCard(staff) {
+    const role = staff.staff_role || 'operations';
+    const roleIcon = STAFF_ROLE_ICONS[role] || '👤';
+    const roleLabel = role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const statusClass = staff.is_suspended ? 'suspended' : (staff.is_active ? 'active' : 'inactive');
+
+    return `
+        <div class="staff-card">
+            <div class="staff-header">
+                <div class="staff-avatar">
+                    <span class="role-icon">${roleIcon}</span>
+                </div>
+                <div class="staff-info">
+                    <span class="staff-name">${escapeHtml(staff.full_name || 'N/A')}</span>
+                    <span class="staff-role">${roleLabel}</span>
+                </div>
+                <span class="status-dot ${statusClass}" title="${statusClass}"></span>
+            </div>
+            <div class="staff-details">
+                <div class="detail-row">
+                    <i class="bi bi-telephone"></i>
+                    <span>${staff.phone_number || '-'}</span>
+                </div>
+                <div class="detail-row">
+                    <i class="bi bi-envelope"></i>
+                    <span>${staff.email || '-'}</span>
+                </div>
+            </div>
+            <div class="staff-actions">
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails('${staff.user_id}')">
+                    <i class="bi bi-eye"></i> View
+                </button>
+                ${staff.is_suspended
+            ? `<button class="btn btn-sm btn-success" onclick="activateUser('${staff.user_id}'); loadStaff();">Activate</button>`
+            : `<button class="btn btn-sm btn-danger" onclick="suspendUser('${staff.user_id}'); loadStaff();">Suspend</button>`
+        }
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
+// DRIVER MANAGEMENT
+// ============================================
+
+let driverSearchDebounce = null;
+
+function debounceDriverSearch() {
+    clearTimeout(driverSearchDebounce);
+    driverSearchDebounce = setTimeout(() => loadDrivers(), 300);
+}
+
+async function loadDrivers(page = 1) {
+    const tbody = document.getElementById('driversTableBody');
+    const statusFilter = document.getElementById('driverStatusFilter')?.value || 'all';
+    const search = document.getElementById('driverSearch')?.value || '';
+
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-cell"><i class="bi bi-hourglass"></i> Loading drivers...</td></tr>';
+
+    try {
+        const params = new URLSearchParams({
+            user_type: 'driver',
+            search,
+            page,
+            limit: 15
+        });
+
+        const res = await fetch(`${API_URL}/admin/users?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.users && data.users.length > 0) {
+            // Get driver details (we need to make additional calls or enhance API later)
+            tbody.innerHTML = data.users.map(driver => renderDriverRow(driver)).join('');
+            renderPagination('driversPagination', data.pagination, 'loadDrivers', { showInfo: true });
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-cell">
+                        <i class="bi bi-truck"></i> No drivers found
+                        <br><br>
+                        <button class="btn btn-primary btn-sm" onclick="openCreateUserModal(); setTimeout(() => selectUserType('driver'), 100);">
+                            <i class="bi bi-person-plus"></i> Add Driver
+                        </button>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('driversPagination').innerHTML = '';
+        }
+    } catch (err) {
+        console.error('loadDrivers error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-cell"><i class="bi bi-exclamation-triangle"></i> Failed to load drivers</td></tr>';
+    }
+}
+
+function renderDriverRow(driver) {
+    const statusClass = driver.is_suspended ? 'suspended' : (driver.is_active ? 'active' : 'inactive');
+    const statusLabel = driver.is_suspended ? 'Offline' : (driver.is_active ? 'Available' : 'Inactive');
+    const statusIcon = driver.is_suspended ? '⚫' : (driver.is_active ? '🟢' : '🔴');
+
+    return `
+        <tr>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar driver"><i class="bi bi-truck"></i></div>
+                    <div class="user-info">
+                        <span class="user-name">${escapeHtml(driver.full_name || 'N/A')}</span>
+                        <span class="user-id">${driver.user_id.slice(0, 8)}...</span>
+                    </div>
+                </div>
+            </td>
+            <td>${driver.phone_number || '-'}</td>
+            <td><span class="vehicle-badge">🏍️ Motorcycle</span></td>
+            <td><span class="status-badge ${statusClass}">${statusIcon} ${statusLabel}</span></td>
+            <td>0</td>
+            <td>⭐ -</td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="viewUserDetails('${driver.user_id}')">
+                    <i class="bi bi-eye"></i>
+                </button>
+                ${driver.is_suspended
+            ? `<button class="btn btn-sm btn-success" onclick="activateUser('${driver.user_id}'); loadDrivers();"><i class="bi bi-check"></i></button>`
+            : `<button class="btn btn-sm btn-warning" onclick="suspendUser('${driver.user_id}'); loadDrivers();"><i class="bi bi-pause"></i></button>`
+        }
+            </td>
+        </tr>
+    `;
 }
 
 // ============================================

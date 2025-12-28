@@ -163,8 +163,14 @@ export function useSocket() {
             });
 
             // Driver assigned to your order
-            socket.current.on('driver_assigned', (data: { order_id: string; driver_name: string; driver_phone: string }) => {
-                console.log('[Socket] Driver assigned:', data.driver_name);
+            socket.current.on('driver_assigned', (data: {
+                order_id: string;
+                order_number: string;
+                driver: { name: string; phone: string; vehicle_type?: string; vehicle_plate?: string };
+                estimated_delivery?: string;
+                notification: string;
+            }) => {
+                console.log('[Socket] Driver assigned:', data.driver?.name);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             });
 
@@ -231,19 +237,32 @@ export function useSocket() {
         hasShownInitialNotification.current = false;
     }, []);
 
-    // Handle app state changes (reconnect when app becomes active)
+    // Handle app state changes (reconnect when app becomes active, disconnect if logged out)
     useEffect(() => {
-        const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-            if (nextAppState === 'active' && !socket.current?.connected) {
-                console.log('[Socket] App active, reconnecting...');
-                connect();
+        const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+            if (nextAppState === 'active') {
+                // Check if user is still logged in
+                const token = await api.getToken();
+                if (!token) {
+                    // User logged out - disconnect socket and clear notifications
+                    console.log('[Socket] No token on app active - disconnecting...');
+                    disconnect();
+                    clearAllNotifications();
+                    return;
+                }
+
+                // User still logged in - reconnect if needed
+                if (!socket.current?.connected) {
+                    console.log('[Socket] App active, reconnecting...');
+                    connect();
+                }
             }
         });
 
         return () => {
             subscription.remove();
         };
-    }, [connect]);
+    }, [connect, disconnect, clearAllNotifications]);
 
     // Auto-connect on mount
     useEffect(() => {

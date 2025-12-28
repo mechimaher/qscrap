@@ -2,29 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 
-// Route imports
-import authRoutes from './routes/auth.routes';
-import requestRoutes from './routes/request.routes';
-import bidRoutes from './routes/bid.routes';
-import orderRoutes from './routes/order.routes';
-import subscriptionRoutes from './routes/subscription.routes';
-import cancellationRoutes from './routes/cancellation.routes';
-import dashboardRoutes from './routes/dashboard.routes';
-import negotiationRoutes from './routes/negotiation.routes';
-import disputeRoutes from './routes/dispute.routes';
-import operationsRoutes from './routes/operations.routes';
-import qualityRoutes from './routes/quality.routes';
-import deliveryRoutes from './routes/delivery.routes';
-import financeRoutes from './routes/finance.routes';
-import supportRoutes from './routes/support.routes';
-import searchRoutes from './routes/search.routes';
-import reportsRoutes from './routes/reports.routes';
-import documentsRoutes from './routes/documents.routes';
-import reviewsRoutes from './routes/reviews.routes';
-import driverRoutes from './routes/driver.routes';
-import chatRoutes from './routes/chat.routes';
-import adminRoutes from './routes/admin.routes';
-import addressRoutes from './routes/address.routes';
+// Versioned API Routes
+import v1Router from './routes/v1.routes';
+
+// Swagger Documentation
+import setupSwagger from './config/swagger';
 
 
 // Middleware imports
@@ -112,40 +94,20 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 // ==========================================
-// API ROUTES
+// API ROUTES (Versioned)
 // ==========================================
 
-// Core Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/requests', requestRoutes);
-app.use('/api/bids', bidRoutes);
-app.use('/api/orders', orderRoutes);
+// API v1 - Primary versioned routes
+app.use('/api/v1', v1Router);
 
-// Feature Routes
-app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/cancellations', cancellationRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/negotiations', negotiationRoutes);
-app.use('/api/disputes', disputeRoutes);
-app.use('/api/operations', operationsRoutes);
-app.use('/api/quality', qualityRoutes);
-app.use('/api/delivery', deliveryRoutes);
-app.use('/api/finance', financeRoutes);
-app.use('/api/support', supportRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/documents', documentsRoutes);
-app.use('/api/reviews', reviewsRoutes);
+// Backward compatibility - /api/* routes to v1
+// This ensures existing clients continue to work
+app.use('/api', v1Router);
 
-// Driver App Routes (for driver mobile app)
-app.use('/api/driver', driverRoutes);
-
-// Chat Routes (customer-driver messaging)
-app.use('/api/chat', chatRoutes);
-
-// Admin Routes (platform administration)
-app.use('/api/admin', adminRoutes);
-app.use('/api/addresses', addressRoutes);
+// ==========================================
+// API DOCUMENTATION (Swagger UI)
+// ==========================================
+setupSwagger(app);
 
 
 // ==========================================

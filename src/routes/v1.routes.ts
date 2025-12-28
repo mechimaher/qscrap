@@ -1,0 +1,97 @@
+/**
+ * API v1 Routes
+ * 
+ * Aggregates all API routes under the v1 namespace.
+ * This file provides a single entry point for all versioned API routes.
+ * 
+ * Usage in app.ts:
+ *   app.use('/api/v1', v1Router);
+ *   app.use('/api', v1Router); // Backward compatibility
+ * 
+ * @module routes/v1.routes
+ */
+
+import { Router } from 'express';
+
+// Core Routes
+import authRoutes from './auth.routes';
+import requestRoutes from './request.routes';
+import bidRoutes from './bid.routes';
+import orderRoutes from './order.routes';
+
+// Feature Routes
+import subscriptionRoutes from './subscription.routes';
+import cancellationRoutes from './cancellation.routes';
+import dashboardRoutes from './dashboard.routes';
+import negotiationRoutes from './negotiation.routes';
+import disputeRoutes from './dispute.routes';
+import operationsRoutes from './operations.routes';
+import qualityRoutes from './quality.routes';
+import deliveryRoutes from './delivery.routes';
+import financeRoutes from './finance.routes';
+import supportRoutes from './support.routes';
+import searchRoutes from './search.routes';
+import reportsRoutes from './reports.routes';
+import documentsRoutes from './documents.routes';
+import reviewsRoutes from './reviews.routes';
+
+// Driver & Chat Routes
+import driverRoutes from './driver.routes';
+import chatRoutes from './chat.routes';
+
+// Admin Routes
+import adminRoutes from './admin.routes';
+import addressRoutes from './address.routes';
+
+const v1Router = Router();
+
+// ==========================================
+// CORE ROUTES
+// ==========================================
+
+/** @swagger path /auth */
+v1Router.use('/auth', authRoutes);
+
+/** @swagger path /requests */
+v1Router.use('/requests', requestRoutes);
+
+/** @swagger path /bids */
+v1Router.use('/bids', bidRoutes);
+
+/** @swagger path /orders */
+v1Router.use('/orders', orderRoutes);
+
+// ==========================================
+// FEATURE ROUTES
+// ==========================================
+
+v1Router.use('/subscriptions', subscriptionRoutes);
+v1Router.use('/cancellations', cancellationRoutes);
+v1Router.use('/dashboard', dashboardRoutes);
+v1Router.use('/negotiations', negotiationRoutes);
+v1Router.use('/disputes', disputeRoutes);
+v1Router.use('/operations', operationsRoutes);
+v1Router.use('/quality', qualityRoutes);
+v1Router.use('/delivery', deliveryRoutes);
+v1Router.use('/finance', financeRoutes);
+v1Router.use('/support', supportRoutes);
+v1Router.use('/search', searchRoutes);
+v1Router.use('/reports', reportsRoutes);
+v1Router.use('/documents', documentsRoutes);
+v1Router.use('/reviews', reviewsRoutes);
+
+// ==========================================
+// DRIVER & CHAT ROUTES
+// ==========================================
+
+v1Router.use('/driver', driverRoutes);
+v1Router.use('/chat', chatRoutes);
+
+// ==========================================
+// ADMIN ROUTES
+// ==========================================
+
+v1Router.use('/admin', adminRoutes);
+v1Router.use('/addresses', addressRoutes);
+
+export default v1Router;
