@@ -9,6 +9,7 @@ import {
     RefreshControl,
     Dimensions,
     Linking,
+    Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -103,8 +104,15 @@ export default function HomeScreen() {
                     />
                 }
             >
-                {/* Premium Header */}
+                {/* Premium Header with Logo */}
                 <View style={styles.header}>
+                    <View style={styles.headerLogoContainer}>
+                        <Image
+                            source={require('../../../assets/logo.png')}
+                            style={styles.headerLogo}
+                            resizeMode="cover"
+                        />
+                    </View>
                     <View style={styles.headerLeft}>
                         <Text style={[styles.greetingSmall, { color: colors.textSecondary }]}>{getTimeEmoji()} {greeting()}</Text>
                         <Text style={[styles.userName, { color: colors.text }]}>{user?.full_name || 'Customer'}</Text>
@@ -301,6 +309,23 @@ const styles = StyleSheet.create({
     },
     headerLeft: {
         flex: 1,
+    },
+    headerLogoContainer: {
+        width: 42,
+        height: 42,
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginRight: Spacing.md,
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    headerLogo: {
+        width: 42,
+        height: 42,
+        borderRadius: 12,
     },
     greetingSmall: {
         fontSize: FontSizes.sm,

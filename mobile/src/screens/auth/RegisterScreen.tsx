@@ -75,7 +75,12 @@ export default function RegisterScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#0f0c29', '#302b63', '#24243e']}
+            style={styles.container}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+        >
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -201,14 +206,13 @@ export default function RegisterScreen() {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAFA',
     },
     keyboardView: { flex: 1 },
     scrollContent: {
@@ -221,12 +225,12 @@ const styles = StyleSheet.create({
     },
     backButton: {
         padding: Spacing.sm,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
         borderRadius: BorderRadius.md,
         alignSelf: 'flex-start',
     },
     backText: {
-        color: Colors.primary,
+        color: '#ffffff',
         fontSize: FontSizes.md,
         fontWeight: '600',
     },
@@ -241,16 +245,19 @@ const styles = StyleSheet.create({
     titleText: {
         fontSize: FontSizes.xxl + 4,
         fontWeight: '800',
-        color: Colors.dark.text,
+        color: '#ffffff',
         letterSpacing: -0.5,
+        textShadowColor: 'rgba(138, 21, 56, 0.6)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 10,
     },
     subtitleText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: 'rgba(255, 255, 255, 0.8)',
         marginTop: Spacing.xs,
     },
     formCard: {
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
         ...Shadows.lg,
@@ -337,12 +344,12 @@ const styles = StyleSheet.create({
     },
     loginText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: 'rgba(255, 255, 255, 0.8)',
     },
     loginLink: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: Colors.primary,
+        color: '#ffffff',
         marginLeft: Spacing.xs,
     },
 });

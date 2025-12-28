@@ -118,10 +118,7 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
-                    <a class="nav-item" data-section="users">
-                        <i class="bi bi-people-fill"></i>
-                        Users
-                    </a>
+
                     <a class="nav-item" data-section="finance">
                         <i class="bi bi-cash-stack"></i>
                         Finance
@@ -844,40 +841,6 @@
                 </div>
             </section>
 
-            <!-- Users Section -->
-            <section class="section" id="sectionUsers">
-                <div class="page-header">
-                    <h1 class="page-title">User Management</h1>
-                    <div class="search-box">
-                        <i class="bi bi-search"></i>
-                        <input type="text" placeholder="Search users..." id="userSearch">
-                    </div>
-                </div>
-
-                <div class="tabs" id="userTabs">
-                    <div class="tab active" data-type="customer">Customers</div>
-                    <div class="tab" data-type="garage">Garages</div>
-                </div>
-
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Contact</th>
-                                <th>Orders</th>
-                                <th>Joined</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTable">
-                        </tbody>
-                    </table>
-                    <!-- Pagination Container -->
-                    <div id="usersPagination"></div>
-                </div>
-            </section>
-
             <!-- Finance Section --!>
             <section class="section" id="sectionFinance">
                 <div class="page-header">
@@ -982,97 +945,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <div id="transactionsPagination"></div>
             </div>
-            </section>
-
-            <!-- Users Section -->
-            <section class="section" id="sectionUsers">
-                <div class="page-header">
-                    <h1 class="page-title">User Management</h1>
-                </div>
-
-                <!-- User Stats -->
-                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
-                            <i class="bi bi-people"></i>
-                        </div>
-                        <div class="stat-value" id="totalUsers">0</div>
-                        <div class="stat-label">Total Customers</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                            <i class="bi bi-building"></i>
-                        </div>
-                        <div class="stat-value" id="totalGarages">0</div>
-                        <div class="stat-label">Total Garages</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                            <i class="bi bi-person-plus"></i>
-                        </div>
-                        <div class="stat-value" id="newUsersThisMonth">0</div>
-                        <div class="stat-label">New This Month</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-                            <i class="bi bi-person-x"></i>
-                        </div>
-                        <div class="stat-value" id="suspendedUsers">0</div>
-                        <div class="stat-label">Suspended</div>
-                    </div>
-                </div>
-
-                <!-- Users Table -->
-                <div class="content-card">
-                    <div class="table-header">
-                        <h3><i class="bi bi-people-fill"></i> All Users</h3>
-                        <input type="text" class="search-input" id="userSearchInput"
-                            placeholder="Search by name or phone..." onkeyup="searchUsers()">
-                    </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Type</th>
-                                <th>Joined</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading users...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Garages Table -->
-                <div class="content-card" style="margin-top: 20px;">
-                    <div class="table-header">
-                        <h3><i class="bi bi-building"></i> Garage Partners</h3>
-                    </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Garage Name</th>
-                                <th>Owner</th>
-                                <th>Rating</th>
-                                <th>Orders</th>
-                                <th>Subscription</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="garagesTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading garages...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </section>
 
             <!-- Finance Section -->

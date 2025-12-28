@@ -20,7 +20,8 @@
     <div class="login-container" id="loginScreen">
         <div class="login-card">
             <div class="login-logo">
-                <h1><i class="bi bi-wrench-adjustable"></i> QScrap</h1>
+                <img src="assets/images/qscrap-logo.png" alt="QScrap" class="auth-logo-img">
+                <h1>QScrap</h1>
                 <p>Garage Partner Portal</p>
             </div>
 
@@ -75,8 +76,12 @@
     <div class="dashboard" id="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-logo"><i class="bi bi-wrench-adjustable"></i> QScrap</div>
-            <div class="sidebar-subtitle">Garage Partner Dashboard</div>
+            <div class="sidebar-header">
+                <img src="assets/images/qscrap-logo.png" alt="QScrap" class="sidebar-logo-img">
+                <h2 class="sidebar-brand">QScrap</h2>
+                <span class="partner-badge">PARTNER</span>
+            </div>
+            <div class="sidebar-subtitle">Garage Partner Portal</div>
 
             <!-- Global Search -->
             <div class="global-search" style="padding: 12px 16px;">
@@ -155,6 +160,48 @@
             </div>
         </aside>
 
+        <!-- Top Header Bar (Premium) -->
+        <header class="top-header" id="topHeader">
+            <div class="header-left">
+                <span class="header-greeting" id="headerGreeting">Welcome back</span>
+                <span class="header-subtitle">Garage Partner Portal</span>
+            </div>
+            <div class="header-right">
+                <div class="header-datetime" id="headerDateTime">
+                    <i class="bi bi-clock"></i>
+                    <span id="liveDateTime">--</span>
+                </div>
+                <button class="header-btn" onclick="refreshCurrentSection()" title="Refresh (R)" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
+                </button>
+                <button class="header-btn" onclick="showKeyboardShortcuts()" title="Keyboard Shortcuts (?)">
+                    <i class="bi bi-keyboard"></i>
+                </button>
+                <div class="header-notifications">
+                    <button class="header-btn notification-btn" onclick="toggleNotifications()" id="notificationBtn">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-dot" id="notificationDot" style="display: none;"></span>
+                    </button>
+                    <div class="notifications-dropdown" id="notificationsDropdown">
+                        <div class="notifications-header">
+                            <span>Notifications</span>
+                            <button class="btn-link" onclick="markAllRead()">Mark all read</button>
+                        </div>
+                        <div class="notifications-list" id="notificationsList">
+                            <div class="notification-empty">
+                                <i class="bi bi-bell-slash"></i>
+                                <span>No new notifications</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-status" title="Connection Status" id="connectionStatus">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Connected</span>
+                </div>
+            </div>
+        </header>
+
         <!-- Main Content -->
         <main class="main-content" id="main-content">
             <!-- Dashboard Section -->
@@ -163,30 +210,53 @@
                     <h1 class="page-title">Dashboard</h1>
                     <div class="live-indicator">
                         <span class="live-dot"></span>
-                        Connected
+                        Real-time
                     </div>
                 </div>
 
+                <!-- Premium Stat Cards with Gradients -->
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon blue"><i class="bi bi-tag"></i></div>
+                    <div class="stat-card premium bids-premium clickable" onclick="switchSection('bids')">
+                        <div class="stat-icon"><i class="bi bi-tag"></i></div>
                         <div class="stat-value" id="statPendingBids">0</div>
                         <div class="stat-label">Pending Bids</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+                    <div class="stat-card premium orders-premium clickable" onclick="switchSection('orders')">
+                        <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
                         <div class="stat-value" id="statAcceptedBids">0</div>
                         <div class="stat-label">Accepted This Month</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon yellow"><i class="bi bi-box-seam"></i></div>
+                    <div class="stat-card premium revenue-premium clickable" onclick="switchSection('orders')">
+                        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
                         <div class="stat-value" id="statActiveOrders">0</div>
                         <div class="stat-label">Active Orders</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon purple"><i class="bi bi-currency-dollar"></i></div>
+                    <div class="stat-card premium earnings-premium clickable" onclick="switchSection('earnings')">
+                        <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
                         <div class="stat-value" id="statRevenue">0</div>
                         <div class="stat-label">Revenue (QAR)</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="quick-actions">
+                    <h3><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="switchSection('requests')">
+                            <i class="bi bi-inbox"></i> View Live Requests
+                        </button>
+                        <button class="action-btn" onclick="switchSection('orders')">
+                            <i class="bi bi-box-seam"></i> Manage Orders
+                        </button>
+                        <button class="action-btn" onclick="switchSection('earnings')">
+                            <i class="bi bi-wallet"></i> Check Earnings
+                        </button>
+                        <button class="action-btn" onclick="switchSection('subscription')">
+                            <i class="bi bi-credit-card"></i> Subscription
+                        </button>
+                        <button class="action-btn" onclick="switchSection('profile')">
+                            <i class="bi bi-person"></i> Edit Profile
+                        </button>
                     </div>
                 </div>
 
@@ -749,6 +819,71 @@
                     </h4>
                     <p id="orderModalNotes" style="color: var(--text-secondary); font-size: 14px; margin: 0;"></p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-overlay" id="keyboardShortcutsModal" style="align-items: center; justify-content: center;">
+        <div class="shortcuts-modal">
+            <div class="shortcuts-header">
+                <h3><i class="bi bi-keyboard"></i> Keyboard Shortcuts</h3>
+                <button class="close-btn" onclick="closeKeyboardShortcuts()">&times;</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcuts-section">
+                    <h4>Navigation</h4>
+                    <div class="shortcut-item">
+                        <span>Dashboard</span>
+                        <kbd>1</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Live Requests</span>
+                        <kbd>2</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>My Bids</span>
+                        <kbd>3</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Orders</span>
+                        <kbd>4</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Subscription</span>
+                        <kbd>5</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Earnings</span>
+                        <kbd>6</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Profile</span>
+                        <kbd>7</kbd>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h4>Actions</h4>
+                    <div class="shortcut-item">
+                        <span>Refresh</span>
+                        <kbd>R</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Show shortcuts</span>
+                        <kbd>?</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Close modals</span>
+                        <kbd>Esc</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Focus search</span>
+                        <div><kbd>Ctrl</kbd> + <kbd>K</kbd></div>
+                    </div>
+                </div>
+            </div>
+            <div class="shortcuts-footer">
+                <button class="btn btn-primary" onclick="closeKeyboardShortcuts()">Got it</button>
             </div>
         </div>
     </div>

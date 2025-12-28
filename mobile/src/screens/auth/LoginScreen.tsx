@@ -1,5 +1,5 @@
 // QScrap Login Screen - Premium VIP Design
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,8 @@ import {
     ScrollView,
     ActivityIndicator,
     Dimensions,
+    Image,
+    Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -31,6 +33,27 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Logo animation
+    const floatAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        // Floating animation
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(floatAnim, {
+                    toValue: -8,
+                    duration: 1500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(floatAnim, {
+                    toValue: 0,
+                    duration: 1500,
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+    }, []);
 
     const handleLogin = async () => {
         if (!phone || !password) {
@@ -55,7 +78,12 @@ export default function LoginScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#0f0c29', '#302b63', '#24243e']}
+            style={styles.container}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+        >
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -65,11 +93,22 @@ export default function LoginScreen() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Logo Section */}
+                    {/* Logo Section with Premium Animation */}
                     <View style={styles.logoSection}>
-                        <View style={styles.logoContainer}>
-                            <Text style={styles.logoEmoji}>🔧</Text>
-                        </View>
+                        <Animated.View
+                            style={[
+                                styles.logoContainer,
+                                {
+                                    transform: [{ translateY: floatAnim }],
+                                }
+                            ]}
+                        >
+                            <Image
+                                source={require('../../../assets/logo.png')}
+                                style={styles.logo}
+                                resizeMode="cover"
+                            />
+                        </Animated.View>
                         <Text style={styles.logoText}>QScrap</Text>
                         <Text style={styles.tagline}>Qatar Auto Parts Marketplace</Text>
                     </View>
@@ -154,14 +193,13 @@ export default function LoginScreen() {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAFA',
     },
     keyboardView: {
         flex: 1,
@@ -178,29 +216,36 @@ const styles = StyleSheet.create({
     logoContainer: {
         width: 100,
         height: 100,
-        borderRadius: 50,
-        backgroundColor: Colors.primary + '15',
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: 24,
+        overflow: 'hidden',
         marginBottom: Spacing.md,
-        ...Shadows.md,
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 20,
+        elevation: 10,
     },
-    logoEmoji: {
-        fontSize: 50,
+    logo: {
+        width: 100,
+        height: 100,
+        borderRadius: 24,
     },
     logoText: {
         fontSize: 42,
         fontWeight: '800',
-        color: Colors.primary,
+        color: '#ffffff',
         letterSpacing: 1,
+        textShadowColor: 'rgba(138, 21, 56, 0.6)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 10,
     },
     tagline: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: 'rgba(255, 255, 255, 0.8)',
         marginTop: Spacing.xs,
     },
     formCard: {
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
         ...Shadows.lg,
@@ -289,12 +334,12 @@ const styles = StyleSheet.create({
     },
     registerText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: 'rgba(255, 255, 255, 0.8)',
     },
     registerLink: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: Colors.primary,
+        color: '#fff',
         marginLeft: Spacing.xs,
     },
     footer: {
@@ -303,12 +348,12 @@ const styles = StyleSheet.create({
     },
     footerText: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: 'rgba(255, 255, 255, 0.6)',
         textAlign: 'center',
         lineHeight: 18,
     },
     footerLink: {
-        color: Colors.primary,
+        color: '#fff',
         fontWeight: '600',
     },
 });

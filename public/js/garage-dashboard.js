@@ -36,6 +36,11 @@ let bidPhotos = [];
 let pendingCounterOffers = []; // Track counter-offers from customers
 let pendingDisputes = []; // Track disputes from customers
 
+// Premium Feature Variables (must be declared before showDashboard call)
+let autoRefreshInterval = null;
+let lastActivityTime = Date.now();
+let notifications = [];
+
 // Theme Management
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
@@ -204,6 +209,11 @@ async function showDashboard() {
     // Connect Socket
     socket = io();
     socket.emit('join_garage_room', userId);
+
+    // Initialize premium features (live datetime, shortcuts, notifications)
+    if (typeof initializePremiumFeatures === 'function') {
+        initializePremiumFeatures();
+    }
 
     // Sync ignored requests from backend (merge with localStorage)
     try {
@@ -464,6 +474,15 @@ async function loadStats() {
         if (data.profile && data.profile.garage_name) {
             document.getElementById('userName').textContent = data.profile.garage_name;
             document.getElementById('userAvatar').textContent = data.profile.garage_name[0].toUpperCase();
+
+            // Store garage name for premium features header greeting
+            localStorage.setItem('garageName', data.profile.garage_name);
+
+            // Update header greeting with garage name
+            const greetingEl = document.getElementById('headerGreeting');
+            if (greetingEl && typeof getTimeBasedGreeting === 'function') {
+                greetingEl.textContent = getTimeBasedGreeting() + ', ' + data.profile.garage_name;
+            }
         } else {
             console.warn('No profile or garage_name found:', data.profile);
         }
@@ -3066,3 +3085,431 @@ function renderPagination(containerId, pagination, onPageChange) {
 // Pagination state for reviews
 let reviewsPage = 1;
 const REVIEWS_PAGE_SIZE = 10;
+
+// ============================================
+// PREMIUM UPGRADE - Live DateTime & Greeting
+// ============================================
+
+// (Variables declared at top of file to avoid TDZ issues)
+
+/**
+ * Initialize all premium features after login
+ */
+function initializePremiumFeatures() {
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    updateGreeting();
+    startAutoRefresh();
+    setupKeyboardShortcuts();
+    setupActivityTracking();
+    updateConnectionStatus(true);
+
+    // Update header greeting with garage name
+    const garageName = localStorage.getItem('garageName') || 'Partner';
+    const greetingEl = document.getElementById('headerGreeting');
+    if (greetingEl) {
+        greetingEl.textContent = getTimeBasedGreeting() + ', ' + garageName;
+    }
+}
+
+/**
+ * Get time-based greeting
+ */
+function getTimeBasedGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
+/**
+ * Update live date and time in header
+ */
+function updateDateTime() {
+    const now = new Date();
+    const options = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    const formatted = now.toLocaleDateString('en-US', options);
+    const el = document.getElementById('liveDateTime');
+    if (el) el.textContent = formatted;
+}
+
+/**
+ * Update greeting based on time of day
+ */
+function updateGreeting() {
+    const garageName = localStorage.getItem('garageName') || 'Partner';
+    const greetingEl = document.getElementById('headerGreeting');
+    if (greetingEl) {
+        greetingEl.textContent = getTimeBasedGreeting() + ', ' + garageName;
+    }
+}
+
+// ============================================
+// PREMIUM UPGRADE - Keyboard Shortcuts
+// ============================================
+
+/**
+ * Setup keyboard shortcuts
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ignore if typing in input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            return;
+        }
+
+        // Section navigation (1-7)
+        const sections = ['dashboard', 'requests', 'bids', 'orders', 'subscription', 'earnings', 'profile'];
+        if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const index = parseInt(e.key) - 1;
+            if (sections[index]) {
+                e.preventDefault();
+                switchSection(sections[index]);
+            }
+        }
+
+        // R - Refresh
+        if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            refreshCurrentSection();
+        }
+
+        // ? - Show shortcuts
+        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+            e.preventDefault();
+            showKeyboardShortcuts();
+        }
+
+        // Esc - Close modals
+        if (e.key === 'Escape') {
+            closeKeyboardShortcuts();
+            closeBidModal();
+            closeOrderModal();
+            closeCounterRespondModal();
+            closeDisputeModal();
+            closeLightbox();
+        }
+
+        // Ctrl+K - Focus global search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const searchInput = document.getElementById('globalSearchInput');
+            if (searchInput) searchInput.focus();
+        }
+    });
+}
+
+/**
+ * Show keyboard shortcuts modal
+ */
+function showKeyboardShortcuts() {
+    const modal = document.getElementById('keyboardShortcutsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+/**
+ * Close keyboard shortcuts modal
+ */
+function closeKeyboardShortcuts() {
+    const modal = document.getElementById('keyboardShortcutsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// ============================================
+// PREMIUM UPGRADE - Notifications System
+// ============================================
+
+// (notifications variable declared at top of file)
+
+/**
+ * Toggle notifications dropdown
+ */
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+/**
+ * Mark all notifications as read
+ */
+function markAllRead() {
+    notifications = [];
+    renderNotifications();
+    const dot = document.getElementById('notificationDot');
+    if (dot) dot.style.display = 'none';
+}
+
+/**
+ * Add a notification
+ */
+function addNotification(title, type = 'info', section = null) {
+    const now = new Date();
+    notifications.unshift({
+        title,
+        type,
+        section,
+        time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    });
+
+    // Keep only last 10
+    if (notifications.length > 10) {
+        notifications = notifications.slice(0, 10);
+    }
+
+    renderNotifications();
+
+    // Show dot
+    const dot = document.getElementById('notificationDot');
+    if (dot) dot.style.display = 'block';
+}
+
+/**
+ * Render notifications list
+ */
+function renderNotifications() {
+    const list = document.getElementById('notificationsList');
+    if (!list) return;
+
+    if (notifications.length === 0) {
+        list.innerHTML = `
+            <div class="notification-empty">
+                <i class="bi bi-bell-slash"></i>
+                <span>No new notifications</span>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = notifications.map(n => `
+        <div class="notification-item" onclick="handleNotificationClick('${n.section || ''}')">
+            <div class="icon ${n.type}">
+                <i class="bi bi-${getNotificationIcon(n.type)}"></i>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 500; color: var(--text-primary);">${escapeHTML(n.title)}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${n.time}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Get icon for notification type
+ */
+function getNotificationIcon(type) {
+    switch (type) {
+        case 'success': return 'check-circle';
+        case 'warning': return 'exclamation-triangle';
+        case 'danger': return 'x-circle';
+        default: return 'info-circle';
+    }
+}
+
+/**
+ * Handle notification click
+ */
+function handleNotificationClick(section) {
+    toggleNotifications();
+    if (section) {
+        switchSection(section);
+    }
+}
+
+// Close notifications when clicking outside
+document.addEventListener('click', (e) => {
+    const container = document.querySelector('.header-notifications');
+    const dropdown = document.getElementById('notificationsDropdown');
+
+    if (container && dropdown && !container.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// ============================================
+// PREMIUM UPGRADE - Auto Refresh & Activity
+// ============================================
+
+/**
+ * Start auto-refresh interval (every 60 seconds)
+ */
+function startAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+
+    autoRefreshInterval = setInterval(() => {
+        // Only refresh if user is active
+        if (Date.now() - lastActivityTime < 5 * 60 * 1000) {
+            refreshCurrentSection(true); // silent refresh
+        }
+    }, 60000);
+}
+
+/**
+ * Refresh current section with optional spinning animation
+ */
+function refreshCurrentSection(silent = false) {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+
+    if (!silent && refreshBtn) {
+        refreshBtn.classList.add('spinning');
+        setTimeout(() => refreshBtn.classList.remove('spinning'), 1000);
+    }
+
+    // Find active section
+    const activeNav = document.querySelector('.nav-item.active');
+    const section = activeNav?.dataset?.section || 'dashboard';
+
+    switch (section) {
+        case 'dashboard':
+            loadStats();
+            loadRecentOrders();
+            break;
+        case 'requests':
+            loadRequests();
+            break;
+        case 'bids':
+            loadBids();
+            break;
+        case 'orders':
+            loadOrders();
+            break;
+        case 'subscription':
+            loadSubscription();
+            break;
+        case 'earnings':
+            loadEarnings();
+            break;
+        case 'reviews':
+            loadReviews();
+            break;
+        case 'profile':
+            loadProfile();
+            break;
+    }
+
+    if (!silent) {
+        showToast('Refreshed', 'success');
+    }
+}
+
+/**
+ * Setup activity tracking for session timeout
+ */
+function setupActivityTracking() {
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+
+    activityEvents.forEach(event => {
+        document.addEventListener(event, () => {
+            lastActivityTime = Date.now();
+        }, { passive: true });
+    });
+
+    // Check for inactivity every minute
+    setInterval(checkInactivity, 60000);
+}
+
+/**
+ * Check for user inactivity and warn/logout
+ */
+function checkInactivity() {
+    const inactiveTime = Date.now() - lastActivityTime;
+    const warningTime = 25 * 60 * 1000; // 25 minutes
+    const logoutTime = 30 * 60 * 1000; // 30 minutes
+
+    if (inactiveTime >= logoutTime) {
+        showToast('Session expired due to inactivity', 'error');
+        logout();
+    } else if (inactiveTime >= warningTime) {
+        showToast('⚠️ Session will expire in 5 minutes due to inactivity', 'warning');
+    }
+}
+
+// ============================================
+// PREMIUM UPGRADE - Connection Status
+// ============================================
+
+/**
+ * Update connection status indicator
+ */
+function updateConnectionStatus(isOnline) {
+    const indicator = document.getElementById('statusIndicator');
+    const text = document.getElementById('statusText');
+    const container = document.getElementById('connectionStatus');
+
+    if (indicator && text && container) {
+        if (isOnline) {
+            indicator.classList.remove('offline');
+            text.textContent = 'Connected';
+            container.style.background = 'rgba(16, 185, 129, 0.1)';
+            container.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            container.style.color = 'var(--success)';
+        } else {
+            indicator.classList.add('offline');
+            text.textContent = 'Offline';
+            container.style.background = 'rgba(239, 68, 68, 0.1)';
+            container.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            container.style.color = 'var(--danger)';
+        }
+    }
+}
+
+// Socket connection status listeners
+if (typeof socket !== 'undefined' && socket) {
+    socket.on('connect', () => {
+        updateConnectionStatus(true);
+    });
+
+    socket.on('disconnect', () => {
+        updateConnectionStatus(false);
+    });
+}
+
+// Also listen for browser online/offline events
+window.addEventListener('online', () => updateConnectionStatus(true));
+window.addEventListener('offline', () => updateConnectionStatus(false));
+
+// ============================================
+// PREMIUM UPGRADE - Socket Notifications
+// ============================================
+
+// Add notification when bid is accepted
+if (typeof socket !== 'undefined' && socket) {
+    socket.on('bid_accepted', (data) => {
+        addNotification(`Bid accepted for ${data.part_description || 'order'}!`, 'success', 'orders');
+    });
+
+    socket.on('bid_rejected', (data) => {
+        addNotification(`Bid rejected for ${data.part_description || 'request'}`, 'warning', 'bids');
+    });
+
+    socket.on('counter_offer', (data) => {
+        addNotification(`New counter-offer: ${data.counter_amount} QAR`, 'info', 'bids');
+    });
+
+    socket.on('dispute_created', (data) => {
+        addNotification(`New dispute for Order #${data.order_number}`, 'danger', 'orders');
+    });
+
+    socket.on('order_status_changed', (data) => {
+        addNotification(`Order #${data.order_number} status: ${data.status}`, 'info', 'orders');
+    });
+
+    socket.on('payout_completed', (data) => {
+        addNotification(`Payout received: ${data.amount} QAR`, 'success', 'earnings');
+    });
+}
