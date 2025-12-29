@@ -35,6 +35,7 @@ let dismissedRequests = JSON.parse(localStorage.getItem('dismissedRequests') || 
 let bidPhotos = [];
 let pendingCounterOffers = []; // Track counter-offers from customers
 let pendingDisputes = []; // Track disputes from customers
+let garageSupplierType = 'both'; // Cache garage supplier type (used/new/both)
 
 // Premium Feature Variables (must be declared before showDashboard call)
 let autoRefreshInterval = null;
@@ -1581,6 +1582,9 @@ async function loadProfile() {
         });
         const profile = await res.json();
 
+        // Cache supplier type for bid condition filtering
+        garageSupplierType = profile.supplier_type || 'both';
+
         // Generate star rating
         const rating = parseFloat(profile.rating_average) || 0;
         const fullStars = Math.floor(rating);
@@ -1839,6 +1843,39 @@ function openBidModal(reqId, info) {
     bidPhotos = [];
     renderBidPhotos();
     document.getElementById('bidModal').classList.add('active');
+
+    // Filter bid condition dropdown based on garage supplier type
+    const conditionSelect = document.getElementById('bidCondition');
+    if (conditionSelect) {
+        // Reset to full options first
+        conditionSelect.innerHTML = `
+            <option value="">Select condition...</option>
+            <option value="new">New</option>
+            <option value="used_excellent">Used - Excellent</option>
+            <option value="used_good">Used - Good</option>
+            <option value="used_fair">Used - Fair</option>
+            <option value="refurbished">Refurbished</option>
+        `;
+
+        // Filter based on supplier type
+        if (garageSupplierType === 'new') {
+            // New parts dealer - only show New
+            conditionSelect.innerHTML = `
+                <option value="">Select condition...</option>
+                <option value="new">New</option>
+            `;
+        } else if (garageSupplierType === 'used') {
+            // Used parts only - remove New
+            conditionSelect.innerHTML = `
+                <option value="">Select condition...</option>
+                <option value="used_excellent">Used - Excellent</option>
+                <option value="used_good">Used - Good</option>
+                <option value="used_fair">Used - Fair</option>
+                <option value="refurbished">Refurbished</option>
+            `;
+        }
+        // 'both' keeps all options
+    }
 
     // Setup photo upload handler
     const MAX_PHOTOS = 10;

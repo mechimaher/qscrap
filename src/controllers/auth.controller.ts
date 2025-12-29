@@ -65,10 +65,9 @@ export const register = async (req: Request, res: Response) => {
         });
     }
 
-    // Password strength validation
-    const passwordCheck = isStrongPassword(password);
-    if (!passwordCheck.valid) {
-        return res.status(400).json({ error: passwordCheck.message });
+    // Password length only (no complex requirements)
+    if (password.length < 4) {
+        return res.status(400).json({ error: 'Password must be at least 4 characters' });
     }
 
     // User type validation
