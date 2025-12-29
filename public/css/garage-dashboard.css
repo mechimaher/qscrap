@@ -783,7 +783,412 @@ body {
     color: var(--text-secondary);
 }
 
-/* Order Cards */
+/* ===== PREMIUM BID CARD WITH INLINE TIMELINE ===== */
+.bid-card-pro {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--accent);
+}
+
+.bid-card-pro:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border-left-color: var(--success);
+}
+
+.bid-card-pro.pending {
+    border-left-color: var(--warning);
+}
+
+.bid-card-pro.accepted {
+    border-left-color: var(--success);
+}
+
+.bid-card-pro.rejected {
+    border-left-color: var(--danger);
+    opacity: 0.7;
+}
+
+.bid-card-pro.withdrawn {
+    border-left-color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.bid-card-pro.expired {
+    border-left-color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.bid-card-left {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.bid-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.bid-thumb-placeholder {
+    width: 80px;
+    height: 80px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bid-thumb-placeholder i {
+    font-size: 28px;
+    color: var(--text-muted);
+}
+
+.bid-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bid-amount-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.bid-info .bid-amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--success);
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bid-info .bid-amount.final {
+    font-size: 24px;
+}
+
+/* Strikethrough original price when negotiated */
+.bid-amount-original {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Negotiated badge */
+.negotiated-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.negotiated-badge i {
+    font-size: 10px;
+}
+
+/* Order number badge */
+.order-number-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(99, 102, 241, 0.12);
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-top: 4px;
+}
+
+.order-number-badge i {
+    font-size: 12px;
+}
+
+
+.bid-status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bid-status-badge.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+}
+
+.bid-status-badge.accepted {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
+
+.bid-status-badge.rejected {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+.bid-status-badge.withdrawn {
+    background: rgba(100, 116, 139, 0.2);
+    color: var(--text-secondary);
+}
+
+.bid-status-badge.expired {
+    background: rgba(100, 116, 139, 0.2);
+    color: var(--text-secondary);
+}
+
+.bid-car {
+    font-size: 14px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bid-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+
+.bid-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bid-meta i {
+    font-size: 13px;
+}
+
+/* Timeline Container */
+.bid-timeline-container {
+    width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-left: 20px;
+    border-left: 1px solid var(--border);
+}
+
+/* Loading Skeleton */
+.timeline-loading {
+    width: 100%;
+}
+
+.timeline-skeleton {
+    height: 50px;
+    background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--bg-tertiary) 50%, var(--bg-secondary) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Mini Timeline */
+.mini-timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 60px;
+}
+
+.step-marker {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+}
+
+.timeline-step.garage .step-marker {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.timeline-step.customer .step-marker {
+    border-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.timeline-step.waiting .step-marker {
+    border-color: var(--text-muted);
+    color: var(--text-muted);
+    animation: pulse-muted 2s infinite;
+}
+
+@keyframes pulse-muted {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.timeline-step.accepted .step-marker {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+}
+
+.timeline-step.rejected .step-marker {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+}
+
+.step-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.step-amount {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.step-time {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.step-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.step-status {
+    font-size: 11px;
+}
+
+.step-status.accepted {
+    color: #10b981;
+}
+
+.step-status.rejected {
+    color: #ef4444;
+}
+
+.step-status.pending {
+    color: #f59e0b;
+}
+
+.step-status.countered {
+    color: #6366f1;
+}
+
+/* Timeline Connector */
+.timeline-connector {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), #10b981);
+    min-width: 20px;
+    max-width: 40px;
+}
+
+.timeline-connector.dashed {
+    background: repeating-linear-gradient(90deg,
+            var(--border) 0px,
+            var(--border) 4px,
+            transparent 4px,
+            transparent 8px);
+}
+
+.timeline-more {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.timeline-error {
+    color: var(--danger);
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .bid-card-pro {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .bid-timeline-container {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-left: 0;
+        padding-top: 16px;
+        justify-content: center;
+    }
+}
+
+
 .order-card {
     background: var(--bg-card);
     border: 1px solid var(--border);

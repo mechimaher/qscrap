@@ -48,11 +48,13 @@ export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
              `, [garageId]);
             totalRevenue = revRes.rows[0].total_revenue;
         } else {
-            // For Admin/Ops, Total Revenue = Platform Fees
+            // For Admin/Ops, Total Revenue = Platform Fees + Delivery Fees (drivers are salaried)
+            // Only count completed orders in last 30 days to match admin dashboard
             const revenueResult = await pool.query(`
-                SELECT COALESCE(SUM(platform_fee), 0) as total_revenue
+                SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) as total_revenue
                 FROM orders
-                WHERE order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'refunded', 'disputed')
+                WHERE order_status = 'completed' 
+                AND created_at > NOW() - INTERVAL '30 days'
             `);
             totalRevenue = revenueResult.rows[0].total_revenue;
         }

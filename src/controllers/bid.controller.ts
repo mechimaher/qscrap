@@ -198,14 +198,19 @@ export const getMyBids = async (req: AuthRequest, res: Response) => {
             params.push(status);
         }
 
+        // Join with orders to get final accepted amount for accepted bids
         const result = await pool.query(
             `SELECT b.*, 
                     CONCAT(pr.car_make, ' ', pr.car_model, ' ', pr.car_year) as car_summary, 
                     pr.part_description,
                     pr.request_id,
-                    pr.status as request_status
+                    pr.status as request_status,
+                    o.part_price as final_accepted_amount,
+                    o.order_number,
+                    o.order_id
              FROM bids b
              JOIN part_requests pr ON b.request_id = pr.request_id
+             LEFT JOIN orders o ON b.bid_id = o.bid_id
              ${whereClause}
              ORDER BY b.created_at DESC
              LIMIT $${paramIndex++} OFFSET $${paramIndex}`,

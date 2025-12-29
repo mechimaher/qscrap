@@ -204,16 +204,37 @@ class ApiService {
     async createRequest(formData: FormData): Promise<any> {
         const token = await this.getToken();
 
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                // Don't set Content-Type for FormData
-            },
-            body: formData,
-        });
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-        return response.json();
+        try {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    // Don't set Content-Type for FormData - browser sets it with boundary
+                },
+                body: formData,
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create request');
+            }
+
+            return data;
+        } catch (error: any) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please check your connection and try again.');
+            }
+            throw error;
+        }
     }
 
     // Orders

@@ -802,32 +802,52 @@ async function loadBids(page = 1) {
             const statusLabels = { pending: 'Pending', accepted: 'Accepted', rejected: 'Rejected', withdrawn: 'Withdrawn', expired: 'Expired' };
             const images = b.image_urls || [];
             const thumbnail = images.length > 0 ? images[0] : null;
+
+            // Use final accepted amount for accepted bids, otherwise use bid_amount
+            const displayAmount = (b.status === 'accepted' && b.final_accepted_amount) ? b.final_accepted_amount : b.bid_amount;
+            const wasNegotiated = b.status === 'accepted' && b.final_accepted_amount && parseFloat(b.final_accepted_amount) !== parseFloat(b.bid_amount);
+
             return `
-                    <div class="bid-card ${b.status === 'rejected' ? 'rejected' : ''}" style="display: flex; gap: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.12)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                        ${thumbnail ? `<img src="${thumbnail}" alt="Part" style="width: 70px; height: 70px; object-fit: cover; border-radius: 10px; flex-shrink: 0;">` : '<div style="width: 70px; height: 70px; background: var(--bg-tertiary); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="bi bi-image" style="color: var(--text-muted); font-size: 24px;"></i></div>'}
-                        <div style="flex: 1; min-width: 0;">
-                            <div class="bid-header" style="margin-bottom: 8px;">
-                                <div>
-                                    <div class="bid-amount" style="font-size: 18px; font-weight: 700; color: var(--success);">${b.bid_amount} QAR</div>
-                                    <div style="color: var(--text-secondary); font-size: 13px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        ${escapeHTML(b.car_summary || 'Vehicle')} - ${escapeHTML(b.part_description?.slice(0, 30) || 'Part')}
-                                    </div>
-                                </div>
-                                <span class="bid-status ${b.status}" style="font-size: 11px; padding: 4px 10px;">${statusLabels[b.status] || b.status}</span>
+                <div class="bid-card-pro ${b.status}" data-bid-id="${b.bid_id}">
+                    <div class="bid-card-left">
+                        ${thumbnail ? `<img src="${thumbnail}" alt="Part" class="bid-thumb">` : '<div class="bid-thumb-placeholder"><i class="bi bi-image"></i></div>'}
+                        <div class="bid-info">
+                            <div class="bid-amount-row">
+                                ${wasNegotiated ? `
+                                    <span class="bid-amount-original">${b.bid_amount} QAR</span>
+                                    <span class="bid-amount final">${displayAmount} QAR</span>
+                                    <span class="negotiated-badge"><i class="bi bi-arrow-repeat"></i> Negotiated</span>
+                                ` : `
+                                    <span class="bid-amount">${displayAmount} QAR</span>
+                                `}
+                                <span class="bid-status-badge ${b.status}">${statusLabels[b.status] || b.status}</span>
                             </div>
-                            <div class="request-meta" style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);">
-                                <span><i class="bi bi-calendar"></i> ${getTimeAgo(b.created_at)}</span>
-                                <span><i class="bi bi-shield-check"></i> ${b.warranty_days} days</span>
+                            ${b.order_number ? `<div class="order-number-badge"><i class="bi bi-hash"></i> ${b.order_number}</div>` : ''}
+                            <div class="bid-car">${escapeHTML(b.car_summary || 'Vehicle')} - ${escapeHTML(b.part_description?.slice(0, 35) || 'Part')}</div>
+                            <div class="bid-meta">
+                                <span><i class="bi bi-calendar3"></i> ${getTimeAgo(b.created_at)}</span>
+                                <span><i class="bi bi-shield-check"></i> ${b.warranty_days}d warranty</span>
                                 <span><i class="bi bi-box-seam"></i> ${b.part_condition || 'Used'}</span>
                             </div>
                         </div>
                     </div>
-                `}).join('') : '<div class="empty-state"><i class="bi bi-tag"></i><h4>No bids yet</h4><p>Submit bids on part requests to see them here</p></div>';
+                    <div class="bid-timeline-container" id="timeline-${b.bid_id}">
+                        <div class="timeline-loading">
+                            <div class="timeline-skeleton"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('') : '<div class="empty-state"><i class="bi bi-tag"></i><h4>No bids yet</h4><p>Submit bids on part requests to see them here</p></div>';
 
         // Store for filtering
         allBidsData = bids;
 
         document.getElementById('bidsList').innerHTML = html;
+
+        // Fetch and render negotiation timelines for each bid asynchronously
+        bids.forEach(b => fetchAndRenderTimeline(b.bid_id, b.bid_amount, b.created_at));
+
 
         // Render pagination
         if (data.pagination && data.pagination.pages > 1) {
@@ -838,6 +858,83 @@ async function loadBids(page = 1) {
         }
     } catch (err) {
         console.error('Failed to load bids:', err);
+    }
+}
+
+// Fetch and render inline timeline for a bid
+async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt) {
+    const container = document.getElementById(`timeline-${bidId}`);
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${API_URL}/negotiations/bids/${bidId}/negotiations`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const history = data.negotiations || [];
+
+        // Build compact inline timeline
+        let timelineHtml = `<div class="mini-timeline">`;
+
+        // Initial bid step
+        timelineHtml += `
+            <div class="timeline-step garage" title="Your Initial Bid">
+                <div class="step-marker"><i class="bi bi-tag-fill"></i></div>
+                <div class="step-info">
+                    <span class="step-amount">${initialAmount} QAR</span>
+                    <span class="step-time">${getTimeAgo(bidCreatedAt)}</span>
+                </div>
+            </div>
+        `;
+
+        if (history.length > 0) {
+            // Show up to 3 most recent negotiation steps
+            const recentHistory = history.slice(-3);
+            recentHistory.forEach((co, idx) => {
+                const isGarage = co.offered_by_type === 'garage';
+                const statusIcon = co.status === 'accepted' ? 'check-circle-fill' :
+                    co.status === 'rejected' ? 'x-circle-fill' :
+                        co.status === 'countered' ? 'arrow-repeat' : 'hourglass-split';
+                const statusClass = co.status === 'accepted' ? 'accepted' :
+                    co.status === 'rejected' ? 'rejected' :
+                        co.status === 'countered' ? 'countered' : 'pending';
+
+                timelineHtml += `
+                    <div class="timeline-connector"></div>
+                    <div class="timeline-step ${isGarage ? 'garage' : 'customer'} ${statusClass}" title="${isGarage ? 'Your Counter' : 'Customer Counter'} - ${co.status}">
+                        <div class="step-marker"><i class="bi bi-${isGarage ? 'building' : 'person-fill'}"></i></div>
+                        <div class="step-info">
+                            <span class="step-amount">${co.proposed_amount} QAR</span>
+                            <span class="step-status ${statusClass}"><i class="bi bi-${statusIcon}"></i></span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // If there are more than 3 items, show a "more" indicator
+            if (history.length > 3) {
+                timelineHtml += `<div class="timeline-more">+${history.length - 3} more</div>`;
+            }
+        } else {
+            // No negotiation yet
+            timelineHtml += `
+                <div class="timeline-connector dashed"></div>
+                <div class="timeline-step waiting">
+                    <div class="step-marker"><i class="bi bi-clock"></i></div>
+                    <div class="step-info">
+                        <span class="step-label">Awaiting response</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        timelineHtml += `</div>`;
+        container.innerHTML = timelineHtml;
+
+    } catch (err) {
+        console.error('Failed to load timeline for bid', bidId, err);
+        container.innerHTML = `<div class="timeline-error"><i class="bi bi-exclamation-triangle"></i></div>`;
     }
 }
 
@@ -1885,12 +1982,22 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
 
 function updateBadge() {
     // Count only visible requests (exclude dismissed, ignored, and ones we've bid on)
+    // This shows "new requests requiring garage action"
     const visibleCount = requests.filter(r =>
         !dismissedRequests.includes(r.request_id) &&
         !ignoredRequests.includes(r.request_id) &&
         !bidStatusMap[r.request_id]
     ).length;
     document.getElementById('requestBadge').textContent = visibleCount;
+
+    // Also update "My Bids" badge with pending bid count
+    // This shows "bids awaiting customer response"
+    const pendingBidsCount = biddedRequests ? biddedRequests.length : 0;
+    const bidsBadge = document.getElementById('bidsBadge');
+    if (bidsBadge) {
+        bidsBadge.textContent = pendingBidsCount;
+        bidsBadge.style.display = pendingBidsCount > 0 ? 'flex' : 'none';
+    }
 }
 
 function getTimeAgo(date) {
@@ -3377,7 +3484,7 @@ function refreshCurrentSection(silent = false) {
     switch (section) {
         case 'dashboard':
             loadStats();
-            loadRecentOrders();
+            loadOrders(); // This also populates dashboard recent orders
             break;
         case 'requests':
             loadRequests();
@@ -3512,4 +3619,140 @@ if (typeof socket !== 'undefined' && socket) {
     socket.on('payout_completed', (data) => {
         addNotification(`Payout received: ${data.amount} QAR`, 'success', 'earnings');
     });
+}
+
+// ===== NEGOTIATION HISTORY =====
+async function viewNegotiationHistory(bidId) {
+    try {
+        const res = await fetch(`${API_URL}/negotiations/bids/${bidId}/negotiations`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showToast(data.error || 'Failed to load history', 'error');
+            return;
+        }
+
+        // Find bid info from local data
+        const bid = allBidsData.find(b => b.bid_id === bidId);
+        const history = data.negotiations || [];
+
+        // Build timeline HTML
+        let timelineHtml = `
+            <div class="negotiation-timeline">
+                <!-- Initial Bid -->
+                <div class="timeline-item garage">
+                    <div class="timeline-marker"><i class="bi bi-tag-fill"></i></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-who">You (Initial Bid)</span>
+                            <span class="timeline-time">${bid ? getTimeAgo(bid.created_at) : 'N/A'}</span>
+                        </div>
+                        <div class="timeline-amount">${bid ? bid.bid_amount : '?'} QAR</div>
+                        ${bid?.notes ? `<div class="timeline-notes">${escapeHTML(bid.notes)}</div>` : ''}
+                    </div>
+                </div>
+        `;
+
+        // Add counter-offers
+        history.forEach((co, idx) => {
+            const isGarage = co.offered_by_type === 'garage';
+            const statusIcon = co.status === 'accepted' ? 'check-circle-fill' :
+                co.status === 'rejected' ? 'x-circle-fill' :
+                    co.status === 'countered' ? 'arrow-repeat' : 'clock';
+            const statusClass = co.status === 'accepted' ? 'accepted' :
+                co.status === 'rejected' ? 'rejected' : '';
+
+            timelineHtml += `
+                <div class="timeline-item ${isGarage ? 'garage' : 'customer'} ${statusClass}">
+                    <div class="timeline-marker"><i class="bi bi-${isGarage ? 'building' : 'person-fill'}"></i></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-who">${isGarage ? 'You (Counter)' : 'Customer'} - Round ${co.round_number}</span>
+                            <span class="timeline-time">${getTimeAgo(co.created_at)}</span>
+                        </div>
+                        <div class="timeline-amount">${co.proposed_amount} QAR</div>
+                        ${co.message ? `<div class="timeline-notes">"${escapeHTML(co.message)}"</div>` : ''}
+                        <div class="timeline-status ${co.status}">
+                            <i class="bi bi-${statusIcon}"></i> ${co.status.charAt(0).toUpperCase() + co.status.slice(1)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (history.length === 0) {
+            timelineHtml += `
+                <div class="timeline-empty">
+                    <i class="bi bi-chat-dots"></i>
+                    <p>No negotiation yet. Waiting for customer response.</p>
+                </div>
+            `;
+        }
+
+        timelineHtml += '</div>';
+
+        // Create modal
+        const modalHtml = `
+            <div class="modal-overlay" id="negotiationHistoryModal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000;">
+                <div class="modal" style="max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; background: var(--bg-card); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div class="modal-header" style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <i class="bi bi-clock-history" style="color: var(--accent);"></i>
+                            Negotiation History
+                        </h3>
+                        <button onclick="closeNegotiationHistoryModal()" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 10px; margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-muted);">Part Request</div>
+                            <div style="font-weight: 600;">${escapeHTML(bid.car_summary || 'Vehicle')} - ${escapeHTML(bid.part_description?.slice(0, 50) || 'Part')}</div>
+                        </div>
+                        ${timelineHtml}
+                    </div>
+                </div>
+            </div>
+            <style>
+                .negotiation-timeline {display: flex; flex-direction: column; gap: 0; padding-left: 20px; }
+                .timeline-item {position: relative; padding: 16px; padding-left: 32px; border-left: 2px solid var(--border); }
+                .timeline-item:last-child {border-left-color: transparent; }
+                .timeline-item.garage {border-left-color: var(--accent); }
+                .timeline-item.customer {border-left-color: #10b981; }
+                .timeline-item.accepted .timeline-content {background: rgba(16, 185, 129, 0.1); border-color: #10b981; }
+                .timeline-item.rejected .timeline-content {background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+                .timeline-marker {position: absolute; left: -12px; width: 24px; height: 24px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+                .timeline-item.garage .timeline-marker {border-color: var(--accent); color: var(--accent); }
+                .timeline-item.customer .timeline-marker {border-color: #10b981; color: #10b981; }
+                .timeline-content {background: var(--bg-secondary); padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
+                .timeline-header {display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+                .timeline-who {font-weight: 600; color: var(--text-primary); }
+                .timeline-amount {font-size: 18px; font-weight: 700; color: var(--success); }
+                .timeline-notes {font-size: 13px; color: var(--text-secondary); font-style: italic; margin-top: 6px; }
+                .timeline-status {font-size: 11px; margin-top: 8px; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
+                .timeline-status.pending {background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+                .timeline-status.accepted {background: rgba(16, 185, 129, 0.2); color: #10b981; }
+                .timeline-status.rejected {background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+                .timeline-status.countered {background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+                .timeline-status.expired {background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+                .timeline-empty {text-align: center; padding: 30px; color: var(--text-muted); }
+                .timeline-empty i {font-size: 32px; margin-bottom: 10px; display: block; }
+            </style>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('negotiationHistoryModal');
+        if (existingModal) existingModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    } catch (err) {
+        console.error('Failed to load negotiation history:', err);
+        showToast('Failed to load negotiation history', 'error');
+    }
+}
+
+function closeNegotiationHistoryModal() {
+    const modal = document.getElementById('negotiationHistoryModal');
+    if (modal) modal.remove();
 }
