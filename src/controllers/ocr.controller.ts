@@ -3,7 +3,7 @@ import fs from 'fs';
 
 // OCR.space provides free OCR API (25,000 requests/month free tier)
 // Get your free API key at: https://ocr.space/ocrapi/freekey
-const OCR_SPACE_API_KEY = process.env.OCR_SPACE_API_KEY || 'K85403888388957'; // Free demo key
+const OCR_SPACE_API_KEY = process.env.OCR_SPACE_API_KEY || ''; // Must be set in environment
 const OCR_SPACE_API_URL = 'https://api.ocr.space/parse/image';
 
 interface MulterRequest extends Request {
@@ -15,6 +15,17 @@ interface MulterRequest extends Request {
  */
 export async function recognizeVIN(req: MulterRequest, res: Response): Promise<void> {
     try {
+        // Check if API key is configured
+        if (!OCR_SPACE_API_KEY) {
+            console.error('[OCR] OCR_SPACE_API_KEY not configured');
+            res.status(503).json({
+                success: false,
+                error: 'OCR service not configured',
+                message: 'Please configure OCR_SPACE_API_KEY environment variable'
+            });
+            return;
+        }
+
         if (!req.file) {
             res.status(400).json({ error: 'No image uploaded' });
             return;
