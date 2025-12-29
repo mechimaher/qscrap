@@ -153,6 +153,66 @@ app.get('/health', async (req, res) => {
 });
 
 // ==========================================
+// JOB HEALTH CHECK (Premium 2026)
+// ==========================================
+app.get('/health/jobs', async (req, res) => {
+    try {
+        const jobs = await import('./config/jobs');
+
+        res.json({
+            success: true,
+            scheduler: 'active',
+            interval: '1 hour',
+            jobs: {
+                expireOldRequests: { description: 'Expire requests past deadline', frequency: 'hourly' },
+                expireCounterOffers: { description: 'Expire pending counter-offers after 24h', frequency: 'hourly' },
+                checkSubscriptions: { description: 'Handle subscription renewals/expirations', frequency: 'hourly' },
+                autoResolveDisputes: { description: 'Auto-approve disputes after 48h', frequency: 'hourly' },
+                autoConfirmDeliveries: { description: 'Auto-complete orders after 24h delivery', frequency: 'hourly' },
+                autoConfirmPayouts: { description: 'Auto-confirm payout receipt after 7 days', frequency: 'hourly' },
+                abandonStaleInspections: { description: 'Release QC inspections stuck > 4 hours', frequency: 'hourly' },
+                schedulePendingPayouts: { description: 'Create payout records for completed orders', frequency: 'hourly' },
+                autoProcessPayouts: { description: 'Process mature payouts, hold disputed ones', frequency: 'hourly' },
+                cleanupOldData: { description: 'Remove old notifications and history', frequency: 'hourly' }
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (err: any) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Manual job trigger (admin only - for testing/emergency)
+app.post('/health/jobs/:jobName/run', async (req, res) => {
+    const { jobName } = req.params;
+    const apiKey = req.headers['x-admin-key'];
+
+    // Simple API key check (production should use proper auth)
+    if (apiKey !== process.env.ADMIN_API_KEY && process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const jobs = await import('./config/jobs');
+        const jobFn = (jobs.default as any)[jobName];
+
+        if (!jobFn || typeof jobFn !== 'function') {
+            return res.status(404).json({ error: `Job not found: ${jobName}` });
+        }
+
+        const result = await jobFn();
+        res.json({
+            success: true,
+            job: jobName,
+            result,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err: any) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ==========================================
 // ERROR HANDLING (Last in chain)
 // ==========================================
 

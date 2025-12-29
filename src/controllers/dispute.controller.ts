@@ -17,6 +17,7 @@ const DISPUTE_CONFIGS: Record<string, {
 };
 
 const DISPUTE_WINDOW_HOURS = 48;
+const MAX_DISPUTE_PHOTOS = 5; // Premium 2026: Limit photos per dispute
 
 // Create a dispute
 export const createDispute = async (req: AuthRequest, res: Response) => {
@@ -74,6 +75,11 @@ export const createDispute = async (req: AuthRequest, res: Response) => {
 
         // Process uploaded photos
         const photoUrls = files ? files.map(f => `/uploads/${f.filename}`) : [];
+
+        // PREMIUM 2026: Enforce photo limits
+        if (photoUrls.length > MAX_DISPUTE_PHOTOS) {
+            throw new Error(`Maximum ${MAX_DISPUTE_PHOTOS} photos allowed per dispute`);
+        }
 
         // Require photos for certain reasons
         if (['damaged', 'wrong_part', 'not_as_described'].includes(reason) && photoUrls.length === 0) {

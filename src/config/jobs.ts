@@ -551,6 +551,87 @@ export async function autoConfirmDeliveries(): Promise<number> {
 }
 
 // ============================================
+// 9. AUTO-CONFIRM PAYOUTS (2-Way Confirmation)
+// Auto-confirms payout receipt after 7 days if garage doesn't respond
+// ============================================
+export async function autoConfirmPayouts(): Promise<number> {
+    try {
+        const result = await pool.query(`
+            UPDATE garage_payouts 
+            SET payout_status = 'completed',
+                confirmed_at = NOW(),
+                auto_confirmed = true,
+                garage_confirmation_notes = 'Auto-confirmed: No response within 7-day confirmation window'
+            WHERE payout_status = 'awaiting_confirmation'
+              AND confirmation_deadline < NOW()
+            RETURNING payout_id, garage_id, net_amount, order_id
+        `);
+
+        const confirmedCount = result.rowCount || 0;
+
+        if (confirmedCount > 0) {
+            console.log(`[CRON] Auto-confirmed ${confirmedCount} payout(s) after deadline`);
+
+            const io = (global as any).io;
+            if (io) {
+                for (const payout of result.rows) {
+                    io.to(`garage_${payout.garage_id}`).emit('payout_auto_confirmed', {
+                        payout_id: payout.payout_id,
+                        order_id: payout.order_id,
+                        amount: payout.net_amount,
+                        notification: `💰 Payout of ${payout.net_amount} QAR auto-confirmed after 7 days`
+                    });
+                }
+            }
+        }
+
+        return confirmedCount;
+    } catch (err) {
+        console.error('[CRON] autoConfirmPayouts error:', err);
+        return 0;
+    }
+}
+
+// ============================================
+// 10. ABANDON STALE INSPECTIONS
+// Releases QC inspections stuck in 'in_progress' for > 4 hours
+// ============================================
+export async function abandonStaleInspections(): Promise<number> {
+    try {
+        const result = await pool.query(`
+            UPDATE quality_inspections 
+            SET status = 'pending',
+                inspector_id = NULL,
+                started_at = NULL,
+                notes = COALESCE(notes, '') || ' [Auto-released: Previous inspection abandoned]'
+            WHERE status = 'in_progress'
+              AND started_at < NOW() - INTERVAL '4 hours'
+            RETURNING inspection_id, order_id
+        `);
+
+        const abandonedCount = result.rowCount || 0;
+
+        if (abandonedCount > 0) {
+            console.log(`[CRON] Released ${abandonedCount} stale inspection(s)`);
+
+            // Notify operations
+            const io = (global as any).io;
+            if (io) {
+                io.to('operations').emit('inspections_released', {
+                    count: abandonedCount,
+                    notification: `⚠️ ${abandonedCount} stale inspection(s) released for reassignment`
+                });
+            }
+        }
+
+        return abandonedCount;
+    } catch (err) {
+        console.error('[CRON] abandonStaleInspections error:', err);
+        return 0;
+    }
+}
+
+// ============================================
 // MASTER JOB RUNNER
 // Runs all jobs in sequence
 // ============================================
@@ -563,9 +644,11 @@ export async function runAllJobs(): Promise<void> {
         await expireCounterOffers();
         await checkSubscriptions();
         await autoResolveDisputes();
-        await autoConfirmDeliveries();  // NEW: Auto-confirm deliveries after 24h
+        await autoConfirmDeliveries();
+        await autoConfirmPayouts();       // 2-way payout confirmation
+        await abandonStaleInspections();  // Release stuck QC inspections
         await schedulePendingPayouts();
-        await autoProcessPayouts();  // Auto-process mature payouts
+        await autoProcessPayouts();
         await cleanupOldData();
 
         const duration = Date.now() - startTime;
@@ -581,7 +664,9 @@ export default {
     expireCounterOffers,
     checkSubscriptions,
     autoResolveDisputes,
-    autoConfirmDeliveries,  // NEW: Auto-confirm deliveries after 24h
+    autoConfirmDeliveries,
+    autoConfirmPayouts,
+    abandonStaleInspections,
     schedulePendingPayouts,
     autoProcessPayouts,
     cleanupOldData,

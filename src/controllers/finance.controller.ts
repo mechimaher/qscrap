@@ -242,6 +242,7 @@ export const getTransactionDetails = async (req: AuthRequest, res: Response) => 
 };
 
 // Create a refund
+// PREMIUM 2026: Automatically reverses/adjusts garage payout
 export const createRefund = async (req: AuthRequest, res: Response) => {
     const { order_id } = req.params;
     const { refund_amount, refund_reason, refund_method } = req.body;
@@ -250,20 +251,77 @@ export const createRefund = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Amount and reason are required' });
     }
 
+    const client = await pool.connect();
     try {
-        const result = await pool.query(`
-            INSERT INTO refunds (order_id, refund_amount, refund_reason, refund_method, refund_status, processed_by)
-            VALUES ($1, $2, $3, $4, 'completed', $5)
+        await client.query('BEGIN');
+
+        // Get order details for validation
+        const orderResult = await client.query(
+            'SELECT total_amount, garage_payout_amount, garage_id, order_number FROM orders WHERE order_id = $1',
+            [order_id]
+        );
+
+        if (orderResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = orderResult.rows[0];
+
+        // Validate refund amount doesn't exceed order total
+        if (parseFloat(refund_amount) > parseFloat(order.total_amount)) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Refund amount exceeds order total' });
+        }
+
+        // Create refund record
+        const refundResult = await client.query(`
+            INSERT INTO refunds (order_id, original_amount, refund_amount, refund_reason, refund_method, refund_status, processed_by)
+            VALUES ($1, $2, $3, $4, $5, 'completed', $6)
             RETURNING *
-        `, [order_id, refund_amount, refund_reason, refund_method || 'original_payment', req.user?.userId]);
+        `, [order_id, order.total_amount, refund_amount, refund_reason, refund_method || 'original_payment', req.user?.userId]);
+
+        // CRITICAL: Reverse/adjust the garage payout
+        const { reversePayout } = await import('../services/payout.service');
+        const payoutResult = await reversePayout(order_id, parseFloat(refund_amount));
+
+        // Update order payment status
+        const isFullRefund = parseFloat(refund_amount) >= parseFloat(order.total_amount);
+        await client.query(`
+            UPDATE orders 
+            SET payment_status = $1, 
+                order_status = CASE WHEN $2 THEN 'refunded' ELSE order_status END,
+                updated_at = NOW()
+            WHERE order_id = $3
+        `, [isFullRefund ? 'refunded' : 'partially_refunded', isFullRefund, order_id]);
+
+        await client.query('COMMIT');
+
+        // Notify garage about refund impact on their payout
+        const io = (global as any).io;
+        if (io) {
+            io.to(`garage_${order.garage_id}`).emit('refund_issued', {
+                order_id,
+                order_number: order.order_number,
+                refund_amount,
+                payout_action: payoutResult.action_taken,
+                notification: isFullRefund
+                    ? `❌ Order #${order.order_number} fully refunded. Payout cancelled.`
+                    : `⚠️ Order #${order.order_number} partially refunded (${refund_amount} QAR). Payout adjusted.`
+            });
+        }
 
         res.status(201).json({
-            refund: result.rows[0],
-            message: 'Refund created successfully'
+            refund: refundResult.rows[0],
+            payout_adjustment: payoutResult,
+            message: 'Refund created and payout adjusted successfully'
         });
     } catch (err: any) {
+        await client.query('ROLLBACK');
         console.error('createRefund Error:', err);
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 };
 
