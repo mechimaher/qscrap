@@ -118,6 +118,9 @@ export const getAllGaragesAdmin = async (req: AuthRequest, res: Response) => {
         const result = await pool.query(`
             SELECT 
                 g.*,
+                g.supplier_type,
+                g.specialized_brands,
+                g.all_brands,
                 u.phone_number,
                 u.email,
                 u.full_name,
@@ -854,6 +857,83 @@ export const overrideCommission = async (req: AuthRequest, res: Response) => {
     } catch (err: any) {
         console.error('[ADMIN] overrideCommission error:', err);
         res.status(500).json({ error: 'Failed to override commission' });
+    }
+};
+
+/**
+ * Update garage specialization (Admin)
+ * Allows admin to set supplier_type and brand specialization for any garage
+ */
+export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Response) => {
+    const { garage_id } = req.params;
+    const { supplier_type, specialized_brands, all_brands } = req.body;
+    const adminId = req.user?.userId;
+
+    // Validate supplier_type
+    if (supplier_type && !['used', 'new', 'both'].includes(supplier_type)) {
+        return res.status(400).json({ error: 'supplier_type must be one of: used, new, both' });
+    }
+
+    // Validate specialized_brands is an array
+    if (specialized_brands && !Array.isArray(specialized_brands)) {
+        return res.status(400).json({ error: 'specialized_brands must be an array' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get current values for audit log
+            const currentResult = await client.query(
+                `SELECT supplier_type, specialized_brands, all_brands FROM garages WHERE garage_id = $1`,
+                [garage_id]
+            );
+
+            if (currentResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'Garage not found' });
+            }
+
+            const oldValues = currentResult.rows[0];
+
+            // Update garage specialization
+            const result = await client.query(`
+                UPDATE garages SET 
+                    supplier_type = COALESCE($1, supplier_type),
+                    specialized_brands = COALESCE($2, specialized_brands),
+                    all_brands = COALESCE($3, all_brands),
+                    updated_at = NOW()
+                WHERE garage_id = $4
+                RETURNING garage_id, garage_name, supplier_type, specialized_brands, all_brands
+            `, [supplier_type || null, specialized_brands || null, all_brands, garage_id]);
+
+            // Log admin action
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, old_value, new_value)
+                VALUES ($1, 'update_specialization', 'garage', $2, $3, $4)
+            `, [
+                adminId,
+                garage_id,
+                JSON.stringify(oldValues),
+                JSON.stringify({ supplier_type, specialized_brands, all_brands })
+            ]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                message: 'Garage specialization updated successfully',
+                garage: result.rows[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[ADMIN] updateGarageSpecializationAdmin error:', err);
+        res.status(500).json({ error: 'Failed to update garage specialization' });
     }
 };
 

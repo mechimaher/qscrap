@@ -183,6 +183,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
 export const getActiveRequests = async (req: AuthRequest, res: Response) => {
     // For Garages - with pagination and filtering
+    const garageId = req.user!.userId;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = (page - 1) * limit;
@@ -191,11 +192,43 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
     const urgency = req.query.urgency as string; // 'high', 'medium', 'low'
     const condition = req.query.condition as string; // 'new', 'used', 'any'
     const sortBy = req.query.sort as string || 'newest'; // 'newest', 'oldest', 'bids_low', 'bids_high'
+    const showAll = req.query.showAll === 'true'; // Override smart routing
 
     try {
+        // ============================================
+        // SMART ROUTING: Get garage profile for filtering
+        // ============================================
+        const garageResult = await pool.query(
+            `SELECT supplier_type, specialized_brands, all_brands FROM garages WHERE garage_id = $1`,
+            [garageId]
+        );
+        const garage = garageResult.rows[0];
+
         let whereClause = "WHERE status = 'active'";
         const params: any[] = [];
         let paramIndex = 1;
+
+        // ============================================
+        // SMART ROUTING: Filter by supplier type
+        // ============================================
+        if (!showAll && garage) {
+            if (garage.supplier_type === 'new') {
+                // New-only dealers see requests for 'new' or 'any' condition
+                whereClause += ` AND condition_required IN ('new', 'any')`;
+            } else if (garage.supplier_type === 'used') {
+                // Used-only garages see requests for 'used' or 'any' condition
+                whereClause += ` AND condition_required IN ('used', 'any')`;
+            }
+            // 'both' sees all requests
+
+            // ============================================
+            // SMART ROUTING: Filter by brand specialization
+            // ============================================
+            if (!garage.all_brands && garage.specialized_brands && garage.specialized_brands.length > 0) {
+                whereClause += ` AND UPPER(car_make) = ANY($${paramIndex++}::text[])`;
+                params.push(garage.specialized_brands.map((b: string) => b.toUpperCase()));
+            }
+        }
 
         // Apply urgency filter based on age
         if (urgency === 'high') {
@@ -206,7 +239,7 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
             whereClause += ` AND created_at < NOW() - INTERVAL '36 hours'`;
         }
 
-        // Apply condition filter
+        // Apply condition filter (manual override)
         if (condition && condition !== 'all') {
             whereClause += ` AND condition_required = $${paramIndex++}`;
             params.push(condition);

@@ -77,6 +77,7 @@ export const getGarageProfile = async (req: AuthRequest, res: Response) => {
                     g.total_transactions, g.created_at,
                     g.cr_number, g.trade_license_number, g.bank_name, g.bank_account, g.iban,
                     g.approval_status, g.demo_expires_at,
+                    g.supplier_type, g.specialized_brands, g.all_brands,
                     u.phone_number,
                     gs.plan_id, gs.status as subscription_status, gs.trial_ends_at, gs.billing_cycle_end,
                     COALESCE(sp.plan_name, 
@@ -137,6 +138,46 @@ export const updateGarageBusinessDetails = async (req: AuthRequest, res: Respons
 
         res.json({
             message: 'Business details updated successfully',
+            garage: result.rows[0]
+        });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update Garage Specialization (Supplier Type and Brand Specialization)
+export const updateGarageSpecialization = async (req: AuthRequest, res: Response) => {
+    const garageId = req.user!.userId;
+    const { supplier_type, specialized_brands, all_brands } = req.body;
+
+    // Validate supplier_type
+    if (supplier_type && !['used', 'new', 'both'].includes(supplier_type)) {
+        return res.status(400).json({ error: 'supplier_type must be one of: used, new, both' });
+    }
+
+    // Validate specialized_brands is an array
+    if (specialized_brands && !Array.isArray(specialized_brands)) {
+        return res.status(400).json({ error: 'specialized_brands must be an array' });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE garages SET 
+                supplier_type = COALESCE($1, supplier_type),
+                specialized_brands = COALESCE($2, specialized_brands),
+                all_brands = COALESCE($3, all_brands),
+                updated_at = NOW()
+             WHERE garage_id = $4
+             RETURNING garage_id, supplier_type, specialized_brands, all_brands`,
+            [supplier_type || null, specialized_brands || null, all_brands, garageId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Garage not found' });
+        }
+
+        res.json({
+            message: 'Garage specialization updated successfully',
             garage: result.rows[0]
         });
     } catch (err: any) {

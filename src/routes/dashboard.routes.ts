@@ -3,6 +3,7 @@ import {
     getGarageStats,
     getGarageProfile,
     updateGarageBusinessDetails,
+    updateGarageSpecialization,
     getCustomerStats,
     getCustomerProfile,
     updateCustomerProfile,
@@ -22,6 +23,9 @@ router.get('/garage/profile', authenticate, requireRole('garage'), getGarageProf
 
 // Garage: Update business details (CR number, bank info) - Qatar Legal Compliance
 router.put('/garage/business-details', authenticate, requireRole('garage'), updateGarageBusinessDetails);
+
+// Garage: Update specialization (supplier type, brands)
+router.put('/garage/specialization', authenticate, requireRole('garage'), updateGarageSpecialization);
 
 // Customer: Get dashboard stats
 router.get('/customer/stats', authenticate, requireRole('customer'), getCustomerStats);

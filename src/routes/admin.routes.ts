@@ -16,6 +16,8 @@ import {
     revokeSubscription,
     extendSubscription,
     overrideCommission,
+    // Garage Specialization
+    updateGarageSpecializationAdmin,
     // Phase 4: User Management
     getAllUsers,
     getAdminUserDetails,
@@ -80,6 +82,9 @@ router.post('/garages/:garage_id/plan', assignPlanToGarage);
 router.post('/garages/:garage_id/plan/revoke', revokeSubscription);
 router.post('/garages/:garage_id/plan/extend', extendSubscription);
 router.post('/garages/:garage_id/commission', overrideCommission);
+
+// Garage Specialization
+router.put('/garages/:garage_id/specialization', updateGarageSpecializationAdmin);
 
 // ============================================================================
 // PHASE 4: USER MANAGEMENT

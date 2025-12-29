@@ -46,7 +46,11 @@ const isStrongPassword = (password: string): { valid: boolean; message?: string 
 // ============================================
 
 export const register = async (req: Request, res: Response) => {
-    const { phone_number, password, user_type, full_name, garage_name, address } = req.body;
+    const {
+        phone_number, password, user_type, full_name, garage_name, address,
+        // Garage specialization fields
+        supplier_type, specialized_brands, all_brands
+    } = req.body;
 
     // Basic field validation
     if (!phone_number || !password || !user_type) {
@@ -104,11 +108,15 @@ export const register = async (req: Request, res: Response) => {
             const demoExpiresAt = new Date();
             demoExpiresAt.setDate(demoExpiresAt.getDate() + TRIAL_DAYS);
 
-            // Create garage with auto demo trial
+            // Create garage with auto demo trial and specialization
             await client.query(
-                `INSERT INTO garages (garage_id, garage_name, address, approval_status, demo_expires_at) 
-                 VALUES ($1, $2, $3, 'demo', $4)`,
-                [userId, garage_name, address, demoExpiresAt]
+                `INSERT INTO garages (garage_id, garage_name, address, approval_status, demo_expires_at,
+                                      supplier_type, specialized_brands, all_brands) 
+                 VALUES ($1, $2, $3, 'demo', $4, $5, $6, $7)`,
+                [userId, garage_name, address, demoExpiresAt,
+                    supplier_type || 'used',
+                    specialized_brands || [],
+                    all_brands !== false]
             );
 
             // Note: During demo, garage operates without formal subscription
