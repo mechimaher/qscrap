@@ -127,7 +127,17 @@ export const getAllGaragesAdmin = async (req: AuthRequest, res: Response) => {
                 (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id) as total_orders,
                 (SELECT COUNT(*) FROM bids WHERE garage_id = g.garage_id) as total_bids,
                 gs.status as subscription_status,
-                sp.plan_name
+                CASE 
+                    WHEN sp.plan_name IS NOT NULL THEN sp.plan_name
+                    WHEN g.approval_status = 'demo' THEN 'Demo'
+                    ELSE NULL
+                END as plan_name,
+                g.demo_expires_at,
+                CASE 
+                    WHEN g.approval_status = 'demo' AND g.demo_expires_at IS NOT NULL 
+                    THEN EXTRACT(DAYS FROM (g.demo_expires_at - NOW()))::int
+                    ELSE NULL 
+                END as demo_days_left
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN ('active', 'trial')
@@ -300,6 +310,16 @@ export const grantDemoAccess = async (req: AuthRequest, res: Response) => {
 
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + Number(days));
+
+            // Cancel any active paid subscriptions (downgrade to demo)
+            await client.query(`
+                UPDATE garage_subscriptions 
+                SET status = 'cancelled', 
+                    cancelled_at = NOW(),
+                    cancellation_reason = 'Downgraded to demo by admin',
+                    updated_at = NOW()
+                WHERE garage_id = $1 AND status IN ('active', 'trial')
+            `, [garage_id]);
 
             // Update garage to demo mode
             const result = await client.query(`
@@ -577,6 +597,26 @@ export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
                 WHERE garage_id = $1 AND status IN ('active', 'trial')
             `, [garage_id]);
 
+            // Update garage approval status to 'approved' (promotion from demo)
+            await client.query(`
+                UPDATE garages SET
+                    approval_status = 'approved',
+                    demo_expires_at = NULL,
+                    approved_by = $1,
+                    approval_date = NOW(),
+                    updated_at = NOW()
+                WHERE garage_id = $2
+            `, [adminId, garage_id]);
+
+            // Activate the user account
+            await client.query(`
+                UPDATE users SET
+                    is_active = true,
+                    is_suspended = false,
+                    updated_at = NOW()
+                WHERE user_id = $1
+            `, [garage_id]);
+
             // Create new subscription
             const startDate = new Date();
             const endDate = new Date();
@@ -584,7 +624,7 @@ export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
 
             const subResult = await client.query(`
                 INSERT INTO garage_subscriptions 
-                (garage_id, plan_id, status, start_date, end_date, is_admin_granted, admin_notes)
+                (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, is_admin_granted, admin_notes)
                 VALUES ($1, $2, 'active', $3, $4, true, $5)
                 RETURNING *
             `, [garage_id, plan_id, startDate, endDate, notes || 'Granted by admin']);

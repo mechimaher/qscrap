@@ -288,6 +288,11 @@ function renderGarageCard(garage, isPending) {
     const statusClass = status;
     const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
 
+    // Determine plan badge class
+    const planName = garage.plan_name || 'None';
+    const planBadgeClass = planName === 'None' ? 'none' :
+        status === 'demo' ? 'demo' : 'professional';
+
     return `
         <div class="garage-card">
             <div class="garage-card-header">
@@ -323,10 +328,20 @@ function renderGarageCard(garage, isPending) {
                         <span class="garage-stat-label">Bids</span>
                     </div>
                     <div class="garage-stat">
-                        <span class="garage-stat-value">${garage.plan_name || 'None'}</span>
+                        <span class="plan-badge ${planBadgeClass}">
+                            <i class="bi bi-${planName === 'None' ? 'x-circle' : status === 'demo' ? 'clock' : 'award'}"></i>
+                            ${planName}
+                        </span>
                         <span class="garage-stat-label">Plan</span>
                     </div>
                 </div>
+                ${(status === 'approved' || status === 'demo') ? `
+                    <div class="garage-plan-actions">
+                        <button class="btn btn-sm btn-outline" onclick="openManagePlanModal('${garage.garage_id}', '${escapeHtml(garage.garage_name)}', '${planName}', '${status}')">
+                            <i class="bi bi-credit-card"></i> Manage Plan
+                        </button>
+                    </div>
+                ` : ''}
             ` : ''}
             <div class="garage-actions">
                 ${status === 'pending' ? `
@@ -352,6 +367,7 @@ function renderGarageCard(garage, isPending) {
         </div>
     `;
 }
+
 
 // ============================================
 // MODALS
@@ -495,6 +511,174 @@ async function revokeAccess(garageId) {
             loadDashboard();
         } else {
             showToast(data.error || 'Failed to revoke', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// ============================================
+// PLAN MANAGEMENT
+// ============================================
+
+async function openManagePlanModal(garageId, garageName, currentPlan, status) {
+    document.getElementById('subscriptionGarageId').value = garageId;
+    document.getElementById('subscriptionGarageName').textContent = garageName;
+    document.getElementById('subscriptionDays').value = 30;
+    document.getElementById('commissionOverride').value = '';
+    document.getElementById('subscriptionNotes').value = '';
+
+    // Load available plans
+    try {
+        const res = await fetch(`${API_URL}/admin/plans`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const planSelect = document.getElementById('subscriptionPlan');
+        planSelect.innerHTML = `
+            <option value="">-- Select Plan --</option>
+            <optgroup label="🎁 Trial Options">
+                <option value="demo_30">🎁 Demo Trial (30 days free, unlimited bids)</option>
+                ${status === 'demo' ? '<option value="demo_extend">🔄 Extend Demo (+30 days)</option>' : ''}
+            </optgroup>
+            <optgroup label="💼 Paid Plans">
+                ${(data.plans || []).map(p => `
+                    <option value="${p.plan_id}" data-commission="${p.commission_rate}">
+                        💼 ${p.plan_name} - ${(p.commission_rate * 100).toFixed(0)}% commission${p.max_bids_per_month ? ` (${p.max_bids_per_month} bids/month)` : ' (unlimited)'}
+                    </option>
+                `).join('')}
+            </optgroup>
+        `;
+
+        // Show/hide revoke button based on current plan
+        const revokeBtn = document.getElementById('btnRevokeSubscription');
+        if (revokeBtn) {
+            revokeBtn.style.display = currentPlan && currentPlan !== 'None' ? 'inline-flex' : 'none';
+        }
+
+        // Update modal title based on status
+        const modalTitle = document.querySelector('#subscriptionModal .modal-header h3');
+        if (modalTitle) {
+            if (status === 'demo') {
+                modalTitle.innerHTML = '<i class="bi bi-arrow-up-circle"></i> Upgrade from Demo';
+            } else if (currentPlan && currentPlan !== 'None') {
+                modalTitle.innerHTML = '<i class="bi bi-pencil-square"></i> Change Plan';
+            } else {
+                modalTitle.innerHTML = '<i class="bi bi-credit-card"></i> Assign Plan';
+            }
+        }
+
+    } catch (err) {
+        console.error('Failed to load plans:', err);
+        showToast('Failed to load subscription plans', 'error');
+        return;
+    }
+
+    document.getElementById('subscriptionModal').classList.add('active');
+}
+
+async function confirmAssignSubscription() {
+    const garageId = document.getElementById('subscriptionGarageId').value;
+    const planValue = document.getElementById('subscriptionPlan').value;
+    const days = parseInt(document.getElementById('subscriptionDays').value) || 30;
+    const commissionOverride = document.getElementById('commissionOverride').value;
+    const notes = document.getElementById('subscriptionNotes').value;
+
+    if (!planValue) {
+        showToast('Please select a plan', 'error');
+        return;
+    }
+
+    try {
+        let endpoint, body;
+
+        if (planValue === 'demo_30' || planValue === 'demo_extend') {
+            // Grant or extend demo
+            endpoint = `${API_URL}/admin/garages/${garageId}/demo`;
+            body = {
+                days: planValue === 'demo_30' ? 30 : days,
+                notes: notes || (planValue === 'demo_30' ? 'Demo assigned by admin' : 'Demo extended by admin')
+            };
+        } else {
+            // Assign paid plan
+            endpoint = `${API_URL}/admin/garages/${garageId}/plan`;
+            body = {
+                plan_id: planValue,
+                months: Math.ceil(days / 30),
+                notes: notes || 'Plan assigned by admin'
+            };
+        }
+
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Handle commission override for paid plans
+            if (commissionOverride && planValue !== 'demo_30' && planValue !== 'demo_extend') {
+                try {
+                    await fetch(`${API_URL}/admin/garages/${garageId}/commission`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            commission_rate: parseFloat(commissionOverride) / 100,
+                            notes: `Custom commission: ${commissionOverride}%`
+                        })
+                    });
+                } catch (e) {
+                    console.warn('Commission override failed:', e);
+                }
+            }
+
+            showToast(data.message || 'Plan assigned successfully!', 'success');
+            closeModal('subscriptionModal');
+            loadGarages();
+            loadPendingGarages();
+            loadDashboard();
+        } else {
+            showToast(data.error || 'Failed to assign plan', 'error');
+        }
+    } catch (err) {
+        console.error('Plan assignment error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+async function revokeSubscription() {
+    const garageId = document.getElementById('subscriptionGarageId').value;
+
+    if (!confirm('Are you sure you want to revoke this subscription? The garage will no longer be able to bid.')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/garages/${garageId}/plan/revoke`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: 'Revoked by admin' })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Subscription revoked', 'success');
+            closeModal('subscriptionModal');
+            loadGarages();
+            loadDashboard();
+        } else {
+            showToast(data.error || 'Failed to revoke subscription', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');
@@ -1109,7 +1293,7 @@ async function loadSubscriptionPlans() {
     if (subscriptionPlansCache) return subscriptionPlansCache;
 
     try {
-        const res = await fetch(`${API_URL}/admin/subscriptions/plans`, {
+        const res = await fetch(`${API_URL}/admin/plans`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -1145,40 +1329,76 @@ async function openSubscriptionModal(garageId, garageName) {
 
 async function confirmAssignSubscription() {
     const garageId = document.getElementById('subscriptionGarageId').value;
-    const planId = document.getElementById('subscriptionPlan').value;
-    const days = document.getElementById('subscriptionDays').value;
+    const planValue = document.getElementById('subscriptionPlan').value;
+    const days = parseInt(document.getElementById('subscriptionDays').value) || 30;
     const commission = document.getElementById('commissionOverride').value;
     const notes = document.getElementById('subscriptionNotes').value;
 
-    if (!planId) {
+    if (!planValue) {
         showToast('Please select a plan', 'error');
         return;
     }
 
     try {
-        const res = await fetch(`${API_URL}/admin/garages/${garageId}/subscription`, {
+        let endpoint, body;
+
+        // Handle demo plans specially - route to /demo endpoint
+        if (planValue === 'demo_30' || planValue === 'demo_extend') {
+            endpoint = `${API_URL}/admin/garages/${garageId}/demo`;
+            body = {
+                days: planValue === 'demo_30' ? 30 : days,
+                notes: notes || (planValue === 'demo_30' ? 'Demo assigned by admin' : 'Demo extended by admin')
+            };
+        } else {
+            // Paid plans go to /plan endpoint
+            endpoint = `${API_URL}/admin/garages/${garageId}/plan`;
+            body = {
+                plan_id: planValue,
+                months: Math.ceil(days / 30),
+                notes: notes || 'Plan assigned by admin'
+            };
+        }
+
+        const res = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                plan_id: planId,
-                days: parseInt(days),
-                commission_override: commission ? parseFloat(commission) : null,
-                notes
-            })
+            body: JSON.stringify(body)
         });
         const data = await res.json();
 
         if (res.ok) {
-            showToast('Subscription assigned successfully', 'success');
+            // Handle commission override for paid plans
+            if (commission && planValue !== 'demo_30' && planValue !== 'demo_extend') {
+                try {
+                    await fetch(`${API_URL}/admin/garages/${garageId}/commission`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            commission_rate: parseFloat(commission) / 100,
+                            notes: `Custom commission: ${commission}%`
+                        })
+                    });
+                } catch (e) {
+                    console.warn('Commission override failed:', e);
+                }
+            }
+
+            showToast(data.message || 'Plan assigned successfully!', 'success');
             closeModal('subscriptionModal');
             loadGarages();
+            loadPendingGarages();
+            loadDashboard();
         } else {
-            showToast(data.error || 'Failed to assign subscription', 'error');
+            showToast(data.error || 'Failed to assign plan', 'error');
         }
     } catch (err) {
+        console.error('Plan assignment error:', err);
         showToast('Connection error', 'error');
     }
 }
@@ -1189,7 +1409,7 @@ async function revokeSubscription() {
     if (!confirm('Are you sure you want to revoke this subscription?')) return;
 
     try {
-        const res = await fetch(`${API_URL}/admin/garages/${garageId}/subscription/revoke`, {
+        const res = await fetch(`${API_URL}/admin/garages/${garageId}/plan/revoke`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1225,7 +1445,7 @@ async function confirmExtendSubscription() {
     const reason = document.getElementById('extendReason').value;
 
     try {
-        const res = await fetch(`${API_URL}/admin/garages/${garageId}/subscription/extend`, {
+        const res = await fetch(`${API_URL}/admin/garages/${garageId}/plan/extend`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,

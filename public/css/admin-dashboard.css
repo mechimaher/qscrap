@@ -934,6 +934,56 @@
     min-width: 100px;
 }
 
+/* Plan Badge Styling */
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.plan-badge i {
+    font-size: 11px;
+}
+
+.plan-badge.none {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.plan-badge.demo {
+    background: rgba(251, 191, 36, 0.15);
+    color: #d97706;
+}
+
+.plan-badge.professional {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+/* Manage Plan Button */
+.garage-plan-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.garage-plan-actions .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.garage-plan-actions .btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+
 /* Modals */
 .modal-overlay {
     position: fixed;

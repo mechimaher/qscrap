@@ -7,8 +7,8 @@
 // export const SOCKET_URL = 'https://api.qscrap.qa';
 
 // DEVELOPMENT URLs (for local testing)
-export const API_BASE_URL = 'http://192.168.1.195:3000/api';
-export const SOCKET_URL = 'http://192.168.1.195:3000';
+export const API_BASE_URL = 'http://192.168.1.59:3000/api';
+export const SOCKET_URL = 'http://192.168.1.59:3000';
 
 // API endpoints - Match exactly with backend routes
 export const API_ENDPOINTS = {

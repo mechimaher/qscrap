@@ -21,7 +21,7 @@ export const requestContext = (req: RequestWithContext, res: Response, next: Nex
     req.requestStartTime = Date.now();
 
     // Add request ID to response headers for client-side debugging
-    res.setHeader('X-Request-ID', req.requestId);
+    res.setHeader('X-Request-ID', req.requestId || '');
 
     // Log request start (console only per user requirement)
     console.log(`[${new Date().toISOString()}] [${req.requestId}] ${req.method} ${req.path} - Started`);

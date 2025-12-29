@@ -14,6 +14,109 @@ function escapeHTML(text) {
     return div.innerHTML;
 }
 
+/**
+ * Decode JWT token to extract payload (without verification - for frontend display only)
+ * Security Note: Actual authorization is enforced by backend middleware
+ */
+function decodeJWT(token) {
+    try {
+        if (!token) return null;
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        const payload = JSON.parse(atob(parts[1]));
+        return payload;
+    } catch (e) {
+        console.error('Failed to decode token:', e);
+        return null;
+    }
+}
+
+/**
+ * Check if current token belongs to an authorized operations user
+ * Allowed roles: admin, operations, staff
+ */
+function isAuthorizedUser(token) {
+    const payload = decodeJWT(token);
+    if (!payload) return false;
+
+    const allowedRoles = ['admin', 'operations', 'staff'];
+    return allowedRoles.includes(payload.userType);
+}
+
+/**
+ * Get user type from token for display purposes
+ */
+function getUserTypeFromToken(token) {
+    const payload = decodeJWT(token);
+    return payload?.userType || 'unknown';
+}
+
+/**
+ * Show access denied screen with clear message
+ */
+function showAccessDenied(userType) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'none';
+
+    // Create access denied overlay if it doesn't exist
+    let accessDenied = document.getElementById('accessDeniedScreen');
+    if (!accessDenied) {
+        accessDenied = document.createElement('div');
+        accessDenied.id = 'accessDeniedScreen';
+        accessDenied.innerHTML = `
+            <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%); padding: 20px;">
+                <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 450px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                        <i class="bi bi-shield-lock" style="font-size: 36px; color: white;"></i>
+                    </div>
+                    <h1 style="color: white; font-size: 24px; margin-bottom: 12px;">Access Denied</h1>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+                        The Operations Dashboard is restricted to <strong style="color: #f59e0b;">Admin</strong>, 
+                        <strong style="color: #f59e0b;">Operations</strong>, and <strong style="color: #f59e0b;">Staff</strong> accounts only.
+                    </p>
+                    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <p style="color: #fca5a5; font-size: 13px; margin: 0;">
+                            <i class="bi bi-info-circle"></i> You are logged in as: <strong id="deniedUserType" style="text-transform: capitalize;">${userType}</strong>
+                        </p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button onclick="logoutAndRetry()" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                            <i class="bi bi-box-arrow-in-right"></i> Login with Different Account
+                        </button>
+                        <a href="/garage-dashboard.html" style="color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none;">
+                            ← Go to Garage Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(accessDenied);
+    } else {
+        accessDenied.style.display = 'block';
+        // Update user type display
+        const userTypeEl = accessDenied.querySelector('#deniedUserType');
+        if (userTypeEl) userTypeEl.textContent = userType;
+    }
+}
+
+/**
+ * Logout and show login screen for retry
+ */
+function logoutAndRetry() {
+    localStorage.removeItem('opsToken');
+    token = null;
+
+    // Hide access denied screen
+    const accessDenied = document.getElementById('accessDeniedScreen');
+    if (accessDenied) accessDenied.style.display = 'none';
+
+    // Show login screen
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+
+    showToast('Please login with an authorized operations account', 'info');
+}
+
 let currentOrderStatus = 'all';
 let currentDisputeStatus = 'pending';
 let currentUserType = 'customer';
@@ -33,6 +136,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const data = await res.json();
 
         if (res.ok && data.token) {
+            // Validate user type before granting access
+            if (!isAuthorizedUser(data.token)) {
+                const userType = getUserTypeFromToken(data.token);
+                showToast(`Access denied: "${userType}" accounts cannot access Operations Dashboard`, 'error');
+                showAccessDenied(userType);
+                return;
+            }
+
             token = data.token;
             localStorage.setItem('opsToken', token);
             showDashboard();
@@ -44,9 +155,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Check auth on load
+// Check auth on load - with user type validation
 if (token) {
-    showDashboard();
+    if (isAuthorizedUser(token)) {
+        showDashboard();
+    } else {
+        const userType = getUserTypeFromToken(token);
+        showAccessDenied(userType);
+    }
 }
 
 async function showDashboard() {
