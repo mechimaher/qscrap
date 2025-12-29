@@ -131,6 +131,12 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const address = document.getElementById('regAddress').value;
     const password = document.getElementById('regPassword').value;
 
+    // Get specialization fields
+    const supplierType = document.getElementById('regSupplierType').value;
+    const allBrands = document.getElementById('regAllBrands').checked;
+    const brandCheckboxes = document.querySelectorAll('.brand-checkbox:checked');
+    const specializedBrands = allBrands ? [] : Array.from(brandCheckboxes).map(cb => cb.value);
+
     try {
         const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
@@ -141,7 +147,11 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
                 full_name: ownerName,
                 user_type: 'garage',
                 garage_name: garageName,
-                address: address
+                address: address,
+                // Specialization fields
+                supplier_type: supplierType,
+                specialized_brands: specializedBrands,
+                all_brands: allBrands
             })
         });
         const data = await res.json();
@@ -157,6 +167,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         showToast('Connection error', 'error');
     }
 });
+
+// Toggle brand selection visibility
+function toggleBrandSelection() {
+    const allBrandsChecked = document.getElementById('regAllBrands').checked;
+    const container = document.getElementById('brandSelectionContainer');
+    if (container) {
+        container.style.display = allBrandsChecked ? 'none' : 'block';
+    }
+}
 
 function logout() {
     localStorage.clear();

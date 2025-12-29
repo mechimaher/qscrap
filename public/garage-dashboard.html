@@ -62,6 +62,50 @@
                     <label>Address</label>
                     <input type="text" class="form-control" id="regAddress" placeholder="Garage Location" required>
                 </div>
+
+                <!-- Specialization Section -->
+                <div style="background: rgba(99, 102, 241, 0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                    <h4 style="margin: 0 0 12px; font-size: 14px; color: var(--accent);">
+                        <i class="bi bi-gear"></i> Specialization (helps match you with relevant requests)
+                    </h4>
+                    
+                    <!-- Supplier Type -->
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 13px;">What type of parts do you sell?</label>
+                        <select class="form-control" id="regSupplierType" required>
+                            <option value="used">Used Parts Only</option>
+                            <option value="new">New Parts Only</option>
+                            <option value="both">Both Used & New</option>
+                        </select>
+                    </div>
+
+                    <!-- Brand Specialization -->
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label style="font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="regAllBrands" checked onchange="toggleBrandSelection()">
+                            I deal with all car brands
+                        </label>
+                    </div>
+
+                    <div id="brandSelectionContainer" style="display: none;">
+                        <label style="font-size: 13px; margin-bottom: 8px; display: block;">Select brands you specialize in:</label>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px;">
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Toyota"> Toyota</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Nissan"> Nissan</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Honda"> Honda</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Hyundai"> Hyundai</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Kia"> Kia</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Mitsubishi"> Mitsubishi</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Lexus"> Lexus</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="BMW"> BMW</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Mercedes"> Mercedes</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Chevrolet"> Chevrolet</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Ford"> Ford</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Land Rover"> Land Rover</label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" class="form-control" id="regPassword" placeholder="Min 6 characters"
