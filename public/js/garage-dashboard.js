@@ -346,36 +346,6 @@ async function showDashboard() {
         loadStats();
     });
 
-    // Counter-offer handlers
-    socket.on('counter_offer_received', (data) => {
-        playNotificationSound('newRequest');
-        showToast(data.notification, 'info');
-        // Store for responding later
-        pendingCounterOffers.push(data);
-        loadBids();
-        // Auto-open the respond modal
-        setTimeout(() => {
-            openCounterRespondModal(
-                data.counter_offer_id,
-                parseFloat(data.original_amount),
-                parseFloat(data.proposed_amount),
-                data.message
-            );
-        }, 500);
-    });
-
-    socket.on('counter_offer_accepted', (data) => {
-        playNotificationSound('success');
-        showToast(data.notification, 'success');
-        loadBids();
-    });
-
-    socket.on('counter_offer_rejected', (data) => {
-        playNotificationSound('warning');
-        showToast(data.notification, 'warning');
-        loadBids();
-    });
-
     // Dispute handlers - Professional queue approach (no modal spam)
     socket.on('dispute_created', (data) => {
         playNotificationSound('warning');
@@ -958,7 +928,7 @@ async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt) {
     }
 }
 
-// Load pending counter-offers on page load
+// Load pending counter-offers and render in Pending Actions section
 async function loadPendingCounterOffers() {
     try {
         const res = await fetch(`${API_URL}/negotiations/pending-offers`, {
@@ -967,7 +937,6 @@ async function loadPendingCounterOffers() {
         const data = await res.json();
 
         if (data.pending_offers && data.pending_offers.length > 0) {
-            // Store them and open modal for first one
             pendingCounterOffers = data.pending_offers.map(co => ({
                 counter_offer_id: co.counter_offer_id,
                 bid_id: co.bid_id,
@@ -975,25 +944,263 @@ async function loadPendingCounterOffers() {
                 original_amount: co.original_amount,
                 message: co.message,
                 car_summary: co.car_summary,
-                part_description: co.part_description
+                part_description: co.part_description,
+                created_at: co.created_at
             }));
-
-            // Show notification badge or auto-open modal
-            showToast(`You have ${pendingCounterOffers.length} pending counter-offer(s)!`, 'info');
-
-            // Auto-open first pending one
-            setTimeout(() => {
-                const first = pendingCounterOffers[0];
-                openCounterRespondModal(
-                    first.counter_offer_id,
-                    parseFloat(first.original_amount),
-                    parseFloat(first.proposed_amount),
-                    first.message
-                );
-            }, 1000);
+        } else {
+            pendingCounterOffers = [];
         }
+
+        // Render to Pending Actions section
+        renderPendingActions();
+        updatePendingActionsBadge();
+
     } catch (err) {
         console.error('Failed to load pending counter-offers:', err);
+    }
+}
+
+// Render pending actions (counter-offers + disputes) as premium cards
+function renderPendingActions() {
+    const container = document.getElementById('pendingActionsList');
+    if (!container) return;
+
+    const allActions = [
+        ...pendingCounterOffers.map(co => ({ type: 'counter-offer', data: co })),
+        ...pendingDisputes.map(d => ({ type: 'dispute', data: d }))
+    ];
+
+    // Update summary counts
+    const counterEl = document.getElementById('counterOfferCount');
+    const disputeEl = document.getElementById('disputeCount');
+    if (counterEl) counterEl.textContent = pendingCounterOffers.length;
+    if (disputeEl) disputeEl.textContent = pendingDisputes.length;
+
+    if (allActions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 60px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);">
+                <i class="bi bi-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 16px;"></i>
+                <h4 style="margin: 0 0 8px; font-size: 18px; color: var(--text-primary);">All Clear!</h4>
+                <p style="margin: 0; color: var(--text-secondary);">No pending actions right now. Counter-offers and disputes will appear here.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Render cards
+    container.innerHTML = allActions.map(action => {
+        if (action.type === 'counter-offer') {
+            return createCounterOfferCard(action.data);
+        } else {
+            return createDisputeActionCard(action.data);
+        }
+    }).join('');
+}
+
+// Create premium counter-offer card
+function createCounterOfferCard(co) {
+    const bidRef = `BID-${String(co.bid_id).padStart(4, '0')}`;
+    const priceDiff = ((co.proposed_amount - co.original_amount) / co.original_amount * 100).toFixed(0);
+    const isLower = co.proposed_amount < co.original_amount;
+
+    // Calculate time remaining (24 hours from creation)
+    const createdAt = new Date(co.created_at || Date.now());
+    const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
+    const hoursRemaining = Math.max(0, (expiresAt - Date.now()) / (1000 * 60 * 60));
+
+    let urgencyClass = 'urgency-low';
+    let urgencyColor = '#10b981';
+    if (hoursRemaining < 2) {
+        urgencyClass = 'urgency-critical';
+        urgencyColor = '#ef4444';
+    } else if (hoursRemaining < 6) {
+        urgencyClass = 'urgency-high';
+        urgencyColor = '#f59e0b';
+    }
+
+    const timeText = hoursRemaining > 1
+        ? `${Math.floor(hoursRemaining)}h ${Math.floor((hoursRemaining % 1) * 60)}m`
+        : `${Math.floor(hoursRemaining * 60)}m`;
+
+    return `
+        <div class="pending-action-card counter-offer-card ${urgencyClass}" style="
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(249, 115, 22, 0.05) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            animation: slideIn 0.3s ease-out;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <div>
+                    <span style="background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">${bidRef}</span>
+                    <span style="background: rgba(249, 115, 22, 0.2); color: #f97316; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-left: 8px;">
+                        <i class="bi bi-arrow-repeat"></i> Counter-Offer
+                    </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; color: ${urgencyColor}; font-size: 13px; font-weight: 600;">
+                    <i class="bi bi-clock"></i>
+                    <span>${timeText} left</span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">${escapeHTML(co.car_summary || 'Vehicle')}</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">${escapeHTML(co.part_description || 'Part Request')}</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 16px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-muted);">Your Bid</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">${parseFloat(co.original_amount).toFixed(0)} QAR</div>
+                </div>
+                <i class="bi bi-arrow-right" style="font-size: 24px; color: var(--accent);"></i>
+                <div style="text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-muted);">Customer Offer</div>
+                    <div style="font-size: 20px; font-weight: 700; color: ${isLower ? '#ef4444' : '#10b981'};">${parseFloat(co.proposed_amount).toFixed(0)} QAR</div>
+                    <div style="font-size: 11px; color: ${isLower ? '#ef4444' : '#10b981'};">${priceDiff > 0 ? '+' : ''}${priceDiff}%</div>
+                </div>
+            </div>
+            
+            ${co.message ? `
+                <div style="padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); font-style: italic;">
+                    <i class="bi bi-chat-dots"></i> "${escapeHTML(co.message)}"
+                </div>
+            ` : ''}
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="respondToCounterFromCard('${co.counter_offer_id}', 'accept')" style="
+                    flex: 1; padding: 12px; border: none; border-radius: 10px;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white; font-weight: 600; cursor: pointer;
+                    display: flex; align-items: center; justify-content: center; gap: 6px;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <i class="bi bi-check-circle"></i> Accept
+                </button>
+                <button onclick="openCounterInputForCard('${co.counter_offer_id}', ${co.proposed_amount})" style="
+                    flex: 1; padding: 12px; border: 1px solid var(--accent); border-radius: 10px;
+                    background: transparent; color: var(--accent); font-weight: 600; cursor: pointer;
+                    display: flex; align-items: center; justify-content: center; gap: 6px;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='var(--accent)'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent)'">
+                    <i class="bi bi-arrow-repeat"></i> Counter
+                </button>
+                <button onclick="respondToCounterFromCard('${co.counter_offer_id}', 'reject')" style="
+                    padding: 12px 16px; border: 1px solid var(--danger); border-radius: 10px;
+                    background: transparent; color: var(--danger); font-weight: 600; cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='var(--danger)'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='var(--danger)'">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Create dispute action card
+function createDisputeActionCard(dispute) {
+    return `
+        <div class="pending-action-card dispute-card" style="
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.05) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                    <i class="bi bi-exclamation-triangle"></i> Dispute
+                </span>
+                <span style="font-size: 13px; color: var(--text-secondary);">Order #${dispute.order_number || dispute.order_id}</span>
+            </div>
+            <div style="margin-bottom: 16px; color: var(--warning); font-weight: 600;">${escapeHTML(dispute.reason || 'Customer reported an issue')}</div>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="openDisputeModalFromCard('${dispute.dispute_id}', '${dispute.order_id}')" style="
+                    flex: 1; padding: 12px; border: none; border-radius: 10px;
+                    background: var(--warning); color: white; font-weight: 600; cursor: pointer;
+                ">
+                    <i class="bi bi-eye"></i> View Details
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Update pending actions badge
+function updatePendingActionsBadge() {
+    const total = pendingCounterOffers.length + pendingDisputes.length;
+    const badge = document.getElementById('pendingActionsBadge');
+    if (badge) {
+        badge.textContent = total;
+        badge.style.display = total > 0 ? 'inline-flex' : 'none';
+    }
+}
+
+// Respond to counter-offer from card (inline)
+async function respondToCounterFromCard(counterOfferId, action) {
+    try {
+        const res = await fetch(`${API_URL}/negotiations/counter-offers/${counterOfferId}/garage-respond`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: action })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(data.message || `Counter-offer ${action}ed!`, 'success');
+            // Reload pending actions
+            await loadPendingCounterOffers();
+            loadBids();
+            if (action === 'accept') loadOrders();
+        } else {
+            showToast(data.error || 'Failed to respond', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Open counter input inline (simplified)
+function openCounterInputForCard(counterOfferId, currentAmount) {
+    const newAmount = prompt(`Enter your counter price (current offer: ${currentAmount} QAR):`);
+    if (newAmount && !isNaN(parseFloat(newAmount))) {
+        respondToCounterWithAmount(counterOfferId, parseFloat(newAmount));
+    }
+}
+
+// Respond with counter amount
+async function respondToCounterWithAmount(counterOfferId, amount) {
+    try {
+        const res = await fetch(`${API_URL}/negotiations/counter-offers/${counterOfferId}/garage-respond`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: 'counter', counter_amount: amount })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(data.message || 'Counter-offer sent!', 'success');
+            await loadPendingCounterOffers();
+            loadBids();
+        } else {
+            showToast(data.error || 'Failed to counter', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Open dispute modal from card
+function openDisputeModalFromCard(disputeId, orderId) {
+    // Find dispute in pendingDisputes and open modal
+    const dispute = pendingDisputes.find(d => d.dispute_id === disputeId || d.order_id === orderId);
+    if (dispute) {
+        openDisputeModal(dispute);
     }
 }
 
@@ -1801,8 +2008,14 @@ function switchSection(section) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.querySelector(`[data-section="${section}"]`).classList.add('active');
 
+    // Handle hyphenated section names
+    const sectionIdMap = {
+        'pending-actions': 'PendingActions'
+    };
+    const sectionId = sectionIdMap[section] || section.charAt(0).toUpperCase() + section.slice(1);
+
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+    document.getElementById('section' + sectionId).classList.add('active');
 
     // Refresh data based on section
     if (section === 'requests') loadRequests();
@@ -1813,6 +2026,7 @@ function switchSection(section) {
     if (section === 'earnings') loadEarnings();
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
+    if (section === 'pending-actions') { loadPendingCounterOffers(); loadPendingDisputes(); }
 }
 
 // Ignore/Skip request - now persists to database (per-garage)
@@ -2064,98 +2278,6 @@ function getTimeAgo(date) {
     return Math.floor(seconds / 86400) + 'd ago';
 }
 
-// ===== COUNTER-OFFER RESPOND =====
-let currentCounterOfferId = null;
-let currentCounterBidId = null;
-
-function openCounterRespondModal(counterOfferId, originalBid, customerOffer, message) {
-    currentCounterOfferId = counterOfferId;
-
-    document.getElementById('respondYourBid').textContent = originalBid.toFixed(2) + ' QAR';
-    document.getElementById('respondCustomerOffer').textContent = customerOffer.toFixed(2) + ' QAR';
-
-    const msgDiv = document.getElementById('respondCustomerMessage');
-    if (message) {
-        msgDiv.textContent = `"${message}"`;
-        msgDiv.style.display = 'block';
-    } else {
-        msgDiv.style.display = 'none';
-    }
-
-    // Reset counter input
-    document.getElementById('counterInputSection').classList.remove('active');
-    document.getElementById('garageCounterAmount').value = '';
-
-    document.getElementById('counterRespondModal').classList.add('active');
-}
-
-function closeCounterRespondModal() {
-    document.getElementById('counterRespondModal').classList.remove('active');
-    currentCounterOfferId = null;
-}
-
-function showCounterInput() {
-    document.getElementById('counterInputSection').classList.add('active');
-}
-
-async function respondToCounter(action) {
-    if (!currentCounterOfferId) return;
-
-    let body = { action };
-
-    if (action === 'counter') {
-        const amount = parseFloat(document.getElementById('garageCounterAmount').value);
-        if (!amount || amount <= 0) {
-            showToast('Please enter a valid counter amount', 'error');
-            return;
-        }
-        body.counter_amount = amount;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/negotiations/counter-offers/${currentCounterOfferId}/garage-respond`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            if (action === 'accept') {
-                showToast('Counter-offer accepted! Bid updated.', 'success');
-            } else if (action === 'reject') {
-                showToast('Counter-offer declined', 'success');
-            } else {
-                showToast(`Counter-offer sent! (Round ${data.round})`, 'success');
-            }
-            closeCounterRespondModal();
-            loadBids();
-            // Remove from pending list
-            pendingCounterOffers = pendingCounterOffers.filter(co => co.counter_offer_id !== currentCounterOfferId);
-        } else {
-            showToast(data.error || 'Failed to respond', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-// Check for pending counter-offers in bid list
-function checkPendingCounterOffers() {
-    if (pendingCounterOffers.length > 0) {
-        const latest = pendingCounterOffers[0];
-        openCounterRespondModal(
-            latest.counter_offer_id,
-            parseFloat(latest.original_amount),
-            parseFloat(latest.proposed_amount),
-            latest.message
-        );
-    }
-}
 
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -2466,17 +2588,56 @@ async function loadSubscription() {
 
         if (data.subscription) {
             const sub = data.subscription;
+
+            // Plan name
             document.getElementById('subPlanName').textContent = sub.plan_name || 'Free Trial';
-            document.getElementById('subPrice').textContent = sub.monthly_fee ? `${sub.monthly_fee} QAR` : 'Free';
+
+            // Price display - commission plans have no monthly fee
+            if (sub.is_commission_based || sub.monthly_fee === 0) {
+                document.getElementById('subPrice').textContent = 'Free';
+            } else {
+                document.getElementById('subPrice').textContent = `${sub.monthly_fee} QAR`;
+            }
+
+            // Bids used this month (now dynamically computed)
             document.getElementById('subBidsUsed').textContent = sub.bids_used_this_cycle || 0;
             document.getElementById('subBidsLimit').textContent = sub.max_bids_per_month || '∞';
-            document.getElementById('subCommission').textContent = sub.commission_rate ?
-                `${(sub.commission_rate * 100).toFixed(1)}%` : '-';
-            document.getElementById('subRenewal').textContent = sub.billing_cycle_end ?
-                new Date(sub.billing_cycle_end).toLocaleDateString() : '-';
+
+            // Commission rate - prominent for commission plans
+            if (sub.commission_rate !== undefined) {
+                document.getElementById('subCommission').textContent =
+                    sub.commission_rate === 0 ? '0% (Demo)' : `${(sub.commission_rate * 100).toFixed(0)}%`;
+            } else {
+                document.getElementById('subCommission').textContent = '-';
+            }
+
+            // Renewal date - not applicable for commission-only plans (no monthly fee)
+            if (sub.is_commission_based || sub.monthly_fee === 0) {
+                document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
+            } else if (sub.billing_cycle_end) {
+                // Only show renewal date if there's an actual billing cycle
+                const endDate = new Date(sub.billing_cycle_end);
+                if (endDate.getFullYear() >= 2099) {
+                    document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
+                } else {
+                    document.getElementById('subRenewal').textContent = endDate.toLocaleDateString();
+                }
+            } else {
+                document.getElementById('subRenewal').textContent = '-';
+            }
+
+            // Hide "Change Plan" button for commission plans (they're already on the best model)
+            const changePlanBtn = document.querySelector('#currentSubscription .plan-actions button');
+            if (changePlanBtn && sub.is_commission_based) {
+                changePlanBtn.style.display = 'none';
+            }
         } else {
             document.getElementById('subPlanName').textContent = 'No Active Subscription';
             document.getElementById('subPrice').textContent = '-';
+            document.getElementById('subBidsUsed').textContent = '0';
+            document.getElementById('subBidsLimit').textContent = '-';
+            document.getElementById('subCommission').textContent = '-';
+            document.getElementById('subRenewal').textContent = '-';
         }
     } catch (err) {
         console.error('Failed to load subscription:', err);
@@ -3355,7 +3516,6 @@ function setupKeyboardShortcuts() {
             closeKeyboardShortcuts();
             closeBidModal();
             closeOrderModal();
-            closeCounterRespondModal();
             closeDisputeModal();
             closeLightbox();
         }

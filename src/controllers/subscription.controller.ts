@@ -23,6 +23,16 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
 
     try {
+        // Get current month's bid count (always compute dynamically for accuracy)
+        const bidCountResult = await pool.query(
+            `SELECT COUNT(*) as bids_this_month 
+             FROM bids 
+             WHERE garage_id = $1 
+             AND created_at >= DATE_TRUNC('month', CURRENT_DATE)`,
+            [garageId]
+        );
+        const bidsThisMonth = parseInt(bidCountResult.rows[0].bids_this_month) || 0;
+
         // First check for active subscription in garage_subscriptions table
         const result = await pool.query(
             `SELECT gs.*, sp.plan_code, sp.plan_name, sp.monthly_fee, 
@@ -38,28 +48,34 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
         if (result.rows.length > 0) {
             const sub = result.rows[0];
             const bidsRemaining = sub.max_bids_per_month
-                ? sub.max_bids_per_month - sub.bids_used_this_cycle
+                ? sub.max_bids_per_month - bidsThisMonth
                 : null;
 
             return res.json({
                 subscription: {
                     ...sub,
+                    bids_used_this_cycle: bidsThisMonth, // Use dynamic count
                     bids_remaining: bidsRemaining
                 }
             });
         }
 
-        // No subscription found - check if garage has demo access
-        const demoResult = await pool.query(
+        // No subscription found - check garage approval status
+        const garageResult = await pool.query(
             `SELECT approval_status, demo_expires_at 
              FROM garages 
              WHERE garage_id = $1`,
             [garageId]
         );
 
-        if (demoResult.rows.length > 0 && demoResult.rows[0].approval_status === 'demo') {
-            const demo = demoResult.rows[0];
-            // Return demo as a virtual subscription (0% commission during demo)
+        if (garageResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Garage not found' });
+        }
+
+        const garage = garageResult.rows[0];
+
+        // Demo garage - return demo plan
+        if (garage.approval_status === 'demo') {
             return res.json({
                 subscription: {
                     plan_name: 'Demo Trial',
@@ -68,17 +84,41 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
                     monthly_fee: 0,
                     commission_rate: 0, // 0% during demo - garage keeps 100%
                     max_bids_per_month: null, // unlimited during demo
-                    bids_used_this_cycle: 0,
+                    bids_used_this_cycle: bidsThisMonth,
                     bids_remaining: null,
-                    billing_cycle_end: demo.demo_expires_at,
+                    billing_cycle_end: garage.demo_expires_at,
                     features: ['Full platform access', 'Unlimited bids', '0% platform commission', 'Demo period'],
                     is_demo: true
                 }
             });
         }
 
-        // Check if garage is expired (demo ended, no subscription)
-        if (demoResult.rows.length > 0 && demoResult.rows[0].approval_status === 'expired') {
+        // Approved garage without subscription - Commission-based model
+        if (garage.approval_status === 'approved') {
+            return res.json({
+                subscription: {
+                    plan_name: 'Commission Plan',
+                    plan_code: 'commission',
+                    status: 'active',
+                    monthly_fee: 0, // No monthly subscription fee
+                    commission_rate: 0.15, // 15% platform commission on each sale
+                    max_bids_per_month: null, // Unlimited bids
+                    bids_used_this_cycle: bidsThisMonth,
+                    bids_remaining: null,
+                    billing_cycle_end: null, // No billing cycle - commission per order
+                    features: [
+                        'No monthly fees',
+                        'Unlimited bids',
+                        '15% commission per order',
+                        'Pay only when you sell'
+                    ],
+                    is_commission_based: true
+                }
+            });
+        }
+
+        // Expired demo
+        if (garage.approval_status === 'expired') {
             return res.json({
                 subscription: null,
                 status: 'expired',
@@ -87,8 +127,12 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // No subscription and no demo
-        return res.json({ subscription: null, message: 'No active subscription' });
+        // Pending approval or other status
+        return res.json({
+            subscription: null,
+            message: 'No active subscription',
+            approval_status: garage.approval_status
+        });
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }

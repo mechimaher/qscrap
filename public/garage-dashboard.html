@@ -64,11 +64,12 @@
                 </div>
 
                 <!-- Specialization Section -->
-                <div style="background: rgba(99, 102, 241, 0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <div
+                    style="background: rgba(99, 102, 241, 0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
                     <h4 style="margin: 0 0 12px; font-size: 14px; color: var(--accent);">
                         <i class="bi bi-gear"></i> Specialization (helps match you with relevant requests)
                     </h4>
-                    
+
                     <!-- Supplier Type -->
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label style="font-size: 13px;">What type of parts do you sell?</label>
@@ -88,20 +89,33 @@
                     </div>
 
                     <div id="brandSelectionContainer" style="display: none;">
-                        <label style="font-size: 13px; margin-bottom: 8px; display: block;">Select brands you specialize in:</label>
+                        <label style="font-size: 13px; margin-bottom: 8px; display: block;">Select brands you specialize
+                            in:</label>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px;">
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Toyota"> Toyota</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Nissan"> Nissan</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Honda"> Honda</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Hyundai"> Hyundai</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Kia"> Kia</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Mitsubishi"> Mitsubishi</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Lexus"> Lexus</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="BMW"> BMW</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Mercedes"> Mercedes</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Chevrolet"> Chevrolet</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Ford"> Ford</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" class="brand-checkbox" value="Land Rover"> Land Rover</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Toyota"> Toyota</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Nissan"> Nissan</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Honda"> Honda</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Hyundai"> Hyundai</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Kia"> Kia</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Mitsubishi"> Mitsubishi</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Lexus"> Lexus</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="BMW"> BMW</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Mercedes"> Mercedes</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Chevrolet"> Chevrolet</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Ford"> Ford</label>
+                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox"
+                                    class="brand-checkbox" value="Land Rover"> Land Rover</label>
                         </div>
                     </div>
                 </div>
@@ -154,6 +168,12 @@
                     <i class="bi bi-tag-fill"></i>
                     My Bids
                     <span class="nav-badge" id="bidsBadge" style="background: #f59e0b; display: none;">0</span>
+                </a>
+                <a class="nav-item" data-section="pending-actions">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    Pending Actions
+                    <span class="nav-badge pulse-badge" id="pendingActionsBadge"
+                        style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); display: none;">0</span>
                 </a>
                 <a class="nav-item" data-section="orders">
                     <i class="bi bi-box-seam-fill"></i>
@@ -399,6 +419,63 @@
                 <div id="bidsPagination" style="margin-top: 20px;"></div>
             </section>
 
+            <!-- Pending Actions Section (Counter-Offers & Disputes) -->
+            <section class="section" id="sectionPendingActions">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-lightning-charge-fill" style="color: #f97316;"></i> Pending
+                        Actions</h1>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        Real-time
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="pending-actions-summary"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div class="summary-card"
+                        style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(239, 68, 68, 0.1) 100%); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 16px; padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div
+                                style="width: 48px; height: 48px; background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-arrow-repeat" style="font-size: 24px; color: white;"></i>
+                            </div>
+                            <div>
+                                <div id="counterOfferCount"
+                                    style="font-size: 28px; font-weight: 700; color: var(--text-primary);">0</div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">Counter-Offers</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="summary-card"
+                        style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(234, 179, 8, 0.1) 100%); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div
+                                style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: white;"></i>
+                            </div>
+                            <div>
+                                <div id="disputeCount"
+                                    style="font-size: 28px; font-weight: 700; color: var(--text-primary);">0</div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">Disputes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Counter-Offers List -->
+                <div id="pendingActionsList" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="empty-state"
+                        style="text-align: center; padding: 60px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);">
+                        <i class="bi bi-check-circle"
+                            style="font-size: 48px; color: var(--success); margin-bottom: 16px;"></i>
+                        <h4 style="margin: 0 0 8px; font-size: 18px; color: var(--text-primary);">All Clear!</h4>
+                        <p style="margin: 0; color: var(--text-secondary);">No pending actions right now. Counter-offers
+                            and disputes will appear here.</p>
+                    </div>
+                </div>
+            </section>
+
             <!-- Orders Section -->
             <section class="section" id="sectionOrders">
                 <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
@@ -638,56 +715,6 @@
         </div>
     </div>
 
-    <!-- Counter-Offer Respond Modal -->
-    <div class="counter-respond-modal" id="counterRespondModal" role="dialog" aria-modal="true"
-        aria-label="Customer Counter-Offer">
-        <div class="counter-respond-content">
-            <div class="counter-respond-header">
-                <h3>💰 Customer Counter-Offer</h3>
-                <button class="counter-respond-close" onclick="closeCounterRespondModal()">×</button>
-            </div>
-            <div class="counter-respond-body">
-                <div class="counter-price-display">
-                    <div class="your-bid">
-                        <label>Your Bid</label>
-                        <div class="price" id="respondYourBid">0 QAR</div>
-                    </div>
-                    <i class="bi bi-arrow-right" style="font-size: 24px; color: var(--accent);"></i>
-                    <div class="customer-offer">
-                        <label>Customer Offers</label>
-                        <div class="price" id="respondCustomerOffer">0 QAR</div>
-                    </div>
-                </div>
-
-                <div class="counter-message-display" id="respondCustomerMessage" style="display: none;">
-                    "Customer message here"
-                </div>
-
-                <div class="counter-respond-actions">
-                    <button class="counter-respond-btn accept" onclick="respondToCounter('accept')">
-                        <i class="bi bi-check-circle"></i>
-                        Accept
-                    </button>
-                    <button class="counter-respond-btn reject" onclick="respondToCounter('reject')">
-                        <i class="bi bi-x-circle"></i>
-                        Decline
-                    </button>
-                    <button class="counter-respond-btn counter" onclick="showCounterInput()">
-                        <i class="bi bi-arrow-repeat"></i>
-                        Counter
-                    </button>
-                </div>
-
-                <div class="counter-input-section" id="counterInputSection">
-                    <label>Your Counter-Offer Price</label>
-                    <div class="counter-input-row">
-                        <input type="number" id="garageCounterAmount" placeholder="Enter amount">
-                        <button onclick="respondToCounter('counter')">Send</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Dispute Response Modal -->
     <div class="counter-respond-modal" id="disputeRespondModal" role="dialog" aria-modal="true"
