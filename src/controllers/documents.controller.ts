@@ -639,17 +639,33 @@ export const verifyDocument = async (req: AuthRequest, res: Response) => {
 // HELPER FUNCTIONS
 // ============================================
 
+function getLogoBase64(): string {
+    try {
+        const logoPath = path.join(__dirname, '../../public/assets/images/qscrap-logo.png');
+        if (fs.existsSync(logoPath)) {
+            const logoBuffer = fs.readFileSync(logoPath);
+            return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+        }
+    } catch (err) {
+        console.error('Error reading logo file:', err);
+    }
+    return ''; // Return empty string if failed
+}
+
 async function generatePDF(doc: any): Promise<Buffer> {
     const docData = typeof doc.document_data === 'string'
         ? JSON.parse(doc.document_data)
         : doc.document_data;
 
+    // Get logo
+    const logoBase64 = getLogoBase64();
+
     // Select template based on invoice type
     let html: string;
     if (docData.invoice_type === 'garage') {
-        html = generateGaragePayoutStatementHTML(docData, doc.qr_code_data);
+        html = generateGaragePayoutStatementHTML(docData, doc.qr_code_data, logoBase64);
     } else {
-        html = generateBilingualCustomerInvoiceHTML(docData, doc.qr_code_data);
+        html = generateBilingualCustomerInvoiceHTML(docData, doc.qr_code_data, logoBase64);
     }
 
     if (!puppeteer) {
@@ -660,7 +676,13 @@ async function generatePDF(doc: any): Promise<Buffer> {
     try {
         const browser = await puppeteer.launch({
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu'
+            ]
         });
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -683,7 +705,7 @@ async function generatePDF(doc: any): Promise<Buffer> {
 // BILINGUAL CUSTOMER INVOICE TEMPLATE (B2C)
 // Arabic + English, Qatar MoC Compliant
 // ============================================
-function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string): string {
+function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string, logoBase64: string = ''): string {
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -747,7 +769,9 @@ function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string): string
     <div class="invoice">
         <!-- Header -->
         <div class="header">
-            <div class="logo">🔧 QSCRAP</div>
+            <div class="logo">
+                ${logoBase64 ? `<img src="${logoBase64}" alt="QScrap" style="height: 60px;">` : '🔧 QSCRAP'}
+            </div>
             <div class="title-block">
                 <div class="title-en">${L.customer_invoice_title?.en || 'TAX INVOICE'}</div>
                 <div class="title-ar arabic">${L.customer_invoice_title?.ar || 'فاتورة ضريبية'}</div>
@@ -864,7 +888,7 @@ function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string): string
 // GARAGE PAYOUT STATEMENT TEMPLATE (B2B)
 // Arabic + English, Shows Platform Fees
 // ============================================
-function generateGaragePayoutStatementHTML(data: any, qrCode: string): string {
+function generateGaragePayoutStatementHTML(data: any, qrCode: string, logoBase64: string = ''): string {
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -928,7 +952,9 @@ function generateGaragePayoutStatementHTML(data: any, qrCode: string): string {
     <div class="invoice">
         <!-- Header -->
         <div class="header">
-            <div class="logo">🔧 QSCRAP</div>
+            <div class="logo">
+                ${logoBase64 ? `<img src="${logoBase64}" alt="QScrap" style="height: 60px;">` : '🔧 QSCRAP'}
+            </div>
             <div class="title-block">
                 <div class="title-en">${L.garage_invoice_title?.en || 'PAYOUT STATEMENT'}</div>
                 <div class="title-ar arabic">${L.garage_invoice_title?.ar || 'كشف حساب الورشة'}</div>
