@@ -7,6 +7,8 @@
     <title>QScrap Garage Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="/assets/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/garage-dashboard.css">
@@ -184,6 +186,12 @@
                 <a class="nav-item" data-section="subscription">
                     <i class="bi bi-credit-card-fill"></i>
                     Subscription
+                </a>
+                <a class="nav-item" data-section="analytics" id="navAnalytics">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    Analytics
+                    <span class="nav-badge"
+                        style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 9px;">PRO</span>
                 </a>
                 <a class="nav-item" data-section="earnings">
                     <i class="bi bi-wallet-fill"></i>
@@ -540,6 +548,158 @@
                 <div class="plans-grid" id="plansGrid" style="display: none;">
                     <h3 style="grid-column: 1/-1; margin-bottom: 16px;">Available Plans</h3>
                     <!-- Plans loaded dynamically -->
+                </div>
+            </section>
+
+            <!-- Analytics Section (Pro/Enterprise) -->
+            <section class="section" id="sectionAnalytics">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-graph-up-arrow"></i> Analytics Dashboard
+                        <span class="badge"
+                            style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-left: 8px;">PRO</span>
+                    </h1>
+                    <div class="header-actions">
+                        <select id="analyticsPeriod" class="form-control" style="width: auto;"
+                            onchange="loadAnalytics()">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                        <button class="btn btn-outline" id="exportAnalyticsBtn" onclick="exportAnalytics()"
+                            style="display: none;">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upgrade Prompt (shown for Starter plans) -->
+                <div id="analyticsUpgradePrompt" class="upgrade-prompt" style="display: none;">
+                    <div class="upgrade-content">
+                        <i class="bi bi-lock-fill" style="font-size: 48px; color: var(--accent);"></i>
+                        <h2>Unlock Business Analytics</h2>
+                        <p>Upgrade to Professional or Enterprise to access detailed analytics, revenue trends, bid
+                            performance metrics, and more.</p>
+                        <div class="upgrade-features">
+                            <div class="feature"><i class="bi bi-check-circle-fill"></i> Revenue trend charts</div>
+                            <div class="feature"><i class="bi bi-check-circle-fill"></i> Bid acceptance rates</div>
+                            <div class="feature"><i class="bi bi-check-circle-fill"></i> Top-performing categories</div>
+                            <div class="feature"><i class="bi bi-check-circle-fill"></i> Response time analytics</div>
+                        </div>
+                        <button class="btn btn-primary btn-lg" onclick="switchSection('subscription')">
+                            <i class="bi bi-arrow-up-circle"></i> View Upgrade Options
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analytics Content (shown for Pro/Enterprise) -->
+                <div id="analyticsContent" style="display: none;">
+                    <!-- Summary Cards -->
+                    <div class="stats-grid" style="margin-bottom: 24px;">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="analyticsRevenue">0 QAR</div>
+                                <div class="stat-label">Total Revenue</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="analyticsOrders">0</div>
+                                <div class="stat-label">Orders Completed</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="bi bi-percent"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="analyticsAcceptRate">0%</div>
+                                <div class="stat-label">Bid Acceptance Rate</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="bi bi-clock"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="analyticsResponseTime">0h</div>
+                                <div class="stat-label">Avg Response Time</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="charts-grid"
+                        style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <!-- Revenue Trend -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="bi bi-graph-up"></i> Revenue Trend</h3>
+                            </div>
+                            <div class="card-body" style="height: 300px;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Top Categories -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="bi bi-pie-chart"></i> Top Categories</h3>
+                            </div>
+                            <div class="card-body" id="topCategoriesList">
+                                <p style="color: var(--text-muted);">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bid Performance -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="bi bi-tag"></i> Bid Performance</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="bid-performance-grid"
+                                style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                                <div class="perf-stat">
+                                    <div class="perf-value" id="analyticsTotalBids">0</div>
+                                    <div class="perf-label">Total Bids</div>
+                                </div>
+                                <div class="perf-stat" style="color: #10b981;">
+                                    <div class="perf-value" id="analyticsAcceptedBids">0</div>
+                                    <div class="perf-label">Accepted</div>
+                                </div>
+                                <div class="perf-stat" style="color: #ef4444;">
+                                    <div class="perf-value" id="analyticsRejectedBids">0</div>
+                                    <div class="perf-label">Rejected</div>
+                                </div>
+                                <div class="perf-stat" style="color: #f59e0b;">
+                                    <div class="perf-value" id="analyticsPendingBids">0</div>
+                                    <div class="perf-label">Pending</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enterprise: Customer Insights -->
+                    <div class="card" id="customerInsightsCard" style="display: none; margin-top: 24px;">
+                        <div class="card-header">
+                            <h3><i class="bi bi-people"></i> Customer Insights <span class="badge"
+                                    style="background: gold; color: black; font-size: 10px;">ENTERPRISE</span></h3>
+                        </div>
+                        <div class="card-body" id="customerInsightsContent">
+                            <p style="color: var(--text-muted);">Loading customer insights...</p>
+                        </div>
+                    </div>
+
+                    <!-- Enterprise: Market Insights -->
+                    <div class="card" id="marketInsightsCard" style="display: none; margin-top: 24px;">
+                        <div class="card-header"
+                            style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(245, 158, 11, 0.05));">
+                            <h3><i class="bi bi-bar-chart-line"></i> Market Insights <span class="badge"
+                                    style="background: linear-gradient(135deg, #eab308, #f59e0b); color: black; font-size: 10px;">ENTERPRISE</span>
+                            </h3>
+                        </div>
+                        <div class="card-body" id="marketInsightsContent">
+                            <p style="color: var(--text-muted);">Loading market insights...</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 

@@ -2023,6 +2023,7 @@ function switchSection(section) {
     if (section === 'orders') loadOrders();
     if (section === 'dashboard') { loadStats(); loadRequests(); }
     if (section === 'subscription') loadSubscription();
+    if (section === 'analytics') loadAnalytics();
     if (section === 'earnings') loadEarnings();
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
@@ -2725,6 +2726,326 @@ async function changePlan(planId) {
         }
     } catch (err) {
         showToast('Connection error', 'error');
+    }
+}
+
+// ===== ANALYTICS MODULE (Pro/Enterprise) =====
+let revenueChart = null;
+
+async function loadAnalytics() {
+    const period = document.getElementById('analyticsPeriod')?.value || '30';
+
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics?period=${period}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 403) {
+            // User doesn't have access - show upgrade prompt
+            const data = await res.json();
+            document.getElementById('analyticsUpgradePrompt').style.display = 'flex';
+            document.getElementById('analyticsContent').style.display = 'none';
+            console.log('Analytics requires upgrade:', data.required_plans);
+            return;
+        }
+
+        if (!res.ok) {
+            showToast('Failed to load analytics', 'error');
+            return;
+        }
+
+        const data = await res.json();
+
+        // Show analytics content, hide upgrade prompt
+        document.getElementById('analyticsUpgradePrompt').style.display = 'none';
+        document.getElementById('analyticsContent').style.display = 'block';
+
+        // Update summary cards
+        document.getElementById('analyticsRevenue').textContent =
+            (data.summary.total_revenue || 0).toLocaleString() + ' QAR';
+        document.getElementById('analyticsOrders').textContent =
+            data.summary.total_orders || 0;
+        document.getElementById('analyticsAcceptRate').textContent =
+            (data.summary.acceptance_rate || 0).toFixed(1) + '%';
+        document.getElementById('analyticsResponseTime').textContent =
+            (data.summary.avg_response_hours || 0).toFixed(1) + 'h';
+
+        // Update bid performance
+        document.getElementById('analyticsTotalBids').textContent = data.summary.total_bids || 0;
+        document.getElementById('analyticsAcceptedBids').textContent =
+            Math.round((data.summary.acceptance_rate / 100) * data.summary.total_bids) || 0;
+        document.getElementById('analyticsRejectedBids').textContent =
+            Math.round(((100 - data.summary.acceptance_rate - 10) / 100) * data.summary.total_bids) || 0;
+        document.getElementById('analyticsPendingBids').textContent =
+            Math.round((10 / 100) * data.summary.total_bids) || 0;
+
+        // Render revenue chart
+        renderRevenueChart(data.charts.revenue_trend);
+
+        // Update top categories
+        renderTopCategories(data.top_categories);
+
+        // Show export button for Enterprise
+        if (data.premium_insights?.can_export) {
+            document.getElementById('exportAnalyticsBtn').style.display = 'inline-flex';
+        }
+
+        // Show customer insights for Enterprise
+        if (data.premium_insights?.customer_insights_available) {
+            document.getElementById('customerInsightsCard').style.display = 'block';
+            loadCustomerInsights();
+            loadMarketInsights();
+        }
+
+    } catch (err) {
+        console.error('Failed to load analytics:', err);
+        showToast('Error loading analytics', 'error');
+    }
+}
+
+function renderRevenueChart(data) {
+    const ctx = document.getElementById('revenueChart')?.getContext('2d');
+    if (!ctx) return;
+
+    // Destroy existing chart
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+
+    const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    const revenues = data.map(d => parseFloat(d.revenue) || 0);
+
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Revenue (QAR)',
+                data: revenues,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function renderTopCategories(categories) {
+    const container = document.getElementById('topCategoriesList');
+    if (!container) return;
+
+    if (!categories || categories.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">No bid data yet</p>';
+        return;
+    }
+
+    const maxBids = Math.max(...categories.map(c => c.bid_count));
+
+    container.innerHTML = categories.map(cat => `
+        <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>${escapeHTML(cat.part_name)}</span>
+                <span style="color: var(--text-muted);">${cat.wins}/${cat.bid_count} wins</span>
+            </div>
+            <div style="background: var(--bg-tertiary); border-radius: 4px; height: 8px;">
+                <div style="background: linear-gradient(90deg, #8b5cf6, #6366f1); height: 100%; border-radius: 4px; width: ${(cat.bid_count / maxBids * 100)}%;"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadCustomerInsights() {
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics/customers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const container = document.getElementById('customerInsightsContent');
+
+        container.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
+                <div class="stat-card" style="background: var(--bg-tertiary);">
+                    <div class="stat-value">${data.insights.unique_customers}</div>
+                    <div class="stat-label">Unique Customers</div>
+                </div>
+                <div class="stat-card" style="background: var(--bg-tertiary);">
+                    <div class="stat-value">${data.insights.repeat_customers}</div>
+                    <div class="stat-label">Repeat Customers</div>
+                </div>
+                <div class="stat-card" style="background: var(--bg-tertiary);">
+                    <div class="stat-value">${data.insights.repeat_rate}%</div>
+                    <div class="stat-label">Repeat Rate</div>
+                </div>
+            </div>
+            <h4 style="margin-bottom: 12px;">Top Areas</h4>
+            ${data.area_breakdown.map(area => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                    <span>${escapeHTML(area.area)}</span>
+                    <span>${parseFloat(area.revenue).toLocaleString()} QAR (${area.orders} orders)</span>
+                </div>
+            `).join('')}
+        `;
+    } catch (err) {
+        console.error('Failed to load customer insights:', err);
+    }
+}
+
+async function loadMarketInsights() {
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics/market`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const container = document.getElementById('marketInsightsContent');
+
+        // Show the card
+        document.getElementById('marketInsightsCard').style.display = 'block';
+
+        container.innerHTML = `
+            <!-- Platform Stats & Your Position -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <!-- Platform Stats -->
+                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05)); border-radius: 12px; padding: 20px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; color: var(--text-muted);">📊 Platform Stats</h4>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Active Garages</span>
+                            <strong>${data.platform.active_garages}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Orders This Month</span>
+                            <strong>${data.platform.orders_this_month}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Active Requests</span>
+                            <strong>${data.platform.active_requests}</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Your Position -->
+                <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(245, 158, 11, 0.05)); border-radius: 12px; padding: 20px; text-align: center;">
+                    <h4 style="margin-bottom: 8px; font-size: 14px; color: var(--text-muted);">🏆 Your Position</h4>
+                    <div style="font-size: 48px; font-weight: 700; color: #eab308;">#${data.your_position.rank}</div>
+                    <div style="color: var(--text-secondary);">of ${data.your_position.total_garages} garages</div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--success);">Top ${100 - data.your_position.percentile}%</div>
+                </div>
+            </div>
+
+            <!-- Performance Benchmarks -->
+            <h4 style="margin-bottom: 12px;">📈 Performance vs Market Average</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
+                ${renderBenchmark('Rating', data.benchmarks.rating.yours.toFixed(1), data.benchmarks.rating.market_avg.toFixed(1), data.benchmarks.rating.is_above_avg, '⭐')}
+                ${renderBenchmark('Win Rate', data.benchmarks.win_rate.yours.toFixed(1) + '%', data.benchmarks.win_rate.market_avg.toFixed(1) + '%', data.benchmarks.win_rate.is_above_avg, '🎯')}
+                ${renderBenchmark('Response Time', data.benchmarks.response_time.yours + ' min', data.benchmarks.response_time.market_avg + ' min', data.benchmarks.response_time.is_above_avg, '⚡')}
+                ${renderBenchmark('Fulfillment', data.benchmarks.fulfillment_rate.yours.toFixed(1) + '%', data.benchmarks.fulfillment_rate.market_avg.toFixed(1) + '%', data.benchmarks.fulfillment_rate.is_above_avg, '✅')}
+            </div>
+
+            <!-- Trending Parts -->
+            <h4 style="margin-bottom: 12px;">🔥 Trending Parts (Last 30 Days)</h4>
+            <div style="display: grid; gap: 8px;">
+                ${data.trending_parts.map((part, i) => `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                        <span style="font-size: 20px; opacity: 0.5;">${i + 1}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500;">${escapeHTML(part.name)}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${part.requests} requests</div>
+                        </div>
+                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                            Hot 🔥
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error('Failed to load market insights:', err);
+    }
+}
+
+function renderBenchmark(label, yours, market, isAbove, icon) {
+    const color = isAbove ? '#10b981' : '#ef4444';
+    const indicator = isAbove ? '↑' : '↓';
+    return `
+        <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span>${icon}</span>
+                <span style="font-weight: 500;">${label}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 20px; font-weight: 700; color: ${color};">${yours}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Market: ${market}</div>
+                </div>
+                <span style="font-size: 24px; color: ${color};">${indicator}</span>
+            </div>
+        </div>
+    `;
+}
+
+async function exportAnalytics() {
+    const period = document.getElementById('analyticsPeriod')?.value || '90';
+
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics/export?period=${period}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            showToast('Export requires Enterprise plan', 'error');
+            return;
+        }
+
+        const data = await res.json();
+
+        // Convert to CSV
+        const headers = ['Order ID', 'Date', 'Part Name', 'Car', 'Amount', 'Platform Fee', 'Payout'];
+        const rows = data.data.map(row => [
+            row.order_id,
+            new Date(row.completed_at).toLocaleDateString(),
+            row.part_name,
+            `${row.car_make} ${row.car_model} ${row.car_year}`,
+            row.bid_amount,
+            row.platform_fee,
+            row.garage_payout_amount
+        ]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `qscrap-analytics-${period}days.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast('Analytics exported!', 'success');
+    } catch (err) {
+        showToast('Export failed', 'error');
     }
 }
 

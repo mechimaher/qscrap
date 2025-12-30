@@ -1099,6 +1099,11 @@ async function loadRequests() {
                                                     `}
                                                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                                         <span class="bid-garage">${escapeHTML(b.garage_name) || 'Garage'}</span>
+                                                        ${b.plan_code === 'enterprise' ? `
+                                                            <span style="background: linear-gradient(135deg, #eab308, #f59e0b); color: #000; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Enterprise</span>
+                                                        ` : b.plan_code === 'professional' ? `
+                                                            <span style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">PRO</span>
+                                                        ` : ''}
                                                         <span class="garage-rating" style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 12px;">
                                                             <i class="bi bi-star-fill"></i>
                                                             <span>${parseFloat(b.garage_rating || 0).toFixed(1)}</span>

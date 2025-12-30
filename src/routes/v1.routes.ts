@@ -80,6 +80,10 @@ v1Router.use('/reports', reportsRoutes);
 v1Router.use('/documents', documentsRoutes);
 v1Router.use('/reviews', reviewsRoutes);
 
+// Garage Analytics (Plan-gated: Pro/Enterprise)
+import analyticsRoutes from './analytics.routes';
+v1Router.use('/garage/analytics', analyticsRoutes);
+
 // ==========================================
 // DRIVER & CHAT ROUTES
 // ==========================================

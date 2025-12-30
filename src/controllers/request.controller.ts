@@ -347,6 +347,8 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         // IMPORTANT: Include last garage offer even if negotiation ended (for customer to accept final price)
         const bidsResult = await pool.query(
             `SELECT b.*, g.garage_name, g.rating_average as garage_rating, g.rating_count as garage_review_count, g.total_transactions,
+                    -- Subscription plan for badge display
+                    COALESCE(sp.plan_code, 'starter') as plan_code,
                     -- Original bid amount (TODO: store separately in future, for now use current bid_amount)
                     b.bid_amount as original_bid_amount,
                     -- Pending counter-offers from garage (awaiting customer response)
@@ -397,9 +399,13 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
                      WHERE co.bid_id = b.bid_id AND co.status = 'pending') as has_pending_negotiation
              FROM bids b
              JOIN garages g ON b.garage_id = g.garage_id
+             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
+             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
              WHERE b.request_id = $1 AND b.status IN ('pending', 'accepted')
              ORDER BY 
                  CASE WHEN b.status = 'accepted' THEN 0 ELSE 1 END,
+                 -- Priority sorting: Enterprise > Professional > Starter
+                 CASE sp.plan_code WHEN 'enterprise' THEN 0 WHEN 'professional' THEN 1 ELSE 2 END,
                  b.bid_amount ASC`,
             [request_id]
         );
@@ -413,7 +419,8 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
                 // Keep garage_id for reviews modal
                 garage_rating: bid.garage_rating,
                 garage_review_count: bid.garage_review_count,
-                total_transactions: bid.total_transactions
+                total_transactions: bid.total_transactions,
+                plan_code: bid.plan_code // Keep plan_code for badge
             }));
         }
 
