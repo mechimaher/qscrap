@@ -107,8 +107,14 @@ export const getPayouts = async (req: AuthRequest, res: Response) => {
         }
 
         if (status) {
-            whereClause += ` AND gp.payout_status = $${paramIndex++}`;
-            params.push(status);
+            const statuses = (status as string).split(',');
+            if (statuses.length > 1) {
+                whereClause += ` AND gp.payout_status = ANY($${paramIndex++})`;
+                params.push(statuses);
+            } else {
+                whereClause += ` AND gp.payout_status = $${paramIndex++}`;
+                params.push(status);
+            }
         }
 
         const result = await pool.query(`

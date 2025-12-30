@@ -11,6 +11,7 @@ import {
     Modal,
     TextInput
 } from 'react-native';
+import ImageViewing from 'react-native-image-viewing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -189,6 +190,20 @@ const RequestDetailsScreen: React.FC = () => {
         );
     };
 
+    // Image Viewer State
+    const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [viewerImages, setViewerImages] = useState<{ uri: string }[]>([]);
+
+    const openImageViewer = (images: string[], index: number) => {
+        const formattedImages = images.map(url => ({
+            uri: url.startsWith('http') ? url : `${API_CONFIG.BASE_URL.replace('/api', '')}${url}`
+        }));
+        setViewerImages(formattedImages);
+        setCurrentImageIndex(index);
+        setIsImageViewerVisible(true);
+    };
+
     if (loading && !request) {
         return (
             <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -287,7 +302,16 @@ const RequestDetailsScreen: React.FC = () => {
                             {bid.image_urls && bid.image_urls.length > 0 && (
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bidImages}>
                                     {bid.image_urls.map((url: string, idx: number) => (
-                                        <Image key={idx} source={{ uri: url.startsWith('http') ? url : `${API_CONFIG.BASE_URL.replace('/api', '')}${url}` }} style={styles.bidImage} />
+                                        <TouchableOpacity
+                                            key={idx}
+                                            onPress={() => openImageViewer(bid.image_urls, idx)}
+                                            activeOpacity={0.9}
+                                        >
+                                            <Image
+                                                source={{ uri: url.startsWith('http') ? url : `${API_CONFIG.BASE_URL.replace('/api', '')}${url}` }}
+                                                style={styles.bidImage}
+                                            />
+                                        </TouchableOpacity>
                                     ))}
                                 </ScrollView>
                             )}
@@ -406,6 +430,23 @@ const RequestDetailsScreen: React.FC = () => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Premium Image Viewer */}
+            <ImageViewing
+                images={viewerImages}
+                imageIndex={currentImageIndex}
+                visible={isImageViewerVisible}
+                onRequestClose={() => setIsImageViewerVisible(false)}
+                swipeToCloseEnabled={true}
+                doubleTapToZoomEnabled={true}
+                FooterComponent={({ imageIndex }) => (
+                    <View style={{ flex: 1, alignItems: 'center', marginBottom: 40 }}>
+                        <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                            {imageIndex + 1} / {viewerImages.length}
+                        </Text>
+                    </View>
+                )}
+            />
         </SafeAreaView>
     );
 };

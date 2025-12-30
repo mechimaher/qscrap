@@ -1,6 +1,7 @@
 node_modules
-npm-debug.log
+uploads
 .git
 .env
-uploads/*
-!uploads/.gitkeep
+backend_debug.log
+server.log
+debug_log.txt

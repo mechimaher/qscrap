@@ -135,7 +135,7 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
             JOIN users u ON o.customer_id = u.user_id
             JOIN garages g ON o.garage_id = g.garage_id
             JOIN users gu ON g.garage_id = gu.user_id
-            JOIN bids b ON o.bid_id = b.bid_id
+            LEFT JOIN bids b ON o.bid_id = b.bid_id
             WHERE o.order_id = $1
         `, [order_id]);
 

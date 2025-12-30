@@ -640,9 +640,20 @@ async function loadOrders(page = 1) {
         };
 
         if (data.orders && data.orders.length) {
+            // Helper function to determine row highlighting class
+            const getRowClass = (status) => {
+                switch (status) {
+                    case 'confirmed': return 'needs-attention-amber';  // Awaiting garage action
+                    case 'disputed': return 'needs-attention-red';     // Urgent: dispute needs resolution
+                    case 'ready_for_pickup': return 'needs-attention-green';  // Ready for driver assignment
+                    case 'qc_failed': return 'needs-attention-red';    // QC failed, needs attention
+                    default: return '';
+                }
+            };
+
             // Orders table
             document.getElementById('ordersTable').innerHTML = data.orders.map(o => `
-                        <tr>
+                        <tr class="${getRowClass(o.order_status)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
                             <td>${o.customer_name}<br><small style="color: var(--text-muted);">${o.customer_phone}</small></td>
                             <td>${o.garage_name}</td>
@@ -660,7 +671,7 @@ async function loadOrders(page = 1) {
 
             // Recent orders on overview (first 5 from current page)
             document.getElementById('recentOrdersTable').innerHTML = data.orders.slice(0, 5).map(o => `
-                        <tr>
+                        <tr class="${getRowClass(o.order_status)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
                             <td>${o.customer_name}</td>
                             <td>${o.part_description?.slice(0, 25)}...</td>
@@ -700,6 +711,12 @@ async function loadDisputes(page = 1) {
 
         if (data.disputes && data.disputes.length) {
             document.getElementById('orderDisputesTable').innerHTML = data.disputes.map(d => {
+                // Determine row highlighting
+                let rowClass = '';
+                if (d.status === 'pending' || d.status === 'contested') {
+                    rowClass = 'needs-attention-red';
+                }
+
                 // Determine action column based on status
                 let actionCol = '';
                 if (d.status === 'pending' || d.status === 'contested') {
@@ -721,7 +738,7 @@ async function loadDisputes(page = 1) {
                 }
 
                 return `
-                            <tr id="dispute-row-${d.dispute_id}">
+                            <tr id="dispute-row-${d.dispute_id}" class="${rowClass}">
                                 <td><strong>#${d.order_number}</strong></td>
                                 <td>${d.customer_name}<br><small style="color: var(--text-muted);">${d.customer_phone}</small></td>
                                 <td>${reasonLabels[d.reason] || d.reason}</td>
@@ -994,26 +1011,6 @@ let currentDriversPage = 1;
 let currentDeliveryOrdersPage = 1;
 const DELIVERY_PAGE_SIZE = 20;
 
-async function loadDeliveryData() {
-    try {
-        // Load stats only
-        const statsRes = await fetch(`${API_URL}/delivery/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const statsData = await statsRes.json();
-
-        document.getElementById('deliveryAvailable').textContent = statsData.stats?.available_drivers || 0;
-        document.getElementById('deliveryBusy').textContent = statsData.stats?.busy_drivers || 0;
-        document.getElementById('deliveryPending').textContent = statsData.stats?.pending_pickup || 0;
-        document.getElementById('deliveryInTransit').textContent = statsData.stats?.in_transit || 0;
-
-        // Load tables with pagination
-        await loadDrivers(1);
-        await loadDeliveryOrders(1);
-    } catch (err) {
-        console.error('Failed to load delivery data:', err);
-    }
-}
 
 // Load Drivers with pagination
 async function loadDrivers(page = 1) {
@@ -1067,12 +1064,13 @@ async function loadDeliveryOrders(page = 1) {
 
         if (data.orders && data.orders.length) {
             document.getElementById('deliveryOrdersTable').innerHTML = data.orders.map(o => {
+                const rowClass = !o.driver_name ? 'needs-attention-green' : '';
                 const statusLabel = o.driver_name ? `Assigned to ${escapeHTML(o.driver_name)}` : o.order_status;
                 const actionBtn = o.driver_name
                     ? `<span class="status-badge in_transit">Assigned</span>`
                     : `<button class="btn btn-primary btn-sm" onclick="openAssignDriverModal('${o.order_id}', '${o.order_number}')"><i class="bi bi-person-plus"></i> Assign</button>`;
                 return `
-                    <tr>
+                    <tr class="${rowClass}">
                         <td><strong>#${o.order_number}</strong></td>
                         <td>${escapeHTML(o.part_description)}</td>
                         <td><span class="status-badge ${o.order_status}">${statusLabel}</span></td>
@@ -1097,24 +1095,6 @@ async function loadDeliveryOrders(page = 1) {
 }
 
 // Toggle driver status (Operations manual control)
-async function toggleDriverStatus(driverId, newStatus) {
-    try {
-        const res = await fetch(`${API_URL}/delivery/drivers/${driverId}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showToast(`Driver status updated to ${newStatus}`, 'success');
-            loadDeliveryData(); // Refresh the drivers list
-        } else {
-            showToast(data.error || 'Failed to update driver status', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
 
 // Delivery History
 let deliveryHistoryPage = 1;
@@ -2999,36 +2979,6 @@ async function loadGarages() {
     }
 }
 
-async function suspendUser(userId) {
-    if (!confirm('Suspend this user?')) return;
-    try {
-        const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-            showToast('User suspended', 'success');
-            loadUsers();
-        }
-    } catch (err) {
-        showToast('Failed to suspend user', 'error');
-    }
-}
-
-async function activateUser(userId) {
-    try {
-        const res = await fetch(`${API_URL}/operations/users/${userId}/activate`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-            showToast('User activated', 'success');
-            loadUsers();
-        }
-    } catch (err) {
-        showToast('Failed to activate user', 'error');
-    }
-}
 
 async function verifyGarage(garageId) {
     try {
@@ -3077,7 +3027,7 @@ const PENDING_PAYOUTS_PER_PAGE = 20;
 async function loadPendingPayouts(page = 1) {
     currentPendingPayoutsPage = page;
     try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=pending&page=${page}&limit=${PENDING_PAYOUTS_PER_PAGE}`, {
+        const res = await fetch(`${API_URL}/finance/payouts?status=pending,on_hold&page=${page}&limit=${PENDING_PAYOUTS_PER_PAGE}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -3090,24 +3040,48 @@ async function loadPendingPayouts(page = 1) {
             return;
         }
 
-        tbody.innerHTML = data.payouts.map(p => `
-            <tr>
-                <td><strong>${p.garage_name || '-'}</strong></td>
+        tbody.innerHTML = data.payouts.map(p => {
+            const isHeld = p.payout_status === 'on_hold' || p.payout_status === 'hold';
+            const reason = (p.failure_reason || 'No reason').replace(/"/g, '&quot;');
+            const statusBadge = isHeld
+                ? `<span class="badge badge-warning" title="${reason}" style="background-color: #f59e0b; color: white;">On Hold</span>`
+                : '<span class="badge badge-info">Pending</span>';
+
+            const rowStyle = isHeld ? 'background-color: #fff7ed !important; border-left: 4px solid #f59e0b;' : '';
+
+            return `
+            <tr style="${rowStyle}">
+                <td>
+                    <strong>${p.garage_name || '-'}</strong>
+                    ${isHeld ? `<div style="font-size: 11px; color: #d97706; margin-top: 4px; font-weight: 600;"><i class="bi bi-exclamation-triangle-fill"></i> ${reason}</div>` : ''}
+                </td>
                 <td>${p.order_number || '-'}</td>
                 <td>${parseFloat(p.gross_amount).toLocaleString()} QAR</td>
                 <td>${parseFloat(p.commission_amount).toLocaleString()} QAR</td>
                 <td><strong>${parseFloat(p.net_amount).toLocaleString()} QAR</strong></td>
-                <td>${p.scheduled_for ? new Date(p.scheduled_for).toLocaleDateString() : '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-success" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || ''}', '${p.order_number || ''}', ${p.net_amount})">
-                        <i class="bi bi-send-check"></i> Send Payment
-                    </button>
-                    <button class="btn btn-sm btn-warning" onclick="holdPayout('${p.payout_id}')" title="Put on hold">
-                        <i class="bi bi-pause"></i>
-                    </button>
+                    ${statusBadge}
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                        ${p.scheduled_for ? new Date(p.scheduled_for).toLocaleDateString() : '-'}
+                    </div>
+                </td>
+                <td>
+                    ${isHeld ? `
+                        <button class="btn btn-sm" onclick="releasePayout('${p.payout_id}')" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 6px 12px; font-weight: 600;">
+                            <i class="bi bi-play-fill"></i> Release
+                        </button>
+                    ` : `
+                        <button class="btn btn-sm btn-success" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || ''}', '${p.order_number || ''}', ${p.net_amount})">
+                            <i class="bi bi-send-check"></i> Send
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="holdPayout('${p.payout_id}')" title="Put on hold">
+                            <i class="bi bi-pause"></i>
+                        </button>
+                    `}
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
 
         // Render pagination controls
         // Note: data returned from getPayouts includes page, limit, total. 
@@ -3228,7 +3202,7 @@ async function loadOrderDisputes() {
                     </div>
                 </td>
             </tr>
-        `).join('');
+            `).join('');
     } catch (err) {
         console.error('Failed to load order disputes:', err);
         tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Error: ${err.message}</td></tr>`;
@@ -3281,7 +3255,7 @@ async function loadPaymentDisputesData() {
                     </div>
                 </td>
             </tr>
-        `).join('');
+            `).join('');
     } catch (err) {
         console.error('Failed to load payment disputes:', err);
         tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Error: ${err.message}</td></tr>`;
@@ -3309,7 +3283,7 @@ function switchDisputeTab(tab) {
 
 async function resolveOrderDisputeAction(disputeId, resolution, refundAmount) {
     const resolutionLabels = {
-        refund_approved: `Approve refund of ${refundAmount} QAR to customer?`,
+        refund_approved: `Approve refund of ${refundAmount} QAR to customer ? `,
         refund_declined: 'Reject this dispute? Customer will not receive a refund.'
     };
 
@@ -3347,7 +3321,7 @@ async function resolveOrderDisputeAction(disputeId, resolution, refundAmount) {
 
 async function resolvePaymentDisputeAction(payoutId, resolution, amount) {
     const resolutionLabels = {
-        resent_payment: `Resend payment of ${amount} QAR? (Garage will need to confirm again)`,
+        resent_payment: `Resend payment of ${amount} QAR ? (Garage will need to confirm again)`,
         confirmed_received: 'Mark as received? (Garage already confirmed they got it)',
         cancelled: 'Cancel this payout permanently?'
     };
@@ -3473,16 +3447,37 @@ async function loadTransactions(page = 1) {
             return;
         }
 
-        tbody.innerHTML = data.transactions.map(t => `
-            <tr>
-                <td>${new Date(t.created_at).toLocaleDateString()}</td>
+        tbody.innerHTML = data.transactions.map(t => {
+            // Robust check for held status - normalize to lowercase and remove spaces/underscores
+            const statusNorm = (t.status || '').toLowerCase().replace(/[\s_-]/g, '');
+            const isHeld = statusNorm === 'onhold' || statusNorm === 'hold';
+            const rowStyle = isHeld ? 'background-color: #fff7ed !important; border-left: 4px solid #f59e0b;' : '';
+            const statusBadge = isHeld
+                ? `<span class="badge badge-warning" style="background-color: #f59e0b; color: white;">On Hold</span>`
+                : `<span class="status-badge ${t.status}">${t.status}</span>`;
+
+            return `
+            <tr style="${rowStyle}">
+                <td>${new Date(t.created_at).toLocaleDateString()}
+                    <div style="font-size: 11px; color: var(--text-muted);">${new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </td>
                 <td><span class="badge ${t.transaction_type}">${t.transaction_type}</span></td>
                 <td>${t.order_number || '-'}</td>
                 <td>${t.garage_name || '-'}</td>
                 <td><strong>${t.amount} QAR</strong></td>
-                <td><span class="status-badge ${t.status}">${t.status}</span></td>
+                <td>
+                    ${statusBadge}
+                    ${isHeld ? `
+                        <div style="margin-top: 5px;">
+                            <button class="btn btn-sm" onclick="releasePayout('${t.id}')" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 4px 10px; font-weight: 600; font-size: 11px;">
+                                <i class="bi bi-play-fill"></i> Release
+                            </button>
+                        </div>
+                    ` : ''}
+                </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
 
         // Render pagination controls
         if (data.pagination) {
@@ -3530,9 +3525,37 @@ async function holdPayout(payoutId) {
         if (res.ok) {
             showToast('Payout held', 'success');
             loadFinance();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to hold payout', 'error');
         }
     } catch (err) {
         showToast('Failed to hold payout', 'error');
+    }
+}
+
+async function releasePayout(payoutId) {
+    if (!confirm('Release this payout back to pending status?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/release`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+
+        if (res.ok) {
+            showToast('Payout released', 'success');
+            loadFinance();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to release payout', 'error');
+        }
+    } catch (err) {
+        showToast('Failed to release payout', 'error');
     }
 }
 
@@ -4306,402 +4329,6 @@ function loadReports() {
     initReportDates();
 }
 
-// ============================================
-// FINANCE & PAYOUT MANAGEMENT
-// ============================================
-
-async function loadFinance() {
-    await Promise.all([
-        loadFinanceStats(),
-        loadPendingPayouts(),
-        loadRecentTransactions()
-    ]);
-}
-
-async function loadFinanceStats() {
-    try {
-        const res = await fetch(`${API_URL}/finance/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        // API returns 'stats' not 'summary'
-        if (data.stats) {
-            const s = data.stats;
-            // Platform Revenue = total_revenue (for admin/ops this is sum of platform fees)
-            document.getElementById('financeTotalRevenue').textContent =
-                parseFloat(s.total_revenue || 0).toLocaleString() + ' QAR';
-            // Pending Payouts
-            document.getElementById('financePendingPayouts').textContent =
-                parseFloat(s.pending_payouts || 0).toLocaleString() + ' QAR';
-            // Awaiting Confirmation (processing/awaiting_confirmation status)
-            document.getElementById('financeProcessingPayouts').textContent =
-                parseFloat(s.processing_payouts || 0).toLocaleString() + ' QAR';
-            // Paid Out Total (completed + confirmed)
-            document.getElementById('financeCompletedPayouts').textContent =
-                parseFloat(s.total_paid || s.completed_payouts || 0).toLocaleString() + ' QAR';
-        }
-    } catch (err) {
-        console.error('Failed to load finance stats:', err);
-    }
-}
-
-async function loadPendingPayouts() {
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('pendingPayoutsTable');
-
-        if (data.payouts && data.payouts.length > 0) {
-            tbody.innerHTML = data.payouts.map(p => {
-                const scheduledDate = p.scheduled_date ? new Date(p.scheduled_date).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'short', year: 'numeric'
-                }) : 'Not scheduled';
-
-                const statusBadge = getPayoutStatusBadge(p.status);
-
-                return `
-                    <tr id="payout-row-${p.payout_id}">
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
-                                    ${(p.garage_name || 'G').charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${p.garage_name || 'Unknown Garage'}</div>
-                                    <div style="font-size: 11px; color: var(--text-muted);">${p.garage_phone || ''}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="#" onclick="viewOrder('${p.order_id}'); return false;" style="color: var(--accent); font-weight: 600; text-decoration: none;">
-                                #${p.order_number || p.order_id?.slice(0, 8)}
-                            </a>
-                        </td>
-                        <td style="font-weight: 500;">${parseFloat(p.gross_amount || 0).toLocaleString()} QAR</td>
-                        <td style="color: var(--accent); font-weight: 500;">${parseFloat(p.commission_amount || 0).toLocaleString()} QAR</td>
-                        <td>
-                            <span style="font-size: 18px; font-weight: 700; color: var(--success);">
-                                ${parseFloat(p.net_amount || 0).toLocaleString()} QAR
-                            </span>
-                        </td>
-                        <td style="color: var(--text-secondary); font-size: 13px;">
-                            <i class="bi bi-calendar3"></i> ${scheduledDate}
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || 'Garage'}', ${p.net_amount || 0}, '${p.order_number || ''}')" 
-                                        style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; font-size: 12px; border-radius: 8px; display: flex; align-items: center; gap: 5px;">
-                                    <i class="bi bi-send-fill"></i> Send Payment
-                                </button>
-                                <button class="btn btn-sm" onclick="holdPayout('${p.payout_id}')" 
-                                        style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 6px 10px; font-size: 12px; border-radius: 8px;">
-                                    <i class="bi bi-pause-circle"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 60px 20px;">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-check-circle-fill" style="font-size: 40px; color: white;"></i>
-                            </div>
-                            <div>
-                                <h4 style="color: var(--text-primary); margin: 0 0 5px;">All caught up!</h4>
-                                <p style="color: var(--text-muted); margin: 0;">No pending payouts at the moment</p>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
-    } catch (err) {
-        console.error('Failed to load pending payouts:', err);
-        document.getElementById('pendingPayoutsTable').innerHTML = `
-            <tr><td colspan="7" class="empty-state"><i class="bi bi-exclamation-triangle"></i> Failed to load payouts</td></tr>
-        `;
-    }
-}
-
-function getPayoutStatusBadge(status) {
-    const styles = {
-        pending: { bg: '#fef3c7', color: '#d97706', icon: 'bi-clock', label: 'Pending' },
-        sent: { bg: '#dbeafe', color: '#2563eb', icon: 'bi-send', label: 'Sent' },
-        awaiting_confirmation: { bg: '#e0e7ff', color: '#4f46e5', icon: 'bi-hourglass-split', label: 'Awaiting Confirmation' },
-        confirmed: { bg: '#d1fae5', color: '#059669', icon: 'bi-check-circle-fill', label: 'Confirmed' },
-        completed: { bg: '#d1fae5', color: '#059669', icon: 'bi-check-circle', label: 'Completed' },
-        disputed: { bg: '#fee2e2', color: '#dc2626', icon: 'bi-exclamation-triangle', label: 'Disputed' },
-        held: { bg: '#f3f4f6', color: '#6b7280', icon: 'bi-pause-circle', label: 'On Hold' },
-        on_hold: { bg: '#f3f4f6', color: '#6b7280', icon: 'bi-pause-circle', label: 'On Hold' }
-    };
-    const s = styles[status] || styles.pending;
-    return `
-        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: ${s.bg}; color: ${s.color}; border-radius: 20px; font-size: 11px; font-weight: 600;">
-            <i class="bi ${s.icon}"></i> ${s.label}
-        </span>
-    `;
-}
-
-function openSendPaymentModal(payoutId, garageName, amount, orderNumber) {
-    const modal = document.createElement('div');
-    modal.id = 'sendPaymentModal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-        <div class="modal-container" style="max-width: 500px; border-radius: 16px; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 24px;">
-                <div>
-                    <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
-                        <i class="bi bi-send-fill"></i> Send Payment
-                    </h2>
-                    <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Transfer funds to garage partner</p>
-                </div>
-                <button class="modal-close" onclick="document.getElementById('sendPaymentModal').remove()" style="color: white; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; width: 36px; height: 36px; cursor: pointer;">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div class="modal-body" style="padding: 24px;">
-                <!-- Payment Summary Card -->
-                <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #bbf7d0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div>
-                            <div style="font-size: 12px; color: #16a34a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Recipient</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #166534; margin-top: 4px;">${garageName}</div>
-                        </div>
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 24px;">
-                            ${garageName.charAt(0).toUpperCase()}
-                        </div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 15px; border-top: 1px dashed #86efac;">
-                        <div>
-                            <div style="font-size: 11px; color: #16a34a; font-weight: 500;">Order Reference</div>
-                            <div style="font-size: 14px; font-weight: 600; color: #166534;">#${orderNumber}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 11px; color: #16a34a; font-weight: 500;">Amount to Send</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #166534;">${parseFloat(amount).toLocaleString()} QAR</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Method -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: var(--text-primary);">
-                        <i class="bi bi-credit-card-2-front" style="color: var(--accent);"></i> Payment Method
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                        <label class="payment-method-option" style="cursor: pointer;">
-                            <input type="radio" name="paymentMethod" value="bank_transfer" checked style="display: none;">
-                            <div class="payment-method-card" style="padding: 15px; border: 2px solid var(--accent); border-radius: 10px; text-align: center; transition: all 0.2s;">
-                                <i class="bi bi-bank" style="font-size: 24px; color: var(--accent);"></i>
-                                <div style="font-size: 12px; font-weight: 600; margin-top: 5px;">Bank Transfer</div>
-                            </div>
-                        </label>
-                        <label class="payment-method-option" style="cursor: pointer;">
-                            <input type="radio" name="paymentMethod" value="cash" style="display: none;">
-                            <div class="payment-method-card" style="padding: 15px; border: 2px solid var(--border); border-radius: 10px; text-align: center; transition: all 0.2s;">
-                                <i class="bi bi-cash-stack" style="font-size: 24px; color: var(--text-muted);"></i>
-                                <div style="font-size: 12px; font-weight: 600; margin-top: 5px; color: var(--text-secondary);">Cash</div>
-                            </div>
-                        </label>
-                        <label class="payment-method-option" style="cursor: pointer;">
-                            <input type="radio" name="paymentMethod" value="mobile_pay" style="display: none;">
-                            <div class="payment-method-card" style="padding: 15px; border: 2px solid var(--border); border-radius: 10px; text-align: center; transition: all 0.2s;">
-                                <i class="bi bi-phone" style="font-size: 24px; color: var(--text-muted);"></i>
-                                <div style="font-size: 12px; font-weight: 600; margin-top: 5px; color: var(--text-secondary);">Mobile Pay</div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Reference Number -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
-                        <i class="bi bi-hash" style="color: var(--accent);"></i> Reference Number (Optional)
-                    </label>
-                    <input type="text" id="paymentReference" placeholder="e.g., TXN123456789" 
-                           style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg-tertiary); color: var(--text-primary);">
-                </div>
-
-                <!-- Notes -->
-                <div>
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
-                        <i class="bi bi-sticky" style="color: var(--accent);"></i> Notes (Optional)
-                    </label>
-                    <textarea id="paymentNotes" placeholder="Add any notes for this payment..." rows="2"
-                              style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; resize: none; background: var(--bg-tertiary); color: var(--text-primary);"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px 24px; background: var(--bg-secondary); border-top: 1px solid var(--border);">
-                <button class="btn btn-ghost" onclick="document.getElementById('sendPaymentModal').remove()" style="padding: 12px 24px; border-radius: 10px;">
-                    Cancel
-                </button>
-                <button class="btn btn-primary" id="confirmSendPaymentBtn" onclick="sendPayment('${payoutId}')" 
-                        style="background: linear-gradient(135deg, #10b981, #059669); padding: 12px 28px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    <i class="bi bi-send-fill"></i> Confirm & Send Payment
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Add click handlers for payment method selection
-    modal.querySelectorAll('.payment-method-option input').forEach(input => {
-        input.addEventListener('change', () => {
-            modal.querySelectorAll('.payment-method-card').forEach(card => {
-                card.style.border = '2px solid var(--border)';
-                card.querySelector('i').style.color = 'var(--text-muted)';
-                card.querySelector('div').style.color = 'var(--text-secondary)';
-            });
-            const selectedCard = input.parentElement.querySelector('.payment-method-card');
-            selectedCard.style.border = '2px solid var(--accent)';
-            selectedCard.querySelector('i').style.color = 'var(--accent)';
-            selectedCard.querySelector('div').style.color = 'var(--text-primary)';
-        });
-    });
-}
-
-async function sendPayment(payoutId) {
-    const btn = document.getElementById('confirmSendPaymentBtn');
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'bank_transfer';
-    const reference = document.getElementById('paymentReference')?.value || '';
-    const notes = document.getElementById('paymentNotes')?.value || '';
-
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                payout_method: paymentMethod,
-                payout_reference: reference || `TXN-${Date.now()}`,
-                notes: notes
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('💸 Payment sent successfully! Awaiting garage confirmation.', 'success');
-            document.getElementById('sendPaymentModal').remove();
-            loadFinance(); // Refresh all finance data
-        } else {
-            showToast(data.error || 'Failed to send payment', 'error');
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    } catch (err) {
-        console.error('Send payment error:', err);
-        showToast('Connection error. Please try again.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-    }
-}
-
-async function holdPayout(payoutId) {
-    if (!confirm('Put this payout on hold? You can release it later.')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason: 'Held by operations for review' })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('Payout placed on hold', 'success');
-            loadPendingPayouts();
-        } else {
-            showToast(data.error || 'Failed to hold payout', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-async function loadRecentTransactions() {
-    try {
-        const res = await fetch(`${API_URL}/finance/transactions?limit=20`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('transactionsTable');
-
-        if (data.transactions && data.transactions.length > 0) {
-            tbody.innerHTML = data.transactions.map(t => {
-                const date = new Date(t.created_at).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'short', year: 'numeric'
-                });
-                const time = new Date(t.created_at).toLocaleTimeString('en-GB', {
-                    hour: '2-digit', minute: '2-digit'
-                });
-
-                const typeStyles = {
-                    payout: { bg: '#d1fae5', color: '#059669', icon: 'bi-arrow-up-right', label: 'Payout' },
-                    refund: { bg: '#fee2e2', color: '#dc2626', icon: 'bi-arrow-return-left', label: 'Refund' },
-                    commission: { bg: '#dbeafe', color: '#2563eb', icon: 'bi-percent', label: 'Commission' }
-                };
-                const typeStyle = typeStyles[t.transaction_type] || typeStyles.payout;
-
-                const statusStyle = getPayoutStatusBadge(t.status);
-
-                return `
-                    <tr>
-                        <td>
-                            <div style="font-weight: 500; color: var(--text-primary);">${date}</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">${time}</div>
-                        </td>
-                        <td>
-                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: ${typeStyle.bg}; color: ${typeStyle.color}; border-radius: 6px; font-size: 11px; font-weight: 600;">
-                                <i class="bi ${typeStyle.icon}"></i> ${typeStyle.label}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="#" onclick="viewOrder('${t.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 500;">
-                                #${t.order_number || t.order_id?.slice(0, 8)}
-                            </a>
-                        </td>
-                        <td style="color: var(--text-secondary);">${t.garage_name || '-'}</td>
-                        <td style="font-weight: 600; color: ${t.transaction_type === 'refund' ? 'var(--danger)' : 'var(--success)'};">
-                            ${t.transaction_type === 'refund' ? '-' : '+'}${parseFloat(t.amount || 0).toLocaleString()} QAR
-                        </td>
-                        <td>${statusStyle}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        <i class="bi bi-inbox" style="font-size: 32px;"></i>
-                        <p style="margin: 10px 0 0;">No transactions yet</p>
-                    </td>
-                </tr>
-            `;
-        }
-    } catch (err) {
-        console.error('Failed to load transactions:', err);
-    }
-}
 
 async function processAllPayouts() {
     if (!confirm('Process all pending payouts now? This will send payments to all garages with pending payouts.')) {

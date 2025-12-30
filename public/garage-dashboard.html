@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="/assets/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="/js/chart.min.js"></script>
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/garage-dashboard.css">
@@ -190,8 +190,8 @@
                 <a class="nav-item" data-section="analytics" id="navAnalytics">
                     <i class="bi bi-graph-up-arrow"></i>
                     Analytics
-                    <span class="nav-badge"
-                        style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 9px;">PRO</span>
+                    <span class="nav-badge" id="analyticsPlanBadge"
+                        style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 9px;">PRO+</span>
                 </a>
                 <a class="nav-item" data-section="earnings">
                     <i class="bi bi-wallet-fill"></i>
@@ -556,8 +556,8 @@
                 <div class="page-header">
                     <h1 class="page-title">
                         <i class="bi bi-graph-up-arrow"></i> Analytics Dashboard
-                        <span class="badge"
-                            style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-left: 8px;">PRO</span>
+                        <span class="badge" id="analyticsHeaderBadge"
+                            style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-left: 8px;">PRO+</span>
                     </h1>
                     <div class="header-actions">
                         <select id="analyticsPeriod" class="form-control" style="width: auto;"

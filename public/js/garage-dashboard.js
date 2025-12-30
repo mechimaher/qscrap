@@ -428,7 +428,8 @@ async function showDashboard() {
         loadRequests(),
         loadBids(),
         loadOrders(),
-        loadProfile()
+        loadProfile(),
+        loadSubscription()  // Load subscription to update Analytics badge
     ]);
 
     // Check for pending counter-offers (after bids are loaded)
@@ -2256,8 +2257,7 @@ function updateBadge() {
     // This shows "new requests requiring garage action"
     const visibleCount = requests.filter(r =>
         !dismissedRequests.includes(r.request_id) &&
-        !ignoredRequests.includes(r.request_id) &&
-        !bidStatusMap[r.request_id]
+        !ignoredRequests.includes(r.request_id)
     ).length;
     document.getElementById('requestBadge').textContent = visibleCount;
 
@@ -2592,6 +2592,34 @@ async function loadSubscription() {
 
             // Plan name
             document.getElementById('subPlanName').textContent = sub.plan_name || 'Free Trial';
+
+            // Update Analytics badges based on plan
+            const planCode = (sub.plan_code || '').toLowerCase();
+            const analyticsBadge = document.getElementById('analyticsPlanBadge');
+            const analyticsHeaderBadge = document.getElementById('analyticsHeaderBadge');
+
+            let badgeText = 'PRO+';
+            let badgeStyle = 'background: linear-gradient(135deg, #8b5cf6, #6366f1);';
+
+            if (planCode === 'enterprise') {
+                badgeText = 'ENTERPRISE';
+                badgeStyle = 'background: linear-gradient(135deg, #eab308, #f59e0b);';
+            } else if (planCode === 'professional') {
+                badgeText = 'PRO';
+                badgeStyle = 'background: linear-gradient(135deg, #8b5cf6, #6366f1);';
+            } else if (planCode === 'starter') {
+                badgeText = 'UPGRADE';
+                badgeStyle = 'background: linear-gradient(135deg, #6b7280, #9ca3af);';
+            }
+
+            if (analyticsBadge) {
+                analyticsBadge.textContent = badgeText;
+                analyticsBadge.style.cssText += badgeStyle;
+            }
+            if (analyticsHeaderBadge) {
+                analyticsHeaderBadge.textContent = badgeText;
+                analyticsHeaderBadge.style.cssText += badgeStyle;
+            }
 
             // Price display - commission plans have no monthly fee
             if (sub.is_commission_based || sub.monthly_fee === 0) {

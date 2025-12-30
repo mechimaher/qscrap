@@ -948,97 +948,6 @@
             </div>
             </section>
 
-            <!-- Finance Section -->
-            <section class="section" id="sectionFinance">
-                <div class="page-header">
-                    <h1 class="page-title">Finance & Payouts</h1>
-                </div>
-
-                <!-- Finance Stats -->
-                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
-                    <div class="stat-card highlight">
-                        <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
-                            <i class="bi bi-currency-dollar"></i>
-                        </div>
-                        <div class="stat-value" id="financeTotalRevenue">0 QAR</div>
-                        <div class="stat-label">Total Platform Revenue</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                            <i class="bi bi-clock"></i>
-                        </div>
-                        <div class="stat-value" id="financePendingPayouts">0 QAR</div>
-                        <div class="stat-label">Pending Payouts</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div class="stat-value" id="financeProcessingPayouts">0 QAR</div>
-                        <div class="stat-label">Processing</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                        <div class="stat-value" id="financeCompletedPayouts">0 QAR</div>
-                        <div class="stat-label">Paid Out</div>
-                    </div>
-                </div>
-
-                <!-- Pending Payouts Table -->
-                <div class="content-card">
-                    <div class="table-header">
-                        <h3><i class="bi bi-clock-history"></i> Pending Payouts</h3>
-                        <button class="btn btn-primary" onclick="processAllPayouts()">
-                            <i class="bi bi-check2-all"></i> Process All
-                        </button>
-                    </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Garage</th>
-                                <th>Order</th>
-                                <th>Gross</th>
-                                <th>Commission</th>
-                                <th>Net Payout</th>
-                                <th>Scheduled</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pendingPayoutsTable">
-                            <tr>
-                                <td colspan="7" class="empty-state">Loading payouts...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="content-card" style="margin-top: 20px;">
-                    <div class="table-header">
-                        <h3><i class="bi bi-list-check"></i> Recent Transactions</h3>
-                    </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Order</th>
-                                <th>Garage</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading transactions...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
             <!-- Reports Section -->
             <section class="section" id="sectionReports">
                 <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
@@ -1324,7 +1233,7 @@
     <script src="js/shared/toast.js"></script>
     <script src="js/shared/modal.js"></script>
     <script src="js/pagination-utils.js"></script>
-    <script src="js/operations-dashboard.js"></script>
+    <script src="js/operations-dashboard.js?v=20251230-final"></script>
 </body>
 
 </html>
