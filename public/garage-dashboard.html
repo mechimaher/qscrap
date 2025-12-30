@@ -193,6 +193,12 @@
                     <span class="nav-badge" id="analyticsPlanBadge"
                         style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 9px;">PRO+</span>
                 </a>
+                <a class="nav-item" data-section="catalog" id="navCatalog">
+                    <i class="bi bi-shop"></i>
+                    Catalog
+                    <span class="nav-badge"
+                        style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 9px;">PRO</span>
+                </a>
                 <a class="nav-item" data-section="earnings">
                     <i class="bi bi-wallet-fill"></i>
                     Earnings
@@ -702,6 +708,245 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Catalog Section (Pro/Enterprise) -->
+            <section class="section" id="sectionCatalog">
+                <div class="page-header"
+                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h1 class="page-title">📦 Product Catalog</h1>
+                        <p style="color: var(--text-muted); margin: 0;" id="catalogSubtitle">Manage your product
+                            listings</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openAddProductModal()" id="addProductBtn"
+                        style="display: none;">
+                        <i class="bi bi-plus-lg"></i> Add Product
+                    </button>
+                </div>
+
+                <!-- Upgrade Prompt for Starter -->
+                <div id="catalogUpgradePrompt" class="card"
+                    style="display: none; margin-bottom: 24px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <div class="card-body" style="text-align: center; padding: 40px;">
+                        <i class="bi bi-shop" style="font-size: 48px; color: #8b5cf6; margin-bottom: 16px;"></i>
+                        <h3 style="margin-bottom: 8px;">Unlock Product Catalog</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            List your parts for direct sale. Customers can browse and buy instantly!
+                        </p>
+                        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                            <div style="padding: 16px 24px; background: var(--bg-tertiary); border-radius: 12px;">
+                                <div style="font-size: 24px; font-weight: 700; color: #8b5cf6;">50</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Products (PRO)</div>
+                            </div>
+                            <div
+                                style="padding: 16px 24px; background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.1)); border-radius: 12px; border: 1px solid #eab308;">
+                                <div style="font-size: 24px; font-weight: 700; color: #eab308;">∞</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Unlimited (Enterprise)</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="switchSection('subscription')"
+                            style="margin-top: 24px;">
+                            <i class="bi bi-rocket-takeoff"></i> Upgrade Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Catalog Content (Pro/Enterprise) -->
+                <div id="catalogContent" style="display: none;">
+                    <!-- Stats Cards -->
+                    <div class="stats-grid"
+                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                        <div class="stat-card"
+                            style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05)); border-radius: 12px; padding: 20px;">
+                            <div class="stat-value" id="catalogStatProducts" style="font-size: 32px; font-weight: 800;">
+                                0</div>
+                            <div class="stat-label" style="color: var(--text-muted);">Products</div>
+                        </div>
+                        <div class="stat-card"
+                            style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border-radius: 12px; padding: 20px;">
+                            <div class="stat-value" id="catalogStatViews" style="font-size: 32px; font-weight: 800;">0
+                            </div>
+                            <div class="stat-label" style="color: var(--text-muted);">Total Views</div>
+                        </div>
+                        <div class="stat-card"
+                            style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05)); border-radius: 12px; padding: 20px;">
+                            <div class="stat-value" id="catalogStatInquiries"
+                                style="font-size: 32px; font-weight: 800;">0</div>
+                            <div class="stat-label" style="color: var(--text-muted);">Inquiries</div>
+                        </div>
+                        <div class="stat-card"
+                            style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(219, 39, 119, 0.05)); border-radius: 12px; padding: 20px;">
+                            <div class="stat-value" id="catalogStatRemaining"
+                                style="font-size: 32px; font-weight: 800;">0</div>
+                            <div class="stat-label" style="color: var(--text-muted);">Slots Left</div>
+                        </div>
+                    </div>
+
+                    <!-- Filters & Search -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-body" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <input type="text" id="catalogSearch" placeholder="Search products..."
+                                    style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary);"
+                                    oninput="filterCatalogProducts()">
+                            </div>
+                            <select id="catalogStatusFilter" onchange="loadCatalogProducts()"
+                                style="padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary);">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="draft">Draft</option>
+                                <option value="sold">Sold</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div id="catalogProductsGrid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                        <p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Loading products...
+                        </p>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="catalogEmptyState" style="display: none; text-align: center; padding: 60px 20px;">
+                        <i class="bi bi-box-seam"
+                            style="font-size: 64px; color: var(--text-muted); margin-bottom: 16px;"></i>
+                        <h3 style="margin-bottom: 8px;">No Products Yet</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 24px;">Add your first product to start
+                            selling!</p>
+                        <button class="btn btn-primary" onclick="openAddProductModal()">
+                            <i class="bi bi-plus-lg"></i> Add Your First Product
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add Product Modal -->
+            <div id="addProductModal" class="modal-overlay" style="display: none;">
+                <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h3><i class="bi bi-plus-circle"></i> <span id="productModalTitle">Add New Product</span></h3>
+                        <button class="modal-close" onclick="closeAddProductModal()">×</button>
+                    </div>
+                    <form id="productForm" onsubmit="saveProduct(event)">
+                        <input type="hidden" id="editProductId" value="">
+
+                        <!-- Images -->
+                        <div class="form-group">
+                            <label>Product Images</label>
+                            <div id="productImageDropzone" class="dropzone"
+                                style="border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;"
+                                ondrop="handleProductImageDrop(event)" ondragover="event.preventDefault()">
+                                <i class="bi bi-cloud-upload" style="font-size: 32px; color: var(--text-muted);"></i>
+                                <p style="margin: 8px 0 0; color: var(--text-muted);">Drag & drop images or click to
+                                    upload</p>
+                                <input type="file" id="productImages" multiple accept="image/*" style="display: none;"
+                                    onchange="handleProductImageSelect(event)">
+                            </div>
+                            <div id="productImagePreviews"
+                                style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;"></div>
+                        </div>
+
+                        <!-- Title & Part Number -->
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label>Title *</label>
+                                <input type="text" id="productTitle" required
+                                    placeholder="e.g., Brake Pads Set - Front">
+                            </div>
+                            <div class="form-group">
+                                <label>Part Number</label>
+                                <input type="text" id="productPartNumber" placeholder="e.g., BP-2023">
+                            </div>
+                        </div>
+
+                        <!-- Brand & Category -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label>Brand</label>
+                                <input type="text" id="productBrand" placeholder="e.g., Brembo, OEM">
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="productCategory">
+                                    <option value="">Select category...</option>
+                                    <option value="brakes">Brakes</option>
+                                    <option value="engine">Engine Parts</option>
+                                    <option value="suspension">Suspension</option>
+                                    <option value="electrical">Electrical</option>
+                                    <option value="body">Body Parts</option>
+                                    <option value="interior">Interior</option>
+                                    <option value="accessories">Accessories</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="productDescription" rows="3"
+                                placeholder="Describe your product..."></textarea>
+                        </div>
+
+                        <!-- Condition & Warranty -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label>Condition *</label>
+                                <select id="productCondition" required>
+                                    <option value="new">New</option>
+                                    <option value="used_excellent">Used - Excellent</option>
+                                    <option value="used_good">Used - Good</option>
+                                    <option value="used_fair">Used - Fair</option>
+                                    <option value="refurbished">Refurbished</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Warranty (days)</label>
+                                <input type="number" id="productWarranty" value="0" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Pricing -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label>Price (QAR) *</label>
+                                <input type="number" id="productPrice" required min="1" step="0.01" placeholder="450">
+                            </div>
+                            <div class="form-group">
+                                <label>Original Price</label>
+                                <input type="number" id="productOriginalPrice" min="0" step="0.01" placeholder="550">
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" id="productQuantity" value="1" min="1">
+                            </div>
+                        </div>
+
+                        <!-- Compatibility -->
+                        <div class="form-group">
+                            <label>Compatible Vehicles</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px;">
+                                <input type="text" id="productMake" placeholder="Make (e.g., Toyota)">
+                                <input type="text" id="productModel" placeholder="Model (e.g., Camry)">
+                                <input type="number" id="productYearFrom" placeholder="From year">
+                                <input type="number" id="productYearTo" placeholder="To year">
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div style="display: flex; gap: 12px; margin-top: 24px;">
+                            <button type="button" class="btn btn-secondary" style="flex: 1;"
+                                onclick="saveProduct(event, 'draft')">
+                                <i class="bi bi-file-earmark"></i> Save as Draft
+                            </button>
+                            <button type="submit" class="btn btn-primary" style="flex: 2;">
+                                <i class="bi bi-rocket-takeoff"></i> Publish Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Earnings Section -->
             <section class="section" id="sectionEarnings">

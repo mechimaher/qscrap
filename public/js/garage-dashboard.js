@@ -2025,6 +2025,7 @@ function switchSection(section) {
     if (section === 'dashboard') { loadStats(); loadRequests(); }
     if (section === 'subscription') loadSubscription();
     if (section === 'analytics') loadAnalytics();
+    if (section === 'catalog') loadCatalog();
     if (section === 'earnings') loadEarnings();
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
@@ -3075,6 +3076,387 @@ async function exportAnalytics() {
     } catch (err) {
         showToast('Export failed', 'error');
     }
+}
+
+// ===== CATALOG MANAGEMENT (Pro/Enterprise) =====
+let catalogProducts = [];
+let catalogProductImages = [];
+
+async function loadCatalog() {
+    try {
+        // Check plan access first
+        const planRes = await fetch(`${API_URL}/garage/analytics/plan-features`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const planData = await planRes.json();
+
+        const hasCatalogAccess = planData.plan_code !== 'starter';
+
+        if (!hasCatalogAccess) {
+            document.getElementById('catalogUpgradePrompt').style.display = 'block';
+            document.getElementById('catalogContent').style.display = 'none';
+            document.getElementById('addProductBtn').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('catalogUpgradePrompt').style.display = 'none';
+        document.getElementById('catalogContent').style.display = 'block';
+        document.getElementById('addProductBtn').style.display = 'inline-flex';
+
+        // Load products and stats
+        await loadCatalogProducts();
+        await loadCatalogStats();
+
+    } catch (err) {
+        console.error('Failed to load catalog:', err);
+        showToast('Failed to load catalog', 'error');
+    }
+}
+
+async function loadCatalogStats() {
+    try {
+        const res = await fetch(`${API_URL}/garage/catalog/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        document.getElementById('catalogStatProducts').textContent = data.summary.active;
+        document.getElementById('catalogStatViews').textContent = data.summary.total_views.toLocaleString();
+        document.getElementById('catalogStatInquiries').textContent = data.summary.total_inquiries;
+        document.getElementById('catalogStatRemaining').textContent =
+            data.plan.limit === -1 ? '∞' : (data.plan.limit - data.plan.product_count);
+
+        // Update subtitle based on plan
+        const subtitle = document.getElementById('catalogSubtitle');
+        if (data.plan.code === 'enterprise') {
+            subtitle.innerHTML = `Unlimited products <span style="background: linear-gradient(135deg, #eab308, #f59e0b); color: #000; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">ENTERPRISE</span>`;
+        } else {
+            subtitle.innerHTML = `${data.plan.product_count} / ${data.plan.limit} products used`;
+        }
+    } catch (err) {
+        console.error('Failed to load catalog stats:', err);
+    }
+}
+
+async function loadCatalogProducts() {
+    const status = document.getElementById('catalogStatusFilter')?.value || 'all';
+
+    try {
+        const res = await fetch(`${API_URL}/garage/catalog?status=${status}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            if (res.status === 403) {
+                document.getElementById('catalogUpgradePrompt').style.display = 'block';
+                document.getElementById('catalogContent').style.display = 'none';
+            }
+            return;
+        }
+
+        const data = await res.json();
+        catalogProducts = data.products;
+
+        if (catalogProducts.length === 0) {
+            document.getElementById('catalogProductsGrid').style.display = 'none';
+            document.getElementById('catalogEmptyState').style.display = 'block';
+        } else {
+            document.getElementById('catalogProductsGrid').style.display = 'grid';
+            document.getElementById('catalogEmptyState').style.display = 'none';
+            renderCatalogProducts();
+        }
+    } catch (err) {
+        console.error('Failed to load products:', err);
+    }
+}
+
+function filterCatalogProducts() {
+    const search = document.getElementById('catalogSearch').value.toLowerCase();
+    const grid = document.getElementById('catalogProductsGrid');
+
+    const filtered = catalogProducts.filter(p =>
+        p.title.toLowerCase().includes(search) ||
+        (p.part_number && p.part_number.toLowerCase().includes(search)) ||
+        (p.brand && p.brand.toLowerCase().includes(search))
+    );
+
+    grid.innerHTML = filtered.map(renderProductCard).join('');
+}
+
+function renderCatalogProducts() {
+    const grid = document.getElementById('catalogProductsGrid');
+    grid.innerHTML = catalogProducts.map(renderProductCard).join('');
+}
+
+function renderProductCard(p) {
+    const statusColors = {
+        active: '#10b981',
+        draft: '#8b5cf6',
+        sold: '#ef4444',
+        archived: '#6b7280'
+    };
+    const statusColor = statusColors[p.status] || '#6b7280';
+    const discount = p.original_price && p.original_price > p.price
+        ? Math.round((1 - p.price / p.original_price) * 100)
+        : 0;
+    const imageUrl = p.image_urls && p.image_urls.length > 0 ? p.image_urls[0] : '/uploads/placeholder.png';
+
+    return `
+        <div class="product-card" style="background: var(--bg-secondary); border-radius: 16px; overflow: hidden; border: 1px solid var(--border); transition: all 0.3s ease;"
+             onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.15)';"
+             onmouseout="this.style.transform=''; this.style.boxShadow='';">
+            <!-- Image -->
+            <div style="position: relative; height: 180px; background: var(--bg-tertiary); overflow: hidden;">
+                <img src="${imageUrl}" alt="${escapeHTML(p.title)}" 
+                     style="width: 100%; height: 100%; object-fit: cover;"
+                     onerror="this.src='https://placehold.co/300x180?text=No+Image'">
+                ${p.is_featured ? `
+                    <div style="position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, #eab308, #f59e0b); color: #000; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                        ⭐ FEATURED
+                    </div>
+                ` : ''}
+                <span style="position: absolute; top: 12px; right: 12px; background: ${statusColor}; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                    ${p.status}
+                </span>
+                ${discount > 0 ? `
+                    <span style="position: absolute; bottom: 12px; right: 12px; background: #ef4444; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                        -${discount}% OFF
+                    </span>
+                ` : ''}
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 16px;">
+                <h4 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${escapeHTML(p.title)}
+                </h4>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                    ${p.brand ? `<span style="background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 11px;">${escapeHTML(p.brand)}</span>` : ''}
+                    <span style="background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-size: 11px;">${p.condition.replace('_', ' ')}</span>
+                    ${p.warranty_days > 0 ? `<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${p.warranty_days}d warranty</span>` : ''}
+                </div>
+                
+                <!-- Stats -->
+                <div style="display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">
+                    <span><i class="bi bi-eye"></i> ${p.view_count}</span>
+                    <span><i class="bi bi-chat-dots"></i> ${p.inquiry_count}</span>
+                </div>
+                
+                <!-- Price -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        ${p.original_price && p.original_price > p.price ? `
+                            <span style="text-decoration: line-through; color: var(--text-muted); font-size: 12px; margin-right: 8px;">${parseFloat(p.original_price).toLocaleString()} QAR</span>
+                        ` : ''}
+                        <span style="font-size: 20px; font-weight: 800; color: var(--success);">${parseFloat(p.price).toLocaleString()} QAR</span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button onclick="editProduct('${p.product_id}')" class="btn btn-secondary" style="flex: 1; padding: 8px;">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                    <button onclick="toggleProductFeatured('${p.product_id}')" class="btn ${p.is_featured ? 'btn-primary' : 'btn-secondary'}" style="padding: 8px;" title="Feature">
+                        <i class="bi bi-star${p.is_featured ? '-fill' : ''}"></i>
+                    </button>
+                    <button onclick="deleteProduct('${p.product_id}')" class="btn btn-secondary" style="padding: 8px; color: #ef4444;" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function openAddProductModal() {
+    document.getElementById('editProductId').value = '';
+    document.getElementById('productModalTitle').textContent = 'Add New Product';
+    document.getElementById('productForm').reset();
+    document.getElementById('productImagePreviews').innerHTML = '';
+    catalogProductImages = [];
+    document.getElementById('addProductModal').style.display = 'flex';
+}
+
+function closeAddProductModal() {
+    document.getElementById('addProductModal').style.display = 'none';
+    catalogProductImages = [];
+}
+
+function editProduct(productId) {
+    const product = catalogProducts.find(p => p.product_id === productId);
+    if (!product) return;
+
+    document.getElementById('editProductId').value = productId;
+    document.getElementById('productModalTitle').textContent = 'Edit Product';
+
+    document.getElementById('productTitle').value = product.title || '';
+    document.getElementById('productPartNumber').value = product.part_number || '';
+    document.getElementById('productBrand').value = product.brand || '';
+    document.getElementById('productCategory').value = product.category || '';
+    document.getElementById('productDescription').value = product.description || '';
+    document.getElementById('productCondition').value = product.condition || 'used_good';
+    document.getElementById('productWarranty').value = product.warranty_days || 0;
+    document.getElementById('productPrice').value = product.price || '';
+    document.getElementById('productOriginalPrice').value = product.original_price || '';
+    document.getElementById('productQuantity').value = product.quantity || 1;
+    document.getElementById('productMake').value = product.compatible_makes?.[0] || '';
+    document.getElementById('productModel').value = product.compatible_models?.[0] || '';
+    document.getElementById('productYearFrom').value = product.year_from || '';
+    document.getElementById('productYearTo').value = product.year_to || '';
+
+    // Show existing images
+    const previewsContainer = document.getElementById('productImagePreviews');
+    previewsContainer.innerHTML = (product.image_urls || []).map((url, i) => `
+        <div style="position: relative; width: 80px; height: 80px;">
+            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+        </div>
+    `).join('');
+
+    document.getElementById('addProductModal').style.display = 'flex';
+}
+
+async function saveProduct(event, forceStatus = null) {
+    event.preventDefault();
+
+    const productId = document.getElementById('editProductId').value;
+    const isEdit = !!productId;
+
+    const formData = new FormData();
+    formData.append('title', document.getElementById('productTitle').value);
+    formData.append('part_number', document.getElementById('productPartNumber').value);
+    formData.append('brand', document.getElementById('productBrand').value);
+    formData.append('category', document.getElementById('productCategory').value);
+    formData.append('description', document.getElementById('productDescription').value);
+    formData.append('condition', document.getElementById('productCondition').value);
+    formData.append('warranty_days', document.getElementById('productWarranty').value || 0);
+    formData.append('price', document.getElementById('productPrice').value);
+    formData.append('original_price', document.getElementById('productOriginalPrice').value || '');
+    formData.append('quantity', document.getElementById('productQuantity').value || 1);
+    formData.append('status', forceStatus || 'active');
+
+    // Compatibility
+    const make = document.getElementById('productMake').value;
+    const model = document.getElementById('productModel').value;
+    if (make) formData.append('compatible_makes', JSON.stringify([make]));
+    if (model) formData.append('compatible_models', JSON.stringify([model]));
+    formData.append('year_from', document.getElementById('productYearFrom').value || '');
+    formData.append('year_to', document.getElementById('productYearTo').value || '');
+
+    // Images
+    catalogProductImages.forEach(file => formData.append('images', file));
+
+    try {
+        const url = isEdit
+            ? `${API_URL}/garage/catalog/${productId}`
+            : `${API_URL}/garage/catalog`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            showToast(data.error || 'Failed to save product', 'error');
+            return;
+        }
+
+        showToast(isEdit ? 'Product updated!' : 'Product created!', 'success');
+        closeAddProductModal();
+        loadCatalogProducts();
+        loadCatalogStats();
+
+    } catch (err) {
+        console.error('Save product error:', err);
+        showToast('Failed to save product', 'error');
+    }
+}
+
+async function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/garage/catalog/${productId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            showToast('Product deleted', 'success');
+            loadCatalogProducts();
+            loadCatalogStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to delete', 'error');
+        }
+    } catch (err) {
+        showToast('Failed to delete product', 'error');
+    }
+}
+
+async function toggleProductFeatured(productId) {
+    try {
+        const res = await fetch(`${API_URL}/garage/catalog/${productId}/feature`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(data.message, 'success');
+            loadCatalogProducts();
+        } else {
+            showToast(data.error || 'Feature requires Enterprise plan', 'error');
+        }
+    } catch (err) {
+        showToast('Failed to toggle featured', 'error');
+    }
+}
+
+// Image handling for product form
+document.getElementById('productImageDropzone')?.addEventListener('click', () => {
+    document.getElementById('productImages').click();
+});
+
+function handleProductImageSelect(event) {
+    const files = Array.from(event.target.files);
+    addProductImages(files);
+}
+
+function handleProductImageDrop(event) {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    addProductImages(files);
+}
+
+function addProductImages(files) {
+    catalogProductImages = [...catalogProductImages, ...files].slice(0, 5);
+
+    const previewsContainer = document.getElementById('productImagePreviews');
+    previewsContainer.innerHTML = catalogProductImages.map((file, i) => {
+        const url = URL.createObjectURL(file);
+        return `
+            <div style="position: relative; width: 80px; height: 80px;">
+                <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                <button onclick="removeProductImage(${i})" type="button"
+                        style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 12px;">
+                    ×
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function removeProductImage(index) {
+    catalogProductImages.splice(index, 1);
+    addProductImages([]);
 }
 
 // ===== EARNINGS & PAYOUTS =====

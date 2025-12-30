@@ -84,6 +84,11 @@ v1Router.use('/reviews', reviewsRoutes);
 import analyticsRoutes from './analytics.routes';
 v1Router.use('/garage/analytics', analyticsRoutes);
 
+// Catalog (Plan-gated: Pro/Enterprise for garage, open for customer browse)
+import catalogRoutes from './catalog.routes';
+v1Router.use('/garage/catalog', catalogRoutes);
+v1Router.use('/catalog', catalogRoutes);
+
 // ==========================================
 // DRIVER & CHAT ROUTES
 // ==========================================
