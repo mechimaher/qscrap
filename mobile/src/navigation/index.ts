@@ -1,5 +1,8 @@
 // QScrap Navigation Exports
+// Navigation is now handled in App.tsx at the root level
+// This file is kept for potential future deep linking configuration
 
-export { default as AppNavigator } from './AppNavigator';
-export type { RootStackParamList, MainTabParamList } from './AppNavigator';
-export { linking, handleDeepLink, subscribeToLinks, getInitialURL, createDeepLink } from './linking';
+// All navigation types are defined in App.tsx:
+// - RootStackParamList
+// - AuthStackParamList  
+// - MainTabParamList

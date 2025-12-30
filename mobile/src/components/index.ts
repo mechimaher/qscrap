@@ -3,7 +3,7 @@
 
 export { ErrorBoundary } from './ErrorBoundary';
 export { LoadingSpinner } from './LoadingSpinner';
-export { SkeletonLoader, SkeletonCard, SkeletonList } from './SkeletonLoader';
+// SkeletonLoader removed - use SkeletonLoading instead (see SkeletonLoading.tsx)
 export { Button } from './Button';
 export { Input } from './Input';
 export { Card } from './Card';
