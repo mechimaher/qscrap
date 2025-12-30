@@ -52,6 +52,12 @@ export interface Bid {
     created_at: string;
     rating_average?: number;
     rating_count?: number;
+    image_urls?: string[];  // Images uploaded by garage with bid
+    // Counter-offer fields
+    garage_counter_amount?: number;
+    garage_counter_message?: string;
+    garage_counter_id?: string;
+    plan_code?: string;
 }
 
 export interface Order {
@@ -92,6 +98,20 @@ export interface Address {
     latitude?: number;
     longitude?: number;
     is_default: boolean;
+}
+
+export interface Product {
+    product_id: string;
+    garage_id: string;
+    garage_name: string;
+    title: string;
+    description: string;
+    price: number;
+    condition: string;
+    image_urls: string[];
+    is_featured: boolean;
+    plan_code: string;
+    view_count: number;
 }
 
 // API Helper
@@ -403,6 +423,11 @@ class ApiService {
         return this.request(API_ENDPOINTS.DELETE_ACCOUNT, {
             method: 'DELETE'
         });
+    }
+
+    // Catalog - Featured Products
+    async getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
+        return this.request(`${API_ENDPOINTS.CATALOG_SEARCH}?limit=${limit}`);
     }
 
 }

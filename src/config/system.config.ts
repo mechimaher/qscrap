@@ -43,6 +43,7 @@ export const SystemConfig = {
     // ============================================
     DEMO_TRIAL_DAYS: 7,  // Days for demo trial
     SUBSCRIPTION_RENEWAL_WARNING_DAYS: 3,  // Days before expiry to warn
+    EARLY_ACCESS_MINUTES: 5,  // Minutes Enterprise garages get exclusive access to new requests
 
     // ============================================
     // REVIEWS & RATINGS

@@ -519,6 +519,43 @@ function renderRequests() {
     document.getElementById('requestsList').innerHTML = html;
 
     // Recent Orders section on dashboard is populated by loadDashboard/loadOrders
+
+    // Start countdown timers for Early Access locked cards
+    startEarlyAccessTimers();
+}
+
+// Early Access countdown timer updater
+let earlyAccessTimerInterval = null;
+function startEarlyAccessTimers() {
+    // Clear existing interval
+    if (earlyAccessTimerInterval) clearInterval(earlyAccessTimerInterval);
+
+    const timers = document.querySelectorAll('.early-access-timer[data-unlock]');
+    if (timers.length === 0) return;
+
+    earlyAccessTimerInterval = setInterval(() => {
+        let needsRefresh = false;
+
+        timers.forEach(timer => {
+            const unlockAt = new Date(timer.dataset.unlock);
+            const remainingMs = unlockAt - Date.now();
+
+            if (remainingMs <= 0) {
+                timer.innerHTML = '<i class="bi bi-unlock-fill"></i> Unlocked!';
+                needsRefresh = true;
+            } else {
+                const mins = Math.floor(remainingMs / 60000);
+                const secs = Math.floor((remainingMs % 60000) / 1000);
+                timer.innerHTML = `<i class="bi bi-hourglass-split"></i> ${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+        });
+
+        // Refresh requests when any timer expires
+        if (needsRefresh) {
+            clearInterval(earlyAccessTimerInterval);
+            loadRequests();
+        }
+    }, 1000);
 }
 
 // Store original requests for filtering
@@ -606,6 +643,41 @@ function clearRequestFilters() {
 
 
 function createRequestCard(req, isNew = false) {
+    // ============================================
+    // EARLY ACCESS: Render locked card for non-Enterprise
+    // ============================================
+    if (req.is_locked) {
+        const unlockAt = new Date(req.unlock_at);
+        const remainingMs = unlockAt - Date.now();
+        const mins = Math.floor(remainingMs / 60000);
+        const secs = Math.floor((remainingMs % 60000) / 1000);
+        const countdown = remainingMs > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : 'Unlocking...';
+
+        return `
+            <div class="request-card locked-card" data-id="${req.request_id}" data-unlock="${req.unlock_at}"
+                 style="border: 2px solid #eab308; background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(251, 191, 36, 0.05)); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; right: 0; background: linear-gradient(135deg, #eab308, #f59e0b); color: #000; padding: 6px 16px; font-size: 11px; font-weight: 700; border-radius: 0 0 0 12px;">
+                    <i class="bi bi-lock-fill"></i> ENTERPRISE EARLY ACCESS
+                </div>
+                <div class="request-info" style="opacity: 0.7; filter: blur(1px); pointer-events: none;">
+                    <h4 style="margin-top: 24px;">${req.car_make} ${req.car_model} ${req.car_year || ''}</h4>
+                    <p>${req.part_name || 'Part details hidden during early access'}</p>
+                </div>
+                <div style="text-align: center; padding: 16px 20px; background: rgba(234, 179, 8, 0.08); border-top: 1px solid rgba(234, 179, 8, 0.2);">
+                    <div style="font-size: 28px; font-weight: 800; color: #eab308; font-family: monospace;" class="early-access-timer" data-unlock="${req.unlock_at}">
+                        <i class="bi bi-hourglass-split"></i> ${countdown}
+                    </div>
+                    <p style="margin: 8px 0 12px; color: var(--text-muted); font-size: 13px;">
+                        Enterprise garages get 5-minute early access to all new requests
+                    </p>
+                    <button onclick="showSubscriptionUpgrade()" class="btn btn-primary" style="background: linear-gradient(135deg, #eab308, #f59e0b); border: none; color: #000; font-weight: 600;">
+                        <i class="bi bi-rocket-takeoff"></i> Upgrade to Enterprise
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
     const title = req.car_make ? `${req.car_make} ${req.car_model} ${req.car_year || ''}` :
         req.summary?.car || 'Vehicle';
     const desc = req.part_description || req.summary?.part || 'Part Request';

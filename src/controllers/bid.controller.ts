@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import fs from 'fs/promises';
+import { SystemConfig } from '../config/system.config';
 
 // ============================================
 // VALIDATION HELPERS
@@ -69,11 +70,33 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
         await client.query('BEGIN');
 
         // Check request validity
-        const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [targetRequestId]);
+        const reqCheck = await client.query('SELECT status, customer_id, created_at FROM part_requests WHERE request_id = $1', [targetRequestId]);
         if (reqCheck.rows.length === 0) throw new Error('Request not found');
         if (reqCheck.rows[0].status !== 'active') throw new Error('Request is no longer active');
 
         const customerId = reqCheck.rows[0].customer_id;
+
+        // ============================================
+        // EARLY ACCESS: Check if garage can bid on this request
+        // ============================================
+        const planCheck = await client.query(
+            `SELECT COALESCE(sp.plan_code, 'starter') as plan_code
+             FROM garages g
+             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
+             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+             WHERE g.garage_id = $1`,
+            [garageId]
+        );
+        const planCode = planCheck.rows[0]?.plan_code || 'starter';
+        const isEnterprise = planCode === 'enterprise';
+
+        const earlyAccessCutoff = new Date(Date.now() - SystemConfig.EARLY_ACCESS_MINUTES * 60 * 1000);
+        const requestCreatedAt = new Date(reqCheck.rows[0].created_at);
+
+        if (!isEnterprise && requestCreatedAt > earlyAccessCutoff) {
+            const unlockAt = new Date(requestCreatedAt.getTime() + SystemConfig.EARLY_ACCESS_MINUTES * 60 * 1000);
+            throw new Error(`Early Access: Enterprise-only until ${unlockAt.toISOString()}`);
+        }
 
         // Check if garage already bid on this request
         const existingBid = await client.query(

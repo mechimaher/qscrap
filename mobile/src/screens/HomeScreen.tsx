@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,8 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { useTheme } from '../contexts';
-import { requestApi } from '../services';
+import { requestApi, api } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows, PART_CATEGORIES, CAR_MAKES } from '../constants';
 
 const HomeScreen: React.FC = () => {
@@ -31,6 +32,47 @@ const HomeScreen: React.FC = () => {
     const [partNumber, setPartNumber] = useState('');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [images, setImages] = useState<string[]>([]);
+
+    // Saved addresses
+    const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+    const [loadingLocation, setLoadingLocation] = useState(false);
+
+    useEffect(() => {
+        loadSavedAddresses();
+    }, []);
+
+    const loadSavedAddresses = async () => {
+        try {
+            const data = await api.getAddresses();
+            setSavedAddresses(data.addresses || []);
+        } catch (error) {
+            console.log('No saved addresses');
+        }
+    };
+
+    const useCurrentLocation = async () => {
+        try {
+            setLoadingLocation(true);
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission needed', 'Please enable location access');
+                return;
+            }
+
+            const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+            const addr = await Location.reverseGeocodeAsync(location.coords);
+
+            if (addr.length > 0) {
+                const a = addr[0];
+                const formatted = [a.street, a.district, a.city, 'Qatar'].filter(Boolean).join(', ');
+                setDeliveryAddress(formatted || 'Current Location');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Could not get current location');
+        } finally {
+            setLoadingLocation(false);
+        }
+    };
 
     const pickImages = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -263,8 +305,54 @@ const HomeScreen: React.FC = () => {
                             <Ionicons name="location-outline" size={22} color={colors.primary} />
                             <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery *</Text>
                         </View>
+
+                        {/* Quick Select Saved Addresses */}
+                        {savedAddresses.length > 0 && (
+                            <View style={styles.quickAddressContainer}>
+                                <Text style={[styles.quickAddressLabel, { color: colors.textSecondary }]}>Quick Select:</Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.addressChips}>
+                                    {savedAddresses.slice(0, 3).map((addr: any) => (
+                                        <TouchableOpacity
+                                            key={addr.address_id}
+                                            style={[
+                                                styles.addressChip,
+                                                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+                                                deliveryAddress === addr.address_text && { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+                                            ]}
+                                            onPress={() => setDeliveryAddress(addr.address_text)}
+                                        >
+                                            <Ionicons
+                                                name={addr.label.toLowerCase().includes('home') ? 'home' : addr.label.toLowerCase().includes('work') ? 'briefcase' : 'location'}
+                                                size={14}
+                                                color={deliveryAddress === addr.address_text ? colors.primary : colors.textSecondary}
+                                            />
+                                            <Text style={[styles.addressChipText, { color: deliveryAddress === addr.address_text ? colors.primary : colors.text }]}>
+                                                {addr.label}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+
+                        {/* Current Location Button */}
+                        <TouchableOpacity
+                            style={[styles.locationButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
+                            onPress={useCurrentLocation}
+                            disabled={loadingLocation}
+                        >
+                            {loadingLocation ? (
+                                <ActivityIndicator size="small" color={colors.primary} />
+                            ) : (
+                                <Ionicons name="navigate" size={18} color={colors.primary} />
+                            )}
+                            <Text style={[styles.locationButtonText, { color: colors.primary }]}>
+                                Use Current Location
+                            </Text>
+                        </TouchableOpacity>
+
                         <TextInput
-                            style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
+                            style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border, marginTop: Spacing.sm }]}
                             placeholder="Street, Building, Zone, Area"
                             placeholderTextColor={colors.textMuted}
                             value={deliveryAddress}
@@ -298,7 +386,7 @@ const styles = StyleSheet.create({
     header: { padding: Spacing.xl, paddingBottom: Spacing.md },
     title: { fontSize: FontSize.xxl, fontWeight: '700' },
     subtitle: { fontSize: FontSize.md, marginTop: Spacing.xs },
-    form: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxxl },
+    form: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
     section: { borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg },
     sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg, gap: Spacing.sm },
     sectionTitle: { fontSize: FontSize.lg, fontWeight: '600' },
@@ -327,6 +415,22 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, marginTop: Spacing.md,
     },
     submitText: { color: '#fff', fontSize: FontSize.lg, fontWeight: '600' },
+    // Quick Address Select
+    quickAddressContainer: { marginBottom: Spacing.sm },
+    quickAddressLabel: { fontSize: FontSize.xs, fontWeight: '600', marginBottom: Spacing.xs },
+    addressChips: { flexDirection: 'row' },
+    addressChip: {
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.full, borderWidth: 1, marginRight: Spacing.sm,
+    },
+    addressChipText: { fontSize: FontSize.sm, fontWeight: '500' },
+    // Location Button
+    locationButton: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm,
+        paddingVertical: Spacing.sm, borderRadius: BorderRadius.md, borderWidth: 1,
+    },
+    locationButtonText: { fontSize: FontSize.sm, fontWeight: '600' },
 });
 
 export default HomeScreen;

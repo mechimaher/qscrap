@@ -23,6 +23,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constan
 import { RootStackParamList } from '../../../App';
 import { LoadingStats } from '../../components/SkeletonLoading';
 import { useSocketContext } from '../../hooks/useSocket';
+import FeaturedProductsSection from '../../components/FeaturedProductsSection';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -152,6 +153,14 @@ export default function HomeScreen() {
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
+
+                {/* Featured Products Carousel */}
+                <FeaturedProductsSection
+                    onProductPress={(product) => {
+                        // TODO: Open product detail modal or navigate to catalog
+                        console.log('Product pressed:', product.title);
+                    }}
+                />
 
                 {/* Stats Section */}
                 <View style={styles.sectionHeader}>

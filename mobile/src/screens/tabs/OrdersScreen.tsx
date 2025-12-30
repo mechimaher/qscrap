@@ -214,6 +214,12 @@ export default function OrdersScreen() {
                         />
                     }
                     ListEmptyComponent={EmptyState}
+                    // Performance optimizations
+                    initialNumToRender={5}
+                    maxToRenderPerBatch={5}
+                    windowSize={7}
+                    removeClippedSubviews={true}
+                    updateCellsBatchingPeriod={50}
                 />
             )}
         </SafeAreaView>

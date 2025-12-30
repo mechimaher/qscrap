@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import fs from 'fs/promises';
+import { SystemConfig } from '../config/system.config';
 
 // ============================================
 // VALIDATION HELPERS
@@ -199,10 +200,16 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
         // SMART ROUTING: Get garage profile for filtering
         // ============================================
         const garageResult = await pool.query(
-            `SELECT supplier_type, specialized_brands, all_brands FROM garages WHERE garage_id = $1`,
+            `SELECT g.supplier_type, g.specialized_brands, g.all_brands,
+                    COALESCE(sp.plan_code, 'starter') as plan_code
+             FROM garages g
+             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
+             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+             WHERE g.garage_id = $1`,
             [garageId]
         );
         const garage = garageResult.rows[0];
+        const isEnterprise = garage?.plan_code === 'enterprise';
 
         let whereClause = "WHERE status = 'active'";
         const params: any[] = [];
@@ -281,8 +288,40 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
             [...params, limit, offset]
         );
 
+        // ============================================
+        // EARLY ACCESS: Process requests for non-Enterprise garages
+        // ============================================
+        const earlyAccessCutoff = new Date(Date.now() - SystemConfig.EARLY_ACCESS_MINUTES * 60 * 1000);
+
+        const processedRequests = result.rows.map((req: any) => {
+            const requestCreatedAt = new Date(req.created_at);
+            const isLocked = !isEnterprise && requestCreatedAt > earlyAccessCutoff;
+
+            if (isLocked) {
+                const unlockAt = new Date(requestCreatedAt.getTime() + SystemConfig.EARLY_ACCESS_MINUTES * 60 * 1000);
+                return {
+                    request_id: req.request_id,
+                    created_at: req.created_at,
+                    car_make: req.car_make,
+                    car_model: req.car_model,
+                    car_year: req.car_year,
+                    condition_required: req.condition_required,
+                    status: req.status,
+                    bid_count: req.bid_count,
+                    // Locked fields
+                    is_locked: true,
+                    unlock_at: unlockAt.toISOString(),
+                    part_name: '🔒 Enterprise Early Access',
+                    part_description: 'Upgrade to Enterprise for immediate access',
+                    image_urls: [],
+                    customer_notes: null,
+                };
+            }
+            return { ...req, is_locked: false, unlock_at: null };
+        });
+
         res.json({
-            requests: result.rows,
+            requests: processedRequests,
             pagination: { page, limit, total, pages: totalPages },
             filters: { urgency: urgency || 'all', condition: condition || 'all', sort: sortBy }
         });
@@ -341,6 +380,34 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         // Access Check
         if (userType === 'customer' && request.customer_id !== userId) {
             return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // ============================================
+        // EARLY ACCESS: Block non-Enterprise garages from new requests
+        // ============================================
+        if (userType === 'garage') {
+            const planResult = await pool.query(
+                `SELECT COALESCE(sp.plan_code, 'starter') as plan_code
+                 FROM garages g
+                 LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
+                 LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+                 WHERE g.garage_id = $1`,
+                [userId]
+            );
+            const planCode = planResult.rows[0]?.plan_code || 'starter';
+            const isEnterprise = planCode === 'enterprise';
+
+            const earlyAccessCutoff = new Date(Date.now() - SystemConfig.EARLY_ACCESS_MINUTES * 60 * 1000);
+            const requestCreatedAt = new Date(request.created_at);
+
+            if (!isEnterprise && requestCreatedAt > earlyAccessCutoff) {
+                const unlockAt = new Date(requestCreatedAt.getTime() + SystemConfig.EARLY_ACCESS_MINUTES * 60 * 1000);
+                return res.status(403).json({
+                    error: 'early_access_locked',
+                    message: 'This request is in Enterprise Early Access period',
+                    unlock_at: unlockAt.toISOString()
+                });
+            }
         }
 
         // Get Bids with latest counter-offer info

@@ -299,21 +299,38 @@ const RequestDetailsScreen: React.FC = () => {
                                 <Text style={{ color: colors.textSecondary }}>Warranty: {bid.warranty_days} days</Text>
                             </View>
 
+                            {/* Part Images Gallery */}
                             {bid.image_urls && bid.image_urls.length > 0 && (
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bidImages}>
-                                    {bid.image_urls.map((url: string, idx: number) => (
-                                        <TouchableOpacity
-                                            key={idx}
-                                            onPress={() => openImageViewer(bid.image_urls, idx)}
-                                            activeOpacity={0.9}
-                                        >
-                                            <Image
-                                                source={{ uri: url.startsWith('http') ? url : `${API_CONFIG.BASE_URL.replace('/api', '')}${url}` }}
-                                                style={styles.bidImage}
-                                            />
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
+                                <View style={styles.imageGalleryContainer}>
+                                    <View style={styles.imageGalleryHeader}>
+                                        <Ionicons name="images-outline" size={16} color={colors.textSecondary} />
+                                        <Text style={[styles.imageGalleryTitle, { color: colors.textSecondary }]}>
+                                            Part Photos ({bid.image_urls.length})
+                                        </Text>
+                                        <Text style={[styles.zoomHint, { color: colors.primary }]}>
+                                            Tap to zoom
+                                        </Text>
+                                    </View>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bidImages}>
+                                        {bid.image_urls.map((url: string, idx: number) => (
+                                            <TouchableOpacity
+                                                key={idx}
+                                                onPress={() => openImageViewer(bid.image_urls, idx)}
+                                                activeOpacity={0.85}
+                                                style={styles.bidImageWrapper}
+                                            >
+                                                <Image
+                                                    source={{ uri: url.startsWith('http') ? url : `${API_CONFIG.BASE_URL.replace('/api', '')}${url}` }}
+                                                    style={styles.bidImage}
+                                                    resizeMode="cover"
+                                                />
+                                                <View style={[styles.zoomOverlay, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
+                                                    <Ionicons name="expand" size={20} color="#fff" />
+                                                </View>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
                             )}
 
                             {/* Action buttons for pending bids */}
@@ -473,8 +490,14 @@ const styles = StyleSheet.create({
     ratingText: { fontSize: FontSize.sm },
     bidAmount: { fontSize: FontSize.xl, fontWeight: '700' },
     bidDetails: { flexDirection: 'row', gap: Spacing.lg, marginBottom: Spacing.md },
-    bidImages: { flexDirection: 'row', marginBottom: Spacing.md },
-    bidImage: { width: 80, height: 80, borderRadius: BorderRadius.md, marginRight: Spacing.sm },
+    bidImages: { flexDirection: 'row', marginTop: Spacing.xs },
+    bidImageWrapper: { position: 'relative', marginRight: Spacing.sm },
+    bidImage: { width: 100, height: 100, borderRadius: BorderRadius.md },
+    zoomOverlay: { position: 'absolute', bottom: 0, right: 0, padding: 4, borderTopLeftRadius: BorderRadius.md },
+    imageGalleryContainer: { marginBottom: Spacing.md, marginTop: Spacing.sm },
+    imageGalleryHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.xs },
+    imageGalleryTitle: { fontSize: FontSize.sm, fontWeight: '500' },
+    zoomHint: { fontSize: FontSize.xs, marginLeft: 'auto', fontWeight: '600' },
     actionButtons: { flexDirection: 'row', gap: Spacing.sm },
     actionBtn: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
     statusBanner: { padding: Spacing.sm, borderRadius: BorderRadius.md, alignItems: 'center' },
