@@ -64,6 +64,9 @@ export const API_ENDPOINTS = {
     // Chat
     CHAT_MESSAGES: (orderId: string) => `/chat/messages/${orderId}`,
     MESSAGES: '/chat/messages',
+
+    // Catalog (Featured Products)
+    CATALOG_SEARCH: '/catalog/search',
 };
 
 // App Info

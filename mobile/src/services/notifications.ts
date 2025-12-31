@@ -98,6 +98,48 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
             });
         }
 
+        // Configure iOS notification categories with action buttons
+        if (Platform.OS === 'ios') {
+            await Notifications.setNotificationCategoryAsync('bids', [
+                {
+                    identifier: 'view',
+                    buttonTitle: 'View Bid',
+                    options: { opensAppToForeground: true },
+                },
+                {
+                    identifier: 'ignore',
+                    buttonTitle: 'Ignore',
+                    options: { isDestructive: true },
+                },
+            ]);
+
+            await Notifications.setNotificationCategoryAsync('orders', [
+                {
+                    identifier: 'track',
+                    buttonTitle: 'Track Order',
+                    options: { opensAppToForeground: true },
+                },
+                {
+                    identifier: 'details',
+                    buttonTitle: 'View Details',
+                    options: { opensAppToForeground: true },
+                },
+            ]);
+
+            await Notifications.setNotificationCategoryAsync('counter_offer', [
+                {
+                    identifier: 'accept',
+                    buttonTitle: 'Accept',
+                    options: { opensAppToForeground: true },
+                },
+                {
+                    identifier: 'view',
+                    buttonTitle: 'View Details',
+                    options: { opensAppToForeground: true },
+                },
+            ]);
+        }
+
         return token;
     } catch (error) {
         console.error('[Notifications] Error registering:', error);

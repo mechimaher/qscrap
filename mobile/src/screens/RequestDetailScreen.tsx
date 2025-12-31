@@ -38,6 +38,7 @@ export default function RequestDetailScreen() {
     const [acceptingBid, setAcceptingBid] = useState<string | null>(null);
     const [isViewerVisible, setIsViewerVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [viewerImages, setViewerImages] = useState<string[]>([]);  // Can be request or bid images
 
     // Load data on mount and when screen regains focus (e.g., after CounterOfferScreen)
     useEffect(() => {
@@ -343,6 +344,47 @@ export default function RequestDetailScreen() {
                             <Text style={styles.notesText}>{bid.notes}</Text>
                         </View>
                     )}
+
+                    {/* Bid Images Gallery - Part Photos from Garage */}
+                    {bid.image_urls && bid.image_urls.length > 0 && (
+                        <View style={styles.bidImagesContainer}>
+                            <View style={styles.bidImagesHeader}>
+                                <Text style={styles.bidImagesTitle}>
+                                    📸 Part Photos ({bid.image_urls.length})
+                                </Text>
+                                <Text style={styles.bidImagesTapHint}>Tap to zoom</Text>
+                            </View>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bidImagesScroll}>
+                                {bid.image_urls.map((url: string, idx: number) => {
+                                    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                    return (
+                                        <TouchableOpacity
+                                            key={idx}
+                                            onPress={() => {
+                                                const images = bid.image_urls!.map(url =>
+                                                    url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`
+                                                );
+                                                setViewerImages(images);
+                                                setCurrentImageIndex(idx);
+                                                setIsViewerVisible(true);
+                                            }}
+                                            activeOpacity={0.85}
+                                            style={styles.bidImageWrapper}
+                                        >
+                                            <Image
+                                                source={{ uri: fullUrl }}
+                                                style={styles.bidImage}
+                                                resizeMode="cover"
+                                            />
+                                            <View style={styles.zoomOverlay}>
+                                                <Text style={styles.zoomIcon}>🔍</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                        </View>
+                    )}
                 </View>
 
                 {/* Only show actions for active requests with pending bids */}
@@ -482,6 +524,10 @@ export default function RequestDetailScreen() {
                                     <TouchableOpacity
                                         key={index}
                                         onPress={() => {
+                                            const images = request.image_urls!.map(url =>
+                                                url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`
+                                            );
+                                            setViewerImages(images);
                                             setCurrentImageIndex(index);
                                             setIsViewerVisible(true);
                                         }}
@@ -518,12 +564,10 @@ export default function RequestDetailScreen() {
                 <View style={{ height: 100 }} />
             </ScrollView>
             {/* Image Viewer */}
-            {request && request.image_urls && (
+            {viewerImages.length > 0 && (
                 <ImageViewerModal
                     visible={isViewerVisible}
-                    images={request.image_urls.map(url =>
-                        url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`
-                    )}
+                    images={viewerImages}
                     imageIndex={currentImageIndex}
                     onClose={() => setIsViewerVisible(false)}
                 />
@@ -823,5 +867,57 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: Colors.error,
+    },
+    // Bid Images Gallery Styles
+    bidImagesContainer: {
+        marginTop: Spacing.md,
+        paddingTop: Spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+    },
+    bidImagesHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
+    },
+    bidImagesTitle: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        color: Colors.dark.text,
+    },
+    bidImagesTapHint: {
+        fontSize: FontSizes.xs,
+        color: Colors.primary,
+        fontWeight: '500',
+    },
+    bidImagesScroll: {
+        flexDirection: 'row',
+    },
+    bidImageWrapper: {
+        marginRight: Spacing.sm,
+        borderRadius: BorderRadius.md,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    bidImage: {
+        width: 100,
+        height: 100,
+        borderRadius: BorderRadius.md,
+        backgroundColor: '#F0F0F0',
+    },
+    zoomOverlay: {
+        position: 'absolute',
+        bottom: 4,
+        right: 4,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    zoomIcon: {
+        fontSize: 12,
     },
 });
