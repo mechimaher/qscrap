@@ -84,6 +84,10 @@ v1Router.use('/reviews', reviewsRoutes);
 import analyticsRoutes from './analytics.routes';
 v1Router.use('/garage/analytics', analyticsRoutes);
 
+// Showcase/Marketplace (Enterprise only)
+import showcaseRoutes from './showcase.routes';
+v1Router.use('/showcase', showcaseRoutes);
+
 // ==========================================
 // DRIVER & CHAT ROUTES
 // ==========================================

@@ -2025,6 +2025,7 @@ function switchSection(section) {
     if (section === 'dashboard') { loadStats(); loadRequests(); }
     if (section === 'subscription') loadSubscription();
     if (section === 'analytics') loadAnalytics();
+    if (section === 'showcase') loadShowcase();
     if (section === 'earnings') loadEarnings();
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
@@ -4320,4 +4321,315 @@ async function viewNegotiationHistory(bidId) {
 function closeNegotiationHistoryModal() {
     const modal = document.getElementById('negotiationHistoryModal');
     if (modal) modal.remove();
+}
+
+// ===== PARTS SHOWCASE (Enterprise Only) =====
+let hasShowcaseAccess = false;
+
+async function loadShowcase() {
+    try {
+        const res = await fetch(`${API_URL}/showcase/garage`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 403) {
+            // Not Enterprise - show upgrade prompt
+            hasShowcaseAccess = false;
+            document.getElementById('showcaseUpgradePrompt').style.display = 'block';
+            document.getElementById('showcaseContent').style.display = 'none';
+            document.getElementById('addPartBtn').style.display = 'none';
+            return;
+        }
+
+        const data = await res.json();
+        hasShowcaseAccess = true;
+
+        // Show content, hide upgrade prompt
+        document.getElementById('showcaseUpgradePrompt').style.display = 'none';
+        document.getElementById('showcaseContent').style.display = 'block';
+        document.getElementById('addPartBtn').style.display = 'inline-flex';
+
+        // Update stats
+        const analytics = data.analytics || {};
+        document.getElementById('showcaseTotalParts').textContent = analytics.total_parts || 0;
+        document.getElementById('showcaseActiveParts').textContent = analytics.active_parts || 0;
+        document.getElementById('showcaseTotalViews').textContent = analytics.total_views || 0;
+        document.getElementById('showcaseTotalOrders').textContent = analytics.total_orders || 0;
+
+        // Render parts grid
+        renderShowcaseParts(data.parts || []);
+
+    } catch (err) {
+        console.error('loadShowcase error:', err);
+        showToast('Failed to load showcase', 'error');
+    }
+}
+
+function renderShowcaseParts(parts) {
+    // Cache parts for editing
+    showcasePartsCache = parts;
+
+    const grid = document.getElementById('showcasePartsGrid');
+
+    if (!parts.length) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                <i class="bi bi-box-seam" style="font-size: 48px; color: var(--text-muted); margin-bottom: 16px;"></i>
+                <h4 style="margin: 0 0 8px;">No parts yet</h4>
+                <p style="color: var(--text-secondary);">Click "Add Part" to showcase your first part to customers!</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = parts.map(part => {
+        const statusClass = part.status === 'active' ? 'success' : (part.status === 'sold' ? 'warning' : 'secondary');
+        const statusIcon = part.status === 'active' ? 'check-circle' : (part.status === 'sold' ? 'bag-check' : 'eye-slash');
+
+        // Handle image URL - may be just filename or full path
+        let imageUrl = '';
+        if (part.image_urls && part.image_urls.length > 0) {
+            const firstImage = part.image_urls[0];
+            // If it's just a filename, add the full path
+            imageUrl = firstImage.startsWith('/') ? firstImage : `/uploads/${firstImage}`;
+        }
+        const hasImage = !!imageUrl;
+
+        return `
+            <div class="request-card" style="position: relative;">
+                <div style="position: absolute; top: 12px; right: 12px;">
+                    <span class="badge badge-${statusClass}" style="font-size: 11px;">
+                        <i class="bi bi-${statusIcon}"></i> ${part.status.charAt(0).toUpperCase() + part.status.slice(1)}
+                    </span>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    ${hasImage ? `
+                        <img src="${imageUrl}" alt="${escapeHTML(part.title)}" 
+                             style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="part-placeholder-icon" style="display: none; width: 80px; height: 80px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); align-items: center; justify-content: center;">
+                            <i class="bi bi-box-seam" style="font-size: 28px; color: var(--text-muted);"></i>
+                        </div>
+                    ` : `
+                        <div style="width: 80px; height: 80px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-box-seam" style="font-size: 28px; color: var(--text-muted);"></i>
+                        </div>
+                    `}
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px; font-size: 15px; color: var(--text-primary);">${escapeHTML(part.title)}</h4>
+                        <p style="margin: 0 0 8px; font-size: 13px; color: var(--text-secondary);">
+                            ${escapeHTML(part.car_make)}${part.car_model ? ' ' + escapeHTML(part.car_model) : ''}
+                        </p>
+                        <div style="display: flex; gap: 16px; font-size: 13px;">
+                            <span style="font-weight: 600; color: var(--success);">${part.price} QAR</span>
+                            <span style="color: var(--text-muted);">${part.part_condition}</span>
+                            <span style="color: var(--text-muted);">Qty: ${part.quantity}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);">
+                        <span><i class="bi bi-eye"></i> ${part.view_count || 0} views</span>
+                        <span><i class="bi bi-cart-check"></i> ${part.order_count || 0} orders</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-outline" onclick="openEditPartModal('${part.part_id}')" title="Edit part">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline" onclick="togglePartStatus('${part.part_id}')" title="Toggle visibility">
+                            <i class="bi bi-${part.status === 'active' ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline" style="color: var(--danger);" onclick="deleteShowcasePart('${part.part_id}')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Track editing state
+let editingPartId = null;
+let showcasePartsCache = [];
+
+function openAddPartModal() {
+    if (!hasShowcaseAccess) {
+        showToast('Enterprise plan required for Parts Showcase', 'warning');
+        return;
+    }
+    editingPartId = null;
+    document.getElementById('addPartForm').reset();
+    document.getElementById('partModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Add Part to Showcase';
+    document.getElementById('submitPartBtn').innerHTML = '<i class="bi bi-plus-lg"></i> Add Part';
+    document.getElementById('currentImagesPreview').innerHTML = '';
+    document.getElementById('currentImagesPreview').style.display = 'none';
+    document.getElementById('addPartModal').classList.add('active');
+}
+
+function openEditPartModal(partId) {
+    if (!hasShowcaseAccess) {
+        showToast('Enterprise plan required for Parts Showcase', 'warning');
+        return;
+    }
+
+    // Find part in cache
+    const part = showcasePartsCache.find(p => p.part_id === partId);
+    if (!part) {
+        showToast('Part not found', 'error');
+        return;
+    }
+
+    editingPartId = partId;
+
+    // Populate form fields
+    document.getElementById('partTitle').value = part.title || '';
+    document.getElementById('partCarMake').value = part.car_make || '';
+    document.getElementById('partCarModel').value = part.car_model || '';
+    document.getElementById('partCondition').value = part.part_condition || 'used';
+    document.getElementById('partPrice').value = part.price || '';
+    document.getElementById('partPriceType').value = part.price_type || 'fixed';
+    document.getElementById('partWarranty').value = part.warranty_days || 0;
+    document.getElementById('partQuantity').value = part.quantity || 1;
+    document.getElementById('partDescription').value = part.part_description || '';
+
+    // Show current images if any
+    const previewContainer = document.getElementById('currentImagesPreview');
+    if (part.image_urls && part.image_urls.length > 0) {
+        previewContainer.innerHTML = `
+            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;">
+                Current Images (upload new to replace)
+            </label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                ${part.image_urls.map((url, idx) => `
+                    <div style="position: relative;">
+                        <img src="${url}" alt="Part image ${idx + 1}" 
+                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);"
+                             onerror="this.style.display='none';">
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        previewContainer.style.display = 'block';
+    } else {
+        previewContainer.innerHTML = '';
+        previewContainer.style.display = 'none';
+    }
+
+    // Update modal title and button
+    document.getElementById('partModalTitle').innerHTML = '<i class="bi bi-pencil-square"></i> Edit Part';
+    document.getElementById('submitPartBtn').innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
+
+    document.getElementById('addPartModal').classList.add('active');
+}
+
+function closeAddPartModal() {
+    document.getElementById('addPartModal').classList.remove('active');
+    editingPartId = null;
+}
+
+async function submitAddPart(event) {
+    event.preventDefault();
+
+    const submitBtn = document.getElementById('submitPartBtn');
+    const isEditing = !!editingPartId;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="bi bi-hourglass-split"></i> ${isEditing ? 'Saving...' : 'Adding...'}`;
+
+    try {
+        const formData = new FormData();
+        formData.append('title', document.getElementById('partTitle').value);
+        formData.append('car_make', document.getElementById('partCarMake').value);
+        formData.append('car_model', document.getElementById('partCarModel').value || '');
+        formData.append('part_condition', document.getElementById('partCondition').value);
+        formData.append('price', document.getElementById('partPrice').value);
+        formData.append('price_type', document.getElementById('partPriceType').value);
+        formData.append('warranty_days', document.getElementById('partWarranty').value || 0);
+        formData.append('quantity', document.getElementById('partQuantity').value || 1);
+        formData.append('part_description', document.getElementById('partDescription').value || '');
+
+        // Add images
+        const imagesInput = document.getElementById('partImages');
+        if (imagesInput.files.length > 0) {
+            for (let i = 0; i < Math.min(imagesInput.files.length, 5); i++) {
+                formData.append('images', imagesInput.files[i]);
+            }
+        }
+
+        const url = isEditing
+            ? `${API_URL}/showcase/garage/${editingPartId}`
+            : `${API_URL}/showcase/garage`;
+
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(isEditing ? 'Part updated successfully!' : 'Part added to showcase!', 'success');
+            closeAddPartModal();
+            loadShowcase(); // Reload parts
+        } else {
+            showToast(data.error || `Failed to ${isEditing ? 'update' : 'add'} part`, 'error');
+        }
+    } catch (err) {
+        console.error('submitAddPart error:', err);
+        showToast(`Failed to ${isEditing ? 'update' : 'add'} part`, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = isEditing
+            ? '<i class="bi bi-check-lg"></i> Save Changes'
+            : '<i class="bi bi-plus-lg"></i> Add Part';
+    }
+}
+
+async function togglePartStatus(partId) {
+    try {
+        const res = await fetch(`${API_URL}/showcase/garage/${partId}/toggle`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Part ${data.status === 'active' ? 'activated' : 'hidden'}`, 'success');
+            loadShowcase();
+        } else {
+            showToast(data.error || 'Failed to toggle status', 'error');
+        }
+    } catch (err) {
+        console.error('togglePartStatus error:', err);
+        showToast('Failed to toggle status', 'error');
+    }
+}
+
+async function deleteShowcasePart(partId) {
+    if (!confirm('Are you sure you want to remove this part from your showcase?')) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/showcase/garage/${partId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            showToast('Part removed from showcase', 'success');
+            loadShowcase();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to remove part', 'error');
+        }
+    } catch (err) {
+        console.error('deleteShowcasePart error:', err);
+        showToast('Failed to remove part', 'error');
+    }
 }
