@@ -260,21 +260,24 @@ export const addGaragePart = async (req: AuthRequest, res: Response) => {
 
 /**
  * PUT /api/garage/showcase/:id - Update part
+ * Supports image removal via images_to_remove array
  */
 export const updateGaragePart = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
     const { id } = req.params;
 
     try {
-        // Verify ownership
+        // Verify ownership and get current images
         const existing = await pool.query(
-            'SELECT part_id FROM garage_parts WHERE part_id = $1 AND garage_id = $2',
+            'SELECT part_id, image_urls FROM garage_parts WHERE part_id = $1 AND garage_id = $2',
             [id, garageId]
         );
 
         if (existing.rows.length === 0) {
             return res.status(404).json({ error: 'Part not found or not yours' });
         }
+
+        const currentImages: string[] = existing.rows[0].image_urls || [];
 
         const {
             title,
@@ -289,19 +292,43 @@ export const updateGaragePart = async (req: AuthRequest, res: Response) => {
             price_type,
             warranty_days,
             quantity,
-            status
+            status,
+            images_to_remove  // Array of image URLs to remove
         } = req.body;
+
+        // Parse images_to_remove if it's a string (from FormData)
+        let imagesToRemove: string[] = [];
+        if (images_to_remove) {
+            try {
+                imagesToRemove = typeof images_to_remove === 'string'
+                    ? JSON.parse(images_to_remove)
+                    : images_to_remove;
+            } catch (e) {
+                console.warn('Failed to parse images_to_remove:', e);
+            }
+        }
 
         // Handle new images if uploaded
         const files = req.files as Express.Multer.File[];
-        let image_urls_update = '';
+        const newImageUrls = files ? files.map(file => `/uploads/${file.filename}`) : [];
+
+        // Compute final image array:
+        // 1. Start with current images
+        // 2. Remove any images marked for deletion
+        // 3. Add any newly uploaded images
+        let finalImages = currentImages.filter(url => !imagesToRemove.includes(url));
+        finalImages = [...finalImages, ...newImageUrls];
+
+        // Build update query
         const params: any[] = [];
         let paramIndex = 1;
 
-        if (files && files.length > 0) {
-            const new_image_urls = files.map(file => `/uploads/${file.filename}`);
+        // Always update images if there were removals or new uploads
+        const hasImageChanges = imagesToRemove.length > 0 || newImageUrls.length > 0;
+        let image_urls_update = '';
+        if (hasImageChanges) {
             image_urls_update = `, image_urls = $${paramIndex++}`;
-            params.push(new_image_urls);
+            params.push(finalImages);
         }
 
         const result = await pool.query(`
@@ -330,7 +357,12 @@ export const updateGaragePart = async (req: AuthRequest, res: Response) => {
             warranty_days, quantity, status, id, garageId
         ]);
 
-        res.json({ message: 'Part updated', part: result.rows[0] });
+        res.json({
+            message: 'Part updated',
+            part: result.rows[0],
+            images_removed: imagesToRemove.length,
+            images_added: newImageUrls.length
+        });
     } catch (err: any) {
         console.error('updateGaragePart error:', err);
         res.status(500).json({ error: err.message });

@@ -4433,6 +4433,9 @@ function renderShowcaseParts(parts) {
                         <span><i class="bi bi-cart-check"></i> ${part.order_count || 0} orders</span>
                     </div>
                     <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-outline" onclick="openPartPreviewModal('${part.part_id}')" title="Preview as customer" style="color: var(--accent);">
+                            <i class="bi bi-phone"></i>
+                        </button>
                         <button class="btn btn-sm btn-outline" onclick="openEditPartModal('${part.part_id}')" title="Edit part">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -4452,6 +4455,7 @@ function renderShowcaseParts(parts) {
 // Track editing state
 let editingPartId = null;
 let showcasePartsCache = [];
+let imagesToRemove = []; // Track images marked for removal during edit
 
 function openAddPartModal() {
     if (!hasShowcaseAccess) {
@@ -4459,12 +4463,39 @@ function openAddPartModal() {
         return;
     }
     editingPartId = null;
+    imagesToRemove = []; // Reset removal list
     document.getElementById('addPartForm').reset();
     document.getElementById('partModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Add Part to Showcase';
     document.getElementById('submitPartBtn').innerHTML = '<i class="bi bi-plus-lg"></i> Add Part';
     document.getElementById('currentImagesPreview').innerHTML = '';
     document.getElementById('currentImagesPreview').style.display = 'none';
     document.getElementById('addPartModal').classList.add('active');
+}
+
+// Mark an image for removal (visual only until save)
+function markImageForRemoval(url, idx) {
+    if (!imagesToRemove.includes(url)) {
+        imagesToRemove.push(url);
+    }
+    // Update visual - strikethrough effect
+    const imgWrapper = document.querySelector(`[data-img-idx="${idx}"]`);
+    if (imgWrapper) {
+        imgWrapper.classList.add('marked-for-removal');
+        imgWrapper.querySelector('.remove-img-btn').innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+        imgWrapper.querySelector('.remove-img-btn').onclick = () => unmarkImageForRemoval(url, idx);
+    }
+    showToast(`Image marked for removal (${imagesToRemove.length})`, 'info');
+}
+
+// Undo removal marking
+function unmarkImageForRemoval(url, idx) {
+    imagesToRemove = imagesToRemove.filter(u => u !== url);
+    const imgWrapper = document.querySelector(`[data-img-idx="${idx}"]`);
+    if (imgWrapper) {
+        imgWrapper.classList.remove('marked-for-removal');
+        imgWrapper.querySelector('.remove-img-btn').innerHTML = '<i class="bi bi-x-circle"></i>';
+        imgWrapper.querySelector('.remove-img-btn').onclick = () => markImageForRemoval(url, idx);
+    }
 }
 
 function openEditPartModal(partId) {
@@ -4481,6 +4512,7 @@ function openEditPartModal(partId) {
     }
 
     editingPartId = partId;
+    imagesToRemove = []; // Reset removal tracking
 
     // Populate form fields
     document.getElementById('partTitle').value = part.title || '';
@@ -4493,22 +4525,47 @@ function openEditPartModal(partId) {
     document.getElementById('partQuantity').value = part.quantity || 1;
     document.getElementById('partDescription').value = part.part_description || '';
 
-    // Show current images if any
+    // Show current images with REMOVE buttons
     const previewContainer = document.getElementById('currentImagesPreview');
     if (part.image_urls && part.image_urls.length > 0) {
         previewContainer.innerHTML = `
             <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;">
-                Current Images (upload new to replace)
+                <i class="bi bi-images" style="color: var(--accent);"></i> Current Images 
+                <span style="color: var(--text-muted);">(click ❌ to remove)</span>
             </label>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 ${part.image_urls.map((url, idx) => `
-                    <div style="position: relative;">
+                    <div class="current-img-wrapper" data-img-idx="${idx}" style="position: relative; transition: all 0.3s;">
                         <img src="${url}" alt="Part image ${idx + 1}" 
-                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);"
-                             onerror="this.style.display='none';">
+                             style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); transition: all 0.3s;"
+                             onerror="this.parentElement.style.display='none';">
+                        <button type="button" class="remove-img-btn" onclick="markImageForRemoval('${url}', ${idx})"
+                                style="position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid var(--bg-card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s;">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
                     </div>
                 `).join('')}
             </div>
+            <style>
+                .current-img-wrapper.marked-for-removal img {
+                    opacity: 0.3;
+                    filter: grayscale(100%);
+                    border-color: var(--danger) !important;
+                }
+                .current-img-wrapper.marked-for-removal::after {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: var(--danger);
+                    transform: rotate(-45deg);
+                }
+                .remove-img-btn:hover {
+                    transform: scale(1.1);
+                }
+            </style>
         `;
         previewContainer.style.display = 'block';
     } else {
@@ -4549,7 +4606,12 @@ async function submitAddPart(event) {
         formData.append('quantity', document.getElementById('partQuantity').value || 1);
         formData.append('part_description', document.getElementById('partDescription').value || '');
 
-        // Add images
+        // Add images marked for removal (only when editing)
+        if (isEditing && imagesToRemove.length > 0) {
+            formData.append('images_to_remove', JSON.stringify(imagesToRemove));
+        }
+
+        // Add new images
         const imagesInput = document.getElementById('partImages');
         if (imagesInput.files.length > 0) {
             for (let i = 0; i < Math.min(imagesInput.files.length, 5); i++) {
@@ -4572,8 +4634,13 @@ async function submitAddPart(event) {
         const data = await res.json();
 
         if (res.ok) {
-            showToast(isEditing ? 'Part updated successfully!' : 'Part added to showcase!', 'success');
+            let message = isEditing ? 'Part updated successfully!' : 'Part added to showcase!';
+            if (isEditing && data.images_removed > 0) {
+                message += ` (${data.images_removed} image${data.images_removed > 1 ? 's' : ''} removed)`;
+            }
+            showToast(message, 'success');
             closeAddPartModal();
+            imagesToRemove = []; // Reset
             loadShowcase(); // Reload parts
         } else {
             showToast(data.error || `Failed to ${isEditing ? 'update' : 'add'} part`, 'error');
@@ -4631,5 +4698,172 @@ async function deleteShowcasePart(partId) {
     } catch (err) {
         console.error('deleteShowcasePart error:', err);
         showToast('Failed to remove part', 'error');
+    }
+}
+
+// ===== PREMIUM PART PREVIEW MODAL =====
+// Shows exactly what customers see in the app
+function openPartPreviewModal(partId) {
+    const part = showcasePartsCache.find(p => p.part_id === partId);
+    if (!part) {
+        showToast('Part not found', 'error');
+        return;
+    }
+
+    // Format condition nicely
+    const conditionLabels = {
+        'new': '✨ New',
+        'used': '♻️ Used',
+        'refurbished': '🔧 Refurbished'
+    };
+    const conditionDisplay = conditionLabels[part.part_condition] || part.part_condition;
+
+    // Build image gallery HTML
+    const images = part.image_urls || [];
+    const galleryHtml = images.length > 0 ? `
+        <div class="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;">
+            ${images.map((url, idx) => `
+                <img src="${url}" alt="Part image ${idx + 1}" 
+                     onclick="previewFullImage('${url}')"
+                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px; cursor: zoom-in; border: 2px solid var(--border); transition: transform 0.2s;"
+                     onmouseover="this.style.transform='scale(1.05)'"
+                     onmouseout="this.style.transform='scale(1)'"
+                     onerror="this.style.display='none'">
+            `).join('')}
+        </div>
+    ` : `
+        <div style="text-align: center; padding: 40px; background: var(--bg-secondary); border-radius: 12px; color: var(--text-muted);">
+            <i class="bi bi-image" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+            <span>No images uploaded</span>
+        </div>
+    `;
+
+    // Main image
+    const mainImageHtml = images.length > 0 ? `
+        <div style="position: relative; margin-bottom: 16px; border-radius: 16px; overflow: hidden; background: var(--bg-secondary);">
+            <img src="${images[0]}" alt="${escapeHTML(part.title)}"
+                 style="width: 100%; height: 220px; object-fit: cover; cursor: zoom-in;"
+                 onclick="previewFullImage('${images[0]}')"
+                 onerror="this.parentElement.innerHTML='<div style=\\'padding:60px; text-align:center; color:var(--text-muted);\\'><i class=\\'bi bi-image\\' style=\\'font-size:48px;\\'></i></div>'">
+            ${images.length > 1 ? `<span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px;">+${images.length - 1} more</span>` : ''}
+        </div>
+    ` : '';
+
+    // Create modal
+    const modalHtml = `
+        <div class="part-preview-overlay" id="partPreviewModal" onclick="closePartPreviewModal()" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; backdrop-filter: blur(4px);">
+            <div class="preview-modal" onclick="event.stopPropagation()" style="max-width: 420px; width: 95%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border-radius: 24px; box-shadow: 0 25px 80px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, var(--accent), #8b5cf6); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: white;">
+                        <i class="bi bi-phone" style="font-size: 20px;"></i>
+                        <span style="font-weight: 600;">Customer Preview</span>
+                    </div>
+                    <button onclick="closePartPreviewModal()" style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 20px;">
+                    <!-- Main Image -->
+                    ${mainImageHtml}
+                    
+                    <!-- Title & Price -->
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="margin: 0 0 8px; font-size: 20px; font-weight: 700; color: var(--text-primary);">${escapeHTML(part.title)}</h2>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span style="font-size: 26px; font-weight: 800; color: var(--success);">${part.price} QAR</span>
+                            ${part.price_type === 'negotiable' ? '<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">NEGOTIABLE</span>' : '<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">FIXED PRICE</span>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Info Cards -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Condition</div>
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${conditionDisplay}</div>
+                        </div>
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Warranty</div>
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${part.warranty_days || 0} days</div>
+                        </div>
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">In Stock</div>
+                            <div style="font-size: 13px; font-weight: 600; color: ${part.quantity > 0 ? 'var(--success)' : 'var(--danger)'};">${part.quantity || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vehicle Compatibility -->
+                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); padding: 16px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(99, 102, 241, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <i class="bi bi-car-front" style="color: var(--accent); font-size: 18px;"></i>
+                            <span style="font-weight: 600; color: var(--text-primary);">Fits Vehicle</span>
+                        </div>
+                        <div style="font-size: 15px; color: var(--text-primary);">
+                            <strong>${escapeHTML(part.car_make)}</strong>${part.car_model ? ' ' + escapeHTML(part.car_model) : ''}
+                            ${part.car_year_from ? `<span style="color: var(--text-muted);"> (${part.car_year_from}${part.car_year_to ? '-' + part.car_year_to : '+'})</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    ${part.part_description ? `
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Description</div>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.6;">${escapeHTML(part.part_description)}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Image Gallery (if more than 1) -->
+                    ${images.length > 1 ? `
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">All Photos (${images.length})</div>
+                            ${galleryHtml}
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Mock Buy Button (disabled) -->
+                    <button disabled style="width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: not-allowed; opacity: 0.7; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="bi bi-cart-plus"></i>
+                        ${part.price_type === 'negotiable' ? 'Request Quote' : 'Buy Now'}
+                        <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 8px;">PREVIEW</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('partPreviewModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closePartPreviewModal() {
+    const modal = document.getElementById('partPreviewModal');
+    if (modal) modal.remove();
+}
+
+// Full image preview helper
+function previewFullImage(url) {
+    // Use existing lightbox if available
+    if (typeof openRequestLightbox === 'function') {
+        // Create temp array for lightbox
+        window.tempLightboxImages = [url];
+        lightboxImages = window.tempLightboxImages;
+        currentLightboxIndex = 0;
+        document.getElementById('lightboxImg').src = url;
+        document.getElementById('lightboxCounter').textContent = '1 / 1';
+        document.getElementById('proLightbox').classList.add('active');
+    } else {
+        // Simple fallback - open in new tab
+        window.open(url, '_blank');
     }
 }
