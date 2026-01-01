@@ -21,6 +21,7 @@ import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import QuickReplies from '../components/QuickReplies';
 
 interface Message {
     message_id: string;
@@ -224,14 +225,9 @@ export default function ChatScreen() {
         );
     };
 
-    const renderQuickAction = (text: string) => (
-        <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => setNewMessage(text)}
-        >
-            <Text style={styles.quickActionText}>{text}</Text>
-        </TouchableOpacity>
-    );
+    const handleQuickReply = (text: string) => {
+        setNewMessage(text);
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -284,12 +280,11 @@ export default function ChatScreen() {
                     />
                 )}
 
-                {/* Quick Actions */}
-                <View style={styles.quickActions}>
-                    {renderQuickAction("I'm on my way")}
-                    {renderQuickAction("Where are you?")}
-                    {renderQuickAction("Call me please")}
-                </View>
+                {/* Premium Quick Replies */}
+                <QuickReplies
+                    recipientType={recipientType}
+                    onSelectReply={handleQuickReply}
+                />
 
                 {/* Input Area */}
                 <View style={styles.inputContainer}>
