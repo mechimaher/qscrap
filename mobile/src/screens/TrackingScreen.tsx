@@ -50,15 +50,31 @@ export default function TrackingScreen() {
     const socket = useRef<Socket | null>(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
-    // Draggable bottom sheet state - START COLLAPSED (map fully visible)
-    const COLLAPSED_HEIGHT = 80; // Small peek handle only
-    const MIDDLE_HEIGHT = height * 0.40; // When dragged up: 40% sheet
-    const EXPANDED_HEIGHT = height * 0.75; // Full details view
-    // Start at collapsed position (positive Y = pushed down)
-    const COLLAPSED_Y = height * 0.40 - COLLAPSED_HEIGHT; // Push down from middle
+    // Draggable bottom sheet - SIMPLE: Fixed height, starts almost hidden
+    const SHEET_HEIGHT = height * 0.75; // Fixed sheet height
+    const PEEK_HEIGHT = 80; // Only 80px visible when collapsed
+    const HALF_HEIGHT = height * 0.40; // Half-expanded state
+
+    // Y positions (positive = pushed down/hidden)
+    const COLLAPSED_Y = SHEET_HEIGHT - PEEK_HEIGHT; // Most of sheet hidden
+    const HALF_Y = SHEET_HEIGHT - HALF_HEIGHT; // Half visible
+    const EXPANDED_Y = 0; // Fully visible
+
+    // Start collapsed (pushed down)
     const bottomSheetY = useRef(new Animated.Value(COLLAPSED_Y)).current;
     const lastGestureY = useRef(0);
-    const currentSnapPoint = useRef(0); // Start collapsed (0=collapsed, 1=middle, 2=expanded)
+    const currentSnapPoint = useRef(0); // Start collapsed
+
+    const snapToPosition = (targetY: number, snapIndex: number) => {
+        currentSnapPoint.current = snapIndex;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Animated.spring(bottomSheetY, {
+            toValue: targetY,
+            useNativeDriver: true,
+            damping: 20,
+            stiffness: 200,
+        }).start();
+    };
 
     const panResponder = useRef(
         PanResponder.create({
@@ -69,49 +85,31 @@ export default function TrackingScreen() {
             },
             onPanResponderMove: (_, gestureState) => {
                 const newY = lastGestureY.current + gestureState.dy;
-                // Clamp to valid range
-                const minY = -(EXPANDED_HEIGHT - MIDDLE_HEIGHT);
-                const maxY = MIDDLE_HEIGHT - COLLAPSED_HEIGHT;
-                bottomSheetY.setValue(Math.min(maxY, Math.max(minY, newY)));
+                // Clamp between fully expanded (0) and collapsed
+                bottomSheetY.setValue(Math.min(COLLAPSED_Y, Math.max(EXPANDED_Y, newY)));
             },
             onPanResponderRelease: (_, gestureState) => {
                 const velocity = gestureState.vy;
                 const currentY = lastGestureY.current + gestureState.dy;
 
-                let targetY = 0;
-                let targetSnap = 1;
-
-                // Determine snap point based on velocity and position
+                // Snap based on velocity or nearest position
                 if (velocity > 0.5) {
-                    // Swiping down - collapse more
-                    targetY = MIDDLE_HEIGHT - COLLAPSED_HEIGHT;
-                    targetSnap = 0;
+                    // Swiping down - collapse
+                    snapToPosition(COLLAPSED_Y, 0);
                 } else if (velocity < -0.5) {
-                    // Swiping up - expand more  
-                    targetY = -(EXPANDED_HEIGHT - MIDDLE_HEIGHT);
-                    targetSnap = 2;
+                    // Swiping up - expand
+                    snapToPosition(EXPANDED_Y, 2);
                 } else {
-                    // Based on position - snap to nearest
-                    const expandedY = -(EXPANDED_HEIGHT - MIDDLE_HEIGHT);
-                    const collapsedY = MIDDLE_HEIGHT - COLLAPSED_HEIGHT;
+                    // Snap to nearest
                     const distances = [
-                        Math.abs(currentY - collapsedY),
-                        Math.abs(currentY - 0),
-                        Math.abs(currentY - expandedY),
+                        Math.abs(currentY - COLLAPSED_Y),
+                        Math.abs(currentY - HALF_Y),
+                        Math.abs(currentY - EXPANDED_Y),
                     ];
-                    targetSnap = distances.indexOf(Math.min(...distances));
-                    targetY = [collapsedY, 0, expandedY][targetSnap];
+                    const nearest = distances.indexOf(Math.min(...distances));
+                    const positions = [COLLAPSED_Y, HALF_Y, EXPANDED_Y];
+                    snapToPosition(positions[nearest], nearest);
                 }
-
-                currentSnapPoint.current = targetSnap;
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-                Animated.spring(bottomSheetY, {
-                    toValue: targetY,
-                    useNativeDriver: true,
-                    damping: 20,
-                    stiffness: 200,
-                }).start();
             },
         })
     ).current;
@@ -727,6 +725,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
+        height: height * 0.75, // Fixed height for proper animation
         backgroundColor: Colors.dark.surface,
         borderTopLeftRadius: BorderRadius.xl,
         borderTopRightRadius: BorderRadius.xl,
