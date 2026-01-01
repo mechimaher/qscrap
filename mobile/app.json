@@ -112,7 +112,8 @@
             "targetSdkVersion": 34,
             "minSdkVersion": 24,
             "buildToolsVersion": "34.0.0",
-            "kotlinVersion": "2.0.21"
+            "kotlinVersion": "2.0.21",
+            "usesCleartextTraffic": true
           },
           "ios": {
             "deploymentTarget": "15.1",

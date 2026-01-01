@@ -14,7 +14,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import LeafletMap from '../components/LeafletMap';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -46,17 +46,19 @@ export default function TrackingScreen() {
     const route = useRoute();
     const { orderId, orderNumber, deliveryAddress } = route.params as any;
 
-    const mapRef = useRef<MapView>(null);
+    const mapRef = useRef<any>(null);
     const socket = useRef<Socket | null>(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
-    // Draggable bottom sheet state
-    const COLLAPSED_HEIGHT = 120; // Show just ETA
-    const MIDDLE_HEIGHT = height * 0.45; // Default - show driver + ETA
-    const EXPANDED_HEIGHT = height * 0.75; // Show all details
-    const bottomSheetY = useRef(new Animated.Value(0)).current;
+    // Draggable bottom sheet state - START COLLAPSED (map fully visible)
+    const COLLAPSED_HEIGHT = 80; // Small peek handle only
+    const MIDDLE_HEIGHT = height * 0.40; // When dragged up: 40% sheet
+    const EXPANDED_HEIGHT = height * 0.75; // Full details view
+    // Start at collapsed position (positive Y = pushed down)
+    const COLLAPSED_Y = height * 0.40 - COLLAPSED_HEIGHT; // Push down from middle
+    const bottomSheetY = useRef(new Animated.Value(COLLAPSED_Y)).current;
     const lastGestureY = useRef(0);
-    const currentSnapPoint = useRef(1); // 0=collapsed, 1=middle, 2=expanded
+    const currentSnapPoint = useRef(0); // Start collapsed (0=collapsed, 1=middle, 2=expanded)
 
     const panResponder = useRef(
         PanResponder.create({
@@ -391,58 +393,12 @@ export default function TrackingScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Map */}
-            <MapView
-                ref={mapRef}
-                style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={defaultRegion}
-                showsUserLocation={false}
-                showsMyLocationButton={false}
-                showsCompass={false}
-                customMapStyle={darkMapStyle}
-            >
-                {/* Driver Marker */}
-                {driverLocation && (
-                    <Marker
-                        coordinate={{
-                            latitude: driverLocation.latitude,
-                            longitude: driverLocation.longitude,
-                        }}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        rotation={driverLocation.heading}
-                    >
-                        <Animated.View style={[styles.driverMarker, { transform: [{ scale: pulseAnim }] }]}>
-                            <View style={styles.driverMarkerInner}>
-                                <Text style={styles.driverMarkerIcon}>🚗</Text>
-                            </View>
-                        </Animated.View>
-                    </Marker>
-                )}
-
-                {/* Customer/Destination Marker */}
-                {customerLocation && (
-                    <Marker coordinate={customerLocation}>
-                        <View style={styles.destinationMarker}>
-                            <Text style={styles.destinationMarkerIcon}>📍</Text>
-                            <View style={styles.destinationPulse} />
-                        </View>
-                    </Marker>
-                )}
-
-                {/* Route Line */}
-                {driverLocation && customerLocation && (
-                    <Polyline
-                        coordinates={[
-                            { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-                            customerLocation,
-                        ]}
-                        strokeColor={Colors.primary}
-                        strokeWidth={4}
-                        lineDashPattern={[10, 5]}
-                    />
-                )}
-            </MapView>
+            {/* Premium Leaflet Map */}
+            <LeafletMap
+                driverLocation={driverLocation}
+                customerLocation={customerLocation}
+                showRoute={true}
+            />
 
             {/* Header */}
             <SafeAreaView style={styles.header} edges={['top']}>
