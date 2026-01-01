@@ -25,6 +25,8 @@ import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import LiveETACard from '../components/LiveETACard';
+import StatusTimeline from '../components/StatusTimeline';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -118,6 +120,7 @@ export default function TrackingScreen() {
     const [customerLocation, setCustomerLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [eta, setEta] = useState<string | null>(null);
+    const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
     const [distance, setDistance] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [driverInfo, setDriverInfo] = useState<{ name: string; phone: string; vehicle: string } | null>(null);
