@@ -269,7 +269,7 @@ const RequestDetailsScreen: React.FC = () => {
                                     {bid.garage_counter_amount ? (
                                         <>
                                             <Text style={[styles.originalPrice, { color: colors.textMuted, textDecorationLine: 'line-through' }]}>
-                                                {bid.bid_amount} QAR
+                                                {bid.original_bid_amount || bid.bid_amount} QAR
                                             </Text>
                                             <Text style={[styles.counterOfferAmount, { color: colors.warning }]}>
                                                 {bid.garage_counter_amount} QAR

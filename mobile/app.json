@@ -7,19 +7,45 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "scheme": "qscrap",
+    "owner": "mechimaher",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/47b26c9d-3bd0-4470-8543-dd303a49b287",
+      "fallbackToCacheTimeout": 30000
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#6366f1",
+      "androidMode": "default",
+      "androidCollapsedTitle": "QScrap"
+    },
     "ios": {
       "bundleIdentifier": "qa.qscrap.app",
       "buildNumber": "1",
       "supportsTablet": true,
+      "usesAppleSignIn": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "QScrap needs camera access to take photos of car parts for your spare parts requests",
         "NSPhotoLibraryUsageDescription": "QScrap needs photo library access to upload images of car parts you're looking for",
-        "NSLocationWhenInUseUsageDescription": "QScrap needs your location to find nearby garages and calculate accurate delivery fees for your area"
+        "NSLocationWhenInUseUsageDescription": "QScrap needs your location to find nearby garages and calculate accurate delivery fees for your area",
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
+      },
+      "entitlements": {
+        "aps-environment": "production"
       }
     },
     "android": {
@@ -29,20 +55,38 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
       },
+      "googleServicesFile": "./google-services.json",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "INTERNET",
-        "VIBRATE"
-      ]
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "useNextNotificationsApi": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366f1",
+          "defaultChannel": "default"
+        }
+      ],
       [
         "expo-location",
         {
@@ -60,12 +104,31 @@
         {
           "photosPermission": "QScrap needs photo library access to upload part images."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24,
+            "buildToolsVersion": "34.0.0",
+            "kotlinVersion": "1.9.22"
+          },
+          "ios": {
+            "deploymentTarget": "15.1",
+            "useFrameworks": "static"
+          }
+        }
       ]
     ],
     "extra": {
       "privacyPolicyUrl": "https://qscrap.qa/privacy",
       "termsOfServiceUrl": "https://qscrap.qa/terms",
-      "supportEmail": "support@qscrap.qa"
+      "supportEmail": "support@qscrap.qa",
+      "eas": {
+        "projectId": "47b26c9d-3bd0-4470-8543-dd303a49b287"
+      }
     }
   }
 }

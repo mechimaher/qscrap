@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
-
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 // Get payout summary and pending payouts
 export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId;
@@ -10,7 +11,7 @@ export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
     try {
         let garageId = null;
         let whereClause = '';
-        const params: any[] = [];
+        const params: unknown[] = [];
 
         if (userType === 'garage') {
             // For garage users, userId IS the garage_id
@@ -77,9 +78,9 @@ export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
             },
             pending_payouts: pendingResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getPayoutSummary Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -92,7 +93,7 @@ export const getPayouts = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         // Force garage filter for garage users
@@ -138,9 +139,9 @@ export const getPayouts = async (req: AuthRequest, res: Response) => {
             page: Number(page),
             limit: Number(limit)
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getPayouts Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -168,9 +169,9 @@ export const processPayout = async (req: AuthRequest, res: Response) => {
             payout: result.rows[0],
             message: 'Payout processed successfully'
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('processPayout Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -196,9 +197,9 @@ export const holdPayout = async (req: AuthRequest, res: Response) => {
             payout: result.rows[0],
             message: 'Payout put on hold'
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('holdPayout Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -241,9 +242,9 @@ export const getTransactionDetails = async (req: AuthRequest, res: Response) => 
             payout: payoutResult.rows[0] || null,
             refunds: refundResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getTransactionDetails Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -322,10 +323,10 @@ export const createRefund = async (req: AuthRequest, res: Response) => {
             payout_adjustment: payoutResult,
             message: 'Refund created and payout adjusted successfully'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('createRefund Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -350,7 +351,7 @@ export const getRevenueReport = async (req: AuthRequest, res: Response) => {
 
     try {
         let garageId = null;
-        const params: any[] = [daysBack]; // $1 = days interval
+        const params: unknown[] = [daysBack]; // $1 = days interval
         let paramIndex = 2;
 
         if (userType === 'garage') {
@@ -393,7 +394,7 @@ export const getRevenueReport = async (req: AuthRequest, res: Response) => {
             daily_revenue: dailyResult.rows,
             top_garages: topGaragesResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getRevenueReport Error:', err);
         res.status(500).json({ error: 'Failed to generate revenue report' });
     }
@@ -407,7 +408,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
 
     try {
         let garageFilter = '';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (userType === 'garage') {
@@ -483,7 +484,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
                 pages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getTransactions Error:', err);
         res.status(500).json({ error: 'Failed to fetch transactions' });
     }
@@ -564,7 +565,7 @@ export const forceProcessPayout = async (req: AuthRequest, res: Response) => {
             payout: result.rows[0],
             message: 'Payout force-processed successfully'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[FINANCE] forceProcessPayout error:', err);
         res.status(500).json({ error: 'Failed to process payout' });
@@ -612,7 +613,7 @@ export const releasePayout = async (req: AuthRequest, res: Response) => {
             payout: result.rows[0],
             message: `Payout released and scheduled for ${scheduledDate.toLocaleDateString()}`
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[FINANCE] releasePayout error:', err);
         res.status(500).json({ error: 'Failed to release payout' });
     }
@@ -656,7 +657,7 @@ export const getPayoutStatus = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ payout: result.rows[0] });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[FINANCE] getPayoutStatus error:', err);
         res.status(500).json({ error: 'Failed to fetch payout status' });
     }
@@ -765,10 +766,10 @@ export const sendPayment = async (req: AuthRequest, res: Response) => {
             message: 'Payment sent successfully. Awaiting garage confirmation.',
             confirmation_deadline: confirmationDeadline
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[FINANCE] sendPayment error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -841,10 +842,10 @@ export const confirmPayment = async (req: AuthRequest, res: Response) => {
             payout: result.rows[0],
             message: 'Payment confirmed successfully. Thank you!'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[FINANCE] confirmPayment error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -925,10 +926,10 @@ export const disputePayment = async (req: AuthRequest, res: Response) => {
             payout: result.rows[0],
             message: 'Payment issue reported. Operations will review and contact you.'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[FINANCE] disputePayment error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -956,7 +957,7 @@ export const getAwaitingConfirmation = async (req: AuthRequest, res: Response) =
             awaiting_confirmation: result.rows,
             count: result.rows.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[FINANCE] getAwaitingConfirmation error:', err);
         res.status(500).json({ error: 'Failed to fetch awaiting confirmations' });
     }
@@ -1020,7 +1021,7 @@ export const resolvePaymentDispute = async (req: AuthRequest, res: Response) => 
                 resolved_by = $3,
                 resolved_at = NOW()`;
 
-        const queryParams: any[] = [newStatus, updateNotes, req.user?.userId];
+        const queryParams: unknown[] = [newStatus, updateNotes, req.user?.userId];
         let paramIndex = 4;
 
         if (new_amount !== undefined && new_amount !== null) {
@@ -1058,10 +1059,10 @@ export const resolvePaymentDispute = async (req: AuthRequest, res: Response) => 
             payout: result.rows[0],
             message: `Dispute resolved: ${resolution}`
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[FINANCE] resolvePaymentDispute error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -1125,7 +1126,7 @@ export const getPaymentStats = async (req: AuthRequest, res: Response) => {
         `);
 
         res.json({ stats: result.rows[0] });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[FINANCE] getPaymentStats error:', err);
         res.status(500).json({ error: 'Failed to fetch payment stats' });
     }

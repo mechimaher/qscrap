@@ -946,7 +946,8 @@ async function loadPendingCounterOffers() {
                 message: co.message,
                 car_summary: co.car_summary,
                 part_description: co.part_description,
-                created_at: co.created_at
+                created_at: co.created_at,
+                round_number: co.round_number || 1
             }));
         } else {
             pendingCounterOffers = [];
@@ -1068,6 +1069,14 @@ function createCounterOfferCard(co) {
                 </div>
             ` : ''}
             
+            ${co.round_number >= 3 ? `
+                <div style="padding: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; margin-bottom: 16px; text-align: center;">
+                    <i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i>
+                    <span style="color: #f59e0b; font-weight: 600;">Round 3/3 - Final Round</span>
+                    <p style="margin: 8px 0 0; font-size: 12px; color: var(--text-secondary);">No more counter-offers allowed. Please Accept or Decline.</p>
+                </div>
+            ` : ''}
+            
             <div style="display: flex; gap: 12px;">
                 <button onclick="respondToCounterFromCard('${co.counter_offer_id}', 'accept')" style="
                     flex: 1; padding: 12px; border: none; border-radius: 10px;
@@ -1078,6 +1087,7 @@ function createCounterOfferCard(co) {
                 " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                     <i class="bi bi-check-circle"></i> Accept
                 </button>
+                ${co.round_number < 3 ? `
                 <button onclick="openCounterInputForCard('${co.counter_offer_id}', ${co.proposed_amount})" style="
                     flex: 1; padding: 12px; border: 1px solid var(--accent); border-radius: 10px;
                     background: transparent; color: var(--accent); font-weight: 600; cursor: pointer;
@@ -1086,6 +1096,7 @@ function createCounterOfferCard(co) {
                 " onmouseover="this.style.background='var(--accent)'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent)'">
                     <i class="bi bi-arrow-repeat"></i> Counter
                 </button>
+                ` : ''}
                 <button onclick="respondToCounterFromCard('${co.counter_offer_id}', 'reject')" style="
                     padding: 12px 16px; border: 1px solid var(--danger); border-radius: 10px;
                     background: transparent; color: var(--danger); font-weight: 600; cursor: pointer;

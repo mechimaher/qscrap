@@ -1,14 +1,16 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage } from '../utils/socketIO';
 import fs from 'fs/promises';
 
 // ============================================
 // VALIDATION HELPERS
 // ============================================
 
-const validateBidAmount = (amount: any): { valid: boolean; value: number; message?: string } => {
-    const numAmount = parseFloat(amount);
+const validateBidAmount = (amount: unknown): { valid: boolean; value: number; message?: string } => {
+    const numAmount = parseFloat(String(amount));
     if (isNaN(numAmount)) {
         return { valid: false, value: 0, message: 'Bid amount must be a number' };
     }
@@ -21,9 +23,9 @@ const validateBidAmount = (amount: any): { valid: boolean; value: number; messag
     return { valid: true, value: numAmount };
 };
 
-const validateWarrantyDays = (days: any): number | null => {
+const validateWarrantyDays = (days: unknown): number | null => {
     if (days === undefined || days === null || days === '') return null;
-    const numDays = parseInt(days, 10);
+    const numDays = parseInt(String(days), 10);
     if (isNaN(numDays) || numDays < 0 || numDays > 365) return null;
     return numDays;
 };
@@ -130,7 +132,7 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
 
         // Notify Customer (Real-time) - must match mobile app BidNotification interface
         try {
-            (global as any).io.to(`user_${customerId}`).emit('new_bid', {
+            emitToUser(customerId, 'new_bid', {
                 bid_id: bidResult.rows[0].bid_id,
                 request_id: targetRequestId,
                 garage_name: `Garage #${bidNumber}`,
@@ -148,7 +150,7 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
             message: 'Bid submitted successfully',
             bid_id: bidResult.rows[0].bid_id
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
 
         // Cleanup uploaded files on error
@@ -163,16 +165,16 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
             }
         }
 
-        console.error('[BID] Submit error:', err.message);
+        console.error('[BID] Submit error:', getErrorMessage(err));
 
         // Return user-friendly error messages
         let userMessage = 'Failed to submit bid';
-        if (err.message.includes('not found')) userMessage = 'Request not found';
-        else if (err.message.includes('not active')) userMessage = 'Request is no longer active';
-        else if (err.message.includes('already submitted')) userMessage = 'You already bid on this request';
-        else if (err.message.includes('limit reached')) userMessage = err.message;
-        else if (err.message.includes('No active subscription')) userMessage = err.message;
-        else if (err.message.includes('demo trial has expired')) userMessage = err.message;
+        if (getErrorMessage(err).includes('not found')) userMessage = 'Request not found';
+        else if (getErrorMessage(err).includes('not active')) userMessage = 'Request is no longer active';
+        else if (getErrorMessage(err).includes('already submitted')) userMessage = 'You already bid on this request';
+        else if (getErrorMessage(err).includes('limit reached')) userMessage = getErrorMessage(err);
+        else if (getErrorMessage(err).includes('No active subscription')) userMessage = getErrorMessage(err);
+        else if (getErrorMessage(err).includes('demo trial has expired')) userMessage = getErrorMessage(err);
 
         res.status(400).json({ error: userMessage });
     } finally {
@@ -190,7 +192,7 @@ export const getMyBids = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE b.garage_id = $1';
-        const params: any[] = [garageId];
+        const params: unknown[] = [garageId];
         let paramIndex = 2;
 
         if (status && ['pending', 'accepted', 'rejected', 'withdrawn'].includes(status as string)) {
@@ -265,14 +267,14 @@ export const rejectBid = async (req: AuthRequest, res: Response) => {
             [bid_id]
         );
 
-        (global as any).io?.to(`garage_${bid.garage_id}`).emit('bid_rejected', {
+        emitToGarage(bid.garage_id, 'bid_rejected', {
             bid_id,
             message: `Your bid for ${bid.car_make} ${bid.car_model} was not selected.`
         });
 
         res.json({ message: 'Bid rejected' });
-    } catch (err: any) {
-        console.error('[BID] Reject error:', err.message);
+    } catch (err) {
+        console.error('[BID] Reject error:', getErrorMessage(err));
         res.status(500).json({ error: 'Failed to reject bid' });
     }
 };
@@ -331,15 +333,15 @@ export const updateBid = async (req: AuthRequest, res: Response) => {
             [bid_amount, warranty_days, notes, part_condition, brand_name, bid_id]
         );
 
-        (global as any).io?.to(`user_${bid.customer_id}`).emit('bid_updated', {
+        emitToUser(bid.customer_id, 'bid_updated', {
             request_id: bid.request_id,
             message: `A garage updated their bid for ${bid.car_make} ${bid.car_model}`,
             new_amount: bid_amount
         });
 
         res.json({ message: 'Bid updated successfully' });
-    } catch (err: any) {
-        console.error('[BID] Update error:', err.message);
+    } catch (err) {
+        console.error('[BID] Update error:', getErrorMessage(err));
         res.status(500).json({ error: 'Failed to update bid' });
     }
 };
@@ -377,14 +379,14 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
             [bid.request_id]
         );
 
-        (global as any).io?.to(`user_${bid.customer_id}`).emit('bid_withdrawn', {
+        emitToUser(bid.customer_id, 'bid_withdrawn', {
             request_id: bid.request_id,
             message: `A garage withdrew their bid for ${bid.car_make} ${bid.car_model}`
         });
 
         res.json({ message: 'Bid withdrawn successfully' });
-    } catch (err: any) {
-        console.error('[BID] Withdraw error:', err.message);
+    } catch (err) {
+        console.error('[BID] Withdraw error:', getErrorMessage(err));
         res.status(500).json({ error: 'Failed to withdraw bid' });
     }
 };

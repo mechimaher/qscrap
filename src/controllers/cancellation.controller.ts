@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 
 // ============================================
 // REQUEST CANCELLATION (by Customer)
@@ -73,9 +75,9 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
             message: 'Request cancelled successfully',
             bids_affected: bidsResult.rowCount
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -141,9 +143,9 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
         });
 
         res.json({ message: 'Bid withdrawn successfully' });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -154,7 +156,7 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
 // ============================================
 
 // Calculate cancellation fee based on order status and time
-const calculateCancellationFee = (order: any): { feeRate: number; fee: number; canCancel: boolean; reason?: string } => {
+const calculateCancellationFee = (order: { created_at: Date; total_amount: number; order_status: string }): { feeRate: number; fee: number; canCancel: boolean; reason?: string } => {
     const orderCreatedAt = new Date(order.created_at);
     const now = new Date();
     const minutesSinceOrder = Math.floor((now.getTime() - orderCreatedAt.getTime()) / 60000);
@@ -186,7 +188,7 @@ const calculateCancellationFee = (order: any): { feeRate: number; fee: number; c
         feeRate = 0.25;
     }
 
-    const fee = parseFloat(order.total_amount) * feeRate;
+    const fee = parseFloat(String(order.total_amount)) * feeRate;
 
     return {
         feeRate,
@@ -220,11 +222,11 @@ export const getCancellationPreview = async (req: AuthRequest, res: Response) =>
             can_cancel: feeInfo.canCancel,
             cancellation_fee_rate: feeInfo.feeRate,
             cancellation_fee: feeInfo.fee,
-            refund_amount: feeInfo.canCancel ? parseFloat(order.total_amount) - feeInfo.fee : 0,
+            refund_amount: feeInfo.canCancel ? parseFloat(String(order.total_amount)) - feeInfo.fee : 0,
             reason: feeInfo.reason
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -257,7 +259,7 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
 
         const orderCreatedAt = new Date(order.created_at);
         const minutesSinceOrder = Math.floor((Date.now() - orderCreatedAt.getTime()) / 60000);
-        const refundAmount = parseFloat(order.total_amount) - feeInfo.fee;
+        const refundAmount = parseFloat(String(order.total_amount)) - feeInfo.fee;
 
         // Create cancellation request
         const cancelResult = await client.query(
@@ -314,9 +316,9 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
             refund_amount: refundAmount,
             refund_status: order.payment_status === 'paid' ? 'pending' : 'not_applicable'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -422,9 +424,9 @@ export const cancelOrderByGarage = async (req: AuthRequest, res: Response) => {
             message: 'Order cancelled. Customer will receive full refund.',
             impact: 'This cancellation affects your fulfillment rate.'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -449,7 +451,7 @@ export const getCancellationHistory = async (req: AuthRequest, res: Response) =>
         );
 
         res.json(result.rows);
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

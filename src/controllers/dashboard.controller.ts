@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
-
+import { cacheGetOrSet, CacheTTL, CachePrefix } from '../utils/cache';
+import { getErrorMessage } from '../types';
 // Garage Dashboard Stats
 export const getGarageStats = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
@@ -62,8 +63,8 @@ export const getGarageStats = async (req: AuthRequest, res: Response) => {
             },
             profile: profile.rows[0] || null
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -108,8 +109,8 @@ export const getGarageProfile = async (req: AuthRequest, res: Response) => {
         }
 
         res.json(profile);
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -140,8 +141,8 @@ export const updateGarageBusinessDetails = async (req: AuthRequest, res: Respons
             message: 'Business details updated successfully',
             garage: result.rows[0]
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -180,8 +181,8 @@ export const updateGarageSpecialization = async (req: AuthRequest, res: Response
             message: 'Garage specialization updated successfully',
             garage: result.rows[0]
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -221,8 +222,8 @@ export const getCustomerStats = async (req: AuthRequest, res: Response) => {
                 awaiting_confirmation: parseInt(awaitingConfirmation.rows[0].count) // NEW: delivered, needs confirmation
             }
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -261,8 +262,8 @@ export const getCustomerProfile = async (req: AuthRequest, res: Response) => {
             stats: statsResult.rows[0] || { total_requests: 0, completed_orders: 0, reviews_given: 0 },
             addresses: addressesResult.rows
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -279,8 +280,8 @@ export const updateCustomerProfile = async (req: AuthRequest, res: Response) => 
         );
 
         res.json({ user: result.rows[0], message: 'Profile updated successfully' });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -305,8 +306,8 @@ export const addAddress = async (req: AuthRequest, res: Response) => {
         );
 
         res.json({ address: result.rows[0], message: 'Address added successfully' });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -326,8 +327,8 @@ export const deleteAddress = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ message: 'Address deleted' });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -355,8 +356,8 @@ export const setDefaultAddress = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ address: result.rows[0], message: 'Default address updated' });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -373,8 +374,8 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
         );
 
         res.json({ notifications: result.rows });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -389,8 +390,8 @@ export const markNotificationRead = async (req: AuthRequest, res: Response) => {
         );
 
         res.json({ message: 'Notification marked as read' });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -404,7 +405,7 @@ export const markAllNotificationsRead = async (req: AuthRequest, res: Response) 
         );
 
         res.json({ message: 'All notifications marked as read' });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

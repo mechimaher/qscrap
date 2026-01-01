@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // Universal search endpoint with role-based scoping
 export const universalSearch = async (req: AuthRequest, res: Response) => {
@@ -16,7 +17,7 @@ export const universalSearch = async (req: AuthRequest, res: Response) => {
     const maxResults = Math.min(Number(limit) || 10, 50);
 
     try {
-        const results: any = {};
+        const results: Record<string, unknown> = {};
 
         // Orders search - scoped by role
         if (!type || type === 'orders') {
@@ -38,7 +39,7 @@ export const universalSearch = async (req: AuthRequest, res: Response) => {
                 )
             `;
 
-            const params: any[] = [searchTerm];
+            const params: unknown[] = [searchTerm];
 
             // Scope by role
             if (userType === 'customer') {
@@ -93,7 +94,7 @@ export const universalSearch = async (req: AuthRequest, res: Response) => {
                 )
             `;
 
-            const params: any[] = [searchTerm];
+            const params: unknown[] = [searchTerm];
 
             if (userType === 'customer') {
                 requestQuery += ` AND pr.customer_id = $2`;
@@ -139,9 +140,9 @@ export const universalSearch = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ results, query: q });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Universal search error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -158,7 +159,7 @@ export const getSearchSuggestions = async (req: AuthRequest, res: Response) => {
     const searchTerm = `%${q.trim()}%`;
 
     try {
-        const suggestions: any[] = [];
+        const suggestions: Record<string, unknown>[] = [];
 
         // Order number suggestions
         let orderQuery = `
@@ -167,7 +168,7 @@ export const getSearchSuggestions = async (req: AuthRequest, res: Response) => {
             JOIN part_requests pr ON o.request_id = pr.request_id
             WHERE o.order_number ILIKE $1
         `;
-        const params: any[] = [searchTerm];
+        const params: unknown[] = [searchTerm];
 
         if (userType === 'customer') {
             orderQuery += ` AND o.customer_id = $2`;
@@ -207,8 +208,8 @@ export const getSearchSuggestions = async (req: AuthRequest, res: Response) => {
         })));
 
         res.json({ suggestions });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Search suggestions error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

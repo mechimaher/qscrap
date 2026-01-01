@@ -8,6 +8,9 @@ import {
     TRIAL_DAYS,
     TOKEN_EXPIRY_SECONDS
 } from '../config/security';
+import { getErrorMessage } from '../types';
+import { AuthRequest } from '../middleware/auth.middleware';
+import logger from '../utils/logger';
 
 // ============================================
 // VALIDATION HELPERS
@@ -132,9 +135,9 @@ export const register = async (req: Request, res: Response) => {
         );
 
         res.status(201).json({ token, userId, userType: user_type });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[AUTH] Registration error:', err.message);
+        logger.error('Registration failed', { error: getErrorMessage(err) });
         res.status(500).json({ error: 'Registration failed. Please try again.' });
     } finally {
         client.release();
@@ -271,14 +274,13 @@ export const login = async (req: Request, res: Response) => {
         );
 
         res.json({ token, userType: user.user_type, userId: user.user_id });
-    } catch (err: any) {
-        console.error('[AUTH] Login error:', err);
+    } catch (err) {
+        logger.error('Login failed', { error: getErrorMessage(err) });
         res.status(500).json({ error: 'Login failed. Please try again.' });
     }
 };
 
-export const deleteAccount = async (req: Request, res: Response) => {
-    // @ts-ignore
+export const deleteAccount = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -297,7 +299,7 @@ export const deleteAccount = async (req: Request, res: Response) => {
         }
 
         // Log the deletion for audit
-        console.log(`[AUTH] Deleting account for user ${userId}`);
+        logger.info('Deleting user account', { userId });
 
         // anonymize user data (Soft Delete)
         const anonymizedPhone = `deleted_${userId}_${Date.now()}`;
@@ -327,9 +329,9 @@ export const deleteAccount = async (req: Request, res: Response) => {
         await client.query('COMMIT');
         res.json({ message: 'Account deleted successfully' });
 
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[AUTH] Delete account error:', err);
+        logger.error('Delete account failed', { error: getErrorMessage(err), userId });
         res.status(500).json({ error: 'Failed to delete account' });
     } finally {
         client.release();

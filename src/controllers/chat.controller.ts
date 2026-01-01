@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 
 // ============================================================================
 // DELIVERY CHAT CONTROLLER
@@ -56,9 +58,9 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
             assignment_status: assignment.status,
             can_chat: ['assigned', 'picked_up', 'in_transit'].includes(assignment.status)
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getChatMessages Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -161,9 +163,9 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
         });
 
         res.status(201).json({ message: newMessage });
-    } catch (err: any) {
+    } catch (err) {
         console.error('sendChatMessage Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -188,9 +190,9 @@ export const getUnreadCount = async (req: AuthRequest, res: Response) => {
         `, [userId]);
 
         res.json({ unread_count: parseInt(result.rows[0].unread_count) || 0 });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getUnreadCount Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -242,9 +244,9 @@ export const getOrderChatMessages = async (req: AuthRequest, res: Response) => {
             messages: messages.rows,
             can_chat: assignment.assignment_id && ['assigned', 'picked_up', 'in_transit'].includes(assignment.status)
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getOrderChatMessages Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -368,8 +370,8 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
                 is_read: false
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('sendOrderChatMessage Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

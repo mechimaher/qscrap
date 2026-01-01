@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 interface AuthRequest extends Request {
     user?: { userId: string; userType: string };
@@ -15,7 +16,7 @@ export const getOrdersReport = async (req: AuthRequest, res: Response) => {
 
         // FIXED: Use parameterised query to prevent SQL injection
         let statusFilter = '';
-        const params: any[] = [fromDate, toDate];
+        const params: unknown[] = [fromDate, toDate];
         let paramIndex = 3;
 
         if (status && status !== 'all') {
@@ -42,7 +43,7 @@ export const getOrdersReport = async (req: AuthRequest, res: Response) => {
         );
 
         // Get summary statistics - also fix this query
-        const summaryParams: any[] = [fromDate, toDate];
+        const summaryParams: unknown[] = [fromDate, toDate];
         let summaryParamIndex = 3;
         let summaryStatusFilter = '';
 
@@ -76,9 +77,9 @@ export const getOrdersReport = async (req: AuthRequest, res: Response) => {
             data: ordersResult.rows,
             total_records: ordersResult.rows.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Orders report error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -145,9 +146,9 @@ export const getRevenueReport = async (req: AuthRequest, res: Response) => {
             daily_breakdown: dailyResult.rows,
             top_garages: topGaragesResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Revenue report error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -195,9 +196,9 @@ export const getDisputesReport = async (req: AuthRequest, res: Response) => {
             data: disputesResult.rows,
             total_records: disputesResult.rows.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Disputes report error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -244,9 +245,9 @@ export const getDeliveriesReport = async (req: AuthRequest, res: Response) => {
             drivers: driversResult.rows,
             total_drivers: driversResult.rows.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Deliveries report error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -280,8 +281,8 @@ export const getGaragesReport = async (req: AuthRequest, res: Response) => {
             data: garagesResult.rows,
             total_garages: garagesResult.rows.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('Garages report error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

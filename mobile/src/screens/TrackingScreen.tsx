@@ -10,6 +10,8 @@ import {
     Animated,
     Linking,
     Alert,
+    PanResponder,
+    ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -48,6 +50,70 @@ export default function TrackingScreen() {
     const socket = useRef<Socket | null>(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
+    // Draggable bottom sheet state
+    const COLLAPSED_HEIGHT = 120; // Show just ETA
+    const MIDDLE_HEIGHT = height * 0.45; // Default - show driver + ETA
+    const EXPANDED_HEIGHT = height * 0.75; // Show all details
+    const bottomSheetY = useRef(new Animated.Value(0)).current;
+    const lastGestureY = useRef(0);
+    const currentSnapPoint = useRef(1); // 0=collapsed, 1=middle, 2=expanded
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
+            onPanResponderGrant: () => {
+                lastGestureY.current = (bottomSheetY as any)._value;
+            },
+            onPanResponderMove: (_, gestureState) => {
+                const newY = lastGestureY.current + gestureState.dy;
+                // Clamp to valid range
+                const minY = -(EXPANDED_HEIGHT - MIDDLE_HEIGHT);
+                const maxY = MIDDLE_HEIGHT - COLLAPSED_HEIGHT;
+                bottomSheetY.setValue(Math.min(maxY, Math.max(minY, newY)));
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                const velocity = gestureState.vy;
+                const currentY = lastGestureY.current + gestureState.dy;
+
+                let targetY = 0;
+                let targetSnap = 1;
+
+                // Determine snap point based on velocity and position
+                if (velocity > 0.5) {
+                    // Swiping down - collapse more
+                    targetY = MIDDLE_HEIGHT - COLLAPSED_HEIGHT;
+                    targetSnap = 0;
+                } else if (velocity < -0.5) {
+                    // Swiping up - expand more  
+                    targetY = -(EXPANDED_HEIGHT - MIDDLE_HEIGHT);
+                    targetSnap = 2;
+                } else {
+                    // Based on position - snap to nearest
+                    const expandedY = -(EXPANDED_HEIGHT - MIDDLE_HEIGHT);
+                    const collapsedY = MIDDLE_HEIGHT - COLLAPSED_HEIGHT;
+                    const distances = [
+                        Math.abs(currentY - collapsedY),
+                        Math.abs(currentY - 0),
+                        Math.abs(currentY - expandedY),
+                    ];
+                    targetSnap = distances.indexOf(Math.min(...distances));
+                    targetY = [collapsedY, 0, expandedY][targetSnap];
+                }
+
+                currentSnapPoint.current = targetSnap;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+                Animated.spring(bottomSheetY, {
+                    toValue: targetY,
+                    useNativeDriver: true,
+                    damping: 20,
+                    stiffness: 200,
+                }).start();
+            },
+        })
+    ).current;
+
     const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
     const [customerLocation, setCustomerLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -55,6 +121,16 @@ export default function TrackingScreen() {
     const [distance, setDistance] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [driverInfo, setDriverInfo] = useState<{ name: string; phone: string; vehicle: string } | null>(null);
+    const [orderDetails, setOrderDetails] = useState<{
+        garage_name: string;
+        part_description: string;
+        part_condition: string;
+        warranty_days: number;
+        part_price: number;
+        delivery_fee: number;
+        total_amount: number;
+        order_status: string;
+    } | null>(null);
 
     // Pulse animation for driver marker
     useEffect(() => {
@@ -154,6 +230,18 @@ export default function TrackingScreen() {
                         vehicle: order.vehicle_info || 'Vehicle',
                     });
                 }
+
+                // Set order details for display
+                setOrderDetails({
+                    garage_name: order.garage_name || 'Unknown Garage',
+                    part_description: order.part_description || 'Part',
+                    part_condition: order.part_condition || 'used_good',
+                    warranty_days: parseInt(String(order.warranty_days)) || 0,
+                    part_price: parseFloat(String(order.part_price)) || 0,
+                    delivery_fee: parseFloat(String(order.delivery_fee || 0)),
+                    total_amount: parseFloat(String(order.total_amount)) || 0,
+                    order_status: order.order_status || 'in_transit',
+                });
             }
         } catch (error) {
             console.log('Failed to load order data:', error);
@@ -388,8 +476,14 @@ export default function TrackingScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Bottom Sheet */}
-            <View style={styles.bottomSheet}>
+            {/* Draggable Bottom Sheet */}
+            <Animated.View
+                style={[
+                    styles.bottomSheet,
+                    { transform: [{ translateY: bottomSheetY }] }
+                ]}
+                {...panResponder.panHandlers}
+            >
                 <View style={styles.handle} />
 
                 {/* ETA Card */}
@@ -455,6 +549,93 @@ export default function TrackingScreen() {
                     </View>
                 )}
 
+                {/* Premium Order Details Card */}
+                {orderDetails && (
+                    <View style={styles.orderCard}>
+                        {/* Status Timeline */}
+                        <View style={styles.statusTimeline}>
+                            {['confirmed', 'in_transit', 'delivered'].map((step, index) => {
+                                const isCompleted = getStatusIndex(orderDetails.order_status) >= index;
+                                const isCurrent = getStatusIndex(orderDetails.order_status) === index;
+                                const labels = ['Prepared', 'In Transit', 'Delivered'];
+                                const icons = ['✓', '🚗', '📦'];
+
+                                return (
+                                    <React.Fragment key={step}>
+                                        <View style={styles.timelineStep}>
+                                            <View style={[
+                                                styles.timelineNode,
+                                                isCompleted && styles.timelineNodeCompleted,
+                                                isCurrent && styles.timelineNodeCurrent,
+                                            ]}>
+                                                <Text style={styles.timelineIcon}>
+                                                    {isCompleted ? icons[index] : '○'}
+                                                </Text>
+                                            </View>
+                                            <Text style={[
+                                                styles.timelineLabel,
+                                                isCompleted && styles.timelineLabelCompleted,
+                                            ]}>
+                                                {labels[index]}
+                                            </Text>
+                                        </View>
+                                        {index < 2 && (
+                                            <View style={[
+                                                styles.timelineConnector,
+                                                isCompleted && styles.timelineConnectorCompleted,
+                                            ]} />
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </View>
+
+                        {/* Garage & Part Info */}
+                        <View style={styles.orderInfoRow}>
+                            <View style={styles.garageSection}>
+                                <Text style={styles.orderLabel}>🏭 FROM</Text>
+                                <Text style={styles.garageName}>{orderDetails.garage_name}</Text>
+                            </View>
+                            <View style={styles.partSection}>
+                                <Text style={styles.partName} numberOfLines={2}>
+                                    {orderDetails.part_description}
+                                </Text>
+                                <View style={styles.partBadges}>
+                                    <View style={styles.conditionBadge}>
+                                        <Text style={styles.conditionText}>
+                                            {orderDetails.part_condition.replace('_', ' ').toUpperCase()}
+                                        </Text>
+                                    </View>
+                                    {orderDetails.warranty_days > 0 && (
+                                        <View style={styles.warrantyBadge}>
+                                            <Text style={styles.warrantyText}>
+                                                {orderDetails.warranty_days}d warranty
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Pricing */}
+                        <View style={styles.pricingSection}>
+                            <View style={styles.priceRow}>
+                                <Text style={styles.priceLabel}>Part</Text>
+                                <Text style={styles.priceValue}>{orderDetails.part_price.toFixed(0)} QAR</Text>
+                            </View>
+                            <View style={styles.priceRow}>
+                                <Text style={styles.priceLabel}>Delivery</Text>
+                                <Text style={styles.priceValue}>{orderDetails.delivery_fee.toFixed(0)} QAR</Text>
+                            </View>
+                            <View style={styles.priceDivider} />
+                            <View style={styles.priceRow}>
+                                <Text style={styles.totalLabel}>Total</Text>
+                                <Text style={styles.totalValue}>{orderDetails.total_amount.toFixed(0)} QAR</Text>
+                            </View>
+                        </View>
+                    </View>
+                )}
+
                 {/* Delivery Address */}
                 <View style={styles.addressCard}>
                     <Text style={styles.addressIcon}>📍</Text>
@@ -465,16 +646,19 @@ export default function TrackingScreen() {
                         </Text>
                     </View>
                 </View>
-
-                {/* Status */}
-                <View style={styles.statusRow}>
-                    <View style={styles.statusDot} />
-                    <Text style={styles.statusText}>Driver is on the way to you</Text>
-                </View>
-            </View>
-        </View>
+            </Animated.View>
+        </View >
     );
 }
+
+// Helper to get status index for timeline
+const getStatusIndex = (status: string): number => {
+    const statusOrder = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_passed', 'in_transit', 'delivered', 'completed'];
+    const idx = statusOrder.indexOf(status);
+    if (idx <= 4) return 0; // Prepared
+    if (idx === 5) return 1; // In Transit
+    return 2; // Delivered
+};
 
 // Dark map style for premium look
 const darkMapStyle = [
@@ -656,6 +840,153 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     messageDriverIcon: { fontSize: 20 },
+    // Premium Order Card Styles
+    orderCard: {
+        backgroundColor: Colors.dark.background,
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        marginBottom: Spacing.md,
+        borderWidth: 1,
+        borderColor: Colors.dark.border,
+    },
+    statusTimeline: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+        paddingHorizontal: Spacing.sm,
+    },
+    timelineStep: {
+        alignItems: 'center',
+    },
+    timelineNode: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: Colors.dark.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: Colors.dark.border,
+    },
+    timelineNodeCompleted: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+    },
+    timelineNodeCurrent: {
+        borderColor: Colors.primary,
+        borderWidth: 3,
+    },
+    timelineIcon: {
+        fontSize: 16,
+        color: Colors.dark.text,
+    },
+    timelineLabel: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textMuted,
+        marginTop: Spacing.xs,
+        fontWeight: '500',
+    },
+    timelineLabelCompleted: {
+        color: Colors.primary,
+        fontWeight: '600',
+    },
+    timelineConnector: {
+        flex: 1,
+        height: 3,
+        backgroundColor: Colors.dark.border,
+        marginHorizontal: Spacing.xs,
+        marginBottom: Spacing.lg,
+    },
+    timelineConnectorCompleted: {
+        backgroundColor: Colors.primary,
+    },
+    orderInfoRow: {
+        marginBottom: Spacing.md,
+    },
+    garageSection: {
+        marginBottom: Spacing.sm,
+    },
+    orderLabel: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textMuted,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+    },
+    garageName: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
+        color: Colors.dark.text,
+        marginTop: Spacing.xs,
+    },
+    partSection: {
+        marginTop: Spacing.sm,
+    },
+    partName: {
+        fontSize: FontSizes.md,
+        color: Colors.dark.textSecondary,
+        marginBottom: Spacing.xs,
+    },
+    partBadges: {
+        flexDirection: 'row',
+        gap: Spacing.xs,
+    },
+    conditionBadge: {
+        backgroundColor: Colors.info + '20',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.sm,
+    },
+    conditionText: {
+        fontSize: FontSizes.xs,
+        color: Colors.info,
+        fontWeight: '600',
+    },
+    warrantyBadge: {
+        backgroundColor: Colors.success + '20',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.sm,
+    },
+    warrantyText: {
+        fontSize: FontSizes.xs,
+        color: Colors.success,
+        fontWeight: '600',
+    },
+    pricingSection: {
+        borderTopWidth: 1,
+        borderTopColor: Colors.dark.border,
+        paddingTop: Spacing.sm,
+        marginTop: Spacing.sm,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.xs,
+    },
+    priceLabel: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textMuted,
+    },
+    priceValue: {
+        fontSize: FontSizes.sm,
+        color: Colors.dark.textSecondary,
+    },
+    priceDivider: {
+        height: 1,
+        backgroundColor: Colors.dark.border,
+        marginVertical: Spacing.xs,
+    },
+    totalLabel: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        color: Colors.dark.text,
+    },
+    totalValue: {
+        fontSize: FontSizes.lg,
+        fontWeight: '800',
+        color: Colors.primary,
+    },
     addressCard: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -678,3 +1009,4 @@ const styles = StyleSheet.create({
     },
     statusText: { fontSize: FontSizes.sm, color: Colors.primary, fontWeight: '600' },
 });
+

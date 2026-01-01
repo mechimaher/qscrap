@@ -1,11 +1,12 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // Helper: Get garage's plan features
 async function getGaragePlanFeatures(garageId: string): Promise<{
     plan_code: string;
-    features: any;
+    features: Record<string, unknown>;
     analytics_level: string;
 }> {
     const result = await pool.query(
@@ -163,9 +164,9 @@ export const getGarageAnalytics = async (req: AuthRequest, res: Response) => {
             })
         });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('getGarageAnalytics error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -208,9 +209,9 @@ export const exportAnalytics = async (req: AuthRequest, res: Response) => {
             data: result.rows
         });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('exportAnalytics error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -285,9 +286,9 @@ export const getCustomerInsights = async (req: AuthRequest, res: Response) => {
             area_breakdown: areaBreakdown.rows
         });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('getCustomerInsights error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -313,8 +314,8 @@ export const getPlanFeatures = async (req: AuthRequest, res: Response) => {
             }
         });
 
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -475,8 +476,8 @@ export const getMarketInsights = async (req: AuthRequest, res: Response) => {
             }))
         });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('getMarketInsights error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

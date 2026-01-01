@@ -1,15 +1,17 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import fs from 'fs/promises';
 
 // ============================================
 // VALIDATION HELPERS
 // ============================================
 
-const validateCarYear = (year: any): { valid: boolean; value: number; message?: string } => {
+const validateCarYear = (year: unknown): { valid: boolean; value: number; message?: string } => {
     const currentYear = new Date().getFullYear();
-    const numYear = parseInt(year, 10);
+    const numYear = parseInt(String(year), 10);
 
     if (isNaN(numYear)) {
         return { valid: false, value: 0, message: 'Car year must be a number' };
@@ -159,7 +161,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         }
 
         res.status(201).json({ message: 'Request created', request_id: request.request_id });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
 
         // Cleanup uploaded files on error
@@ -205,7 +207,7 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
         const garage = garageResult.rows[0];
 
         let whereClause = "WHERE status = 'active'";
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         // ============================================
@@ -413,7 +415,7 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         let bids = bidsResult.rows;
         // Anonymize for customer (keep garage_id for reviews, anonymize name)
         if (userType === 'customer') {
-            bids = bids.map((bid: any, i: number) => ({
+            bids = bids.map((bid: Record<string, unknown>, i: number) => ({
                 ...bid,
                 garage_name: `Garage ${i + 1}`,
                 // Keep garage_id for reviews modal
@@ -425,7 +427,7 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ request, bids });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REQUEST] Get request details error:', err);
         res.status(500).json({ error: 'Failed to fetch request details' });
     }
@@ -466,7 +468,7 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
         );
 
         res.json({ success: true, message: 'Request cancelled successfully' });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REQUEST] Cancel request error:', err);
         res.status(500).json({ error: 'Failed to cancel request' });
     }
@@ -557,7 +559,7 @@ export const deleteRequest = async (req: AuthRequest, res: Response) => {
                 part: request.part_description
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[REQUEST] Delete request error:', err);
         res.status(500).json({ error: 'Failed to delete request' });
@@ -596,7 +598,7 @@ export const ignoreRequest = async (req: AuthRequest, res: Response) => {
         `, [garageId, request_id]);
 
         res.json({ success: true, message: 'Request ignored' });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REQUEST] Ignore request error:', err);
         res.status(500).json({ error: 'Failed to ignore request' });
     }
@@ -625,7 +627,7 @@ export const getIgnoredRequests = async (req: AuthRequest, res: Response) => {
 
         const ignoredIds = result.rows.map(row => row.request_id);
         res.json({ ignored: ignoredIds });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REQUEST] Get ignored requests error:', err);
         res.status(500).json({ error: 'Failed to fetch ignored requests' });
     }

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 import { getDeliveryFeeForLocation } from './delivery.controller';
 
 // Get commission rate based on garage's status and subscription
@@ -170,7 +171,7 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
             `SELECT DISTINCT garage_id FROM bids WHERE request_id = $1 AND bid_id != $2`,
             [bid.request_id, bid_id]
         );
-        rejectedBids.rows.forEach((r: any) => {
+        rejectedBids.rows.forEach((r: Record<string, unknown>) => {
             (global as any).io.to(`garage_${r.garage_id}`).emit('bid_rejected', {
                 request_id: bid.request_id,
                 notification: "Another bid was selected for this request."
@@ -183,9 +184,9 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
             order_number: order.order_number,
             total_amount
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -256,7 +257,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
         // Update order
         const updateFields: string[] = ['order_status = $1', 'updated_at = NOW()'];
-        const updateValues: any[] = [order_status, order_id];
+        const updateValues: unknown[] = [order_status, order_id];
 
         if (order_status === 'delivered') {
             updateFields.push('actual_delivery_at = NOW()');
@@ -286,11 +287,19 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             'delivered': '✅ Your order has been delivered'
         };
 
+        // Get garage name for notification
+        const garageResult = await pool.query(
+            'SELECT garage_name FROM garages WHERE garage_id = $1',
+            [garageId]
+        );
+        const garageName = garageResult.rows[0]?.garage_name || 'Garage';
+
         (global as any).io.to(`user_${customerId}`).emit('order_status_updated', {
             order_id,
             order_number: currentOrder.order_number,
             old_status: oldStatus,
             new_status: order_status,
+            garage_name: garageName,
             notification: statusMessages[order_status] || `Order status updated to ${order_status}`
         });
 
@@ -308,9 +317,9 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             old_status: oldStatus,
             new_status: order_status
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -331,7 +340,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
 
         // Build count query
         let countQuery = `SELECT COUNT(*) FROM orders o WHERE o.${field} = $1`;
-        const countParams: any[] = [userId];
+        const countParams: unknown[] = [userId];
         if (status) {
             countQuery += ` AND o.order_status = $2`;
             countParams.push(status);
@@ -361,7 +370,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
             LEFT JOIN order_reviews r ON o.order_id = r.order_id
             WHERE o.${field} = $1
         `;
-        const params: any[] = [userId];
+        const params: unknown[] = [userId];
         let paramIndex = 2;
 
         if (status) {
@@ -377,8 +386,8 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
             orders: result.rows,
             pagination: { page: pageNum, limit: limitNum, total, pages: totalPages }
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -426,8 +435,8 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
             status_history: history.rows,
             review: review.rows[0] || null
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -524,9 +533,9 @@ export const confirmDelivery = async (req: AuthRequest, res: Response) => {
             message: 'Delivery confirmed. Thank you!',
             prompt_review: true
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -590,9 +599,9 @@ export const submitReview = async (req: AuthRequest, res: Response) => {
         });
 
         res.json({ message: 'Thank you for your review!' });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -629,8 +638,8 @@ export const getGarageReviews = async (req: AuthRequest, res: Response) => {
             reviews: result.rows,
             stats: stats.rows[0]
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 

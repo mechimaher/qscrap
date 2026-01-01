@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // ============================================================================
 // ADMIN CONTROLLER - Garage Approval & Platform Management
@@ -25,7 +26,7 @@ export const getPendingGarages = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         // Status filter
@@ -78,7 +79,7 @@ export const getPendingGarages = async (req: AuthRequest, res: Response) => {
                 limit: limitNum
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getPendingGarages error:', err);
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
@@ -93,7 +94,7 @@ export const getAllGaragesAdmin = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (status && status !== 'all') {
@@ -166,7 +167,7 @@ export const getAllGaragesAdmin = async (req: AuthRequest, res: Response) => {
                 pages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getAllGaragesAdmin error:', err);
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
@@ -229,7 +230,7 @@ export const approveGarage = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] approveGarage error:', err);
         res.status(500).json({ error: 'Failed to approve garage' });
     }
@@ -292,7 +293,7 @@ export const rejectGarage = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] rejectGarage error:', err);
         res.status(500).json({ error: 'Failed to reject garage' });
     }
@@ -368,7 +369,7 @@ export const grantDemoAccess = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] grantDemoAccess error:', err);
         res.status(500).json({ error: 'Failed to grant demo access' });
     }
@@ -440,7 +441,7 @@ export const revokeGarageAccess = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] revokeGarageAccess error:', err);
         res.status(500).json({ error: 'Failed to revoke access' });
     }
@@ -478,7 +479,7 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
         res.json({
             stats: stats.rows[0]
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getAdminDashboardStats error:', err);
         res.status(500).json({ error: 'Failed to fetch dashboard stats' });
     }
@@ -495,7 +496,7 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (action_type) {
@@ -536,7 +537,7 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
                 limit: limitNum
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getAuditLog error:', err);
         res.status(500).json({ error: 'Failed to fetch audit log' });
     }
@@ -559,7 +560,7 @@ export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
             ORDER BY sp.display_order ASC
         `);
         res.json({ plans: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getSubscriptionPlans error:', err);
         res.status(500).json({ error: 'Failed to fetch plans' });
     }
@@ -655,7 +656,7 @@ export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] assignPlanToGarage error:', err);
         res.status(500).json({ error: 'Failed to assign plan' });
     }
@@ -716,7 +717,7 @@ export const revokeSubscription = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] revokeSubscription error:', err);
         res.status(500).json({ error: 'Failed to revoke subscription' });
     }
@@ -782,7 +783,7 @@ export const extendSubscription = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] extendSubscription error:', err);
         res.status(500).json({ error: 'Failed to extend subscription' });
     }
@@ -854,7 +855,7 @@ export const overrideCommission = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] overrideCommission error:', err);
         res.status(500).json({ error: 'Failed to override commission' });
     }
@@ -931,7 +932,7 @@ export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Res
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] updateGarageSpecializationAdmin error:', err);
         res.status(500).json({ error: 'Failed to update garage specialization' });
     }
@@ -951,7 +952,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (userTypeFilter && userTypeFilter !== 'all') {
@@ -1001,7 +1002,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
                 total_pages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getAllUsers error:', err);
         res.status(500).json({ error: 'Failed to fetch users' });
     }
@@ -1027,7 +1028,7 @@ export const getAdminUserDetails = async (req: AuthRequest, res: Response) => {
         }
 
         const user = userResult.rows[0];
-        let additionalData: any = {};
+        let additionalData: Record<string, unknown> = {};
 
         // Get type-specific data
         if (user.user_type === 'customer') {
@@ -1067,7 +1068,7 @@ export const getAdminUserDetails = async (req: AuthRequest, res: Response) => {
             ...additionalData,
             recent_activity: activity.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] getAdminUserDetails error:', err);
         res.status(500).json({ error: 'Failed to fetch user details' });
     }
@@ -1131,7 +1132,7 @@ export const updateUserAdmin = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] updateUserAdmin error:', err);
         res.status(500).json({ error: 'Failed to update user' });
     }
@@ -1182,7 +1183,7 @@ export const adminSuspendUser = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] adminSuspendUser error:', err);
         res.status(500).json({ error: 'Failed to suspend user' });
     }
@@ -1233,7 +1234,7 @@ export const adminActivateUser = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] adminActivateUser error:', err);
         res.status(500).json({ error: 'Failed to activate user' });
     }
@@ -1290,7 +1291,7 @@ export const adminResetPassword = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] adminResetPassword error:', err);
         res.status(500).json({ error: 'Failed to reset password' });
     }
@@ -1448,7 +1449,7 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[ADMIN] adminCreateUser error:', err);
         res.status(500).json({ error: 'Failed to create user' });
     }

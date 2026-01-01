@@ -145,15 +145,88 @@ export function useSocket() {
             // Counter-offer rejected by garage
             socket.current.on('counter_offer_rejected', (data: any) => {
                 console.log('[Socket] Counter-offer rejected:', data);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+                if (data.is_final_round) {
+                    // Final round rejection - more urgent notification
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+                    // Show rich notification guiding customer to accept or decline
+                    import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                        scheduleLocalNotification(
+                            '⚠️ Final Offer Decision Needed',
+                            data.notification || `Your offer was declined. Accept ${data.original_bid_amount} QAR or choose another bid.`,
+                            {
+                                type: 'counter_offer_final',
+                                bidId: data.bid_id,
+                                isFinalRound: true,
+                                originalBidAmount: data.original_bid_amount,
+                            }
+                        );
+                    });
+                } else {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                }
             });
 
             // === ORDER EVENTS ===
 
-            // Order status changed
-            socket.current.on('order_status_updated', (data: OrderStatusUpdate) => {
+            // Order status changed - Show rich notification with garage branding
+            socket.current.on('order_status_updated', (data: OrderStatusUpdate & { garage_name?: string; part_description?: string }) => {
                 console.log('[Socket] Order status updated:', data.order_number, data.new_status);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                // Schedule rich local notification for background/locked phone
+                const statusMessages: Record<string, { emoji: string; title: string; body: string }> = {
+                    'preparing': {
+                        emoji: '🔧',
+                        title: 'Part Being Prepared',
+                        body: `${data.garage_name || 'Garage'} is preparing your part`
+                    },
+                    'ready_for_pickup': {
+                        emoji: '📦',
+                        title: 'Part Ready',
+                        body: `Your part from ${data.garage_name || 'the garage'} is ready for collection`
+                    },
+                    'collected': {
+                        emoji: '✅',
+                        title: 'Part Collected',
+                        body: 'QScrap has collected your part for quality check'
+                    },
+                    'qc_passed': {
+                        emoji: '✨',
+                        title: 'Quality Check Passed!',
+                        body: 'Your part passed inspection - Ready for delivery'
+                    },
+                    'in_transit': {
+                        emoji: '🚗',
+                        title: 'Out for Delivery',
+                        body: data.driver_name
+                            ? `${data.driver_name} is on the way with your part`
+                            : 'Your part is on its way!'
+                    },
+                    'delivered': {
+                        emoji: '🎉',
+                        title: 'Part Delivered!',
+                        body: 'Your order has been delivered. Enjoy!'
+                    },
+                };
+
+                const statusInfo = statusMessages[data.new_status];
+                if (statusInfo) {
+                    import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                        scheduleLocalNotification(
+                            `${statusInfo.emoji} QScrap | ${statusInfo.title}`,
+                            statusInfo.body,
+                            {
+                                type: 'order_update',
+                                orderId: data.order_id,
+                                orderNumber: data.order_number,
+                                status: data.new_status,
+                                garageName: data.garage_name,
+                            }
+                        );
+                    });
+                }
 
                 setOrderUpdates(prev => {
                     // Replace if exists, otherwise add

@@ -1,25 +1,78 @@
 {
     "cli": {
-        "version": ">= 3.0.0"
+        "version": ">= 12.0.0",
+        "appVersionSource": "remote"
     },
     "build": {
+        "base": {
+            "node": "20.18.0",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://api.qscrap.qa",
+                "EXPO_PUBLIC_SOCKET_URL": "https://api.qscrap.qa"
+            }
+        },
         "development": {
+            "extends": "base",
             "developmentClient": true,
-            "distribution": "internal"
+            "distribution": "internal",
+            "channel": "development",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "http://192.168.1.100:3000/api",
+                "EXPO_PUBLIC_SOCKET_URL": "http://192.168.1.100:3000"
+            },
+            "android": {
+                "buildType": "apk",
+                "gradleCommand": ":app:assembleDebug"
+            },
+            "ios": {
+                "buildConfiguration": "Debug",
+                "simulator": false
+            }
         },
         "preview": {
+            "extends": "base",
             "distribution": "internal",
+            "channel": "preview",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://staging.qscrap.qa/api",
+                "EXPO_PUBLIC_SOCKET_URL": "https://staging.qscrap.qa"
+            },
             "android": {
                 "buildType": "apk"
+            },
+            "ios": {
+                "buildConfiguration": "Release"
             }
         },
         "production": {
+            "extends": "base",
+            "autoIncrement": true,
+            "channel": "production",
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://api.qscrap.qa/api",
+                "EXPO_PUBLIC_SOCKET_URL": "https://api.qscrap.qa"
+            },
             "android": {
-                "buildType": "app-bundle"
+                "buildType": "app-bundle",
+                "gradleCommand": ":app:bundleRelease"
+            },
+            "ios": {
+                "buildConfiguration": "Release",
+                "autoIncrement": "buildNumber"
             }
         }
     },
     "submit": {
-        "production": {}
+        "production": {
+            "android": {
+                "serviceAccountKeyPath": "./credentials/google-play-service-account.json",
+                "track": "internal",
+                "releaseStatus": "draft"
+            },
+            "ios": {
+                "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
+                "appleTeamId": "YOUR_APPLE_TEAM_ID"
+            }
+        }
     }
 }

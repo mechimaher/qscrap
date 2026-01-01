@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // ============================================
 // PUBLIC/CUSTOMER: Get Garage Reviews
@@ -62,9 +63,9 @@ export const getGarageReviews = async (req: AuthRequest, res: Response) => {
                 total: parseInt(statsResult.rows[0]?.total_reviews || '0')
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getGarageReviews error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -109,8 +110,8 @@ export const getMyReviews = async (req: AuthRequest, res: Response) => {
             reviews: result.rows,
             stats: statsResult.rows[0]
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -160,8 +161,8 @@ export const getPendingReviews = async (req: AuthRequest, res: Response) => {
                 pages: Math.ceil(total / limit)
             }
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -177,7 +178,7 @@ export const getAllReviews = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = '';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (status !== 'all') {
@@ -225,8 +226,8 @@ export const getAllReviews = async (req: AuthRequest, res: Response) => {
                 pages: Math.ceil(total / limit)
             }
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -288,7 +289,7 @@ export const moderateReview = async (req: AuthRequest, res: Response) => {
             message: `Review ${action}d successfully`,
             review: result.rows[0]
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

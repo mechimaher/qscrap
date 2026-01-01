@@ -1,28 +1,44 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import logger from '../utils/logger';
 
-// Get live dashboard stats
+// Type for SQL query parameters - uses unknown for flexibility with Express query params
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SqlParams = unknown[];
+
+import { cacheGetOrSet, CacheTTL, dashboardStatsKey } from '../utils/cache';
+
+// Get live dashboard stats (CACHED: 1 minute TTL for real-time feel)
 export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     try {
-        const stats = await pool.query(`
-            SELECT 
-                (SELECT COUNT(*) FROM orders WHERE order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')) as active_orders,
-                (SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURRENT_DATE) as orders_today,
-                (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as pending_disputes,
-                (SELECT COUNT(*) FROM disputes WHERE status = 'contested') as contested_disputes,
-                (SELECT COUNT(*) FROM orders WHERE order_status = 'in_transit') as in_transit,
-                (SELECT COUNT(*) FROM orders WHERE order_status = 'delivered') as awaiting_confirmation,
-                (SELECT COUNT(*) FROM orders WHERE order_status = 'ready_for_pickup') as ready_for_pickup,
-                (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as revenue_today,
-                (SELECT COUNT(*) FROM part_requests WHERE status = 'active') as pending_requests,
-                (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
-                (SELECT COUNT(*) FROM garages) as total_garages
-        `);
+        const stats = await cacheGetOrSet(
+            dashboardStatsKey(),
+            async () => {
+                const result = await pool.query(`
+                    SELECT 
+                        (SELECT COUNT(*) FROM orders WHERE order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')) as active_orders,
+                        (SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURRENT_DATE) as orders_today,
+                        (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as pending_disputes,
+                        (SELECT COUNT(*) FROM disputes WHERE status = 'contested') as contested_disputes,
+                        (SELECT COUNT(*) FROM orders WHERE order_status = 'in_transit') as in_transit,
+                        (SELECT COUNT(*) FROM orders WHERE order_status = 'delivered') as awaiting_confirmation,
+                        (SELECT COUNT(*) FROM orders WHERE order_status = 'ready_for_pickup') as ready_for_pickup,
+                        (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as revenue_today,
+                        (SELECT COUNT(*) FROM part_requests WHERE status = 'active') as pending_requests,
+                        (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
+                        (SELECT COUNT(*) FROM garages) as total_garages
+                `);
+                return result.rows[0];
+            },
+            CacheTTL.SHORT // 1 minute - stats change frequently
+        );
 
-        res.json({ stats: stats.rows[0] });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+        res.json({ stats });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -44,7 +60,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             JOIN users gu ON g.garage_id = gu.user_id
             WHERE 1=1
         `;
-        const params: any[] = [];
+        const params: SqlParams = [];
         let paramIndex = 1;
 
         if (status && status !== 'all') {
@@ -79,7 +95,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN users u ON o.customer_id = u.user_id
             WHERE 1=1`;
-        const countParams: any[] = [];
+        const countParams: SqlParams = [];
         let countParamIndex = 1;
 
         if (status && status !== 'all') {
@@ -113,9 +129,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
                 pages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getOrders Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -161,9 +177,9 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
             status_history: historyResult.rows,
             dispute: disputeResult.rows[0] || null
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getOrderDetails Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -178,11 +194,14 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     try {
         await client.query('BEGIN');
 
-        // Get current status with all needed fields
+        // Get current status with all needed fields including garage_name
         const orderResult = await client.query(
             `SELECT o.order_status, o.customer_id, o.garage_id, o.order_number, 
-                    o.part_price, o.platform_fee, o.garage_payout_amount, o.driver_id
-             FROM orders o WHERE o.order_id = $1`,
+                    o.part_price, o.platform_fee, o.garage_payout_amount, o.driver_id,
+                    g.garage_name
+             FROM orders o
+             JOIN garages g ON o.garage_id = g.garage_id
+             WHERE o.order_id = $1`,
             [order_id]
         );
 
@@ -195,7 +214,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
         // Build the update query based on new_status
         let updateQuery = `UPDATE orders SET order_status = $1, updated_at = NOW()`;
-        const updateParams: any[] = [new_status];
+        const updateParams: SqlParams = [new_status];
 
         // Special handling for 'completed' status
         if (new_status === 'completed') {
@@ -262,6 +281,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             order_number: order.order_number,
             old_status: oldStatus,
             new_status,
+            garage_name: order.garage_name,
             notification: customerNotification
         });
 
@@ -296,9 +316,9 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             new_status,
             payout_created: new_status === 'completed'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -372,10 +392,10 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             order_number: order.order_number,
             new_status: 'collected'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('collectOrder Error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -400,7 +420,7 @@ export const getDisputes = async (req: AuthRequest, res: Response) => {
             JOIN garages g ON d.garage_id = g.garage_id
         `;
 
-        const params: any[] = [];
+        const params: SqlParams = [];
         let paramIndex = 1;
 
         if (status && status !== 'all') {
@@ -415,7 +435,7 @@ export const getDisputes = async (req: AuthRequest, res: Response) => {
 
         // Get total count with filters
         let countQuery = `SELECT COUNT(*) FROM disputes d WHERE 1=1`;
-        const countParams: any[] = [];
+        const countParams: SqlParams = [];
         if (status && status !== 'all') {
             countQuery += ` AND d.status = $1`;
             countParams.push(status);
@@ -432,9 +452,9 @@ export const getDisputes = async (req: AuthRequest, res: Response) => {
                 pages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getDisputes Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -577,10 +597,10 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             refund_amount: resolution === 'refund_approved' ? finalRefundAmount : null,
             return_assignment: returnAssignment
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('resolveDispute Error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -600,7 +620,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
                 FROM garages g
                 JOIN users u ON g.garage_id = u.user_id
             `;
-            const params: any[] = [];
+            const params: SqlParams = [];
             let paramIndex = 1;
 
             if (search) {
@@ -616,7 +636,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 
             // Get count
             let countQuery = `SELECT COUNT(*) FROM garages g JOIN users u ON g.garage_id = u.user_id`;
-            const countParams: any[] = [];
+            const countParams: SqlParams = [];
             if (search) {
                 countQuery += ` WHERE (g.garage_name ILIKE $1 OR u.phone_number ILIKE $1)`;
                 countParams.push(`%${search}%`);
@@ -641,7 +661,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
                 FROM users u
                 WHERE u.user_type = 'customer'
             `;
-            const params: any[] = [];
+            const params: SqlParams = [];
             let paramIndex = 1;
 
             if (search) {
@@ -657,7 +677,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 
             // Get count
             let countQuery = `SELECT COUNT(*) FROM users u WHERE u.user_type = 'customer'`;
-            const countParams: any[] = [];
+            const countParams: SqlParams = [];
             if (search) {
                 countQuery += ` AND (u.full_name ILIKE $1 OR u.phone_number ILIKE $1)`;
                 countParams.push(`%${search}%`);
@@ -675,7 +695,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
                 }
             });
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('getUsers Error:', err);
         res.status(500).json({ error: 'Failed to fetch users' });
     }
@@ -721,9 +741,9 @@ export const getDisputeDetails = async (req: AuthRequest, res: Response) => {
             dispute,
             order_history: historyResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getDisputeDetails Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -810,9 +830,9 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
             top_garages: topGaragesResult.rows,
             top_parts: topPartsResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getAnalytics Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -876,9 +896,9 @@ export const getQualityStats = async (req: AuthRequest, res: Response) => {
             pending: pendingResult.rows,
             recent: recentResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getQualityStats Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -943,9 +963,9 @@ export const getUserDetails = async (req: AuthRequest, res: Response) => {
             orders: ordersResult.rows,
             disputes: disputesResult.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getUserDetails Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -973,9 +993,9 @@ export const suspendUser = async (req: AuthRequest, res: Response) => {
             user: result.rows[0],
             message: 'User suspended successfully'
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('suspendUser Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -1002,7 +1022,7 @@ export const activateUser = async (req: AuthRequest, res: Response) => {
             user: result.rows[0],
             message: 'User activated successfully'
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('activateUser Error:', err);
         res.status(500).json({ error: 'Failed to activate user' });
     }
@@ -1024,7 +1044,7 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
         `);
 
         res.json(stats.rows[0]);
-    } catch (err: any) {
+    } catch (err) {
         console.error('[OPERATIONS] getUserStats error:', err);
         res.status(500).json({ error: 'Failed to fetch user statistics' });
     }
@@ -1048,7 +1068,7 @@ export const getGarages = async (req: AuthRequest, res: Response) => {
             WHERE 1=1
         `;
 
-        const params: any[] = [];
+        const params: SqlParams = [];
         let paramIndex = 1;
 
         if (search) {
@@ -1067,7 +1087,7 @@ export const getGarages = async (req: AuthRequest, res: Response) => {
 
         const result = await pool.query(query, params);
         res.json({ garages: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[OPERATIONS] getGarages error:', err);
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
@@ -1100,7 +1120,7 @@ export const getPendingReturns = async (req: AuthRequest, res: Response) => {
             returns: result.rows,
             count: result.rows.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[OPERATIONS] getPendingReturns error:', err);
         res.status(500).json({ error: 'Failed to fetch pending returns' });
     }
@@ -1191,10 +1211,10 @@ export const assignDriverToReturn = async (req: AuthRequest, res: Response) => {
             driver_id,
             driver_name: driverResult.rows[0].full_name
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('[OPERATIONS] assignDriverToReturn error:', err);
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -1213,7 +1233,7 @@ export const getReturnStats = async (req: AuthRequest, res: Response) => {
         `);
 
         res.json(stats.rows[0]);
-    } catch (err: any) {
+    } catch (err) {
         console.error('[OPERATIONS] getReturnStats error:', err);
         res.status(500).json({ error: 'Failed to fetch return statistics' });
     }

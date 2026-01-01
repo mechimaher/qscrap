@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 
 const MAX_NEGOTIATION_ROUNDS = 3;
 
@@ -94,9 +96,9 @@ export const createCounterOffer = async (req: AuthRequest, res: Response) => {
             round: currentRound,
             max_rounds: MAX_NEGOTIATION_ROUNDS
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -173,12 +175,25 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
 
             await client.query('COMMIT');
 
-            // Notify customer
+            // Notify customer - different message if at final round
             const io = (global as any).io;
-            io.to(`user_${co.customer_id}`).emit('counter_offer_rejected', {
-                bid_id: co.bid_id,
-                notification: `❌ Your counter-offer was declined. Original price: ${co.bid_amount} QAR`
-            });
+            const isFinalRound = co.round_number >= MAX_NEGOTIATION_ROUNDS;
+
+            if (isFinalRound) {
+                // At round 3/3, guide customer to accept or decline the original bid
+                io.to(`user_${co.customer_id}`).emit('counter_offer_rejected', {
+                    bid_id: co.bid_id,
+                    is_final_round: true,
+                    original_bid_amount: co.bid_amount,
+                    notification: `❌ Final round: Your offer of ${co.proposed_amount} QAR was declined. The garage's price is ${co.bid_amount} QAR - Accept or choose another bid.`
+                });
+            } else {
+                io.to(`user_${co.customer_id}`).emit('counter_offer_rejected', {
+                    bid_id: co.bid_id,
+                    is_final_round: false,
+                    notification: `❌ Your counter-offer was declined. Original price: ${co.bid_amount} QAR`
+                });
+            }
 
             res.json({ message: 'Counter-offer rejected' });
 
@@ -230,9 +245,9 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
         } else {
             throw new Error('Invalid action');
         }
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -350,9 +365,9 @@ export const customerRespondToCounter = async (req: AuthRequest, res: Response) 
                 round: co.round_number + 1
             });
         }
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -397,8 +412,8 @@ export const getNegotiationHistory = async (req: AuthRequest, res: Response) => 
             max_rounds: MAX_NEGOTIATION_ROUNDS,
             current_round: result.rows.length
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -422,8 +437,8 @@ export const getPendingCounterOffers = async (req: AuthRequest, res: Response) =
         );
 
         res.json({ pending_offers: result.rows });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -500,9 +515,9 @@ export const acceptLastGarageOffer = async (req: AuthRequest, res: Response) => 
             final_amount: finalAmount,
             bid_id: bid_id
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }

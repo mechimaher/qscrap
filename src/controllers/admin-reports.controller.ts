@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // ============================================================================
 // ADMIN REPORTS CONTROLLER
@@ -38,7 +39,7 @@ const getPeriodDates = (period: string): { start: Date; end: Date } => {
 /**
  * Helper: Format CSV from data array
  */
-const formatCSV = (data: any[], columns: { key: string; label: string }[]): string => {
+const formatCSV = (data: Record<string, unknown>[], columns: { key: string; label: string }[]): string => {
     const header = columns.map(c => c.label).join(',');
     const rows = data.map(row =>
         columns.map(c => {
@@ -126,7 +127,7 @@ export const getDemoGaragesReport = async (req: AuthRequest, res: Response) => {
                 expiring_soon: result.rows.filter(r => r.days_left <= 7).length
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getDemoGaragesReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }
@@ -209,7 +210,7 @@ export const getExpiredDemosReport = async (req: AuthRequest, res: Response) => 
                 potential_conversions: result.rows.filter(r => r.total_orders > 0).length
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getExpiredDemosReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }
@@ -302,7 +303,7 @@ export const getDemoConversionsReport = async (req: AuthRequest, res: Response) 
                     : 0
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getDemoConversionsReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }
@@ -389,7 +390,7 @@ export const getSubscriptionRenewalsReport = async (req: AuthRequest, res: Respo
                 high_value_at_risk: result.rows.filter(r => parseFloat(r.total_revenue) > 10000).length
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getSubscriptionRenewalsReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }
@@ -473,7 +474,7 @@ export const getCommissionRevenueReport = async (req: AuthRequest, res: Response
             breakdown: breakdown.rows,
             top_garages: topGarages.rows
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getCommissionRevenueReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }
@@ -491,7 +492,7 @@ export const getAllGaragesReport = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = 'WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (status !== 'all') {
@@ -563,7 +564,7 @@ export const getAllGaragesReport = async (req: AuthRequest, res: Response) => {
                 limit: limitNum
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getAllGaragesReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }
@@ -627,7 +628,7 @@ export const getRegistrationsReport = async (req: AuthRequest, res: Response) =>
                 total_registrations: summary.rows.reduce((sum, r) => sum + parseInt(r.count), 0)
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[REPORTS] getRegistrationsReport error:', err);
         res.status(500).json({ error: 'Failed to generate report' });
     }

@@ -7,6 +7,7 @@ import {
     getOrderDocuments,
     getMyDocuments,
     downloadDocument,
+    downloadDocumentWithToken,
     verifyDocument
 } from '../controllers/documents.controller';
 
@@ -19,7 +20,8 @@ const router = Router();
 // Public verification endpoint (QR code scanning)
 router.get('/verify/:code', verifyDocument);
 
-// ============================================
+// Public download with query token (for mobile app opening PDF in browser)
+router.get('/:document_id/download', downloadDocumentWithToken);
 // AUTHENTICATED ROUTES
 // ============================================
 

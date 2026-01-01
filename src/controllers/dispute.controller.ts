@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 
 // Dispute reason configurations with refund rules
 const DISPUTE_CONFIGS: Record<string, {
@@ -134,9 +136,9 @@ export const createDispute = async (req: AuthRequest, res: Response) => {
             delivery_refunded: config.deliveryRefund
         });
 
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -154,7 +156,7 @@ export const getMyDisputes = async (req: AuthRequest, res: Response) => {
 
     try {
         const field = userType === 'garage' ? 'garage_id' : 'customer_id';
-        const params: any[] = [userId];
+        const params: unknown[] = [userId];
         let paramIndex = 2;
 
         let whereClause = `WHERE d.${field} = $1`;
@@ -188,8 +190,8 @@ export const getMyDisputes = async (req: AuthRequest, res: Response) => {
             disputes: result.rows,
             pagination: { page: pageNum, limit: limitNum, total, pages: totalPages }
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -218,8 +220,8 @@ export const getDisputeDetails = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ dispute: result.rows[0] });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -290,9 +292,9 @@ export const garageRespondToDispute = async (req: AuthRequest, res: Response) =>
             status: 'under_review'
         });
 
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -356,7 +358,7 @@ export const getPendingDisputesCount = async (req: AuthRequest, res: Response) =
         );
 
         res.json({ pending_count: parseInt(result.rows[0].count) });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

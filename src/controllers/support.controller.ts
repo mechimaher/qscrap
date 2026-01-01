@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 import { io } from '../server';
 
 // Create a new support ticket
@@ -38,10 +39,10 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
         });
 
         res.status(201).json({ ticket: ticket, message: messageResult.rows[0] });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[SUPPORT] createTicket error:', err.message);
-        res.status(500).json({ error: err.message });
+        console.error('[SUPPORT] createTicket error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -59,7 +60,7 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
 
     try {
         let whereClause = '';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (userType === 'customer') {
@@ -102,9 +103,9 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
             tickets: result.rows,
             pagination: { page: pageNum, limit: limitNum, total, pages: totalPages }
         });
-    } catch (err: any) {
-        console.error('[SUPPORT] getTickets error:', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        console.error('[SUPPORT] getTickets error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -132,9 +133,9 @@ export const getTicketMessages = async (req: AuthRequest, res: Response) => {
         `, [ticket_id]);
 
         res.json(result.rows);
-    } catch (err: any) {
-        console.error('[SUPPORT] getTicketMessages error:', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        console.error('[SUPPORT] getTicketMessages error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -202,9 +203,9 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         } finally {
             client.release();
         }
-    } catch (err: any) {
-        console.error('[SUPPORT] sendMessage error:', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        console.error('[SUPPORT] sendMessage error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -226,8 +227,8 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
         io.to(`ticket_${ticket_id}`).emit('ticket_updated', { status });
 
         res.json(ticket);
-    } catch (err: any) {
-        console.error('[SUPPORT] updateTicketStatus error:', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        console.error('[SUPPORT] updateTicketStatus error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

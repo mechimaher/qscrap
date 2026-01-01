@@ -2,7 +2,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { driverService } from '../services/driver.service';
-
+import { getErrorMessage } from '../types';
 // ============================================================================
 // DRIVER PROFILE
 // ============================================================================
@@ -14,9 +14,9 @@ export const getMyProfile = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Driver profile not found' });
         }
         res.json({ driver });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getMyProfile Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -31,9 +31,9 @@ export const getMyAssignments = async (req: AuthRequest, res: Response) => {
             assignments,
             count: assignments.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getMyAssignments Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -44,9 +44,9 @@ export const getAssignmentDetails = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Assignment not found or not yours' });
         }
         res.json({ assignment });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getAssignmentDetails Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -66,12 +66,12 @@ export const updateMyLocation = async (req: AuthRequest, res: Response) => {
             speed
         );
         res.json(result);
-    } catch (err: any) {
+    } catch (err) {
         console.error('updateMyLocation Error:', err);
-        if (err.message === 'Driver profile not found') {
-            return res.status(404).json({ error: err.message });
+        if (getErrorMessage(err) === 'Driver profile not found') {
+            return res.status(404).json({ error: getErrorMessage(err) });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -90,15 +90,15 @@ export const updateAssignmentStatus = async (req: AuthRequest, res: Response) =>
             failure_reason
         );
         res.json(result);
-    } catch (err: any) {
+    } catch (err) {
         console.error('updateAssignmentStatus Error:', err);
-        if (err.message.includes('not found')) {
-            return res.status(404).json({ error: err.message });
+        if (getErrorMessage(err).includes('not found')) {
+            return res.status(404).json({ error: getErrorMessage(err) });
         }
-        if (err.message.includes('Cannot transition')) {
-            return res.status(400).json({ error: err.message });
+        if (getErrorMessage(err).includes('Cannot transition')) {
+            return res.status(400).json({ error: getErrorMessage(err) });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -113,12 +113,12 @@ export const uploadDeliveryProof = async (req: AuthRequest, res: Response) => {
             notes
         );
         res.json(result);
-    } catch (err: any) {
+    } catch (err) {
         console.error('uploadDeliveryProof Error:', err);
-        if (err.message.includes('not found')) {
-            return res.status(404).json({ error: err.message });
+        if (getErrorMessage(err).includes('not found')) {
+            return res.status(404).json({ error: getErrorMessage(err) });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -133,9 +133,9 @@ export const getMyStats = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Driver not found' });
         }
         res.json({ stats });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getMyStats Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -143,14 +143,14 @@ export const toggleAvailability = async (req: AuthRequest, res: Response) => {
     try {
         const result = await driverService.toggleAvailability(req.user!.userId, req.body.status);
         res.json(result);
-    } catch (err: any) {
+    } catch (err) {
         console.error('toggleAvailability Error:', err);
-        if (err.message.includes('Cannot go offline')) {
-            return res.status(400).json({ error: err.message });
+        if (getErrorMessage(err).includes('Cannot go offline')) {
+            return res.status(400).json({ error: getErrorMessage(err) });
         }
-        if (err.message === 'Driver not found') {
-            return res.status(404).json({ error: err.message });
+        if (getErrorMessage(err) === 'Driver not found') {
+            return res.status(404).json({ error: getErrorMessage(err) });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

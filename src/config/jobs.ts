@@ -2,6 +2,8 @@
 // Handles scheduled tasks: expiration, renewal, payouts
 
 import pool from './db';
+import logger from '../utils/logger';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 
 // ============================================
 // 1. REQUEST EXPIRATION
@@ -22,7 +24,7 @@ export async function expireOldRequests(): Promise<number> {
         const expiredCount = result.rowCount || 0;
 
         if (expiredCount > 0) {
-            console.log(`[CRON] Expired ${expiredCount} part request(s)`);
+            logger.jobComplete('expireOldRequests', { count: expiredCount });
 
             // Also expire any pending bids on these requests
             const requestIds = result.rows.map(r => r.request_id);
@@ -31,21 +33,18 @@ export async function expireOldRequests(): Promise<number> {
                 WHERE request_id = ANY($1) AND status = 'pending'
             `, [requestIds]);
 
-            // Emit socket notifications (if io is available)
-            const io = (global as any).io;
-            if (io) {
-                result.rows.forEach(row => {
-                    io.to(`user_${row.customer_id}`).emit('request_expired', {
-                        request_id: row.request_id,
-                        notification: 'Your part request has expired. Create a new one to continue.'
-                    });
+            // Emit socket notifications using helper
+            result.rows.forEach(row => {
+                emitToUser(row.customer_id, 'request_expired', {
+                    request_id: row.request_id,
+                    notification: 'Your part request has expired. Create a new one to continue.'
                 });
-            }
+            });
         }
 
         return expiredCount;
     } catch (err) {
-        console.error('[CRON] expireOldRequests error:', err);
+        logger.error('expireOldRequests failed', { error: (err as Error).message });
         return 0;
     } finally {
         client.release();
@@ -74,35 +73,25 @@ export async function expireCounterOffers(): Promise<number> {
         const expiredCount = result.rowCount || 0;
 
         if (expiredCount > 0) {
-            console.log(`[CRON] Expired ${expiredCount} counter-offer(s)`);
+            logger.jobComplete('expireCounterOffers', { count: expiredCount });
 
             // Emit socket events to both parties
-            const io = (global as any).io;
-            if (io) {
-                for (const co of result.rows) {
-                    // Notify customer
-                    io.to(`user_${co.customer_id}`).emit('counter_offer_expired', {
-                        counter_offer_id: co.counter_offer_id,
-                        bid_id: co.bid_id,
-                        offered_by_type: co.offered_by_type,
-                        proposed_amount: co.proposed_amount,
-                        message: 'Counter offer has expired without response'
-                    });
-                    // Notify garage
-                    io.to(`garage_${co.garage_id}`).emit('counter_offer_expired', {
-                        counter_offer_id: co.counter_offer_id,
-                        bid_id: co.bid_id,
-                        offered_by_type: co.offered_by_type,
-                        proposed_amount: co.proposed_amount,
-                        message: 'Counter offer has expired without response'
-                    });
-                }
+            for (const co of result.rows) {
+                const eventData = {
+                    counter_offer_id: co.counter_offer_id,
+                    bid_id: co.bid_id,
+                    offered_by_type: co.offered_by_type,
+                    proposed_amount: co.proposed_amount,
+                    message: 'Counter offer has expired without response'
+                };
+                emitToUser(co.customer_id, 'counter_offer_expired', eventData);
+                emitToGarage(co.garage_id, 'counter_offer_expired', eventData);
             }
         }
 
         return expiredCount;
     } catch (err) {
-        console.error('[CRON] expireCounterOffers error:', err);
+        logger.error('expireCounterOffers failed', { error: (err as Error).message });
         return 0;
     }
 }
@@ -126,7 +115,7 @@ export async function checkSubscriptions(): Promise<{ expired: number; warnings:
 
         const expiredCount = expiredResult.rowCount || 0;
         if (expiredCount > 0) {
-            console.log(`[CRON] Expired ${expiredCount} subscription(s)`);
+            logger.jobComplete('checkSubscriptions:expired', { count: expiredCount });
         }
 
         // 2. Find subscriptions expiring in 3 days (for warning)
@@ -143,18 +132,15 @@ export async function checkSubscriptions(): Promise<{ expired: number; warnings:
 
         const warningCount = warningResult.rowCount || 0;
         if (warningCount > 0) {
-            console.log(`[CRON] ${warningCount} subscription(s) expiring in 3 days`);
+            logger.info('Subscriptions expiring soon', { count: warningCount, daysUntilExpiry: 3 });
 
             // Send socket notifications
-            const io = (global as any).io;
-            if (io) {
-                warningResult.rows.forEach(row => {
-                    io.to(`garage_${row.garage_id}`).emit('subscription_warning', {
-                        message: `Your ${row.plan_name} subscription expires on ${new Date(row.billing_cycle_end).toLocaleDateString()}. Please renew to continue bidding.`,
-                        expires_at: row.billing_cycle_end
-                    });
+            warningResult.rows.forEach(row => {
+                emitToGarage(row.garage_id, 'subscription_warning', {
+                    message: `Your ${row.plan_name} subscription expires on ${new Date(row.billing_cycle_end).toLocaleDateString()}. Please renew to continue bidding.`,
+                    expires_at: row.billing_cycle_end
                 });
-            }
+            });
         }
 
         // 3. Auto-renew subscriptions (where auto_renew = true)
@@ -172,12 +158,12 @@ export async function checkSubscriptions(): Promise<{ expired: number; warnings:
         `);
 
         if ((renewResult.rowCount || 0) > 0) {
-            console.log(`[CRON] Auto-renewed ${renewResult.rowCount} subscription(s)`);
+            logger.jobComplete('checkSubscriptions:autoRenew', { count: renewResult.rowCount });
         }
 
         return { expired: expiredCount, warnings: warningCount };
     } catch (err) {
-        console.error('[CRON] checkSubscriptions error:', err);
+        logger.error('checkSubscriptions failed', { error: (err as Error).message });
         return { expired: 0, warnings: 0 };
     } finally {
         client.release();
@@ -247,13 +233,13 @@ export async function autoResolveDisputes(): Promise<number> {
         await client.query('COMMIT');
 
         if (resolvedCount > 0) {
-            console.log(`[CRON] Auto-resolved ${resolvedCount} dispute(s)`);
+            logger.jobComplete('autoResolveDisputes', { count: resolvedCount });
         }
 
         return resolvedCount;
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[CRON] autoResolveDisputes error:', err);
+        logger.error('autoResolveDisputes failed', { error: (err as Error).message });
         return 0;
     } finally {
         client.release();
@@ -287,7 +273,7 @@ export async function schedulePendingPayouts(): Promise<number> {
         const scheduledCount = result.rowCount || 0;
 
         if (scheduledCount > 0) {
-            console.log(`[CRON] Scheduled ${scheduledCount} new payout(s) for processing in 7 days`);
+            logger.jobComplete('schedulePendingPayouts', { count: scheduledCount });
 
             // Notify garages about scheduled payouts
             const io = (global as any).io;
@@ -306,7 +292,7 @@ export async function schedulePendingPayouts(): Promise<number> {
 
         return scheduledCount;
     } catch (err) {
-        console.error('[CRON] schedulePendingPayouts error:', err);
+        logger.error('schedulePendingPayouts failed', { error: (err as Error).message });
         return 0;
     }
 }
@@ -335,7 +321,7 @@ export async function autoProcessPayouts(): Promise<{ processed: number; held: n
 
         const heldCount = holdResult.rowCount || 0;
         if (heldCount > 0) {
-            console.log(`[CRON] Held ${heldCount} payout(s) due to active disputes`);
+            logger.warn('Payouts held due to disputes', { count: heldCount });
 
             // Notify garages
             const io = (global as any).io;
@@ -374,7 +360,7 @@ export async function autoProcessPayouts(): Promise<{ processed: number; held: n
         const processedCount = processResult.rowCount || 0;
 
         if (processedCount > 0) {
-            console.log(`[CRON] Auto-processed ${processedCount} payout(s)`);
+            logger.jobComplete('autoProcessPayouts', { processed: processedCount });
 
             // Notify garages about completed payouts
             const io = (global as any).io;
@@ -413,7 +399,7 @@ export async function autoProcessPayouts(): Promise<{ processed: number; held: n
         `);
 
         if ((releaseResult.rowCount || 0) > 0) {
-            console.log(`[CRON] Released ${releaseResult.rowCount} payout(s) after dispute resolution`);
+            logger.info('Payouts released after dispute resolution', { count: releaseResult.rowCount });
 
             const io = (global as any).io;
             if (io) {
@@ -431,7 +417,7 @@ export async function autoProcessPayouts(): Promise<{ processed: number; held: n
         return { processed: processedCount, held: heldCount };
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[CRON] autoProcessPayouts error:', err);
+        logger.error('autoProcessPayouts failed', { error: (err as Error).message });
         return { processed: 0, held: 0 };
     } finally {
         client.release();
@@ -461,9 +447,9 @@ export async function cleanupOldData(): Promise<void> {
               )
         `);
 
-        console.log(`[CRON] Cleanup: ${notifResult.rowCount || 0} notifications, ${historyResult.rowCount || 0} history records`);
+        logger.info('Cleanup complete', { notifications: notifResult.rowCount || 0, historyRecords: historyResult.rowCount || 0 });
     } catch (err) {
-        console.error('[CRON] cleanupOldData error:', err);
+        logger.error('cleanupOldData failed', { error: (err as Error).message });
     }
 }
 
@@ -492,7 +478,7 @@ export async function autoConfirmDeliveries(): Promise<number> {
         const confirmedCount = result.rowCount || 0;
 
         if (confirmedCount > 0) {
-            console.log(`[CRON] Auto-confirmed ${confirmedCount} delivered order(s) after 24h grace period`);
+            logger.jobComplete('autoConfirmDeliveries', { count: confirmedCount, gracePeriodHours: 24 });
 
             // Record in order status history for each auto-confirmed order
             for (const order of result.rows) {
@@ -543,7 +529,7 @@ export async function autoConfirmDeliveries(): Promise<number> {
         return confirmedCount;
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[CRON] autoConfirmDeliveries error:', err);
+        logger.error('autoConfirmDeliveries failed', { error: (err as Error).message });
         return 0;
     } finally {
         client.release();
@@ -570,7 +556,7 @@ export async function autoConfirmPayouts(): Promise<number> {
         const confirmedCount = result.rowCount || 0;
 
         if (confirmedCount > 0) {
-            console.log(`[CRON] Auto-confirmed ${confirmedCount} payout(s) after deadline`);
+            logger.jobComplete('autoConfirmPayouts', { count: confirmedCount });
 
             const io = (global as any).io;
             if (io) {
@@ -587,7 +573,7 @@ export async function autoConfirmPayouts(): Promise<number> {
 
         return confirmedCount;
     } catch (err) {
-        console.error('[CRON] autoConfirmPayouts error:', err);
+        logger.error('autoConfirmPayouts failed', { error: (err as Error).message });
         return 0;
     }
 }
@@ -612,7 +598,7 @@ export async function abandonStaleInspections(): Promise<number> {
         const abandonedCount = result.rowCount || 0;
 
         if (abandonedCount > 0) {
-            console.log(`[CRON] Released ${abandonedCount} stale inspection(s)`);
+            logger.warn('Stale inspections released', { count: abandonedCount });
 
             // Notify operations
             const io = (global as any).io;
@@ -626,7 +612,7 @@ export async function abandonStaleInspections(): Promise<number> {
 
         return abandonedCount;
     } catch (err) {
-        console.error('[CRON] abandonStaleInspections error:', err);
+        logger.error('abandonStaleInspections failed', { error: (err as Error).message });
         return 0;
     }
 }
@@ -636,7 +622,7 @@ export async function abandonStaleInspections(): Promise<number> {
 // Runs all jobs in sequence
 // ============================================
 export async function runAllJobs(): Promise<void> {
-    console.log('[CRON] Starting scheduled jobs run...');
+    logger.jobStart('runAllJobs');
     const startTime = Date.now();
 
     try {
@@ -652,9 +638,9 @@ export async function runAllJobs(): Promise<void> {
         await cleanupOldData();
 
         const duration = Date.now() - startTime;
-        console.log(`[CRON] All jobs completed in ${duration}ms`);
+        logger.jobComplete('runAllJobs', { durationMs: duration });
     } catch (err) {
-        console.error('[CRON] Error running jobs:', err);
+        logger.error('runAllJobs failed', { error: (err as Error).message });
     }
 }
 

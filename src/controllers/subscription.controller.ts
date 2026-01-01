@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // Get all available subscription plans
 export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
@@ -13,8 +14,8 @@ export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
              ORDER BY display_order ASC`
         );
         res.json(result.rows);
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -133,8 +134,8 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
             message: 'No active subscription',
             approval_status: garage.approval_status
         });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -200,9 +201,9 @@ export const subscribeToPlan = async (req: AuthRequest, res: Response) => {
             plan_name: plan.plan_name,
             expires_at: cycleEnd.toISOString()
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -259,9 +260,9 @@ export const changePlan = async (req: AuthRequest, res: Response) => {
             new_commission_rate: newP.commission_rate,
             effective_immediately: true
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -299,9 +300,9 @@ export const cancelSubscription = async (req: AuthRequest, res: Response) => {
             active_until: result.rows[0].billing_cycle_end,
             note: 'You can continue to use the service until the end of your billing cycle'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -323,7 +324,7 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response) => {
         );
 
         res.json(result.rows);
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

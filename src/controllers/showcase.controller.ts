@@ -5,11 +5,12 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
 
 // Helper: Get garage's plan features (reused from analytics.controller.ts pattern)
 async function getGaragePlanFeatures(garageId: string): Promise<{
     plan_code: string;
-    features: any;
+    features: Record<string, unknown>;
     has_showcase: boolean;
 }> {
     const result = await pool.query(
@@ -52,7 +53,7 @@ export const getShowcaseParts = async (req: AuthRequest, res: Response) => {
             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE gp.status = 'active' AND gp.quantity > 0
         `;
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (car_make) {
@@ -77,9 +78,9 @@ export const getShowcaseParts = async (req: AuthRequest, res: Response) => {
         const result = await pool.query(query, params);
 
         res.json({ parts: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getShowcaseParts error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -103,9 +104,9 @@ export const getFeaturedParts = async (req: AuthRequest, res: Response) => {
         `);
 
         res.json({ parts: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getFeaturedParts error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -138,9 +139,9 @@ export const getPartDetail = async (req: AuthRequest, res: Response) => {
         );
 
         res.json({ part: result.rows[0] });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getPartDetail error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -187,9 +188,9 @@ export const getMyShowcaseParts = async (req: AuthRequest, res: Response) => {
             parts: result.rows,
             analytics: analytics.rows[0]
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getMyShowcaseParts error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -252,9 +253,9 @@ export const addGaragePart = async (req: AuthRequest, res: Response) => {
             message: 'Part added to showcase',
             part: result.rows[0]
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('addGaragePart error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -320,7 +321,7 @@ export const updateGaragePart = async (req: AuthRequest, res: Response) => {
         finalImages = [...finalImages, ...newImageUrls];
 
         // Build update query
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         // Always update images if there were removals or new uploads
@@ -363,9 +364,9 @@ export const updateGaragePart = async (req: AuthRequest, res: Response) => {
             images_removed: imagesToRemove.length,
             images_added: newImageUrls.length
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('updateGaragePart error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -387,9 +388,9 @@ export const deleteGaragePart = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ message: 'Part removed from showcase' });
-    } catch (err: any) {
+    } catch (err) {
         console.error('deleteGaragePart error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -414,9 +415,9 @@ export const togglePartStatus = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ message: 'Status toggled', status: result.rows[0].status });
-    } catch (err: any) {
+    } catch (err) {
         console.error('togglePartStatus error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -526,10 +527,10 @@ export const quickOrderFromShowcase = async (req: AuthRequest, res: Response) =>
                 garage_name: part.garage_name
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('quickOrderFromShowcase error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -629,10 +630,10 @@ export const requestQuoteFromShowcase = async (req: AuthRequest, res: Response) 
                 asking_price: part.price
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('requestQuoteFromShowcase error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }

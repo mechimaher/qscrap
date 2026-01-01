@@ -1,12 +1,15 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/security';
 import pool from '../config/db';
+import { getErrorMessage, DocumentData } from '../types';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 
 // Import puppeteer for PDF generation
-let puppeteer: any;
+let puppeteer: unknown;
 try {
     puppeteer = require('puppeteer');
 } catch (e) {
@@ -14,7 +17,7 @@ try {
 }
 
 // Import QRCode generator
-let QRCode: any;
+let QRCode: unknown;
 try {
     QRCode = require('qrcode');
 } catch (e) {
@@ -182,7 +185,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
         const netPayout = parseFloat(order.garage_payout_amount || (partPrice - platformFee));
 
         // Build document data based on invoice type
-        let documentData: any;
+        let documentData: DocumentData;
 
         if (invoiceType === 'garage') {
             // ========================================
@@ -315,7 +318,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
         let qrCodeData = '';
         if (QRCode) {
             try {
-                qrCodeData = await QRCode.toDataURL(
+                qrCodeData = await (QRCode as { toDataURL: (text: string, opts: { width: number; margin: number }) => Promise<string> }).toDataURL(
                     `https://qscrap.qa/verify/${verifyCode}`,
                     { width: 150, margin: 1 }
                 );
@@ -383,9 +386,9 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
             }
         });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('generateInvoice Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -435,8 +438,8 @@ export const getDocument = async (req: AuthRequest, res: Response) => {
 
         res.json({ document: doc });
 
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -475,8 +478,8 @@ export const getOrderDocuments = async (req: AuthRequest, res: Response) => {
 
         res.json({ documents: result.rows });
 
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -508,7 +511,7 @@ export const getMyDocuments = async (req: AuthRequest, res: Response) => {
             WHERE ${whereClause} AND d.status != 'voided'
         `;
 
-        const params: any[] = userType !== 'admin' && userType !== 'operations' ? [userId] : [];
+        const params: unknown[] = userType !== 'admin' && userType !== 'operations' ? [userId] : [];
 
         if (type) {
             query += ` AND d.document_type = $${params.length + 1}`;
@@ -522,8 +525,8 @@ export const getMyDocuments = async (req: AuthRequest, res: Response) => {
 
         res.json({ documents: result.rows });
 
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -572,9 +575,72 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
         res.setHeader('Content-Disposition', `attachment; filename="${doc.document_number}.pdf"`);
         res.send(pdfBuffer);
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('downloadDocument Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// ============================================
+// DOWNLOAD DOCUMENT WITH QUERY TOKEN (For browser opening)
+// Specifically for mobile apps that open PDF in external browser
+// ============================================
+
+export const downloadDocumentWithToken = async (req: Request, res: Response) => {
+    const { document_id } = req.params;
+    const token = req.query.token as string;
+
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+
+    try {
+        // Verify JWT token from query parameter
+        const payload = jwt.verify(token, getJwtSecret()) as { userId: string; userType: string };
+        const userId = payload.userId;
+        const userType = payload.userType;
+
+        const result = await pool.query(`
+            SELECT * FROM documents WHERE document_id = $1
+        `, [document_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        const doc = result.rows[0];
+
+        // Authorization
+        if (userType === 'customer' && doc.customer_id !== userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+        if (userType === 'garage' && doc.garage_id !== userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        // Generate PDF
+        const pdfBuffer = await generatePDF(doc);
+
+        // Update download status
+        await pool.query(`
+            UPDATE documents SET downloaded_at = CURRENT_TIMESTAMP, status = 'downloaded'
+            WHERE document_id = $1
+        `, [document_id]);
+
+        // Log access
+        await logDocumentAccess(document_id, 'download', userId, userType, req);
+
+        // Send PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${doc.document_number}.pdf"`);
+        res.send(pdfBuffer);
+
+    } catch (err) {
+        console.error('downloadDocumentWithToken Error:', err);
+        if ((err as Error).name === 'JsonWebTokenError' || (err as Error).name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Invalid or expired token' });
+        }
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -630,8 +696,8 @@ export const verifyDocument = async (req: AuthRequest, res: Response) => {
             pricing: docData?.pricing || {},
         });
 
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -652,7 +718,7 @@ function getLogoBase64(): string {
     return ''; // Return empty string if failed
 }
 
-async function generatePDF(doc: any): Promise<Buffer> {
+async function generatePDF(doc: { document_data: DocumentData | string; qr_code_data?: string;[key: string]: unknown }): Promise<Buffer> {
     const docData = typeof doc.document_data === 'string'
         ? JSON.parse(doc.document_data)
         : doc.document_data;
@@ -663,9 +729,9 @@ async function generatePDF(doc: any): Promise<Buffer> {
     // Select template based on invoice type
     let html: string;
     if (docData.invoice_type === 'garage') {
-        html = generateGaragePayoutStatementHTML(docData, doc.qr_code_data, logoBase64);
+        html = generateGaragePayoutStatementHTML(docData, doc.qr_code_data || '', logoBase64);
     } else {
-        html = generateBilingualCustomerInvoiceHTML(docData, doc.qr_code_data, logoBase64);
+        html = generateBilingualCustomerInvoiceHTML(docData, doc.qr_code_data || '', logoBase64);
     }
 
     if (!puppeteer) {
@@ -674,7 +740,7 @@ async function generatePDF(doc: any): Promise<Buffer> {
     }
 
     try {
-        const browser = await puppeteer.launch({
+        const browser = await (puppeteer as { launch: (opts: unknown) => Promise<{ newPage: () => Promise<unknown>; close: () => Promise<void> }> }).launch({
             headless: 'new',
             executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
             args: [
@@ -684,7 +750,7 @@ async function generatePDF(doc: any): Promise<Buffer> {
                 '--disable-gpu'
             ]
         });
-        const page = await browser.newPage();
+        const page = await browser.newPage() as { setContent: (html: string, opts: { waitUntil: string }) => Promise<void>; pdf: (opts: unknown) => Promise<Uint8Array> };
         await page.setContent(html, { waitUntil: 'networkidle0' });
 
         const pdfUint8 = await page.pdf({
@@ -705,7 +771,7 @@ async function generatePDF(doc: any): Promise<Buffer> {
 // BILINGUAL CUSTOMER INVOICE TEMPLATE (B2C)
 // Arabic + English, Qatar MoC Compliant
 // ============================================
-function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string, logoBase64: string = ''): string {
+function generateBilingualCustomerInvoiceHTML(data: DocumentData, qrCode: string, logoBase64: string = ''): string {
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -778,7 +844,7 @@ function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string, logoBas
                 <div class="doc-number">${data.invoice_number}</div>
             </div>
             <div style="text-align: right;">
-                <div>${formatDate(data.invoice_date)}</div>
+                <div>${formatDate(data.invoice_date || '')}</div>
                 <div class="arabic" style="font-size: 10px; color: #666;">${L.invoice_date?.ar || 'تاريخ الفاتورة'}</div>
             </div>
         </div>
@@ -854,10 +920,10 @@ function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string, logoBas
                     <span>${L.part_price?.en || 'Part Price'} <span class="arabic" style="color: #888; font-size: 9px;">${L.part_price?.ar || 'سعر القطعة'}</span></span>
                     <span>${formatMoney(data.pricing?.part_price || 0)} QAR</span>
                 </div>
-                ${data.pricing?.delivery_fee > 0 ? `
+                ${(data.pricing?.delivery_fee || 0) > 0 ? `
                 <div class="total-row">
                     <span>${L.delivery_fee?.en || 'Delivery Fee'} <span class="arabic" style="color: #888; font-size: 9px;">${L.delivery_fee?.ar || 'رسوم التوصيل'}</span></span>
-                    <span>${formatMoney(data.pricing.delivery_fee)} QAR</span>
+                    <span>${formatMoney(data.pricing?.delivery_fee || 0)} QAR</span>
                 </div>` : ''}
                 <div class="total-row grand">
                     <span>${L.total_paid?.en || 'Total Paid'} <span class="arabic">${L.total_paid?.ar || 'إجمالي المدفوع'}</span></span>
@@ -872,7 +938,7 @@ function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string, logoBas
                 <strong>${L.verify_at?.en || 'Verify at'}:</strong> qscrap.qa/verify<br>
                 <div style="font-family: monospace; border: 1px solid #ddd; padding: 4px 8px; margin-top: 4px; display: inline-block;">${data.verification?.code || 'N/A'}</div>
                 <br><br>
-                <span style="color: #999;">${L.generated_via?.en || 'Generated via QScrap Platform'} • ${formatDate(data.invoice_date)}</span>
+                <span style="color: #999;">${L.generated_via?.en || 'Generated via QScrap Platform'} • ${formatDate(data.invoice_date || '')}</span>
             </div>
             <div class="qr-code">
                 ${qrCode ? `<img src="${qrCode}" alt="QR Code">` : ''}
@@ -888,7 +954,7 @@ function generateBilingualCustomerInvoiceHTML(data: any, qrCode: string, logoBas
 // GARAGE PAYOUT STATEMENT TEMPLATE (B2B)
 // Arabic + English, Shows Platform Fees
 // ============================================
-function generateGaragePayoutStatementHTML(data: any, qrCode: string, logoBase64: string = ''): string {
+function generateGaragePayoutStatementHTML(data: DocumentData, qrCode: string, logoBase64: string = ''): string {
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -961,7 +1027,7 @@ function generateGaragePayoutStatementHTML(data: any, qrCode: string, logoBase64
                 <div class="doc-number">${data.invoice_number}</div>
             </div>
             <div style="text-align: right;">
-                <div>${formatDate(data.invoice_date)}</div>
+                <div>${formatDate(data.invoice_date || '')}</div>
                 <div class="arabic" style="font-size: 10px; color: #666;">${L.statement_date?.ar || 'تاريخ الكشف'}</div>
             </div>
         </div>
@@ -1054,7 +1120,7 @@ function generateGaragePayoutStatementHTML(data: any, qrCode: string, logoBase64
 </html>`;
 }
 
-function generateInvoiceHTML(data: any, qrCode: string): string {
+function generateInvoiceHTML(data: DocumentData, qrCode: string): string {
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -1262,7 +1328,7 @@ function generateInvoiceHTML(data: any, qrCode: string): string {
             </div>
             <div class="info-col">
                 <div class="info-label">Invoice Date</div>
-                <div class="info-name">${formatDate(data.invoice_date)}</div>
+                <div class="info-name">${formatDate(data.invoice_date || '')}</div>
             </div>
         </div>
         
@@ -1302,16 +1368,16 @@ function generateInvoiceHTML(data: any, qrCode: string): string {
                     <span>Subtotal</span>
                     <span>${formatMoney(data.pricing?.subtotal || 0)} QAR</span>
                 </div>
-                ${data.pricing?.delivery_fee > 0 ? `
+                ${(data.pricing?.delivery_fee || 0) > 0 ? `
                 <div class="total-row">
                     <span>Delivery</span>
-                    <span>${formatMoney(data.pricing.delivery_fee)} QAR</span>
+                    <span>${formatMoney(data.pricing?.delivery_fee || 0)} QAR</span>
                 </div>
                 ` : ''}
-                ${data.pricing?.vat_amount > 0 ? `
+                ${(data.pricing?.vat_amount || 0) > 0 ? `
                 <div class="total-row">
-                    <span>VAT (${data.pricing.vat_rate}%)</span>
-                    <span>${formatMoney(data.pricing.vat_amount)} QAR</span>
+                    <span>VAT (${data.pricing?.vat_rate || 0}%)</span>
+                    <span>${formatMoney(data.pricing?.vat_amount || 0)} QAR</span>
                 </div>
                 ` : ''}
                 <div class="total-row grand">
@@ -1339,7 +1405,7 @@ function generateInvoiceHTML(data: any, qrCode: string): string {
                 <div class="verify-code">${data.verification?.code || 'N/A'}</div>
                 <br>
                 <span style="font-size: 10px; color: #999;">
-                    Generated via QScrap Platform • ${formatDate(data.invoice_date)}
+                    Generated via QScrap Platform • ${formatDate(data.invoice_date || '')}
                 </span>
             </div>
             <div class="qr-code">
@@ -1380,7 +1446,7 @@ async function logDocumentAccess(
     action: string,
     actorId: string | null,
     actorType: string,
-    req: any
+    req: { ip?: string; headers: Record<string, unknown> }
 ) {
     try {
         await pool.query(`

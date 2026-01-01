@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 
 // Get inspection criteria checklist
 export const getInspectionCriteria = async (req: AuthRequest, res: Response) => {
@@ -12,9 +14,9 @@ export const getInspectionCriteria = async (req: AuthRequest, res: Response) => 
             ORDER BY sort_order ASC
         `);
         res.json({ criteria: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getInspectionCriteria Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -35,9 +37,9 @@ export const getReadyForCollection = async (req: AuthRequest, res: Response) => 
             ORDER BY o.updated_at ASC
         `);
         res.json({ orders: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getReadyForCollection Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -79,9 +81,9 @@ export const getPendingInspections = async (req: AuthRequest, res: Response) => 
             orders: result.rows,
             pagination: { page, limit, total, pages: totalPages }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getPendingInspections Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -123,10 +125,10 @@ export const startInspection = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
         res.status(201).json({ inspection: result.rows[0] });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('startInspection Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -310,10 +312,10 @@ export const submitInspection = async (req: AuthRequest, res: Response) => {
                 ? 'Part passed QC and is ready for delivery assignment'
                 : 'Part failed QC - order will be cancelled'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('submitInspection Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -353,9 +355,9 @@ export const getInspectionHistory = async (req: AuthRequest, res: Response) => {
             inspections: result.rows,
             pagination: { page, limit, total, pages: totalPages }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getInspectionHistory Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -393,9 +395,9 @@ export const getQCStats = async (req: AuthRequest, res: Response) => {
                 pass_rate: passRate
             }
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getQCStats Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -418,9 +420,9 @@ export const getQCPassedOrders = async (req: AuthRequest, res: Response) => {
         `);
 
         res.json({ orders: result.rows });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getQCPassedOrders Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
@@ -498,10 +500,10 @@ export const createReturnAssignment = async (req: AuthRequest, res: Response) =>
                 ? 'Return assignment created and driver assigned'
                 : 'Return assignment created - awaiting driver assignment'
         });
-    } catch (err: any) {
+    } catch (err) {
         await client.query('ROLLBACK');
         console.error('createReturnAssignment Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }
@@ -531,8 +533,8 @@ export const getInspectionReport = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ inspection: result.rows[0] });
-    } catch (err: any) {
+    } catch (err) {
         console.error('getInspectionReport Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };

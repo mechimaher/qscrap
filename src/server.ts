@@ -7,6 +7,8 @@ import { closeRedis, initializeRedis } from './config/redis';
 import { initializeSocketAdapter, getGlobalSocketCount } from './config/socketAdapter';
 import { initializeJobQueues, closeJobQueues, createJobWorker, scheduleRecurringJob } from './config/jobQueue';
 import { performStartupSecurityChecks } from './config/security';
+import { initializeSocketIO } from './utils/socketIO';
+import logger from './utils/logger';
 
 const PORT = process.env.PORT || 3000;
 const NODE_ID = process.env.NODE_ID || `node-${process.pid}`;
@@ -29,12 +31,16 @@ export const io = new Server(server, {
     maxHttpBufferSize: 1e6
 });
 
-// Make io accessible globally
+// Initialize Socket.IO singleton for type-safe access throughout the app
+initializeSocketIO(io);
+
+// DEPRECATED: Remove after migrating all (global as any).io usages
+// Kept temporarily for backward compatibility
 (global as any).io = io;
 
 io.on('connection', (socket) => {
     if (process.env.NODE_ENV !== 'production') {
-        console.log(`[${NODE_ID}] User connected: ${socket.id}`);
+        logger.socket('User connected', { socketId: socket.id });
     }
 
     socket.on('join_user_room', (userId) => {
@@ -48,7 +54,8 @@ io.on('connection', (socket) => {
             const token = socket.handshake.auth?.token;
             if (token) {
                 const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+                const { getJwtSecret } = require('./config/security');
+                const decoded = jwt.verify(token, getJwtSecret()) as { userId?: string; user_id?: string };
                 const userId = decoded.userId || decoded.user_id;
                 if (userId) {
                     socket.join(`user_${userId}`);
