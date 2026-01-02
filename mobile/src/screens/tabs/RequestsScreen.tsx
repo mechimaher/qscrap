@@ -204,24 +204,26 @@ const ActiveRequestCard = ({
                             },
                         ]}
                     >
-                        {/* Green accent bar for active */}
-                        {isActive && (
+                        {/* Status-based accent bar - always render one */}
+                        {item.status === 'active' ? (
                             <LinearGradient
                                 colors={['#22C55E', '#16A34A', '#22C55E']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 0, y: 1 }}
                                 style={styles.accentBar}
                             />
-                        )}
-
-                        {/* Accepted accent bar */}
-                        {item.status === 'accepted' && (
-                            <View style={[styles.accentBar, { backgroundColor: '#3B82F6' }]} />
-                        )}
-
-                        {/* Completed accent bar */}
-                        {item.status === 'completed' && (
-                            <View style={[styles.accentBar, { backgroundColor: '#8B5CF6' }]} />
+                        ) : (
+                            <View style={[
+                                styles.accentBar,
+                                {
+                                    backgroundColor:
+                                        item.status === 'accepted' ? '#3B82F6' :
+                                            item.status === 'completed' ? '#8B5CF6' :
+                                                item.status === 'expired' ? '#9CA3AF' :
+                                                    item.status === 'cancelled' ? '#EF4444' :
+                                                        '#6B7280'
+                                }
+                            ]} />
                         )}
 
                         <View style={styles.cardContent}>
@@ -544,6 +546,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         flexDirection: 'row',
+        minHeight: 120, // Ensure card never collapses
         ...Shadows.sm,
     },
     accentBar: {
