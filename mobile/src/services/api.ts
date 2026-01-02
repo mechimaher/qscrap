@@ -37,6 +37,7 @@ export interface Request {
     delivery_address_text?: string;
     created_at: string;
     expires_at: string;
+    lowest_bid_price?: number;  // Best offer price for display
     bids?: Bid[];
 }
 

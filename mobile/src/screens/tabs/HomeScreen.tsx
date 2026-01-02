@@ -1,5 +1,5 @@
-// QScrap Home Screen - Premium VIP Dashboard
-import React, { useState, useCallback, useEffect } from 'react';
+// QScrap Home Screen - Premium 2026 Brand Experience
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,8 @@ import {
     Dimensions,
     Linking,
     Image,
+    Animated,
+    Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,7 +23,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { api, Stats } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
-import { LoadingStats } from '../../components/SkeletonLoading';
 import { useSocketContext } from '../../hooks/useSocket';
 import FeaturedProductsSection from '../../components/FeaturedProductsSection';
 
@@ -29,52 +30,47 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
 
-export default function HomeScreen() {
-    const navigation = useNavigation<HomeScreenNavigationProp>();
-    const { user } = useAuth();
-    const { colors, isDarkMode } = useTheme();
-    const { newBids, orderUpdates } = useSocketContext();
-    const [stats, setStats] = useState<Stats | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+// ============================================
+// ANIMATED COUNT-UP COMPONENT
+// ============================================
+const AnimatedNumber = ({ value, delay = 0 }: { value: number; delay?: number }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+    const animRef = useRef<any>(null);
 
-    const loadStats = useCallback(async () => {
-        try {
-            const data = await api.getStats();
-            setStats(data.stats);
-        } catch (error) {
-            console.log('Failed to load stats:', error);
-        } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
-        }
-    }, []);
-
-    // Auto-refresh stats when screen gains focus (e.g., after creating request)
-    useFocusEffect(
-        useCallback(() => {
-            loadStats();
-        }, [loadStats])
-    );
-
-    // Real-time: Reload stats when socket receives new bids or order updates
     useEffect(() => {
-        if (newBids.length > 0 || orderUpdates.length > 0) {
-            console.log('[HomeScreen] Socket event received, refreshing stats...');
-            loadStats();
-        }
-    }, [newBids, orderUpdates, loadStats]);
+        const timeout = setTimeout(() => {
+            let start = 0;
+            const duration = 1000;
+            const step = (timestamp: number) => {
+                if (!animRef.current) animRef.current = timestamp;
+                const progress = Math.min((timestamp - animRef.current) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                setDisplayValue(Math.floor(eased * value));
+                if (progress < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        }, delay);
+        return () => clearTimeout(timeout);
+    }, [value, delay]);
 
-    const onRefresh = useCallback(() => {
-        setIsRefreshing(true);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        loadStats();
-    }, []);
+    return <Text style={styles.statValue}>{displayValue}</Text>;
+};
 
-    const handleNewRequest = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        navigation.navigate('NewRequest');
-    };
+// ============================================
+// HERO WELCOME SECTION
+// ============================================
+const HeroWelcome = ({
+    user,
+    colors,
+    onNotificationPress
+}: {
+    user: any;
+    colors: any;
+    onNotificationPress: () => void;
+}) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(-20)).current;
+    const pulseAnim = useRef(new Animated.Value(0)).current;
 
     const greeting = () => {
         const hour = new Date().getHours();
@@ -92,6 +88,528 @@ export default function HomeScreen() {
         return '🌙';
     };
 
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 600,
+                easing: Easing.out(Easing.back(1.2)),
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Pulse for notification badge
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
+            ])
+        ).start();
+    }, []);
+
+    const badgeScale = pulseAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.2],
+    });
+
+    return (
+        <Animated.View style={[
+            styles.heroSection,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+        ]}>
+            <LinearGradient
+                colors={[Colors.primary, '#6B102C', '#4A0D1F']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.heroGradient}
+            >
+                <View style={styles.heroContent}>
+                    <View style={styles.heroLeft}>
+                        <View style={styles.logoContainer}>
+                            <Image
+                                source={require('../../../assets/logo.png')}
+                                style={styles.logo}
+                                resizeMode="cover"
+                            />
+                        </View>
+                        <View style={styles.heroTextContainer}>
+                            <Text style={styles.heroGreeting}>
+                                {getTimeEmoji()} {greeting()}
+                            </Text>
+                            <Text style={styles.heroName}>
+                                {user?.full_name || 'Customer'}
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.notificationBtn}
+                        onPress={onNotificationPress}
+                    >
+                        <Text style={styles.notificationIcon}>🔔</Text>
+                        <Animated.View style={[
+                            styles.notificationBadge,
+                            { transform: [{ scale: badgeScale }] }
+                        ]} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Gold accent line */}
+                <View style={styles.goldAccent} />
+            </LinearGradient>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// SIGNATURE CTA CARD
+// ============================================
+const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const glowAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        // Entrance animation
+        Animated.parallel([
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                delay: 200,
+                easing: Easing.out(Easing.back(1.1)),
+                useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                delay: 200,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Subtle glow pulse
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(glowAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+                Animated.timing(glowAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+            ])
+        ).start();
+    }, []);
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+    };
+
+    const glowOpacity = glowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.3, 0.6],
+    });
+
+    return (
+        <Animated.View style={[
+            styles.ctaWrapper,
+            {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
+            }
+        ]}>
+            <TouchableOpacity
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={1}
+            >
+                <View style={styles.ctaCard}>
+                    {/* Glow effect */}
+                    <Animated.View style={[styles.ctaGlow, { opacity: glowOpacity }]} />
+
+                    <LinearGradient
+                        colors={[Colors.primary, '#B31D4A', '#8A1538']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.ctaGradient}
+                    >
+                        <View style={styles.ctaContent}>
+                            <View style={styles.ctaTextContainer}>
+                                <Text style={styles.ctaTitle}>Find Your Part</Text>
+                                <Text style={styles.ctaSubtitle}>
+                                    Get quotes from verified garages in Qatar
+                                </Text>
+                            </View>
+                            <View style={styles.ctaIconContainer}>
+                                <Text style={styles.ctaIcon}>+</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.ctaFooter}>
+                            <View style={styles.ctaFooterDot} />
+                            <Text style={styles.ctaFooterText}>
+                                Average response time: 2 hours
+                            </Text>
+                        </View>
+                    </LinearGradient>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// ANIMATED STATS DASHBOARD
+// ============================================
+const AnimatedStats = ({
+    stats,
+    onRequestsPress,
+    onOrdersPress
+}: {
+    stats: Stats | null;
+    onRequestsPress: () => void;
+    onOrdersPress: () => void;
+}) => {
+    const slideAnims = useRef([
+        new Animated.Value(40),
+        new Animated.Value(40),
+        new Animated.Value(40),
+    ]).current;
+    const fadeAnims = useRef([
+        new Animated.Value(0),
+        new Animated.Value(0),
+        new Animated.Value(0),
+    ]).current;
+
+    useEffect(() => {
+        slideAnims.forEach((anim, index) => {
+            Animated.timing(anim, {
+                toValue: 0,
+                duration: 500,
+                delay: 400 + index * 100,
+                easing: Easing.out(Easing.back(1.1)),
+                useNativeDriver: true,
+            }).start();
+        });
+
+        fadeAnims.forEach((anim, index) => {
+            Animated.timing(anim, {
+                toValue: 1,
+                duration: 400,
+                delay: 400 + index * 100,
+                useNativeDriver: true,
+            }).start();
+        });
+    }, []);
+
+    const StatCard = ({
+        index,
+        emoji,
+        value,
+        label,
+        colors: cardColors,
+        onPress
+    }: {
+        index: number;
+        emoji: string;
+        value: number;
+        label: string;
+        colors: readonly [string, string];
+        onPress: () => void;
+    }) => {
+        const scaleAnim = useRef(new Animated.Value(1)).current;
+
+        const handlePressIn = () => {
+            Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
+        };
+        const handlePressOut = () => {
+            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+        };
+
+        return (
+            <Animated.View style={[
+                styles.statCardWrapper,
+                {
+                    opacity: fadeAnims[index],
+                    transform: [{ translateY: slideAnims[index] }, { scale: scaleAnim }],
+                }
+            ]}>
+                <TouchableOpacity
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    activeOpacity={1}
+                >
+                    <LinearGradient colors={cardColors} style={styles.statCardInner}>
+                        <Text style={styles.statEmoji}>{emoji}</Text>
+                        <AnimatedNumber value={value} delay={500 + index * 150} />
+                        <Text style={styles.statLabel}>{label}</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        );
+    };
+
+    return (
+        <View style={styles.statsSection}>
+            <Text style={styles.sectionTitle}>📊 Your Activity</Text>
+            <View style={styles.statsRow}>
+                <StatCard
+                    index={0}
+                    emoji="🔍"
+                    value={stats?.active_requests || 0}
+                    label="Active Requests"
+                    colors={['#FFF9E6', '#FFF3CC']}
+                    onPress={onRequestsPress}
+                />
+                <StatCard
+                    index={1}
+                    emoji="🚚"
+                    value={stats?.pending_deliveries || 0}
+                    label="In Progress"
+                    colors={['#E6F7FF', '#CCF0FF']}
+                    onPress={onOrdersPress}
+                />
+            </View>
+            <Animated.View style={[
+                styles.statCardWide,
+                {
+                    opacity: fadeAnims[2],
+                    transform: [{ translateY: slideAnims[2] }],
+                }
+            ]}>
+                <TouchableOpacity onPress={onOrdersPress} activeOpacity={0.9}>
+                    <LinearGradient
+                        colors={['rgba(138,21,56,0.08)', 'rgba(138,21,56,0.15)']}
+                        style={styles.statCardWideInner}
+                    >
+                        <View style={styles.wideCardLeft}>
+                            <Text style={styles.wideCardEmoji}>📦</Text>
+                            <View>
+                                <AnimatedNumber value={stats?.total_orders || 0} delay={700} />
+                                <Text style={styles.wideCardLabel}>Total Orders Completed</Text>
+                            </View>
+                        </View>
+                        <View style={styles.wideCardBadge}>
+                            <Text style={styles.wideCardBadgeText}>View All →</Text>
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        </View>
+    );
+};
+
+// ============================================
+// PREMIUM QUICK ACTIONS
+// ============================================
+const QuickActions = ({ navigation }: { navigation: any }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                delay: 700,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                delay: 700,
+                easing: Easing.out(Easing.back(1.1)),
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
+    const ActionButton = ({
+        emoji,
+        label,
+        bgColor,
+        onPress
+    }: {
+        emoji: string;
+        label: string;
+        bgColor: string;
+        onPress: () => void;
+    }) => {
+        const scaleAnim = useRef(new Animated.Value(1)).current;
+
+        return (
+            <TouchableOpacity
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+                onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.9, useNativeDriver: true }).start()}
+                onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
+                activeOpacity={1}
+            >
+                <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }] }]}>
+                    <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
+                        <Text style={styles.actionEmoji}>{emoji}</Text>
+                    </View>
+                    <Text style={styles.actionLabel}>{label}</Text>
+                </Animated.View>
+            </TouchableOpacity>
+        );
+    };
+
+    return (
+        <Animated.View style={[
+            styles.actionsSection,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+        ]}>
+            <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
+            <View style={styles.actionsGrid}>
+                <ActionButton
+                    emoji="📋"
+                    label="Requests"
+                    bgColor="#FFF3E0"
+                    onPress={() => navigation.navigate('Main', { screen: 'Requests' })}
+                />
+                <ActionButton
+                    emoji="📦"
+                    label="Orders"
+                    bgColor="#E3F2FD"
+                    onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
+                />
+                <ActionButton
+                    emoji="💬"
+                    label="Support"
+                    bgColor="#E8F5E9"
+                    onPress={() => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support')}
+                />
+                <ActionButton
+                    emoji="⚙️"
+                    label="Settings"
+                    bgColor="#F3E5F5"
+                    onPress={() => navigation.navigate('Main', { screen: 'Profile' })}
+                />
+            </View>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// PRO TIP CARD
+// ============================================
+const ProTipCard = () => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 400,
+            delay: 900,
+            useNativeDriver: true,
+        }).start();
+    }, []);
+
+    return (
+        <Animated.View style={[styles.proTipCard, { opacity: fadeAnim }]}>
+            <Text style={styles.proTipIcon}>💡</Text>
+            <View style={styles.proTipContent}>
+                <Text style={styles.proTipTitle}>Pro Tip</Text>
+                <Text style={styles.proTipText}>
+                    Add your VIN number for faster & more accurate quotes
+                </Text>
+            </View>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// SKELETON LOADING
+// ============================================
+const SkeletonLoading = () => {
+    const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, useNativeDriver: true })
+        ).start();
+    }, []);
+
+    const shimmerTranslate = shimmerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-width, width],
+    });
+
+    const SkeletonBox = ({ style }: { style: any }) => (
+        <View style={[styles.skeletonBox, style]}>
+            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }] }]} />
+        </View>
+    );
+
+    return (
+        <View style={styles.skeletonContainer}>
+            <SkeletonBox style={styles.skeletonHero} />
+            <SkeletonBox style={styles.skeletonCTA} />
+            <View style={styles.skeletonStatsRow}>
+                <SkeletonBox style={styles.skeletonStatCard} />
+                <SkeletonBox style={styles.skeletonStatCard} />
+            </View>
+        </View>
+    );
+};
+
+// ============================================
+// MAIN HOME SCREEN
+// ============================================
+export default function HomeScreen() {
+    const navigation = useNavigation<HomeScreenNavigationProp>();
+    const { user } = useAuth();
+    const { colors } = useTheme();
+    const { newBids, orderUpdates } = useSocketContext();
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const loadStats = useCallback(async () => {
+        try {
+            const data = await api.getStats();
+            setStats(data.stats);
+        } catch (error) {
+            console.log('Failed to load stats:', error);
+        } finally {
+            setIsLoading(false);
+            setIsRefreshing(false);
+        }
+    }, []);
+
+    useFocusEffect(useCallback(() => { loadStats(); }, [loadStats]));
+
+    useEffect(() => {
+        if (newBids.length > 0 || orderUpdates.length > 0) {
+            loadStats();
+        }
+    }, [newBids, orderUpdates, loadStats]);
+
+    const onRefresh = useCallback(() => {
+        setIsRefreshing(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        loadStats();
+    }, [loadStats]);
+
+    const handleNewRequest = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        navigation.navigate('NewRequest');
+    };
+
+    if (isLoading) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+                <SkeletonLoading />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView
@@ -105,193 +623,35 @@ export default function HomeScreen() {
                     />
                 }
             >
-                {/* Premium Header with Logo */}
-                <View style={styles.header}>
-                    <View style={styles.headerLogoContainer}>
-                        <Image
-                            source={require('../../../assets/logo.png')}
-                            style={styles.headerLogo}
-                            resizeMode="cover"
-                        />
-                    </View>
-                    <View style={styles.headerLeft}>
-                        <Text style={[styles.greetingSmall, { color: colors.textSecondary }]}>{getTimeEmoji()} {greeting()}</Text>
-                        <Text style={[styles.userName, { color: colors.text }]}>{user?.full_name || 'Customer'}</Text>
-                    </View>
-                    <TouchableOpacity
-                        style={[styles.notificationBtn, { backgroundColor: colors.surface }]}
-                        onPress={() => navigation.navigate('Notifications' as any)}
-                    >
-                        <Text style={styles.notificationIcon}>🔔</Text>
-                        <View style={styles.notificationBadge} />
-                    </TouchableOpacity>
-                </View>
+                {/* Hero Welcome */}
+                <HeroWelcome
+                    user={user}
+                    colors={colors}
+                    onNotificationPress={() => navigation.navigate('Notifications' as any)}
+                />
 
-                {/* Premium CTA Card */}
-                <TouchableOpacity
-                    style={styles.ctaCard}
-                    onPress={handleNewRequest}
-                    activeOpacity={0.95}
-                >
-                    <LinearGradient
-                        colors={[Colors.primary, '#B31D4A']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.ctaGradient}
-                    >
-                        <View style={styles.ctaContent}>
-                            <View style={styles.ctaTextContainer}>
-                                <Text style={styles.ctaTitle}>Find Your Part</Text>
-                                <Text style={styles.ctaSubtitle}>Get quotes from verified garages in Qatar</Text>
-                            </View>
-                            <View style={styles.ctaIconContainer}>
-                                <Text style={styles.ctaIcon}>+</Text>
-                            </View>
-                        </View>
-                        <View style={styles.ctaFooter}>
-                            <Text style={styles.ctaFooterText}>🚀 Average response time: 2 hours</Text>
-                        </View>
-                    </LinearGradient>
-                </TouchableOpacity>
+                {/* Signature CTA */}
+                <SignatureCTA onPress={handleNewRequest} />
 
-                {/* Featured Products Carousel */}
+                {/* Featured Products */}
                 <FeaturedProductsSection
                     onProductPress={(product) => {
-                        // TODO: Open product detail modal or navigate to catalog
                         console.log('Product pressed:', product.title);
                     }}
                 />
 
-                {/* Stats Section */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>📊 Your Activity</Text>
-                </View>
-
-                {isLoading ? (
-                    <LoadingStats />
-                ) : (
-                    <View style={styles.statsContainer}>
-                        {/* Row 1: Two cards */}
-                        <View style={styles.statsRow}>
-                            <TouchableOpacity
-                                style={styles.statCard}
-                                onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
-                                activeOpacity={0.8}
-                            >
-                                <LinearGradient
-                                    colors={['#FFF9E6', '#FFF3CC']}
-                                    style={styles.statCardInner}
-                                >
-                                    <View style={styles.statIconContainer}>
-                                        <Text style={styles.statEmoji}>🔍</Text>
-                                    </View>
-                                    <Text style={styles.statValue}>{stats?.active_requests || 0}</Text>
-                                    <Text style={styles.statLabel}>Active Requests</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.statCard}
-                                onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
-                                activeOpacity={0.8}
-                            >
-                                <LinearGradient
-                                    colors={['#E6F7FF', '#CCF0FF']}
-                                    style={styles.statCardInner}
-                                >
-                                    <View style={styles.statIconContainer}>
-                                        <Text style={styles.statEmoji}>🚚</Text>
-                                    </View>
-                                    <Text style={styles.statValue}>{stats?.pending_deliveries || 0}</Text>
-                                    <Text style={styles.statLabel}>In Progress</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Row 2: Full width card */}
-                        <TouchableOpacity
-                            style={styles.statCardWide}
-                            onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
-                            activeOpacity={0.8}
-                        >
-                            <LinearGradient
-                                colors={['#8A153815', '#8A153825']}
-                                style={styles.statCardWideInner}
-                            >
-                                <View style={styles.wideCardLeft}>
-                                    <Text style={styles.wideCardEmoji}>📦</Text>
-                                    <View>
-                                        <Text style={styles.wideCardValue}>{stats?.total_orders || 0}</Text>
-                                        <Text style={styles.wideCardLabel}>Total Orders Completed</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.wideCardBadge}>
-                                    <Text style={styles.wideCardBadgeText}>View All →</Text>
-                                </View>
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-                )}
+                {/* Animated Stats */}
+                <AnimatedStats
+                    stats={stats}
+                    onRequestsPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                    onOrdersPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                />
 
                 {/* Quick Actions */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
-                </View>
+                <QuickActions navigation={navigation} />
 
-                <View style={styles.actionsGrid}>
-                    <TouchableOpacity
-                        style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
-                        activeOpacity={0.8}
-                    >
-                        <View style={[styles.actionIconBg, { backgroundColor: '#FFF3E0' }]}>
-                            <Text style={styles.actionEmoji}>📋</Text>
-                        </View>
-                        <Text style={styles.actionLabel}>Requests</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
-                        activeOpacity={0.8}
-                    >
-                        <View style={[styles.actionIconBg, { backgroundColor: '#E3F2FD' }]}>
-                            <Text style={styles.actionEmoji}>📦</Text>
-                        </View>
-                        <Text style={styles.actionLabel}>Orders</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCard}
-                        onPress={() => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support')}
-                        activeOpacity={0.8}
-                    >
-                        <View style={[styles.actionIconBg, { backgroundColor: '#E8F5E9' }]}>
-                            <Text style={styles.actionEmoji}>💬</Text>
-                        </View>
-                        <Text style={styles.actionLabel}>Support</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Profile' } as any)}
-                        activeOpacity={0.8}
-                    >
-                        <View style={[styles.actionIconBg, { backgroundColor: '#F3E5F5' }]}>
-                            <Text style={styles.actionEmoji}>⚙️</Text>
-                        </View>
-                        <Text style={styles.actionLabel}>Settings</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Pro Tip Card */}
-                <View style={styles.proTipCard}>
-                    <Text style={styles.proTipIcon}>💡</Text>
-                    <View style={styles.proTipContent}>
-                        <Text style={styles.proTipTitle}>Pro Tip</Text>
-                        <Text style={styles.proTipText}>Add your VIN number for faster & more accurate quotes</Text>
-                    </View>
-                </View>
+                {/* Pro Tip */}
+                <ProTipCard />
 
                 <View style={{ height: 100 }} />
             </ScrollView>
@@ -299,96 +659,103 @@ export default function HomeScreen() {
     );
 }
 
+// ============================================
+// STYLES
+// ============================================
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FAFAFA',
+    container: { flex: 1, backgroundColor: '#FAFAFA' },
+    scrollView: { flex: 1 },
+
+    // Hero Section
+    heroSection: { marginBottom: Spacing.lg },
+    heroGradient: {
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.lg,
+        paddingBottom: Spacing.xl,
+        borderBottomLeftRadius: BorderRadius.xl * 1.5,
+        borderBottomRightRadius: BorderRadius.xl * 1.5,
     },
-    scrollView: {
-        flex: 1,
-    },
-    // Header
-    header: {
+    heroContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.md,
-        paddingBottom: Spacing.lg,
     },
-    headerLeft: {
-        flex: 1,
-    },
-    headerLogoContainer: {
-        width: 42,
-        height: 42,
-        borderRadius: 12,
+    heroLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    logoContainer: {
+        width: 52,
+        height: 52,
+        borderRadius: 16,
         overflow: 'hidden',
         marginRight: Spacing.md,
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.3)',
+        ...Shadows.md,
     },
-    headerLogo: {
-        width: 42,
-        height: 42,
-        borderRadius: 12,
-    },
-    greetingSmall: {
+    logo: { width: 52, height: 52 },
+    heroTextContainer: { flex: 1 },
+    heroGreeting: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: 'rgba(255,255,255,0.8)',
         marginBottom: 4,
     },
-    userName: {
+    heroName: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        color: Colors.dark.text,
+        color: '#fff',
         letterSpacing: -0.5,
     },
     notificationBtn: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
-        ...Shadows.sm,
     },
-    notificationIcon: {
-        fontSize: 22,
-    },
+    notificationIcon: { fontSize: 22 },
     notificationBadge: {
         position: 'absolute',
         top: 10,
         right: 10,
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: Colors.primary,
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: Colors.secondary,
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: Colors.primary,
     },
+    goldAccent: {
+        height: 3,
+        backgroundColor: Colors.secondary,
+        borderRadius: 2,
+        marginTop: Spacing.lg,
+        width: 60,
+        alignSelf: 'center',
+    },
+
     // CTA Card
+    ctaWrapper: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
     ctaCard: {
-        marginHorizontal: Spacing.lg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        marginBottom: Spacing.xl,
         ...Shadows.lg,
     },
-    ctaGradient: {
-        padding: Spacing.lg,
+    ctaGlow: {
+        position: 'absolute',
+        top: -20,
+        left: -20,
+        right: -20,
+        bottom: -20,
+        backgroundColor: Colors.primary,
+        borderRadius: BorderRadius.xl + 20,
     },
+    ctaGradient: { padding: Spacing.lg },
     ctaContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    ctaTextContainer: {
-        flex: 1,
-    },
+    ctaTextContainer: { flex: 1 },
     ctaTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
@@ -406,72 +773,53 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.25)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.4)',
     },
-    ctaIcon: {
-        fontSize: 32,
-        color: '#fff',
-        fontWeight: '300',
-    },
+    ctaIcon: { fontSize: 32, color: '#fff', fontWeight: '300' },
     ctaFooter: {
         marginTop: Spacing.md,
         paddingTop: Spacing.sm,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.2)',
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    ctaFooterText: {
-        fontSize: FontSizes.xs,
-        color: 'rgba(255,255,255,0.9)',
+    ctaFooterDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#22C55E',
+        marginRight: Spacing.sm,
     },
-    // Section Header
-    sectionHeader: {
-        paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.md,
-    },
+    ctaFooterText: { fontSize: FontSizes.xs, color: 'rgba(255,255,255,0.9)' },
+
+    // Stats Section
+    statsSection: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: Colors.dark.text,
-    },
-    // Stats
-    statsContainer: {
-        paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.md,
     },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: Spacing.md,
     },
-    statCard: {
-        width: cardWidth,
-        borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
-        ...Shadows.sm,
-    },
+    statCardWrapper: { width: cardWidth },
     statCardInner: {
         padding: Spacing.md,
         alignItems: 'center',
-        minHeight: 120,
+        minHeight: 130,
         justifyContent: 'center',
+        borderRadius: BorderRadius.lg,
+        ...Shadows.sm,
     },
-    statIconContainer: {
-        marginBottom: Spacing.sm,
-    },
-    statEmoji: {
-        fontSize: 28,
-    },
-    statValue: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: Colors.dark.text,
-    },
-    statLabel: {
-        fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
-        marginTop: 4,
-    },
+    statEmoji: { fontSize: 32, marginBottom: Spacing.sm },
+    statValue: { fontSize: 36, fontWeight: '800', color: Colors.dark.text },
+    statLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary, marginTop: 4 },
     statCardWide: {
-        width: '100%',
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
         borderWidth: 1.5,
@@ -484,42 +832,20 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    wideCardLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    wideCardEmoji: {
-        fontSize: 36,
-        marginRight: Spacing.md,
-    },
-    wideCardValue: {
-        fontSize: 28,
-        fontWeight: '800',
-        color: Colors.primary,
-    },
-    wideCardLabel: {
-        fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
-    },
+    wideCardLeft: { flexDirection: 'row', alignItems: 'center' },
+    wideCardEmoji: { fontSize: 36, marginRight: Spacing.md },
+    wideCardLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
     wideCardBadge: {
         backgroundColor: Colors.primary + '20',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
     },
-    wideCardBadgeText: {
-        fontSize: FontSizes.xs,
-        color: Colors.primary,
-        fontWeight: '600',
-    },
-    // Actions Grid
-    actionsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.lg,
-    },
+    wideCardBadgeText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600' },
+
+    // Quick Actions
+    actionsSection: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+    actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
     actionCard: {
         width: cardWidth,
         backgroundColor: '#fff',
@@ -530,21 +856,16 @@ const styles = StyleSheet.create({
         ...Shadows.sm,
     },
     actionIconBg: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: Spacing.sm,
     },
-    actionEmoji: {
-        fontSize: 24,
-    },
-    actionLabel: {
-        fontSize: FontSizes.sm,
-        fontWeight: '600',
-        color: Colors.dark.text,
-    },
+    actionEmoji: { fontSize: 28 },
+    actionLabel: { fontSize: FontSizes.sm, fontWeight: '600', color: Colors.dark.text },
+
     // Pro Tip
     proTipCard: {
         flexDirection: 'row',
@@ -554,23 +875,19 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        borderColor: '#FFE082',
+        borderColor: Colors.secondary,
     },
-    proTipIcon: {
-        fontSize: 24,
-        marginRight: Spacing.md,
-    },
-    proTipContent: {
-        flex: 1,
-    },
-    proTipTitle: {
-        fontSize: FontSizes.sm,
-        fontWeight: '700',
-        color: '#F57C00',
-        marginBottom: 2,
-    },
-    proTipText: {
-        fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
-    },
+    proTipIcon: { fontSize: 24, marginRight: Spacing.md },
+    proTipContent: { flex: 1 },
+    proTipTitle: { fontSize: FontSizes.sm, fontWeight: '700', color: Colors.secondary, marginBottom: 2 },
+    proTipText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+
+    // Skeleton
+    skeletonContainer: { padding: Spacing.lg },
+    skeletonBox: { backgroundColor: '#E8E8E8', borderRadius: BorderRadius.xl, overflow: 'hidden' },
+    skeletonShimmer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.4)' },
+    skeletonHero: { height: 140, marginBottom: Spacing.lg, borderRadius: 0, borderBottomLeftRadius: BorderRadius.xl * 1.5, borderBottomRightRadius: BorderRadius.xl * 1.5 },
+    skeletonCTA: { height: 120, marginBottom: Spacing.lg },
+    skeletonStatsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    skeletonStatCard: { width: cardWidth, height: 130 },
 });

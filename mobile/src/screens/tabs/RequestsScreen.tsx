@@ -1,5 +1,5 @@
-// QScrap Requests Screen - Premium VIP Design with Swipe-to-Delete
-import React, { useState, useCallback } from 'react';
+// QScrap Requests Screen - Premium VIP Design with Active Card Highlights
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -9,6 +9,8 @@ import {
     RefreshControl,
     Dimensions,
     Alert,
+    Animated,
+    Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -24,6 +26,295 @@ import { LoadingList } from '../../components/SkeletonLoading';
 
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
+
+// Premium Active Card Component with Pulsing Glow
+const ActiveRequestCard = ({
+    item,
+    colors,
+    onPress,
+    onDelete
+}: {
+    item: Request;
+    colors: any;
+    onPress: () => void;
+    onDelete: (closeSwipeable: () => void) => void;
+}) => {
+    const glowAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    let swipeableRef: Swipeable | null = null;
+
+    useEffect(() => {
+        // Pulsing glow animation for active cards
+        if (item.status === 'active') {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(glowAnim, {
+                        toValue: 1,
+                        duration: 1500,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: false,
+                    }),
+                    Animated.timing(glowAnim, {
+                        toValue: 0,
+                        duration: 1500,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: false,
+                    }),
+                ])
+            ).start();
+        }
+    }, [item.status]);
+
+    const closeSwipeable = () => {
+        if (swipeableRef) swipeableRef.close();
+    };
+
+    // Calculate time remaining
+    const getTimeRemaining = () => {
+        if (!item.expires_at) return null;
+        const now = new Date();
+        const expires = new Date(item.expires_at);
+        const diff = expires.getTime() - now.getTime();
+
+        if (diff <= 0) return { text: 'Expired', urgency: 'expired' };
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const days = Math.floor(hours / 24);
+        const remainingHours = hours % 24;
+
+        let urgency = 'normal';
+        if (hours <= 6) urgency = 'critical';
+        else if (hours <= 24) urgency = 'warning';
+
+        if (days > 0) {
+            return { text: `${days}d ${remainingHours}h left`, urgency };
+        }
+        return { text: `${hours}h left`, urgency };
+    };
+
+    const timeRemaining = item.status === 'active' ? getTimeRemaining() : null;
+    const isActive = item.status === 'active';
+    const hasNewBids = item.bid_count > 0 && item.status === 'active';
+
+    // Animated glow color
+    const glowColor = glowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['rgba(34, 197, 94, 0.0)', 'rgba(34, 197, 94, 0.25)'],
+    });
+
+    const borderColor = glowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.8)'],
+    });
+
+    const getStatusConfig = (status: string) => {
+        switch (status) {
+            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
+            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Accepted' };
+            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: 'Expired' };
+            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: 'Cancelled' };
+            default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
+        }
+    };
+
+    const statusConfig = getStatusConfig(item.status);
+
+    const getUrgencyColor = (urgency: string) => {
+        switch (urgency) {
+            case 'critical': return '#EF4444';
+            case 'warning': return '#F59E0B';
+            default: return '#22C55E';
+        }
+    };
+
+    const renderRightActions = () => {
+        if (item.status === 'accepted') return null;
+        return (
+            <TouchableOpacity
+                style={styles.deleteAction}
+                onPress={() => onDelete(closeSwipeable)}
+            >
+                <LinearGradient
+                    colors={['#EF4444', '#DC2626']}
+                    style={styles.deleteGradient}
+                >
+                    <Text style={styles.deleteIcon}>🗑️</Text>
+                    <Text style={styles.deleteText}>Delete</Text>
+                </LinearGradient>
+            </TouchableOpacity>
+        );
+    };
+
+    return (
+        <Swipeable
+            ref={(ref) => { swipeableRef = ref; }}
+            renderRightActions={renderRightActions}
+            overshootRight={false}
+            friction={2}
+            rightThreshold={40}
+            onSwipeableOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+        >
+            <TouchableOpacity
+                onPress={onPress}
+                activeOpacity={0.85}
+                onPressIn={() => {
+                    Animated.spring(scaleAnim, {
+                        toValue: 0.98,
+                        useNativeDriver: true,
+                    }).start();
+                }}
+                onPressOut={() => {
+                    Animated.spring(scaleAnim, {
+                        toValue: 1,
+                        useNativeDriver: true,
+                    }).start();
+                }}
+            >
+                <Animated.View
+                    style={[
+                        styles.cardWrapper,
+                        { transform: [{ scale: scaleAnim }] },
+                        isActive && {
+                            shadowColor: '#22C55E',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 12,
+                            elevation: 8,
+                        },
+                    ]}
+                >
+                    {/* Animated glow background for active cards */}
+                    {isActive && (
+                        <Animated.View
+                            style={[
+                                styles.glowBackground,
+                                { backgroundColor: glowColor },
+                            ]}
+                        />
+                    )}
+
+                    <Animated.View
+                        style={[
+                            styles.requestCard,
+                            { backgroundColor: colors.surface },
+                            isActive && {
+                                borderWidth: 2,
+                                borderColor: borderColor as any,
+                            },
+                        ]}
+                    >
+                        {/* Green accent bar for active */}
+                        {isActive && (
+                            <LinearGradient
+                                colors={['#22C55E', '#16A34A', '#22C55E']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 0, y: 1 }}
+                                style={styles.accentBar}
+                            />
+                        )}
+
+                        {/* Accepted accent bar */}
+                        {item.status === 'accepted' && (
+                            <View style={[styles.accentBar, { backgroundColor: '#3B82F6' }]} />
+                        )}
+
+                        <View style={styles.cardContent}>
+                            {/* Header with Status */}
+                            <View style={styles.cardHeader}>
+                                <View style={styles.carInfo}>
+                                    <Text style={styles.carEmoji}>🚗</Text>
+                                    <View>
+                                        <Text style={[styles.carName, { color: colors.text }]}>
+                                            {item.car_make} {item.car_model}
+                                        </Text>
+                                        <Text style={[styles.carYear, { color: colors.textSecondary }]}>
+                                            {item.car_year}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                                    <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                                        {statusConfig.icon} {statusConfig.label}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            {/* Part Description */}
+                            <Text
+                                style={[styles.partDescription, { color: colors.textSecondary }]}
+                                numberOfLines={2}
+                            >
+                                {item.part_description}
+                            </Text>
+
+                            {/* Active Card: Time Remaining & New Bids */}
+                            {isActive && (
+                                <View style={styles.activeIndicators}>
+                                    {/* Countdown Timer */}
+                                    {timeRemaining && (
+                                        <View style={[
+                                            styles.timerBadge,
+                                            { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '15' }
+                                        ]}>
+                                            <Text style={styles.timerIcon}>⏱</Text>
+                                            <Text style={[
+                                                styles.timerText,
+                                                { color: getUrgencyColor(timeRemaining.urgency) }
+                                            ]}>
+                                                {timeRemaining.text}
+                                            </Text>
+                                        </View>
+                                    )}
+
+                                    {/* New Bids Badge */}
+                                    {hasNewBids && (
+                                        <View style={styles.newBidsBadge}>
+                                            <Text style={styles.fireIcon}>🔥</Text>
+                                            <Text style={styles.newBidsText}>
+                                                {item.bid_count} {item.bid_count === 1 ? 'bid' : 'bids'}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+
+                            <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
+
+                            {/* Footer with Best Bid & Date */}
+                            <View style={styles.cardFooter}>
+                                <View style={styles.bidInfo}>
+                                    {item.lowest_bid_price ? (
+                                        <View style={styles.bestBid}>
+                                            <Text style={styles.bestBidLabel}>Best offer</Text>
+                                            <Text style={styles.bestBidPrice}>
+                                                QAR {item.lowest_bid_price.toLocaleString()}
+                                            </Text>
+                                        </View>
+                                    ) : (
+                                        <View style={styles.bidCount}>
+                                            <View style={styles.bidIconBg}>
+                                                <Text style={styles.bidIcon}>💬</Text>
+                                            </View>
+                                            <Text style={styles.bidCountText}>
+                                                {item.bid_count} bids received
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                                <Text style={styles.dateText}>
+                                    {new Date(item.created_at).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric'
+                                    })}
+                                </Text>
+                            </View>
+                        </View>
+                    </Animated.View>
+                </Animated.View>
+            </TouchableOpacity>
+        </Swipeable>
+    );
+};
 
 export default function RequestsScreen() {
     const navigation = useNavigation<RequestsScreenNavigationProp>();
@@ -44,7 +335,6 @@ export default function RequestsScreen() {
         }
     }, []);
 
-    // Auto-refresh when screen gains focus (e.g., after creating/viewing request)
     useFocusEffect(
         useCallback(() => {
             loadRequests();
@@ -57,18 +347,16 @@ export default function RequestsScreen() {
         loadRequests();
     }, []);
 
-    // Swipe-to-delete handler
     const handleDeleteRequest = async (request: Request, closeSwipeable: () => void) => {
-        // Only allow deletion for requests that can be deleted
         if (request.status === 'accepted') {
-            Alert.alert('Cannot Delete', 'This request has been accepted and has an order. It cannot be deleted.');
+            Alert.alert('Cannot Delete', 'This request has been accepted and cannot be deleted.');
             closeSwipeable();
             return;
         }
 
         Alert.alert(
             'Delete Request',
-            `Are you sure you want to permanently delete this request for ${request.car_make} ${request.car_model}?\n\nThis will remove all bids and cannot be undone.`,
+            `Delete request for ${request.car_make} ${request.car_model}?\n\nThis will remove all bids and cannot be undone.`,
             [
                 { text: 'Cancel', style: 'cancel', onPress: closeSwipeable },
                 {
@@ -78,15 +366,10 @@ export default function RequestsScreen() {
                         try {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                             await api.deleteRequest(request.request_id);
-
-                            // Remove from local state immediately
                             setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
-
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert('Deleted', 'Request has been permanently deleted');
                         } catch (error: any) {
                             Alert.alert('Error', error.message || 'Failed to delete request');
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                         }
                     },
                 },
@@ -94,103 +377,17 @@ export default function RequestsScreen() {
         );
     };
 
-    // Render swipe action (delete button)
-    const renderRightActions = (request: Request, closeSwipeable: () => void) => {
-        // Don't show delete for accepted requests
-        if (request.status === 'accepted') return null;
-
-        return (
-            <TouchableOpacity
-                style={styles.deleteAction}
-                onPress={() => handleDeleteRequest(request, closeSwipeable)}
-            >
-                <LinearGradient
-                    colors={['#EF4444', '#DC2626']}
-                    style={styles.deleteGradient}
-                >
-                    <Text style={styles.deleteIcon}>🗑️</Text>
-                    <Text style={styles.deleteText}>Delete</Text>
-                </LinearGradient>
-            </TouchableOpacity>
-        );
-    };
-
-    const getStatusConfig = (status: string) => {
-        switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Accepted' };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: 'Expired' };
-            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: 'Cancelled' };
-            default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
-        }
-    };
-
-    const renderRequest = ({ item }: { item: Request }) => {
-        const statusConfig = getStatusConfig(item.status);
-        let swipeableRef: Swipeable | null = null;
-
-        const closeSwipeable = () => {
-            if (swipeableRef) swipeableRef.close();
-        };
-
-        return (
-            <Swipeable
-                ref={(ref) => { swipeableRef = ref; }}
-                renderRightActions={() => renderRightActions(item, closeSwipeable)}
-                overshootRight={false}
-                friction={2}
-                rightThreshold={40}
-                onSwipeableOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
-            >
-                <TouchableOpacity
-                    style={[styles.requestCard, { backgroundColor: colors.surface }]}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        navigation.navigate('RequestDetail', { requestId: item.request_id });
-                    }}
-                    activeOpacity={0.8}
-                >
-                    <View style={styles.cardHeader}>
-                        <View style={styles.carInfo}>
-                            <Text style={styles.carEmoji}>🚗</Text>
-                            <View>
-                                <Text style={[styles.carName, { color: colors.text }]}>{item.car_make} {item.car_model}</Text>
-                                <Text style={[styles.carYear, { color: colors.textSecondary }]}>{item.car_year}</Text>
-                            </View>
-                        </View>
-                        <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                            <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                                {statusConfig.icon} {statusConfig.label}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-                        {item.part_description}
-                    </Text>
-
-                    <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
-
-                    <View style={styles.cardFooter}>
-                        <View style={styles.bidCount}>
-                            <View style={styles.bidIconBg}>
-                                <Text style={styles.bidIcon}>💬</Text>
-                            </View>
-                            <Text style={styles.bidCountText}>{item.bid_count} bids received</Text>
-                        </View>
-                        <Text style={styles.dateText}>
-                            {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </Text>
-                    </View>
-
-                    {/* Swipe hint for active requests */}
-                    {item.status === 'active' && (
-                        <Text style={styles.swipeHint}>← Swipe to delete</Text>
-                    )}
-                </TouchableOpacity>
-            </Swipeable>
-        );
-    };
+    const renderRequest = ({ item }: { item: Request }) => (
+        <ActiveRequestCard
+            item={item}
+            colors={colors}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate('RequestDetail', { requestId: item.request_id });
+            }}
+            onDelete={(close) => handleDeleteRequest(item, close)}
+        />
+    );
 
     const EmptyState = () => (
         <View style={styles.emptyState}>
@@ -198,7 +395,9 @@ export default function RequestsScreen() {
                 <Text style={styles.emptyIcon}>📋</Text>
             </View>
             <Text style={styles.emptyTitle}>No Requests Yet</Text>
-            <Text style={styles.emptyText}>Create your first part request and get quotes from verified garages</Text>
+            <Text style={styles.emptyText}>
+                Create your first part request and get quotes from verified garages
+            </Text>
             <TouchableOpacity
                 style={styles.emptyButton}
                 onPress={() => navigation.navigate('NewRequest')}
@@ -215,13 +414,20 @@ export default function RequestsScreen() {
         </View>
     );
 
+    // Count active requests for header
+    const activeCount = requests.filter(r => r.status === 'active').length;
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Premium Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <View>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>My Requests</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{requests.length} total requests</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+                        {activeCount > 0 ? `${activeCount} active` : ''}
+                        {activeCount > 0 && requests.length > activeCount ? ' • ' : ''}
+                        {requests.length} total
+                    </Text>
                 </View>
                 <TouchableOpacity
                     style={styles.addButton}
@@ -255,12 +461,10 @@ export default function RequestsScreen() {
                         />
                     }
                     ListEmptyComponent={EmptyState}
-                    // Performance optimizations
                     initialNumToRender={5}
                     maxToRenderPerBatch={5}
                     windowSize={7}
                     removeClippedSubviews={true}
-                    updateCellsBatchingPeriod={50}
                 />
             )}
         </SafeAreaView>
@@ -315,18 +519,40 @@ const styles = StyleSheet.create({
     listContent: {
         padding: Spacing.lg,
     },
+    // Card Wrapper with glow support
+    cardWrapper: {
+        marginBottom: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        overflow: 'visible',
+    },
+    glowBackground: {
+        position: 'absolute',
+        top: -4,
+        left: -4,
+        right: -4,
+        bottom: -4,
+        borderRadius: BorderRadius.xl + 4,
+    },
     requestCard: {
         backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
-        padding: Spacing.lg,
-        marginBottom: Spacing.md,
+        overflow: 'hidden',
+        flexDirection: 'row',
         ...Shadows.sm,
+    },
+    accentBar: {
+        width: 5,
+        backgroundColor: '#22C55E',
+    },
+    cardContent: {
+        flex: 1,
+        padding: Spacing.lg,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.sm,
     },
     carInfo: {
         flexDirection: 'row',
@@ -360,16 +586,73 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         color: Colors.dark.textSecondary,
         lineHeight: 22,
+        marginBottom: Spacing.sm,
+    },
+    // Active indicators row
+    activeIndicators: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    timerBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.md,
+    },
+    timerIcon: {
+        fontSize: 12,
+        marginRight: 4,
+    },
+    timerText: {
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+    },
+    newBidsBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEF3C7',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.md,
+    },
+    fireIcon: {
+        fontSize: 12,
+        marginRight: 4,
+    },
+    newBidsText: {
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+        color: '#D97706',
     },
     cardDivider: {
         height: 1,
         backgroundColor: '#F0F0F0',
-        marginVertical: Spacing.md,
+        marginVertical: Spacing.sm,
     },
     cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+    },
+    bidInfo: {
+        flex: 1,
+    },
+    bestBid: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    bestBidLabel: {
+        fontSize: FontSizes.xs,
+        color: Colors.dark.textMuted,
+    },
+    bestBidPrice: {
+        fontSize: FontSizes.md,
+        fontWeight: '800',
+        color: '#22C55E',
     },
     bidCount: {
         flexDirection: 'row',
@@ -396,6 +679,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
         color: Colors.dark.textMuted,
     },
+    // Empty State
     emptyState: {
         alignItems: 'center',
         paddingVertical: Spacing.xxl * 2,
@@ -440,19 +724,20 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '700',
     },
-    // Swipe-to-delete styles
+    // Delete action
     deleteAction: {
-        marginHorizontal: Spacing.md,
-        marginVertical: Spacing.sm,
+        marginLeft: -Spacing.md,
+        marginVertical: Spacing.xs,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
+        justifyContent: 'center',
     },
     deleteGradient: {
         width: 80,
-        height: '100%',
+        height: '90%',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.lg,
     },
     deleteIcon: {
         fontSize: 24,
@@ -463,12 +748,5 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         fontWeight: '600',
     },
-    swipeHint: {
-        fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
-        textAlign: 'right',
-        marginTop: Spacing.xs,
-        fontStyle: 'italic',
-        opacity: 0.6,
-    },
 });
+

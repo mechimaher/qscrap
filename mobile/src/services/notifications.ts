@@ -60,7 +60,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
         // Get Expo push token
         const tokenData = await Notifications.getExpoPushTokenAsync({
-            projectId: 'qscrap', // Replace with actual Expo project ID
+            projectId: '47b26c9d-3bd0-4470-8543-dd303a49b287',
         });
         const token = tokenData.data;
 
