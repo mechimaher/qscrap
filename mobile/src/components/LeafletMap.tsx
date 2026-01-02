@@ -123,7 +123,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body, #map { width: 100%; height: 100%; background: #1a1a2e; }
+        html, body, #map { width: 100%; height: 100%; background: #f8fafc; }
         
         /* Premium Driver Marker */
         .driver-marker {
@@ -206,8 +206,8 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
             attributionControl: true,
         }).setView([${defaultCenter.lat}, ${defaultCenter.lng}], 14);
         
-        // Premium dark tile layer (Carto Dark Matter)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Premium light tile layer (Carto Positron - clean and readable)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO',
             subdomains: 'abcd',
             maxZoom: 20
@@ -332,7 +332,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#f8fafc',
     },
     webview: {
         flex: 1,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     },
     loading: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#f8fafc',
         justifyContent: 'center',
         alignItems: 'center',
     },

@@ -134,6 +134,12 @@ export default function TrackingScreen() {
         total_amount: number;
         order_status: string;
     } | null>(null);
+    const [newChatMessage, setNewChatMessage] = useState<{ text: string; from: string } | null>(null);
+    const [qcStatus, setQcStatus] = useState<'pending' | 'in_progress' | 'passed' | 'failed'>('pending');
+
+    // Determine if driver should be visible (only after QC passed)
+    const canShowDriver = !!(orderDetails?.order_status &&
+        ['qc_passed', 'in_transit', 'delivered', 'completed'].includes(orderDetails.order_status));
 
     // Pulse animation for driver marker
     useEffect(() => {
@@ -189,9 +195,39 @@ export default function TrackingScreen() {
             });
 
             socket.current.on('order_status_update', (data: any) => {
-                if (data.order_id === orderId && data.status === 'delivered') {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    navigation.goBack();
+                if (data.order_id === orderId) {
+                    // Update order status
+                    setOrderDetails(prev => prev ? { ...prev, order_status: data.status } : null);
+
+                    // Handle QC status changes
+                    if (data.status === 'qc_in_progress') {
+                        setQcStatus('in_progress');
+                    } else if (data.status === 'qc_passed') {
+                        setQcStatus('passed');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    } else if (data.status === 'qc_failed') {
+                        setQcStatus('failed');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        Alert.alert(
+                            '⚠️ Quality Check Failed',
+                            'The part did not pass our quality inspection. It is being returned to the garage for replacement.',
+                            [{ text: 'OK', onPress: () => navigation.goBack() }]
+                        );
+                    } else if (data.status === 'delivered') {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    } else if (data.status === 'completed') {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    }
+                }
+            });
+
+            // Listen for chat messages from driver
+            socket.current.on('new_message', (data: any) => {
+                if (data.order_id === orderId && data.sender_type === 'driver') {
+                    setNewChatMessage({ text: data.message, from: data.sender_name || 'Driver' });
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    // Auto-clear after 5 seconds
+                    setTimeout(() => setNewChatMessage(null), 5000);
                 }
             });
 
@@ -235,16 +271,26 @@ export default function TrackingScreen() {
                 }
 
                 // Set order details for display
+                const rawOrder = order as any;
                 setOrderDetails({
                     garage_name: order.garage_name || 'Unknown Garage',
-                    part_description: order.part_description || 'Part',
-                    part_condition: order.part_condition || 'used_good',
-                    warranty_days: parseInt(String(order.warranty_days)) || 0,
-                    part_price: parseFloat(String(order.part_price)) || 0,
+                    part_description: rawOrder.part_description || rawOrder.part_name || 'Part',
+                    part_condition: rawOrder.part_condition || 'used_good',
+                    warranty_days: parseInt(String(rawOrder.warranty_days)) || 0,
+                    part_price: parseFloat(String(rawOrder.part_price)) || 0,
                     delivery_fee: parseFloat(String(order.delivery_fee || 0)),
                     total_amount: parseFloat(String(order.total_amount)) || 0,
                     order_status: order.order_status || 'in_transit',
                 });
+
+                // Set QC status based on order status
+                if (order.order_status === 'qc_in_progress') {
+                    setQcStatus('in_progress');
+                } else if (['qc_passed', 'in_transit', 'delivered', 'completed'].includes(order.order_status)) {
+                    setQcStatus('passed');
+                } else if (order.order_status === 'qc_failed') {
+                    setQcStatus('failed');
+                }
             }
         } catch (error) {
             console.log('Failed to load order data:', error);
@@ -394,12 +440,48 @@ export default function TrackingScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Premium Leaflet Map */}
+            {/* Premium Leaflet Map - Driver only visible after QC passed */}
             <LeafletMap
-                driverLocation={driverLocation}
+                driverLocation={canShowDriver ? driverLocation : null}
                 customerLocation={customerLocation}
-                showRoute={true}
+                showRoute={canShowDriver}
             />
+
+            {/* QC In Progress Overlay */}
+            {qcStatus === 'in_progress' && (
+                <View style={styles.qcOverlay}>
+                    <View style={styles.qcCard}>
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                        <Text style={styles.qcTitle}>Quality Check in Progress</Text>
+                        <Text style={styles.qcSubtitle}>Our driver is inspecting your part...</Text>
+                    </View>
+                </View>
+            )}
+
+            {/* Chat Notification Banner */}
+            {newChatMessage && (
+                <TouchableOpacity
+                    style={styles.chatBanner}
+                    onPress={() => {
+                        setNewChatMessage(null);
+                        navigation.navigate('Chat', {
+                            orderId: orderId,
+                            orderNumber: orderNumber,
+                            recipientName: driverInfo?.name || 'Driver',
+                            recipientType: 'driver',
+                        });
+                    }}
+                >
+                    <View style={styles.chatBannerContent}>
+                        <Text style={styles.chatBannerIcon}>💬</Text>
+                        <View style={styles.chatBannerText}>
+                            <Text style={styles.chatBannerFrom}>{newChatMessage.from}</Text>
+                            <Text style={styles.chatBannerMessage} numberOfLines={1}>{newChatMessage.text}</Text>
+                        </View>
+                        <Text style={styles.chatBannerAction}>View →</Text>
+                    </View>
+                </TouchableOpacity>
+            )}
 
             {/* Header */}
             <SafeAreaView style={styles.header} edges={['top']}>
@@ -415,23 +497,17 @@ export default function TrackingScreen() {
                 </View>
             </SafeAreaView>
 
-            {/* Map Controls */}
-            <View style={styles.mapControls}>
-                <TouchableOpacity style={styles.mapButton} onPress={centerOnDriver}>
-                    <Text style={styles.mapButtonIcon}>🚗</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.mapButton} onPress={fitAllMarkers}>
-                    <Text style={styles.mapButtonIcon}>⊡</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.shareLocButton} onPress={handleShareLocation}>
-                    <LinearGradient
-                        colors={['#3b82f6', '#2563eb']}
-                        style={styles.shareLocGradient}
-                    >
-                        <Text style={styles.shareLocIcon}>📍</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
+            {/* Map Controls - Only show driver controls if QC passed */}
+            {canShowDriver && (
+                <View style={styles.mapControls}>
+                    <TouchableOpacity style={styles.mapButton} onPress={centerOnDriver}>
+                        <Text style={styles.mapButtonIcon}>🚗</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.mapButton} onPress={fitAllMarkers}>
+                        <Text style={styles.mapButtonIcon}>⊡</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Draggable Bottom Sheet */}
             <Animated.View
@@ -509,13 +585,14 @@ export default function TrackingScreen() {
                 {/* Premium Order Details Card */}
                 {orderDetails && (
                     <View style={styles.orderCard}>
-                        {/* Status Timeline */}
+                        {/* Status Timeline - 4 Steps including Completed */}
                         <View style={styles.statusTimeline}>
-                            {['confirmed', 'in_transit', 'delivered'].map((step, index) => {
-                                const isCompleted = getStatusIndex(orderDetails.order_status) >= index;
-                                const isCurrent = getStatusIndex(orderDetails.order_status) === index;
-                                const labels = ['Prepared', 'In Transit', 'Delivered'];
-                                const icons = ['✓', '🚗', '📦'];
+                            {['prepared', 'in_transit', 'delivered', 'completed'].map((step, index) => {
+                                const statusIdx = getStatusIndex(orderDetails.order_status);
+                                const isCompleted = statusIdx > index;
+                                const isCurrent = statusIdx === index;
+                                const labels = ['Prepared', 'In Transit', 'Delivered', 'Completed'];
+                                const icons = ['✓', '🚗', '📦', '⭐'];
 
                                 return (
                                     <React.Fragment key={step}>
@@ -525,18 +602,22 @@ export default function TrackingScreen() {
                                                 isCompleted && styles.timelineNodeCompleted,
                                                 isCurrent && styles.timelineNodeCurrent,
                                             ]}>
-                                                <Text style={styles.timelineIcon}>
-                                                    {isCompleted ? icons[index] : '○'}
+                                                <Text style={[
+                                                    styles.timelineIcon,
+                                                    (isCompleted || isCurrent) && styles.timelineIconActive,
+                                                ]}>
+                                                    {isCompleted || isCurrent ? icons[index] : '○'}
                                                 </Text>
                                             </View>
                                             <Text style={[
                                                 styles.timelineLabel,
                                                 isCompleted && styles.timelineLabelCompleted,
+                                                isCurrent && styles.timelineLabelCurrent,
                                             ]}>
                                                 {labels[index]}
                                             </Text>
                                         </View>
-                                        {index < 2 && (
+                                        {index < 3 && (
                                             <View style={[
                                                 styles.timelineConnector,
                                                 isCompleted && styles.timelineConnectorCompleted,
@@ -593,28 +674,43 @@ export default function TrackingScreen() {
                     </View>
                 )}
 
-                {/* Delivery Address */}
-                <View style={styles.addressCard}>
-                    <Text style={styles.addressIcon}>📍</Text>
-                    <View style={styles.addressContent}>
-                        <Text style={styles.addressLabel}>Delivering to</Text>
-                        <Text style={styles.addressText} numberOfLines={2}>
-                            {deliveryAddress || 'Your location'}
-                        </Text>
-                    </View>
-                </View>
+                {/* Share Location Button - Premium UX */}
+                <TouchableOpacity style={styles.shareLocationCard} onPress={handleShareLocation}>
+                    <LinearGradient
+                        colors={['#3b82f6', '#2563eb']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.shareLocationGradient}
+                    >
+                        <Text style={styles.shareLocationIcon}>📍</Text>
+                        <View style={styles.shareLocationText}>
+                            <Text style={styles.shareLocationTitle}>Share My Location</Text>
+                            <Text style={styles.shareLocationSubtitle}>Help driver find you easily</Text>
+                        </View>
+                        <Text style={styles.shareLocationArrow}>→</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
             </Animated.View>
-        </View >
+        </View>
     );
 }
 
-// Helper to get status index for timeline
+// Helper to get status index for 4-step timeline
 const getStatusIndex = (status: string): number => {
-    const statusOrder = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_passed', 'in_transit', 'delivered', 'completed'];
-    const idx = statusOrder.indexOf(status);
-    if (idx <= 4) return 0; // Prepared
-    if (idx === 5) return 1; // In Transit
-    return 2; // Delivered
+    // Map order statuses to timeline steps:
+    // 0 = Prepared, 1 = In Transit, 2 = Delivered, 3 = Completed
+    const statusMapping: Record<string, number> = {
+        'confirmed': 0,
+        'preparing': 0,
+        'ready_for_pickup': 0,
+        'collected': 0,
+        'qc_in_progress': 0,
+        'qc_passed': 0,
+        'in_transit': 1,
+        'delivered': 2,
+        'completed': 3,
+    };
+    return statusMapping[status] ?? 0;
 };
 
 // Dark map style for premium look
@@ -966,5 +1062,112 @@ const styles = StyleSheet.create({
         marginRight: Spacing.sm,
     },
     statusText: { fontSize: FontSizes.sm, color: Colors.primary, fontWeight: '600' },
+    // QC Overlay Styles
+    qcOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 100,
+    },
+    qcCard: {
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        alignItems: 'center',
+        ...Shadows.lg,
+    },
+    qcTitle: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
+        color: '#1a1a1a',
+        marginTop: Spacing.md,
+    },
+    qcSubtitle: {
+        fontSize: FontSizes.sm,
+        color: '#525252',
+        marginTop: Spacing.xs,
+    },
+    // Chat Banner Styles
+    chatBanner: {
+        position: 'absolute',
+        top: 120,
+        left: Spacing.lg,
+        right: Spacing.lg,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.lg,
+        ...Shadows.lg,
+        zIndex: 50,
+    },
+    chatBannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+    },
+    chatBannerIcon: {
+        fontSize: 28,
+        marginRight: Spacing.md,
+    },
+    chatBannerText: {
+        flex: 1,
+    },
+    chatBannerFrom: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+        color: '#1a1a1a',
+    },
+    chatBannerMessage: {
+        fontSize: FontSizes.sm,
+        color: '#525252',
+        marginTop: 2,
+    },
+    chatBannerAction: {
+        fontSize: FontSizes.sm,
+        color: Colors.primary,
+        fontWeight: '600',
+    },
+    // Timeline Active States
+    timelineIconActive: {
+        color: '#fff',
+    },
+    timelineLabelCurrent: {
+        color: Colors.primary,
+        fontWeight: '700',
+    },
+    // Share Location Button Styles
+    shareLocationCard: {
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        marginTop: Spacing.md,
+        ...Shadows.md,
+    },
+    shareLocationGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.lg,
+    },
+    shareLocationIcon: {
+        fontSize: 28,
+        marginRight: Spacing.md,
+    },
+    shareLocationText: {
+        flex: 1,
+    },
+    shareLocationTitle: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    shareLocationSubtitle: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255, 255, 255, 0.8)',
+        marginTop: 2,
+    },
+    shareLocationArrow: {
+        fontSize: 24,
+        color: '#fff',
+        fontWeight: '300',
+    },
 });
 
