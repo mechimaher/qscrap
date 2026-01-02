@@ -10,7 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
-import { SocketProvider } from './src/hooks/useSocket';
+import { SocketProvider, useSocketContext } from './src/hooks/useSocket';
 import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
 import { Address } from './src/services/api';
@@ -257,6 +257,18 @@ export default function App() {
 // Themed wrapper component to access theme context
 function ThemedApp() {
   const { isDarkMode } = useTheme();
+  const { isAuthenticated } = useAuth();
+  const { connect, disconnect } = useSocketContext();
+
+  // Manage socket connection based on auth state
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      connect();
+    } else {
+      disconnect();
+    }
+  }, [isAuthenticated, connect, disconnect]);
+
   return (
     <>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />

@@ -1,6 +1,7 @@
 // Auth Context - Manages authentication state across the app
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, User } from '../services/api';
+import { initializePushNotifications } from '../services/notifications';
 
 interface AuthContextType {
     user: User | null;
@@ -29,6 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const savedUser = await api.getUser();
                 if (savedUser) {
                     setUser(savedUser);
+                    // Initialize push notifications when checking auth
+                    initializePushNotifications();
                 }
             }
         } catch (error) {
@@ -47,12 +50,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return { success: false, error: 'Please use the customer app' };
             }
 
-            setUser({
-                user_id: response.userId,
-                full_name: response.user?.full_name || '',
-                phone_number: phone,
-                user_type: 'customer',
-            });
+            // Fetch full profile to ensure we have the name and details
+            // The login response might not have the full user object
+            try {
+                const profileResponse = await api.getProfile();
+                if (profileResponse.user) {
+                    const fullUser = {
+                        user_id: profileResponse.user.user_id,
+                        full_name: profileResponse.user.full_name,
+                        phone_number: profileResponse.user.phone_number,
+                        email: profileResponse.user.email,
+                        user_type: 'customer' as const,
+                    };
+                    setUser(fullUser);
+                    await api.saveUser(fullUser);
+                } else {
+                    // Fallback to login response data if profile fetch fails (unlikely)
+                    const partialUser = {
+                        user_id: response.userId,
+                        full_name: response.user?.full_name || '',
+                        phone_number: phone,
+                        user_type: 'customer' as const,
+                    };
+                    setUser(partialUser);
+                    await api.saveUser(partialUser);
+                }
+            } catch (profileError) {
+                console.log('Failed to fetch profile on login:', profileError);
+                // Fallback
+                const partialUser = {
+                    user_id: response.userId,
+                    full_name: response.user?.full_name || '',
+                    phone_number: phone,
+                    user_type: 'customer' as const,
+                };
+                setUser(partialUser);
+                await api.saveUser(partialUser);
+            }
+
+            // Initialize push notifications after successful login
+            initializePushNotifications();
 
             return { success: true };
         } catch (error: any) {

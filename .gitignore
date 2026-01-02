@@ -37,3 +37,8 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Built APK files
+*.apk
+QScrap.apk
+QScrap-Premium.apk

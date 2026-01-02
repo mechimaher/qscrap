@@ -8,7 +8,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { notificationApi } from './api';
+import { api } from './api';
 import * as storage from '../utils/storage';
 
 // Configure notification behavior
@@ -153,7 +153,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 export const registerTokenWithBackend = async (token: string): Promise<boolean> => {
     try {
         const platform = Platform.OS as 'ios' | 'android';
-        await notificationApi.registerPushToken(token, platform);
+        await api.registerPushToken(token, platform);
         console.log('[Notifications] Token registered with backend');
         return true;
     } catch (error) {

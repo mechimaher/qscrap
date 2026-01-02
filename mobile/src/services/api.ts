@@ -188,10 +188,19 @@ class ApiService {
 
         if (data.token) {
             await this.setToken(data.token);
-            await this.saveUser({
+
+            // If user data is provided in login response, save it directly
+            // including the critical userId and userType from the response root
+            const userToSave = data.user ? {
+                ...data.user,
+                user_id: data.userId, // Ensure root userId takes precedence or matches
+                user_type: data.userType
+            } : {
                 user_id: data.userId,
                 user_type: data.userType,
-            });
+            };
+
+            await this.saveUser(userToSave);
         }
 
         return data;
@@ -429,6 +438,14 @@ class ApiService {
     // Catalog - Featured Products
     async getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
         return this.request(`${API_ENDPOINTS.CATALOG_SEARCH}?limit=${limit}`);
+    }
+
+    // Notifications
+    async registerPushToken(token: string, platform: 'ios' | 'android'): Promise<any> {
+        return this.request(API_ENDPOINTS.NOTIFICATIONS_REGISTER, {
+            method: 'POST',
+            body: JSON.stringify({ token, platform, device_id: 'unknown' })
+        });
     }
 
 }

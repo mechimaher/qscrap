@@ -111,6 +111,7 @@ const ActiveRequestCard = ({
         switch (status) {
             case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
             case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Accepted' };
+            case 'completed': return { color: '#8B5CF6', bg: '#EDE9FE', icon: '🎉', label: 'Completed' };
             case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: 'Expired' };
             case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: 'Cancelled' };
             default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
@@ -216,6 +217,11 @@ const ActiveRequestCard = ({
                         {/* Accepted accent bar */}
                         {item.status === 'accepted' && (
                             <View style={[styles.accentBar, { backgroundColor: '#3B82F6' }]} />
+                        )}
+
+                        {/* Completed accent bar */}
+                        {item.status === 'completed' && (
+                            <View style={[styles.accentBar, { backgroundColor: '#8B5CF6' }]} />
                         )}
 
                         <View style={styles.cardContent}>
@@ -464,7 +470,7 @@ export default function RequestsScreen() {
                     initialNumToRender={5}
                     maxToRenderPerBatch={5}
                     windowSize={7}
-                    removeClippedSubviews={true}
+                    removeClippedSubviews={false} // Fixes blank items on Android
                 />
             )}
         </SafeAreaView>

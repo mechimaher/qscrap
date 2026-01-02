@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -1050,7 +1051,6 @@ const styles = StyleSheet.create({
     },
 });
 
-// Need to import Platform
-import { Platform } from 'react-native';
+
 
 export default VINDecoder;

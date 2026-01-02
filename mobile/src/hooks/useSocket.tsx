@@ -103,6 +103,17 @@ export function useSocket() {
                     return;
                 }
 
+                // Check if bid is too old (ghost notification from reconnect)
+                // If bid is older than 5 minutes, ignore it for alerts
+                const bidTime = new Date(data.created_at).getTime();
+                const now = new Date().getTime();
+                const isOld = (now - bidTime) > 5 * 60 * 1000; // 5 minutes
+
+                if (isOld) {
+                    console.log('[Socket] Skipping old bid notification:', data.bid_id);
+                    return;
+                }
+
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Add to queue, sorted by amount (lowest first)
@@ -376,6 +387,8 @@ interface SocketContextType {
     clearOrderUpdate: (orderId: string) => void;
     dismissBid: (bidId: string) => void;
     clearAllNotifications: () => void;
+    connect: () => Promise<void>;
+    disconnect: () => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);

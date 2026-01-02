@@ -46,6 +46,7 @@ export const API_ENDPOINTS = {
 
     // Notifications
     NOTIFICATIONS: '/dashboard/notifications',
+    NOTIFICATIONS_REGISTER: '/notifications/register-token',
     MARK_NOTIFICATION_READ: (notificationId: string) => `/dashboard/notifications/${notificationId}/read`,
     MARK_ALL_NOTIFICATIONS_READ: '/dashboard/notifications/read-all',
 
