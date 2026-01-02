@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api, Product } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { API_BASE_URL } from '../config/api';
 
@@ -30,6 +31,7 @@ interface FeaturedProductsSectionProps {
 }
 
 export default function FeaturedProductsSection({ onProductPress }: FeaturedProductsSectionProps) {
+    const { colors } = useTheme();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -72,14 +74,14 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
 
     const renderProduct = ({ item }: { item: Product }) => (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { backgroundColor: colors.surface }]}
             activeOpacity={0.9}
             onPress={() => onProductPress?.(item)}
         >
             {/* Product Image */}
             <Image
                 source={{ uri: getImageUrl(item.image_urls?.[0]) }}
-                style={styles.image}
+                style={[styles.image, { backgroundColor: colors.border }]}
                 resizeMode="cover"
             />
 
@@ -102,13 +104,13 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
 
             {/* Product Info */}
             <View style={styles.info}>
-                <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.garage} numberOfLines={1}>{item.garage_name}</Text>
+                <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                <Text style={[styles.garage, { color: colors.textSecondary }]} numberOfLines={1}>{item.garage_name}</Text>
 
                 <View style={styles.footer}>
                     <Text style={styles.price}>{item.price} QAR</Text>
-                    <View style={[styles.conditionBadge, item.condition === 'new' && styles.conditionNew]}>
-                        <Text style={[styles.conditionText, item.condition === 'new' && styles.conditionTextNew]}>
+                    <View style={[styles.conditionBadge, { backgroundColor: colors.border }, item.condition === 'new' && styles.conditionNew]}>
+                        <Text style={[styles.conditionText, { color: colors.textSecondary }, item.condition === 'new' && styles.conditionTextNew]}>
                             {item.condition?.toUpperCase()}
                         </Text>
                     </View>
@@ -120,8 +122,8 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.sectionTitle}>🏆 Featured Parts</Text>
-                <Text style={styles.sectionSubtitle}>From Premium Enterprise Garages</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Featured Parts</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>From Premium Enterprise Garages</Text>
             </View>
 
             <FlatList
