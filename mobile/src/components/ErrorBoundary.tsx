@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: FontSize.xxl,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         textAlign: 'center',
         marginBottom: Spacing.md,
     },
     message: {
         fontSize: FontSize.md,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: Spacing.xl,
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     },
     stackTrace: {
         fontSize: FontSize.xs,
-        color: '#737373', // Previously Colors.dark.textMuted
+        color: '#737373',
         fontFamily: 'monospace',
         marginTop: Spacing.sm,
     },
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     },
     helpText: {
         fontSize: FontSize.sm,
-        color: '#737373', // Previously Colors.dark.textMuted
+        color: '#737373',
         textAlign: 'center',
     },
 });

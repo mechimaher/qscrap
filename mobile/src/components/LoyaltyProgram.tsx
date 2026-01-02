@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         marginBottom: Spacing.md,
     },
     benefitRow: {
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     },
     benefitText: {
         fontSize: FontSizes.md,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     tabContainer: {
         flexDirection: 'row',
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     tabText: {
         fontSize: FontSizes.md,
         fontWeight: '500',
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     tabTextActive: {
         color: Colors.primary,
@@ -526,12 +526,12 @@ const styles = StyleSheet.create({
     rewardTitle: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         textAlign: 'center',
     },
     rewardDesc: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         textAlign: 'center',
         marginTop: 4,
     },
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
     rewardPoints: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     rewardAffordable: {
         color: Colors.success,
@@ -587,11 +587,11 @@ const styles = StyleSheet.create({
     },
     historyDesc: {
         fontSize: FontSizes.sm,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     historyDate: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     historyPoints: {
         fontSize: FontSizes.lg,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     earnText: {
         flex: 1,
         fontSize: FontSizes.md,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     earnPoints: {
         fontSize: FontSizes.sm,

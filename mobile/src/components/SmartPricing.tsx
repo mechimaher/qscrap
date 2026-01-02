@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: Spacing.sm,
         fontSize: FontSizes.md,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     headerCard: {
         margin: Spacing.md,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         marginBottom: Spacing.md,
     },
     overviewGrid: {
@@ -420,11 +420,11 @@ const styles = StyleSheet.create({
     overviewValue: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     overviewLabel: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginTop: 2,
     },
     demandBadge: {
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     },
     periodText: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         fontWeight: '500',
     },
     periodTextActive: {
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     },
     chartLabel: {
         fontSize: 10,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginTop: 4,
     },
     chartLegend: {
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     },
     legendText: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     quickPriceCard: {
         marginHorizontal: Spacing.md,
@@ -545,17 +545,17 @@ const styles = StyleSheet.create({
     priceOptionLabel: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     priceOptionValue: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         marginVertical: 4,
     },
     priceOptionHint: {
         fontSize: 10,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     infoNote: {
         flexDirection: 'row',
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
     infoText: {
         flex: 1,
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         lineHeight: 18,
     },
 });

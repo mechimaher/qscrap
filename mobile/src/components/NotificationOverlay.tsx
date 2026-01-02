@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     priceRow: {
         flexDirection: 'row',
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     },
     warranty: {
         fontSize: FontSizes.sm,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginLeft: Spacing.sm,
     },
     dismissButton: {
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dismissText: {
-        color: '#737373', // Previously Colors.dark.textMuted
+        color: '#737373',
         fontSize: 16,
         fontWeight: '700',
     },

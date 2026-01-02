@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     categoryLabel: {
         fontSize: FontSizes.xs,
         fontWeight: '500',
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     categoryLabelActive: {
         color: Colors.primary,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     },
     replyText: {
         fontSize: FontSizes.sm,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         fontWeight: '500',
         maxWidth: 180,
     },

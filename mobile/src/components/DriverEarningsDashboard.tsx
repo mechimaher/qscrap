@@ -350,11 +350,11 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     statLabel: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginTop: 2,
     },
     breakdownCard: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     breakdownTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         marginBottom: Spacing.md,
     },
     breakdownRow: {
@@ -379,12 +379,12 @@ const styles = StyleSheet.create({
     },
     breakdownLabel: {
         fontSize: FontSizes.md,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     breakdownValue: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     tipsValue: {
         color: Colors.success,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     totalLabel: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     totalValue: {
         fontSize: FontSizes.xl,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     recentTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         marginBottom: Spacing.md,
     },
     deliveryRow: {
@@ -447,11 +447,11 @@ const styles = StyleSheet.create({
     deliveryOrder: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     deliveryTime: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     deliveryAmounts: {
         alignItems: 'flex-end',
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     deliveryAmount: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     deliveryTip: {
         fontSize: FontSizes.xs,
@@ -504,11 +504,11 @@ const styles = StyleSheet.create({
     fuelTitle: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     fuelHint: {
         fontSize: FontSizes.sm,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
 });
 

@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     container: { marginBottom: Spacing.md },
     label: {
         fontSize: FontSizes.sm,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginBottom: Spacing.xs,
         fontWeight: '600',
     },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     closeButton: {
         padding: Spacing.sm,
     },
-    closeIcon: { fontSize: 20, color: '#525252' } // Previously Colors.dark.textSecondary,
+    closeIcon: { fontSize: 20, color: '#525252' },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         textAlign: 'center',
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginTop: Spacing.xl,
     },
     customContainer: {
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     },
     customLabel: {
         fontSize: FontSizes.md,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         marginBottom: Spacing.md,
     },
     customInput: {
         backgroundColor: Colors.dark.background,
         borderRadius: BorderRadius.md,
         padding: Spacing.md,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         fontSize: FontSizes.md,
         marginBottom: Spacing.lg,
         borderWidth: 1,
@@ -318,6 +318,6 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
     },
     backButtonText: {
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
 });

@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: Spacing.sm,
         fontSize: FontSizes.md,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     overviewCard: {
         margin: Spacing.md,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     },
     filterText: {
         fontSize: FontSizes.sm,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         fontWeight: '500',
     },
     filterTextActive: {
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     driverName: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     driverMeta: {
         flexDirection: 'row',
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     },
     vehicleType: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     statusBadge: {
         flexDirection: 'row',
@@ -642,11 +642,11 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     statLabel: {
         fontSize: 10,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     assignmentsSection: {
         marginTop: Spacing.md,
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     assignmentsTitle: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginBottom: Spacing.xs,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
     orderId: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     assignmentStatus: {
         backgroundColor: '#E8E8E8',
@@ -693,12 +693,12 @@ const styles = StyleSheet.create({
     },
     assignmentRoute: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
         marginTop: 4,
     },
     assignmentMeta: {
         fontSize: 10,
-        color: '#737373', // Previously Colors.dark.textMuted
+        color: '#737373',
         marginTop: 2,
     },
     expandedActions: {
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
     },
     actionText: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
 });
 

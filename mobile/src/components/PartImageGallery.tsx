@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     toggleText: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     toggleTextActive: {
         color: '#fff',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: FontSizes.md,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     // Fullscreen styles
     fullscreenContainer: {

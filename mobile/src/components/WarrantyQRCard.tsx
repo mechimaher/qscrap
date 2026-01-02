@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '800',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     closeButton: {
         width: 40,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     },
     closeText: {
         fontSize: 18,
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     fullCard: {
         backgroundColor: '#fff',
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     },
     qrCaption: {
         fontSize: FontSizes.xs,
-        color: '#737373', // Previously Colors.dark.textMuted
+        color: '#737373',
         textAlign: 'center',
         marginBottom: Spacing.lg,
     },
@@ -431,12 +431,12 @@ const styles = StyleSheet.create({
     },
     detailLabel: {
         fontSize: FontSizes.sm,
-        color: '#525252', // Previously Colors.dark.textSecondary
+        color: '#525252',
     },
     detailValue: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
         maxWidth: '60%',
         textAlign: 'right',
     },
@@ -490,11 +490,11 @@ const styles = StyleSheet.create({
     actionText: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a', // Previously Colors.dark.text
+        color: '#1a1a1a',
     },
     disclaimer: {
         fontSize: FontSizes.xs,
-        color: '#737373', // Previously Colors.dark.textMuted
+        color: '#737373',
         textAlign: 'center',
         marginTop: Spacing.lg,
         paddingHorizontal: Spacing.lg,
