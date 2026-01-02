@@ -11,38 +11,40 @@ export const Colors = {
     // Secondary - Gold accent (complements Al Adam)
     secondary: '#C9A227',
 
-    // Dark Theme (Default) - Now using LIGHT colors for Qatar White theme
-    dark: {
-        background: '#ffffff',
-        surface: '#f8f9fa',
-        surfaceElevated: '#ffffff',
-        card: '#ffffff',
-        cardHover: '#f0f0f0',
-        border: '#e5e5e5',
-        borderLight: '#d4d4d4',
+    // Light Theme (Default) - Light backgrounds, dark text
+    light: {
+        background: '#FAFAFA',
+        surface: '#FFFFFF',
+        surfaceElevated: '#FFFFFF',
+        card: '#FFFFFF',
+        cardHover: '#F5F5F5',
+        border: '#E5E5E5',
+        borderLight: '#EEEEEE',
 
         text: '#1a1a1a',
         textSecondary: '#525252',
         textMuted: '#737373',
 
+        primary: '#8A1538',
         statusBar: 'dark',
     },
 
-    // Light Theme
-    light: {
-        background: '#f5f5f5',
-        surface: '#ffffff',
-        surfaceElevated: '#ffffff',
-        card: '#ffffff',
-        cardHover: '#f0f0f0',
-        border: '#e5e5e5',
-        borderLight: '#d4d4d4',
+    // Dark Theme - Dark backgrounds, light text
+    dark: {
+        background: '#121212',
+        surface: '#1E1E1E',
+        surfaceElevated: '#2A2A2A',
+        card: '#252525',
+        cardHover: '#333333',
+        border: '#3A3A3A',
+        borderLight: '#444444',
 
-        text: '#0a0a0a',
-        textSecondary: '#525252',
-        textMuted: '#737373',
+        text: '#FFFFFF',
+        textSecondary: '#B0B0B0',
+        textMuted: '#808080',
 
-        statusBar: 'dark',
+        primary: '#8A1538',
+        statusBar: 'light',
     },
 
     // Status Colors

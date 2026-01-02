@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        color: Colors.dark.text,
+        // color set dynamically via colors.text
         letterSpacing: -0.5,
     },
     editButton: {
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     menuTitle: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         marginBottom: Spacing.sm,
         textTransform: 'uppercase',
         letterSpacing: 1,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: FontSizes.md,
         fontWeight: '500',
-        color: Colors.dark.text,
+        // color set dynamically via colors.text or danger color
     },
     menuLabelDanger: {
         color: '#EF4444',
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     },
     menuArrow: {
         fontSize: 22,
-        color: Colors.dark.textMuted,
+        opacity: 0.4,
     },
     versionContainer: {
         alignItems: 'center',
@@ -454,15 +454,15 @@ const styles = StyleSheet.create({
     versionText: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        opacity: 0.7,
     },
     copyrightText: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        opacity: 0.5,
     },
     madeWithText: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        opacity: 0.5,
         marginTop: Spacing.xs,
     },
 });

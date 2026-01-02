@@ -6,6 +6,7 @@ import {
     Animated,
     Easing,
 } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 
 interface TimelineStep {
@@ -56,6 +57,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     currentStatus,
     steps = DEFAULT_STEPS,
 }) => {
+    const { colors } = useTheme();
     const currentIndex = STATUS_MAP[currentStatus] ?? 0;
 
     // Animation for the current step indicator
@@ -111,8 +113,8 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     });
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Order Progress</Text>
+        <View style={[styles.container, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Order Progress</Text>
 
             <View style={styles.timeline}>
                 {steps.map((step, index) => {
@@ -128,6 +130,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                     <View
                                         style={[
                                             styles.connector,
+                                            { backgroundColor: colors.border },
                                             isCompleted && styles.connectorCompleted,
                                             isCurrent && styles.connectorActive,
                                         ]}
@@ -156,9 +159,10 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                     <View
                                         style={[
                                             styles.node,
+                                            { backgroundColor: colors.border },
                                             isCompleted && styles.nodeCompleted,
                                             isCurrent && styles.nodeCurrent,
-                                            isPending && styles.nodePending,
+                                            isPending && [styles.nodePending, { backgroundColor: colors.surface, borderColor: colors.border }],
                                         ]}
                                     >
                                         <Text style={[
@@ -175,15 +179,15 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                     <Text
                                         style={[
                                             styles.stepLabel,
-                                            isCompleted && styles.stepLabelCompleted,
+                                            { color: colors.text },
                                             isCurrent && styles.stepLabelCurrent,
-                                            isPending && styles.stepLabelPending,
+                                            isPending && { color: colors.textSecondary },
                                         ]}
                                     >
                                         {step.label}
                                     </Text>
                                     {step.timestamp && (
-                                        <Text style={styles.timestamp}>{step.timestamp}</Text>
+                                        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{step.timestamp}</Text>
                                     )}
                                     {isCurrent && (
                                         <Text style={styles.currentLabel}>Now</Text>
