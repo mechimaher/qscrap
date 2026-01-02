@@ -395,11 +395,11 @@ export default function OrdersScreen() {
 
     const EmptyState = () => (
         <View style={styles.emptyState}>
-            <View style={styles.emptyIconBg}>
+            <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>📦</Text>
             </View>
-            <Text style={styles.emptyTitle}>No Orders Yet</Text>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Orders Yet</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Your orders will appear here once you accept a bid
             </Text>
         </View>
@@ -408,7 +408,7 @@ export default function OrdersScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <View>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>My Orders</Text>
                     <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        // borderBottomColor set dynamically
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
@@ -580,10 +580,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-end',
     },
-    priceLabel: { fontSize: FontSizes.xs, color: Colors.dark.textMuted },
+    priceLabel: { fontSize: FontSizes.xs, opacity: 0.6 },
     priceAmount: { fontSize: FontSizes.xl, fontWeight: '800' },
     dateSection: { alignItems: 'flex-end' },
-    dateLabel: { fontSize: FontSizes.xs, color: Colors.dark.textMuted },
+    dateLabel: { fontSize: FontSizes.xs, opacity: 0.6 },
     dateText: { fontSize: FontSizes.sm, fontWeight: '600' },
 
     // Banners
@@ -625,12 +625,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: Colors.dark.text,
+        // color set dynamically
         marginBottom: Spacing.sm,
     },
     emptyText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        // color set dynamically
         textAlign: 'center',
         lineHeight: 22,
     },

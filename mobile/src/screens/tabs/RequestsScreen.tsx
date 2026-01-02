@@ -399,11 +399,11 @@ export default function RequestsScreen() {
 
     const EmptyState = () => (
         <View style={styles.emptyState}>
-            <View style={styles.emptyIconContainer}>
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>📋</Text>
             </View>
-            <Text style={styles.emptyTitle}>No Requests Yet</Text>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Requests Yet</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Create your first part request and get quotes from verified garages
             </Text>
             <TouchableOpacity
@@ -482,7 +482,7 @@ export default function RequestsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAFA',
+        // backgroundColor set dynamically via colors.background
     },
     header: {
         flexDirection: 'row',
@@ -490,19 +490,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.md,
-        backgroundColor: '#fff',
+        // backgroundColor set dynamically via colors.surface
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        // borderBottomColor set dynamically via colors.border
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        color: Colors.dark.text,
+        // color set dynamically via colors.text
         letterSpacing: -0.5,
     },
     headerSubtitle: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         marginTop: 2,
     },
     addButton: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl + 4,
     },
     requestCard: {
-        backgroundColor: '#fff',
+        // backgroundColor set dynamically via colors.surface
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         flexDirection: 'row',
@@ -575,11 +575,11 @@ const styles = StyleSheet.create({
     carName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        // color set dynamically via colors.text
     },
     carYear: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         marginTop: 2,
     },
     statusBadge: {
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     },
     partDescription: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         lineHeight: 22,
         marginBottom: Spacing.sm,
     },
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
     },
     cardDivider: {
         height: 1,
-        backgroundColor: '#F0F0F0',
+        // backgroundColor set dynamically via colors.border
         marginVertical: Spacing.sm,
     },
     cardFooter: {
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     },
     bestBidLabel: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        // color set dynamically via colors.textMuted
     },
     bestBidPrice: {
         fontSize: FontSizes.md,
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textMuted,
+        // color set dynamically via colors.textMuted
     },
     // Empty State
     emptyState: {
@@ -709,12 +709,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: Colors.dark.text,
+        // color set dynamically via colors.text
         marginBottom: Spacing.sm,
     },
     emptyText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         textAlign: 'center',
         marginBottom: Spacing.xl,
         lineHeight: 22,

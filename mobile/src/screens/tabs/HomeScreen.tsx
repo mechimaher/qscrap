@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        // color set dynamically via colors.text
         marginBottom: Spacing.md,
     },
     statsRow: {
@@ -817,8 +817,8 @@ const styles = StyleSheet.create({
         ...Shadows.sm,
     },
     statEmoji: { fontSize: 32, marginBottom: Spacing.sm },
-    statValue: { fontSize: 36, fontWeight: '800', color: Colors.dark.text },
-    statLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary, marginTop: 4 },
+    statValue: { fontSize: 36, fontWeight: '800' }, // color set dynamically
+    statLabel: { fontSize: FontSizes.sm, marginTop: 4 }, // color set dynamically
     statCardWide: {
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
     },
     wideCardLeft: { flexDirection: 'row', alignItems: 'center' },
     wideCardEmoji: { fontSize: 36, marginRight: Spacing.md },
-    wideCardLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    wideCardLabel: { fontSize: FontSizes.sm }, // color set dynamically
     wideCardBadge: {
         backgroundColor: Colors.primary + '20',
         paddingHorizontal: Spacing.md,
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.sm,
     },
     actionEmoji: { fontSize: 28 },
-    actionLabel: { fontSize: FontSizes.sm, fontWeight: '600', color: Colors.dark.text },
+    actionLabel: { fontSize: FontSizes.sm, fontWeight: '600' }, // color set dynamically
 
     // Pro Tip
     proTipCard: {
@@ -880,7 +880,7 @@ const styles = StyleSheet.create({
     proTipIcon: { fontSize: 24, marginRight: Spacing.md },
     proTipContent: { flex: 1 },
     proTipTitle: { fontSize: FontSizes.sm, fontWeight: '700', color: Colors.secondary, marginBottom: 2 },
-    proTipText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    proTipText: { fontSize: FontSizes.sm }, // color set dynamically
 
     // Skeleton
     skeletonContainer: { padding: Spacing.lg },
