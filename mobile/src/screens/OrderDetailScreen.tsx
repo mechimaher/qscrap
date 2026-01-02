@@ -725,8 +725,8 @@ const styles = StyleSheet.create({
     driverAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md, ...Shadows.sm },
     driverAvatarText: { fontSize: 24 },
     liveDot: { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, backgroundColor: '#22C55E', borderWidth: 2, borderColor: '#fff' },
-    driverLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
-    driverName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.dark.text },
+    driverLabel: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
+    driverName: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' } // Previously Colors.dark.text,
     callButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#22C55E', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: BorderRadius.lg, ...Shadows.sm },
     callIcon: { fontSize: 16, marginRight: Spacing.xs },
     callText: { color: '#fff', fontWeight: '700' },
@@ -744,15 +744,15 @@ const styles = StyleSheet.create({
     timelineLineBg: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#E8E8E8', borderRadius: 1.5 },
     timelineLineFill: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: '#22C55E', borderRadius: 1.5 },
     timelineContent: { flex: 1, paddingLeft: Spacing.md, paddingBottom: Spacing.lg, flexDirection: 'row', alignItems: 'center' },
-    timelineLabel: { fontSize: FontSizes.md, color: Colors.dark.textMuted },
-    timelineLabelActive: { fontWeight: '600', color: Colors.dark.text },
+    timelineLabel: { fontSize: FontSizes.md, color: '#737373' } // Previously Colors.dark.textMuted,
+    timelineLabelActive: { fontWeight: '600', color: '#1a1a1a' } // Previously Colors.dark.text,
     currentBadge: { marginLeft: Spacing.sm, backgroundColor: Colors.primary + '20', paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.md },
     currentBadgeText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600' },
 
     // Details
     detailsCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, padding: Spacing.lg, ...Shadows.sm },
     detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm },
-    detailLabel: { fontSize: FontSizes.md, color: Colors.dark.textSecondary },
+    detailLabel: { fontSize: FontSizes.md, color: '#525252' } // Previously Colors.dark.textSecondary,
     detailValue: { fontSize: FontSizes.md, fontWeight: '500', textAlign: 'right', flex: 1 },
     divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: Spacing.md },
     totalLabel: { fontSize: FontSizes.lg, fontWeight: '700' },
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
     confirmText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
 
     metaInfo: { alignItems: 'center', marginTop: Spacing.md },
-    metaText: { fontSize: FontSizes.sm, color: Colors.dark.textMuted },
+    metaText: { fontSize: FontSizes.sm, color: '#737373' } // Previously Colors.dark.textMuted,
 
     // Skeleton
     skeletonContainer: { padding: Spacing.lg },

@@ -654,9 +654,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         ...Shadows.md,
     },
-    backIcon: { fontSize: 24, color: Colors.dark.text },
+    backIcon: { fontSize: 24, color: '#1a1a1a' } // Previously Colors.dark.text,
     headerInfo: { flex: 1, marginLeft: Spacing.md },
-    headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.dark.text },
+    headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' } // Previously Colors.dark.text,
     orderNumber: { fontSize: FontSizes.sm, color: Colors.primary },
     connectionDot: {
         width: 12,
@@ -777,8 +777,8 @@ const styles = StyleSheet.create({
     },
     driverAvatarIcon: { fontSize: 24 },
     driverDetails: { flex: 1, marginLeft: Spacing.md },
-    driverName: { fontSize: FontSizes.lg, fontWeight: '600', color: Colors.dark.text },
-    driverVehicle: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    driverName: { fontSize: FontSizes.lg, fontWeight: '600', color: '#1a1a1a' } // Previously Colors.dark.text,
+    driverVehicle: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
     callDriverButton: {
         width: 44,
         height: 44,
@@ -837,11 +837,11 @@ const styles = StyleSheet.create({
     },
     timelineIcon: {
         fontSize: 16,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     timelineLabel: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         marginTop: Spacing.xs,
         fontWeight: '500',
     },
@@ -867,14 +867,14 @@ const styles = StyleSheet.create({
     },
     orderLabel: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         fontWeight: '700',
         letterSpacing: 0.5,
     },
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginTop: Spacing.xs,
     },
     partSection: {
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
     },
     partName: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginBottom: Spacing.xs,
     },
     partBadges: {
@@ -924,11 +924,11 @@ const styles = StyleSheet.create({
     },
     priceLabel: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
     },
     priceValue: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
     priceDivider: {
         height: 1,
@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
     totalLabel: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     totalValue: {
         fontSize: FontSizes.lg,
@@ -952,8 +952,8 @@ const styles = StyleSheet.create({
     },
     addressIcon: { fontSize: 24, marginRight: Spacing.sm },
     addressContent: { flex: 1 },
-    addressLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
-    addressText: { fontSize: FontSizes.md, color: Colors.dark.text, marginTop: Spacing.xs },
+    addressLabel: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
+    addressText: { fontSize: FontSizes.md, color: '#1a1a1a', // Previously Colors.dark.text marginTop: Spacing.xs },
     statusRow: {
         flexDirection: 'row',
         alignItems: 'center',

@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     durationText: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         fontVariant: ['tabular-nums'],
     },
     sendButton: {
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     },
     playerDuration: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginTop: 4,
     },
     playerDurationOwn: {

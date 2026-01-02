@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     optionalBadge: {
         marginLeft: 'auto',
@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     },
     hint: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         marginBottom: Spacing.md,
     },
     input: {
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.lg,
         fontSize: 14,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         borderWidth: 2,
         borderColor: '#E8E8E8',
         fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -984,7 +984,7 @@ const styles = StyleSheet.create({
     },
     charCount: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         fontWeight: '500',
     },
     charCountValid: {
@@ -1042,12 +1042,12 @@ const styles = StyleSheet.create({
     },
     resultLabel: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
     resultValue: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
 });
 

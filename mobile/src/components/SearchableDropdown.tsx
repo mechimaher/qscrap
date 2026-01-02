@@ -107,7 +107,7 @@ export default function SearchableDropdown({
                                     <TextInput
                                         style={styles.searchInput}
                                         placeholder="Search..."
-                                        placeholderTextColor={Colors.dark.textSecondary}
+                                        placeholderTextColor="#999"
                                         value={search}
                                         onChangeText={setSearch}
                                         autoFocus={true}
@@ -144,7 +144,7 @@ export default function SearchableDropdown({
                                 <TextInput
                                     style={styles.customInput}
                                     placeholder={`Type ${label || 'value'}...`}
-                                    placeholderTextColor={Colors.dark.textSecondary}
+                                    placeholderTextColor="#999"
                                     value={customValue}
                                     onChangeText={setCustomValue}
                                     autoFocus={true}
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     container: { marginBottom: Spacing.md },
     label: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginBottom: Spacing.xs,
         fontWeight: '600',
     },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     closeButton: {
         padding: Spacing.sm,
     },
-    closeIcon: { fontSize: 20, color: Colors.dark.textSecondary },
+    closeIcon: { fontSize: 20, color: '#525252' } // Previously Colors.dark.textSecondary,
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         textAlign: 'center',
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginTop: Spacing.xl,
     },
     customContainer: {
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     },
     customLabel: {
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.md,
     },
     customInput: {
         backgroundColor: Colors.dark.background,
         borderRadius: BorderRadius.md,
         padding: Spacing.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         fontSize: FontSizes.md,
         marginBottom: Spacing.lg,
         borderWidth: 1,
@@ -318,6 +318,6 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
     },
     backButtonText: {
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
 });

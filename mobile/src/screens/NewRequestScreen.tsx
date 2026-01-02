@@ -362,7 +362,7 @@ export default function NewRequestScreen() {
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             placeholder="Additional details (e.g. left side, color...)"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             value={partDescription}
                             onChangeText={setPartDescription}
                             multiline
@@ -373,7 +373,7 @@ export default function NewRequestScreen() {
                         <TextInput
                             style={styles.input}
                             placeholder="OEM part number"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             value={partNumber}
                             onChangeText={setPartNumber}
                         />
@@ -468,7 +468,7 @@ export default function NewRequestScreen() {
                         <TextInput
                             style={styles.input}
                             placeholder="Or enter address manually"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             value={deliveryAddress}
                             onChangeText={setDeliveryAddress}
                         />
@@ -537,8 +537,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         borderRadius: 20,
     },
-    closeText: { fontSize: 18, color: Colors.dark.text },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text, letterSpacing: -0.5 },
+    closeText: { fontSize: 18, color: '#1a1a1a' },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
     scrollView: { flex: 1, padding: Spacing.lg },
     section: {
         marginBottom: Spacing.lg,
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a',
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -584,19 +584,19 @@ const styles = StyleSheet.create({
     optionalTagText: {
         fontSize: 9,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: '#525252',
     },
     row: { flexDirection: 'row', gap: Spacing.md },
     halfInput: { flex: 1 },
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: '#525252',
         marginBottom: Spacing.xs,
     },
     inputHint: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373',
         marginBottom: Spacing.sm,
         fontStyle: 'italic',
     },
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a',
         borderWidth: 1,
         borderColor: '#E8E8E8',
         marginBottom: Spacing.md,
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a',
         borderWidth: 1,
         borderColor: '#E8E8E8',
         minHeight: 52,
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         borderColor: Colors.primary,
     },
-    conditionText: { fontSize: FontSizes.md, color: Colors.dark.textSecondary, fontWeight: '500' },
+    conditionText: { fontSize: FontSizes.md, color: '#525252', fontWeight: '500' },
     conditionTextActive: { color: Colors.primary, fontWeight: '700' },
     imageActions: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
     imageButton: {
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
         borderColor: '#E8E8E8',
     },
     imageButtonIcon: { fontSize: 20, marginRight: Spacing.sm },
-    imageButtonText: { fontSize: FontSizes.md, color: Colors.dark.text, fontWeight: '500' },
+    imageButtonText: { fontSize: FontSizes.md, color: '#1a1a1a', fontWeight: '500' },
     imagePreview: { flexDirection: 'row' },
     imageContainer: { marginRight: Spacing.sm, position: 'relative' },
     image: { width: 80, height: 80, borderRadius: BorderRadius.md },
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
     },
-    addressBookText: { fontSize: FontSizes.md, color: Colors.dark.text, fontWeight: '600' },
+    addressBookText: { fontSize: FontSizes.md, color: '#1a1a1a', fontWeight: '600' },
     locationIcon: { fontSize: 20, marginRight: Spacing.sm },
     locationText: { fontSize: FontSizes.md, color: Colors.primary, fontWeight: '600' },
     feePreview: {
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#4CAF50',
     },
-    feeLabel: { fontSize: FontSizes.md, color: Colors.dark.text },
+    feeLabel: { fontSize: FontSizes.md, color: '#1a1a1a' },
     feeAmount: { fontSize: FontSizes.xl, fontWeight: '800', color: '#4CAF50' },
     submitButton: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginTop: Spacing.md, ...Shadows.md },
     submitButtonDisabled: { opacity: 0.7 },

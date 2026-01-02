@@ -127,8 +127,8 @@ export default function SettingsScreen() {
             <Switch
                 value={value}
                 onValueChange={onToggle}
-                trackColor={{ false: Colors.dark.border, true: Colors.primary + '60' }}
-                thumbColor={value ? Colors.primary : Colors.dark.textMuted}
+                trackColor={{ false: '#E5E5E5', true: Colors.primary + '60' }}
+                thumbColor={value ? Colors.primary : '#999'}
             />
         </View>
     );
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 }, // color set dynamically
     scrollView: { flex: 1, padding: Spacing.lg },
     section: {
         backgroundColor: '#fff',
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.sm,
         fontWeight: '700',
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         marginBottom: Spacing.md,
         marginLeft: Spacing.sm,
         textTransform: 'uppercase',
@@ -341,17 +341,17 @@ const styles = StyleSheet.create({
     },
     settingIcon: { fontSize: 22, marginRight: Spacing.md },
     settingInfo: { flex: 1 },
-    settingTitle: { fontSize: FontSizes.md, fontWeight: '600', color: Colors.dark.text },
+    settingTitle: { fontSize: FontSizes.md, fontWeight: '600' }, // color set dynamically
     settingSubtitle: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        // color set dynamically via colors.textSecondary
         marginTop: 2,
     },
     actionValue: { flexDirection: 'row', alignItems: 'center' },
     valueText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textMuted,
+        color: '#737373',
         marginRight: Spacing.sm,
     },
-    chevron: { fontSize: 24, color: Colors.dark.textMuted },
+    chevron: { fontSize: 24, color: '#737373' },
 });

@@ -166,7 +166,7 @@ const HeroRequestCard = ({
             <View style={styles.heroCarInfo}>
                 <Text style={styles.heroCarEmoji}>🚗</Text>
                 <View style={styles.heroCarDetails}>
-                    <Text style={[styles.heroCarName, !isActive && { color: Colors.dark.text }]}>
+                    <Text style={[styles.heroCarName, !isActive && { color: '#1a1a1a' } // Previously Colors.dark.text]}>
                         {request.car_make} {request.car_model}
                     </Text>
                     <Text style={[styles.heroCarYear, !isActive && { color: Colors.primary }]}>
@@ -180,10 +180,10 @@ const HeroRequestCard = ({
 
             {/* Part Description */}
             <View style={styles.heroSection}>
-                <Text style={[styles.heroLabel, !isActive && { color: Colors.dark.textSecondary }]}>
+                <Text style={[styles.heroLabel, !isActive && { color: '#525252' } // Previously Colors.dark.textSecondary]}>
                     PART NEEDED
                 </Text>
-                <Text style={[styles.heroPartDescription, !isActive && { color: Colors.dark.text }]}>
+                <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' } // Previously Colors.dark.text]}>
                     {request.part_description}
                 </Text>
             </View>
@@ -193,16 +193,16 @@ const HeroRequestCard = ({
                 <View style={styles.heroMetaRow}>
                     {request.part_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: Colors.dark.textMuted }]}>Part #</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: Colors.dark.text }]}>
+                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' } // Previously Colors.dark.textMuted]}>Part #</Text>
+                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' } // Previously Colors.dark.text]}>
                                 {request.part_number}
                             </Text>
                         </View>
                     )}
                     {request.vin_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: Colors.dark.textMuted }]}>VIN</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: Colors.dark.text }]}>
+                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' } // Previously Colors.dark.textMuted]}>VIN</Text>
+                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' } // Previously Colors.dark.text]}>
                                 {request.vin_number.slice(-8)}
                             </Text>
                         </View>
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
     },
     noBidsEmoji: { fontSize: 48, marginBottom: Spacing.md },
     noBidsText: { fontSize: FontSizes.md, fontWeight: '600', textAlign: 'center' },
-    noBidsSubtext: { fontSize: FontSizes.sm, color: Colors.dark.textMuted, marginTop: Spacing.xs },
+    noBidsSubtext: { fontSize: FontSizes.sm, color: '#737373', // Previously Colors.dark.textMuted marginTop: Spacing.xs },
 
     // Premium Bid Card
     premiumBidCard: {
@@ -1018,12 +1018,12 @@ const styles = StyleSheet.create({
     garageName: { fontSize: FontSizes.lg, fontWeight: '700' },
     ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     ratingStar: { fontSize: 14, marginRight: 4 },
-    ratingText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    ratingText: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
     roundsText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600', marginTop: 4 },
     priceSection: { alignItems: 'flex-end' },
-    priceLabel: { fontSize: FontSizes.xs, color: Colors.dark.textMuted },
+    priceLabel: { fontSize: FontSizes.xs, color: '#737373' } // Previously Colors.dark.textMuted,
     priceAmount: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.primary },
-    originalPrice: { fontSize: FontSizes.sm, color: Colors.dark.textMuted, textDecorationLine: 'line-through' },
+    originalPrice: { fontSize: FontSizes.sm, color: '#737373', // Previously Colors.dark.textMuted textDecorationLine: 'line-through' },
     currentPriceLabel: { fontSize: FontSizes.xs, color: '#F59E0B', fontWeight: '600' },
     currentPrice: { fontSize: FontSizes.xxl, fontWeight: '800', color: '#F59E0B' },
 
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 4,
     },
-    negotiationLabel: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    negotiationLabel: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
     negotiationValue: { fontSize: FontSizes.sm, fontWeight: '600' },
 
     bidDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.md },
@@ -1050,10 +1050,10 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: BorderRadius.md,
     },
-    detailChipText: { fontSize: FontSizes.sm, fontWeight: '600', color: Colors.dark.text },
+    detailChipText: { fontSize: FontSizes.sm, fontWeight: '600', color: '#1a1a1a' } // Previously Colors.dark.text,
     bidNotes: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         fontStyle: 'italic',
         marginTop: Spacing.md,
     },

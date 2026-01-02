@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Always dark on white card
         marginBottom: Spacing.xs,
     },
     input: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Always dark input text on light background
         borderWidth: 1.5,
         borderColor: '#E8E8E8',
     },
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     },
     benefitText: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Always dark on white card
     },
     loginSection: {
         flexDirection: 'row',

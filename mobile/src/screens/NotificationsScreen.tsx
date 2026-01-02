@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' } // Previously Colors.dark.text,
     markAllButton: {
         padding: Spacing.sm,
         backgroundColor: Colors.primary + '15',
@@ -242,18 +242,18 @@ const styles = StyleSheet.create({
     title: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: 4,
     },
     unreadTitle: { fontWeight: '700' },
     message: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginBottom: 4,
     },
     time: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
     },
     unreadDot: {
         width: 10,
@@ -272,11 +272,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.sm,
     },
     emptySubtitle: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
 });

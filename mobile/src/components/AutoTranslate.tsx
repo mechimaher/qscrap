@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     },
     originalText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         lineHeight: 22,
     },
     arabicText: {
@@ -392,12 +392,12 @@ const styles = StyleSheet.create({
     },
     toggleIcon: {
         fontSize: 10,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginRight: 4,
     },
     toggleText: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
     languageBadge: {
         backgroundColor: '#F5F5F5',
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     },
     languageText: {
         fontSize: 10,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         fontWeight: '500',
     },
     translationContainer: {
@@ -423,12 +423,12 @@ const styles = StyleSheet.create({
     },
     translatedText: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         lineHeight: 20,
     },
     confidenceHint: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         fontStyle: 'italic',
         marginTop: 2,
     },

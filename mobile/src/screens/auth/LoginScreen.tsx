@@ -253,13 +253,13 @@ const styles = StyleSheet.create({
     welcomeText: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Always dark on white card
         textAlign: 'center',
         letterSpacing: -0.5,
     },
     subtitleText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Always dark secondary on white card
         textAlign: 'center',
         marginBottom: Spacing.lg,
     },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Always dark on white card
         marginBottom: Spacing.xs,
     },
     input: {
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.lg,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Always dark input text on light background
         borderWidth: 1.5,
         borderColor: '#E8E8E8',
     },

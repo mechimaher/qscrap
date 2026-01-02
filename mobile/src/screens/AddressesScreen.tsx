@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    title: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text, letterSpacing: -0.5 },
+    title: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 }, // color set dynamically
     addButton: {
         width: 40,
         height: 40,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     },
     defaultCard: { borderColor: Colors.primary, borderWidth: 2 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    label: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.dark.text, marginRight: Spacing.sm },
+    label: { fontSize: FontSizes.md, fontWeight: '700', marginRight: Spacing.sm }, // color set dynamically
     defaultBadge: {
         fontSize: 10,
         color: Colors.primary,
@@ -335,13 +335,13 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.full,
         fontWeight: '600',
     },
-    addressText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    addressText: { fontSize: FontSizes.sm }, // color set dynamically
     cardActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
     editButton: { padding: Spacing.sm },
     editText: { fontSize: 18 },
     deleteButton: { padding: Spacing.sm },
     deleteText: { color: Colors.error, fontSize: 18 },
-    emptyText: { textAlign: 'center', color: Colors.dark.textMuted, marginTop: 50, fontSize: FontSizes.md },
+    emptyText: { textAlign: 'center', color: '#737373', marginTop: 50, fontSize: FontSizes.md },
 
     // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
@@ -351,13 +351,12 @@ const styles = StyleSheet.create({
         borderTopRightRadius: BorderRadius.xl,
         padding: Spacing.xl
     },
-    modalTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text, marginBottom: Spacing.lg },
-    inputLabel: { color: Colors.dark.textSecondary, marginBottom: Spacing.xs, fontSize: FontSizes.sm, fontWeight: '600' },
+    modalTitle: { fontSize: FontSizes.xl, fontWeight: '800', marginBottom: Spacing.lg }, // color set dynamically
+    inputLabel: { marginBottom: Spacing.xs, fontSize: FontSizes.sm, fontWeight: '600' }, // color set dynamically
     input: {
         backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        color: Colors.dark.text,
         marginBottom: Spacing.md,
         borderWidth: 1,
         borderColor: '#E8E8E8'
@@ -383,7 +382,7 @@ const styles = StyleSheet.create({
         borderColor: '#E8E8E8',
         backgroundColor: '#F8F9FA',
     },
-    cancelText: { color: Colors.dark.text, fontWeight: '600' },
+    cancelText: { fontWeight: '600' }, // color set dynamically
     saveButton: { flex: 2, borderRadius: BorderRadius.lg, overflow: 'hidden', ...Shadows.sm },
     saveGradient: { padding: Spacing.md, alignItems: 'center' },
     saveText: { color: '#fff', fontWeight: '700' },

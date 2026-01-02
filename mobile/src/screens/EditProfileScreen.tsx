@@ -253,7 +253,7 @@ export default function EditProfileScreen() {
                             value={fullName}
                             onChangeText={setFullName}
                             placeholder="Enter your full name"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                         />
                     </View>
 
@@ -264,7 +264,7 @@ export default function EditProfileScreen() {
                             value={phoneNumber}
                             editable={false}
                             placeholder="Phone number"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                         />
                         <Text style={styles.inputHint}>Contact support to change phone number</Text>
                     </View>
@@ -276,7 +276,7 @@ export default function EditProfileScreen() {
                             value={email}
                             onChangeText={setEmail}
                             placeholder="Enter your email"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             keyboardType="email-address"
                             autoCapitalize="none"
                         />
@@ -311,7 +311,7 @@ export default function EditProfileScreen() {
                             value={currentPassword}
                             onChangeText={setCurrentPassword}
                             placeholder="Enter current password"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             secureTextEntry
                         />
                     </View>
@@ -323,7 +323,7 @@ export default function EditProfileScreen() {
                             value={newPassword}
                             onChangeText={setNewPassword}
                             placeholder="Enter new password"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             secureTextEntry
                         />
                     </View>
@@ -335,7 +335,7 @@ export default function EditProfileScreen() {
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             placeholder="Confirm new password"
-                            placeholderTextColor={Colors.dark.textMuted}
+                            placeholderTextColor="#999"
                             secureTextEntry
                         />
                     </View>
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' } // Previously Colors.dark.text,
     scrollView: { flex: 1, padding: Spacing.lg },
     avatarSection: {
         alignItems: 'center',
@@ -431,14 +431,14 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.lg,
     },
     inputGroup: { marginBottom: Spacing.md },
     label: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginBottom: Spacing.xs,
     },
     input: {
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         borderWidth: 1,
         borderColor: '#E8E8E8',
     },
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     },
     inputHint: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         marginTop: Spacing.xs,
     },
     saveButton: {
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     deleteAccountText: { color: Colors.error, fontSize: FontSizes.md, fontWeight: '600' },
     deleteHint: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         marginTop: Spacing.sm,
         textAlign: 'center',
     },

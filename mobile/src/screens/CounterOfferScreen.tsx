@@ -410,7 +410,7 @@ export default function CounterOfferScreen() {
                                 value={proposedAmount}
                                 onChangeText={setProposedAmount}
                                 placeholder="Enter your proposed amount"
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 keyboardType="numeric"
                             />
                         </View>
@@ -422,7 +422,7 @@ export default function CounterOfferScreen() {
                                 value={message}
                                 onChangeText={setMessage}
                                 placeholder="Explain your offer..."
-                                placeholderTextColor={Colors.dark.textMuted}
+                                placeholderTextColor="#999"
                                 multiline
                                 maxLength={200}
                             />
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text, letterSpacing: -0.5 },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a', // Previously Colors.dark.text letterSpacing: -0.5 },
     scrollView: { flex: 1, padding: Spacing.lg },
     bidCard: {
         backgroundColor: '#fff',
@@ -498,8 +498,8 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
         ...Shadows.sm,
     },
-    garageName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.dark.text },
-    partName: { fontSize: FontSizes.md, color: Colors.dark.textSecondary, marginTop: Spacing.xs },
+    garageName: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' } // Previously Colors.dark.text,
+    partName: { fontSize: FontSizes.md, color: '#525252', // Previously Colors.dark.textSecondary marginTop: Spacing.xs },
     priceRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -509,13 +509,13 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#F0F0F0',
     },
-    priceLabel: { fontSize: FontSizes.md, color: Colors.dark.textSecondary },
+    priceLabel: { fontSize: FontSizes.md, color: '#525252' } // Previously Colors.dark.textSecondary,
     priceAmount: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.primary },
     roundsInfo: {
         marginTop: Spacing.md,
         alignItems: 'center',
     },
-    roundsText: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
+    roundsText: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
     roundsDots: { flexDirection: 'row', marginTop: Spacing.sm, gap: Spacing.sm },
     roundDot: {
         width: 14,
@@ -536,12 +536,12 @@ const styles = StyleSheet.create({
     pendingAmount: {
         fontSize: FontSizes.xxxl,
         fontWeight: '800',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginTop: Spacing.sm,
     },
     pendingMessage: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         fontStyle: 'italic',
         marginTop: Spacing.sm,
     },
@@ -578,12 +578,12 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
         ...Shadows.sm,
     },
-    formTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.dark.text, marginBottom: Spacing.lg },
+    formTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a', // Previously Colors.dark.text marginBottom: Spacing.lg },
     inputGroup: { marginBottom: Spacing.md },
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginBottom: Spacing.xs,
     },
     amountInput: {
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         borderWidth: 1,
         borderColor: '#E8E8E8',
     },
@@ -620,10 +620,10 @@ const styles = StyleSheet.create({
         ...Shadows.sm,
     },
     maxRoundsIcon: { fontSize: 48, marginBottom: Spacing.md },
-    maxRoundsTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.dark.text },
+    maxRoundsTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' } // Previously Colors.dark.text,
     maxRoundsText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         textAlign: 'center',
         marginTop: Spacing.sm,
     },
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
     historyTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.md,
     },
     historyItem: {
@@ -656,18 +656,18 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: Spacing.xs,
     },
-    historyRound: { fontSize: FontSizes.xs, color: Colors.dark.textMuted, fontWeight: '600' },
+    historyRound: { fontSize: FontSizes.xs, color: '#737373', // Previously Colors.dark.textMuted fontWeight: '600' },
     historyStatus: { fontSize: FontSizes.xs, fontWeight: '700' },
     statusAccepted: { color: Colors.success },
     statusRejected: { color: Colors.error },
     statusPending: { color: '#D97706' },
-    historyBy: { fontSize: FontSizes.sm, color: Colors.dark.textSecondary },
-    historyAmount: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.dark.text },
+    historyBy: { fontSize: FontSizes.sm, color: '#525252' } // Previously Colors.dark.textSecondary,
+    historyAmount: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' } // Previously Colors.dark.text,
     historyMessage: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         fontStyle: 'italic',
         marginTop: Spacing.xs,
     },
-    historyDate: { fontSize: FontSizes.xs, color: Colors.dark.textMuted, marginTop: Spacing.xs },
+    historyDate: { fontSize: FontSizes.xs, color: '#737373', // Previously Colors.dark.textMuted marginTop: Spacing.xs },
 });

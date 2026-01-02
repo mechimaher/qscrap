@@ -350,11 +350,11 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     statLabel: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginTop: 2,
     },
     breakdownCard: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     breakdownTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.md,
     },
     breakdownRow: {
@@ -379,12 +379,12 @@ const styles = StyleSheet.create({
     },
     breakdownLabel: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
     breakdownValue: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     tipsValue: {
         color: Colors.success,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     totalLabel: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     totalValue: {
         fontSize: FontSizes.xl,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     recentTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.md,
     },
     deliveryRow: {
@@ -447,11 +447,11 @@ const styles = StyleSheet.create({
     deliveryOrder: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     deliveryTime: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
     deliveryAmounts: {
         alignItems: 'flex-end',
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     deliveryAmount: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     deliveryTip: {
         fontSize: FontSizes.xs,
@@ -504,11 +504,11 @@ const styles = StyleSheet.create({
     fuelTitle: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     fuelHint: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
 });
 

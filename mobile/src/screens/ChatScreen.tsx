@@ -291,7 +291,7 @@ export default function ChatScreen() {
                     <TextInput
                         style={styles.textInput}
                         placeholder="Type a message..."
-                        placeholderTextColor={Colors.dark.textMuted}
+                        placeholderTextColor="#999"
                         value={newMessage}
                         onChangeText={setNewMessage}
                         multiline
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     },
     backText: {
         fontSize: 20,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     headerInfo: {
         flex: 1,
@@ -354,11 +354,11 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     headerSubtitle: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginTop: 2,
     },
     headerIcon: {
@@ -397,11 +397,11 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: FontSizes.lg,
         fontWeight: '600',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     emptyHint: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginTop: Spacing.xs,
     },
     messageBubble: {
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     },
     messageText: {
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         lineHeight: 22,
     },
     myMessageText: {
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     },
     messageTime: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
         marginTop: 4,
         textAlign: 'right',
     },
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     },
     quickActionText: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
     },
     inputContainer: {
         flexDirection: 'row',
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.sm,
         paddingTop: Spacing.sm,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         maxHeight: 100,
         marginRight: Spacing.sm,
         borderWidth: 1,

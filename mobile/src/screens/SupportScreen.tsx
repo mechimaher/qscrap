@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' } // Previously Colors.dark.text,
     newTicketButton: {
         marginHorizontal: Spacing.lg,
         marginVertical: Spacing.md,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     ticketSubject: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         flex: 1,
         marginRight: Spacing.md,
     },
@@ -305,12 +305,12 @@ const styles = StyleSheet.create({
     statusText: { fontSize: FontSizes.xs, fontWeight: '600' },
     ticketMessage: {
         fontSize: FontSizes.sm,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
         marginBottom: Spacing.sm,
     },
     ticketDate: {
         fontSize: FontSizes.xs,
-        color: Colors.dark.textMuted,
+        color: '#737373', // Previously Colors.dark.textMuted
     },
     emptyContainer: {
         flex: 1,
@@ -322,12 +322,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.sm,
     },
     emptySubtitle: {
         fontSize: FontSizes.md,
-        color: Colors.dark.textSecondary,
+        color: '#525252', // Previously Colors.dark.textSecondary
     },
     modalOverlay: {
         flex: 1,
@@ -347,14 +347,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.lg,
     },
-    modalTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: Colors.dark.text },
-    closeButton: { fontSize: 24, color: Colors.dark.textMuted },
+    modalTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' } // Previously Colors.dark.text,
+    closeButton: { fontSize: 24, color: '#737373' } // Previously Colors.dark.textMuted,
     input: {
         backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: Colors.dark.text,
+        color: '#1a1a1a', // Previously Colors.dark.text
         marginBottom: Spacing.md,
         borderWidth: 1,
         borderColor: '#E8E8E8',
