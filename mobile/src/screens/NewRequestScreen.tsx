@@ -278,7 +278,13 @@ export default function NewRequestScreen() {
 
                     {/* Vehicle Metadata */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Vehicle Information</Text>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionIcon}>🚗</Text>
+                            <Text style={styles.sectionTitle}>Vehicle Information</Text>
+                            <View style={styles.requiredBadge}>
+                                <Text style={styles.requiredText}>REQUIRED</Text>
+                            </View>
+                        </View>
 
                         {/* Make & Year Row */}
                         <View style={styles.row}>
@@ -327,7 +333,10 @@ export default function NewRequestScreen() {
 
                     {/* Part Details - Enhanced with Categories */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Part Details</Text>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionIcon}>🔧</Text>
+                            <Text style={styles.sectionTitle}>Part Details</Text>
+                        </View>
 
                         {/* Category */}
                         <SearchableDropdown
@@ -394,7 +403,13 @@ export default function NewRequestScreen() {
 
                     {/* Images Section */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Photos (Optional)</Text>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionIcon}>📷</Text>
+                            <Text style={styles.sectionTitle}>Photos</Text>
+                            <View style={styles.optionalTag}>
+                                <Text style={styles.optionalTagText}>Optional</Text>
+                            </View>
+                        </View>
 
                         <View style={styles.imageActions}>
                             <TouchableOpacity style={styles.imageButton} onPress={handleTakePhoto}>
@@ -431,7 +446,10 @@ export default function NewRequestScreen() {
 
                     {/* Delivery Section */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Delivery Location</Text>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionIcon}>📦</Text>
+                            <Text style={styles.sectionTitle}>Delivery Location</Text>
+                        </View>
 
                         <View style={styles.locationActions}>
                             <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
@@ -533,7 +551,40 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: Colors.dark.text,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: Spacing.md,
+    },
+    sectionIcon: {
+        fontSize: 20,
+        marginRight: Spacing.sm,
+    },
+    requiredBadge: {
+        marginLeft: 'auto',
+        backgroundColor: Colors.primary + '15',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+    },
+    requiredText: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: Colors.primary,
+        letterSpacing: 0.5,
+    },
+    optionalTag: {
+        marginLeft: 'auto',
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+    },
+    optionalTagText: {
+        fontSize: 9,
+        fontWeight: '600',
+        color: Colors.dark.textSecondary,
     },
     row: { flexDirection: 'row', gap: Spacing.md },
     halfInput: { flex: 1 },

@@ -283,100 +283,149 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
 
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>VIN / Chassis Number</Text>
-            <Text style={styles.hint}>
-                💡 Enter 17-character VIN to auto-fill vehicle info
-            </Text>
-
-            <View style={styles.inputRow}>
-                <View style={styles.inputWrapper}>
-                    <TextInput
-                        style={[
-                            styles.input,
-                            validationError && styles.inputError,
-                            isValid && styles.inputValid,
-                        ]}
-                        placeholder="1HGCG5655WA042039"
-                        placeholderTextColor={Colors.dark.textMuted}
-                        value={value}
-                        onChangeText={handleTextChange}
-                        autoCapitalize="characters"
-                        maxLength={17}
-                    />
-                    <Text style={[
-                        styles.charCount,
-                        value.length === 17 && styles.charCountValid,
-                    ]}>
-                        {value.length}/17
+            <View style={styles.cardWrapper}>
+                <LinearGradient
+                    colors={['#22c55e', '#16a34a']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.accentBar}
+                />
+                <View style={styles.cardContent}>
+                    <View style={styles.labelRow}>
+                        <Text style={styles.labelIcon}>🔐</Text>
+                        <Text style={styles.label}>VIN / Chassis Number</Text>
+                        <View style={styles.optionalBadge}>
+                            <Text style={styles.optionalText}>SMART FILL</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.hint}>
+                        💡 Enter 17-character VIN to auto-fill vehicle info
                     </Text>
-                </View>
 
-                <TouchableOpacity
-                    style={[styles.decodeButton, !value && styles.decodeButtonDisabled]}
-                    onPress={handleDecode}
-                    disabled={!value || isDecoding}
-                >
-                    <LinearGradient
-                        colors={value ? ['#22c55e', '#16a34a'] : ['#d1d5db', '#9ca3af']}
-                        style={styles.decodeGradient}
-                    >
-                        {isDecoding ? (
-                            <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                            <>
-                                <Text style={styles.decodeIcon}>🔍</Text>
-                                <Text style={styles.decodeText}>Decode</Text>
-                            </>
-                        )}
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
+                    <View style={styles.inputRow}>
+                        <View style={styles.inputWrapper}>
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    validationError && styles.inputError,
+                                    isValid && styles.inputValid,
+                                ]}
+                                placeholder="1HGCG5655WA042039"
+                                placeholderTextColor={Colors.dark.textMuted}
+                                value={value}
+                                onChangeText={handleTextChange}
+                                autoCapitalize="characters"
+                                maxLength={17}
+                            />
+                            <Text style={[
+                                styles.charCount,
+                                value.length === 17 && styles.charCountValid,
+                            ]}>
+                                {value.length}/17
+                            </Text>
+                        </View>
 
-            {validationError && (
-                <Text style={styles.errorText}>⚠️ {validationError}</Text>
-            )}
+                        <TouchableOpacity
+                            style={[styles.decodeButton, !value && styles.decodeButtonDisabled]}
+                            onPress={handleDecode}
+                            disabled={!value || isDecoding}
+                        >
+                            <LinearGradient
+                                colors={value ? ['#22c55e', '#16a34a'] : ['#d1d5db', '#9ca3af']}
+                                style={styles.decodeGradient}
+                            >
+                                {isDecoding ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                ) : (
+                                    <>
+                                        <Text style={styles.decodeIcon}>🔍</Text>
+                                        <Text style={styles.decodeText}>Decode</Text>
+                                    </>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
 
-            {decodedInfo && (
-                <View style={styles.resultCard}>
-                    <Text style={styles.resultTitle}>✅ Decoded Vehicle</Text>
-                    <View style={styles.resultRow}>
-                        <Text style={styles.resultLabel}>Make:</Text>
-                        <Text style={styles.resultValue}>{decodedInfo.make}</Text>
-                    </View>
-                    <View style={styles.resultRow}>
-                        <Text style={styles.resultLabel}>Model:</Text>
-                        <Text style={styles.resultValue}>{decodedInfo.model}</Text>
-                    </View>
-                    <View style={styles.resultRow}>
-                        <Text style={styles.resultLabel}>Year:</Text>
-                        <Text style={styles.resultValue}>{decodedInfo.year}</Text>
-                    </View>
-                    {decodedInfo.country && (
-                        <View style={styles.resultRow}>
-                            <Text style={styles.resultLabel}>Origin:</Text>
-                            <Text style={styles.resultValue}>{decodedInfo.country}</Text>
+                    {validationError && (
+                        <Text style={styles.errorText}>⚠️ {validationError}</Text>
+                    )}
+
+                    {decodedInfo && (
+                        <View style={styles.resultCard}>
+                            <Text style={styles.resultTitle}>✅ Decoded Vehicle</Text>
+                            <View style={styles.resultRow}>
+                                <Text style={styles.resultLabel}>Make:</Text>
+                                <Text style={styles.resultValue}>{decodedInfo.make}</Text>
+                            </View>
+                            <View style={styles.resultRow}>
+                                <Text style={styles.resultLabel}>Model:</Text>
+                                <Text style={styles.resultValue}>{decodedInfo.model}</Text>
+                            </View>
+                            <View style={styles.resultRow}>
+                                <Text style={styles.resultLabel}>Year:</Text>
+                                <Text style={styles.resultValue}>{decodedInfo.year}</Text>
+                            </View>
+                            {decodedInfo.country && (
+                                <View style={styles.resultRow}>
+                                    <Text style={styles.resultLabel}>Origin:</Text>
+                                    <Text style={styles.resultValue}>{decodedInfo.country}</Text>
+                                </View>
+                            )}
                         </View>
                     )}
                 </View>
-            )}
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: Spacing.md,
+        marginTop: Spacing.lg,
+    },
+    cardWrapper: {
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.md,
+    },
+    accentBar: {
+        height: 4,
+    },
+    cardContent: {
+        padding: Spacing.md,
+    },
+    labelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.xs,
+    },
+    labelIcon: {
+        fontSize: 16,
+        marginRight: Spacing.xs,
     },
     label: {
-        fontSize: FontSizes.sm,
-        fontWeight: '600',
-        color: Colors.dark.textSecondary,
-        marginBottom: Spacing.xs,
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        color: Colors.dark.text,
+    },
+    optionalBadge: {
+        marginLeft: 'auto',
+        backgroundColor: '#22c55e15',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+    },
+    optionalText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#16a34a',
+        letterSpacing: 0.5,
     },
     hint: {
         fontSize: FontSizes.xs,
         color: Colors.dark.textMuted,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.md,
     },
     inputRow: {
         flexDirection: 'row',
