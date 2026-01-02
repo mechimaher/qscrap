@@ -26,11 +26,13 @@ const DEFAULT_STEPS: TimelineStep[] = [
     { key: 'ready_for_pickup', label: 'Ready for Pickup', icon: '🏭' },
     { key: 'picked_up', label: 'Picked Up', icon: '🚗' },
     { key: 'in_transit', label: 'In Transit', icon: '🛣️' },
-    { key: 'arriving', label: 'Arriving', icon: '🏁' },
-    { key: 'delivered', label: 'Delivered', icon: '✅' },
+    { key: 'arriving', label: 'Arriving Soon', icon: '🏁' },
+    { key: 'delivered', label: 'Delivered', icon: '📬' },
+    { key: 'completed', label: 'Completed', icon: '👑' },
 ];
 
 // Map order statuses to timeline index
+// Premium 8-step journey: confirmed → preparing → ready → picked → transit → arriving → delivered → completed
 const STATUS_MAP: Record<string, number> = {
     'confirmed': 0,
     'preparing': 1,
@@ -43,7 +45,7 @@ const STATUS_MAP: Record<string, number> = {
     'in_transit': 4,
     'arriving': 5,
     'delivered': 6,
-    'completed': 6,
+    'completed': 7,
 };
 
 /**
