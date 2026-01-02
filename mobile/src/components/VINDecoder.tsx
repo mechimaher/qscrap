@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import VINScanner from './VINScanner';
 
 interface VINDecoderProps {
     value: string;
@@ -693,14 +694,27 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
     const [isDecoding, setIsDecoding] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
     const [decodedInfo, setDecodedInfo] = useState<DecodedVIN | null>(null);
+    const [scannerVisible, setScannerVisible] = useState(false);
 
-    const handleDecode = async () => {
-        if (!value) {
+    // Handle VIN from camera scanner
+    const handleScannedVIN = (vin: string, confidence: number) => {
+        onChangeText(vin);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        // Auto-decode after scan
+        setTimeout(() => {
+            handleDecode(vin);
+        }, 500);
+    };
+
+    const handleDecode = async (vinToUse?: string) => {
+        const vinValue = vinToUse || value;
+        if (!vinValue) {
             Alert.alert('Enter VIN', 'Please enter a VIN number to decode');
             return;
         }
 
-        const validation = validateVIN(value);
+        const validation = validateVIN(vinValue);
         if (!validation.valid) {
             setValidationError(validation.error || 'Invalid VIN');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -712,13 +726,13 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
 
         try {
             // Try NHTSA API first for accurate results
-            let decoded = await decodeVINWithAPI(value);
+            let decoded = await decodeVINWithAPI(vinValue);
             let usedAPI = true;
 
             // Fallback to local database if API fails
             if (!decoded) {
                 console.log('NHTSA API failed, using local database');
-                decoded = decodeVINLocally(value);
+                decoded = decodeVINLocally(vinValue);
                 usedAPI = false;
             }
 
@@ -802,6 +816,26 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
                         💡 Enter 17-character VIN to auto-fill vehicle info
                     </Text>
 
+                    {/* Scan VIN Button - NEW PREMIUM FEATURE */}
+                    <TouchableOpacity
+                        style={styles.scanButton}
+                        onPress={() => setScannerVisible(true)}
+                    >
+                        <LinearGradient
+                            colors={[Colors.primary, '#7a1f3d']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.scanGradient}
+                        >
+                            <Text style={styles.scanIcon}>📷</Text>
+                            <View style={styles.scanTextContainer}>
+                                <Text style={styles.scanTitle}>Scan Registration Card</Text>
+                                <Text style={styles.scanSubtitle}>Auto-capture VIN from Qatar card</Text>
+                            </View>
+                            <Text style={styles.scanArrow}>→</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
                     {/* VIN Input - Full Width */}
                     <TextInput
                         style={[
@@ -837,7 +871,7 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
                     {/* Decode Button - Full Width */}
                     <TouchableOpacity
                         style={[styles.decodeButton, !value && styles.decodeButtonDisabled]}
-                        onPress={handleDecode}
+                        onPress={() => handleDecode()}
                         disabled={!value || isDecoding}
                     >
                         <LinearGradient
@@ -886,6 +920,13 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
                     )}
                 </View>
             </View>
+
+            {/* VIN Scanner Modal */}
+            <VINScanner
+                visible={scannerVisible}
+                onClose={() => setScannerVisible(false)}
+                onVINDetected={handleScannedVIN}
+            />
         </View>
     );
 };
@@ -1048,6 +1089,41 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
         fontWeight: '600',
         color: '#1a1a1a',
+    },
+    // Scan Button Styles - Premium VIN Scanner
+    scanButton: {
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        marginBottom: Spacing.md,
+        ...Shadows.md,
+    },
+    scanGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.lg,
+    },
+    scanIcon: {
+        fontSize: 28,
+        marginRight: Spacing.md,
+    },
+    scanTextContainer: {
+        flex: 1,
+    },
+    scanTitle: {
+        color: '#fff',
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
+    scanSubtitle: {
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: FontSizes.xs,
+        marginTop: 2,
+    },
+    scanArrow: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: '300',
     },
 });
 

@@ -258,3 +258,131 @@ function findPartialVIN(text: string): string | null {
     return null;
 }
 
+/**
+ * Recognize VIN from base64 image (for mobile app)
+ * Accepts JSON body with { image: "base64string" }
+ */
+export async function recognizeVINBase64(req: Request, res: Response): Promise<void> {
+    try {
+        // Check if API key is configured
+        if (!OCR_SPACE_API_KEY) {
+            console.error('[OCR] OCR_SPACE_API_KEY not configured');
+            res.status(503).json({
+                vin: null,
+                confidence: 0,
+                error: 'OCR service not configured'
+            });
+            return;
+        }
+
+        const { image } = req.body;
+
+        if (!image) {
+            res.status(400).json({
+                vin: null,
+                confidence: 0,
+                error: 'No image data provided'
+            });
+            return;
+        }
+
+        console.log('[OCR] Processing base64 image, length:', image.length);
+
+        // Prepare base64 image for OCR.space API
+        let base64Image = image;
+        // Add data URI prefix if not present
+        if (!base64Image.startsWith('data:image')) {
+            base64Image = `data:image/jpeg;base64,${base64Image}`;
+        }
+
+        // Use URL-encoded form data
+        const formBody = new URLSearchParams();
+        formBody.append('base64Image', base64Image);
+        formBody.append('language', 'eng');
+        formBody.append('isOverlayRequired', 'false');
+        formBody.append('detectOrientation', 'true');
+        formBody.append('scale', 'true');
+        formBody.append('OCREngine', '2'); // Engine 2 is better for documents
+        formBody.append('filetype', 'JPG');
+
+        console.log('[OCR] Calling OCR.space API for mobile request');
+
+        const response = await fetch(OCR_SPACE_API_URL, {
+            method: 'POST',
+            headers: {
+                'apikey': OCR_SPACE_API_KEY,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formBody.toString()
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[OCR] OCR.space API error:', errorText);
+            res.json({
+                vin: null,
+                confidence: 0,
+                error: 'OCR service error'
+            });
+            return;
+        }
+
+        const data = await response.json() as {
+            ParsedResults?: Array<{ ParsedText?: string }>;
+            IsErroredOnProcessing?: boolean;
+            ErrorMessage?: string;
+        };
+
+        if (data.IsErroredOnProcessing || !data.ParsedResults?.[0]?.ParsedText) {
+            console.error('[OCR] OCR.space parsing error:', data.ErrorMessage);
+            res.json({
+                vin: null,
+                confidence: 0,
+                raw_text: '',
+                error: data.ErrorMessage || 'Could not parse image'
+            });
+            return;
+        }
+
+        const ocrText = data.ParsedResults[0].ParsedText;
+        console.log('[OCR] Mobile OCR raw text:', ocrText.substring(0, 200));
+
+        // Extract VIN from OCR text
+        const vin = extractVINFromText(ocrText);
+
+        if (vin) {
+            console.log('[OCR] Mobile extracted VIN:', vin);
+            res.json({
+                vin: vin,
+                confidence: 85,
+                raw_text: ocrText.substring(0, 500)
+            });
+        } else {
+            // Try partial match
+            const partial = findPartialVIN(ocrText);
+            if (partial) {
+                console.log('[OCR] Mobile partial VIN:', partial);
+                res.json({
+                    vin: partial,
+                    confidence: 60,
+                    raw_text: ocrText.substring(0, 500)
+                });
+            } else {
+                res.json({
+                    vin: null,
+                    confidence: 0,
+                    raw_text: ocrText.substring(0, 500),
+                    error: 'VIN not found in image'
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error('[OCR] Mobile OCR error:', error);
+        res.status(500).json({
+            vin: null,
+            confidence: 0,
+            error: error instanceof Error ? error.message : 'OCR processing failed'
+        });
+    }
+}

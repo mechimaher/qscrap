@@ -448,6 +448,24 @@ class ApiService {
         });
     }
 
+    // VIN OCR - Server-side text recognition
+    async ocrVIN(imageBase64: string): Promise<{ vin: string | null; confidence: number; raw_text?: string }> {
+        try {
+            const response = await this.request<{ vin: string | null; confidence: number; raw_text?: string }>(
+                '/ocr/vin/base64',
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ image: imageBase64 })
+                }
+            );
+            return response;
+        } catch (error) {
+            console.log('[API] OCR VIN error:', error);
+            // Return empty result on error - scanner will handle gracefully
+            return { vin: null, confidence: 0 };
+        }
+    }
+
 }
 
 export const api = new ApiService();
