@@ -26,6 +26,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import SearchableDropdown from '../components/SearchableDropdown';
 
 import ImageViewerModal from '../components/ImageViewerModal';
+import VINDecoder, { DecodedVIN } from '../components/VINDecoder';
 import { CAR_MAKES, CAR_MODELS, YEARS } from '../constants/carData';
 import { Address } from '../services/api';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
@@ -311,21 +312,17 @@ export default function NewRequestScreen() {
                             disabled={!carMake}
                         />
 
-                        {/* VIN */}
-                        <Text style={styles.inputLabel}>VIN / Chassis Number (Optional)</Text>
-                        <Text style={styles.inputHint}>Example: 1HGCG5655WA042039</Text>
-                        <View style={styles.vinContainer}>
-                            <TextInput
-                                style={styles.vinInput}
-                                placeholder="Enter 17-character VIN"
-                                placeholderTextColor={Colors.dark.textSecondary}
-                                value={vinNumber}
-                                onChangeText={setVinNumber}
-                                autoCapitalize="characters"
-                                maxLength={17}
-                            />
-
-                        </View>
+                        {/* VIN Decoder */}
+                        <VINDecoder
+                            value={vinNumber}
+                            onChangeText={setVinNumber}
+                            onDecoded={(decoded: DecodedVIN) => {
+                                // Auto-fill vehicle info from decoded VIN
+                                if (decoded.make) setCarMake(decoded.make);
+                                if (decoded.model) setCarModel(decoded.model);
+                                if (decoded.year) setCarYear(decoded.year);
+                            }}
+                        />
                     </View>
 
                     {/* Part Details - Enhanced with Categories */}
