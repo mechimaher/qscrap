@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Alert,
     Platform,
+    Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -720,6 +721,51 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
     const [decodedInfo, setDecodedInfo] = useState<DecodedVIN | null>(null);
     const [scannerVisible, setScannerVisible] = useState(false);
 
+    // Pulsing animation for scan button attention grabber
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const glowAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        // Create pulsing animation to draw attention to scan button
+        const pulseLoop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.03,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ])
+        );
+
+        const glowLoop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(glowAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: false,
+                }),
+                Animated.timing(glowAnim, {
+                    toValue: 0,
+                    duration: 1000,
+                    useNativeDriver: false,
+                }),
+            ])
+        );
+
+        pulseLoop.start();
+        glowLoop.start();
+
+        return () => {
+            pulseLoop.stop();
+            glowLoop.stop();
+        };
+    }, []);
+
     // Handle VIN from camera scanner
     const handleScannedVIN = (vin: string, confidence: number) => {
         onChangeText(vin);
@@ -840,25 +886,41 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
                         💡 Enter 17-character VIN to auto-fill vehicle info
                     </Text>
 
-                    {/* Scan VIN Button - NEW PREMIUM FEATURE */}
-                    <TouchableOpacity
-                        style={styles.scanButton}
-                        onPress={() => setScannerVisible(true)}
+                    {/* Scan VIN Button - PREMIUM PULSING FEATURE */}
+                    <Animated.View
+                        style={[{
+                            transform: [{ scale: pulseAnim }],
+                            shadowColor: Colors.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: glowAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.3, 0.8],
+                            }),
+                            shadowRadius: glowAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [4, 12],
+                            }),
+                        }]}
                     >
-                        <LinearGradient
-                            colors={[Colors.primary, '#7a1f3d']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.scanGradient}
+                        <TouchableOpacity
+                            style={styles.scanButton}
+                            onPress={() => setScannerVisible(true)}
                         >
-                            <Text style={styles.scanIcon}>📷</Text>
-                            <View style={styles.scanTextContainer}>
-                                <Text style={styles.scanTitle}>Scan Registration Card</Text>
-                                <Text style={styles.scanSubtitle}>Auto-capture VIN from Qatar card</Text>
-                            </View>
-                            <Text style={styles.scanArrow}>→</Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                            <LinearGradient
+                                colors={[Colors.primary, '#7a1f3d']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.scanGradient}
+                            >
+                                <Text style={styles.scanIcon}>📷</Text>
+                                <View style={styles.scanTextContainer}>
+                                    <Text style={styles.scanTitle}>📌 START HERE - Scan Registration Card</Text>
+                                    <Text style={styles.scanSubtitle}>Auto-capture VIN from Qatar card</Text>
+                                </View>
+                                <Text style={styles.scanArrow}>→</Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </Animated.View>
 
                     {/* VIN Input - Full Width */}
                     <TextInput

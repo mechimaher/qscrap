@@ -286,6 +286,25 @@ export default function NewRequestScreen() {
                             </View>
                         </View>
 
+                        {/* VIN Decoder - FIRST to guide customers */}
+                        <VINDecoder
+                            value={vinNumber}
+                            onChangeText={setVinNumber}
+                            onDecoded={(decoded: DecodedVIN) => {
+                                // Auto-fill vehicle info from decoded VIN
+                                if (decoded.make) setCarMake(decoded.make);
+                                if (decoded.model) setCarModel(decoded.model);
+                                if (decoded.year) setCarYear(decoded.year);
+                            }}
+                        />
+
+                        {/* Divider with OR */}
+                        <View style={styles.orDivider}>
+                            <View style={styles.orLine} />
+                            <Text style={styles.orText}>OR ENTER MANUALLY</Text>
+                            <View style={styles.orLine} />
+                        </View>
+
                         {/* Make & Year Row */}
                         <View style={styles.row}>
                             <View style={styles.halfInput}>
@@ -308,27 +327,16 @@ export default function NewRequestScreen() {
                             </View>
                         </View>
 
-                        {/* Model */}
+                        {/* Model - with allowCustom for manual entry */}
                         <SearchableDropdown
                             label="Model *"
-                            placeholder={carMake ? "Select Model" : "Select Make first"}
+                            placeholder={carMake ? "Select or type model" : "Select Make first"}
                             items={availableModels}
                             value={carModel}
                             onSelect={setCarModel}
                             disabled={!carMake}
                         />
-
-                        {/* VIN Decoder */}
-                        <VINDecoder
-                            value={vinNumber}
-                            onChangeText={setVinNumber}
-                            onDecoded={(decoded: DecodedVIN) => {
-                                // Auto-fill vehicle info from decoded VIN
-                                if (decoded.make) setCarMake(decoded.make);
-                                if (decoded.model) setCarModel(decoded.model);
-                                if (decoded.year) setCarYear(decoded.year);
-                            }}
-                        />
+                        <Text style={styles.modelHint}>💡 Can't find your model? Just type it above</Text>
                     </View>
 
                     {/* Part Details - Enhanced with Categories */}
@@ -720,4 +728,29 @@ const styles = StyleSheet.create({
     submitButtonDisabled: { opacity: 0.7 },
     submitGradient: { paddingVertical: Spacing.lg, alignItems: 'center' },
     submitText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
+    // OR Divider styles
+    orDivider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: Spacing.lg,
+        marginBottom: Spacing.md,
+    },
+    orLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E8E8E8',
+    },
+    orText: {
+        paddingHorizontal: Spacing.md,
+        fontSize: FontSizes.xs,
+        color: '#9ca3af',
+        fontWeight: '600',
+        letterSpacing: 0.5,
+    },
+    modelHint: {
+        fontSize: FontSizes.xs,
+        color: '#737373',
+        marginTop: Spacing.xs,
+        fontStyle: 'italic',
+    },
 });
