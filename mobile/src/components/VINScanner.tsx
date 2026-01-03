@@ -107,8 +107,8 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
         return 'moving';
     }, []);
 
-    // Take photo and process
-    const captureAndProcess = async () => {
+    // Manual capture - user presses button to capture
+    const handleManualCapture = async () => {
         if (!cameraRef.current || scanState !== 'scanning') return;
 
         try {
@@ -150,9 +150,6 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                 const correctedVIN = autoCorrectVIN(ocrResult.vin);
                 const confidence = getVINConfidence(correctedVIN);
 
-                // Add to scan results for multi-frame consensus
-                setScanResults(prev => [...prev, correctedVIN]);
-
                 if (isValidVIN(correctedVIN)) {
                     // Valid VIN found!
                     setDetectedVIN(correctedVIN);
@@ -161,57 +158,22 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                     setStatusMessage('✅ VIN detected successfully!');
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 } else {
-                    // Invalid checksum - need more frames
-                    setStatusMessage('🔄 Verifying... Please hold steady');
+                    // Invalid checksum - try again
+                    setStatusMessage('⚠️ Could not verify VIN. Try again.');
                     setScanState('scanning');
                 }
             } else {
                 // No VIN found - retry
-                setStatusMessage('🔄 VIN not found. Adjusting...');
+                setStatusMessage('🔄 VIN not found. Please try again.');
                 setScanState('scanning');
             }
         } catch (error: any) {
             console.log('[VINScanner] Error:', error);
-
-            // Try multi-frame consensus with existing results
-            const consensusVIN = findConsensusVIN(scanResults);
-            if (consensusVIN) {
-                setDetectedVIN(consensusVIN);
-                setVinConfidence(getVINConfidence(consensusVIN));
-                setScanState('confirming');
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } else {
-                setStatusMessage('⚠️ Could not read VIN. Try again.');
-                setScanState('error');
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            }
+            setStatusMessage('⚠️ Could not read VIN. Try again.');
+            setScanState('error');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
     };
-
-    // Auto-capture logic
-    useEffect(() => {
-        if (scanState !== 'scanning') return;
-
-        const interval = setInterval(() => {
-            const quality = checkFrameQuality();
-            setFrameQuality(quality);
-            setStatusMessage(getStatusMessage(quality));
-
-            if (quality === 'good') {
-                setGoodFrameCount(prev => prev + 1);
-            } else {
-                setGoodFrameCount(0);
-            }
-
-            // Auto-capture after 3 consecutive good frames
-            if (goodFrameCount >= 3) {
-                captureAndProcess();
-                setGoodFrameCount(0);
-            }
-        }, 500);
-
-        return () => clearInterval(interval);
-    }, [scanState, goodFrameCount, checkFrameQuality, getStatusMessage]);
 
     // Start scanning
     const startScan = () => {
@@ -405,6 +367,21 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                         <TouchableOpacity style={styles.manualButton} onPress={handleClose}>
                             <Text style={styles.manualText}>Enter Manually</Text>
                         </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Manual Capture Button */}
+                {scanState === 'scanning' && (
+                    <View style={styles.captureContainer}>
+                        <TouchableOpacity
+                            style={styles.captureButton}
+                            onPress={handleManualCapture}
+                        >
+                            <View style={styles.captureButtonInner}>
+                                <Text style={styles.captureIcon}>📸</Text>
+                            </View>
+                        </TouchableOpacity>
+                        <Text style={styles.captureHint}>Tap to capture VIN</Text>
                     </View>
                 )}
 
@@ -713,5 +690,43 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         color: 'rgba(255, 255, 255, 0.6)',
         fontSize: FontSizes.md,
+    },
+    // Manual Capture Button Styles
+    captureContainer: {
+        position: 'absolute',
+        bottom: 100,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    },
+    captureButton: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 4,
+        borderColor: '#fff',
+    },
+    captureButtonInner: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    captureIcon: {
+        fontSize: 32,
+    },
+    captureHint: {
+        color: '#fff',
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        marginTop: Spacing.sm,
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
 });

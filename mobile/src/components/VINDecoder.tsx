@@ -723,14 +723,13 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
 
     // Pulsing animation for scan button attention grabber
     const pulseAnim = useRef(new Animated.Value(1)).current;
-    const glowAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Create pulsing animation to draw attention to scan button
+        // Create simple pulsing animation to draw attention to scan button
         const pulseLoop = Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, {
-                    toValue: 1.03,
+                    toValue: 1.02,
                     duration: 800,
                     useNativeDriver: true,
                 }),
@@ -738,31 +737,14 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
                     toValue: 1,
                     duration: 800,
                     useNativeDriver: true,
-                }),
-            ])
-        );
-
-        const glowLoop = Animated.loop(
-            Animated.sequence([
-                Animated.timing(glowAnim, {
-                    toValue: 1,
-                    duration: 1000,
-                    useNativeDriver: false,
-                }),
-                Animated.timing(glowAnim, {
-                    toValue: 0,
-                    duration: 1000,
-                    useNativeDriver: false,
                 }),
             ])
         );
 
         pulseLoop.start();
-        glowLoop.start();
 
         return () => {
             pulseLoop.stop();
-            glowLoop.stop();
         };
     }, []);
 
@@ -888,19 +870,9 @@ export const VINDecoder: React.FC<VINDecoderProps> = ({
 
                     {/* Scan VIN Button - PREMIUM PULSING FEATURE */}
                     <Animated.View
-                        style={[{
+                        style={{
                             transform: [{ scale: pulseAnim }],
-                            shadowColor: Colors.primary,
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: glowAnim.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [0.3, 0.8],
-                            }),
-                            shadowRadius: glowAnim.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [4, 12],
-                            }),
-                        }]}
+                        }}
                     >
                         <TouchableOpacity
                             style={styles.scanButton}
