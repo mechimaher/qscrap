@@ -216,7 +216,6 @@ async function showDashboard() {
     // Load initial data
     await loadStats();
     await loadOrders();
-    await loadQualityStats(); // Populate Quality badge - must await to ensure badge shows
 
     // Initialize premium VVIP features
     initializePremiumFeatures();
@@ -243,7 +242,7 @@ function setupSocketListeners() {
     socket.off('qc_completed');
 
     // Bind listeners
-    socket.on('order_status_updated', () => { loadStats(); loadOrders(); loadQualityStats(); });
+    socket.on('order_status_updated', () => { loadStats(); loadOrders(); });
     socket.on('delivery_status_updated', (data) => {
         if (data.new_status === 'delivered') {
             showToast(`📦 Order #${data.order_number} delivered by driver!`, 'success');
@@ -254,21 +253,13 @@ function setupSocketListeners() {
     socket.on('dispute_created', () => { loadStats(); loadDisputes(); });
     socket.on('new_order', () => { loadStats(); loadOrders(); });
 
-    // QC Events - update quality badge in real-time
+    // Order collected - ready for driver assignment
     socket.on('order_collected', (data) => {
-        showToast(`📦 Order #${data.order_number || ''} collected - ready for QC!`, 'info');
-        loadQualityStats();
+        showToast(`📦 Order #${data.order_number || ''} collected - ready for delivery!`, 'info');
         loadOrders();
+        loadDeliveryData();
     });
-    socket.on('qc_completed', (data) => {
-        const msg = data.result === 'passed'
-            ? `✅ QC Passed: Order #${data.order_number}`
-            : `❌ QC Failed: Order #${data.order_number}`;
-        showToast(msg, data.result === 'passed' ? 'success' : 'warning');
-        loadQualityStats();
-        loadOrders();
-        loadStats();
-    });
+    // qc_completed event removed - QC module no longer exists
 
     // Order ready for pickup notification (from garage)
     socket.on('order_ready_for_pickup', (data) => {
@@ -408,7 +399,6 @@ function switchSection(section) {
     if (section === 'disputes') loadDisputes();
     if (section === 'users') loadUsers();
     if (section === 'finance') loadFinance();
-    if (section === 'quality') loadQualityStats();
     if (section === 'delivery') { loadDeliveryData(); loadDeliveryHistory(); }
     if (section === 'analytics') loadAnalytics();
     if (section === 'reports') loadReports();
@@ -1395,105 +1385,10 @@ async function confirmDelivery(orderId) {
     }
 }
 
-// QC Section - Pagination State
-let currentQCPendingPage = 1;
-let currentQCHistoryPage = 1;
-const QC_PAGE_SIZE = 10;
-
-async function loadQualityStats() {
-    try {
-        // Load stats only
-        const statsRes = await fetch(`${API_URL}/quality/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const statsData = await statsRes.json();
-
-        document.getElementById('qcPendingInspection').textContent = statsData.stats?.pending_inspection || 0;
-        document.getElementById('qcPassedToday').textContent = statsData.stats?.passed_today || 0;
-        document.getElementById('qcFailedToday').textContent = statsData.stats?.failed_today || 0;
-        document.getElementById('qcPassRate').textContent = (statsData.stats?.pass_rate || 0) + '%';
-
-        // Update Quality badge with pending inspection count
-        updateBadge('qualityBadge', statsData.stats?.pending_inspection || 0);
-
-        // Load tables with pagination
-        await loadQCPending(1);
-        await loadQCHistory(1);
-    } catch (err) {
-        console.error('Failed to load quality stats:', err);
-    }
-}
-
-// Load QC Pending Inspections with pagination
-async function loadQCPending(page = 1) {
-    currentQCPendingPage = page;
-    try {
-        const res = await fetch(`${API_URL}/quality/pending?page=${page}&limit=${QC_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.orders && data.orders.length) {
-            document.getElementById('qcPendingTable').innerHTML = data.orders.map(o => `
-                <tr>
-                    <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
-                    <td>${escapeHTML(o.part_description)}</td>
-                    <td>${escapeHTML(o.garage_name)}</td>
-                    <td>${o.is_reinspection
-                    ? '<span class="status-badge warning" style="font-size: 11px;">Re-inspection</span>'
-                    : '<span class="status-badge preparing">Awaiting QC</span>'}</td>
-                    <td>${new Date(o.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick="openInspection('${o.order_id}', '${o.order_number}', '${escapeHTML(o.part_description).replace(/'/g, "\\'")}', '${escapeHTML(o.garage_name)}')">
-                            <i class="bi bi-clipboard-check"></i> Inspect
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        } else {
-            document.getElementById('qcPendingTable').innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i><h4>No pending inspections</h4></td></tr>';
-        }
-
-        // Render pagination
-        if (data.pagination) {
-            renderPagination('qcPendingPagination', data.pagination, 'loadQCPending');
-        }
-    } catch (err) {
-        console.error('Failed to load QC pending:', err);
-    }
-}
-
-// Load QC History with pagination
-async function loadQCHistory(page = 1) {
-    currentQCHistoryPage = page;
-    try {
-        const res = await fetch(`${API_URL}/quality/history?page=${page}&limit=${QC_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.inspections && data.inspections.length) {
-            document.getElementById('qcRecentTable').innerHTML = data.inspections.map(i => `
-                <tr>
-                    <td><a href="#" onclick="viewOrder('${i.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${i.order_number}</a></td>
-                    <td>${escapeHTML(i.part_description)}</td>
-                    <td><span class="status-badge ${i.status}">${i.status === 'passed' ? 'Passed' : 'Failed'}</span></td>
-                    <td>${escapeHTML(i.inspector_name || 'Inspector')}</td>
-                    <td>${new Date(i.completed_at).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        } else {
-            document.getElementById('qcRecentTable').innerHTML = '<tr><td colspan="5" class="empty-state">No recent inspections</td></tr>';
-        }
-
-        // Render pagination
-        if (data.pagination) {
-            renderPagination('qcHistoryPagination', data.pagination, 'loadQCHistory');
-        }
-    } catch (err) {
-        console.error('Failed to load QC history:', err);
-    }
-}
+// ==========================================
+// QC SECTION CODE - REMOVED
+// QC module has been removed. Order goes from 'collected' directly to 'in_transit'
+// ==========================================
 
 // Quality Inspection Modal Functions - Enhanced Professional Version
 let inspectionCriteria = [];
@@ -1809,7 +1704,6 @@ async function submitInspection(result) {
                 showToast('Part failed QC. Return assignment will be created.', 'warning');
                 await createReturnForFailedQC(failedOrderId);
             }
-            loadQualityStats();
             loadStats();
         } else {
             showToast(data.error || 'Failed to submit inspection', 'error');
@@ -1911,7 +1805,6 @@ async function confirmDriverAssignment(orderId) {
         if (res.ok) {
             showToast(data.message || 'Driver assigned! Delivery started.', 'success');
             document.getElementById('driverAssignModal').remove();
-            loadQualityStats();
             loadDeliveryData();
             loadStats();
         } else {
@@ -2731,7 +2624,6 @@ async function submitCollectOrder(orderId) {
             document.getElementById('collectOrderModal').remove();
             loadDeliveryData();
             loadStats();
-            loadQualityStats();
             loadOrders();
         } else {
             showToast(data.error || 'Failed to collect order', 'error');
@@ -4812,29 +4704,12 @@ function getTimeAgo(dateStr) {
 }
 
 // ==========================================
-// QC SOCKET EVENT LISTENERS
+// QC SOCKET EVENT LISTENERS - REMOVED
+// QC module has been removed. Order goes from 'collected' directly to 'in_transit'
 // ==========================================
+
+// Support ticket created
 if (typeof socket !== 'undefined' && socket) {
-    // Order collected - part ready for QC
-    socket.on('order_collected', (data) => {
-        showToast(`📦 Order #${data.order_number} collected - ready for QC inspection!`, 'info');
-        loadQualityStats();
-        updateBadge('qualityBadge', (parseInt(document.getElementById('qualityBadge')?.textContent) || 0) + 1);
-    });
-
-    // QC result - passed or failed
-    socket.on('qc_completed', (data) => {
-        if (data.result === 'passed') {
-            showToast(`✅ QC Passed: Order #${data.order_number} - Grade ${data.grade}`, 'success');
-        } else {
-            showToast(`❌ QC Failed: Order #${data.order_number}`, 'warning');
-        }
-        loadQualityStats();
-        loadOrders();
-        loadStats();
-    });
-
-    // Support ticket created
     socket.on('ticket_created', (data) => {
         showToast(data.notification || 'New support ticket received', 'info');
         updateBadge('supportBadge', (parseInt(document.getElementById('supportBadge')?.textContent) || 0) + 1);
@@ -5099,9 +4974,6 @@ function refreshCurrentSection() {
             break;
         case 'orders':
             loadOrders();
-            break;
-        case 'quality':
-            loadQualityStats();
             break;
         case 'delivery':
             loadDeliveryData();
