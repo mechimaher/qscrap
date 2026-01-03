@@ -1151,16 +1151,16 @@ export const confirmAllPayouts = async (req: AuthRequest, res: Response) => {
     try {
         await client.query('BEGIN');
 
-        // Step 1: Verify password
-        const garageResult = await client.query(`
-            SELECT password_hash FROM garages WHERE garage_id = $1
+        // Step 1: Verify password from users table (password_hash is stored there, not in garages)
+        const userResult = await client.query(`
+            SELECT password_hash FROM users WHERE user_id = $1
         `, [garageId]);
 
-        if (garageResult.rows.length === 0) {
-            throw new Error('Garage not found');
+        if (userResult.rows.length === 0) {
+            throw new Error('User not found');
         }
 
-        const isPasswordValid = await bcrypt.compare(password, garageResult.rows[0].password_hash);
+        const isPasswordValid = await bcrypt.compare(password, userResult.rows[0].password_hash);
         if (!isPasswordValid) {
             await client.query('ROLLBACK');
             return res.status(401).json({ error: 'Incorrect password' });
