@@ -192,29 +192,41 @@ const MANUFACTURER_CODES: Record<string, { make: string; country: string }> = {
 // Format: First 1-3 chars of VDS section mapped to model names
 const MODEL_DATABASE: Record<string, Record<string, string>> = {
     'Toyota': {
-        // VDS patterns (chars 4-8)
-        'BU': 'Camry', 'BF': 'Camry', 'BK': 'Camry',
-        'HP': 'RAV4', 'HK': 'RAV4', 'HW': 'RAV4',
-        'R3': 'Corolla', 'R1': 'Corolla', 'RN': 'Corolla',
+        // VDS patterns (chars 4-8) - including GCC/Middle East patterns
+        'BU': 'Camry', 'BF': 'Camry', 'BK': 'Camry', 'ASV': 'Camry',
+        'HP': 'RAV4', 'HK': 'RAV4', 'HW': 'RAV4', 'XA': 'RAV4',
+        'R3': 'Corolla', 'R1': 'Corolla', 'RN': 'Corolla', 'ZRE': 'Corolla',
+        // Land Cruiser - GCC very popular
         'UF': 'Land Cruiser', 'UR': 'Land Cruiser', 'UZ': 'Land Cruiser 200',
-        'GR': 'Land Cruiser 300', 'GN': 'Hilux', 'GW': 'Hilux', 'GD': 'Hilux',
-        'KC': 'Prado', 'KD': 'Prado', 'KJ': 'Prado 150',
-        'SW': 'Fortuner', 'SR': 'Fortuner',
-        'KS': 'Yaris', 'KP': 'Yaris', 'NK': 'Yaris Cross',
-        'MU': 'Avalon', 'MR': 'Highlander', 'MD': 'Highlander',
+        'URJ': 'Land Cruiser 200', 'VDJ': 'Land Cruiser 200', 'UZJ': 'Land Cruiser 100',
+        'GR': 'Land Cruiser 300', 'VJA': 'Land Cruiser 300',
+        'FJ': 'FJ Cruiser', 'GSJ': 'FJ Cruiser',
+        // Prado - GCC very popular
+        'KC': 'Prado', 'KD': 'Prado', 'KJ': 'Prado 150', 'GDJ': 'Prado 150',
+        'TRJ': 'Prado 150', 'GRJ': 'Prado 150', 'KZJ': 'Prado 90',
+        // Hilux - GCC popular
+        'GN': 'Hilux', 'GW': 'Hilux', 'GD': 'Hilux', 'GUN': 'Hilux',
+        'KUN': 'Hilux', 'LN': 'Hilux',
+        // Fortuner - uses different VDS
+        'SW': 'Fortuner', 'SR': 'Fortuner', 'TGN': 'Fortuner',
+        'KS': 'Yaris', 'KP': 'Yaris', 'NK': 'Yaris Cross', 'NSP': 'Yaris',
+        'MU': 'Avalon', 'GSX': 'Avalon',
+        'MR': 'Highlander', 'MD': 'Highlander', 'GSU': 'Highlander',
         '8R': '4Runner', '8N': 'Sequoia', 'TW': 'Tundra',
         'SK': 'Sienna', 'SC': 'Supra', 'DB': 'Tacoma',
         'ZN': 'C-HR', 'AC': 'Corolla Cross', 'A1': 'Aygo',
+        // Pickup\n        'LAN': 'Land Cruiser Pickup',
     },
     'Lexus': {
-        'AG': 'ES', 'AK': 'ES350', 'AS': 'ES300h',
-        'BC': 'GS', 'BD': 'GS350', 'BE': 'GS450h',
-        'CE': 'IS', 'CC': 'IS350', 'CF': 'IS300',
-        'DZ': 'LS', 'DA': 'LS500',
-        'JA': 'RX', 'JC': 'RX350', 'JD': 'RX450h',
-        'JK': 'NX', 'JN': 'NX300', 'JM': 'NX350h',
+        'AG': 'ES', 'AK': 'ES350', 'AS': 'ES300h', 'GSV': 'ES',
+        'BC': 'GS', 'BD': 'GS350', 'BE': 'GS450h', 'GRS': 'GS',
+        'CE': 'IS', 'CC': 'IS350', 'CF': 'IS300', 'GSE': 'IS',
+        'DZ': 'LS', 'DA': 'LS500', 'USF': 'LS',
+        'JA': 'RX', 'JC': 'RX350', 'JD': 'RX450h', 'GGL': 'RX', 'GYL': 'RX',
+        'JK': 'NX', 'JN': 'NX300', 'JM': 'NX350h', 'AGZ': 'NX',
         'TB': 'GX', 'TC': 'GX460', 'TD': 'GX550',
-        'TJ': 'LX', 'TK': 'LX570', 'TL': 'LX600',
+        // LX - GCC very popular (same as Land Cruiser platform)
+        'TJ': 'LX', 'TK': 'LX570', 'TL': 'LX600', 'URJ': 'LX570', 'VJA': 'LX600',
         'ZA': 'UX', 'ZC': 'UX250h', 'FA': 'LC', 'FC': 'LC500',
     },
     'Nissan': {
@@ -421,9 +433,15 @@ const MODEL_DATABASE: Record<string, Record<string, string>> = {
     'Mitsubishi': {
         'GG': 'Outlander', 'GF': 'Outlander', 'CW': 'Outlander',
         'GA': 'ASX', 'XA': 'ASX',
+        // Pajero - GCC very popular (multiple generations)
         'KA': 'Pajero', 'V8': 'Pajero', 'V9': 'Pajero',
-        'KS': 'Pajero Sport', 'KR': 'Pajero Sport',
-        'KB': 'Triton', 'MQ': 'Triton', 'MR': 'Triton',
+        'V80': 'Pajero', 'V93': 'Pajero', 'V97': 'Pajero', 'V98': 'Pajero',
+        'NW': 'Pajero', 'NT': 'Pajero', 'NM': 'Pajero',
+        // Pajero Sport / Montero Sport
+        'KS': 'Pajero Sport', 'KR': 'Pajero Sport', 'KG': 'Montero Sport',
+        'QE': 'Pajero Sport', 'QF': 'Pajero Sport',
+        // Triton / L200
+        'KB': 'Triton', 'MQ': 'Triton', 'MR': 'Triton', 'KL': 'L200',
         'CY': 'Lancer', 'CZ': 'Lancer', 'CS': 'Lancer',
         'GS': 'Eclipse Cross', 'YA': 'Eclipse Cross',
         'LA': 'Mirage', 'A03': 'Mirage', 'A05': 'Attrage',
