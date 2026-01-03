@@ -15,7 +15,6 @@ import {
     suspendUser,
     activateUser,
     getAnalytics,
-    getQualityStats,
     getUserStats,
     getGarages,
     // Return assignment management
@@ -33,9 +32,6 @@ router.use(authorizeOperations);
 // Dashboard & Analytics
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/analytics', getAnalytics);
-
-// Quality Control
-router.get('/quality/stats', getQualityStats);
 
 // Orders
 router.get('/orders', getOrders);

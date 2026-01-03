@@ -836,71 +836,7 @@ export const getAnalytics = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Get quality control stats
-export const getQualityStats = async (req: AuthRequest, res: Response) => {
-    try {
-        // QC stats - orders in "preparing" status need inspection
-        const statsResult = await pool.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE order_status = 'preparing') as pending_inspection,
-                COUNT(*) FILTER (WHERE order_status = 'ready_for_pickup' AND DATE(updated_at) = CURRENT_DATE) as passed_today,
-                COUNT(*) FILTER (WHERE order_status = 'disputed' AND DATE(updated_at) = CURRENT_DATE) as failed_today
-            FROM orders
-        `);
 
-        // Pass rate for last 7 days
-        const rateResult = await pool.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE order_status IN ('ready_for_pickup', 'in_transit', 'delivered', 'completed')) as passed,
-                COUNT(*) as total
-            FROM orders
-            WHERE updated_at >= CURRENT_DATE - INTERVAL '7 days'
-              AND order_status NOT IN ('confirmed', 'preparing')
-        `);
-
-        const passed = parseInt(rateResult.rows[0].passed) || 0;
-        const total = parseInt(rateResult.rows[0].total) || 1;
-        const passRate = Math.round((passed / total) * 100);
-
-        // Pending orders for inspection
-        const pendingResult = await pool.query(`
-            SELECT o.order_id, o.order_number, o.order_status, o.updated_at,
-                   pr.part_description, g.garage_name
-            FROM orders o
-            JOIN part_requests pr ON o.request_id = pr.request_id
-            JOIN garages g ON o.garage_id = g.garage_id
-            WHERE o.order_status = 'preparing'
-            ORDER BY o.updated_at ASC
-            LIMIT 10
-        `);
-
-        // Recent inspections (orders that moved past preparing)
-        const recentResult = await pool.query(`
-            SELECT o.order_id, o.order_number, o.order_status, o.updated_at,
-                   pr.part_description,
-                   CASE WHEN o.order_status IN ('ready_for_pickup', 'in_transit', 'delivered', 'completed') 
-                        THEN 'passed' ELSE 'failed' END as result
-            FROM orders o
-            JOIN part_requests pr ON o.request_id = pr.request_id
-            WHERE o.order_status NOT IN ('confirmed', 'preparing')
-              AND o.updated_at >= CURRENT_DATE - INTERVAL '7 days'
-            ORDER BY o.updated_at DESC
-            LIMIT 10
-        `);
-
-        res.json({
-            stats: {
-                ...statsResult.rows[0],
-                pass_rate: passRate
-            },
-            pending: pendingResult.rows,
-            recent: recentResult.rows
-        });
-    } catch (err) {
-        console.error('getQualityStats Error:', err);
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
 
 // Get user details with activity history
 export const getUserDetails = async (req: AuthRequest, res: Response) => {

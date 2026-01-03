@@ -186,21 +186,19 @@ export const getOrdersReadyForCollection = async (req: AuthRequest, res: Respons
     }
 };
 
-// Get orders ready for DELIVERY to customers (qc_passed status)
+// Get orders ready for DELIVERY to customers (collected status - ready for driver assignment)
 export const getOrdersReadyForDelivery = async (req: AuthRequest, res: Response) => {
     try {
         const result = await pool.query(`
             SELECT o.order_id, o.order_number, o.order_status, o.created_at, o.delivery_address,
                    pr.part_description, pr.car_make, pr.car_model,
                    g.garage_name,
-                   u.full_name as customer_name, u.phone_number as customer_phone,
-                   qi.result as qc_result, qi.part_grade, qi.condition_assessment
+                   u.full_name as customer_name, u.phone_number as customer_phone
             FROM orders o
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN garages g ON o.garage_id = g.garage_id
             JOIN users u ON o.customer_id = u.user_id
-            LEFT JOIN quality_inspections qi ON o.order_id = qi.order_id
-            WHERE o.order_status = 'qc_passed'
+            WHERE o.order_status = 'collected'
             ORDER BY o.created_at ASC
         `);
 
@@ -397,13 +395,12 @@ export const getOrdersForDelivery = async (req: AuthRequest, res: Response) => {
             LEFT JOIN customer_addresses ca ON o.customer_id = ca.customer_id AND ca.is_default = true
             LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
             LEFT JOIN drivers d ON da.driver_id = d.driver_id
-            WHERE o.order_status IN ('ready_for_pickup', 'collected', 'qc_passed', 'in_transit')
+            WHERE o.order_status IN ('ready_for_pickup', 'collected', 'in_transit')
             ORDER BY 
                 CASE o.order_status 
                     WHEN 'in_transit' THEN 1
-                    WHEN 'qc_passed' THEN 2
-                    WHEN 'collected' THEN 3
-                    WHEN 'ready_for_pickup' THEN 4
+                    WHEN 'collected' THEN 2
+                    WHEN 'ready_for_pickup' THEN 3
                 END,
                 o.created_at ASC
         `);
@@ -447,13 +444,13 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
 
         const order = orderResult.rows[0];
 
-        // CRITICAL: Enforce QC passed before driver assignment
-        if (order.order_status !== 'qc_passed') {
+        // Driver can be assigned after order is collected from garage
+        if (order.order_status !== 'collected') {
             await client.query('ROLLBACK');
             return res.status(400).json({
-                error: 'Cannot assign driver - order must pass QC inspection first',
+                error: 'Cannot assign driver - order must be collected first',
                 current_status: order.order_status,
-                required_status: 'qc_passed'
+                required_status: 'collected'
             });
         }
 
@@ -504,7 +501,7 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
         await client.query(`
             INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
             VALUES ($1, $2, $3, $4, 'operations', $5)
-        `, [order_id, 'qc_passed', 'in_transit', req.user?.userId, `Assigned to driver: ${driver.full_name}`]);
+        `, [order_id, 'collected', 'in_transit', req.user?.userId, `Assigned to driver: ${driver.full_name}`]);
 
         await client.query('COMMIT');
 
@@ -545,7 +542,7 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
         io.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
-            old_status: 'qc_passed',
+            old_status: 'collected',
             new_status: 'in_transit',
             notification: `🚚 Your order is on the way!`
         });
@@ -904,18 +901,18 @@ export const getDeliveryStats = async (req: AuthRequest, res: Response) => {
             WHERE order_status = 'ready_for_pickup'
         `);
 
-        // Get QC passed count (ready for delivery)
-        const qcPassedResult = await pool.query(`
-            SELECT COUNT(*) as qc_passed
+        // Get collected count (ready for driver assignment)
+        const collectedResult = await pool.query(`
+            SELECT COUNT(*) as ready_for_delivery
             FROM orders 
-            WHERE order_status = 'qc_passed'
+            WHERE order_status = 'collected'
         `);
 
         res.json({
             stats: {
                 ...statsResult.rows[0],
                 pending_pickup: parseInt(pendingResult.rows[0].pending_pickup) || 0,
-                qc_passed: parseInt(qcPassedResult.rows[0].qc_passed) || 0
+                ready_for_delivery: parseInt(collectedResult.rows[0].ready_for_delivery) || 0
             }
         });
     } catch (err) {

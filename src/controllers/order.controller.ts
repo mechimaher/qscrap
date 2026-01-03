@@ -203,7 +203,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     if (!garageAllowedStatuses.includes(order_status)) {
         return res.status(400).json({
             error: 'Garages can only set status to "preparing" or "ready_for_pickup"',
-            hint: 'Collection, QC, and delivery are handled by Operations team'
+            hint: 'Collection and delivery are handled by Operations team'
         });
     }
 
@@ -239,10 +239,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             // Provide helpful error messages
             const stageMessages: Record<string, string> = {
                 'ready_for_pickup': 'Order is waiting for QScrap collection',
-                'collected': 'Order has been collected by QScrap',
-                'qc_in_progress': 'Order is being inspected',
-                'qc_passed': 'Order passed QC and is ready for delivery',
-                'qc_failed': 'Order failed QC and will be returned',
+                'collected': 'Order has been collected - awaiting driver assignment',
                 'in_transit': 'Order is being delivered',
                 'delivered': 'Order has been delivered',
                 'completed': 'Order is completed'

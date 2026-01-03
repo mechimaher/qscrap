@@ -203,7 +203,7 @@ export const getCustomerStats = async (req: AuthRequest, res: Response) => {
             // In Progress = orders that are actively being processed (NOT delivered/completed/cancelled)
             pool.query(
                 `SELECT COUNT(*) as count FROM orders 
-                 WHERE customer_id = $1 AND order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_in_progress', 'qc_passed', 'in_transit')`,
+                 WHERE customer_id = $1 AND order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit')`,
                 [customerId]
             ),
             // Awaiting Confirmation = delivered but not yet confirmed by customer

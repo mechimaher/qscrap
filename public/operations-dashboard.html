@@ -89,11 +89,6 @@
                         Orders
                         <span class="nav-badge" id="ordersBadge" style="display: none;">0</span>
                     </a>
-                    <a class="nav-item" data-section="quality">
-                        <i class="bi bi-patch-check-fill"></i>
-                        Quality
-                        <span class="nav-badge" id="qualityBadge" style="display: none;">0</span>
-                    </a>
                     <a class="nav-item" data-section="delivery">
                         <i class="bi bi-truck"></i>
                         Delivery
@@ -304,8 +299,6 @@
                     <div class="tab" data-status="preparing">Preparing</div>
                     <div class="tab" data-status="ready_for_pickup">Ready for Pickup</div>
                     <div class="tab" data-status="collected">Collected</div>
-                    <div class="tab" data-status="qc_passed">QC Passed</div>
-                    <div class="tab" data-status="qc_failed">QC Failed</div>
                     <div class="tab" data-status="in_transit">In Transit</div>
                     <div class="tab" data-status="delivered">Delivered</div>
                     <div class="tab" data-status="completed">Completed</div>
@@ -635,8 +628,8 @@
                     <div class="content-card">
                         <h3 style="margin-bottom: 15px; color: var(--text-primary);">
                             <i class="bi bi-box-arrow-up"></i> Ready for Delivery
-                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">(QC
-                                passed)</span>
+                            <span
+                                style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">(collected)</span>
                         </h3>
                         <table class="data-table">
                             <thead>
@@ -754,92 +747,6 @@
             </section>
 
 
-
-            <!-- Quality Section -->
-            <section class="section" id="sectionQuality">
-                <div class="page-header">
-                    <h1 class="page-title">Quality Control</h1>
-                </div>
-
-                <!-- QC Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="qcPendingInspection">0</div>
-                            <div class="stat-label">Pending Inspection</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="qcPassedToday">0</div>
-                            <div class="stat-label">Passed Today</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-                            <i class="bi bi-x-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="qcFailedToday">0</div>
-                            <div class="stat-label">Failed Today</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                            <i class="bi bi-percent"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="qcPassRate">--%</div>
-                            <div class="stat-label">Pass Rate (7d)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Inspections -->
-                <div class="content-card" style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 15px; color: var(--text-primary);"><i class="bi bi-clipboard-check"></i>
-                        Pending Quality Inspections</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Part</th>
-                                <th>Garage</th>
-                                <th>Status</th>
-                                <th>Since</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="qcPendingTable">
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Recent Inspections -->
-                <div class="content-card" style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 15px; color: var(--text-primary);"><i class="bi bi-clock-history"></i>
-                        Recent Inspections</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Part</th>
-                                <th>Result</th>
-                                <th>Inspector</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="qcRecentTable">
-                        </tbody>
-                    </table>
-                </div>
-            </section>
 
             <!-- Finance Section --!>
             <section class="section" id="sectionFinance">
@@ -1204,13 +1111,12 @@
                     <h4>Navigation</h4>
                     <div class="shortcut-item"><kbd>1</kbd> <span>Overview</span></div>
                     <div class="shortcut-item"><kbd>2</kbd> <span>Orders</span></div>
-                    <div class="shortcut-item"><kbd>3</kbd> <span>Quality</span></div>
-                    <div class="shortcut-item"><kbd>4</kbd> <span>Delivery</span></div>
-                    <div class="shortcut-item"><kbd>5</kbd> <span>Disputes</span></div>
-                    <div class="shortcut-item"><kbd>6</kbd> <span>Reviews</span></div>
-                    <div class="shortcut-item"><kbd>7</kbd> <span>Support</span></div>
-                    <div class="shortcut-item"><kbd>8</kbd> <span>Users</span></div>
-                    <div class="shortcut-item"><kbd>9</kbd> <span>Finance</span></div>
+                    <div class="shortcut-item"><kbd>3</kbd> <span>Delivery</span></div>
+                    <div class="shortcut-item"><kbd>4</kbd> <span>Disputes</span></div>
+                    <div class="shortcut-item"><kbd>5</kbd> <span>Reviews</span></div>
+                    <div class="shortcut-item"><kbd>6</kbd> <span>Support</span></div>
+                    <div class="shortcut-item"><kbd>7</kbd> <span>Users</span></div>
+                    <div class="shortcut-item"><kbd>8</kbd> <span>Finance</span></div>
                 </div>
                 <div class="shortcuts-section">
                     <h4>Actions</h4>
