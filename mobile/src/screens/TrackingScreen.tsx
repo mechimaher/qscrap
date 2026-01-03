@@ -135,11 +135,10 @@ export default function TrackingScreen() {
         order_status: string;
     } | null>(null);
     const [newChatMessage, setNewChatMessage] = useState<{ text: string; from: string } | null>(null);
-    const [qcStatus, setQcStatus] = useState<'pending' | 'in_progress' | 'passed' | 'failed'>('pending');
 
-    // Determine if driver should be visible (only after QC passed)
+    // Driver visible immediately after order is collected (no QC gate)
     const canShowDriver = !!(orderDetails?.order_status &&
-        ['qc_passed', 'in_transit', 'delivered', 'completed'].includes(orderDetails.order_status));
+        ['collected', 'in_transit', 'delivered', 'completed'].includes(orderDetails.order_status));
 
     // Pulse animation for driver marker
     useEffect(() => {
@@ -199,23 +198,8 @@ export default function TrackingScreen() {
                     // Update order status
                     setOrderDetails(prev => prev ? { ...prev, order_status: data.status } : null);
 
-                    // Handle QC status changes
-                    if (data.status === 'qc_in_progress') {
-                        setQcStatus('in_progress');
-                    } else if (data.status === 'qc_passed') {
-                        setQcStatus('passed');
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    } else if (data.status === 'qc_failed') {
-                        setQcStatus('failed');
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                        Alert.alert(
-                            '⚠️ Quality Check Failed',
-                            'The part did not pass our quality inspection. It is being returned to the garage for replacement.',
-                            [{ text: 'OK', onPress: () => navigation.goBack() }]
-                        );
-                    } else if (data.status === 'delivered') {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    } else if (data.status === 'completed') {
+                    // Haptic feedback for key status changes
+                    if (data.status === 'in_transit' || data.status === 'delivered' || data.status === 'completed') {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                     }
                 }
@@ -282,15 +266,6 @@ export default function TrackingScreen() {
                     total_amount: parseFloat(String(order.total_amount)) || 0,
                     order_status: order.order_status || 'in_transit',
                 });
-
-                // Set QC status based on order status
-                if (order.order_status === 'qc_in_progress') {
-                    setQcStatus('in_progress');
-                } else if (['qc_passed', 'in_transit', 'delivered', 'completed'].includes(order.order_status)) {
-                    setQcStatus('passed');
-                } else if (order.order_status === 'qc_failed') {
-                    setQcStatus('failed');
-                }
             }
         } catch (error) {
             console.log('Failed to load order data:', error);
@@ -446,17 +421,6 @@ export default function TrackingScreen() {
                 customerLocation={customerLocation}
                 showRoute={canShowDriver}
             />
-
-            {/* QC In Progress Overlay */}
-            {qcStatus === 'in_progress' && (
-                <View style={styles.qcOverlay}>
-                    <View style={styles.qcCard}>
-                        <ActivityIndicator size="large" color={Colors.primary} />
-                        <Text style={styles.qcTitle}>Quality Check in Progress</Text>
-                        <Text style={styles.qcSubtitle}>Our driver is inspecting your part...</Text>
-                    </View>
-                </View>
-            )}
 
             {/* Chat Notification Banner */}
             {newChatMessage && (
