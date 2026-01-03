@@ -293,10 +293,10 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     customInput: {
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#F8F9FA',  // Light background
         borderRadius: BorderRadius.md,
         padding: Spacing.md,
-        color: '#1a1a1a',
+        color: '#1a1a1a',  // Dark text
         fontSize: FontSizes.md,
         marginBottom: Spacing.lg,
         borderWidth: 1,
