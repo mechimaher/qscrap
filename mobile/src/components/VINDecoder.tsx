@@ -219,12 +219,15 @@ const MODEL_DATABASE: Record<string, Record<string, string>> = {
     },
     'Nissan': {
         'L3': 'Altima', 'L33': 'Altima', 'L34': 'Altima',
-        // Patrol - multiple VDS patterns used across generations
+        // Patrol - multiple VDS patterns used across generations (GCC/Middle East)
         'Y6': 'Patrol', 'Y62': 'Patrol', 'Y61': 'Patrol Safari',
         'BT': 'Patrol', 'BT2': 'Patrol', 'TB': 'Patrol', 'TBW': 'Patrol',
+        'BY': 'Patrol', 'BY2': 'Patrol', 'BY2N': 'Patrol Y62', // GCC Patrol Y62
+        // X-Trail patterns (GCC market uses different VDS)
+        'T3': 'X-Trail', 'T32': 'X-Trail', 'T33': 'X-Trail',
+        'BT2M': 'X-Trail', 'T2MU': 'X-Trail', 'MU': 'X-Trail', // GCC X-Trail T32
         'B1': 'Sentra', 'B17': 'Sentra', 'B18': 'Sentra',
         'R5': 'Pathfinder', 'R52': 'Pathfinder', 'R53': 'Pathfinder',
-        'T3': 'X-Trail', 'T32': 'X-Trail', 'T33': 'X-Trail',
         'N1': 'Sunny', 'N17': 'Sunny', 'N18': 'Almera',
         'A3': 'Maxima', 'A35': 'Maxima', 'A36': 'Maxima',
         'Z5': 'Murano', 'Z52': 'Murano',
@@ -556,12 +559,14 @@ const decodeVINLocally = (vin: string): DecodedVIN | null => {
     const year = YEAR_CODES[yearChar] || 'Unknown';
 
     // Try to find model using VDS section (positions 4-8)
+    // VDS is chars 4-8 of VIN (indices 3-7)
     const vds = upperVIN.substring(3, 8);
     const models = MODEL_DATABASE[manufacturer.make] || {};
     let model = 'Unknown Model';
 
-    // Try different VDS pattern lengths for matching
-    for (let len = 3; len >= 1; len--) {
+    // Try different VDS pattern lengths for matching (longest first for specificity)
+    // Start with 4 chars for GCC-specific codes like BY2N, BT2M
+    for (let len = 4; len >= 1; len--) {
         const pattern = vds.substring(0, len);
         if (models[pattern]) {
             model = models[pattern];
@@ -569,14 +574,15 @@ const decodeVINLocally = (vin: string): DecodedVIN | null => {
         }
     }
 
-    // Also try character at position 4 and 5 individually
+    // Also try sliding window patterns within VDS
     if (model === 'Unknown Model') {
-        const char4 = vds.charAt(0);
-        const char5 = vds.charAt(1);
-        if (models[char4 + char5]) {
-            model = models[char4 + char5];
-        } else if (models[char4]) {
-            model = models[char4];
+        // Try chars 2-3 of VDS (like MU in BT2MU for X-Trail)
+        const mid2 = vds.substring(2, 4);
+        const mid3 = vds.substring(1, 3);
+        if (models[mid2]) {
+            model = models[mid2];
+        } else if (models[mid3]) {
+            model = models[mid3];
         }
     }
 
