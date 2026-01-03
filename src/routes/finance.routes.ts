@@ -20,7 +20,8 @@ import {
     disputePayment,
     getAwaitingConfirmation,
     resolvePaymentDispute,
-    getPaymentStats
+    getPaymentStats,
+    confirmAllPayouts
 } from '../controllers/finance.controller';
 
 const router = Router();
@@ -60,6 +61,9 @@ router.get('/payouts/awaiting-confirmation', requireRole('garage'), getAwaitingC
 
 // Garage: Confirm payment receipt
 router.post('/payouts/:payout_id/confirm', requireRole('garage'), confirmPayment);
+
+// Garage: Bulk confirm all payouts (requires password)
+router.post('/payouts/confirm-all', requireRole('garage'), confirmAllPayouts);
 
 // Garage: Dispute/report issue with payment
 router.post('/payouts/:payout_id/dispute', requireRole('garage'), disputePayment);

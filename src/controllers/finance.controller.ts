@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import bcrypt from 'bcrypt';
 // Get payout summary and pending payouts
 export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId;
@@ -1129,5 +1130,114 @@ export const getPaymentStats = async (req: AuthRequest, res: Response) => {
     } catch (err) {
         console.error('[FINANCE] getPaymentStats error:', err);
         res.status(500).json({ error: 'Failed to fetch payment stats' });
+    }
+};
+
+/**
+ * Garage: Bulk Confirm All Payouts
+ * Requires password re-verification for security
+ * Transaction-safe: all succeed or all fail
+ */
+export const confirmAllPayouts = async (req: AuthRequest, res: Response) => {
+    const { password } = req.body;
+    const garageId = req.user!.userId;
+
+    // Require password for bulk action
+    if (!password) {
+        return res.status(400).json({ error: 'Password is required to confirm all payouts' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Step 1: Verify password
+        const garageResult = await client.query(`
+            SELECT password_hash FROM garages WHERE garage_id = $1
+        `, [garageId]);
+
+        if (garageResult.rows.length === 0) {
+            throw new Error('Garage not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, garageResult.rows[0].password_hash);
+        if (!isPasswordValid) {
+            await client.query('ROLLBACK');
+            return res.status(401).json({ error: 'Incorrect password' });
+        }
+
+        // Step 2: Get all payouts awaiting confirmation for this garage
+        const payoutsResult = await client.query(`
+            SELECT gp.payout_id, gp.net_amount, gp.order_id, o.order_number
+            FROM garage_payouts gp
+            LEFT JOIN orders o ON gp.order_id = o.order_id
+            WHERE gp.garage_id = $1 AND gp.payout_status = 'awaiting_confirmation'
+            FOR UPDATE OF gp
+        `, [garageId]);
+
+        if (payoutsResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'No payouts awaiting confirmation' });
+        }
+
+        const payouts = payoutsResult.rows;
+        const payoutIds = payouts.map(p => p.payout_id);
+        const totalAmount = payouts.reduce((sum, p) => sum + parseFloat(p.net_amount), 0);
+
+        // Step 3: Bulk update all payouts to completed
+        const updateResult = await client.query(`
+            UPDATE garage_payouts SET
+                payout_status = 'completed',
+                confirmed_at = NOW(),
+                garage_confirmation_notes = $1
+            WHERE payout_id = ANY($2::uuid[])
+            RETURNING *
+        `, [
+            `Bulk confirmed ${payouts.length} payouts (${totalAmount.toFixed(2)} QAR total)`,
+            payoutIds
+        ]);
+
+        // Step 4: Log the bulk action for audit trail
+        console.log(`[FINANCE] BULK CONFIRM: Garage ${garageId} confirmed ${payouts.length} payouts totaling ${totalAmount.toFixed(2)} QAR`);
+        console.log(`[FINANCE] BULK CONFIRM IDs: ${payoutIds.join(', ')}`);
+
+        await client.query('COMMIT');
+
+        // Step 5: Notify operations about each confirmed payout
+        const io = (global as any).io;
+        if (io) {
+            // Single notification for bulk action
+            io.to('operations').emit('bulk_payment_confirmed', {
+                garage_id: garageId,
+                count: payouts.length,
+                total_amount: totalAmount,
+                payout_ids: payoutIds,
+                notification: `✅ Garage bulk-confirmed ${payouts.length} payouts (${totalAmount.toFixed(2)} QAR total)`
+            });
+
+            // Also emit individual payout_completed events for badge updates
+            for (const payout of payouts) {
+                io.to('operations').emit('payout_completed', {
+                    payout_id: payout.payout_id,
+                    order_id: payout.order_id,
+                    amount: payout.net_amount,
+                    notification: `✅ Payment confirmed by garage`
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            confirmed_count: payouts.length,
+            total_amount: totalAmount,
+            payouts: updateResult.rows,
+            message: `Successfully confirmed ${payouts.length} payouts totaling ${totalAmount.toFixed(2)} QAR`
+        });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('[FINANCE] confirmAllPayouts error:', err);
+        res.status(400).json({ error: getErrorMessage(err) });
+    } finally {
+        client.release();
     }
 };

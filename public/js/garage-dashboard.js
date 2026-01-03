@@ -3133,11 +3133,21 @@ async function loadAwaitingConfirmation() {
             return;
         }
 
+        // Calculate total for bulk confirm button
+        const totalAmount = data.awaiting_confirmation.reduce((sum, p) => sum + parseFloat(p.net_amount), 0);
+        const count = data.awaiting_confirmation.length;
+
         container.style.display = 'block';
         container.innerHTML = `
             <div class="content-card" style="margin-bottom: 20px; border: 2px solid #10b981;">
-                <div class="table-header" style="background: linear-gradient(135deg, #10b981, #059669); margin: -20px -20px 15px; padding: 15px 20px; border-radius: 12px 12px 0 0;">
+                <div class="table-header" style="background: linear-gradient(135deg, #10b981, #059669); margin: -20px -20px 15px; padding: 15px 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="color: white; margin: 0;"><i class="bi bi-bell-fill"></i> Payments Awaiting Your Confirmation</h3>
+                    ${count > 1 ? `
+                        <button class="btn" onclick="openConfirmAllModal(${count}, ${totalAmount.toFixed(2)})" 
+                            style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            <i class="bi bi-check-all"></i> Confirm All (${count} payouts, ${totalAmount.toLocaleString()} QAR)
+                        </button>
+                    ` : ''}
                 </div>
                 ${data.awaiting_confirmation.map(p => `
                     <div class="awaiting-payment-card" style="background: var(--bg-tertiary); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
@@ -3195,6 +3205,89 @@ async function confirmPaymentReceipt(payoutId) {
         }
     } catch (err) {
         showToast('Failed to confirm payment', 'error');
+    }
+}
+
+// Open Confirm All Payouts modal with password verification
+function openConfirmAllModal(count, totalAmount) {
+    const modal = document.createElement('div');
+    modal.id = 'confirmAllModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                <h3 style="margin: 0;"><i class="bi bi-check-all"></i> Confirm All Payouts</h3>
+                <button class="modal-close" onclick="closeConfirmAllModal()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                    <div style="font-size: 32px; font-weight: 700; color: var(--success);">${totalAmount.toLocaleString()} QAR</div>
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">${count} payment${count > 1 ? 's' : ''} total</div>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-shield-lock" style="font-size: 20px; color: #f59e0b;"></i>
+                    <span style="font-size: 13px; color: var(--text-secondary);">For security, please re-enter your password to confirm all payouts</span>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Password</label>
+                    <input type="password" id="confirmAllPassword" class="form-control" placeholder="Enter your password" style="width: 100%;" required>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--border);">
+                <button class="btn btn-ghost" onclick="closeConfirmAllModal()">Cancel</button>
+                <button class="btn btn-success" id="confirmAllBtn" onclick="submitConfirmAll()" style="min-width: 180px;">
+                    <i class="bi bi-check-all"></i> Confirm All Payouts
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('confirmAllPassword').focus();
+}
+
+// Close Confirm All modal
+function closeConfirmAllModal() {
+    const modal = document.getElementById('confirmAllModal');
+    if (modal) modal.remove();
+}
+
+// Submit bulk confirmation with password
+async function submitConfirmAll() {
+    const password = document.getElementById('confirmAllPassword').value;
+    if (!password) {
+        showToast('Please enter your password', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('confirmAllBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Confirming...';
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/confirm-all`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            closeConfirmAllModal();
+            showToast(`✅ ${data.message}`, 'success');
+            loadEarnings();
+        } else {
+            showToast(data.error || 'Failed to confirm payouts', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-all"></i> Confirm All Payouts';
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-all"></i> Confirm All Payouts';
     }
 }
 
