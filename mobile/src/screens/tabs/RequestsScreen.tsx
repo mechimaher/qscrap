@@ -233,10 +233,10 @@ const ActiveRequestCard = ({
                                     <Text style={styles.carEmoji}>🚗</Text>
                                     <View>
                                         <Text style={[styles.carName, { color: colors.text }]}>
-                                            {item.car_make} {item.car_model}
+                                            {item.car_make || 'Unknown'} {item.car_model || ''}
                                         </Text>
                                         <Text style={[styles.carYear, { color: colors.textSecondary }]}>
-                                            {item.car_year}
+                                            {item.car_year || 'N/A'}
                                         </Text>
                                     </View>
                                 </View>
@@ -252,7 +252,7 @@ const ActiveRequestCard = ({
                                 style={[styles.partDescription, { color: colors.textSecondary }]}
                                 numberOfLines={2}
                             >
-                                {item.part_description}
+                                {item.part_description || 'No description'}
                             </Text>
 
                             {/* Active Card: Time Remaining & New Bids */}
@@ -457,7 +457,7 @@ export default function RequestsScreen() {
             ) : (
                 <FlatList
                     data={requests}
-                    keyExtractor={(item) => item.request_id}
+                    keyExtractor={(item, index) => `${item.request_id}-${item.status}-${index}`}
                     renderItem={renderRequest}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
@@ -469,10 +469,11 @@ export default function RequestsScreen() {
                         />
                     }
                     ListEmptyComponent={EmptyState}
-                    initialNumToRender={5}
-                    maxToRenderPerBatch={5}
-                    windowSize={7}
-                    removeClippedSubviews={false} // Fixes blank items on Android
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={10}
+                    windowSize={21}
+                    removeClippedSubviews={false}
+                    extraData={requests.length + requests.map(r => r.status).join('')}
                 />
             )}
         </SafeAreaView>
