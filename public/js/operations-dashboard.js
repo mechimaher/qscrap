@@ -4649,19 +4649,6 @@ async function updateAllBadges() {
             updateBadge('deliveryBadge', s.ready_for_pickup || 0);
         }
 
-        // Update quality badge
-        try {
-            const qcRes = await fetch(`${API_URL}/quality/stats`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const qcData = await qcRes.json();
-            if (qcData.stats) {
-                updateBadge('qualityBadge', qcData.stats.pending_inspection || 0);
-            }
-        } catch (e) {
-            console.log('Quality stats not available');
-        }
-
         // Update finance badge (pending payouts)
         try {
             // Use /finance/payouts with status filter for pending payouts
@@ -4816,8 +4803,8 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // Section navigation (1-9)
-        const sections = ['overview', 'orders', 'quality', 'delivery', 'disputes', 'reviewModeration', 'support', 'users', 'finance'];
+        // Section navigation (1-8) - quality section removed
+        const sections = ['overview', 'orders', 'delivery', 'disputes', 'reviewModeration', 'support', 'users', 'finance'];
         if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const index = parseInt(e.key) - 1;
             if (sections[index]) {
