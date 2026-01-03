@@ -27,6 +27,21 @@ function escapeHTML(text) {
     return div.innerHTML;
 }
 
+/**
+ * Escape string for use in inline JavaScript onclick handlers
+ * Handles quotes, newlines, backslashes, and other problematic characters
+ */
+function escapeJSString(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/\\/g, '\\\\')  // Escape backslashes first
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
+}
+
 let ignoredRequests = JSON.parse(localStorage.getItem('ignoredRequests') || '[]');
 let biddedRequests = []; // Track requests we've already bid on (pending)
 let rejectedRequests = []; // Track requests where our bid was rejected
@@ -679,11 +694,14 @@ function createRequestCard(req, isNew = false) {
     } else if (isIgnored) {
         actionHtml = `<span class="ignored-badge"><i class="bi bi-eye-slash"></i> Ignored</span>`;
     } else {
+        // Use safe escapeJSString to prevent syntax errors from special chars
+        const safeTitle = escapeJSString(title);
+        const safeDesc = escapeJSString(desc);
         actionHtml = `<div class="request-actions">
                     <button class="btn-ignore" onclick="ignoreRequest('${id}')" title="Skip this request">
                         <i class="bi bi-x-lg"></i> Skip
                     </button>
-                    <button class="btn-bid" onclick="openBidModal('${id}', '${title.replace(/'/g, "\\'")} - ${desc.replace(/'/g, "\\'")}')">
+                    <button class="btn-bid" onclick="openBidModal('${id}', '${safeTitle} - ${safeDesc}')">
                         <i class="bi bi-tag-fill"></i> Bid Now
                     </button>
                 </div>`;
