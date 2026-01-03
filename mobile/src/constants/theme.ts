@@ -1,18 +1,19 @@
 // QScrap Premium Theme - Qatar National Colors Edition
-// Al Adam (Pantone 1955 C) and White
+// Single unified theme - No dark mode
 
 export const Colors = {
-    // Primary Brand - Qatar Al Adam (Pantone 1955 C)
-    primary: '#8A1538',
-    primaryDark: '#6B102C',
+    // Primary Brand - Qatar Maroon
+    primary: '#8D1B3D',
+    primaryDark: '#6B1530',
     primaryLight: '#A82050',
-    primaryGlow: 'rgba(138, 21, 56, 0.3)',
+    primaryGlow: 'rgba(141, 27, 61, 0.3)',
 
-    // Secondary - Gold accent (complements Al Adam)
+    // Secondary - Gold accent
     secondary: '#C9A227',
+    secondaryLight: '#F5F0E1',
 
-    // Light Theme (Default) - Light backgrounds, dark text
-    light: {
+    // Theme - Single light theme (no dark mode)
+    theme: {
         background: '#FAFAFA',
         surface: '#FFFFFF',
         surfaceElevated: '#FFFFFF',
@@ -21,44 +22,27 @@ export const Colors = {
         border: '#E5E5E5',
         borderLight: '#EEEEEE',
 
-        text: '#1a1a1a',
-        textSecondary: '#525252',
-        textMuted: '#737373',
+        text: '#1A1A1A',
+        textSecondary: '#4A4A4A',
+        textMuted: '#6A6A6A',
 
-        primary: '#8A1538',
+        primary: '#8D1B3D',
         statusBar: 'dark',
     },
 
-    // Dark Theme - Dark backgrounds, light text
-    dark: {
-        background: '#121212',
-        surface: '#1E1E1E',
-        surfaceElevated: '#2A2A2A',
-        card: '#252525',
-        cardHover: '#333333',
-        border: '#3A3A3A',
-        borderLight: '#444444',
-
-        text: '#FFFFFF',
-        textSecondary: '#B0B0B0',
-        textMuted: '#808080',
-
-        primary: '#8A1538',
-        statusBar: 'light',
-    },
-
     // Status Colors
-    success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
+    success: '#059669',
+    warning: '#d97706',
+    error: '#dc2626',
+    info: '#C9A227',  // Gold for info
 
-    // Gradients (use with LinearGradient) - Qatar Al Adam theme
+    // Gradients (use with LinearGradient) - Qatar theme
     gradients: {
-        primary: ['#8A1538', '#6B102C'] as const,
-        primaryDark: ['#4A0D1F', '#8A1538'] as const,
-        card: ['#1f1f1f', '#2a2a2a'] as const,
-        premium: ['#8A1538', '#C9A227'] as const,
+        primary: ['#8D1B3D', '#6B1530'] as const,
+        primaryDark: ['#6B1530', '#8D1B3D'] as const,
+        card: ['#FFFFFF', '#F8F8F8'] as const,
+        premium: ['#8D1B3D', '#C9A227'] as const,
+        gold: ['#C9A227', '#A68520'] as const,
     }
 };
 
@@ -102,28 +86,28 @@ export const Shadows = {
     sm: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 2,
     },
     md: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.15,
         shadowRadius: 6,
         elevation: 4,
     },
     lg: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
+        shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 8,
     },
     glow: {
-        shadowColor: '#8A1538',
+        shadowColor: '#8D1B3D',
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
+        shadowOpacity: 0.3,
         shadowRadius: 16,
         elevation: 10,
     },

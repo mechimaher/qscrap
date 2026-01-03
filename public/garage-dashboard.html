@@ -29,7 +29,7 @@
 
             <div class="auth-tabs" style="display: flex; gap: 8px; margin-bottom: 24px;">
                 <button class="auth-tab active" onclick="switchAuthTab('login')"
-                    style="flex: 1; padding: 12px; border: 2px solid var(--border); background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%); border-radius: 10px; font-weight: 600; color: white; cursor: pointer;">Sign
+                    style="flex: 1; padding: 12px; border: 2px solid var(--border); background: linear-gradient(135deg, var(--accent) 0%, #A82050 100%); border-radius: 10px; font-weight: 600; color: white; cursor: pointer;">Sign
                     In</button>
                 <button class="auth-tab" onclick="switchAuthTab('register')"
                     style="flex: 1; padding: 12px; border: 2px solid var(--border); background: rgba(255,255,255,0.05); border-radius: 10px; font-weight: 600; color: var(--text-secondary); cursor: pointer;">Register</button>
@@ -191,7 +191,7 @@
                     <i class="bi bi-graph-up-arrow"></i>
                     Analytics
                     <span class="nav-badge" id="analyticsPlanBadge"
-                        style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 9px;">PRO+</span>
+                        style="background: linear-gradient(135deg, #A82050, #8D1B3D); font-size: 9px;">PRO+</span>
                 </a>
                 <a class="nav-item" data-section="showcase" id="navShowcase">
                     <i class="bi bi-shop-window"></i>
@@ -223,15 +223,8 @@
                     </div>
                 </div>
 
-                <!-- Theme Toggle -->
-                <div class="theme-toggle" onclick="toggleTheme()">
-                    <div class="theme-toggle-label">
-                        <i class="bi bi-moon-stars-fill theme-icon theme-icon-moon"></i>
-                        <i class="bi bi-sun-fill theme-icon theme-icon-sun"></i>
-                        <span id="themeLabel">Dark Mode</span>
-                    </div>
-                    <div class="theme-switch"></div>
-                </div>
+
+                <!-- Qatar Premium Theme - No dark mode toggle -->
 
                 <button class="btn-logout" onclick="logout()">
                     <i class="bi bi-box-arrow-left"></i> Sign Out
@@ -563,7 +556,7 @@
                     <h1 class="page-title">
                         <i class="bi bi-graph-up-arrow"></i> Analytics Dashboard
                         <span class="badge" id="analyticsHeaderBadge"
-                            style="background: linear-gradient(135deg, #8b5cf6, #6366f1); font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-left: 8px;">PRO+</span>
+                            style="background: linear-gradient(135deg, #A82050, #8D1B3D); font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-left: 8px;">PRO+</span>
                     </h1>
                     <div class="header-actions">
                         <select id="analyticsPeriod" class="form-control" style="width: auto;"
@@ -766,7 +759,7 @@
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"><i
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #8D1B3D, #A82050);"><i
                                     class="bi bi-eye"></i></div>
                             <div class="stat-info">
                                 <div class="stat-value" id="showcaseTotalViews">0</div>

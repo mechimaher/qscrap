@@ -114,9 +114,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 // Auth Tab Switching
 function switchAuthTab(tab) {
     const tabs = document.querySelectorAll('.auth-tab');
-    tabs[0].style.background = tab === 'login' ? 'linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)' : 'rgba(255,255,255,0.05)';
+    tabs[0].style.background = tab === 'login' ? 'linear-gradient(135deg, var(--accent) 0%, #A82050 100%)' : 'rgba(255,255,255,0.05)';
     tabs[0].style.color = tab === 'login' ? 'white' : 'var(--text-secondary)';
-    tabs[1].style.background = tab === 'register' ? 'linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)' : 'rgba(255,255,255,0.05)';
+    tabs[1].style.background = tab === 'register' ? 'linear-gradient(135deg, var(--accent) 0%, #A82050 100%)' : 'rgba(255,255,255,0.05)';
     tabs[1].style.color = tab === 'register' ? 'white' : 'var(--text-secondary)';
 
     document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
@@ -1816,7 +1816,7 @@ async function loadProfile() {
 
         document.getElementById('profileContent').innerHTML = `
             <!-- Garage Header -->
-            <div style="background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%); border-radius: 16px; padding: 32px; margin-bottom: 24px; color: white;">
+            <div style="background: linear-gradient(135deg, var(--accent) 0%, #A82050 100%); border-radius: 16px; padding: 32px; margin-bottom: 24px; color: white;">
                 <div style="display: flex; align-items: center; gap: 20px;">
                     <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 36px;">
                         <i class="bi bi-building"></i>
@@ -2611,14 +2611,14 @@ async function loadSubscription() {
             const analyticsHeaderBadge = document.getElementById('analyticsHeaderBadge');
 
             let badgeText = 'PRO+';
-            let badgeStyle = 'background: linear-gradient(135deg, #8b5cf6, #6366f1);';
+            let badgeStyle = 'background: linear-gradient(135deg, #A82050, #8D1B3D);';
 
             if (planCode === 'enterprise') {
                 badgeText = 'ENTERPRISE';
                 badgeStyle = 'background: linear-gradient(135deg, #eab308, #f59e0b);';
             } else if (planCode === 'professional') {
                 badgeText = 'PRO';
-                badgeStyle = 'background: linear-gradient(135deg, #8b5cf6, #6366f1);';
+                badgeStyle = 'background: linear-gradient(135deg, #A82050, #8D1B3D);';
             } else if (planCode === 'starter') {
                 badgeText = 'UPGRADE';
                 badgeStyle = 'background: linear-gradient(135deg, #6b7280, #9ca3af);';
@@ -2862,7 +2862,7 @@ function renderRevenueChart(data) {
             datasets: [{
                 label: 'Revenue (QAR)',
                 data: revenues,
-                borderColor: '#8b5cf6',
+                borderColor: '#A82050',
                 backgroundColor: 'rgba(139, 92, 246, 0.1)',
                 fill: true,
                 tension: 0.4
@@ -2905,7 +2905,7 @@ function renderTopCategories(categories) {
                 <span style="color: var(--text-muted);">${cat.wins}/${cat.bid_count} wins</span>
             </div>
             <div style="background: var(--bg-tertiary); border-radius: 4px; height: 8px;">
-                <div style="background: linear-gradient(90deg, #8b5cf6, #6366f1); height: 100%; border-radius: 4px; width: ${(cat.bid_count / maxBids * 100)}%;"></div>
+                <div style="background: linear-gradient(90deg, #A82050, #8D1B3D); height: 100%; border-radius: 4px; width: ${(cat.bid_count / maxBids * 100)}%;"></div>
             </div>
         </div>
     `).join('');
@@ -4403,7 +4403,7 @@ async function viewNegotiationHistory(bidId) {
                 .timeline-status.pending {background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
                 .timeline-status.accepted {background: rgba(16, 185, 129, 0.2); color: #10b981; }
                 .timeline-status.rejected {background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-                .timeline-status.countered {background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+                .timeline-status.countered {background: rgba(99, 102, 241, 0.2); color: #8D1B3D; }
                 .timeline-status.expired {background: rgba(107, 114, 128, 0.2); color: #6b7280; }
                 .timeline-empty {text-align: center; padding: 30px; color: var(--text-muted); }
                 .timeline-empty i {font-size: 32px; margin-bottom: 10px; display: block; }
@@ -4858,7 +4858,7 @@ function openPartPreviewModal(partId) {
         <div class="part-preview-overlay" id="partPreviewModal" onclick="closePartPreviewModal()" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; backdrop-filter: blur(4px);">
             <div class="preview-modal" onclick="event.stopPropagation()" style="max-width: 420px; width: 95%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border-radius: 24px; box-shadow: 0 25px 80px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;">
                 <!-- Header -->
-                <div style="background: linear-gradient(135deg, var(--accent), #8b5cf6); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
+                <div style="background: linear-gradient(135deg, var(--accent), #A82050); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
                     <div style="display: flex; align-items: center; gap: 10px; color: white;">
                         <i class="bi bi-phone" style="font-size: 20px;"></i>
                         <span style="font-weight: 600;">Customer Preview</span>

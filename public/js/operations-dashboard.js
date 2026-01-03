@@ -80,7 +80,7 @@ function showAccessDenied(userType) {
                         </p>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <button onclick="logoutAndRetry()" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                        <button onclick="logoutAndRetry()" style="background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border: none; color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
                             <i class="bi bi-box-arrow-in-right"></i> Login with Different Account
                         </button>
                         <a href="/garage-dashboard.html" style="color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none;">
@@ -2253,7 +2253,7 @@ function initDeliveryMap(deliveries) {
         if (d.current_lat && d.current_lng) {
             const icon = L.divIcon({
                 className: 'driver-marker',
-                html: `<div style="width: 36px; height: 36px; background: #6366f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); border: 3px solid white;">
+                html: `<div style="width: 36px; height: 36px; background: #8D1B3D; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); border: 3px solid white;">
                             <span style="font-size: 18px;">🚚</span>
                         </div>`,
                 iconSize: [36, 36],
@@ -3873,9 +3873,9 @@ function renderReport(type, data) {
                 .no-print { display: none !important; }
                 .print-page-break { page-break-before: always; }
             }
-            .report-header { border-bottom: 3px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }
+            .report-header { border-bottom: 3px solid #8D1B3D; padding-bottom: 20px; margin-bottom: 30px; }
             .report-logo { display: flex; align-items: center; gap: 12px; }
-            .report-logo-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; }
+            .report-logo-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #8D1B3D, #A82050); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; }
             .report-title { text-align: center; margin: 30px 0; }
             .report-title h1 { font-size: 28px; font-weight: 700; color: #1f2937; margin: 0; letter-spacing: 1px; }
             .report-title p { color: #6b7280; margin-top: 8px; }
@@ -3998,7 +3998,7 @@ function renderRevenueReport(data) {
     const s = data.summary;
     return `
         <div class="summary-grid">
-            <div class="summary-card" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+            <div class="summary-card" style="background: linear-gradient(135deg, #8D1B3D, #A82050); color: white;">
                 <div class="value" style="color: white;">${parseFloat(s.gross_revenue || 0).toLocaleString()} QAR</div>
                 <div class="label" style="color: rgba(255,255,255,0.8);">Gross Revenue</div>
             </div>

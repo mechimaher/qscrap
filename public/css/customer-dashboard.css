@@ -1,7 +1,7 @@
 /* Light Theme (Default for Customer) */
 :root {
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
+    --primary: #8D1B3D;
+    --primary-dark: #6B1530;
     --primary-light: #818cf8;
     --success: #10b981;
     --warning: #f59e0b;
@@ -85,7 +85,7 @@ body {
 /* ===== AUTH SCREEN ===== */
 .auth-screen {
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 50%, #a855f7 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #A82050 50%, #C9A227 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -179,7 +179,7 @@ body {
     outline: none;
     border-color: var(--primary);
     background: white;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 4px rgba(141, 27, 61, 0.1);
 }
 
 .form-control::placeholder {
@@ -221,7 +221,7 @@ textarea.form-control {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 10px 20px rgba(141, 27, 61, 0.3);
 }
 
 .btn-success {
@@ -302,7 +302,7 @@ textarea.form-control {
 }
 
 .nav-tab.active {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
     color: var(--primary);
 }
 
@@ -697,7 +697,7 @@ textarea.form-control {
 
 .category-item.selected {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(141, 27, 61, 0.05);
 }
 
 .category-item i {
@@ -726,7 +726,7 @@ textarea.form-control {
 
 .image-upload-area:hover {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.02);
+    background: rgba(141, 27, 61, 0.02);
 }
 
 .image-upload-icon {
@@ -827,7 +827,7 @@ textarea.form-control {
 }
 
 .request-badge.accepted {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
     color: var(--primary);
 }
 
@@ -925,7 +925,7 @@ textarea.form-control {
 }
 
 .badge.condition-refurbished {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--primary);
 }
 
@@ -1297,7 +1297,7 @@ textarea.form-control {
 }
 
 .order-status.confirmed {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
     color: var(--primary);
 }
 
@@ -1308,7 +1308,7 @@ textarea.form-control {
 
 .order-status.in_transit {
     background: rgba(168, 85, 247, 0.1);
-    color: #8b5cf6;
+    color: #A82050;
 }
 
 .order-status.delivered {
@@ -1796,7 +1796,7 @@ textarea.form-control {
 }
 
 .negotiation-item.garage {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
 }
 
 .round-badge {
@@ -2147,11 +2147,11 @@ textarea.form-control {
 
     0%,
     100% {
-        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+        box-shadow: 0 0 0 0 rgba(141, 27, 61, 0.4);
     }
 
     50% {
-        box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+        box-shadow: 0 0 0 10px rgba(141, 27, 61, 0);
     }
 }
 
@@ -2626,11 +2626,11 @@ textarea.form-control {
 }
 
 .notification-item:hover {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(141, 27, 61, 0.05);
 }
 
 .notification-item.unread {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
 }
 
 .notification-item .title {
@@ -2685,7 +2685,7 @@ textarea.form-control {
     gap: 12px;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(141, 27, 61, 0.05);
 }
 
 .profile-card-header i {
@@ -2755,7 +2755,7 @@ textarea.form-control {
 .stat-item {
     text-align: center;
     padding: 16px;
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(141, 27, 61, 0.05);
     border-radius: var(--radius-md);
 }
 
@@ -2868,7 +2868,7 @@ input:checked+.toggle-slider:before {
    REVIEW MODAL & STAR RATINGS
    ============================================ */
 .review-garage-info {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
     padding: 16px;
     border-radius: var(--radius-md);
     margin-bottom: 20px;
@@ -3045,7 +3045,7 @@ input:checked+.toggle-slider:before {
     background: var(--primary);
     color: white;
     border: none;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(141, 27, 61, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -3309,7 +3309,7 @@ input:checked+.toggle-slider:before {
     background: var(--primary);
     color: white;
     border-color: var(--primary);
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 2px 4px rgba(141, 27, 61, 0.2);
 }
 
 .ticket-list {
@@ -3330,7 +3330,7 @@ input:checked+.toggle-slider:before {
 }
 
 .ticket-item.active {
-    background: rgba(99, 102, 241, 0.04);
+    background: rgba(141, 27, 61, 0.04);
     border-left: 3px solid var(--primary);
 }
 
@@ -3549,7 +3549,7 @@ input:checked+.toggle-slider:before {
     outline: none;
     border-color: var(--primary);
     background: white;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 4px rgba(141, 27, 61, 0.1);
 }
 
 .btn-send-chat {
@@ -3565,12 +3565,12 @@ input:checked+.toggle-slider:before {
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(141, 27, 61, 0.3);
 }
 
 .btn-send-chat:hover {
     transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 16px rgba(141, 27, 61, 0.4);
 }
 
 .btn-create-ticket {
@@ -3585,13 +3585,13 @@ input:checked+.toggle-slider:before {
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(141, 27, 61, 0.3);
     transition: all 0.2s;
 }
 
 .btn-create-ticket:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 16px rgba(141, 27, 61, 0.4);
 }
 
 .back-to-tickets-btn {
@@ -3715,7 +3715,7 @@ select:focus-visible {
 
 /* ===== Selection Styles ===== */
 ::selection {
-    background: rgba(99, 102, 241, 0.2);
+    background: rgba(141, 27, 61, 0.2);
     color: var(--text-primary);
 }
 

@@ -1,14 +1,6 @@
-// QScrap Theme Context - App-wide dark mode support
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const THEME_KEY = 'qscrap_theme';
-
-interface ThemeContextType {
-    isDarkMode: boolean;
-    toggleTheme: () => void;
-    colors: ThemeColors;
-}
+// QScrap Theme Context - Single unified premium theme
+// No dark mode - Qatar Premium Edition
+import React, { createContext, useContext, ReactNode } from 'react';
 
 export interface ThemeColors {
     background: string;
@@ -26,78 +18,47 @@ export interface ThemeColors {
     warning: string;
     error: string;
     info: string;
+    gold: string;
 }
 
-const lightColors: ThemeColors = {
+// Qatar Premium Theme - Single unified theme
+const qatarPremiumColors: ThemeColors = {
     background: '#FAFAFA',
     surface: '#FFFFFF',
     surfaceElevated: '#FFFFFF',
     card: '#FFFFFF',
-    border: '#E8E8E8',
-    text: '#1a1a1a',
-    textSecondary: '#525252',
-    textMuted: '#737373',
-    primary: '#8A1538',
-    primaryDark: '#6B102C',
+    border: '#E5E5E5',
+    text: '#1A1A1A',
+    textSecondary: '#4A4A4A',
+    textMuted: '#6A6A6A',
+    primary: '#8D1B3D',
+    primaryDark: '#6B1530',
     primaryLight: '#A82050',
-    success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
+    success: '#059669',
+    warning: '#d97706',
+    error: '#dc2626',
+    info: '#C9A227',
+    gold: '#C9A227',
 };
 
-const darkColors: ThemeColors = {
-    background: '#121212',
-    surface: '#1e1e1e',
-    surfaceElevated: '#2a2a2a',
-    card: '#252525',
-    border: '#3a3a3a',
-    text: '#ffffff',
-    textSecondary: '#b0b0b0',
-    textMuted: '#808080',
-    primary: '#8A1538',
-    primaryDark: '#6B102C',
-    primaryLight: '#A82050',
-    success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#3b82f6',
-};
+interface ThemeContextType {
+    isDarkMode: boolean;
+    toggleTheme: () => void;
+    colors: ThemeColors;
+}
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [isDarkMode, setIsDarkMode] = useState(false);
-
-    useEffect(() => {
-        loadTheme();
-    }, []);
-
-    const loadTheme = async () => {
-        try {
-            const savedTheme = await AsyncStorage.getItem(THEME_KEY);
-            if (savedTheme !== null) {
-                setIsDarkMode(savedTheme === 'dark');
-            }
-        } catch (error) {
-            console.log('Failed to load theme:', error);
-        }
+    // Fixed to light mode - no dark mode toggle
+    const isDarkMode = false;
+    const toggleTheme = () => {
+        // No-op - single theme only
+        console.log('Theme toggle disabled - Qatar Premium single theme');
     };
-
-    const toggleTheme = async () => {
-        const newTheme = !isDarkMode;
-        setIsDarkMode(newTheme);
-        try {
-            await AsyncStorage.setItem(THEME_KEY, newTheme ? 'dark' : 'light');
-        } catch (error) {
-            console.log('Failed to save theme:', error);
-        }
-    };
-
-    const colors = isDarkMode ? darkColors : lightColors;
 
     return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleTheme, colors }}>
+        <ThemeContext.Provider value={{ isDarkMode, toggleTheme, colors: qatarPremiumColors }}>
             {children}
         </ThemeContext.Provider>
     );
@@ -111,5 +72,5 @@ export function useTheme() {
     return context;
 }
 
-// Export colors for static usage (when context not available)
-export { lightColors, darkColors };
+// Export colors for static usage
+export { qatarPremiumColors as lightColors, qatarPremiumColors as darkColors };

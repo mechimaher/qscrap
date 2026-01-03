@@ -1102,7 +1102,7 @@ async function loadRequests() {
                                                         ${b.plan_code === 'enterprise' ? `
                                                             <span style="background: linear-gradient(135deg, #eab308, #f59e0b); color: #000; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Enterprise</span>
                                                         ` : b.plan_code === 'professional' ? `
-                                                            <span style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">PRO</span>
+                                                            <span style="background: linear-gradient(135deg, #8D1B3D, #A82050); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">PRO</span>
                                                         ` : ''}
                                                         <span class="garage-rating" style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 12px;">
                                                             <i class="bi bi-star-fill"></i>
@@ -1618,7 +1618,7 @@ function initializeTrackingMaps(orders) {
             // Custom truck icon
             const truckIcon = L.divIcon({
                 className: 'driver-marker',
-                html: `<div style="width: 40px; height: 40px; background: #6366f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); border: 3px solid white;">
+                html: `<div style="width: 40px; height: 40px; background: #8D1B3D; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); border: 3px solid white;">
                             <span style="font-size: 20px;">🚚</span>
                         </div>`,
                 iconSize: [40, 40],
@@ -2761,8 +2761,8 @@ function createOrderCardHtml(order) {
     const statusColors = {
         'confirmed': '#3b82f6',
         'preparing': '#f59e0b',
-        'ready_for_collection': '#8b5cf6',
-        'collected': '#6366f1',
+        'ready_for_collection': '#A82050',
+        'collected': '#8D1B3D',
         'qc_in_progress': '#f59e0b',
         'qc_passed': '#10b981',
         'in_transit': '#3b82f6',
@@ -2907,8 +2907,8 @@ function getOrderStatusConfig(status) {
     const configs = {
         'confirmed': { icon: 'check-circle', label: 'Order Confirmed', description: 'Your order has been confirmed', color: '#3b82f6', bgColor: '#dbeafe' },
         'preparing': { icon: 'box-seam', label: 'Preparing', description: 'Garage is preparing your part', color: '#f59e0b', bgColor: '#fef3c7' },
-        'ready_for_collection': { icon: 'bag-check', label: 'Ready for Pickup', description: 'Ready for driver to collect', color: '#8b5cf6', bgColor: '#ede9fe' },
-        'collected': { icon: 'truck', label: 'Collected', description: 'Driver has picked up your part', color: '#6366f1', bgColor: '#e0e7ff' },
+        'ready_for_collection': { icon: 'bag-check', label: 'Ready for Pickup', description: 'Ready for driver to collect', color: '#A82050', bgColor: '#ede9fe' },
+        'collected': { icon: 'truck', label: 'Collected', description: 'Driver has picked up your part', color: '#8D1B3D', bgColor: '#e0e7ff' },
         'qc_in_progress': { icon: 'search', label: 'Quality Check', description: 'Part is being inspected', color: '#f59e0b', bgColor: '#fef3c7' },
         'qc_passed': { icon: 'patch-check', label: 'QC Passed', description: 'Part passed quality inspection', color: '#10b981', bgColor: '#d1fae5' },
         'in_transit': { icon: 'truck', label: 'In Transit', description: 'On the way to you', color: '#3b82f6', bgColor: '#dbeafe' },

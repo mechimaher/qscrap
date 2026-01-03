@@ -28,8 +28,8 @@
     --text-muted: var(--gray-400);
 
     /* Accent - Muted Blue */
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
+    --accent: #8D1B3D;
+    --accent-hover: #6B1530;
     --accent-light: #dbeafe;
 
     /* Semantic Colors - Muted */
@@ -415,7 +415,7 @@ body {
 }
 
 .stat-icon.blue {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--accent);
 }
 
@@ -527,7 +527,7 @@ body {
 }
 
 .data-table tr:hover {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(141, 27, 61, 0.05);
 }
 
 .data-table tr:last-child td {
@@ -546,7 +546,7 @@ body {
 }
 
 .status-badge.confirmed {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--accent);
 }
 
@@ -567,7 +567,7 @@ body {
 
 .status-badge.delivered {
     background: rgba(139, 92, 246, 0.15);
-    color: #8b5cf6;
+    color: #A82050;
 }
 
 .status-badge.completed {
@@ -603,7 +603,7 @@ body {
 /* Additional Status Badges */
 .status-badge.collected {
     background: rgba(139, 92, 246, 0.15);
-    color: #8b5cf6;
+    color: #A82050;
 }
 
 .status-badge.qc_failed,
@@ -641,7 +641,7 @@ body {
 }
 
 .status-badge.in_progress {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--accent);
 }
 
@@ -917,8 +917,8 @@ body {
     border-radius: 24px;
     box-shadow:
         0 0 0 4px rgba(255, 255, 255, 0.3),
-        0 0 40px 8px rgba(37, 99, 235, 0.4),
-        0 0 80px 16px rgba(37, 99, 235, 0.2),
+        0 0 40px 8px rgba(141, 27, 61, 0.4),
+        0 0 80px 16px rgba(141, 27, 61, 0.2),
         0 20px 40px rgba(0, 0, 0, 0.3);
     animation: loginLogoFloat 3s ease-in-out infinite, loginLogoGlow 2s ease-in-out infinite alternate;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -928,8 +928,8 @@ body {
     transform: scale(1.08) translateY(-4px);
     box-shadow:
         0 0 0 6px rgba(255, 255, 255, 0.4),
-        0 0 60px 12px rgba(37, 99, 235, 0.5),
-        0 0 100px 24px rgba(37, 99, 235, 0.3),
+        0 0 60px 12px rgba(141, 27, 61, 0.5),
+        0 0 100px 24px rgba(141, 27, 61, 0.3),
         0 30px 50px rgba(0, 0, 0, 0.35);
 }
 
@@ -947,11 +947,11 @@ body {
 
 @keyframes loginLogoGlow {
     0% {
-        filter: brightness(1) drop-shadow(0 0 10px rgba(37, 99, 235, 0.3));
+        filter: brightness(1) drop-shadow(0 0 10px rgba(141, 27, 61, 0.3));
     }
 
     100% {
-        filter: brightness(1.1) drop-shadow(0 0 20px rgba(37, 99, 235, 0.5));
+        filter: brightness(1.1) drop-shadow(0 0 20px rgba(141, 27, 61, 0.5));
     }
 }
 
@@ -959,7 +959,7 @@ body {
     font-size: 32px;
     font-weight: 700;
     margin-bottom: 8px;
-    background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, #C9A227 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -997,7 +997,7 @@ body {
 .form-control:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 3px rgba(141, 27, 61, 0.15);
 }
 
 .form-control:focus-visible {
@@ -1008,7 +1008,7 @@ body {
 .btn-login {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, #A82050 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -1020,7 +1020,7 @@ body {
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 10px 30px rgba(141, 27, 61, 0.3);
 }
 
 /* ===== Toast ===== */
@@ -1140,7 +1140,7 @@ body {
     align-items: center;
     padding: 20px 24px;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, #A82050 100%);
 }
 
 .modal-header h2 {
@@ -1232,7 +1232,7 @@ body {
 }
 
 .info-card-icon.garage {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--accent);
 }
 
@@ -1372,7 +1372,7 @@ body {
 .timeline-item.current .timeline-dot {
     background: var(--accent);
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 4px rgba(141, 27, 61, 0.3);
 }
 
 .timeline-status {
@@ -1527,13 +1527,13 @@ body {
 }
 
 .status-badge.verified {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--accent);
 }
 
 /* Badge types */
 .badge.customer {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(141, 27, 61, 0.15);
     color: var(--accent);
 }
 
@@ -1590,7 +1590,7 @@ body {
 }
 
 .ticket-item.active {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(141, 27, 61, 0.1);
     border-left: 3px solid var(--accent);
 }
 
@@ -1760,7 +1760,7 @@ body {
 }
 
 .data-table tbody tr:hover {
-    background-color: rgba(99, 102, 241, 0.08);
+    background-color: rgba(141, 27, 61, 0.08);
 }
 
 .data-table tbody tr.clickable {
@@ -1768,7 +1768,7 @@ body {
 }
 
 .data-table tbody tr.selected {
-    background-color: rgba(99, 102, 241, 0.12);
+    background-color: rgba(141, 27, 61, 0.12);
 }
 
 /* ===== Content Card Hover ===== */
@@ -1865,7 +1865,7 @@ body {
 
 /* ===== Selection Styles ===== */
 ::selection {
-    background: rgba(99, 102, 241, 0.3);
+    background: rgba(141, 27, 61, 0.3);
     color: var(--text-primary);
 }
 
@@ -1914,8 +1914,8 @@ body {
     border-radius: 24px;
     box-shadow:
         0 0 0 4px rgba(255, 255, 255, 0.3),
-        0 0 40px 8px rgba(37, 99, 235, 0.4),
-        0 0 80px 16px rgba(37, 99, 235, 0.2),
+        0 0 40px 8px rgba(141, 27, 61, 0.4),
+        0 0 80px 16px rgba(141, 27, 61, 0.2),
         0 20px 40px rgba(0, 0, 0, 0.3);
     animation: logoFloat 3s ease-in-out infinite, logoGlow 2s ease-in-out infinite alternate;
     position: relative;
@@ -1927,8 +1927,8 @@ body {
     transform: scale(1.08) translateY(-4px);
     box-shadow:
         0 0 0 6px rgba(255, 255, 255, 0.4),
-        0 0 60px 12px rgba(37, 99, 235, 0.5),
-        0 0 100px 24px rgba(37, 99, 235, 0.3),
+        0 0 60px 12px rgba(141, 27, 61, 0.5),
+        0 0 100px 24px rgba(141, 27, 61, 0.3),
         0 30px 50px rgba(0, 0, 0, 0.35);
 }
 
@@ -1955,11 +1955,11 @@ body {
 
 @keyframes logoGlow {
     0% {
-        filter: brightness(1) drop-shadow(0 0 10px rgba(37, 99, 235, 0.3));
+        filter: brightness(1) drop-shadow(0 0 10px rgba(141, 27, 61, 0.3));
     }
 
     100% {
-        filter: brightness(1.1) drop-shadow(0 0 20px rgba(37, 99, 235, 0.5));
+        filter: brightness(1.1) drop-shadow(0 0 20px rgba(141, 27, 61, 0.5));
     }
 }
 
@@ -1981,7 +1981,7 @@ body {
     border-radius: 12px;
     box-shadow:
         0 0 0 2px rgba(255, 255, 255, 0.2),
-        0 0 20px 4px rgba(37, 99, 235, 0.3),
+        0 0 20px 4px rgba(141, 27, 61, 0.3),
         0 4px 12px rgba(0, 0, 0, 0.3);
     animation: sidebarLogoPulse 2.5s ease-in-out infinite;
     transition: all 0.3s ease;
@@ -1991,7 +1991,7 @@ body {
     transform: scale(1.1) rotate(3deg);
     box-shadow:
         0 0 0 3px rgba(255, 255, 255, 0.3),
-        0 0 30px 6px rgba(37, 99, 235, 0.5),
+        0 0 30px 6px rgba(141, 27, 61, 0.5),
         0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
@@ -2001,14 +2001,14 @@ body {
     100% {
         box-shadow:
             0 0 0 2px rgba(255, 255, 255, 0.2),
-            0 0 20px 4px rgba(37, 99, 235, 0.3),
+            0 0 20px 4px rgba(141, 27, 61, 0.3),
             0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     50% {
         box-shadow:
             0 0 0 3px rgba(255, 255, 255, 0.3),
-            0 0 25px 6px rgba(37, 99, 235, 0.45),
+            0 0 25px 6px rgba(141, 27, 61, 0.45),
             0 4px 16px rgba(0, 0, 0, 0.35);
     }
 }
@@ -2287,7 +2287,7 @@ body {
     align-items: center;
     padding: 20px 24px;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    background: linear-gradient(135deg, var(--accent), #A82050);
 }
 
 .shortcuts-header h3 {
@@ -2402,7 +2402,7 @@ body {
 }
 
 .stat-card.highlight:hover {
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 30px rgba(141, 27, 61, 0.4);
 }
 
 /* ===== Enhanced Toast with Close Button ===== */

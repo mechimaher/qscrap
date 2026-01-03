@@ -8,10 +8,10 @@
 /* ===== CSS VARIABLES (Shared Theme) ===== */
 :root {
     /* Primary Colors */
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
+    --primary: #8D1B3D;
+    --primary-dark: #6B1530;
     --primary-light: #818cf8;
-    --accent: #6366f1;
+    --accent: #8D1B3D;
 
     /* Status Colors */
     --success: #10b981;
@@ -519,7 +519,7 @@
 
 .status-badge.confirmed {
     background: #dbeafe;
-    color: #1d4ed8;
+    color: #6B1530;
 }
 
 .status-badge.preparing {
@@ -546,7 +546,7 @@
 .status-badge.in-transit,
 .status-badge.in_transit {
     background: #dbeafe;
-    color: #1d4ed8;
+    color: #6B1530;
 }
 
 .status-badge.delivered {
@@ -591,7 +591,7 @@
 
 .status-badge.open {
     background: #dbeafe;
-    color: #1d4ed8;
+    color: #6B1530;
 }
 
 .status-badge.resolved {
@@ -637,7 +637,7 @@
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(141, 27, 61, 0.4);
 }
 
 .btn-success {
@@ -860,7 +860,7 @@ textarea:focus-visible {
 }
 
 .expandable-row:hover {
-    background: var(--bg-hover, rgba(99, 102, 241, 0.05));
+    background: var(--bg-hover, rgba(141, 27, 61, 0.05));
 }
 
 .expand-icon {
