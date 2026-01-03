@@ -2,7 +2,7 @@
  * VIN Scanner Component
  * 
  * Premium camera-based VIN/Chassis number capture from Qatar registration cards.
- * Uses narrow horizontal strip for focused 17-character VIN capture.
+ * Uses LOCAL ML Kit OCR for fast on-device text recognition.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -14,14 +14,15 @@ import {
     Modal,
     ActivityIndicator,
     Dimensions,
+    Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as ImageManipulator from 'expo-image-manipulator';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
-import { isValidVIN, autoCorrectVIN, getVINConfidence } from '../utils/vinValidator';
-import { api } from '../services/api';
+import { isValidVIN, autoCorrectVIN, getVINConfidence, extractVINCandidates } from '../utils/vinValidator';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -43,8 +44,60 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
     const [statusMessage, setStatusMessage] = useState('Position VIN line inside the strip');
     const [detectedVIN, setDetectedVIN] = useState<string | null>(null);
     const [vinConfidence, setVinConfidence] = useState(0);
+    const [rawOcrText, setRawOcrText] = useState<string>('');
 
     const cameraRef = useRef<CameraView>(null);
+
+    // LOCAL OCR using ML Kit
+    const performLocalOCR = async (imageUri: string): Promise<string> => {
+        try {
+            const result = await TextRecognition.recognize(imageUri);
+            // Combine all recognized text
+            let fullText = '';
+            if (result && result.blocks) {
+                for (const block of result.blocks) {
+                    for (const line of block.lines) {
+                        fullText += line.text + ' ';
+                    }
+                }
+            }
+            return fullText.trim();
+        } catch (error) {
+            console.log('[VINScanner] ML Kit OCR error:', error);
+            return '';
+        }
+    };
+
+    // Extract VIN from OCR text
+    const extractVINFromText = (ocrText: string): string | null => {
+        if (!ocrText) return null;
+
+        // First try to extract VIN candidates
+        const candidates = extractVINCandidates(ocrText);
+
+        // Find first valid VIN
+        for (const candidate of candidates) {
+            const corrected = autoCorrectVIN(candidate);
+            if (isValidVIN(corrected)) {
+                return corrected;
+            }
+        }
+
+        // Fallback: look for 17-char alphanumeric sequence
+        const normalized = ocrText.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (normalized.length >= 17) {
+            for (let i = 0; i <= normalized.length - 17; i++) {
+                const candidate = normalized.substring(i, i + 17);
+                const corrected = autoCorrectVIN(candidate);
+                // Return even if checksum fails - let user see what was detected
+                if (corrected.length === 17) {
+                    return corrected;
+                }
+            }
+        }
+
+        return null;
+    };
 
     // Manual capture - user presses button to capture
     const handleManualCapture = async () => {
@@ -52,25 +105,25 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
 
         try {
             setScanState('processing');
-            setStatusMessage('📸 Processing image...');
+            setStatusMessage('📸 Capturing image...');
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
             // Take photo
             const photo = await cameraRef.current.takePictureAsync({
-                quality: 0.9,
-                base64: true,
+                quality: 1.0, // High quality for better OCR
+                base64: false,
             });
 
             if (!photo?.uri) {
                 throw new Error('Failed to capture photo');
             }
 
-            // CRITICAL: Crop to VIN strip area only (<10% height, centered)
-            // This captures just the narrow horizontal strip where VIN appears
-            const cropHeight = photo.height * 0.08; // 8% height - very narrow
-            const cropWidth = photo.width * 0.85;   // 85% width
+            // Crop to VIN strip area only (8% height, centered)
+            setStatusMessage('🔍 Processing image...');
+            const cropHeight = photo.height * 0.08;
+            const cropWidth = photo.width * 0.85;
             const originX = (photo.width - cropWidth) / 2;
-            const originY = (photo.height - cropHeight) / 2; // Center vertically
+            const originY = (photo.height - cropHeight) / 2;
 
             const manipulated = await ImageManipulator.manipulateAsync(
                 photo.uri,
@@ -83,38 +136,49 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                             height: cropHeight,
                         },
                     },
+                    // Increase contrast for better OCR
+                    { resize: { width: cropWidth * 2 } },
                 ],
-                { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+                { compress: 1.0, format: ImageManipulator.SaveFormat.PNG }
             );
 
-            // Send to backend OCR
-            setStatusMessage('🔍 Reading VIN number...');
-            const ocrResult = await api.ocrVIN(manipulated.base64 || '');
+            // LOCAL OCR using ML Kit
+            setStatusMessage('🔍 Reading text (local OCR)...');
+            const ocrText = await performLocalOCR(manipulated.uri);
+            setRawOcrText(ocrText);
+            console.log('[VINScanner] OCR Text:', ocrText);
 
-            if (ocrResult.vin) {
-                const correctedVIN = autoCorrectVIN(ocrResult.vin);
-                const confidence = getVINConfidence(correctedVIN);
+            if (ocrText) {
+                const extractedVIN = extractVINFromText(ocrText);
 
-                if (isValidVIN(correctedVIN)) {
-                    // Valid VIN found!
+                if (extractedVIN) {
+                    const correctedVIN = autoCorrectVIN(extractedVIN);
+                    const confidence = getVINConfidence(correctedVIN);
+                    const isValid = isValidVIN(correctedVIN);
+
                     setDetectedVIN(correctedVIN);
                     setVinConfidence(confidence);
                     setScanState('confirming');
-                    setStatusMessage('✅ VIN detected successfully!');
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                    if (isValid) {
+                        setStatusMessage('✅ Valid VIN detected!');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    } else {
+                        setStatusMessage('⚠️ VIN detected but checksum invalid. Verify manually.');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    }
                 } else {
-                    // Invalid checksum - try again
-                    setStatusMessage('⚠️ Could not verify VIN. Try again.');
+                    // Show raw OCR text for debugging
+                    setStatusMessage('🔄 No VIN found. OCR: "' + ocrText.substring(0, 30) + '..."');
                     setScanState('scanning');
                 }
             } else {
-                // No VIN found - retry
-                setStatusMessage('🔄 VIN not found. Align VIN line and try again.');
+                setStatusMessage('🔄 No text detected. Try again.');
                 setScanState('scanning');
             }
         } catch (error: any) {
             console.log('[VINScanner] Error:', error);
-            setStatusMessage('⚠️ Could not read VIN. Try again.');
+            setStatusMessage('⚠️ Could not read VIN: ' + error.message);
             setScanState('error');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
@@ -123,11 +187,12 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
     // Start scanning
     const startScan = () => {
         setDetectedVIN(null);
+        setRawOcrText('');
         setScanState('scanning');
         setStatusMessage('Align VIN line inside strip, then tap capture');
     };
 
-    // Confirm VIN
+    // Confirm VIN (even if checksum fails - user can verify)
     const confirmVIN = () => {
         if (detectedVIN) {
             onVINDetected(detectedVIN, vinConfidence);
@@ -138,6 +203,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
     // Rescan
     const rescan = () => {
         setDetectedVIN(null);
+        setRawOcrText('');
         setScanState('scanning');
         setStatusMessage('Align VIN line inside strip, then tap capture');
     };
@@ -195,30 +261,18 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
 
                 {/* Dark Overlay with VIN Strip Cutout */}
                 <View style={styles.overlay}>
-                    {/* Top dark area */}
                     <View style={styles.overlayTop} />
-
-                    {/* Middle Row with VIN Strip */}
                     <View style={styles.stripRow}>
                         <View style={styles.overlaySide} />
-
-                        {/* VIN Strip Frame - Narrow horizontal */}
                         <View style={styles.vinStripFrame}>
-                            {/* Left edge marker */}
                             <View style={[styles.edgeMarker, styles.edgeLeft]} />
-                            {/* Right edge marker */}
                             <View style={[styles.edgeMarker, styles.edgeRight]} />
-
-                            {/* Scan line animation hint */}
                             <View style={styles.scanLineContainer}>
                                 <Text style={styles.stripLabel}>━━━ VIN / CHASSIS LINE ━━━</Text>
                             </View>
                         </View>
-
                         <View style={styles.overlaySide} />
                     </View>
-
-                    {/* Bottom dark area */}
                     <View style={styles.overlayBottom} />
                 </View>
 
@@ -227,7 +281,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                     <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
                         <Text style={styles.closeText}>✕</Text>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Scan VIN</Text>
+                    <Text style={styles.headerTitle}>Scan VIN (Local OCR)</Text>
                     <View style={{ width: 44 }} />
                 </View>
 
@@ -259,11 +313,23 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                                     </View>
                                 ))}
                             </View>
-                            <View style={styles.confidenceBadge}>
-                                <Text style={styles.confidenceText}>
-                                    ✓ Checksum Valid • {vinConfidence}% Confidence
+                            <View style={[
+                                styles.confidenceBadge,
+                                { backgroundColor: vinConfidence >= 80 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
+                            ]}>
+                                <Text style={[
+                                    styles.confidenceText,
+                                    { color: vinConfidence >= 80 ? '#22C55E' : '#FBBF24' }
+                                ]}>
+                                    {vinConfidence >= 80 ? '✓ Checksum Valid' : '⚠️ Verify Manually'} • {vinConfidence}%
                                 </Text>
                             </View>
+
+                            {rawOcrText ? (
+                                <Text style={styles.rawOcrText}>
+                                    Raw OCR: {rawOcrText.substring(0, 50)}...
+                                </Text>
+                            ) : null}
 
                             <View style={styles.confirmActions}>
                                 <TouchableOpacity style={styles.rescanButton} onPress={rescan}>
@@ -274,7 +340,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                                         colors={Colors.gradients.primary}
                                         style={styles.confirmButtonGradient}
                                     >
-                                        <Text style={styles.confirmButtonText}>✓ Confirm VIN</Text>
+                                        <Text style={styles.confirmButtonText}>✓ Use This VIN</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </View>
@@ -317,7 +383,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                         📋 Position ONLY the VIN/Chassis line inside the strip
                     </Text>
                     <Text style={styles.footerSubtext}>
-                        17 characters • One line only
+                        17 characters • Local OCR (no internet required)
                     </Text>
                 </View>
             </View>
@@ -474,16 +540,20 @@ const styles = StyleSheet.create({
     },
     confidenceBadge: {
         alignSelf: 'center',
-        backgroundColor: 'rgba(34, 197, 94, 0.2)',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.sm,
     },
     confidenceText: {
-        color: '#22C55E',
         fontSize: FontSizes.sm,
         fontWeight: '600',
+    },
+    rawOcrText: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: FontSizes.xs,
+        textAlign: 'center',
+        marginBottom: Spacing.md,
     },
     confirmActions: {
         flexDirection: 'row',
@@ -614,7 +684,6 @@ const styles = StyleSheet.create({
         color: 'rgba(255, 255, 255, 0.6)',
         fontSize: FontSizes.md,
     },
-    // Manual Capture Button Styles
     captureContainer: {
         position: 'absolute',
         bottom: 100,
