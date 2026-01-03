@@ -6,6 +6,7 @@ export interface ThemeColors {
     background: string;
     surface: string;
     surfaceElevated: string;
+    surfaceSecondary: string;
     card: string;
     border: string;
     text: string;
@@ -17,6 +18,7 @@ export interface ThemeColors {
     success: string;
     warning: string;
     error: string;
+    danger: string;
     info: string;
     gold: string;
 }
@@ -26,6 +28,7 @@ const qatarPremiumColors: ThemeColors = {
     background: '#FAFAFA',
     surface: '#FFFFFF',
     surfaceElevated: '#FFFFFF',
+    surfaceSecondary: '#F5F5F5',
     card: '#FFFFFF',
     border: '#E5E5E5',
     text: '#1A1A1A',
@@ -37,12 +40,14 @@ const qatarPremiumColors: ThemeColors = {
     success: '#059669',
     warning: '#d97706',
     error: '#dc2626',
+    danger: '#dc2626',
     info: '#C9A227',
     gold: '#C9A227',
 };
 
-interface ThemeContextType {
+export interface ThemeContextType {
     isDarkMode: boolean;
+    isDark: boolean;  // Alias for backward compatibility
     toggleTheme: () => void;
     colors: ThemeColors;
 }
@@ -52,19 +57,20 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
     // Fixed to light mode - no dark mode toggle
     const isDarkMode = false;
+    const isDark = false;
     const toggleTheme = () => {
         // No-op - single theme only
         console.log('Theme toggle disabled - Qatar Premium single theme');
     };
 
     return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleTheme, colors: qatarPremiumColors }}>
+        <ThemeContext.Provider value={{ isDarkMode, isDark, toggleTheme, colors: qatarPremiumColors }}>
             {children}
         </ThemeContext.Provider>
     );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextType {
     const context = useContext(ThemeContext);
     if (context === undefined) {
         throw new Error('useTheme must be used within a ThemeProvider');

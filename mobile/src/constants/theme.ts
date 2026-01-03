@@ -1,6 +1,31 @@
 // QScrap Premium Theme - Qatar National Colors Edition
 // Single unified theme - No dark mode
 
+// Theme colors object (used by both light and dark for compatibility)
+const themeColors = {
+    background: '#FAFAFA',
+    surface: '#FFFFFF',
+    surfaceElevated: '#FFFFFF',
+    card: '#FFFFFF',
+    cardHover: '#F5F5F5',
+    border: '#E5E5E5',
+    borderLight: '#EEEEEE',
+
+    text: '#1A1A1A',
+    textSecondary: '#4A4A4A',
+    textMuted: '#6A6A6A',
+
+    primary: '#8D1B3D',
+    statusBar: 'dark' as const,
+
+    // Additional colors for components
+    success: '#059669',
+    warning: '#d97706',
+    danger: '#dc2626',
+    error: '#dc2626',
+    info: '#C9A227',
+};
+
 export const Colors = {
     // Primary Brand - Qatar Maroon
     primary: '#8D1B3D',
@@ -12,29 +37,18 @@ export const Colors = {
     secondary: '#C9A227',
     secondaryLight: '#F5F0E1',
 
-    // Theme - Single light theme (no dark mode)
-    theme: {
-        background: '#FAFAFA',
-        surface: '#FFFFFF',
-        surfaceElevated: '#FFFFFF',
-        card: '#FFFFFF',
-        cardHover: '#F5F5F5',
-        border: '#E5E5E5',
-        borderLight: '#EEEEEE',
-
-        text: '#1A1A1A',
-        textSecondary: '#4A4A4A',
-        textMuted: '#6A6A6A',
-
-        primary: '#8D1B3D',
-        statusBar: 'dark',
-    },
-
     // Status Colors
     success: '#059669',
     warning: '#d97706',
     error: '#dc2626',
-    info: '#C9A227',  // Gold for info
+    info: '#C9A227',
+
+    // BACKWARD COMPATIBILITY: Both light and dark point to same theme
+    light: themeColors,
+    dark: themeColors,
+
+    // New unified theme reference
+    theme: themeColors,
 
     // Gradients (use with LinearGradient) - Qatar theme
     gradients: {
