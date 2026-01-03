@@ -2,10 +2,10 @@
  * VIN Scanner Component
  * 
  * Premium camera-based VIN/Chassis number capture from Qatar registration cards.
- * Implements quality gate, auto-capture, and multi-frame consensus for zero-error detection.
+ * Uses narrow horizontal strip for focused 17-character VIN capture.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,23 +13,21 @@ import {
     TouchableOpacity,
     Modal,
     ActivityIndicator,
-    Animated,
     Dimensions,
-    Alert,
 } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import { isValidVIN, autoCorrectVIN, getVINConfidence, findConsensusVIN } from '../utils/vinValidator';
+import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { isValidVIN, autoCorrectVIN, getVINConfidence } from '../utils/vinValidator';
 import { api } from '../services/api';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Card overlay dimensions (Qatar registration card aspect ratio ~1.58:1)
-const CARD_WIDTH = SCREEN_WIDTH * 0.85;
-const CARD_HEIGHT = CARD_WIDTH / 1.58;
+// VIN Strip dimensions - narrow horizontal strip for 17-char VIN only
+const VIN_STRIP_WIDTH = SCREEN_WIDTH * 0.9;
+const VIN_STRIP_HEIGHT = 60; // Narrow strip for VIN line only
 
 interface VINScannerProps {
     visible: boolean;
@@ -38,19 +36,15 @@ interface VINScannerProps {
 }
 
 type ScanState = 'ready' | 'scanning' | 'processing' | 'confirming' | 'error';
-type FrameQuality = 'good' | 'blur' | 'dark' | 'bright' | 'moving';
 
 export default function VINScanner({ visible, onClose, onVINDetected }: VINScannerProps) {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanState, setScanState] = useState<ScanState>('ready');
-    const [statusMessage, setStatusMessage] = useState('Position Qatar registration card inside the frame');
+    const [statusMessage, setStatusMessage] = useState('Position VIN line inside the strip');
     const [detectedVIN, setDetectedVIN] = useState<string | null>(null);
     const [vinConfidence, setVinConfidence] = useState(0);
 
     const cameraRef = useRef<CameraView>(null);
-
-    // Simple status message update
-    const updateStatus = (msg: string) => setStatusMessage(msg);
 
     // Manual capture - user presses button to capture
     const handleManualCapture = async () => {
@@ -63,7 +57,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
 
             // Take photo
             const photo = await cameraRef.current.takePictureAsync({
-                quality: 0.8,
+                quality: 0.9,
                 base64: true,
             });
 
@@ -71,20 +65,26 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                 throw new Error('Failed to capture photo');
             }
 
-            // Crop to card region (center of image)
+            // CRITICAL: Crop to VIN strip area only (<10% height, centered)
+            // This captures just the narrow horizontal strip where VIN appears
+            const cropHeight = photo.height * 0.08; // 8% height - very narrow
+            const cropWidth = photo.width * 0.85;   // 85% width
+            const originX = (photo.width - cropWidth) / 2;
+            const originY = (photo.height - cropHeight) / 2; // Center vertically
+
             const manipulated = await ImageManipulator.manipulateAsync(
                 photo.uri,
                 [
                     {
                         crop: {
-                            originX: photo.width * 0.1,
-                            originY: photo.height * 0.3,
-                            width: photo.width * 0.8,
-                            height: photo.height * 0.4,
+                            originX: originX,
+                            originY: originY,
+                            width: cropWidth,
+                            height: cropHeight,
                         },
                     },
                 ],
-                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+                { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG, base64: true }
             );
 
             // Send to backend OCR
@@ -109,7 +109,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                 }
             } else {
                 // No VIN found - retry
-                setStatusMessage('🔄 VIN not found. Please try again.');
+                setStatusMessage('🔄 VIN not found. Align VIN line and try again.');
                 setScanState('scanning');
             }
         } catch (error: any) {
@@ -124,7 +124,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
     const startScan = () => {
         setDetectedVIN(null);
         setScanState('scanning');
-        setStatusMessage('Position card inside the frame, then tap capture');
+        setStatusMessage('Align VIN line inside strip, then tap capture');
     };
 
     // Confirm VIN
@@ -139,7 +139,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
     const rescan = () => {
         setDetectedVIN(null);
         setScanState('scanning');
-        setStatusMessage('Position card inside the frame, then tap capture');
+        setStatusMessage('Align VIN line inside strip, then tap capture');
     };
 
     // Handle close
@@ -193,34 +193,33 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                     autofocus="on"
                 />
 
-                {/* Dark Overlay with Card Cutout */}
+                {/* Dark Overlay with VIN Strip Cutout */}
                 <View style={styles.overlay}>
-                    {/* Top */}
-                    <View style={styles.overlaySection} />
+                    {/* Top dark area */}
+                    <View style={styles.overlayTop} />
 
-                    {/* Middle Row */}
-                    <View style={styles.middleRow}>
-                        <View style={styles.overlaySection} />
+                    {/* Middle Row with VIN Strip */}
+                    <View style={styles.stripRow}>
+                        <View style={styles.overlaySide} />
 
-                        {/* Card Frame - Static green border */}
-                        <View style={[styles.cardFrame, { borderColor: '#22C55E' }]}>
-                            {/* Corner Markers */}
-                            <View style={[styles.corner, styles.cornerTL]} />
-                            <View style={[styles.corner, styles.cornerTR]} />
-                            <View style={[styles.corner, styles.cornerBL]} />
-                            <View style={[styles.corner, styles.cornerBR]} />
+                        {/* VIN Strip Frame - Narrow horizontal */}
+                        <View style={styles.vinStripFrame}>
+                            {/* Left edge marker */}
+                            <View style={[styles.edgeMarker, styles.edgeLeft]} />
+                            {/* Right edge marker */}
+                            <View style={[styles.edgeMarker, styles.edgeRight]} />
 
-                            {/* VIN Area Indicator */}
-                            <View style={styles.vinAreaIndicator}>
-                                <Text style={styles.vinAreaText}>Chassis No. Area</Text>
+                            {/* Scan line animation hint */}
+                            <View style={styles.scanLineContainer}>
+                                <Text style={styles.stripLabel}>━━━ VIN / CHASSIS LINE ━━━</Text>
                             </View>
                         </View>
 
-                        <View style={styles.overlaySection} />
+                        <View style={styles.overlaySide} />
                     </View>
 
-                    {/* Bottom */}
-                    <View style={styles.overlaySection} />
+                    {/* Bottom dark area */}
+                    <View style={styles.overlayBottom} />
                 </View>
 
                 {/* Header */}
@@ -315,7 +314,10 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                 {/* Instructions Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>
-                        📋 Position the Chassis No. section of your Qatar registration card inside the frame
+                        📋 Position ONLY the VIN/Chassis line inside the strip
+                    </Text>
+                    <Text style={styles.footerSubtext}>
+                        17 characters • One line only
                     </Text>
                 </View>
             </View>
@@ -330,71 +332,58 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-    },
-    overlaySection: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    middleRow: {
-        flexDirection: 'row',
-        height: CARD_HEIGHT,
-    },
-    cardFrame: {
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-        borderWidth: 3,
-        borderRadius: BorderRadius.lg,
         justifyContent: 'center',
+    },
+    overlayTop: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+    overlayBottom: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+    stripRow: {
+        flexDirection: 'row',
+        height: VIN_STRIP_HEIGHT,
         alignItems: 'center',
     },
-    corner: {
+    overlaySide: {
+        flex: 1,
+        height: VIN_STRIP_HEIGHT,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+    vinStripFrame: {
+        width: VIN_STRIP_WIDTH,
+        height: VIN_STRIP_HEIGHT,
+        borderWidth: 3,
+        borderColor: '#22C55E',
+        borderRadius: BorderRadius.sm,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+    },
+    edgeMarker: {
         position: 'absolute',
-        width: 30,
-        height: 30,
+        width: 20,
+        height: '100%',
         borderColor: '#fff',
     },
-    cornerTL: {
-        top: -2,
-        left: -2,
-        borderTopWidth: 4,
+    edgeLeft: {
+        left: 0,
         borderLeftWidth: 4,
-        borderTopLeftRadius: BorderRadius.lg,
     },
-    cornerTR: {
-        top: -2,
-        right: -2,
-        borderTopWidth: 4,
+    edgeRight: {
+        right: 0,
         borderRightWidth: 4,
-        borderTopRightRadius: BorderRadius.lg,
     },
-    cornerBL: {
-        bottom: -2,
-        left: -2,
-        borderBottomWidth: 4,
-        borderLeftWidth: 4,
-        borderBottomLeftRadius: BorderRadius.lg,
-    },
-    cornerBR: {
-        bottom: -2,
-        right: -2,
-        borderBottomWidth: 4,
-        borderRightWidth: 4,
-        borderBottomRightRadius: BorderRadius.lg,
-    },
-    vinAreaIndicator: {
-        position: 'absolute',
-        bottom: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    scanLineContainer: {
         paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.sm,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
-    vinAreaText: {
-        color: '#fff',
+    stripLabel: {
+        color: 'rgba(255, 255, 255, 0.6)',
         fontSize: FontSizes.xs,
         fontWeight: '600',
+        letterSpacing: 2,
     },
     header: {
         position: 'absolute',
@@ -425,7 +414,7 @@ const styles = StyleSheet.create({
     },
     statusContainer: {
         position: 'absolute',
-        top: SCREEN_HEIGHT * 0.5 + CARD_HEIGHT / 2 + 20,
+        top: SCREEN_HEIGHT * 0.5 + VIN_STRIP_HEIGHT / 2 + 30,
         left: Spacing.lg,
         right: Spacing.lg,
     },
@@ -570,11 +559,18 @@ const styles = StyleSheet.create({
         bottom: 30,
         left: Spacing.lg,
         right: Spacing.lg,
+        alignItems: 'center',
     },
     footerText: {
         color: 'rgba(255, 255, 255, 0.6)',
         fontSize: FontSizes.sm,
         textAlign: 'center',
+    },
+    footerSubtext: {
+        color: 'rgba(255, 255, 255, 0.4)',
+        fontSize: FontSizes.xs,
+        textAlign: 'center',
+        marginTop: 4,
     },
     permissionContainer: {
         flex: 1,
