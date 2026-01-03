@@ -43,69 +43,14 @@ type FrameQuality = 'good' | 'blur' | 'dark' | 'bright' | 'moving';
 export default function VINScanner({ visible, onClose, onVINDetected }: VINScannerProps) {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanState, setScanState] = useState<ScanState>('ready');
-    const [frameQuality, setFrameQuality] = useState<FrameQuality>('good');
     const [statusMessage, setStatusMessage] = useState('Position Qatar registration card inside the frame');
     const [detectedVIN, setDetectedVIN] = useState<string | null>(null);
     const [vinConfidence, setVinConfidence] = useState(0);
-    const [scanResults, setScanResults] = useState<string[]>([]);
-    const [goodFrameCount, setGoodFrameCount] = useState(0);
 
     const cameraRef = useRef<CameraView>(null);
-    const pulseAnim = useRef(new Animated.Value(1)).current;
-    const borderColorAnim = useRef(new Animated.Value(0)).current;
 
-    // Pulse animation for scanning indicator
-    useEffect(() => {
-        if (scanState === 'scanning') {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(pulseAnim, {
-                        toValue: 1.05,
-                        duration: 800,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(pulseAnim, {
-                        toValue: 1,
-                        duration: 800,
-                        useNativeDriver: true,
-                    }),
-                ])
-            ).start();
-        } else {
-            pulseAnim.setValue(1);
-        }
-    }, [scanState]);
-
-    // Border color animation based on frame quality
-    useEffect(() => {
-        Animated.timing(borderColorAnim, {
-            toValue: frameQuality === 'good' ? 1 : 0,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
-    }, [frameQuality]);
-
-    const getStatusMessage = useCallback((quality: FrameQuality): string => {
-        switch (quality) {
-            case 'blur': return '📷 Hold steady - image is blurry';
-            case 'dark': return '💡 Too dark - move to better lighting';
-            case 'bright': return '☀️ Too bright - avoid direct sunlight';
-            case 'moving': return '✋ Hold still - detecting motion';
-            case 'good': return '✅ Perfect! Hold steady...';
-            default: return 'Position card inside the frame';
-        }
-    }, []);
-
-    // Simulate quality gate (in production, this would analyze frame data)
-    const checkFrameQuality = useCallback((): FrameQuality => {
-        // Simplified quality check - in production would analyze actual image
-        // For now, randomly simulate occasional quality issues for realistic UX
-        const rand = Math.random();
-        if (rand < 0.7) return 'good';
-        if (rand < 0.8) return 'blur';
-        if (rand < 0.9) return 'dark';
-        return 'moving';
-    }, []);
+    // Simple status message update
+    const updateStatus = (msg: string) => setStatusMessage(msg);
 
     // Manual capture - user presses button to capture
     const handleManualCapture = async () => {
@@ -177,11 +122,9 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
 
     // Start scanning
     const startScan = () => {
-        setScanResults([]);
         setDetectedVIN(null);
-        setGoodFrameCount(0);
         setScanState('scanning');
-        setStatusMessage('Position card inside the frame');
+        setStatusMessage('Position card inside the frame, then tap capture');
     };
 
     // Confirm VIN
@@ -194,17 +137,14 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
 
     // Rescan
     const rescan = () => {
-        setScanResults([]);
         setDetectedVIN(null);
-        setGoodFrameCount(0);
         setScanState('scanning');
-        setStatusMessage('Position card inside the frame');
+        setStatusMessage('Position card inside the frame, then tap capture');
     };
 
     // Handle close
     const handleClose = () => {
         setScanState('ready');
-        setScanResults([]);
         setDetectedVIN(null);
         onClose();
     };
@@ -242,11 +182,6 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
         );
     }
 
-    const borderColor = borderColorAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['#EF4444', '#22C55E'],
-    });
-
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
             <View style={styles.container}>
@@ -267,16 +202,8 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                     <View style={styles.middleRow}>
                         <View style={styles.overlaySection} />
 
-                        {/* Card Frame */}
-                        <Animated.View
-                            style={[
-                                styles.cardFrame,
-                                {
-                                    borderColor,
-                                    transform: [{ scale: pulseAnim }],
-                                },
-                            ]}
-                        >
+                        {/* Card Frame - Static green border */}
+                        <View style={[styles.cardFrame, { borderColor: '#22C55E' }]}>
                             {/* Corner Markers */}
                             <View style={[styles.corner, styles.cornerTL]} />
                             <View style={[styles.corner, styles.cornerTR]} />
@@ -287,7 +214,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                             <View style={styles.vinAreaIndicator}>
                                 <Text style={styles.vinAreaText}>Chassis No. Area</Text>
                             </View>
-                        </Animated.View>
+                        </View>
 
                         <View style={styles.overlaySection} />
                     </View>
