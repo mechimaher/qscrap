@@ -367,7 +367,7 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
 
     try {
         const result = await pool.query(
-            `SELECT notification_id, title, body, notification_type, is_read, created_at
+            `SELECT notification_id, title, body as message, notification_type as type, is_read, created_at, related_id
              FROM notifications WHERE user_id = $1 
              ORDER BY created_at DESC LIMIT 50`,
             [userId]
