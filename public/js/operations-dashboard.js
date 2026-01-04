@@ -470,11 +470,11 @@ function getOrderActions(order) {
         case 'ready_for_pickup':
             return `<button class="btn btn-primary btn-sm" onclick="assignCollection('${o.order_id}')" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
         case 'collected':
-            return `<button class="btn btn-primary btn-sm" onclick="openInspection('${o.order_id}', '#${o.order_number}', '', '')" title="Start QC inspection"><i class="bi bi-clipboard-check"></i></button>`;
+            return `<span class="status-badge ready" style="font-size: 11px;">Part Collected</span>`;
         case 'qc_failed':
             return `<button class="btn btn-warning btn-sm" onclick="handleQCFailed('${o.order_id}')" title="Handle QC failure"><i class="bi bi-exclamation-triangle"></i></button>`;
         case 'in_transit':
-            return `<button class="btn btn-success btn-sm" onclick="confirmDelivery('${o.order_id}')" title="Confirm delivery"><i class="bi bi-check-circle"></i></button>`;
+            return `<span class="status-badge in_transit" style="font-size: 11px;">In Transit</span>`;
         case 'delivered':
             return `<span class="status-badge delivered" style="font-size: 11px;">Delivered</span>`;
         case 'completed':

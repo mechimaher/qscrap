@@ -233,6 +233,14 @@ class DriverApiService {
             body: JSON.stringify({ token, platform, device_id: 'unknown' }),
         });
     }
+
+    // ========== CHAT ==========
+    async sendChatMessage(orderId: string, message: string): Promise<{ message: any }> {
+        return this.request('/chat/messages', {
+            method: 'POST',
+            body: JSON.stringify({ order_id: orderId, message }),
+        });
+    }
 }
 
 export const api = new DriverApiService();

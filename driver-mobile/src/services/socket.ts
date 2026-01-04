@@ -113,13 +113,7 @@ export const leaveChatRoom = (orderId: string) => {
     socket?.emit('leave_order_chat', orderId);
 };
 
-export const sendChatMessage = (data: {
-    order_id: string;
-    message: string;
-    sender_type: 'driver';
-}) => {
-    socket?.emit('send_message', data);
-};
+// sendChatMessage removed (use REST API)
 
 // ==============================
 // STATUS UPDATE LISTENERS

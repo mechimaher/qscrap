@@ -20,7 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
-import { getSocket, joinChatRoom, leaveChatRoom, sendChatMessage, onNewMessage } from '../services/socket';
+import { getSocket, joinChatRoom, leaveChatRoom, onNewMessage } from '../services/socket';
 import { Colors, BorderRadius, Spacing, FontSize } from '../constants/theme';
 
 interface Message {
@@ -119,11 +119,8 @@ export default function ChatScreen() {
 
         try {
             // Send via socket
-            sendChatMessage({
-                order_id: orderId,
-                message: messageText,
-                sender_type: 'driver',
-            });
+            // Send via REST API (Backend emits socket event)
+            await api.sendChatMessage(orderId, messageText);
         } catch (err) {
             console.error('[Chat] Send error:', err);
         } finally {
