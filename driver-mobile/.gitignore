@@ -1,0 +1,21 @@
+# Driver Mobile App
+node_modules/
+.expo/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Env
+.env
+.env.local
+.env.production
+
+# Native
+*.hprof
+android/app/build/
+ios/Pods/

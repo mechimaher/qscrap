@@ -95,13 +95,31 @@ export class DriverService {
             // 3. Update Assignment Status
             const updatedAssignment = await driverRepository.updateAssignmentStatus(assignmentId, status, notes, failureReason, client);
 
-            // 4. Update Order Status
+            // 4. Update Order Status based on assignment type and new status
             let newOrderStatus = null;
-            if (assignment.assignment_type === 'delivery' || assignment.assignment_type === 'collection' || !assignment.assignment_type) {
+
+            // COLLECTION ASSIGNMENTS: Driver confirms pickup from garage
+            // picked_up means driver collected the part → order becomes 'collected'
+            if (assignment.assignment_type === 'collection') {
+                if (status === 'picked_up') {
+                    newOrderStatus = 'collected';
+                } else if (status === 'in_transit') {
+                    // After collection, driver goes to customer
+                    newOrderStatus = 'in_transit';
+                } else if (status === 'delivered') {
+                    newOrderStatus = 'delivered';
+                } else if (status === 'failed') {
+                    newOrderStatus = 'disputed';
+                }
+            }
+            // DELIVERY ASSIGNMENTS: Standard delivery flow
+            else if (assignment.assignment_type === 'delivery' || !assignment.assignment_type) {
                 if (status === 'in_transit') newOrderStatus = 'in_transit';
                 else if (status === 'delivered') newOrderStatus = 'delivered';
                 else if (status === 'failed') newOrderStatus = 'disputed';
-            } else if (assignment.assignment_type === 'return_to_garage') {
+            }
+            // RETURN ASSIGNMENTS: Return to garage
+            else if (assignment.assignment_type === 'return_to_garage') {
                 if (status === 'delivered') newOrderStatus = 'returning_to_garage';
             }
 

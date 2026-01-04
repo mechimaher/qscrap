@@ -10,6 +10,7 @@ import {
     getOrdersReadyForCollection,
     getOrdersReadyForDelivery,
     collectOrder,
+    assignCollectionDriver,
     assignDriver,
     reassignDriver,
     updateDeliveryStatus,
@@ -48,7 +49,8 @@ router.patch('/drivers/:driver_id', updateDriver);
 
 // Orders - Collection from garages
 router.get('/collection/pending', getOrdersReadyForCollection);
-router.post('/collect/:order_id', collectOrder);
+router.post('/assign-collection/:order_id', assignCollectionDriver);  // NEW: Assign driver, order stays ready_for_pickup
+router.post('/collect/:order_id', collectOrder);  // DEPRECATED: Use assign-collection + driver pickup
 
 // Orders - Delivery to customers  
 router.get('/delivery/pending', getOrdersReadyForDelivery);

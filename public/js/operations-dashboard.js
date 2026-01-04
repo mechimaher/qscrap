@@ -519,7 +519,7 @@ async function assignCollection(orderId) {
                 <button class="modal-close" onclick="document.getElementById('collectionAssignModal').remove()" style="color: white;">&times;</button>
             </div>
             <div class="modal-body" style="padding: 20px;">
-                <p style="margin-bottom: 15px; color: var(--text-secondary);">Assign a driver to collect this order from the garage.</p>
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Assign a driver to collect this order from the garage. Driver will confirm pickup via their app.</p>
                 <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver:</label>
                 <select id="collectionDriverSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
                     ${driversHtml}
@@ -528,7 +528,7 @@ async function assignCollection(orderId) {
             <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
                 <button class="btn btn-ghost" onclick="document.getElementById('collectionAssignModal').remove()">Cancel</button>
                 <button class="btn btn-primary" id="confirmCollectionBtn" onclick="submitCollectionAssignment('${orderId}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                    <i class="bi bi-check-lg"></i> Assign & Collect
+                    <i class="bi bi-truck"></i> Assign Driver
                 </button>
             </div>
         </div>
@@ -536,7 +536,7 @@ async function assignCollection(orderId) {
     document.body.appendChild(modal);
 }
 
-// Submit collection assignment - mark order as collected
+// Submit collection assignment - driver will confirm pickup via their app
 async function submitCollectionAssignment(orderId) {
     const driverId = document.getElementById('collectionDriverSelect').value;
     if (!driverId) {
@@ -549,8 +549,9 @@ async function submitCollectionAssignment(orderId) {
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
 
     try {
-        // First, mark the order as collected
-        const res = await fetch(`${API_URL}/delivery/collect/${orderId}`, {
+        // NEW FLOW: Assign driver for collection (order stays ready_for_pickup)
+        // Driver will confirm pickup via their app, which will update order to collected
+        const res = await fetch(`${API_URL}/delivery/assign-collection/${orderId}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -558,26 +559,26 @@ async function submitCollectionAssignment(orderId) {
             },
             body: JSON.stringify({
                 driver_id: driverId,
-                notes: 'Collected by assigned driver'
+                notes: 'Assigned for collection by operations'
             })
         });
         const data = await res.json();
 
         if (res.ok) {
-            showToast('📦 Order collected! Ready for QC inspection.', 'success');
+            showToast(`🚚 Driver ${data.driver?.name || ''} assigned! Awaiting pickup confirmation.`, 'success');
             document.getElementById('collectionAssignModal').remove();
             loadOrders();
             loadStats();
             loadDeliveryData();
         } else {
-            showToast(data.error || 'Failed to assign collection', 'error');
+            showToast(data.error || 'Failed to assign collection driver', 'error');
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign & Collect';
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign Driver';
         }
     } catch (err) {
         showToast('Connection error', 'error');
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign & Collect';
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign Driver';
     }
 }
 

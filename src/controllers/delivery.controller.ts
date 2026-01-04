@@ -209,7 +209,176 @@ export const getOrdersReadyForDelivery = async (req: AuthRequest, res: Response)
     }
 };
 
+// ============================================================================
+// ASSIGN COLLECTION DRIVER (NEW FLOW)
+// Assigns driver for collection from garage - order stays at ready_for_pickup
+// Driver will confirm pickup via their app, which triggers order -> collected
+// ============================================================================
+export const assignCollectionDriver = async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+    const { driver_id, notes } = req.body;
+
+    if (!driver_id) {
+        return res.status(400).json({ error: 'Driver ID is required' });
+    }
+
+    console.log('[DELIVERY] assignCollectionDriver called:', { order_id, driver_id, notes });
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Verify order is ready for collection
+        const orderResult = await client.query(
+            `SELECT o.order_id, o.order_number, o.order_status, o.customer_id, o.garage_id,
+                    o.delivery_address,
+                    pr.part_description, g.garage_name, g.address as garage_address,
+                    u.full_name as customer_name
+             FROM orders o
+             JOIN part_requests pr ON o.request_id = pr.request_id
+             JOIN garages g ON o.garage_id = g.garage_id
+             JOIN users u ON o.customer_id = u.user_id
+             WHERE o.order_id = $1`,
+            [order_id]
+        );
+
+        if (orderResult.rows.length === 0) {
+            throw new Error('Order not found');
+        }
+
+        const order = orderResult.rows[0];
+
+        if (order.order_status !== 'ready_for_pickup') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+                error: 'Order is not ready for collection',
+                current_status: order.order_status,
+                required_status: 'ready_for_pickup'
+            });
+        }
+
+        // Check if collection assignment already exists
+        const existingAssignment = await client.query(
+            `SELECT assignment_id, driver_id FROM delivery_assignments 
+             WHERE order_id = $1 AND assignment_type = 'collection' AND status = 'assigned'`,
+            [order_id]
+        );
+
+        if (existingAssignment.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+                error: 'Collection driver already assigned',
+                assignment_id: existingAssignment.rows[0].assignment_id
+            });
+        }
+
+        // Check driver availability
+        const driverResult = await client.query(
+            `SELECT driver_id, user_id, status, full_name, phone, vehicle_type, vehicle_plate 
+             FROM drivers WHERE driver_id = $1`,
+            [driver_id]
+        );
+
+        if (driverResult.rows.length === 0) {
+            throw new Error('Driver not found');
+        }
+
+        const driver = driverResult.rows[0];
+
+        if (driver.status !== 'available') {
+            throw new Error(`Driver is currently ${driver.status}`);
+        }
+
+        // Create collection assignment record (order stays at ready_for_pickup)
+        const assignResult = await client.query(`
+            INSERT INTO delivery_assignments 
+                (order_id, driver_id, pickup_address, delivery_address, status, assignment_type, created_by_user_id)
+            VALUES ($1, $2, $3, $4, 'assigned', 'collection', $5)
+            RETURNING assignment_id, order_id, status, assignment_type
+        `, [order_id, driver_id, order.garage_address, order.delivery_address, req.user?.userId]);
+
+        // Update driver status to busy
+        await client.query(
+            'UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2',
+            ['busy', driver_id]
+        );
+
+        // Update order with driver reference (orders.driver_id references users.user_id)
+        await client.query(
+            'UPDATE orders SET driver_id = $1, updated_at = NOW() WHERE order_id = $2',
+            [driver.user_id, order_id]
+        );
+
+        // Log the assignment (NOT status change - order remains ready_for_pickup)
+        await client.query(`
+            INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+            VALUES ($1, $2, $2, $3, 'operations', $4)
+        `, [order_id, 'ready_for_pickup', req.user?.userId,
+            notes || `Collection driver assigned: ${driver.full_name}. Awaiting driver pickup confirmation.`]);
+
+        await client.query('COMMIT');
+
+        // Socket notifications
+        const io = (global as any).io;
+
+        // Notify driver about new collection assignment
+        if (driver.user_id) {
+            io.to(`driver_${driver.user_id}`).emit('new_assignment', {
+                assignment_id: assignResult.rows[0].assignment_id,
+                assignment_type: 'collection',
+                order_id,
+                order_number: order.order_number,
+                part_description: order.part_description,
+                pickup_address: order.garage_address,
+                delivery_address: order.delivery_address,
+                customer_name: order.customer_name,
+                garage_name: order.garage_name,
+                notification: `📦 New collection: Order #${order.order_number} - Pick up from ${order.garage_name}`
+            });
+        }
+
+        // Notify garage that driver is on the way
+        io.to(`garage_${order.garage_id}`).emit('collection_driver_assigned', {
+            order_id,
+            order_number: order.order_number,
+            driver_name: driver.full_name,
+            driver_phone: driver.phone,
+            vehicle: `${driver.vehicle_type} - ${driver.vehicle_plate}`,
+            notification: `🚚 Driver ${driver.full_name} is on the way to collect Order #${order.order_number}`
+        });
+
+        // Notify operations
+        io.to('operations').emit('collection_driver_assigned', {
+            order_id,
+            order_number: order.order_number,
+            driver_name: driver.full_name,
+            notification: `✅ Collection driver assigned: ${driver.full_name} for #${order.order_number}`
+        });
+
+        res.status(201).json({
+            success: true,
+            message: `Collection driver assigned. Awaiting driver pickup confirmation.`,
+            assignment: assignResult.rows[0],
+            order_number: order.order_number,
+            driver: {
+                id: driver.driver_id,
+                name: driver.full_name,
+                phone: driver.phone,
+                vehicle: `${driver.vehicle_type} - ${driver.vehicle_plate}`
+            },
+            next_step: 'Driver will confirm pickup via their app'
+        });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('assignCollectionDriver Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    } finally {
+        client.release();
+    }
+};
+
 // Mark order as collected from garage (ready_for_pickup -> collected)
+// DEPRECATED: Use assignCollectionDriver + driver pickup confirmation instead
 export const collectOrder = async (req: AuthRequest, res: Response) => {
     const { order_id } = req.params;
     const { notes, driver_id } = req.body;
