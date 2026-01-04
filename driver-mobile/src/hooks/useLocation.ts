@@ -71,7 +71,12 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
                     }
                 );
                 console.log('[Location Task] Updated:', location.coords.latitude, location.coords.longitude);
-            } catch (err) {
+            } catch (err: any) {
+                // Suppress benign errors
+                if (
+                    err?.message?.includes('rate limited') ||
+                    err?.message?.includes('No token')
+                ) return;
                 console.error('[Location Task] API error:', err);
             }
         }
@@ -210,7 +215,9 @@ export function useLocation(): UseLocationResult {
                                 speed: state.speed ?? undefined,
                             }
                         );
-                    } catch (err) {
+                    } catch (err: any) {
+                        // Suppress rate limit errors
+                        if (err?.message?.includes('rate limited')) return;
                         console.error('[Location] API update error:', err);
                     }
                 }
