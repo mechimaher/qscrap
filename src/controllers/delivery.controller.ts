@@ -198,7 +198,7 @@ export const getOrdersReadyForDelivery = async (req: AuthRequest, res: Response)
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN garages g ON o.garage_id = g.garage_id
             JOIN users u ON o.customer_id = u.user_id
-            WHERE o.order_status = 'collected'
+            WHERE o.order_status = 'collected' AND o.driver_id IS NULL
             ORDER BY o.created_at ASC
         `);
 
