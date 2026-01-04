@@ -15,15 +15,20 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLocation } from '../../hooks/useLocation';
+import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
+import { getSocket } from '../../services/socket'; // Import getSocket
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
 
 export default function HomeScreen() {
     const { driver, refreshDriver } = useAuth();
     const { colors } = useTheme();
+    const navigation = useNavigation<any>();
+    const { isConnected } = useSocket(); // Get isConnected instead of socket
     const { location, isTracking, startTracking, stopTracking, hasPermission, requestPermission } = useLocation();
 
     const [stats, setStats] = useState<DriverStats | null>(null);
@@ -32,9 +37,41 @@ export default function HomeScreen() {
     const [isAvailable, setIsAvailable] = useState(driver?.status === 'available');
     const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
+    // Refresh data when screen comes into focus (e.g. returning from details)
+    useFocusEffect(
+        useCallback(() => {
+            loadData();
+        }, [])
+    );
+
+    // Socket listeners for real-time updates
     useEffect(() => {
-        loadData();
-    }, []);
+        if (!isConnected) return;
+
+        const socket = getSocket();
+        if (!socket) return;
+
+        console.log('[Home] Setting up socket listeners');
+
+        const handleUpdate = () => {
+            console.log('[Home] Received update event, reloading data...');
+            loadData();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        };
+
+        socket.on('new_assignment', handleUpdate);
+        socket.on('assignment_cancelled', handleUpdate);
+        socket.on('assignment_removed', handleUpdate);
+        socket.on('order_status_updated', handleUpdate);
+
+        return () => {
+            console.log('[Home] Cleaning up socket listeners');
+            socket.off('new_assignment', handleUpdate);
+            socket.off('assignment_cancelled', handleUpdate);
+            socket.off('assignment_removed', handleUpdate);
+            socket.off('order_status_updated', handleUpdate);
+        };
+    }, [isConnected]);
 
     useEffect(() => {
         setIsAvailable(driver?.status === 'available');
@@ -228,6 +265,7 @@ export default function HomeScreen() {
                                 key={assignment.assignment_id}
                                 assignment={assignment}
                                 colors={colors}
+                                onPress={() => navigation.navigate('AssignmentDetail', { assignmentId: assignment.assignment_id })}
                             />
                         ))
                     )}
@@ -248,7 +286,8 @@ function StatCard({ icon, value, label, color, colors }: any) {
     );
 }
 
-function AssignmentCard({ assignment, colors }: { assignment: Assignment; colors: any }) {
+
+function AssignmentCard({ assignment, colors, onPress }: { assignment: Assignment; colors: any; onPress: () => void }) {
     const statusConfig = AssignmentStatusConfig[assignment.status as keyof typeof AssignmentStatusConfig];
     const typeConfig = AssignmentTypeConfig[assignment.assignment_type as keyof typeof AssignmentTypeConfig];
 
@@ -256,6 +295,7 @@ function AssignmentCard({ assignment, colors }: { assignment: Assignment; colors
         <TouchableOpacity
             style={[styles.assignmentCard, { backgroundColor: colors.surface }]}
             activeOpacity={0.8}
+            onPress={onPress}
         >
             {/* Header */}
             <View style={styles.assignmentHeader}>
