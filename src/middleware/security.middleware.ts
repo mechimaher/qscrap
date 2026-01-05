@@ -18,7 +18,8 @@ export const securityMiddleware = helmet({
             connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com"],
             frameSrc: ["'none'"],
             objectSrc: ["'none'"],
-            upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+            // Only enable upgrade-insecure-requests when HTTPS is configured
+            upgradeInsecureRequests: process.env.HTTPS_ENABLED === 'true' ? [] : null
         }
     },
     // Cross-Origin Embedder Policy
