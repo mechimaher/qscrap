@@ -1,11 +1,13 @@
 // QScrap Driver App - API Configuration
-// Same backend as customer app
+// LOCAL DEV: Uses local server
+// PRODUCTION BUILD: Set IS_PRODUCTION = true or use EAS env vars
 
-// Production API URL
-export const API_BASE_URL = 'https://qscrap.qa/api';
+// Current Environment
+const IS_PRODUCTION = false; // Set to true for production builds
 
-// For local development, uncomment below and comment above:
-// export const API_BASE_URL = 'http://192.168.1.59:3000/api';
+export const API_BASE_URL = IS_PRODUCTION
+    ? 'https://qscrap.qa/api'
+    : 'http://192.168.1.59:3000/api';
 
 export const API_ENDPOINTS = {
     // Auth

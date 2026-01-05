@@ -1,14 +1,17 @@
 // API Configuration
-// PRODUCTION: Use your actual server URL
-// DEVELOPMENT: Uncomment local IP for testing on physical device
+// LOCAL DEV: Uses local server (current)
+// PRODUCTION BUILD: Set via EAS environment variables or change before building
 
-// PRODUCTION URLs (update when domain is ready)
-// export const API_BASE_URL = 'https://api.qscrap.qa/api';
-// export const SOCKET_URL = 'https://api.qscrap.qa';
+// Current Environment
+const IS_PRODUCTION = false; // Set to true for production builds, or use EAS env vars
 
-// DEVELOPMENT URLs (for local testing)
-export const API_BASE_URL = 'http://192.168.1.59:3000/api';
-export const SOCKET_URL = 'http://192.168.1.59:3000';
+export const API_BASE_URL = IS_PRODUCTION
+    ? 'https://qscrap.qa/api'
+    : 'http://192.168.1.59:3000/api';
+
+export const SOCKET_URL = IS_PRODUCTION
+    ? 'https://qscrap.qa'
+    : 'http://192.168.1.59:3000';
 
 // API endpoints - Match exactly with backend routes
 export const API_ENDPOINTS = {
