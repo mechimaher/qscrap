@@ -237,3 +237,27 @@ Queries that use primary (write pool):
 3. 📋 Test with current setup (works without changes)
 4. 🚀 Add Redis/S3 when scaling to 1000+ users
 5. 📊 Monitor `/health` endpoint for performance metrics
+
+## Phase 3: Cloud Native Scale (10k - 100k Users)
+**Objective**: Decouple logic from infrastructure to allow infinite auto-scaling.
+
+### 1. Container Orchestration (Kubernetes / AWS ECS)
+Move from `docker-compose` (single server) to **Kubernetes**.
+- **Auto-Scaling**: Automatically spin up new API containers when CPU > 70%.
+- **Self-Healing**: Automatically restart crashed pods.
+
+### 2. Managed Database (AWS RDS / Azure SQL)
+Stop managing Postgres yourself.
+- **Multi-AZ**: Database exists in 2 physical data centers simultaneously.
+- **Point-in-Time Recovery**: Restore data to any second in the last 30 days.
+
+### 3. Event-Driven Architecture (Queues)
+Use **Redis Streams** or **RabbitMQ** to decouple heavy tasks (Emails, Notifications) from the main API.
+
+## Phase 4: Global Scale (100k+ Users)
+
+### 1. Database Sharding
+Split data by geography (e.g., Qatar users on Cluster A, Saudi users on Cluster B).
+
+### 2. Edge Computing
+Run logic on **Cloudflare Workers** to process requests milliseconds from the user.
