@@ -1,17 +1,18 @@
 // API Configuration
-// LOCAL DEV: Uses local server (current)
-// PRODUCTION BUILD: Set via EAS environment variables or change before building
+// DEMO MODE: Pointing to VPS IP (until DNS propagates)
+// Once qscrap.qa DNS works, change to https://qscrap.qa
 
-// Current Environment
-const IS_PRODUCTION = false; // Set to true for production builds, or use EAS env vars
+// Demo Configuration - VPS IP Address
+export const API_BASE_URL = 'http://147.93.89.153:3000/api';
+export const SOCKET_URL = 'http://147.93.89.153:3000';
 
-export const API_BASE_URL = IS_PRODUCTION
-    ? 'https://qscrap.qa/api'
-    : 'http://192.168.1.59:3000/api';
+// FUTURE: Once DNS propagates, use these:
+// export const API_BASE_URL = 'https://qscrap.qa/api';
+// export const SOCKET_URL = 'https://qscrap.qa';
 
-export const SOCKET_URL = IS_PRODUCTION
-    ? 'https://qscrap.qa'
-    : 'http://192.168.1.59:3000';
+// LOCAL DEV (uncomment for local development):
+// export const API_BASE_URL = 'http://192.168.1.59:3000/api';
+// export const SOCKET_URL = 'http://192.168.1.59:3000';
 
 // API endpoints - Match exactly with backend routes
 export const API_ENDPOINTS = {
