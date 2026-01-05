@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { submitBid, getMyBids, rejectBid, updateBid } from '../controllers/bid.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
-import { upload } from '../middleware/file.middleware';
+import { upload, optimizeFiles } from '../middleware/file.middleware';
 import { validate, createBidSchema } from '../middleware/validation.middleware';
 
 const router = Router();
 
 // Submit bid (Garage only) - Allow up to 10 images with validation
-router.post('/', authenticate, requireRole('garage'), upload.array('images', 10), submitBid);
+router.post('/', authenticate, requireRole('garage'), upload.array('images', 10), optimizeFiles, submitBid);
 
 // Get my bids (Garage only)
 router.get('/my', authenticate, requireRole('garage'), getMyBids);

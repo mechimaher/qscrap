@@ -3,7 +3,7 @@
  */
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
-import { upload } from '../middleware/file.middleware';
+import { upload, optimizeFiles } from '../middleware/file.middleware';
 import * as showcaseController from '../controllers/showcase.controller';
 
 const router = Router();
@@ -25,8 +25,8 @@ router.post('/request-quote', authenticate, showcaseController.requestQuoteFromS
 // GARAGE ENDPOINTS (Enterprise Only)
 // ============================================
 router.get('/garage', authenticate, requireRole('garage'), showcaseController.getMyShowcaseParts);
-router.post('/garage', authenticate, requireRole('garage'), upload.array('images', 5), showcaseController.addGaragePart);
-router.put('/garage/:id', authenticate, requireRole('garage'), upload.array('images', 5), showcaseController.updateGaragePart);
+router.post('/garage', authenticate, requireRole('garage'), upload.array('images', 5), optimizeFiles, showcaseController.addGaragePart);
+router.put('/garage/:id', authenticate, requireRole('garage'), upload.array('images', 5), optimizeFiles, showcaseController.updateGaragePart);
 router.delete('/garage/:id', authenticate, requireRole('garage'), showcaseController.deleteGaragePart);
 router.post('/garage/:id/toggle', authenticate, requireRole('garage'), showcaseController.togglePartStatus);
 

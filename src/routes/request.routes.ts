@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { createRequest, getActiveRequests, getMyRequests, getRequestDetails, ignoreRequest, unignoreRequest, getIgnoredRequests, cancelRequest, deleteRequest } from '../controllers/request.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
-import { upload } from '../middleware/file.middleware';
+import { upload, optimizeFiles } from '../middleware/file.middleware';
 
 const router = Router();
 
@@ -19,8 +19,8 @@ const handleMulterError = (fn: any) => (req: Request, res: Response, next: NextF
     });
 };
 
-// Customer creates request
-router.post('/', authenticate, requireRole('customer'), handleMulterError(upload.array('images', 5)), createRequest);
+// Customer creates request (with compressed images)
+router.post('/', authenticate, requireRole('customer'), handleMulterError(upload.array('images', 5)), optimizeFiles, createRequest);
 
 // Customer views their requests
 router.get('/my', authenticate, requireRole('customer'), getMyRequests);
