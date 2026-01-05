@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EfgdJO79GbxCryBSahnbEAv6FUCOdosT9nrJ1XvLKJFtQHKJoWJE4c7IzEKwHJD
+\restrict cwQSragatKM8lQl9esMX1re8nVYU939xnnWsUwyDraImM31YYe2WPXZ21gVgPJA
 
 -- Dumped from database version 14.20
 -- Dumped by pg_dump version 17.7 (Ubuntu 17.7-0ubuntu0.25.10.1)
@@ -364,6 +364,7 @@ CREATE TABLE public.bids (
     updated_at timestamp without time zone DEFAULT now(),
     withdrawn_at timestamp without time zone,
     deleted_at timestamp without time zone,
+    original_bid_amount numeric,
     CONSTRAINT bids_bid_amount_check CHECK ((bid_amount > (0)::numeric)),
     CONSTRAINT bids_part_condition_check CHECK ((part_condition = ANY (ARRAY['new'::text, 'used_excellent'::text, 'used_good'::text, 'used_fair'::text, 'refurbished'::text]))),
     CONSTRAINT bids_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'rejected'::text, 'withdrawn'::text, 'expired'::text]))),
@@ -1308,7 +1309,7 @@ CREATE TABLE public.reviews (
 -- Name: TABLE reviews; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.reviews IS 'DEPRECATED: Use order_reviews instead. Retained for historical data.';
+COMMENT ON TABLE public.reviews IS 'DEPRECATED (2024-12-31): Use order_reviews instead. Scheduled for removal Q2 2025. DO NOT USE IN NEW CODE.';
 
 
 --
@@ -1445,7 +1446,7 @@ CREATE TABLE public.user_addresses (
 -- Name: TABLE user_addresses; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.user_addresses IS 'DEPRECATED: Use customer_addresses instead. Retained for migration period.';
+COMMENT ON TABLE public.user_addresses IS 'DEPRECATED (2024-12-31): Use customer_addresses instead. Scheduled for removal Q2 2025. DO NOT USE IN NEW CODE.';
 
 
 --
@@ -1575,14 +1576,6 @@ ALTER TABLE ONLY public.customer_addresses
 
 ALTER TABLE ONLY public.delivery_assignments
     ADD CONSTRAINT delivery_assignments_order_id_key UNIQUE (order_id);
-
-
---
--- Name: delivery_assignments delivery_assignments_order_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.delivery_assignments
-    ADD CONSTRAINT delivery_assignments_order_id_unique UNIQUE (order_id);
 
 
 --
@@ -1945,20 +1938,6 @@ CREATE INDEX idx_assignments_active ON public.delivery_assignments USING btree (
 
 
 --
--- Name: idx_assignments_driver; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_assignments_driver ON public.delivery_assignments USING btree (driver_id);
-
-
---
--- Name: idx_assignments_order; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_assignments_order ON public.delivery_assignments USING btree (order_id);
-
-
---
 -- Name: idx_assignments_reassigned; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1970,13 +1949,6 @@ CREATE INDEX idx_assignments_reassigned ON public.delivery_assignments USING btr
 --
 
 CREATE INDEX idx_assignments_returns ON public.delivery_assignments USING btree (assignment_type) WHERE ((assignment_type)::text = 'return_to_garage'::text);
-
-
---
--- Name: idx_assignments_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_assignments_status ON public.delivery_assignments USING btree (status);
 
 
 --
@@ -2015,13 +1987,6 @@ CREATE INDEX idx_audit_target ON public.admin_audit_log USING btree (target_type
 
 
 --
--- Name: idx_bids_garage; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_bids_garage ON public.bids USING btree (garage_id);
-
-
---
 -- Name: idx_bids_garage_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2036,6 +2001,13 @@ CREATE INDEX idx_bids_garage_id ON public.bids USING btree (garage_id);
 
 
 --
+-- Name: idx_bids_not_deleted; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bids_not_deleted ON public.bids USING btree (bid_id) WHERE (deleted_at IS NULL);
+
+
+--
 -- Name: idx_bids_pending; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2047,13 +2019,6 @@ CREATE INDEX idx_bids_pending ON public.bids USING btree (status) WHERE (status 
 --
 
 CREATE INDEX idx_bids_request_created ON public.bids USING btree (request_id, created_at DESC);
-
-
---
--- Name: idx_bids_request_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_bids_request_id ON public.bids USING btree (request_id);
 
 
 --
@@ -2078,17 +2043,17 @@ CREATE UNIQUE INDEX idx_bids_unique_garage_request ON public.bids USING btree (g
 
 
 --
--- Name: idx_counter_offers_bid; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_counter_offers_bid ON public.counter_offers USING btree (bid_id);
-
-
---
 -- Name: idx_counter_offers_bid_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_counter_offers_bid_id ON public.counter_offers USING btree (bid_id);
+
+
+--
+-- Name: idx_counter_offers_expires; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_counter_offers_expires ON public.counter_offers USING btree (expires_at) WHERE (status = 'pending'::text);
 
 
 --
@@ -2180,13 +2145,6 @@ CREATE INDEX idx_disputes_customer ON public.disputes USING btree (customer_id);
 --
 
 CREATE INDEX idx_disputes_garage ON public.disputes USING btree (garage_id);
-
-
---
--- Name: idx_disputes_order; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_disputes_order ON public.disputes USING btree (order_id);
 
 
 --
@@ -2407,6 +2365,13 @@ CREATE INDEX idx_garages_name_search ON public.garages USING btree (garage_name)
 
 
 --
+-- Name: idx_garages_not_deleted; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_garages_not_deleted ON public.garages USING btree (garage_id) WHERE (deleted_at IS NULL);
+
+
+--
 -- Name: idx_garages_pending; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2484,13 +2449,6 @@ CREATE INDEX idx_orders_created ON public.orders USING btree (created_at DESC);
 
 
 --
--- Name: idx_orders_customer; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_orders_customer ON public.orders USING btree (customer_id);
-
-
---
 -- Name: idx_orders_customer_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2505,13 +2463,6 @@ CREATE INDEX idx_orders_customer_id ON public.orders USING btree (customer_id);
 
 
 --
--- Name: idx_orders_garage; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_orders_garage ON public.orders USING btree (garage_id);
-
-
---
 -- Name: idx_orders_garage_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2523,6 +2474,13 @@ CREATE INDEX idx_orders_garage_created ON public.orders USING btree (garage_id, 
 --
 
 CREATE INDEX idx_orders_garage_id ON public.orders USING btree (garage_id);
+
+
+--
+-- Name: idx_orders_not_deleted; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_not_deleted ON public.orders USING btree (order_id) WHERE (deleted_at IS NULL);
 
 
 --
@@ -2558,6 +2516,13 @@ CREATE INDEX idx_orders_zone ON public.orders USING btree (delivery_zone_id);
 --
 
 CREATE INDEX idx_part_requests_customer_id ON public.part_requests USING btree (customer_id);
+
+
+--
+-- Name: idx_part_requests_not_deleted; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_requests_not_deleted ON public.part_requests USING btree (request_id) WHERE (deleted_at IS NULL);
 
 
 --
@@ -2761,6 +2726,13 @@ CREATE INDEX idx_user_addresses_user_id ON public.user_addresses USING btree (us
 --
 
 CREATE INDEX idx_users_active ON public.users USING btree (is_active, user_type);
+
+
+--
+-- Name: idx_users_not_deleted; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_users_not_deleted ON public.users USING btree (user_id) WHERE (deleted_at IS NULL);
 
 
 --
@@ -3403,5 +3375,5 @@ ALTER TABLE ONLY public.user_addresses
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EfgdJO79GbxCryBSahnbEAv6FUCOdosT9nrJ1XvLKJFtQHKJoWJE4c7IzEKwHJD
+\unrestrict cwQSragatKM8lQl9esMX1re8nVYU939xnnWsUwyDraImM31YYe2WPXZ21gVgPJA
 
