@@ -1,13 +1,15 @@
 // QScrap Driver App - API Configuration
-// LOCAL DEV: Uses local server
-// PRODUCTION BUILD: Set IS_PRODUCTION = true or use EAS env vars
+// DEMO MODE: Pointing to VPS IP (until DNS propagates)
+// Once qscrap.qa DNS works, change to https://qscrap.qa
 
-// Current Environment
-const IS_PRODUCTION = false; // Set to true for production builds
+// Demo Configuration - VPS IP Address
+export const API_BASE_URL = 'http://147.93.89.153:3000/api';
 
-export const API_BASE_URL = IS_PRODUCTION
-    ? 'https://qscrap.qa/api'
-    : 'http://192.168.1.59:3000/api';
+// FUTURE: Once DNS propagates, use:
+// export const API_BASE_URL = 'https://qscrap.qa/api';
+
+// LOCAL DEV (uncomment for local development):
+// export const API_BASE_URL = 'http://192.168.1.59:3000/api';
 
 export const API_ENDPOINTS = {
     // Auth
