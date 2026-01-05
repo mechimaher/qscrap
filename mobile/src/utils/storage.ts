@@ -20,6 +20,7 @@ export enum StorageKey {
     DRAFT_REQUEST = 'draft_request',
     APP_VERSION = 'app_version',
     LAST_SYNC = 'last_sync',
+    SWIPE_HINT_SHOWN = 'swipe_hint_shown',
 }
 
 /**

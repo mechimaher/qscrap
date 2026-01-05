@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { createRequest, getActiveRequests, getMyRequests, getRequestDetails, ignoreRequest, getIgnoredRequests, cancelRequest, deleteRequest } from '../controllers/request.controller';
+import { createRequest, getActiveRequests, getMyRequests, getRequestDetails, ignoreRequest, unignoreRequest, getIgnoredRequests, cancelRequest, deleteRequest } from '../controllers/request.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { upload } from '../middleware/file.middleware';
 
@@ -39,6 +39,9 @@ router.delete('/:request_id', authenticate, requireRole('customer'), deleteReque
 
 // Garage: Ignore a request (per-garage, request still visible to others)
 router.post('/:request_id/ignore', authenticate, requireRole('garage'), ignoreRequest);
+
+// Garage: Undo ignore (for 5-second undo feature)
+router.delete('/:request_id/ignore', authenticate, requireRole('garage'), unignoreRequest);
 
 // Garage: Get list of ignored request IDs
 router.get('/ignored/list', authenticate, requireRole('garage'), getIgnoredRequests);

@@ -580,21 +580,11 @@ export const ignoreRequest = async (req: AuthRequest, res: Response) => {
     const { request_id } = req.params;
 
     try {
-        // Ensure table exists (idempotent) - using UUID types to match users and part_requests tables
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS garage_ignored_requests (
-                garage_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                request_id UUID NOT NULL REFERENCES part_requests(request_id) ON DELETE CASCADE,
-                ignored_at TIMESTAMP DEFAULT NOW(),
-                PRIMARY KEY (garage_id, request_id)
-            )
-        `);
-
         // Insert ignore (ON CONFLICT = already ignored, just update timestamp)
         await pool.query(`
             INSERT INTO garage_ignored_requests (garage_id, request_id)
             VALUES ($1, $2)
-            ON CONFLICT (garage_id, request_id) DO UPDATE SET ignored_at = NOW()
+            ON CONFLICT (garage_id, request_id) DO UPDATE SET created_at = NOW()
         `, [garageId, request_id]);
 
         res.json({ success: true, message: 'Request ignored' });
@@ -611,16 +601,6 @@ export const getIgnoredRequests = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
 
     try {
-        // First ensure table exists (using UUID types to match users and part_requests tables)
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS garage_ignored_requests (
-                garage_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                request_id UUID NOT NULL REFERENCES part_requests(request_id) ON DELETE CASCADE,
-                ignored_at TIMESTAMP DEFAULT NOW(),
-                PRIMARY KEY (garage_id, request_id)
-            )
-        `);
-
         const result = await pool.query(`
             SELECT request_id FROM garage_ignored_requests WHERE garage_id = $1
         `, [garageId]);
@@ -630,5 +610,25 @@ export const getIgnoredRequests = async (req: AuthRequest, res: Response) => {
     } catch (err) {
         console.error('[REQUEST] Get ignored requests error:', err);
         res.status(500).json({ error: 'Failed to fetch ignored requests' });
+    }
+};
+
+/**
+ * Undo ignore - removes a request from the ignored list (for undo functionality)
+ */
+export const unignoreRequest = async (req: AuthRequest, res: Response) => {
+    const garageId = req.user!.userId;
+    const { request_id } = req.params;
+
+    try {
+        await pool.query(`
+            DELETE FROM garage_ignored_requests 
+            WHERE garage_id = $1 AND request_id = $2
+        `, [garageId, request_id]);
+
+        res.json({ success: true, message: 'Request restored' });
+    } catch (err) {
+        console.error('[REQUEST] Unignore request error:', err);
+        res.status(500).json({ error: 'Failed to restore request' });
     }
 };

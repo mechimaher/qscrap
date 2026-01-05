@@ -27,20 +27,26 @@ import { LoadingList } from '../../components/SkeletonLoading';
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 
-// Premium Active Card Component with Pulsing Glow
+// Premium Active Card Component with Pulsing Glow and Swipe Hint
 const ActiveRequestCard = ({
     item,
     colors,
     onPress,
-    onDelete
+    onDelete,
+    showSwipeHint = false,
+    onSwipeHintDismiss,
 }: {
     item: Request;
     colors: any;
     onPress: () => void;
     onDelete: (closeSwipeable: () => void) => void;
+    showSwipeHint?: boolean;
+    onSwipeHintDismiss?: () => void;
 }) => {
     const glowAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
+    const swipeHintAnim = useRef(new Animated.Value(0)).current;
+    const arrowBounceAnim = useRef(new Animated.Value(0)).current;
     let swipeableRef: Swipeable | null = null;
 
     useEffect(() => {
@@ -59,6 +65,26 @@ const ActiveRequestCard = ({
                         duration: 1500,
                         easing: Easing.inOut(Easing.ease),
                         useNativeDriver: false,
+                    }),
+                ])
+            ).start();
+        }
+
+        // Arrow bounce animation for swipe hint
+        if (item.status !== 'accepted') {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(arrowBounceAnim, {
+                        toValue: 1,
+                        duration: 800,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(arrowBounceAnim, {
+                        toValue: 0,
+                        duration: 800,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
                     }),
                 ])
             ).start();
@@ -316,6 +342,24 @@ const ActiveRequestCard = ({
                                     })}
                                 </Text>
                             </View>
+
+                            {/* Persistent Swipe Hint for deletable cards */}
+                            {item.status !== 'accepted' && (
+                                <View style={styles.swipeHintContainer}>
+                                    <Animated.Text style={[
+                                        styles.swipeArrow,
+                                        {
+                                            transform: [{
+                                                translateX: arrowBounceAnim.interpolate({
+                                                    inputRange: [0, 1],
+                                                    outputRange: [0, -6],
+                                                }),
+                                            }],
+                                        }
+                                    ]}>←</Animated.Text>
+                                    <Text style={styles.swipeHintText}>Swipe to cancel</Text>
+                                </View>
+                            )}
                         </View>
                     </Animated.View>
                 </Animated.View>
@@ -757,6 +801,28 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: FontSizes.xs,
         fontWeight: '600',
+    },
+    // Swipe hint styles
+    swipeHintContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        marginTop: Spacing.sm,
+        paddingTop: Spacing.xs,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(239, 68, 68, 0.1)',
+    },
+    swipeArrow: {
+        fontSize: 14,
+        color: '#EF4444',
+        fontWeight: '600',
+        marginRight: 4,
+    },
+    swipeHintText: {
+        fontSize: FontSizes.xs,
+        color: '#EF4444',
+        fontWeight: '500',
+        opacity: 0.8,
     },
 });
 

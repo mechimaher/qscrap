@@ -2061,27 +2061,101 @@ function switchSection(section) {
     if (section === 'pending-actions') { loadPendingCounterOffers(); loadPendingDisputes(); }
 }
 
-// Ignore/Skip request - now persists to database (per-garage)
+// Ignore/Skip request - now persists to database (per-garage) with 5-second undo
+let currentUndoTimeout = null;
+let currentUndoToast = null;
+
 async function ignoreRequest(reqId) {
     if (!ignoredRequests.includes(reqId)) {
+        // Immediately update UI (optimistic)
         ignoredRequests.push(reqId);
         localStorage.setItem('ignoredRequests', JSON.stringify(ignoredRequests));
         renderRequests();
         updateBadge();
-        showToast('Request skipped', 'success');
 
-        // Persist to backend (per-garage, request still visible to other garages)
-        try {
-            await fetch(`${API_URL}/requests/${reqId}/ignore`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-        } catch (err) {
-            console.error('Failed to persist ignore to backend:', err);
-            // Still works via localStorage, just won't persist across devices
+        // Clear any existing undo toast
+        if (currentUndoToast) {
+            currentUndoToast.remove();
+            clearTimeout(currentUndoTimeout);
         }
+
+        // Show undo toast with countdown
+        const toast = document.createElement('div');
+        toast.className = 'toast info undo-toast';
+        toast.innerHTML = `
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Request skipped</span>
+            <button class="undo-btn" onclick="undoIgnoreRequest('${reqId}')">
+                UNDO <span class="countdown">5</span>
+            </button>
+        `;
+        document.getElementById('toastContainer').appendChild(toast);
+        currentUndoToast = toast;
+
+        // Countdown timer
+        let secondsLeft = 5;
+        const countdownEl = toast.querySelector('.countdown');
+        const countdownInterval = setInterval(() => {
+            secondsLeft--;
+            if (countdownEl) countdownEl.textContent = secondsLeft;
+            if (secondsLeft <= 0) clearInterval(countdownInterval);
+        }, 1000);
+
+        // After 5 seconds, persist to backend and remove toast
+        currentUndoTimeout = setTimeout(async () => {
+            if (currentUndoToast) {
+                currentUndoToast.remove();
+                currentUndoToast = null;
+            }
+            clearInterval(countdownInterval);
+
+            // Persist to backend
+            try {
+                await fetch(`${API_URL}/requests/${reqId}/ignore`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (err) {
+                console.error('Failed to persist ignore to backend:', err);
+            }
+        }, 5000);
     }
 }
+
+// Undo ignore - restore request to visible state
+async function undoIgnoreRequest(reqId) {
+    // Clear timeout to prevent backend persist
+    if (currentUndoTimeout) {
+        clearTimeout(currentUndoTimeout);
+        currentUndoTimeout = null;
+    }
+
+    // Remove from local state
+    ignoredRequests = ignoredRequests.filter(id => id !== reqId);
+    localStorage.setItem('ignoredRequests', JSON.stringify(ignoredRequests));
+
+    // Remove undo toast
+    if (currentUndoToast) {
+        currentUndoToast.remove();
+        currentUndoToast = null;
+    }
+
+    // Update UI
+    renderRequests();
+    updateBadge();
+    showToast('Request restored', 'success');
+
+    // Also call backend to delete in case it was persisted earlier
+    try {
+        await fetch(`${API_URL}/requests/${reqId}/ignore`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    } catch (err) {
+        // Ignore - might not exist yet
+    }
+}
+
 
 function openBidModal(reqId, info) {
     document.getElementById('bidRequestId').value = reqId;
