@@ -135,6 +135,26 @@ certbot --nginx -d qscrap.qa -d www.qscrap.qa
 
 ---
 
+---
+
+## 🌐 Step 5: DNS Configuration (Critical)
+To ensure reliable connectivity, your Domain Name System (DNS) must be configured correctly.
+
+1. **Option A: Hostinger DNS (Simpler)**
+   - Login to your Domain Registrar (e.g., qhost.qa).
+   - Change Nameservers to: `ns1.dns-parking.com`, `ns2.dns-parking.com`.
+   - In Hostinger Dashboard: Create **A Record** for `@` pointing to your VPS IP (`147.93.89.153`).
+
+2. **Option B: Cloudflare DNS (Recommended for Speed/Security)**
+   - Sign up for Cloudflare and add `qscrap.qa`.
+   - Change Nameservers at your Registrar to the ones provided by Cloudflare.
+   - In Cloudflare: Create **A Record** for `@` pointing to `147.93.89.153` (Proxy Status: DNS Only initially, then Proxied).
+
+**Troubleshooting:**
+If `https://IP_ADDRESS` works fast but `https://DOMAIN` is slow/timeout, the issue is almost always **DNS Misconfiguration** or ISP throttling of the domain name. Switching to Cloudflare usually prevents this.
+
+---
+
 ## 🔄 Updating the App
 When you push changes to GitHub, deploy them like this:
 
