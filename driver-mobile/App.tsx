@@ -178,18 +178,18 @@ export default function App() {
 const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
-        backgroundColor: Colors.dark.background,
+        backgroundColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
     },
     loadingText: {
-        color: Colors.primary,
+        color: '#fff',
         fontSize: 28,
         fontWeight: '700',
         marginTop: 16,
     },
     loadingSubtext: {
-        color: Colors.dark.textSecondary,
+        color: 'rgba(255,255,255,0.7)',
         fontSize: 14,
         marginTop: 8,
     },

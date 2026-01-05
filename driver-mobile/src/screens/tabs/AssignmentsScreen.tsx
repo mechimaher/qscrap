@@ -11,6 +11,7 @@ import {
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { api, Assignment } from '../../services/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
@@ -19,6 +20,7 @@ type FilterType = 'active' | 'completed' | 'all';
 
 export default function AssignmentsScreen() {
     const { colors } = useTheme();
+    const navigation = useNavigation<any>();
 
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [filter, setFilter] = useState<FilterType>('active');
@@ -55,6 +57,7 @@ export default function AssignmentsScreen() {
             <TouchableOpacity
                 style={[styles.card, { backgroundColor: colors.surface }]}
                 activeOpacity={0.8}
+                onPress={() => navigation.navigate('AssignmentDetail', { assignmentId: item.assignment_id })}
             >
                 {/* Header Row */}
                 <View style={styles.cardHeader}>

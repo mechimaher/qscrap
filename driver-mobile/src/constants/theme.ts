@@ -1,51 +1,141 @@
-// QScrap Driver App - Premium Theme
-// Driver-focused color scheme (amber/orange for visibility)
+// QScrap Driver App - Premium VVIP Theme
+// Unified Brand Identity - Qatar Maroon & Gold
+// Single Theme (No Dark Mode) - Matches Customer App
+
+// Unified Theme Definition
+const themeColors = {
+    background: '#FAFAFA',
+    surface: '#FFFFFF',
+    surfaceElevated: '#FFFFFF',
+    card: '#FFFFFF',
+    cardHover: '#F5F5F5',
+    border: '#E5E5E5',
+    borderLight: '#EEEEEE',
+
+    text: '#1A1A1A',
+    textSecondary: '#4A4A4A',
+    textMuted: '#6A6A6A',
+
+    primary: '#8D1B3D',
+    statusBar: 'dark' as const,
+
+    success: '#059669',
+    warning: '#d97706',
+    danger: '#dc2626',
+    error: '#dc2626',
+    info: '#C9A227',
+};
 
 export const Colors = {
-    // Primary brand colors - Amber/Orange for driver identity
-    primary: '#f59e0b',      // Amber-500 - main action color
-    primaryDark: '#d97706',  // Amber-600 - pressed states
-    primaryLight: '#fbbf24', // Amber-400 - highlights
+    // Primary Brand - Qatar Maroon
+    primary: '#8D1B3D',
+    primaryDark: '#6B1530',
+    primaryLight: '#A82050',
+    primaryGlow: 'rgba(141, 27, 61, 0.3)',
 
-    // Status colors
-    success: '#10b981',      // Emerald-500
-    warning: '#f59e0b',      // Amber-500
-    danger: '#ef4444',       // Red-500
-    info: '#3b82f6',         // Blue-500
+    // Secondary - Gold accent
+    secondary: '#C9A227',
+    secondaryLight: '#F5F0E1',
 
-    // Assignment status colors
-    assigned: '#3b82f6',     // Blue - new assignment
-    pickedUp: '#8b5cf6',     // Purple - collected
-    inTransit: '#f59e0b',    // Amber - on the way
-    delivered: '#10b981',    // Green - completed
-    failed: '#ef4444',       // Red - failed
+    // Status Colors (Direct access)
+    success: '#059669',
+    warning: '#d97706',
+    danger: '#dc2626',
+    error: '#dc2626',
+    info: '#C9A227',
 
-    // Dark theme (driver default - easier on eyes during night driving)
-    dark: {
-        background: '#0f172a',      // Slate-900
-        surface: '#1e293b',         // Slate-800
-        surfaceElevated: '#334155', // Slate-700
-        text: '#f8fafc',            // Slate-50
-        textSecondary: '#94a3b8',   // Slate-400
-        textMuted: '#64748b',       // Slate-500
-        border: '#334155',          // Slate-700
-        card: '#1e293b',            // Slate-800
-    },
+    // Assignment Specific
+    assigned: '#C9A227',
+    pickedUp: '#8D1B3D',
+    inTransit: '#8D1B3D',
+    delivered: '#059669',
+    failed: '#dc2626',
 
-    // Light theme
-    light: {
-        background: '#f8fafc',      // Slate-50
-        surface: '#ffffff',
-        surfaceElevated: '#f1f5f9', // Slate-100
-        text: '#0f172a',            // Slate-900
-        textSecondary: '#475569',   // Slate-600
-        textMuted: '#94a3b8',       // Slate-400
-        border: '#e2e8f0',          // Slate-200
-        card: '#ffffff',
+    // BACKWARD COMPATIBILITY - Both point to unified light theme
+    light: themeColors,
+    dark: themeColors, // Force light theme even in dark mode
+
+    // Unified reference
+    theme: themeColors,
+
+    // Gradients (use with LinearGradient) - Qatar theme
+    gradients: {
+        primary: ['#8D1B3D', '#6B1530'] as const,
+        primaryDark: ['#6B1530', '#8D1B3D'] as const,
+        card: ['#FFFFFF', '#F8F8F8'] as const,
+        premium: ['#8D1B3D', '#C9A227'] as const,
+        gold: ['#C9A227', '#A68520'] as const,
     },
 };
 
-// Assignment status display config
+export const Spacing = {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 48,
+};
+
+export const BorderRadius = {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    full: 9999,
+};
+
+export const FontSize = {
+    xs: 10,
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    xxl: 24,
+    xxxl: 32,
+    display: 40,
+};
+
+export const FontWeights = {
+    regular: '400' as const,
+    medium: '500' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
+    heavy: '800' as const,
+};
+
+export const Shadows = {
+    sm: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    md: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    lg: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    glow: {
+        shadowColor: '#8D1B3D',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+        elevation: 10,
+    },
+};
+
+// Assignment config
 export const AssignmentStatusConfig = {
     assigned: {
         label: 'Assigned',
@@ -79,24 +169,24 @@ export const AssignmentStatusConfig = {
     },
 };
 
-// Assignment type display config
 export const AssignmentTypeConfig = {
     collection: {
         label: 'Collection',
         description: 'Pick up from garage',
         icon: '🏪',
-        color: '#8b5cf6', // Purple
+        color: Colors.primary,
     },
     delivery: {
         label: 'Delivery',
         description: 'Deliver to customer',
         icon: '📦',
-        color: '#3b82f6', // Blue
+        color: Colors.secondary,
     },
     return_to_garage: {
         label: 'Return',
         description: 'Return to garage',
         icon: '↩️',
-        color: '#f59e0b', // Amber
+        color: Colors.warning,
     },
 };
+

@@ -1,14 +1,11 @@
 // QScrap Driver App - API Configuration
 // Same backend as customer app
 
-// Use environment variable or default to production
-const getApiUrl = () => {
-    // For local testing, use your machine's IP
-    // CHANGE THIS BACK TO 'https://qscrap.qa/api' for production
-    return 'http://192.168.1.59:3000/api';
-};
+// Production API URL
+export const API_BASE_URL = 'https://qscrap.qa/api';
 
-export const API_BASE_URL = getApiUrl();
+// For local development, uncomment below and comment above:
+// export const API_BASE_URL = 'http://192.168.1.59:3000/api';
 
 export const API_ENDPOINTS = {
     // Auth

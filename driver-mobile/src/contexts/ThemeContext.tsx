@@ -1,74 +1,38 @@
 // QScrap Driver App - Theme Context
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Appearance, ColorSchemeName } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Unified VVIP Theme - No Dark Mode (Matches Customer App)
+import React, { createContext, useContext, ReactNode } from 'react';
 import { Colors } from '../constants/theme';
 
 interface ThemeContextType {
-    isDarkMode: boolean;
-    colors: typeof Colors.dark;
-    toggleTheme: () => void;
-    setTheme: (mode: 'light' | 'dark' | 'system') => void;
+    isDarkMode: boolean; // Always false for backward compatibility
+    colors: typeof Colors.theme;
+    toggleTheme: () => void; // No-op for backward compatibility
+    setTheme: (mode: 'light' | 'dark' | 'system') => void; // No-op for backward compatibility
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_KEY = 'qscrap_driver_theme';
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    // Default to dark mode for drivers (easier on eyes during night driving)
-    const [isDarkMode, setIsDarkMode] = useState(true);
-    const [themePreference, setThemePreference] = useState<'light' | 'dark' | 'system'>('dark');
+    // Unified VVIP Theme - Always use light theme colors
+    // No dark mode toggle - matches customer app approach
+    const colors = Colors.theme;
 
-    useEffect(() => {
-        loadThemePreference();
-
-        const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-            if (themePreference === 'system') {
-                setIsDarkMode(colorScheme === 'dark');
-            }
-        });
-
-        return () => subscription.remove();
-    }, [themePreference]);
-
-    const loadThemePreference = async () => {
-        try {
-            const saved = await AsyncStorage.getItem(THEME_KEY);
-            if (saved) {
-                const pref = saved as 'light' | 'dark' | 'system';
-                setThemePreference(pref);
-                if (pref === 'system') {
-                    setIsDarkMode(Appearance.getColorScheme() === 'dark');
-                } else {
-                    setIsDarkMode(pref === 'dark');
-                }
-            }
-        } catch (error) {
-            console.log('[Theme] Load preference failed:', error);
-        }
-    };
-
+    // These are no-ops for backward compatibility with existing code
     const toggleTheme = () => {
-        const newMode = isDarkMode ? 'light' : 'dark';
-        setTheme(newMode);
+        console.log('[Theme] Dark mode disabled - using unified VVIP theme');
     };
 
-    const setTheme = async (mode: 'light' | 'dark' | 'system') => {
-        setThemePreference(mode);
-        await AsyncStorage.setItem(THEME_KEY, mode);
-
-        if (mode === 'system') {
-            setIsDarkMode(Appearance.getColorScheme() === 'dark');
-        } else {
-            setIsDarkMode(mode === 'dark');
-        }
+    const setTheme = (_mode: 'light' | 'dark' | 'system') => {
+        console.log('[Theme] Theme switching disabled - using unified VVIP theme');
     };
-
-    const colors = isDarkMode ? Colors.dark : Colors.light;
 
     return (
-        <ThemeContext.Provider value={{ isDarkMode, colors, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{
+            isDarkMode: false, // Always false
+            colors,
+            toggleTheme,
+            setTheme
+        }}>
             {children}
         </ThemeContext.Provider>
     );
@@ -81,3 +45,4 @@ export function useTheme() {
     }
     return context;
 }
+

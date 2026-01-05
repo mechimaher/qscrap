@@ -127,15 +127,38 @@ class DriverApiService {
             ...options.headers,
         };
 
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers,
-        });
+        const url = `${API_BASE_URL}${endpoint}`;
+        console.log('[API] Request:', options.method || 'GET', url);
 
-        const data = await response.json();
+        let response: Response;
+        try {
+            response = await fetch(url, {
+                ...options,
+                headers,
+            });
+        } catch (networkError) {
+            console.error('[API] Network error:', networkError);
+            throw new Error('Network error - please check your connection');
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('[API] Non-JSON response:', text.substring(0, 200));
+            throw new Error('Server error - please try again later');
+        }
+
+        let data: any;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            console.error('[API] JSON parse error:', parseError);
+            throw new Error('Invalid response from server');
+        }
 
         if (!response.ok) {
-            throw new Error(data.error || 'Request failed');
+            throw new Error(data.error || data.message || 'Request failed');
         }
 
         return data;

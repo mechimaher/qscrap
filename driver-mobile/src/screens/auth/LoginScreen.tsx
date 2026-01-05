@@ -1,5 +1,5 @@
 // QScrap Driver App - Login Screen
-// Premium driver login experience
+// Premium driver login experience with Qatar VVIP Theme
 
 import React, { useState } from 'react';
 import {
@@ -12,17 +12,16 @@ import {
     Platform,
     ActivityIndicator,
     Alert,
+    Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { Colors } from '../../constants/theme';
+import { Colors, Shadows, BorderRadius, FontWeights } from '../../constants/theme';
 
 export default function LoginScreen() {
     const { login } = useAuth();
-    const { colors } = useTheme();
 
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -52,8 +51,10 @@ export default function LoginScreen() {
 
     return (
         <LinearGradient
-            colors={[Colors.dark.background, '#1a1a2e']}
+            colors={[Colors.primary, Colors.primaryDark, '#4a0d1f']}
             style={styles.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
         >
             <SafeAreaView style={styles.container}>
                 <KeyboardAvoidingView
@@ -62,20 +63,26 @@ export default function LoginScreen() {
                 >
                     {/* Logo Section */}
                     <View style={styles.logoSection}>
-                        <Text style={styles.logoEmoji}>🚚</Text>
+                        <View style={styles.logoContainer}>
+                            <Text style={styles.logoEmoji}>🚚</Text>
+                        </View>
                         <Text style={styles.logoText}>QScrap</Text>
-                        <Text style={styles.logoSubtext}>DRIVER</Text>
+                        <View style={styles.driverBadge}>
+                            <Text style={styles.driverBadgeText}>DRIVER</Text>
+                        </View>
                         <Text style={styles.tagline}>Delivering Excellence</Text>
                     </View>
 
                     {/* Form Section */}
                     <View style={styles.formSection}>
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputIcon}>📱</Text>
+                            <View style={styles.inputIconContainer}>
+                                <Text style={styles.inputIcon}>📱</Text>
+                            </View>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Phone Number"
-                                placeholderTextColor={colors.textMuted}
+                                placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={phone}
                                 onChangeText={setPhone}
                                 keyboardType="phone-pad"
@@ -85,11 +92,13 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputIcon}>🔒</Text>
+                            <View style={styles.inputIconContainer}>
+                                <Text style={styles.inputIcon}>🔒</Text>
+                            </View>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Password"
-                                placeholderTextColor={colors.textMuted}
+                                placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
@@ -113,13 +122,13 @@ export default function LoginScreen() {
                             activeOpacity={0.8}
                         >
                             <LinearGradient
-                                colors={[Colors.primary, Colors.primaryDark]}
+                                colors={[Colors.secondary, '#a68520']}
                                 style={styles.loginButtonGradient}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                             >
                                 {isLoading ? (
-                                    <ActivityIndicator color="#fff" size="small" />
+                                    <ActivityIndicator color={Colors.primaryDark} size="small" />
                                 ) : (
                                     <>
                                         <Text style={styles.loginButtonText}>Sign In</Text>
@@ -161,27 +170,41 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 48,
     },
+    logoContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
     logoEmoji: {
-        fontSize: 64,
-        marginBottom: 8,
+        fontSize: 56,
     },
     logoText: {
         fontSize: 42,
-        fontWeight: '800',
-        color: Colors.primary,
+        fontWeight: FontWeights.heavy,
+        color: '#fff',
         letterSpacing: 2,
     },
-    logoSubtext: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#fff',
-        letterSpacing: 6,
-        marginTop: 4,
+    driverBadge: {
+        backgroundColor: Colors.secondary,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: BorderRadius.full,
+        marginTop: 8,
+    },
+    driverBadgeText: {
+        fontSize: 14,
+        fontWeight: FontWeights.bold,
+        color: Colors.primaryDark,
+        letterSpacing: 4,
     },
     tagline: {
         fontSize: 14,
-        color: Colors.dark.textSecondary,
-        marginTop: 12,
+        color: 'rgba(255,255,255,0.7)',
+        marginTop: 16,
     },
     formSection: {
         gap: 16,
@@ -189,15 +212,17 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.dark.surface,
-        borderRadius: 16,
-        paddingHorizontal: 16,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    inputIconContainer: {
+        width: 48,
+        alignItems: 'center',
     },
     inputIcon: {
         fontSize: 20,
-        marginRight: 12,
     },
     input: {
         flex: 1,
@@ -206,20 +231,16 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     showPasswordBtn: {
-        padding: 8,
+        padding: 16,
     },
     showPasswordText: {
         fontSize: 20,
     },
     loginButton: {
         marginTop: 8,
-        borderRadius: 16,
+        borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
+        ...Shadows.glow,
     },
     loginButtonDisabled: {
         opacity: 0.7,
@@ -232,27 +253,28 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     loginButtonText: {
-        color: '#fff',
+        color: Colors.primaryDark,
         fontSize: 18,
-        fontWeight: '700',
+        fontWeight: FontWeights.bold,
     },
     loginButtonIcon: {
-        color: '#fff',
+        color: Colors.primaryDark,
         fontSize: 20,
-        fontWeight: '700',
+        fontWeight: FontWeights.bold,
     },
     footer: {
         alignItems: 'center',
         marginTop: 48,
     },
     footerText: {
-        color: Colors.dark.textMuted,
+        color: 'rgba(255,255,255,0.6)',
         fontSize: 12,
         textAlign: 'center',
     },
     footerSubtext: {
-        color: Colors.dark.textMuted,
+        color: 'rgba(255,255,255,0.4)',
         fontSize: 11,
         marginTop: 4,
     },
 });
+

@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
+import { API_BASE_URL } from '../config/api';
 import { getSocket, joinChatRoom, leaveChatRoom, onNewMessage } from '../services/socket';
 import { Colors, BorderRadius, Spacing, FontSize } from '../constants/theme';
 
@@ -77,11 +78,12 @@ export default function ChatScreen() {
     const loadMessages = async () => {
         try {
             // API call to get chat history
+            const token = await api.getToken();
             const response = await fetch(
-                `${api['API_BASE_URL'] || 'https://qscrap.qa/api'}/chat/order/${orderId}`,
+                `${API_BASE_URL}/chat/order/${orderId}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${await api.getToken()}`,
+                        'Authorization': `Bearer ${token}`,
                     },
                 }
             );

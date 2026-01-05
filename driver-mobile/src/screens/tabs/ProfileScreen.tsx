@@ -18,7 +18,7 @@ import { Colors } from '../../constants/theme';
 
 export default function ProfileScreen() {
     const { driver, logout } = useAuth();
-    const { colors, isDarkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
 
     const handleLogout = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -121,13 +121,33 @@ export default function ProfileScreen() {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
                     <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-                        <TouchableOpacity style={styles.settingRow} onPress={toggleTheme}>
-                            <Text style={styles.settingIcon}>{isDarkMode ? '🌙' : '☀️'}</Text>
+                        <TouchableOpacity style={styles.settingRow}>
+                            <Text style={styles.settingIcon}>🔔</Text>
                             <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                                Notifications
+                            </Text>
+                            <Text style={[styles.settingValue, { color: Colors.success }]}>
+                                Enabled
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <TouchableOpacity style={styles.settingRow}>
+                            <Text style={styles.settingIcon}>📞</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>
+                                Contact Support
                             </Text>
                             <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                Toggle
+                                →
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <TouchableOpacity style={styles.settingRow}>
+                            <Text style={styles.settingIcon}>📄</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>
+                                Terms & Conditions
+                            </Text>
+                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
+                                →
                             </Text>
                         </TouchableOpacity>
                     </View>
