@@ -26,13 +26,13 @@ const poolConfig: PoolConfig = {
     query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT || '30000'),
 
     // SSL Configuration for production
-    // SECURITY: rejectUnauthorized defaults to true for proper certificate validation
-    // Set DB_SSL_REJECT_UNAUTHORIZED=false ONLY for managed databases (Azure/AWS) that require it
-    ssl: process.env.NODE_ENV === 'production'
+    // SECURITY: Set DB_SSL=true for cloud databases (Azure/AWS/GCP)
+    // For Docker deployments with internal Postgres: DB_SSL=false (default for Docker)
+    ssl: process.env.DB_SSL === 'true'
         ? {
             rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
         }
-        : undefined
+        : (process.env.DB_SSL === 'false' ? false : undefined)
 };
 
 // Primary database pool (read-write)

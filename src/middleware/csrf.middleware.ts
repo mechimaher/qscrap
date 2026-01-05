@@ -48,8 +48,8 @@ const isValidOrigin = (origin: string | undefined, referer: string | undefined):
         }
     }
 
-    // No origin information - reject in production
-    return process.env.NODE_ENV !== 'production';
+    // No origin information - Allow for Mobile Apps (which often don't send Origin)
+    return true;
 };
 
 /**
@@ -68,6 +68,11 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
     // Skip validation for API calls with valid JWT (already authenticated)
     // This is an additional layer, not a replacement for JWT auth
     const hasAuthHeader = req.headers.authorization?.startsWith('Bearer ');
+
+    // If authenticated with Token, skip CSRF (it's stateless)
+    if (hasAuthHeader) {
+        return next();
+    }
 
     const origin = req.headers.origin as string | undefined;
     const referer = req.headers.referer as string | undefined;

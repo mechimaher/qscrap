@@ -68,14 +68,12 @@
         "android.permission.POST_NOTIFICATIONS"
       ],
       "useNextNotificationsApi": true,
-      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-secure-store",
-      "./plugins/withFirebase",
       [
         "expo-notifications",
         {

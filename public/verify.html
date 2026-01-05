@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Document | QScrap</title>
+    <meta name="description" content="Verify the authenticity of QScrap documents and invoices">
+    <link rel="icon" href="/favicon.ico">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cairo:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --maroon: #8D1B3D;
+            --maroon-dark: #6B1530;
+            --gold: #C9A227;
+            --gold-light: #D4B44A;
+            --success: #10b981;
+            --error: #ef4444;
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Cairo', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(141, 27, 61, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(201, 162, 39, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(141, 27, 61, 0.05) 0%, transparent 70%);
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(-2%, 2%) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(2%, -2%) rotate(-1deg);
+            }
+
+            75% {
+                transform: translate(-1%, -1%) rotate(0.5deg);
+            }
+        }
+
+        /* Grid Lines */
+        .grid-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+        }
+
+        /* Main Container */
+        .verify-container {
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+        }
+
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--maroon), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* Main Card */
+        .verify-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .verify-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--maroon), var(--gold), var(--maroon));
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+
+            0%,
+            100% {
+                background-position: -200% 0;
+            }
+
+            50% {
+                background-position: 200% 0;
+            }
+        }
+
+        /* Shield Icon Animation */
+        .shield-container {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .shield-icon {
+            width: 100px;
+            height: 100px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .shield-icon.loading {
+            background: rgba(201, 162, 39, 0.1);
+            color: var(--gold);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .shield-icon.verified {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            animation: verified-bounce 0.6s ease-out;
+        }
+
+        .shield-icon.invalid {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes verified-bounce {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-8px);
+            }
+
+            75% {
+                transform: translateX(8px);
+            }
+        }
+
+        /* Rotating ring for loading */
+        .shield-ring {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border: 2px solid transparent;
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Status Title */
+        .status-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .status-subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        /* Document Info Grid */
+        .doc-info {
+            display: none;
+        }
+
+        .doc-info.visible {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .highlight-box.invalid {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .highlight-box i {
+            font-size: 20px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .highlight-box .title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .highlight-box .desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Digital Signature Badge */
+        .signature-badge {
+            margin-top: 24px;
+            background: rgba(201, 162, 39, 0.08);
+            border: 1px solid rgba(201, 162, 39, 0.2);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .signature-badge i {
+            font-size: 24px;
+            color: var(--gold);
+        }
+
+        .signature-badge .text {
+            flex: 1;
+        }
+
+        .signature-badge .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .signature-badge .code {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            color: var(--gold);
+        }
+
+        /* Language Toggle */
+        .lang-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .lang-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--maroon);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        /* RTL Support */
+        [dir="rtl"] {
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+
+        [dir="rtl"] .info-value {
+            text-align: left;
+        }
+
+        [dir="rtl"] .info-label {
+            flex-direction: row-reverse;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .verify-card {
+                padding: 28px 20px;
+            }
+
+            .shield-icon {
+                width: 80px;
+                height: 80px;
+                font-size: 36px;
+            }
+
+            .shield-ring {
+                width: 100px;
+                height: 100px;
+            }
+
+            .status-title {
+                font-size: 20px;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .info-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-pattern"></div>
+    <div class="grid-lines"></div>
+
+    <div class="verify-container">
+        <div class="logo">
+            <h1>QScrap</h1>
+            <span id="logoSubtitle">Document Verification</span>
+        </div>
+
+        <div class="verify-card">
+            <div class="lang-toggle">
+                <button class="lang-btn active" onclick="setLang('en')">EN</button>
+                <button class="lang-btn" onclick="setLang('ar')">عربي</button>
+            </div>
+
+            <div class="shield-container">
+                <div id="shieldIcon" class="shield-icon loading">
+                    <div id="shieldRing" class="shield-ring"></div>
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+
+            <h2 id="statusTitle" class="status-title">Verifying Document...</h2>
+            <p id="statusSubtitle" class="status-subtitle">Please wait while we authenticate this document</p>
+
+            <!-- Document Info (shown after verification) -->
+            <div id="docInfo" class="doc-info">
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-file-earmark-text"></i> <span data-i18n="docType">Document
+                            Type</span></span>
+                    <span id="docType" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-hash"></i> <span data-i18n="docNumber">Document
+                            Number</span></span>
+                    <span id="docNumber" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-calendar3"></i> <span data-i18n="issueDate">Issue
+                            Date</span></span>
+                    <span id="docDate" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-receipt"></i> <span data-i18n="orderNumber">Order
+                            Number</span></span>
+                    <span id="orderNumber" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-building"></i> <span
+                            data-i18n="garage">Garage</span></span>
+                    <span id="garageName" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-car-front"></i> <span
+                            data-i18n="vehicle">Vehicle</span></span>
+                    <span id="vehicle" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="bi bi-cash-stack"></i> <span
+                            data-i18n="amount">Amount</span></span>
+                    <span id="amount" class="info-value">-</span>
+                </div>
+
+                <div id="signatureBadge" class="signature-badge">
+                    <i class="bi bi-fingerprint"></i>
+                    <div class="text">
+                        <div class="label" data-i18n="digitalSignature">Digital Signature</div>
+                        <div id="signatureCode" class="code">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="highlightBox" class="highlight-box" style="display: none;">
+                <i id="highlightIcon" class="bi bi-patch-check-fill" style="color: var(--success);"></i>
+                <div id="highlightTitle" class="title">Document Verified</div>
+                <div id="highlightDesc" class="desc">This document is genuine and issued by QScrap</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span data-i18n="footerText">Powered by</span> <a href="https://qscrap.qa">QScrap.qa</a> &copy; 2026
+        </div>
+    </div>
+
+    <script>
+        // Translations
+        const translations = {
+            en: {
+                logoSubtitle: 'Document Verification',
+                verifying: 'Verifying Document...',
+                verifyingDesc: 'Please wait while we authenticate this document',
+                verified: 'Document Verified ✓',
+                verifiedDesc: 'This is an authentic QScrap document',
+                invalid: 'Verification Failed',
+                invalidDesc: 'This document could not be verified',
+                notFound: 'Document Not Found',
+                notFoundDesc: 'The verification code is invalid or expired',
+                docType: 'Document Type',
+                docNumber: 'Document Number',
+                issueDate: 'Issue Date',
+                orderNumber: 'Order Number',
+                garage: 'Garage',
+                vehicle: 'Vehicle',
+                amount: 'Amount',
+                digitalSignature: 'Digital Signature',
+                highlightTitle: 'Document Verified',
+                highlightDesc: 'This document is genuine and issued by QScrap',
+                highlightTitleInvalid: 'Verification Failed',
+                highlightDescInvalid: 'This document could not be authenticated',
+                footerText: 'Powered by',
+                invoice: 'Invoice',
+                warranty: 'Warranty Card',
+                receipt: 'Receipt'
+            },
+            ar: {
+                logoSubtitle: 'التحقق من المستند',
+                verifying: 'جاري التحقق...',
+                verifyingDesc: 'يرجى الانتظار بينما نتحقق من صحة هذا المستند',
+                verified: 'تم التحقق ✓',
+                verifiedDesc: 'هذا مستند QScrap أصلي وموثق',
+                invalid: 'فشل التحقق',
+                invalidDesc: 'تعذر التحقق من هذا المستند',
+                notFound: 'المستند غير موجود',
+                notFoundDesc: 'رمز التحقق غير صالح أو منتهي الصلاحية',
+                docType: 'نوع المستند',
+                docNumber: 'رقم المستند',
+                issueDate: 'تاريخ الإصدار',
+                orderNumber: 'رقم الطلب',
+                garage: 'الورشة',
+                vehicle: 'المركبة',
+                amount: 'المبلغ',
+                digitalSignature: 'التوقيع الرقمي',
+                highlightTitle: 'تم التحقق من المستند',
+                highlightDesc: 'هذا المستند أصلي وصادر من QScrap',
+                highlightTitleInvalid: 'فشل التحقق',
+                highlightDescInvalid: 'لم يتم التحقق من صحة هذا المستند',
+                footerText: 'مدعوم من',
+                invoice: 'فاتورة',
+                warranty: 'بطاقة الضمان',
+                receipt: 'إيصال'
+            }
+        };
+
+        let currentLang = 'en';
+
+        function setLang(lang) {
+            currentLang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = lang;
+
+            // Update lang buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update all translatable elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Update logo subtitle
+            document.getElementById('logoSubtitle').textContent = translations[lang].logoSubtitle;
+        }
+
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        // Extract verification code from URL
+        const path = window.location.pathname;
+        const code = path.split('/verify/')[1] || path.split('/').pop();
+
+        async function verifyDocument() {
+            if (!code) {
+                showError('notFound');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/documents/verify/${encodeURIComponent(code)}`);
+                const data = await response.json();
+
+                // Artificial delay for UX
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                if (data.verified) {
+                    showVerified(data);
+                } else {
+                    showError('invalid');
+                }
+            } catch (err) {
+                console.error('Verification error:', err);
+                showError('invalid');
+            }
+        }
+
+        function showVerified(data) {
+            const doc = data.document || {};
+            const item = data.item || {};
+            const pricing = data.pricing || {};
+
+            // Update shield icon
+            const shield = document.getElementById('shieldIcon');
+            shield.classList.remove('loading');
+            shield.classList.add('verified');
+            shield.innerHTML = '<i class="bi bi-shield-check"></i>';
+
+            // Update status
+            document.getElementById('statusTitle').textContent = t('verified');
+            document.getElementById('statusSubtitle').textContent = t('verifiedDesc');
+
+            // Populate document info
+            const docTypes = { invoice: t('invoice'), warranty: t('warranty'), receipt: t('receipt') };
+            document.getElementById('docType').textContent = docTypes[doc.type] || doc.type || '-';
+            document.getElementById('docNumber').textContent = doc.number || '-';
+            document.getElementById('docDate').textContent = doc.date ? new Date(doc.date).toLocaleDateString() : '-';
+            document.getElementById('orderNumber').textContent = doc.order_number || '-';
+            document.getElementById('garageName').textContent = doc.garage || '-';
+
+            // Vehicle info
+            const vehicle = [item.car_make, item.car_model, item.car_year].filter(Boolean).join(' ');
+            document.getElementById('vehicle').textContent = vehicle || '-';
+
+            // Amount
+            const amount = pricing.total || pricing.bid_amount;
+            document.getElementById('amount').textContent = amount ? `${parseFloat(amount).toLocaleString()} QAR` : '-';
+
+            // Digital signature
+            document.getElementById('signatureCode').textContent = doc.digital_signature || '-';
+
+            // Show document info
+            document.getElementById('docInfo').classList.add('visible');
+
+            // Show highlight box
+            const highlight = document.getElementById('highlightBox');
+            highlight.style.display = 'block';
+            highlight.classList.remove('invalid');
+            document.getElementById('highlightIcon').className = 'bi bi-patch-check-fill';
+            document.getElementById('highlightIcon').style.color = 'var(--success)';
+            document.getElementById('highlightTitle').textContent = t('highlightTitle');
+            document.getElementById('highlightDesc').textContent = t('highlightDesc');
+        }
+
+        function showError(type) {
+            // Update shield icon
+            const shield = document.getElementById('shieldIcon');
+            shield.classList.remove('loading');
+            shield.classList.add('invalid');
+            shield.innerHTML = '<i class="bi bi-shield-x"></i>';
+
+            // Update status
+            document.getElementById('statusTitle').textContent = t(type);
+            document.getElementById('statusSubtitle').textContent = t(type + 'Desc');
+
+            // Show error highlight
+            const highlight = document.getElementById('highlightBox');
+            highlight.style.display = 'block';
+            highlight.classList.add('invalid');
+            document.getElementById('highlightIcon').className = 'bi bi-exclamation-triangle-fill';
+            document.getElementById('highlightIcon').style.color = 'var(--error)';
+            document.getElementById('highlightTitle').textContent = t('highlightTitleInvalid');
+            document.getElementById('highlightDesc').textContent = t('highlightDescInvalid');
+        }
+
+        // Start verification
+        verifyDocument();
+    </script>
+</body>
+
+</html>
