@@ -57,6 +57,19 @@
                     "icon": "./assets/notification-icon.png",
                     "color": "#C9A227"
                 }
+            ],
+            [
+                "expo-build-properties",
+                {
+                    "android": {
+                        "compileSdkVersion": 35,
+                        "targetSdkVersion": 35,
+                        "minSdkVersion": 24,
+                        "buildToolsVersion": "35.0.0",
+                        "kotlinVersion": "2.1.20",
+                        "usesCleartextTraffic": true
+                    }
+                }
             ]
         ],
         "extra": {

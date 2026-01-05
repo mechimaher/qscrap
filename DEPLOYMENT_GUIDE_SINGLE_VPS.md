@@ -81,31 +81,57 @@ docker ps
 
 ---
 
-## 🔒 Step 4: Setup SSL (HTTPS) with Caddy (Easiest Method)
-Instead of configuring Nginx manually, we use **Caddy** which handles SSL automatically.
+## 🔒 Step 4: Setup SSL (HTTPS) with Nginx
+We use **Nginx** for robust performance and better control over HTTP protocols (resolves HTTP/2 connectivity issues in some regions).
 
-1. Create a `Caddyfile` in the root folder:
+1. **Install Nginx & Certbot**:
 ```bash
-nano Caddyfile
+apt-get update
+apt-get install -y nginx certbot python3-certbot-nginx
 ```
-Content:
-```caddy
-qscrap.qa, www.qscrap.qa {
-    reverse_proxy localhost:3000
+
+2. **Configure Nginx**:
+Create `/etc/nginx/sites-available/qscrap`:
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name qscrap.qa www.qscrap.qa;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name qscrap.qa www.qscrap.qa;
+
+    ssl_certificate /etc/letsencrypt/live/qscrap.qa/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/qscrap.qa/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;  # Important for streaming/performance
+    }
 }
 ```
 
-2. Run Caddy with Docker:
+3. **Enable Site & Get Certificate**:
 ```bash
-docker run -d \
-    --name caddy \
-    --network host \
-    -v $(pwd)/Caddyfile:/etc/caddy/Caddyfile \
-    -v caddy_data:/data \
-    caddy:alpine
+ln -s /etc/nginx/sites-available/qscrap /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+service nginx restart
+
+# Get SSL Certificate
+certbot --nginx -d qscrap.qa -d www.qscrap.qa
 ```
 
-**Done!** Your site `https://qscrap.qa` is now live with padlock HTTPS.
+**Done!** Your site `https://qscrap.qa` is now live with padlock HTTPS and robust HTTP/1.1 support.
 
 ---
 

@@ -213,6 +213,14 @@ app.post('/health/jobs/:jobName/run', async (req, res) => {
 });
 
 // ==========================================
+// DOCUMENT VERIFICATION PAGE (Premium 2026)
+// ==========================================
+// Serve verify.html for any /verify/* URL (QR code scanning)
+app.get('/verify/*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/verify.html'));
+});
+
+// ==========================================
 // ERROR HANDLING (Last in chain)
 // ==========================================
 

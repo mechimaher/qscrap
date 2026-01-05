@@ -3,6 +3,7 @@
 // Once qscrap.qa DNS works, change to https://qscrap.qa
 
 // Demo Configuration - VPS IP Address
+// Demo Configuration - VPS IP Address
 export const API_BASE_URL = 'http://147.93.89.153:3000/api';
 export const SOCKET_URL = 'http://147.93.89.153:3000';
 

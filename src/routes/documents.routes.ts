@@ -21,7 +21,9 @@ const router = Router();
 router.get('/verify/:code', verifyDocument);
 
 // Public download with query token (for mobile app opening PDF in browser)
-router.get('/:document_id/download', downloadDocumentWithToken);
+// Uses /public/ prefix to avoid conflict with authenticated download route
+router.get('/public/:document_id/download', downloadDocumentWithToken);
+
 // AUTHENTICATED ROUTES
 // ============================================
 
