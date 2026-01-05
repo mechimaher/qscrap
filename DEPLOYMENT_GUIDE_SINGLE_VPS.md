@@ -33,12 +33,25 @@ You can clone from GitHub (easiest) or copy files via SFTP.
 ```bash
 # 1. Clone your repo
 cd /opt
-git clone https://github.com/mechimaher/qscrap.git
+
+> [!TIP]
+> **Option A: HTTPS (Simplest)**
+> Use the command below. When asked for password, use a **Personal Access Token**.
+> `git clone https://github.com/mechimaher/qscrap.git`
+>
+> **Option B: SSH (Recommended for Pros)**
+> If you prefer using `git@github.com:...`:
+> 1. Run `ssh-keygen -t ed25519` (Press Enter for all).
+> 2. Run `cat /root/.ssh/id_ed25519.pub` and copy the output.
+> 3. Go to GitHub -> Settings -> SSH Keys -> New Key -> Paste it.
+> 4. Run `git clone git@github.com:mechimaher/qscrap.git`
+
 cd qscrap
 
 # 2. Set up environment variables
 cp .env.example .env
 nano .env
+
 ```
 
 **Edit your `.env` for production:**
