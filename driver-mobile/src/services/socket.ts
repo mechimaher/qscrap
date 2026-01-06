@@ -3,7 +3,9 @@
 
 import { io, Socket } from 'socket.io-client';
 import * as SecureStore from 'expo-secure-store';
+import * as Haptics from 'expo-haptics';
 import { API_BASE_URL } from '../config/api';
+import { scheduleLocalNotification } from './notifications';
 
 // Get socket URL from API URL (same server)
 const SOCKET_URL = API_BASE_URL.replace('/api', '');
@@ -58,6 +60,99 @@ export const initSocket = async (): Promise<Socket | null> => {
         console.log('[Socket] Reconnected after', attemptNumber, 'attempts');
     });
 
+    // ==============================
+    // ASSIGNMENT EVENTS WITH NOTIFICATIONS
+    // ==============================
+
+    socket.on('new_assignment', (data: any) => {
+        console.log('[Socket] New assignment received:', data.order_number);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        scheduleLocalNotification(
+            '🚚 New Delivery Assignment!',
+            data.pickup_address
+                ? `Pickup from: ${data.pickup_address}`
+                : `Order #${data.order_number || 'New'} - Tap to view details`,
+            {
+                type: 'new_assignment',
+                assignmentId: data.assignment_id,
+                orderId: data.order_id,
+            }
+        );
+    });
+
+    socket.on('assignment_updated', (data: any) => {
+        console.log('[Socket] Assignment updated:', data.assignment_id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    });
+
+    socket.on('assignment_cancelled', (data: any) => {
+        console.log('[Socket] Assignment cancelled:', data.assignment_id);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+        scheduleLocalNotification(
+            '❌ Assignment Cancelled',
+            data.reason || `Order #${data.order_number || 'Unknown'} has been cancelled`,
+            {
+                type: 'assignment_cancelled',
+                assignmentId: data.assignment_id,
+            }
+        );
+    });
+
+    socket.on('assignment_removed', (data: any) => {
+        console.log('[Socket] Assignment removed:', data.assignment_id);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+        scheduleLocalNotification(
+            '⚠️ Assignment Reassigned',
+            data.message || 'Your assignment has been reassigned to another driver',
+            {
+                type: 'assignment_removed',
+                assignmentId: data.assignment_id,
+            }
+        );
+    });
+
+    // ==============================
+    // CHAT EVENTS WITH NOTIFICATIONS
+    // ==============================
+
+    socket.on('new_message', (data: any) => {
+        console.log('[Socket] New message:', data.message_id);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    });
+
+    socket.on('chat_notification', (data: any) => {
+        console.log('[Socket] Chat notification:', data.order_number);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        scheduleLocalNotification(
+            '💬 Customer Message',
+            data.message || 'You have a new message',
+            {
+                type: 'chat_message',
+                orderId: data.order_id,
+                orderNumber: data.order_number,
+            }
+        );
+    });
+
+    socket.on('chat_message', (data: any) => {
+        console.log('[Socket] Chat message received:', data.message_id);
+        if (data.sender_type === 'customer') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+    });
+
+    // ==============================
+    // STATUS UPDATE LISTENERS
+    // ==============================
+
+    socket.on('driver_status_changed', (data: any) => {
+        console.log('[Socket] Driver status changed:', data.status);
+    });
+
     return socket;
 };
 
@@ -72,7 +167,7 @@ export const disconnectSocket = () => {
 };
 
 // ==============================
-// ASSIGNMENT EVENTS
+// ASSIGNMENT EVENTS (legacy callbacks)
 // ==============================
 
 export const onNewAssignment = (callback: (data: any) => void) => {
@@ -116,7 +211,7 @@ export const leaveChatRoom = (orderId: string) => {
 // sendChatMessage removed (use REST API)
 
 // ==============================
-// STATUS UPDATE LISTENERS
+// STATUS UPDATE LISTENERS  
 // ==============================
 
 export const onDriverStatusChanged = (callback: (data: any) => void) => {
@@ -131,3 +226,4 @@ export const onDriverStatusChanged = (callback: (data: any) => void) => {
 export const emitLocationUpdate = (lat: number, lng: number, orderId?: string) => {
     socket?.emit('driver_location', { lat, lng, order_id: orderId });
 };
+

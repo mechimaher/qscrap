@@ -116,6 +116,26 @@ export function useSocket() {
 
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+                // Schedule rich local notification for background/locked phone
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    const conditionLabel = data.part_condition
+                        ?.replace('used_', 'Used ')
+                        ?.replace('_', ' ')
+                        ?.replace(/\b\w/g, c => c.toUpperCase()) || 'Used';
+
+                    scheduleLocalNotification(
+                        `💰 New Bid: ${data.bid_amount} QAR`,
+                        `${data.garage_name} • ${conditionLabel}${data.warranty_days ? ` • ${data.warranty_days} days warranty` : ''}`,
+                        {
+                            type: 'new_bid',
+                            bidId: data.bid_id,
+                            requestId: data.request_id,
+                            garageName: data.garage_name,
+                            bidAmount: data.bid_amount,
+                        }
+                    );
+                });
+
                 // Add to queue, sorted by amount (lowest first)
                 setNewBids(prev => {
                     // Prevent duplicate bids
@@ -128,8 +148,23 @@ export function useSocket() {
             });
 
             // Bid was updated
-            socket.current.on('bid_updated', (data: { bid_id: string; bid_amount: number }) => {
+            socket.current.on('bid_updated', (data: { bid_id: string; bid_amount: number; request_id?: string }) => {
                 console.log('[Socket] Bid updated:', data.bid_id);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '💰 Bid Updated',
+                        `A garage revised their offer to ${data.bid_amount} QAR`,
+                        {
+                            type: 'bid_updated',
+                            bidId: data.bid_id,
+                            requestId: data.request_id,
+                            bidAmount: data.bid_amount,
+                        }
+                    );
+                });
+
                 setNewBids(prev =>
                     prev.map(bid =>
                         bid.bid_id === data.bid_id
@@ -145,12 +180,36 @@ export function useSocket() {
             socket.current.on('garage_counter_offer', (data: any) => {
                 console.log('[Socket] Garage counter-offer:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '🔄 Counter-Offer Received',
+                        data.notification || `Garage proposed ${data.proposed_amount} QAR`,
+                        {
+                            type: 'counter_offer',
+                            bidId: data.bid_id,
+                            proposedAmount: data.proposed_amount,
+                        }
+                    );
+                });
             });
 
             // Counter-offer accepted by garage
             socket.current.on('counter_offer_accepted', (data: any) => {
                 console.log('[Socket] Counter-offer accepted:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '✅ Offer Accepted!',
+                        data.notification || `Your offer of ${data.agreed_amount} QAR was accepted`,
+                        {
+                            type: 'counter_offer_accepted',
+                            bidId: data.bid_id,
+                            agreedAmount: data.agreed_amount,
+                        }
+                    );
+                });
             });
 
             // Counter-offer rejected by garage
@@ -256,6 +315,21 @@ export function useSocket() {
             }) => {
                 console.log('[Socket] Driver assigned:', data.driver?.name);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '🚗 Driver Assigned!',
+                        data.driver?.name
+                            ? `${data.driver.name} is heading to pick up your order`
+                            : 'A driver has been assigned to your order',
+                        {
+                            type: 'driver_assigned',
+                            orderId: data.order_id,
+                            orderNumber: data.order_number,
+                            driverName: data.driver?.name,
+                        }
+                    );
+                });
             });
 
             // === TRACKING EVENTS ===
@@ -269,6 +343,119 @@ export function useSocket() {
             socket.current.on('order_delivered', (data: { order_id: string; order_number: string }) => {
                 console.log('[Socket] Order delivered:', data.order_number);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '🎉 Package Delivered!',
+                        `Order #${data.order_number} has arrived. Please confirm receipt.`,
+                        {
+                            type: 'order_delivered',
+                            orderId: data.order_id,
+                            orderNumber: data.order_number,
+                        }
+                    );
+                });
+            });
+
+            // === ADDITIONAL CRITICAL EVENTS ===
+
+            // Request expired (no bids received in time)
+            socket.current.on('request_expired', (data: { request_id: string; part_description?: string }) => {
+                console.log('[Socket] Request expired:', data.request_id);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '⏰ Request Expired',
+                        data.part_description
+                            ? `Your request for "${data.part_description}" has expired`
+                            : 'Your part request has expired. Create a new one to get quotes.',
+                        {
+                            type: 'request_expired',
+                            requestId: data.request_id,
+                        }
+                    );
+                });
+            });
+
+            // Garage withdrew their bid
+            socket.current.on('bid_withdrawn', (data: { request_id: string; message?: string }) => {
+                console.log('[Socket] Bid withdrawn:', data.request_id);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '📤 Bid Withdrawn',
+                        data.message || 'A garage has withdrawn their bid on your request',
+                        {
+                            type: 'bid_withdrawn',
+                            requestId: data.request_id,
+                        }
+                    );
+                });
+            });
+
+            // Support team replied to your ticket
+            socket.current.on('support_reply', (data: { ticket_id: string; message?: any }) => {
+                console.log('[Socket] Support reply:', data.ticket_id);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    scheduleLocalNotification(
+                        '💬 Support Reply',
+                        data.message?.content || 'QScrap support has replied to your ticket',
+                        {
+                            type: 'support_reply',
+                            ticketId: data.ticket_id,
+                        }
+                    );
+                });
+            });
+
+            // Order was cancelled
+            socket.current.on('order_cancelled', (data: { order_id: string; order_number?: string; reason?: string; cancelled_by?: string }) => {
+                console.log('[Socket] Order cancelled:', data.order_id);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    const cancelledBy = data.cancelled_by === 'garage' ? 'The garage' : 'Your order';
+                    scheduleLocalNotification(
+                        '❌ Order Cancelled',
+                        data.reason
+                            ? `${cancelledBy} cancelled: ${data.reason}`
+                            : `Order #${data.order_number || 'N/A'} has been cancelled`,
+                        {
+                            type: 'order_cancelled',
+                            orderId: data.order_id,
+                            orderNumber: data.order_number,
+                        }
+                    );
+                });
+            });
+
+            // Chat message notification (when not in chat screen)
+            socket.current.on('chat_notification', (data: {
+                order_id: string;
+                order_number: string;
+                sender_type: string;
+                message: string;
+                notification: string;
+            }) => {
+                console.log('[Socket] Chat notification:', data.order_number);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    const senderLabel = data.sender_type === 'driver' ? '🚗 Driver' : '🔧 Garage';
+                    scheduleLocalNotification(
+                        `${senderLabel} Message`,
+                        data.message || 'You have a new message',
+                        {
+                            type: 'chat_message',
+                            orderId: data.order_id,
+                            orderNumber: data.order_number,
+                        }
+                    );
+                });
             });
 
         } catch (error) {

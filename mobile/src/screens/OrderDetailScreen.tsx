@@ -439,7 +439,7 @@ export default function OrderDetailScreen() {
                 documentId = docsData.documents?.find((d: any) => d.document_type === 'invoice')?.document_id;
             }
             if (!documentId) throw new Error('Could not generate invoice');
-            await Linking.openURL(`${SOCKET_URL}/api/documents/${documentId}/download?token=${token}`);
+            await Linking.openURL(`${SOCKET_URL}/api/documents/public/${documentId}/download?token=${token}`);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to download invoice');
