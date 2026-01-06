@@ -1967,7 +1967,67 @@ async function loadProfile() {
                     </button>
                 </form>
             </div>
+            
+            <!-- GPS Location Picker (for driver navigation) -->
+            <div class="stat-card" style="margin-top: 24px;">
+                <h3 style="margin: 0 0 8px; display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-geo-alt-fill" style="color: var(--accent);"></i> Garage Location
+                    ${(profile.location_lat && profile.location_lng) ? '<span style="background: var(--success); color: white; font-size: 10px; padding: 4px 8px; border-radius: 12px;">GPS Set</span>' : '<span style="background: #f59e0b; color: white; font-size: 10px; padding: 4px 8px; border-radius: 12px;">Required</span>'}
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                    <i class="bi bi-info-circle"></i> Set your garage location for accurate driver navigation. Drivers will use this to pick up orders.
+                </p>
+                
+                ${(!profile.location_lat || !profile.location_lng) ? `
+                <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.1)); border: 1px solid #f59e0b; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px; color: #f59e0b; font-weight: 600;">
+                        <i class="bi bi-exclamation-triangle-fill"></i> GPS Location Required
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                        Please set your location so drivers can navigate to your garage with one click.
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div id="locationMapContainer" style="height: 300px; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 2px solid var(--border);"></div>
+                
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                    <button type="button" class="btn btn-outline" onclick="useMyLocation()">
+                        <i class="bi bi-crosshairs"></i> Use My Location
+                    </button>
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" class="form-control" id="locationAddressInput" 
+                            value="${profile.address || ''}"
+                            placeholder="Enter address description"
+                            style="font-size: 14px;">
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-muted);">Latitude</label>
+                        <input type="text" class="form-control" id="locationLatInput" 
+                            value="${profile.location_lat || ''}"
+                            placeholder="25.2854" readonly 
+                            style="background: var(--bg-secondary); font-family: monospace;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-muted);">Longitude</label>
+                        <input type="text" class="form-control" id="locationLngInput" 
+                            value="${profile.location_lng || ''}"
+                            placeholder="51.5310" readonly 
+                            style="background: var(--bg-secondary); font-family: monospace;">
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary" onclick="saveGarageLocation()">
+                    <i class="bi bi-geo-alt-fill"></i> Save Location
+                </button>
+            </div>
         `;
+
+        // Initialize Leaflet map after DOM is updated
+        setTimeout(() => initLocationMap(profile.location_lat, profile.location_lng), 100);
     } catch (err) {
         console.error('Failed to load profile:', err);
     }
@@ -2007,6 +2067,143 @@ async function saveBusinessDetails(event) {
         }
     } catch (err) {
         console.error('Save business details error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+// ===== GPS LOCATION PICKER =====
+let locationMap = null;
+let locationMarker = null;
+
+function initLocationMap(lat, lng) {
+    const container = document.getElementById('locationMapContainer');
+    if (!container) return;
+
+    // Default to Doha, Qatar if no coordinates
+    const defaultLat = lat ? parseFloat(lat) : 25.2854;
+    const defaultLng = lng ? parseFloat(lng) : 51.5310;
+
+    // Destroy existing map if any
+    if (locationMap) {
+        locationMap.remove();
+        locationMap = null;
+    }
+
+    // Create map
+    locationMap = L.map('locationMapContainer').setView([defaultLat, defaultLng], lat && lng ? 16 : 12);
+
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(locationMap);
+
+    // Add marker if coordinates exist
+    if (lat && lng) {
+        locationMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(locationMap);
+        locationMarker.on('dragend', onMarkerDragEnd);
+    }
+
+    // Click to place marker
+    locationMap.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+
+        if (locationMarker) {
+            locationMarker.setLatLng(e.latlng);
+        } else {
+            locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+            locationMarker.on('dragend', onMarkerDragEnd);
+        }
+
+        updateLocationInputs(lat, lng);
+    });
+}
+
+function onMarkerDragEnd(e) {
+    const pos = e.target.getLatLng();
+    updateLocationInputs(pos.lat, pos.lng);
+}
+
+function updateLocationInputs(lat, lng) {
+    document.getElementById('locationLatInput').value = lat.toFixed(8);
+    document.getElementById('locationLngInput').value = lng.toFixed(8);
+}
+
+function useMyLocation() {
+    if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser', 'error');
+        return;
+    }
+
+    showToast('Getting your location...', 'info');
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            // Update inputs
+            updateLocationInputs(lat, lng);
+
+            // Update map
+            if (locationMap) {
+                locationMap.setView([lat, lng], 16);
+
+                if (locationMarker) {
+                    locationMarker.setLatLng([lat, lng]);
+                } else {
+                    locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+                    locationMarker.on('dragend', onMarkerDragEnd);
+                }
+            }
+
+            showToast('Location detected! Click Save Location to confirm.', 'success');
+        },
+        (error) => {
+            console.error('Geolocation error:', error);
+            showToast('Could not get your location. Please place marker manually.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+async function saveGarageLocation() {
+    const lat = document.getElementById('locationLatInput').value;
+    const lng = document.getElementById('locationLngInput').value;
+    const address = document.getElementById('locationAddressInput').value.trim();
+
+    if (!lat || !lng) {
+        showToast('Please set your location on the map first', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/dashboard/garage/location`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                location_lat: parseFloat(lat),
+                location_lng: parseFloat(lng),
+                address: address || undefined
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('📍 Location saved! Drivers can now navigate to your garage.', 'success');
+            if (data.warning) {
+                showToast(data.warning, 'warning');
+            }
+            loadProfile(); // Refresh to show GPS Set badge
+        } else {
+            showToast(data.error || 'Failed to save location', 'error');
+        }
+    } catch (err) {
+        console.error('Save location error:', err);
         showToast('Connection error', 'error');
     }
 }

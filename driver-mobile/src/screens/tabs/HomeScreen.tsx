@@ -26,7 +26,7 @@ import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
-import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating } from '../../components';
+import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating, LiveMapView, AssignmentPopup } from '../../components';
 
 export default function HomeScreen() {
     const { driver, refreshDriver } = useAuth();
@@ -41,6 +41,10 @@ export default function HomeScreen() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isAvailable, setIsAvailable] = useState(driver?.status === 'available');
     const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+
+    // VVIP: Accept/Reject popup state
+    const [pendingAssignment, setPendingAssignment] = useState<Assignment | null>(null);
+    const [showAssignmentPopup, setShowAssignmentPopup] = useState(false);
 
     // Animation values for entrance effects
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -65,17 +69,31 @@ export default function HomeScreen() {
         const handleUpdate = () => {
             console.log('[Home] Received update event, reloading data...');
             loadData();
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         };
 
-        socket.on('new_assignment', handleUpdate);
+        // VVIP: Show accept/reject popup for new assignments
+        const handleNewAssignment = (data: any) => {
+            console.log('[Home] New assignment received:', data);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+            // If assignment data is included, show popup
+            if (data && data.assignment) {
+                setPendingAssignment(data.assignment);
+                setShowAssignmentPopup(true);
+            } else {
+                // Fallback: just reload data
+                loadData();
+            }
+        };
+
+        socket.on('new_assignment', handleNewAssignment);
         socket.on('assignment_cancelled', handleUpdate);
         socket.on('assignment_removed', handleUpdate);
         socket.on('order_status_updated', handleUpdate);
 
         return () => {
             console.log('[Home] Cleaning up socket listeners');
-            socket.off('new_assignment', handleUpdate);
+            socket.off('new_assignment', handleNewAssignment);
             socket.off('assignment_cancelled', handleUpdate);
             socket.off('assignment_removed', handleUpdate);
             socket.off('order_status_updated', handleUpdate);
@@ -174,6 +192,45 @@ export default function HomeScreen() {
         return isAvailable ? 'Available' : 'Offline';
     };
 
+    // VVIP: Accept/Reject/Timeout handlers
+    const handleAcceptAssignment = async () => {
+        console.log('[Home] Accepting assignment:', pendingAssignment?.assignment_id);
+        setShowAssignmentPopup(false);
+        setPendingAssignment(null);
+
+        // For now, just reload data - backend already auto-assigned
+        // TODO: Call accept API when backend supports pending state
+        await loadData();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    };
+
+    const handleRejectAssignment = async () => {
+        console.log('[Home] Rejecting assignment:', pendingAssignment?.assignment_id);
+        setShowAssignmentPopup(false);
+        setPendingAssignment(null);
+
+        // TODO: Call reject API when backend supports pending state
+        // For now, show alert that rejection is not yet implemented
+        Alert.alert(
+            'Assignment Rejected',
+            'This assignment has been declined. Operations will reassign it.',
+            [{ text: 'OK' }]
+        );
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    };
+
+    const handleAssignmentTimeout = () => {
+        console.log('[Home] Assignment timed out');
+        setShowAssignmentPopup(false);
+        setPendingAssignment(null);
+
+        Alert.alert(
+            'Assignment Expired',
+            'You did not respond in time. The assignment may be reassigned.',
+            [{ text: 'OK' }]
+        );
+    };
+
     // Show skeleton loading on initial load
     if (isLoading) {
         return (
@@ -227,6 +284,17 @@ export default function HomeScreen() {
                 }
                 showsVerticalScrollIndicator={false}
             >
+                {/* VVIP: Live Map Dashboard */}
+                {isAvailable && (
+                    <View style={styles.mapContainer}>
+                        <LiveMapView
+                            activeAssignment={activeAssignments[0] || null}
+                            height={180}
+                            showRoute={true}
+                        />
+                    </View>
+                )}
+
                 {/* Quick Stats */}
                 <View style={styles.statsGrid}>
                     <StatCard
@@ -311,6 +379,15 @@ export default function HomeScreen() {
                     )}
                 </View>
             </ScrollView>
+
+            {/* VVIP: Accept/Reject Popup */}
+            <AssignmentPopup
+                visible={showAssignmentPopup}
+                assignment={pendingAssignment}
+                onAccept={handleAcceptAssignment}
+                onReject={handleRejectAssignment}
+                onTimeout={handleAssignmentTimeout}
+            />
         </SafeAreaView>
     );
 }
@@ -489,6 +566,16 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         gap: 12,
         marginBottom: 20,
+    },
+    mapContainer: {
+        marginBottom: 16,
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
     },
     statCard: {
         flex: 1,

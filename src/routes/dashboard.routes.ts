@@ -4,6 +4,7 @@ import {
     getGarageProfile,
     updateGarageBusinessDetails,
     updateGarageSpecialization,
+    updateGarageLocation,
     getCustomerStats,
     getCustomerProfile,
     updateCustomerProfile,
@@ -26,6 +27,9 @@ router.put('/garage/business-details', authenticate, requireRole('garage'), upda
 
 // Garage: Update specialization (supplier type, brands)
 router.put('/garage/specialization', authenticate, requireRole('garage'), updateGarageSpecialization);
+
+// Garage: Update location (GPS coordinates for driver navigation)
+router.put('/garage/location', authenticate, requireRole('garage'), updateGarageLocation);
 
 // Customer: Get dashboard stats
 router.get('/customer/stats', authenticate, requireRole('customer'), getCustomerStats);

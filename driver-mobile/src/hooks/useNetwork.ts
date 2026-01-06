@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+// @ts-ignore - NetInfo types are bundled with the package
+import NetInfo from '@react-native-community/netinfo';
+
+// Define types locally since package types may not resolve
+interface NetInfoState {
+    isConnected: boolean | null;
+    isInternetReachable: boolean | null;
+    type: string;
+}
 
 interface NetworkState {
     isConnected: boolean;

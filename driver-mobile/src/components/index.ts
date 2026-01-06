@@ -14,3 +14,9 @@ export { NetworkBanner } from './NetworkBanner';
 export { AnimatedNumber, AnimatedCurrency, AnimatedRating } from './AnimatedNumber';
 export { QuickReplies } from './QuickReplies';
 
+// VVIP Premium Features
+export { default as LiveMapView } from './LiveMapView';
+export { default as AssignmentPopup } from './AssignmentPopup';
+export { default as ETABadge, ETAText } from './ETABadge';
+export { default as AchievementBadges, checkNewAchievements } from './AchievementBadges';
+export { default as SwipeToComplete, SwipeButton } from './SwipeToComplete';

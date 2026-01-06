@@ -9,19 +9,14 @@ try:
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(host, username=user, password=password)
     
-    print("🔄 Restarting Backend Container...")
-    stdin, stdout, stderr = client.exec_command("docker restart qscrap-backend")
+    print("🧪 Checking HTTP on port 3000...")
+    stdin, stdout, stderr = client.exec_command("curl -I -s http://localhost:3000/operations-dashboard.html | head -5")
     print(stdout.read().decode())
     
-    print("⏳ Waiting for health check...")
-    import time
-    time.sleep(5)
-    
-    # Check logs to confirm startup
-    stdin, stdout, stderr = client.exec_command("docker logs qscrap-backend --tail=10 2>&1")
+    print("🔒 Checking HTTPS on port 443 (via Nginx)...")
+    stdin, stdout, stderr = client.exec_command("curl -I --insecure -s https://localhost/operations-dashboard.html | head -5")
     print(stdout.read().decode())
     
     client.close()
-    print("\n✅ Backend restarted successfully.")
 except Exception as e:
     print(f"Error: {e}")

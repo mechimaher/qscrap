@@ -186,6 +186,59 @@ export const updateGarageSpecialization = async (req: AuthRequest, res: Response
     }
 };
 
+// Update Garage Location (GPS coordinates for driver navigation)
+export const updateGarageLocation = async (req: AuthRequest, res: Response) => {
+    const garageId = req.user!.userId;
+    const { location_lat, location_lng, address } = req.body;
+
+    // Validate coordinates provided
+    if (location_lat === undefined || location_lng === undefined) {
+        return res.status(400).json({ error: 'Both location_lat and location_lng are required' });
+    }
+
+    const lat = parseFloat(location_lat);
+    const lng = parseFloat(location_lng);
+
+    // Validate coordinate ranges
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({ error: 'Invalid GPS coordinates' });
+    }
+
+    // Optional: Warn if outside Qatar bounds (24.4-26.2, 50.7-51.7) but don't reject
+    const isInQatar = lat >= 24.4 && lat <= 26.2 && lng >= 50.7 && lng <= 51.7;
+
+    try {
+        const updateFields = ['location_lat = $1', 'location_lng = $2', 'updated_at = NOW()'];
+        const params: (number | string)[] = [lat, lng];
+
+        if (address) {
+            updateFields.push(`address = $${params.length + 1}`);
+            params.push(address);
+        }
+
+        params.push(garageId);
+
+        const result = await pool.query(
+            `UPDATE garages SET ${updateFields.join(', ')}
+             WHERE garage_id = $${params.length}
+             RETURNING garage_id, garage_name, address, location_lat, location_lng`,
+            params
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Garage not found' });
+        }
+
+        res.json({
+            message: 'Garage location updated successfully',
+            garage: result.rows[0],
+            warning: !isInQatar ? 'Location appears to be outside Qatar. Please verify.' : undefined
+        });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
 // Customer Dashboard Stats  
 export const getCustomerStats = async (req: AuthRequest, res: Response) => {
     const customerId = req.user!.userId;

@@ -52,7 +52,9 @@ export const register = async (req: Request, res: Response) => {
     const {
         phone_number, password, user_type, full_name, garage_name, address,
         // Garage specialization fields
-        supplier_type, specialized_brands, all_brands
+        supplier_type, specialized_brands, all_brands,
+        // Garage location fields (GPS coordinates)
+        location_lat, location_lng
     } = req.body;
 
     // Basic field validation
@@ -106,16 +108,41 @@ export const register = async (req: Request, res: Response) => {
                 return res.status(400).json({ error: 'Garage name is required for garage registration' });
             }
 
+            // Validate GPS coordinates if provided
+            let validLat: number | null = null;
+            let validLng: number | null = null;
+
+            if (location_lat !== undefined && location_lng !== undefined) {
+                const lat = parseFloat(location_lat);
+                const lng = parseFloat(location_lng);
+
+                // Basic coordinate validation
+                if (!isNaN(lat) && !isNaN(lng) &&
+                    lat >= -90 && lat <= 90 &&
+                    lng >= -180 && lng <= 180) {
+                    validLat = lat;
+                    validLng = lng;
+
+                    // Log warning if outside Qatar bounds (but don't reject)
+                    if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) {
+                        logger.warn('Garage location outside Qatar bounds', { userId, lat, lng });
+                    }
+                } else {
+                    logger.warn('Invalid GPS coordinates provided during registration', { userId, location_lat, location_lng });
+                }
+            }
+
             // Calculate demo expiry date (30 days from now)
             const demoExpiresAt = new Date();
             demoExpiresAt.setDate(demoExpiresAt.getDate() + TRIAL_DAYS);
 
-            // Create garage with auto demo trial and specialization
+            // Create garage with auto demo trial, specialization, and location
             await client.query(
-                `INSERT INTO garages (garage_id, garage_name, address, approval_status, demo_expires_at,
+                `INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng,
+                                      approval_status, demo_expires_at,
                                       supplier_type, specialized_brands, all_brands) 
-                 VALUES ($1, $2, $3, 'demo', $4, $5, $6, $7)`,
-                [userId, garage_name, address, demoExpiresAt,
+                 VALUES ($1, $2, $3, $4, $5, 'demo', $6, $7, $8, $9)`,
+                [userId, garage_name, address, validLat, validLng, demoExpiresAt,
                     supplier_type || 'used',
                     specialized_brands || [],
                     all_brands !== false]
