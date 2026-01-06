@@ -1,5 +1,6 @@
-// QScrap Driver App - Chat Screen
+// QScrap Driver App - Premium Chat Screen
 // Real-time messaging with customer during delivery
+// Now with premium animations and QuickReplies component
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -11,9 +12,11 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator,
     Vibration,
+    Animated,
+    Easing,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -22,7 +25,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { API_BASE_URL } from '../config/api';
 import { getSocket, joinChatRoom, leaveChatRoom, onNewMessage } from '../services/socket';
-import { Colors, BorderRadius, Spacing, FontSize } from '../constants/theme';
+import { Colors, BorderRadius, Spacing, FontSize, Shadows } from '../constants/theme';
+import { QuickReplies, SkeletonLoader } from '../components';
 
 interface Message {
     message_id: string;
@@ -35,13 +39,7 @@ interface Message {
     is_read: boolean;
 }
 
-const QUICK_REPLIES = [
-    { text: "On my way!", emoji: "🚚" },
-    { text: "Arrived at location", emoji: "📍" },
-    { text: "Traffic delay, will be there soon", emoji: "🚦" },
-    { text: "Please come outside", emoji: "👋" },
-    { text: "Can you share landmark?", emoji: "🏢" },
-];
+
 
 export default function ChatScreen() {
     const { colors } = useTheme();
@@ -54,7 +52,12 @@ export default function ChatScreen() {
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
+    const [showQuickReplies, setShowQuickReplies] = useState(true);
     const flatListRef = useRef<FlatList>(null);
+
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
 
     useEffect(() => {
         loadMessages();
@@ -91,6 +94,21 @@ export default function ChatScreen() {
             if (data.messages) {
                 setMessages(data.messages);
             }
+
+            // Entrance animation
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 400,
+                    easing: Easing.out(Easing.back(1.1)),
+                    useNativeDriver: true,
+                }),
+            ]).start();
         } catch (err) {
             console.error('[Chat] Load messages error:', err);
         } finally {
@@ -132,6 +150,7 @@ export default function ChatScreen() {
 
     const handleQuickReply = (text: string) => {
         setInputText(text);
+        setShowQuickReplies(false); // Hide after selection
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     };
 
@@ -194,7 +213,9 @@ export default function ChatScreen() {
             >
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color={Colors.primary} />
+                        <SkeletonLoader width={200} height={40} borderRadius={20} />
+                        <SkeletonLoader width={250} height={40} borderRadius={20} style={{ marginTop: 12, alignSelf: 'flex-end' }} />
+                        <SkeletonLoader width={180} height={40} borderRadius={20} style={{ marginTop: 12 }} />
                     </View>
                 ) : (
                     <FlatList
@@ -216,26 +237,12 @@ export default function ChatScreen() {
                 )}
 
                 {/* Quick Replies */}
-                <View style={styles.quickRepliesContainer}>
-                    <FlatList
-                        horizontal
-                        data={QUICK_REPLIES}
-                        keyExtractor={(item) => item.text}
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.quickRepliesList}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[styles.quickReplyButton, { backgroundColor: colors.surface }]}
-                                onPress={() => handleQuickReply(item.text)}
-                            >
-                                <Text>{item.emoji}</Text>
-                                <Text style={[styles.quickReplyText, { color: colors.text }]} numberOfLines={1}>
-                                    {item.text}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
+                {showQuickReplies && (
+                    <QuickReplies
+                        onSelectReply={handleQuickReply}
+                        recipientType="customer"
                     />
-                </View>
+                )}
 
                 {/* Input */}
                 <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>

@@ -11,3 +11,6 @@ export { SkeletonLoader, SkeletonCard, SkeletonList, SkeletonStats, HomeScreenSk
 export { ToastProvider, useToast } from './Toast';
 export { EmptyState } from './EmptyState';
 export { NetworkBanner } from './NetworkBanner';
+export { AnimatedNumber, AnimatedCurrency, AnimatedRating } from './AnimatedNumber';
+export { QuickReplies } from './QuickReplies';
+
