@@ -1,7 +1,8 @@
-// QScrap Driver App - Home Screen
+// QScrap Driver App - Premium Home Screen
 // Live dashboard with assignments, stats, and availability toggle
+// Now with skeleton loading and premium animations
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,6 +12,8 @@ import {
     RefreshControl,
     Switch,
     Alert,
+    Animated,
+    Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,8 +24,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLocation } from '../../hooks/useLocation';
 import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
-import { getSocket } from '../../services/socket'; // Import getSocket
-import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
+import { getSocket } from '../../services/socket';
+import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
+import { HomeScreenSkeleton, EmptyState } from '../../components';
 
 export default function HomeScreen() {
     const { driver, refreshDriver } = useAuth();
@@ -33,9 +37,14 @@ export default function HomeScreen() {
 
     const [stats, setStats] = useState<DriverStats | null>(null);
     const [activeAssignments, setActiveAssignments] = useState<Assignment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isAvailable, setIsAvailable] = useState(driver?.status === 'available');
     const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+
+    // Animation values for entrance effects
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
 
     // Refresh data when screen comes into focus (e.g. returning from details)
     useFocusEffect(
@@ -86,8 +95,25 @@ export default function HomeScreen() {
 
             setStats(statsRes.stats);
             setActiveAssignments(assignmentsRes.assignments || []);
+
+            // Start entrance animation after data loads
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 400,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 500,
+                    easing: Easing.out(Easing.back(1.1)),
+                    useNativeDriver: true,
+                }),
+            ]).start();
         } catch (err) {
             console.error('[Home] Load error:', err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -148,10 +174,19 @@ export default function HomeScreen() {
         return isAvailable ? 'Available' : 'Offline';
     };
 
+    // Show skeleton loading on initial load
+    if (isLoading) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <HomeScreenSkeleton />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
                 <View>
                     <Text style={[styles.greeting, { color: colors.textSecondary }]}>
                         {getGreeting()},
@@ -182,7 +217,7 @@ export default function HomeScreen() {
                         />
                     )}
                 </TouchableOpacity>
-            </View>
+            </Animated.View>
 
             <ScrollView
                 style={styles.scrollView}
