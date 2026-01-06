@@ -428,8 +428,9 @@ async function loadStats() {
             updateBadge('ordersBadge', s.active_orders);
         }
 
-        // Also load review badge
+        // Also load review badge and finance badge
         loadReviewBadge();
+        loadFinanceBadge();
     } catch (err) {
         console.error('Failed to load stats:', err);
     }
@@ -446,6 +447,24 @@ async function loadReviewBadge() {
         }
     } catch (err) {
         console.error('Failed to load review badge:', err);
+    }
+}
+
+async function loadFinanceBadge() {
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts?status=pending&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.pagination) {
+            updateBadge('financeBadge', data.pagination.total || 0);
+        } else if (Array.isArray(data.payouts)) {
+            updateBadge('financeBadge', data.payouts.length || 0);
+        } else if (Array.isArray(data)) {
+            updateBadge('financeBadge', data.length || 0);
+        }
+    } catch (err) {
+        console.log('Finance badge: unable to load pending payouts');
     }
 }
 
@@ -4650,23 +4669,8 @@ async function updateAllBadges() {
             updateBadge('deliveryBadge', s.ready_for_pickup || 0);
         }
 
-        // Update finance badge (pending payouts)
-        try {
-            // Use /finance/payouts with status filter for pending payouts
-            const finRes = await fetch(`${API_URL}/finance/payouts?status=pending&limit=100`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const finData = await finRes.json();
-            if (finData.pagination) {
-                updateBadge('financeBadge', finData.pagination.total || 0);
-            } else if (Array.isArray(finData.payouts)) {
-                updateBadge('financeBadge', finData.payouts.length || 0);
-            } else if (Array.isArray(finData)) {
-                updateBadge('financeBadge', finData.length || 0);
-            }
-        } catch (e) {
-            console.log('Finance stats not available');
-        }
+        // Update finance badge (pending payouts) - use shared function
+        loadFinanceBadge();
 
     } catch (err) {
         console.error('Failed to update badges:', err);
