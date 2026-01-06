@@ -24,7 +24,18 @@ if grep -q "192.168" "$API_FILE" 2>/dev/null; then
     echo "⚠️  WARNING: Development API URL detected!"
     echo "   Please update $API_FILE to use production URL"
     echo ""
+    echo ""
 fi
+
+# Ensure dependencies are installed
+echo "📦 Checking dependencies..."
+if [ ! -d "node_modules" ] || [ ! -d "node_modules/@react-native-community/netinfo" ]; then
+    echo "⬇️  Installing dependencies..."
+    npm install
+else
+    echo "✓ Dependencies appear to be installed"
+fi
+echo ""
 
 # Get version from app.json
 VERSION=$(grep -o '"version": *"[^"]*"' app.json | cut -d'"' -f4 || echo "1.0.0")
