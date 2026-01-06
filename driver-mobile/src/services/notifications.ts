@@ -7,7 +7,7 @@
 
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { api } from './api';
 
 // Configure notification behavior
@@ -16,7 +16,8 @@ Notifications.setNotificationHandler({
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
+        shouldShowBanner: true,
+        shouldShowList: true,
     }),
 });
 
@@ -24,7 +25,9 @@ Notifications.setNotificationHandler({
  * Request notification permissions and get token
  */
 export const registerForPushNotifications = async (): Promise<string | null> => {
-    if (!Device.isDevice) {
+    // Check if running on a physical device (not simulator/emulator)
+    const isDevice = Constants.isDevice ?? true;
+    if (!isDevice) {
         console.log('[Notifications] Must use physical device for push notifications');
         return null;
     }

@@ -232,7 +232,9 @@ export const assignCollectionDriver = async (req: AuthRequest, res: Response) =>
         const orderResult = await client.query(
             `SELECT o.order_id, o.order_number, o.order_status, o.customer_id, o.garage_id,
                     o.delivery_address,
-                    pr.part_description, g.garage_name, g.address as garage_address,
+                    pr.part_description, pr.delivery_lat, pr.delivery_lng,
+                    g.garage_name, g.address as garage_address,
+                    g.location_lat as garage_lat, g.location_lng as garage_lng,
                     u.full_name as customer_name
              FROM orders o
              JOIN part_requests pr ON o.request_id = pr.request_id
@@ -289,13 +291,20 @@ export const assignCollectionDriver = async (req: AuthRequest, res: Response) =>
             throw new Error(`Driver is currently ${driver.status}`);
         }
 
-        // Create collection assignment record (order stays at ready_for_pickup)
+        // Create collection assignment record with GPS coordinates for driver navigation
+        // pickup_lat/lng = garage location (where driver picks up)
+        // delivery_lat/lng = customer location (for later delivery phase)
         const assignResult = await client.query(`
             INSERT INTO delivery_assignments 
-                (order_id, driver_id, pickup_address, delivery_address, status, assignment_type, created_by_user_id)
-            VALUES ($1, $2, $3, $4, 'assigned', 'collection', $5)
-            RETURNING assignment_id, order_id, status, assignment_type
-        `, [order_id, driver_id, order.garage_address, order.delivery_address, req.user?.userId]);
+                (order_id, driver_id, pickup_address, pickup_lat, pickup_lng, 
+                 delivery_address, delivery_lat, delivery_lng,
+                 status, assignment_type, created_by_user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'assigned', 'collection', $9)
+            RETURNING assignment_id, order_id, status, assignment_type, pickup_lat, pickup_lng
+        `, [order_id, driver_id, order.garage_address,
+            order.garage_lat, order.garage_lng,
+            order.delivery_address, order.delivery_lat, order.delivery_lng,
+            req.user?.userId]);
 
         // Update driver status to busy
         await client.query(
@@ -321,7 +330,7 @@ export const assignCollectionDriver = async (req: AuthRequest, res: Response) =>
         // Socket notifications
         const io = (global as any).io;
 
-        // Notify driver about new collection assignment
+        // Notify driver about new collection assignment with GPS for one-click navigation
         if (driver.user_id) {
             io.to(`driver_${driver.user_id}`).emit('new_assignment', {
                 assignment_id: assignResult.rows[0].assignment_id,
@@ -329,10 +338,19 @@ export const assignCollectionDriver = async (req: AuthRequest, res: Response) =>
                 order_id,
                 order_number: order.order_number,
                 part_description: order.part_description,
+                // Pickup location (garage) - for collection phase
                 pickup_address: order.garage_address,
+                pickup_lat: order.garage_lat ? parseFloat(order.garage_lat) : null,
+                pickup_lng: order.garage_lng ? parseFloat(order.garage_lng) : null,
+                // Delivery location (customer) - for delivery phase 
                 delivery_address: order.delivery_address,
+                delivery_lat: order.delivery_lat ? parseFloat(order.delivery_lat) : null,
+                delivery_lng: order.delivery_lng ? parseFloat(order.delivery_lng) : null,
                 customer_name: order.customer_name,
                 garage_name: order.garage_name,
+                // Flag to indicate GPS availability for navigation
+                has_pickup_gps: order.garage_lat !== null && order.garage_lng !== null,
+                has_delivery_gps: order.delivery_lat !== null && order.delivery_lng !== null,
                 notification: `📦 New collection: Order #${order.order_number} - Pick up from ${order.garage_name}`
             });
         }

@@ -20,6 +20,7 @@ import EarningsScreen from './src/screens/tabs/EarningsScreen';
 import ProfileScreen from './src/screens/tabs/ProfileScreen';
 import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ChatScreen from './src/screens/ChatScreen';
+import PartInspectionScreen from './src/screens/PartInspectionScreen';
 
 // Navigation Types
 export type RootStackParamList = {
@@ -28,6 +29,7 @@ export type RootStackParamList = {
     AssignmentDetail: { assignmentId: string };
     Chat: { orderId: string; orderNumber: string; recipientName: string };
     DeliveryConfirmation: { assignmentId: string };
+    PartInspection: { assignmentId: string; orderId?: string; orderNumber?: string; partDescription?: string };
     Settings: undefined;
 };
 
@@ -138,6 +140,7 @@ function RootNavigator() {
                     <RootStack.Screen name="Main" component={MainTabs} />
                     <RootStack.Screen name="AssignmentDetail" component={AssignmentDetailScreen} />
                     <RootStack.Screen name="Chat" component={ChatScreen} />
+                    <RootStack.Screen name="PartInspection" component={PartInspectionScreen} />
                 </>
             )}
         </RootStack.Navigator>
