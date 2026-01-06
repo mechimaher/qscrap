@@ -26,7 +26,7 @@ import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
-import { HomeScreenSkeleton, EmptyState } from '../../components';
+import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating } from '../../components';
 
 export default function HomeScreen() {
     const { driver, refreshDriver } = useAuth();
@@ -235,6 +235,7 @@ export default function HomeScreen() {
                         label="Today"
                         color={Colors.primary}
                         colors={colors}
+                        delay={0}
                     />
                     <StatCard
                         icon="💰"
@@ -242,13 +243,16 @@ export default function HomeScreen() {
                         label="Earnings"
                         color={Colors.success}
                         colors={colors}
+                        delay={100}
                     />
                     <StatCard
                         icon="⭐"
-                        value={formatRating(stats?.rating_average)}
+                        value={parseFloat(formatRating(stats?.rating_average))}
                         label="Rating"
                         color={Colors.warning}
                         colors={colors}
+                        delay={200}
+                        isRating={true}
                     />
                     <StatCard
                         icon="📋"
@@ -256,6 +260,7 @@ export default function HomeScreen() {
                         label="Active"
                         color={Colors.info}
                         colors={colors}
+                        delay={300}
                     />
                 </View>
 
@@ -311,13 +316,47 @@ export default function HomeScreen() {
 }
 
 // Helper components
-function StatCard({ icon, value, label, color, colors }: any) {
+function StatCard({ icon, value, label, color, colors, delay = 0, isRating = false }: any) {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+    };
+
+    // Parse numeric value from strings like "100 QAR"
+    const numericValue = typeof value === 'string'
+        ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0
+        : value;
+    const suffix = typeof value === 'string' && value.includes('QAR') ? ' QAR' : '';
+
     return (
-        <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
-            <Text style={styles.statIcon}>{icon}</Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-        </View>
+        <TouchableOpacity
+            activeOpacity={1}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+        >
+            <Animated.View style={[
+                styles.statCard,
+                { backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }
+            ]}>
+                <Text style={styles.statIcon}>{icon}</Text>
+                {isRating ? (
+                    <AnimatedRating value={numericValue} delay={delay} style={{ color: colors.text }} />
+                ) : (
+                    <AnimatedNumber
+                        value={numericValue}
+                        delay={delay}
+                        suffix={suffix}
+                        style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}
+                    />
+                )}
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+            </Animated.View>
+        </TouchableOpacity>
     );
 }
 
