@@ -21,6 +21,7 @@ import ProfileScreen from './src/screens/tabs/ProfileScreen';
 import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import PartInspectionScreen from './src/screens/PartInspectionScreen';
+import NavigationScreen from './src/screens/NavigationScreen';
 
 // Navigation Types
 export type RootStackParamList = {
@@ -30,6 +31,13 @@ export type RootStackParamList = {
     Chat: { orderId: string; orderNumber: string; recipientName: string };
     DeliveryConfirmation: { assignmentId: string };
     PartInspection: { assignmentId: string; orderId?: string; orderNumber?: string; partDescription?: string };
+    Navigation: {
+        pickupLat?: number; pickupLng?: number;
+        deliveryLat?: number; deliveryLng?: number;
+        destinationType: 'pickup' | 'delivery';
+        destinationName: string;
+        destinationAddress: string;
+    };
     Settings: undefined;
 };
 
@@ -141,6 +149,11 @@ function RootNavigator() {
                     <RootStack.Screen name="AssignmentDetail" component={AssignmentDetailScreen} />
                     <RootStack.Screen name="Chat" component={ChatScreen} />
                     <RootStack.Screen name="PartInspection" component={PartInspectionScreen} />
+                    <RootStack.Screen
+                        name="Navigation"
+                        component={NavigationScreen}
+                        options={{ animation: 'slide_from_bottom' }}
+                    />
                 </>
             )}
         </RootStack.Navigator>

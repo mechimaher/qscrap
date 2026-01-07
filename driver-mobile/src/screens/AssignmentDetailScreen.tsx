@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { api, Assignment } from '../services/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../constants/theme';
+import { LiveMapView, SwipeToComplete } from '../components';
 
 export default function AssignmentDetailScreen() {
     const { colors } = useTheme();
@@ -90,17 +91,25 @@ export default function AssignmentDetailScreen() {
         );
     };
 
-    const openNavigation = (address: string, lat?: number, lng?: number) => {
+    const openNavigation = (address: string, lat?: number, lng?: number, type: 'pickup' | 'delivery' = 'pickup') => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        // Google Maps URL
-        let url = '';
+        // VVIP: Open in-app navigation with OSRM
         if (lat && lng) {
-            url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-        } else {
-            url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+            navigation.navigate('Navigation', {
+                pickupLat: assignment?.pickup_lat,
+                pickupLng: assignment?.pickup_lng,
+                deliveryLat: assignment?.delivery_lat,
+                deliveryLng: assignment?.delivery_lng,
+                destinationType: type,
+                destinationName: type === 'pickup' ? assignment?.garage_name : assignment?.customer_name,
+                destinationAddress: address,
+            });
+            return;
         }
 
+        // Fallback: Open external Google Maps
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
         Linking.openURL(url).catch(() => {
             Alert.alert('Error', 'Could not open maps');
         });
@@ -188,6 +197,13 @@ export default function AssignmentDetailScreen() {
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
             >
+                {/* VVIP: Embedded Live Map with Route */}
+                <LiveMapView
+                    activeAssignment={assignment}
+                    height={220}
+                    showRoute={true}
+                />
+
                 {/* Type Badge */}
                 <View style={[styles.typeCard, { backgroundColor: typeConfig?.color + '15' }]}>
                     <Text style={styles.typeIcon}>{typeConfig?.icon}</Text>
@@ -223,7 +239,7 @@ export default function AssignmentDetailScreen() {
                     <View style={styles.actionRow}>
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: Colors.info + '20' }]}
-                            onPress={() => openNavigation(assignment.pickup_address, assignment.pickup_lat, assignment.pickup_lng)}
+                            onPress={() => openNavigation(assignment.pickup_address, assignment.pickup_lat, assignment.pickup_lng, 'pickup')}
                         >
                             <Text style={[styles.actionButtonText, { color: Colors.info }]}>🧭 Navigate</Text>
                         </TouchableOpacity>
@@ -251,7 +267,7 @@ export default function AssignmentDetailScreen() {
                     <View style={styles.actionRow}>
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: Colors.info + '20' }]}
-                            onPress={() => openNavigation(assignment.delivery_address, assignment.delivery_lat, assignment.delivery_lng)}
+                            onPress={() => openNavigation(assignment.delivery_address, assignment.delivery_lat, assignment.delivery_lng, 'delivery')}
                         >
                             <Text style={[styles.actionButtonText, { color: Colors.info }]}>🧭 Navigate</Text>
                         </TouchableOpacity>
@@ -273,7 +289,7 @@ export default function AssignmentDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* Bottom Action */}
+            {/* VVIP Bottom Action - Swipe Gesture */}
             {isActive && nextAction && (
                 <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
                     <TouchableOpacity
@@ -281,24 +297,30 @@ export default function AssignmentDetailScreen() {
                         onPress={() => updateStatus('failed')}
                         disabled={isUpdating}
                     >
-                        <Text style={styles.failButtonText}>❌ Report Issue</Text>
+                        <Text style={styles.failButtonText}>❌</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.mainActionButton}
-                        onPress={() => updateStatus(nextAction.status)}
-                        disabled={isUpdating}
-                    >
-                        <LinearGradient
-                            colors={[nextAction.color, nextAction.color + 'cc']}
-                            style={styles.mainActionGradient}
-                        >
-                            {isUpdating ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.mainActionText}>{nextAction.label}</Text>
-                            )}
-                        </LinearGradient>
-                    </TouchableOpacity>
+                    <View style={styles.swipeContainer}>
+                        <SwipeToComplete
+                            onComplete={async () => {
+                                setIsUpdating(true);
+                                try {
+                                    await api.updateAssignmentStatus(assignment.assignment_id, nextAction.status);
+                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                    await loadAssignment();
+                                } catch (err: any) {
+                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                                    Alert.alert('Error', err.message || 'Failed to update');
+                                } finally {
+                                    setIsUpdating(false);
+                                }
+                            }}
+                            label={nextAction.label}
+                            type={nextAction.status === 'delivered' ? 'success' : 'primary'}
+                            icon="→"
+                            completeIcon="✓"
+                            disabled={isUpdating}
+                        />
+                    </View>
                 </View>
             )}
         </SafeAreaView>
@@ -373,4 +395,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     mainActionText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    swipeContainer: { flex: 1 },
 });
