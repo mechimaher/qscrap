@@ -448,6 +448,26 @@ body {
     margin-bottom: 12px;
 }
 
+/* Mobile Menu Toggle */
+.menu-toggle {
+    display: none;
+    /* Hidden by default on desktop */
+    font-size: 24px;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 8px;
+}
+
+@media (max-width: 1024px) {
+    .menu-toggle {
+        display: block;
+        /* Visible only on mobile/tablet */
+    }
+}
+
 .stat-icon {
     width: 44px;
     height: 44px;
@@ -2517,6 +2537,7 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
 /* Support Section Master-Detail View */
 @media (max-width: 768px) {
     .support-layout {

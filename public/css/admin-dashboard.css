@@ -408,6 +408,7 @@
 /* Mobile Menu Toggle */
 .menu-toggle {
     display: none;
+    /* Hidden by default on desktop */
     font-size: 24px;
     background: none;
     border: none;
@@ -420,6 +421,7 @@
 @media (max-width: 1024px) {
     .menu-toggle {
         display: block;
+        /* Visible only on mobile/tablet */
     }
 }
 
