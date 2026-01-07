@@ -4232,3 +4232,13 @@ kbd {
     color: var(--text-primary);
     font-size: 14px;
 }
+/* Mobile Menu Toggle - Explicitly hidden on desktop */
+.menu-toggle {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .menu-toggle {
+        display: block;
+    }
+}
