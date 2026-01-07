@@ -611,7 +611,7 @@ body {
 /* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 32px;
 }
@@ -710,6 +710,18 @@ body {
     align-items: center;
     transition: all 0.3s;
     border-left: 4px solid var(--accent);
+}
+
+@media (max-width: 640px) {
+    .request-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .request-card .btn-bid {
+        width: 100%;
+    }
 }
 
 .request-card:hover {
