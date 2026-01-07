@@ -14,6 +14,15 @@
     <link rel="stylesheet" href="css/garage-dashboard.css">
     <!-- Leaflet CSS for GPS Location Picker -->
     <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
+    <script>
+        // Critical UI Interaction - Inlined for robustness
+        window.toggleSidebar = function () {
+            const sidebar = document.querySelector('.sidebar') || document.querySelector('.app-sidebar');
+            const overlay = document.getElementById('appOverlay') || document.querySelector('.app-overlay');
+            if (sidebar) sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('is-visible');
+        };
+    </script>
 </head>
 
 <body>
