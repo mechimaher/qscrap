@@ -7,8 +7,8 @@
         "base": {
             "node": "20.19.4",
             "env": {
-                "EXPO_PUBLIC_API_URL": "https://api.qscrap.qa",
-                "EXPO_PUBLIC_SOCKET_URL": "https://api.qscrap.qa"
+                "EXPO_PUBLIC_API_URL": "https://qscrap.qa/api",
+                "EXPO_PUBLIC_SOCKET_URL": "https://qscrap.qa"
             }
         },
         "development": {
@@ -49,8 +49,8 @@
             "autoIncrement": true,
             "channel": "production",
             "env": {
-                "EXPO_PUBLIC_API_URL": "https://api.qscrap.qa/api",
-                "EXPO_PUBLIC_SOCKET_URL": "https://api.qscrap.qa"
+                "EXPO_PUBLIC_API_URL": "https://qscrap.qa/api",
+                "EXPO_PUBLIC_SOCKET_URL": "https://qscrap.qa"
             },
             "android": {
                 "buildType": "app-bundle",

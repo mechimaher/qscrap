@@ -3,9 +3,11 @@ export const APP_VERSION = '1.0.0';
 
 // API Configuration
 export const API_CONFIG = {
-    // Change this to your production URL for app store releases
-    BASE_URL: __DEV__ ? 'http://192.168.1.59:3000/api' : 'https://api.qscrap.qa',
-    SOCKET_URL: __DEV__ ? 'http://192.168.1.59:3000' : 'https://api.qscrap.qa',
+    // Forcing production URL to match Driver App success
+    BASE_URL: 'https://qscrap.qa/api',
+    SOCKET_URL: 'https://qscrap.qa',
+    // BASE_URL: __DEV__ ? 'http://192.168.1.59:3000/api' : 'https://qscrap.qa/api',
+    // SOCKET_URL: __DEV__ ? 'http://192.168.1.59:3000' : 'https://qscrap.qa',
     TIMEOUT: 15000,
 };
 

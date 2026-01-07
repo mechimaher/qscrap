@@ -86,6 +86,10 @@ v1Router.use('/garage/analytics', analyticsRoutes);
 import showcaseRoutes from './showcase.routes';
 v1Router.use('/showcase', showcaseRoutes);
 
+// Catalog alias for mobile app compatibility
+// Mobile uses /catalog/search which maps to /showcase/parts
+v1Router.use('/catalog', showcaseRoutes);
+
 // ==========================================
 // DRIVER & CHAT ROUTES
 // ==========================================
