@@ -165,21 +165,7 @@ if (token) {
     }
 }
 
-// Mobile Sidebar Toggle
-function toggleSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('appOverlay');
 
-    if (sidebar) {
-        sidebar.classList.toggle('active');
-    }
-
-    if (overlay) {
-        overlay.classList.toggle('is-visible');
-    }
-}
-// Expose to global scope for HTML onclick
-window.toggleSidebar = toggleSidebar;
 
 async function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
