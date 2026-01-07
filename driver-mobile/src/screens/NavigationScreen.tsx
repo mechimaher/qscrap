@@ -79,14 +79,34 @@ export default function NavigationScreen() {
                 return;
             }
 
-            // Get initial location
-            const currentLocation = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.BestForNavigation,
-            });
-            setLocation(currentLocation);
+            // Get initial location with robust error handling
+            let currentLocation: Location.LocationObject | null = null;
+            try {
+                currentLocation = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.BestForNavigation,
+                });
+                setLocation(currentLocation);
+            } catch (err) {
+                console.warn('[Navigation] High accuracy location failed, trying lower accuracy:', err);
+                try {
+                    // Fallback to lower accuracy for faster lock
+                    currentLocation = await Location.getCurrentPositionAsync({
+                        accuracy: Location.Accuracy.Balanced,
+                    });
+                    setLocation(currentLocation);
+                } catch (fallbackErr) {
+                    console.error('[Navigation] All location methods failed:', fallbackErr);
+                    Alert.alert(
+                        'GPS Error',
+                        'Could not get your location. Please ensure GPS is enabled and try again.',
+                        [{ text: 'Go Back', onPress: () => navigation.goBack() }]
+                    );
+                    return;
+                }
+            }
 
             // Fetch route
-            if (destination) {
+            if (destination && currentLocation) {
                 fetchRoute({
                     latitude: currentLocation.coords.latitude,
                     longitude: currentLocation.coords.longitude

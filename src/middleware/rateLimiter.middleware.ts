@@ -7,7 +7,9 @@ export const loginLimiter = rateLimit({
     message: 'Too many login attempts. Please try again in 15 minutes.',
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: false
+    skipSuccessfulRequests: false,
+    // Trust X-Forwarded-For from Cloudflare/Nginx
+    validate: { xForwardedForHeader: false }
 });
 
 // Rate limiter for registration
@@ -16,7 +18,8 @@ export const registerLimiter = rateLimit({
     max: 3, // 3 registrations per hour per IP
     message: 'Too many registration attempts. Please try again later.',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false }
 });
 
 // General API rate limiter (for other endpoints)
@@ -25,7 +28,8 @@ export const apiLimiter = rateLimit({
     max: 100, // 100 requests per minute
     message: 'Too many requests. Please slow down.',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false }
 });
 
 // Driver location update rate limiter
