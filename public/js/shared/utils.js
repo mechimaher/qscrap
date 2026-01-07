@@ -284,3 +284,23 @@ window.apiRequest = apiRequest;
 window.debounce = debounce;
 window.throttle = throttle;
 window.setButtonLoading = setButtonLoading;
+
+// ===== UI UTILITIES =====
+
+/**
+ * Toggle Mobile Sidebar
+ * Global function for mobile menu interaction
+ */
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar') || document.querySelector('.app-sidebar');
+    const overlay = document.getElementById('appOverlay') || document.querySelector('.app-overlay');
+
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+
+    if (overlay) {
+        overlay.classList.toggle('is-visible');
+    }
+}
+window.toggleSidebar = toggleSidebar;
