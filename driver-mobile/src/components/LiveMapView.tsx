@@ -1,25 +1,33 @@
 // QScrap Driver App - Live Map View Component
 // Premium real-time map with driver location, assignment route, and animated markers
 // VVIP cutting-edge feature inspired by Uber/Talabat
+// FIXED: Removed duplicate location tracking - now uses parent's location prop
+// MERGED: Includes OSRM routing from remote and Smart Location handling from local
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions, ActivityIndicator, Text } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
+import MapView, { Marker, Polyline, Region } from 'react-native-maps';
+import * as Location from 'expo-location'; // Type imports
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { Assignment } from '../services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+interface DriverLocation {
+    latitude: number;
+    longitude: number;
+}
+
 interface LiveMapViewProps {
+    driverLocation?: DriverLocation | null;
     activeAssignment?: Assignment | null;
     height?: number;
     showRoute?: boolean;
 }
 
 // Qatar default center
-const QATAR_CENTER = {
+const QATAR_CENTER: Region = {
     latitude: 25.2854,
     longitude: 51.5310,
     latitudeDelta: 0.1,
@@ -27,64 +35,23 @@ const QATAR_CENTER = {
 };
 
 export default function LiveMapView({
+    driverLocation,
     activeAssignment,
     height = 200,
     showRoute = true
 }: LiveMapViewProps) {
     const { colors, isDarkMode } = useTheme();
     const mapRef = useRef<MapView>(null);
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // OSRM Route State
     const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
     const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
     const [isLoadingRoute, setIsLoadingRoute] = useState(false);
 
-    // Get current location
-    useEffect(() => {
-        let locationSubscription: Location.LocationSubscription | null = null;
-
-        (async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                setErrorMsg('Location permission required');
-                setLoading(false);
-                return;
-            }
-
-            // Get initial location
-            const currentLocation = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
-            });
-            setLocation(currentLocation);
-            setLoading(false);
-
-            // Subscribe to location updates
-            locationSubscription = await Location.watchPositionAsync(
-                {
-                    accuracy: Location.Accuracy.High,
-                    timeInterval: 5000, // Update every 5 seconds
-                    distanceInterval: 10, // Or every 10 meters
-                },
-                (newLocation) => {
-                    setLocation(newLocation);
-                }
-            );
-        })();
-
-        return () => {
-            if (locationSubscription) {
-                locationSubscription.remove();
-            }
-        };
-    }, []);
-
     // Fetch OSRM route when location or assignment changes
     useEffect(() => {
         const fetchRoute = async () => {
-            if (!location || !activeAssignment) {
+            if (!driverLocation || !activeAssignment) {
                 setRouteCoordinates([]);
                 setRouteInfo(null);
                 return;
@@ -105,11 +72,11 @@ export default function LiveMapView({
             }
 
             if (!destLat || !destLng) {
-                // Fallback to straight line
+                // Fallback to straight line if points missing
                 const fallbackCoords = [];
                 fallbackCoords.push({
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
+                    latitude: driverLocation.latitude,
+                    longitude: driverLocation.longitude,
                 });
                 if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
                     fallbackCoords.push({
@@ -129,9 +96,10 @@ export default function LiveMapView({
 
             setIsLoadingRoute(true);
             try {
+                // Dynamic import to avoid cycles if any
                 const { getRoute, formatDistance, formatDuration } = await import('../services/routing.service');
                 const result = await getRoute(
-                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
                     { latitude: destLat, longitude: destLng }
                 );
 
@@ -144,7 +112,7 @@ export default function LiveMapView({
                 } else {
                     // Fallback to straight line on API failure
                     setRouteCoordinates([
-                        { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                        { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
                         { latitude: destLat, longitude: destLng },
                     ]);
                     setRouteInfo(null);
@@ -153,7 +121,7 @@ export default function LiveMapView({
                 console.error('[LiveMapView] OSRM error:', err);
                 // Fallback to straight line
                 setRouteCoordinates([
-                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
                     { latitude: destLat, longitude: destLng },
                 ]);
             } finally {
@@ -162,42 +130,59 @@ export default function LiveMapView({
         };
 
         fetchRoute();
-    }, [location?.coords.latitude, location?.coords.longitude, activeAssignment?.status, activeAssignment?.assignment_id]);
+    }, [driverLocation?.latitude, driverLocation?.longitude, activeAssignment?.status, activeAssignment?.assignment_id]);
 
-    // Fit map to show all points when assignment changes
+    // Camera Logic: Follow driver or fit route
     useEffect(() => {
-        if (mapRef.current && routeCoordinates.length > 1) {
+        if (!mapRef.current || !driverLocation) return;
+
+        // 1. If we have a calculated route, fit to it
+        if (routeCoordinates.length > 1) {
             mapRef.current.fitToCoordinates(routeCoordinates, {
                 edgePadding: { top: 60, right: 40, bottom: 60, left: 40 },
                 animated: true,
             });
-        } else if (mapRef.current && location && activeAssignment) {
-            const points = [
-                { latitude: location.coords.latitude, longitude: location.coords.longitude },
-            ];
+            return;
+        }
 
+        const points: { latitude: number; longitude: number }[] = [
+            { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
+        ];
+
+        // 2. If no route but assignment exists, include endpoints in view
+        if (activeAssignment) {
             if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
                 points.push({
                     latitude: activeAssignment.pickup_lat,
                     longitude: activeAssignment.pickup_lng,
                 });
             }
-
             if (activeAssignment.delivery_lat && activeAssignment.delivery_lng) {
                 points.push({
                     latitude: activeAssignment.delivery_lat,
                     longitude: activeAssignment.delivery_lng,
                 });
             }
-
-            if (points.length > 1) {
-                mapRef.current.fitToCoordinates(points, {
-                    edgePadding: { top: 60, right: 40, bottom: 60, left: 40 },
-                    animated: true,
-                });
-            }
         }
-    }, [routeCoordinates, location, activeAssignment]);
+
+        // 3. Apply Camera Update
+        if (points.length === 1) {
+            // Only driver: Center tightly (Smart Strategy: Follow Mode)
+            mapRef.current.animateToRegion({
+                latitude: driverLocation.latitude,
+                longitude: driverLocation.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            }, 1000);
+        } else {
+            // Driver + Destination: Fit bounds
+            mapRef.current.fitToCoordinates(points, {
+                edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
+                animated: true,
+            });
+        }
+
+    }, [driverLocation, routeCoordinates, activeAssignment]);
 
     // Dark mode map style
     const darkMapStyle = [
@@ -209,35 +194,24 @@ export default function LiveMapView({
         { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e0e0e' }] },
     ];
 
-    if (loading) {
+    // Show loading only if no location yet
+    if (!driverLocation) {
         return (
             <View style={[styles.container, { height, backgroundColor: colors.surface }]}>
                 <ActivityIndicator size="large" color={Colors.primary} />
                 <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-                    Getting your location...
+                    Waiting for location...
                 </Text>
             </View>
         );
     }
 
-    if (errorMsg) {
-        return (
-            <View style={[styles.container, { height, backgroundColor: colors.surface }]}>
-                <Text style={[styles.errorText, { color: Colors.danger }]}>
-                    📍 {errorMsg}
-                </Text>
-            </View>
-        );
-    }
-
-    const initialRegion: Region = location
-        ? {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
-        }
-        : QATAR_CENTER;
+    const initialRegion: Region = {
+        latitude: driverLocation.latitude,
+        longitude: driverLocation.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+    };
 
     return (
         <View style={[styles.container, { height }]}>
@@ -252,22 +226,20 @@ export default function LiveMapView({
                 pitchEnabled={false}
             >
                 {/* Driver Location Marker - VVIP animated */}
-                {location && (
-                    <Marker
-                        coordinate={{
-                            latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
-                        }}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                    >
-                        <View style={styles.driverMarker}>
-                            <View style={styles.driverMarkerPulse} />
-                            <View style={styles.driverMarkerInner}>
-                                <Text style={styles.driverMarkerIcon}>🚗</Text>
-                            </View>
+                <Marker
+                    coordinate={{
+                        latitude: driverLocation.latitude,
+                        longitude: driverLocation.longitude,
+                    }}
+                    anchor={{ x: 0.5, y: 0.5 }}
+                >
+                    <View style={styles.driverMarker}>
+                        <View style={styles.driverMarkerPulse} />
+                        <View style={styles.driverMarkerInner}>
+                            <Text style={styles.driverMarkerIcon}>🚗</Text>
                         </View>
-                    </Marker>
-                )}
+                    </View>
+                </Marker>
 
                 {/* Pickup Location Marker */}
                 {activeAssignment?.pickup_lat && activeAssignment?.pickup_lng && (
