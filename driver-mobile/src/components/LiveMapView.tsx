@@ -37,6 +37,11 @@ export default function LiveMapView({
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+    // OSRM Route State
+    const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
+    const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
+    const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+
     // Get current location
     useEffect(() => {
         let locationSubscription: Location.LocationSubscription | null = null;
@@ -76,14 +81,101 @@ export default function LiveMapView({
         };
     }, []);
 
+    // Fetch OSRM route when location or assignment changes
+    useEffect(() => {
+        const fetchRoute = async () => {
+            if (!location || !activeAssignment) {
+                setRouteCoordinates([]);
+                setRouteInfo(null);
+                return;
+            }
+
+            // Determine destination based on assignment status
+            let destLat: number | undefined;
+            let destLng: number | undefined;
+
+            if (activeAssignment.status === 'assigned' || activeAssignment.status === 'picked_up') {
+                // Navigate to pickup (garage)
+                destLat = activeAssignment.pickup_lat;
+                destLng = activeAssignment.pickup_lng;
+            } else if (activeAssignment.status === 'in_transit') {
+                // Navigate to delivery (customer)
+                destLat = activeAssignment.delivery_lat;
+                destLng = activeAssignment.delivery_lng;
+            }
+
+            if (!destLat || !destLng) {
+                // Fallback to straight line
+                const fallbackCoords = [];
+                fallbackCoords.push({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                });
+                if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
+                    fallbackCoords.push({
+                        latitude: activeAssignment.pickup_lat,
+                        longitude: activeAssignment.pickup_lng,
+                    });
+                }
+                if (activeAssignment.delivery_lat && activeAssignment.delivery_lng) {
+                    fallbackCoords.push({
+                        latitude: activeAssignment.delivery_lat,
+                        longitude: activeAssignment.delivery_lng,
+                    });
+                }
+                setRouteCoordinates(fallbackCoords);
+                return;
+            }
+
+            setIsLoadingRoute(true);
+            try {
+                const { getRoute, formatDistance, formatDuration } = await import('../services/routing.service');
+                const result = await getRoute(
+                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    { latitude: destLat, longitude: destLng }
+                );
+
+                if (result.success && result.route) {
+                    setRouteCoordinates(result.route.coordinates);
+                    setRouteInfo({
+                        distance: formatDistance(result.route.distance),
+                        duration: formatDuration(result.route.duration),
+                    });
+                } else {
+                    // Fallback to straight line on API failure
+                    setRouteCoordinates([
+                        { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                        { latitude: destLat, longitude: destLng },
+                    ]);
+                    setRouteInfo(null);
+                }
+            } catch (err) {
+                console.error('[LiveMapView] OSRM error:', err);
+                // Fallback to straight line
+                setRouteCoordinates([
+                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    { latitude: destLat, longitude: destLng },
+                ]);
+            } finally {
+                setIsLoadingRoute(false);
+            }
+        };
+
+        fetchRoute();
+    }, [location?.coords.latitude, location?.coords.longitude, activeAssignment?.status, activeAssignment?.assignment_id]);
+
     // Fit map to show all points when assignment changes
     useEffect(() => {
-        if (mapRef.current && location && activeAssignment) {
+        if (mapRef.current && routeCoordinates.length > 1) {
+            mapRef.current.fitToCoordinates(routeCoordinates, {
+                edgePadding: { top: 60, right: 40, bottom: 60, left: 40 },
+                animated: true,
+            });
+        } else if (mapRef.current && location && activeAssignment) {
             const points = [
                 { latitude: location.coords.latitude, longitude: location.coords.longitude },
             ];
 
-            // Add pickup location
             if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
                 points.push({
                     latitude: activeAssignment.pickup_lat,
@@ -91,7 +183,6 @@ export default function LiveMapView({
                 });
             }
 
-            // Add delivery location
             if (activeAssignment.delivery_lat && activeAssignment.delivery_lng) {
                 points.push({
                     latitude: activeAssignment.delivery_lat,
@@ -101,12 +192,12 @@ export default function LiveMapView({
 
             if (points.length > 1) {
                 mapRef.current.fitToCoordinates(points, {
-                    edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                    edgePadding: { top: 60, right: 40, bottom: 60, left: 40 },
                     animated: true,
                 });
             }
         }
-    }, [location, activeAssignment]);
+    }, [routeCoordinates, location, activeAssignment]);
 
     // Dark mode map style
     const darkMapStyle = [
@@ -148,34 +239,13 @@ export default function LiveMapView({
         }
         : QATAR_CENTER;
 
-    // Build route polyline
-    const routeCoordinates: { latitude: number; longitude: number }[] = [];
-    if (location && activeAssignment) {
-        routeCoordinates.push({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-        });
-        if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
-            routeCoordinates.push({
-                latitude: activeAssignment.pickup_lat,
-                longitude: activeAssignment.pickup_lng,
-            });
-        }
-        if (activeAssignment.delivery_lat && activeAssignment.delivery_lng) {
-            routeCoordinates.push({
-                latitude: activeAssignment.delivery_lat,
-                longitude: activeAssignment.delivery_lng,
-            });
-        }
-    }
-
     return (
         <View style={[styles.container, { height }]}>
             <MapView
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={initialRegion}
-                showsUserLocation={false} // We'll use custom marker
+                showsUserLocation={false}
                 showsMyLocationButton={false}
                 customMapStyle={isDarkMode ? darkMapStyle : []}
                 rotateEnabled={false}
@@ -231,24 +301,35 @@ export default function LiveMapView({
                     </Marker>
                 )}
 
-                {/* Route Polyline */}
+                {/* OSRM Route Polyline - Real roads */}
                 {showRoute && routeCoordinates.length > 1 && (
                     <Polyline
                         coordinates={routeCoordinates}
                         strokeColor={Colors.primary}
-                        strokeWidth={4}
-                        lineDashPattern={[10, 5]}
+                        strokeWidth={5}
+                        lineCap="round"
+                        lineJoin="round"
                     />
                 )}
             </MapView>
 
-            {/* Map Overlay - Status Badge */}
+            {/* Route Info Overlay */}
             {activeAssignment && (
                 <View style={styles.statusOverlay}>
                     <View style={[styles.statusBadge, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.statusText, { color: Colors.primary }]}>
-                            📍 Live Tracking
-                        </Text>
+                        {isLoadingRoute ? (
+                            <ActivityIndicator size="small" color={Colors.primary} />
+                        ) : routeInfo ? (
+                            <>
+                                <Text style={[styles.routeInfoText, { color: Colors.primary }]}>
+                                    {routeInfo.distance} • {routeInfo.duration}
+                                </Text>
+                            </>
+                        ) : (
+                            <Text style={[styles.statusText, { color: Colors.primary }]}>
+                                📍 Live Tracking
+                            </Text>
+                        )}
                     </View>
                 </View>
             )}
@@ -342,5 +423,9 @@ const styles = StyleSheet.create({
     statusText: {
         fontSize: 12,
         fontWeight: '600',
+    },
+    routeInfoText: {
+        fontSize: 13,
+        fontWeight: '700',
     },
 });
