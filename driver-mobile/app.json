@@ -39,7 +39,12 @@
                 "ACCESS_BACKGROUND_LOCATION",
                 "FOREGROUND_SERVICE",
                 "FOREGROUND_SERVICE_LOCATION"
-            ]
+            ],
+            "config": {
+                "googleMaps": {
+                    "apiKey": "AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs"
+                }
+            }
         },
         "plugins": [
             "expo-secure-store",
@@ -56,6 +61,13 @@
                 {
                     "icon": "./assets/notification-icon.png",
                     "color": "#C9A227"
+                }
+            ],
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "QScrap Driver needs access to your camera to capture part condition photos.",
+                    "microphonePermission": "QScrap Driver needs access to microphone for video recording."
                 }
             ],
             [

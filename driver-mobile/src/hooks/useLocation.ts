@@ -1,31 +1,18 @@
 // QScrap Driver App - Location Tracking Hook
-// Efficient, accurate GPS tracking with background support
+// SMART STRATEGY VERSION - Tiered accuracy for instant lock
+// Tier 1: Cached (Instant)
+// Tier 2: Low Accuracy (Cell/WiFi) - Fast lock (~1-2s) to unblock UI
+// Tier 3: Balanced/High Accuracy - Precision updates in background
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 import { api } from '../services/api';
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Platform } from 'react-native';
 
-const LOCATION_TASK_NAME = 'qscrap-driver-location';
-
-// Location tracking configuration
 const LOCATION_CONFIG = {
-    // High accuracy for delivery tracking
-    accuracy: Location.Accuracy.High,
-
-    // Update every 5 seconds when actively tracking
+    accuracy: Location.Accuracy.Balanced,
     timeInterval: 5000,
-
-    // Update if moved 10 meters
     distanceInterval: 10,
-
-    // Foreground settings for active deliveries
-    foreground: {
-        title: 'QScrap Driver',
-        subtitle: 'Tracking your location for deliveries',
-        icon: '🚚',
-    },
 };
 
 interface LocationState {
@@ -45,43 +32,7 @@ interface UseLocationResult {
     startTracking: () => Promise<boolean>;
     stopTracking: () => Promise<void>;
     requestPermission: () => Promise<boolean>;
-    getCurrentLocation: () => Promise<LocationState | null>;
 }
-
-// Register background task
-TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
-    if (error) {
-        console.error('[Location Task] Error:', error);
-        return;
-    }
-
-    if (data) {
-        const { locations } = data as { locations: Location.LocationObject[] };
-        const location = locations[0];
-
-        if (location) {
-            try {
-                await api.updateLocation(
-                    location.coords.latitude,
-                    location.coords.longitude,
-                    {
-                        accuracy: location.coords.accuracy ?? undefined,
-                        heading: location.coords.heading ?? undefined,
-                        speed: location.coords.speed ?? undefined,
-                    }
-                );
-                console.log('[Location Task] Updated:', location.coords.latitude, location.coords.longitude);
-            } catch (err: any) {
-                // Suppress benign errors
-                if (
-                    err?.message?.includes('rate limited') ||
-                    err?.message?.includes('No token')
-                ) return;
-                console.error('[Location Task] API error:', err);
-            }
-        }
-    }
-});
 
 export function useLocation(): UseLocationResult {
     const [location, setLocation] = useState<LocationState | null>(null);
@@ -90,38 +41,24 @@ export function useLocation(): UseLocationResult {
     const [error, setError] = useState<string | null>(null);
 
     const watcherRef = useRef<Location.LocationSubscription | null>(null);
-    const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+    const isMountedRef = useRef(true);
 
-    // Check permissions on mount
     useEffect(() => {
+        isMountedRef.current = true;
         checkPermissions();
-
-        // Handle app state changes for background/foreground transitions
-        const subscription = AppState.addEventListener('change', handleAppStateChange);
-
         return () => {
-            subscription.remove();
-            stopWatcher();
+            isMountedRef.current = false;
+            if (watcherRef.current) {
+                watcherRef.current.remove();
+                watcherRef.current = null;
+            }
         };
     }, []);
 
-    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-        if (appStateRef.current === 'background' && nextAppState === 'active') {
-            // App came to foreground - restart watcher if was tracking
-            if (isTracking) {
-                await startWatcher();
-            }
-        }
-        appStateRef.current = nextAppState;
-    };
-
     const checkPermissions = async () => {
         try {
-            const { status: foreground } = await Location.getForegroundPermissionsAsync();
-            const { status: background } = await Location.getBackgroundPermissionsAsync();
-
-            setHasPermission(foreground === 'granted');
-            console.log('[Location] Permissions:', { foreground, background });
+            const { status } = await Location.getForegroundPermissionsAsync();
+            if (isMountedRef.current) setHasPermission(status === 'granted');
         } catch (err) {
             console.error('[Location] Permission check error:', err);
         }
@@ -130,169 +67,131 @@ export function useLocation(): UseLocationResult {
     const requestPermission = async (): Promise<boolean> => {
         try {
             setError(null);
-
-            // Request foreground first
-            const { status: foreground } = await Location.requestForegroundPermissionsAsync();
-            if (foreground !== 'granted') {
-                setError('Location permission denied. Please enable in settings.');
-                setHasPermission(false);
-                return false;
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            const granted = status === 'granted';
+            if (isMountedRef.current) {
+                setHasPermission(granted);
+                if (!granted) setError('Location permission denied');
             }
-
-            // Then request background for continuous tracking during deliveries
-            if (Platform.OS === 'android') {
-                const { status: background } = await Location.requestBackgroundPermissionsAsync();
-                console.log('[Location] Background permission:', background);
-            }
-
-            setHasPermission(true);
-            return true;
+            return granted;
         } catch (err: any) {
-            setError(err.message || 'Failed to request location permission');
+            if (isMountedRef.current) setError(err.message || 'Failed to request permission');
             return false;
         }
     };
 
-    const getCurrentLocation = async (): Promise<LocationState | null> => {
-        try {
-            if (!hasPermission) {
-                const granted = await requestPermission();
-                if (!granted) return null;
+    const updateLocationState = (loc: Location.LocationObject, source: string) => {
+        if (!isMountedRef.current) return;
+
+        const state: LocationState = {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            accuracy: loc.coords.accuracy,
+            heading: loc.coords.heading,
+            speed: loc.coords.speed,
+            timestamp: loc.timestamp,
+        };
+        setLocation(state);
+        console.log(`[Location] Updated via ${source}:`, state.latitude, state.longitude);
+
+        // Fire and forget update
+        api.updateLocation(
+            state.latitude,
+            state.longitude,
+            {
+                accuracy: state.accuracy ?? undefined,
+                heading: state.heading ?? undefined,
+                speed: state.speed ?? undefined
             }
-
-            const loc = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
-            });
-
-            const state: LocationState = {
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                accuracy: loc.coords.accuracy,
-                heading: loc.coords.heading,
-                speed: loc.coords.speed,
-                timestamp: loc.timestamp,
-            };
-
-            setLocation(state);
-            return state;
-        } catch (err: any) {
-            setError(err.message || 'Failed to get location');
-            return null;
-        }
+        ).catch(() => { });
     };
 
-    const startWatcher = async () => {
+    const startTracking = async (): Promise<boolean> => {
+        console.log('[Location] startTracking: Smart Strategy Initiated');
         try {
-            // Stop existing watcher
-            await stopWatcher();
+            setError(null);
 
+            // 1. Permission Check
+            const { status } = await Location.getForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+                if (newStatus !== 'granted') {
+                    if (isMountedRef.current) setError('Permission denied');
+                    return false;
+                }
+            }
+            if (isMountedRef.current) setHasPermission(true);
+
+            // 2. Enable Services (Android)
+            const servicesEnabled = await Location.hasServicesEnabledAsync();
+            if (!servicesEnabled && Platform.OS === 'android') {
+                try {
+                    await Location.enableNetworkProviderAsync();
+                } catch (e) { console.warn('[Location] Failed to enable services programmatically'); }
+            }
+
+            // 3. Stop existing
+            if (watcherRef.current) {
+                watcherRef.current.remove();
+                watcherRef.current = null;
+            }
+
+            // --- SMART STRATEGY ---
+
+            // TIER 1: CACHED (Instant)
+            try {
+                const cached = await Location.getLastKnownPositionAsync();
+                if (cached) updateLocationState(cached, 'Cache');
+            } catch (e) { /* ignore */ }
+
+            // TIER 2: LOW ACCURACY (Fast Lock/Cell Towers)
+            // This is the "Magic Fix" - gets approximate location ~1-2s to unblock UI
+            if (!location) {
+                console.log('[Location] Tier 2: Attempting Low Accuracy lock...');
+                try {
+                    const lowAccLoc = await Location.getCurrentPositionAsync({
+                        accuracy: Location.Accuracy.Lowest, // Maps to coarse/cell/wifi
+                        timeout: 5000 // 5s hard timeout
+                    });
+                    if (lowAccLoc) updateLocationState(lowAccLoc, 'Tier2-LowAcc');
+                } catch (e) {
+                    console.log('[Location] Tier 2 failed or timed out, proceeding to Tier 3');
+                }
+            }
+
+            // TIER 3: WATCHER (High Precision)
+            // Start this regardless to refine position over time
+            console.log('[Location] Tier 3: Starting Precision Watcher...');
             watcherRef.current = await Location.watchPositionAsync(
                 {
                     accuracy: LOCATION_CONFIG.accuracy,
                     timeInterval: LOCATION_CONFIG.timeInterval,
                     distanceInterval: LOCATION_CONFIG.distanceInterval,
                 },
-                async (loc) => {
-                    const state: LocationState = {
-                        latitude: loc.coords.latitude,
-                        longitude: loc.coords.longitude,
-                        accuracy: loc.coords.accuracy,
-                        heading: loc.coords.heading,
-                        speed: loc.coords.speed,
-                        timestamp: loc.timestamp,
-                    };
-
-                    setLocation(state);
-
-                    // Send to backend
-                    try {
-                        await api.updateLocation(
-                            state.latitude,
-                            state.longitude,
-                            {
-                                accuracy: state.accuracy ?? undefined,
-                                heading: state.heading ?? undefined,
-                                speed: state.speed ?? undefined,
-                            }
-                        );
-                    } catch (err: any) {
-                        // Suppress rate limit errors
-                        if (err?.message?.includes('rate limited')) return;
-                        console.error('[Location] API update error:', err);
-                    }
-                }
+                (loc) => updateLocationState(loc, 'Watcher')
             );
 
-            console.log('[Location] Watcher started');
-        } catch (err: any) {
-            console.error('[Location] Watcher start error:', err);
-            setError(err.message);
-        }
-    };
-
-    const stopWatcher = async () => {
-        if (watcherRef.current) {
-            watcherRef.current.remove();
-            watcherRef.current = null;
-        }
-    };
-
-    const startTracking = async (): Promise<boolean> => {
-        try {
-            setError(null);
-
-            // Ensure permissions
-            if (!hasPermission) {
-                const granted = await requestPermission();
-                if (!granted) return false;
-            }
-
-            // Start foreground watcher
-            await startWatcher();
-
-            // Start background tracking for Android
-            if (Platform.OS === 'android') {
-                const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
-                if (!isRegistered) {
-                    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-                        accuracy: LOCATION_CONFIG.accuracy,
-                        timeInterval: LOCATION_CONFIG.timeInterval,
-                        distanceInterval: LOCATION_CONFIG.distanceInterval,
-                        foregroundService: {
-                            notificationTitle: LOCATION_CONFIG.foreground.title,
-                            notificationBody: LOCATION_CONFIG.foreground.subtitle,
-                        },
-                        pausesUpdatesAutomatically: false,
-                        showsBackgroundLocationIndicator: true,
-                    });
-                    console.log('[Location] Background tracking started');
-                }
-            }
-
-            setIsTracking(true);
+            if (isMountedRef.current) setIsTracking(true);
             return true;
+
         } catch (err: any) {
-            setError(err.message || 'Failed to start tracking');
+            console.error('[Location] startTracking failed:', err);
+            if (isMountedRef.current) {
+                setError(err.message || 'Failed to start tracking');
+                setIsTracking(false);
+            }
             return false;
         }
     };
 
     const stopTracking = async (): Promise<void> => {
         try {
-            // Stop foreground watcher
-            await stopWatcher();
-
-            // Stop background tracking
-            const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
-            if (isRegistered) {
-                await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-                console.log('[Location] Background tracking stopped');
+            if (watcherRef.current) {
+                watcherRef.current.remove();
+                watcherRef.current = null;
             }
-
-            setIsTracking(false);
-        } catch (err: any) {
-            console.error('[Location] Stop tracking error:', err);
-        }
+            if (isMountedRef.current) setIsTracking(false);
+        } catch (err) { console.error(err); }
     };
 
     return {
@@ -302,7 +201,6 @@ export function useLocation(): UseLocationResult {
         error,
         startTracking,
         stopTracking,
-        requestPermission,
-        getCurrentLocation,
+        requestPermission
     };
 }

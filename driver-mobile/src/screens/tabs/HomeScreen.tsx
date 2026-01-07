@@ -284,14 +284,23 @@ export default function HomeScreen() {
                 }
                 showsVerticalScrollIndicator={false}
             >
-                {/* VVIP: Live Map Dashboard */}
-                {isAvailable && (
+                {/* VVIP: Live Map Dashboard - Only render when location is available */}
+                {isAvailable && location && (
                     <View style={styles.mapContainer}>
                         <LiveMapView
+                            driverLocation={location}
                             activeAssignment={activeAssignments[0] || null}
                             height={180}
                             showRoute={true}
                         />
+                    </View>
+                )}
+
+                {/* Location loading placeholder - shows when available but no location yet */}
+                {isAvailable && !location && (
+                    <View style={[styles.mapContainer, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', height: 180, borderRadius: 16 }]}>
+                        <Text style={{ fontSize: 32 }}>📍</Text>
+                        <Text style={{ color: colors.textMuted, marginTop: 8 }}>Acquiring GPS...</Text>
                     </View>
                 )}
 
@@ -332,21 +341,7 @@ export default function HomeScreen() {
                     />
                 </View>
 
-                {/* Location Status */}
-                {isTracking && location && (
-                    <View style={[styles.locationCard, { backgroundColor: colors.surface }]}>
-                        <Text style={styles.locationIcon}>📍</Text>
-                        <View style={styles.locationInfo}>
-                            <Text style={[styles.locationLabel, { color: colors.textSecondary }]}>
-                                Location Active
-                            </Text>
-                            <Text style={[styles.locationCoords, { color: colors.textMuted }]}>
-                                {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
-                            </Text>
-                        </View>
-                        <View style={[styles.locationDot]} />
-                    </View>
-                )}
+
 
                 {/* Active Assignments */}
                 <View style={styles.section}>
