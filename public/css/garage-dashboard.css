@@ -4232,13 +4232,19 @@ kbd {
     color: var(--text-primary);
     font-size: 14px;
 }
+
 /* Mobile Menu Toggle - Explicitly hidden on desktop */
-.menu-toggle {
-    display: none;
+/* Mobile Menu Toggle - Explicitly hidden on desktop */
+/* Using !important to override any potential conflicts */
+.page-header .menu-toggle,
+button.menu-toggle {
+    display: none !important;
 }
 
 @media (max-width: 1024px) {
-    .menu-toggle {
-        display: block;
+
+    .page-header .menu-toggle,
+    button.menu-toggle {
+        display: block !important;
     }
 }
