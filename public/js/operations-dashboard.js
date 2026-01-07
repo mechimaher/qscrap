@@ -399,6 +399,34 @@ function setupSocketListeners() {
     if (typeof initSupportSocketListeners === 'function') {
         initSupportSocketListeners();
     }
+    // Initialize support socket listeners
+    if (typeof initSupportSocketListeners === 'function') {
+        initSupportSocketListeners();
+    }
+
+    // Mobile Support View Back Button
+    const chatPanel = document.querySelector('.ticket-chat-panel');
+    if (chatPanel) {
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn btn-ghost btn-sm hide-desktop';
+        backBtn.innerHTML = '<i class="bi bi-arrow-left"></i> Back';
+        backBtn.style.marginBottom = '10px';
+        backBtn.onclick = () => {
+            document.querySelector('.support-layout').classList.remove('show-chat');
+        };
+
+        // Insert before chat header
+        const chatHeader = chatPanel.querySelector('.chat-header');
+        if (chatHeader) {
+            chatPanel.insertBefore(backBtn, chatHeader);
+        }
+    }
+}
+
+function showMobileChat() {
+    if (window.innerWidth <= 768) {
+        document.querySelector('.support-layout').classList.add('show-chat');
+    }
 }
 
 function switchSection(section) {

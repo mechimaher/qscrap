@@ -305,6 +305,18 @@
     width: 100%;
 }
 
+/* Premium Transitions */
+:root {
+    --transition-normal: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile Utilities */
+@media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+}
+
 /* Mobile App Shell */
 @media (max-width: 1024px) {
     .app-sidebar {

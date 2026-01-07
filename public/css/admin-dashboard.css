@@ -453,8 +453,13 @@
     padding: 8px 14px;
     background: var(--bg-secondary);
     border-radius: 10px;
-    font-size: 13px;
     color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .header-datetime {
+        display: none;
+    }
 }
 
 .header-datetime i {
@@ -545,8 +550,15 @@
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     display: none;
-    z-index: 200;
     overflow: hidden;
+}
+
+@media (max-width: 480px) {
+    .notifications-dropdown {
+        width: 90vw;
+        right: -60px;
+        /* Adjust for padding */
+    }
 }
 
 .notifications-dropdown.active {
@@ -3143,6 +3155,7 @@
         right: 12px;
     }
 }
+
 /* Responsive Table Wrapper */
 .data-table-wrapper {
     overflow-x: auto;
