@@ -11,7 +11,7 @@
     <script src="/js/chart.min.js"></script>
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
-    <link rel="stylesheet" href="css/garage-dashboard.css">
+    <link rel="stylesheet" href="css/garage-dashboard.css?v=3">
     <!-- Leaflet CSS for GPS Location Picker -->
     <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
     <script>
@@ -293,7 +293,7 @@
             <section class="section active" id="sectionDashboard">
                 <div class="page-header">
                     <div style="display: flex; align-items: center;">
-                        <button class="menu-toggle" onclick="toggleSidebar()">
+                        <button class="menu-toggle" id="mobileMenuBtn" onclick="toggleSidebar()" style="display: none;">
                             <i class="bi bi-list"></i>
                         </button>
                         <div>
