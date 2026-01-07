@@ -9,6 +9,15 @@
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/admin-dashboard.css">
     <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.css">
+    <script>
+        // Critical UI Interaction - Inlined for robustness
+        window.toggleSidebar = function () {
+            const sidebar = document.querySelector('.sidebar') || document.querySelector('.app-sidebar');
+            const overlay = document.getElementById('appOverlay') || document.querySelector('.app-overlay');
+            if (sidebar) sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('is-visible');
+        };
+    </script>
 </head>
 
 <body>
