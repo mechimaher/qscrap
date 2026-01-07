@@ -423,6 +423,10 @@ export default function OrderDetailScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         try {
             const token = await api.getToken();
+            if (!token) {
+                Alert.alert('Session Expired', 'Please log in again to download the invoice.');
+                return;
+            }
             const generateResponse = await fetch(`${SOCKET_URL}/api/documents/invoice/${order.order_id}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

@@ -15,6 +15,7 @@ export interface ThemeColors {
     primary: string;
     primaryDark: string;
     primaryLight: string;
+    secondary: string;
     success: string;
     warning: string;
     error: string;
@@ -37,6 +38,7 @@ const qatarPremiumColors: ThemeColors = {
     primary: '#8D1B3D',
     primaryDark: '#6B1530',
     primaryLight: '#A82050',
+    secondary: '#C9A227',
     success: '#059669',
     warning: '#d97706',
     error: '#dc2626',

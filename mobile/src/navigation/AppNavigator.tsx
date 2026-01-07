@@ -8,17 +8,20 @@ import { useAuth, useTheme } from '../contexts';
 import { Colors } from '../constants';
 import * as storage from '../utils/storage';
 
-// Screens
-import LoginScreen from '../screens/LoginScreen';
+// Screens - Auth
+import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import HomeScreen from '../screens/HomeScreen';
-import RequestsScreen from '../screens/RequestsScreen';
-import OrdersScreen from '../screens/OrdersScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+
+// Screens - Tabs
+import HomeScreen from '../screens/tabs/HomeScreen';
+import RequestsScreen from '../screens/tabs/RequestsScreen';
+import OrdersScreen from '../screens/tabs/OrdersScreen';
+import ProfileScreen from '../screens/tabs/ProfileScreen';
 import SupportScreen from '../screens/SupportScreen';
 
-import RequestDetailsScreen from '../screens/RequestDetailsScreen';
-import OrderDetailsScreen from '../screens/OrderDetailsScreen';
+// Screens - Detail
+import RequestDetailScreen from '../screens/RequestDetailScreen';
+import OrderDetailScreen from '../screens/OrderDetailScreen';
 import DeliveryTrackingScreen from '../screens/DeliveryTrackingScreen';
 import CancellationPreviewScreen from '../screens/CancellationPreviewScreen';
 import DisputeScreen from '../screens/DisputeScreen';
@@ -134,8 +137,8 @@ const MainStack: React.FC = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="MainTabs" component={MainTabs} />
-            <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} />
-            <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+            <Stack.Screen name="RequestDetails" component={RequestDetailScreen} />
+            <Stack.Screen name="OrderDetails" component={OrderDetailScreen} />
             <Stack.Screen name="DeliveryTracking" component={DeliveryTrackingScreen} />
             <Stack.Screen name="CancellationPreview" component={CancellationPreviewScreen} />
             <Stack.Screen name="Dispute" component={DisputeScreen} />

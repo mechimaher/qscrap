@@ -1,23 +1,21 @@
 // QScrap Services
 // API, Socket, and other service exports
 
-export {
-    default as api,
-    authApi,
-    requestApi,
-    bidApi,
-    orderApi,
-    negotiationApi,
-    disputeApi,
-    supportApi,
-    cancellationApi,
-    dashboardApi,
-    documentApi,
-    notificationApi,
-    processOfflineQueue,
+// API Service (single instance)
+export { api } from './api';
+
+// Type exports
+export type {
+    User,
+    AuthResponse,
+    Request,
+    Bid,
+    Order,
+    Stats,
+    Address,
+    Product
 } from './api';
 
-export type { ApiResponse, LoginResponse, ApiError } from './api';
-
+// Socket and Notifications
 export * from './socket';
 export * from './notifications';
