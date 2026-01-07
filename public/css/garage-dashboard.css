@@ -4234,8 +4234,7 @@ kbd {
 }
 
 /* Mobile Menu Toggle - Explicitly hidden on desktop */
-/* Mobile Menu Toggle - Explicitly hidden on desktop */
-/* Using !important to override any potential conflicts */
+#mobileMenuBtn,
 .page-header .menu-toggle,
 button.menu-toggle {
     display: none !important;
@@ -4243,6 +4242,7 @@ button.menu-toggle {
 
 @media (max-width: 1024px) {
 
+    #mobileMenuBtn,
     .page-header .menu-toggle,
     button.menu-toggle {
         display: block !important;
