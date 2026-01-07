@@ -18,6 +18,12 @@ import { validateOrigin } from './middleware/csrf.middleware';
 const app = express();
 
 // ==========================================
+// TRUST PROXY (Required behind Cloudflare/Nginx)
+// ==========================================
+// Fix for ERR_ERL_UNEXPECTED_X_FORWARDED_FOR rate limiter error
+app.set('trust proxy', 1); // Trust first proxy (Nginx/Cloudflare)
+
+// ==========================================
 // SECURITY MIDDLEWARE (First in chain)
 // ==========================================
 app.use(securityMiddleware);
