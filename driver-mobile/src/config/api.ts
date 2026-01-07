@@ -1,15 +1,12 @@
 // QScrap Driver App - API Configuration
-// DEMO MODE: Pointing to VPS IP (until DNS propagates)
-// Once qscrap.qa DNS works, change to https://qscrap.qa
+// Production: Using qscrap.qa domain
 
-// Demo Configuration - VPS IP Address
-export const API_BASE_URL = 'http://147.93.89.153:3000/api';
+export const API_BASE_URL = 'https://qscrap.qa/api';
+export const SOCKET_URL = 'https://qscrap.qa';
 
-// FUTURE: Once DNS propagates, use:
-// export const API_BASE_URL = 'https://qscrap.qa/api';
-
-// LOCAL DEV (uncomment for local development):
-// export const API_BASE_URL = 'http://192.168.1.59:3000/api';
+// For local development, update these temporarily:
+// export const API_BASE_URL = 'http://192.168.1.x:3000/api';
+// export const SOCKET_URL = 'http://192.168.1.x:3000';
 
 export const API_ENDPOINTS = {
     // Auth
