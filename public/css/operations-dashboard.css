@@ -348,23 +348,6 @@ body {
     gap: 16px;
 }
 
-/* Mobile Menu Toggle */
-.menu-toggle {
-    display: none;
-    font-size: 24px;
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    padding: 8px;
-    margin-right: 8px;
-}
-
-@media (max-width: 1024px) {
-    .menu-toggle {
-        display: block;
-    }
-}
 
 .page-title {
     font-size: 28px;
@@ -450,7 +433,7 @@ body {
 
 /* Mobile Menu Toggle */
 .menu-toggle {
-    display: none;
+    display: none !important;
     /* Hidden by default on desktop */
     font-size: 24px;
     background: none;
@@ -463,8 +446,13 @@ body {
 
 @media (max-width: 1024px) {
     .menu-toggle {
-        display: block;
+        display: block !important;
         /* Visible only on mobile/tablet */
+    }
+
+    /* Fix z-index issue: Sidebar must be above overlay (900) */
+    .sidebar {
+        z-index: 1001 !important;
     }
 }
 

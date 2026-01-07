@@ -407,7 +407,7 @@
 
 /* Mobile Menu Toggle */
 .menu-toggle {
-    display: none;
+    display: none !important;
     /* Hidden by default on desktop */
     font-size: 24px;
     background: none;
@@ -420,8 +420,13 @@
 
 @media (max-width: 1024px) {
     .menu-toggle {
-        display: block;
+        display: block !important;
         /* Visible only on mobile/tablet */
+    }
+
+    /* Fix z-index issue: Sidebar must be above overlay (900) */
+    .sidebar {
+        z-index: 1001 !important;
     }
 }
 

@@ -448,6 +448,7 @@ class ApiService {
         });
     }
 
+
     // VIN OCR - Server-side text recognition
     async ocrVIN(imageBase64: string): Promise<{ vin: string | null; confidence: number; raw_text?: string }> {
         try {
@@ -464,6 +465,40 @@ class ApiService {
             // Return empty result on error - scanner will handle gracefully
             return { vin: null, confidence: 0 };
         }
+    }
+
+    // Cancellation
+    async getCancellationPreview(orderId: string): Promise<any> {
+        return this.request(`/orders/${orderId}/cancel-preview`);
+    }
+
+    async cancelOrder(orderId: string, reason: string): Promise<any> {
+        return this.request(`/orders/${orderId}/cancel/customer`, {
+            method: 'POST',
+            body: JSON.stringify({ reason })
+        });
+    }
+
+    // Order Details (single order)
+    async getOrderDetails(orderId: string): Promise<any> {
+        return this.request(`/orders/${orderId}`);
+    }
+
+    // Disputes
+    async createDispute(formData: FormData): Promise<any> {
+        const token = await this.getToken();
+        const response = await fetch(`${API_BASE_URL}/disputes`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to create dispute');
+        }
+        return data;
     }
 
 }

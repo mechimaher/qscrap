@@ -5,6 +5,7 @@
 const themeColors = {
     background: '#FAFAFA',
     surface: '#FFFFFF',
+    surfaceSecondary: '#F5F5F5',
     surfaceElevated: '#FFFFFF',
     card: '#FFFFFF',
     cardHover: '#F5F5F5',
@@ -16,6 +17,7 @@ const themeColors = {
     textMuted: '#6A6A6A',
 
     primary: '#8D1B3D',
+    secondary: '#C9A227', // Gold accent
     statusBar: 'dark' as const,
 
     // Additional colors for components
@@ -67,6 +69,7 @@ export const Spacing = {
     lg: 24,
     xl: 32,
     xxl: 48,
+    xxxl: 64, // Added for components that need extra large spacing
 };
 
 export const BorderRadius = {
@@ -87,6 +90,9 @@ export const FontSizes = {
     xxxl: 32,
     display: 40,
 };
+
+// Alias for backward compatibility (some components use singular form)
+export const FontSize = FontSizes;
 
 export const FontWeights = {
     regular: '400' as const,

@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../contexts';
-import { disputeApi } from '../services';
+import { api } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
 
 const DISPUTE_REASONS = [
@@ -99,18 +99,18 @@ const DisputeScreen: React.FC = () => {
             formData.append('description', description);
 
             images.forEach((uri, index) => {
-                const filename = uri.split('/').pop() || `evidence_${index}.jpg`;
+                const filename = uri.split('/').pop() || `photo_${index}.jpg`;
                 const match = /\.(\w+)$/.exec(filename);
                 const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-                formData.append('evidence', {
+                formData.append('photos', {
                     uri,
                     name: filename,
                     type,
                 } as any);
             });
 
-            await disputeApi.create(formData);
+            await api.createDispute(formData);
 
             Alert.alert(
                 'Dispute Submitted',

@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import { useTheme } from '../contexts';
-import { orderApi, getSocket } from '../services';
+import { api, getSocket } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
@@ -63,8 +63,8 @@ const DeliveryTrackingScreen: React.FC = () => {
 
     const loadOrderDetails = async () => {
         try {
-            const response = await orderApi.getDetails(orderId);
-            const orderData = response.data.order;
+            const response = await api.getOrderDetails(orderId);
+            const orderData = response.order;
             setOrder(orderData);
 
             if (orderData.driver_lat && orderData.driver_lng) {

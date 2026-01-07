@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts';
-import { cancellationApi } from '../services';
+import { api } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
 
 const CANCELLATION_REASONS = [
@@ -42,7 +42,7 @@ const CancellationPreviewScreen: React.FC = () => {
     const loadPreview = async () => {
         try {
             setLoading(true);
-            const response = await cancellationApi.getPreview(orderId);
+            const response = await api.getCancellationPreview(orderId);
             setPreview(response.data);
         } catch (error: any) {
             Alert.alert('Error', error.response?.data?.error || 'Failed to load cancellation details');
@@ -77,7 +77,7 @@ const CancellationPreviewScreen: React.FC = () => {
                     onPress: async () => {
                         try {
                             setSubmitting(true);
-                            await cancellationApi.cancelOrder(orderId, reason);
+                            await api.cancelOrder(orderId, reason);
                             Alert.alert('Cancelled', 'Your order has been cancelled. Refund will be processed within 3-5 business days.');
                             navigation.navigate('MainTabs');
                         } catch (error: any) {

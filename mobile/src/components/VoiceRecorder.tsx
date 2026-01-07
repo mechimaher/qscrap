@@ -8,7 +8,7 @@ import {
     Platform,
     Alert,
 } from 'react-native';
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
@@ -328,7 +328,7 @@ export const VoiceMessagePlayer: React.FC<VoiceMessagePlayerProps> = ({
         }
     };
 
-    const onPlaybackStatusUpdate = (status: Audio.SoundStatus) => {
+    const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
         if (status.isLoaded) {
             if (status.didJustFinish) {
                 setIsPlaying(false);

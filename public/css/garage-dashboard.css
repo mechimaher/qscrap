@@ -552,7 +552,7 @@ body {
 
 /* Mobile Menu Toggle */
 .menu-toggle {
-    display: none;
+    display: none !important;
     font-size: 24px;
     background: none;
     border: none;
@@ -564,11 +564,16 @@ body {
 
 @media (max-width: 1024px) {
     .menu-toggle {
-        display: block;
+        display: block !important;
     }
 
     .page-header {
         margin-bottom: 24px;
+    }
+
+    /* Fix z-index issue: Sidebar must be above overlay (900) */
+    .sidebar {
+        z-index: 1001 !important;
     }
 }
 

@@ -46,7 +46,7 @@ const BILINGUAL_LABELS = {
     item_details: { en: 'Item Details', ar: 'تفاصيل القطعة' },
 
     // Table Headers
-    description: { en: 'Description', ar: 'الوصف' },
+    item: { en: 'Item', ar: 'القطعة' },
     condition: { en: 'Condition', ar: 'الحالة' },
     warranty: { en: 'Warranty', ar: 'الضمان' },
     amount: { en: 'Amount', ar: 'المبلغ' },
@@ -309,8 +309,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
                     status: order.payment_status || 'Paid',
                 },
 
-                // Notes
-                notes: order.bid_notes || '',
+                // No notes field - official invoice per Qatar Ministry requirements
             };
         }
 
@@ -892,7 +891,7 @@ function generateBilingualCustomerInvoiceHTML(data: DocumentData, qrCode: string
             <table class="item-table">
                 <thead>
                     <tr>
-                        <th style="width: 40%">${L.description?.en || 'Description'}</th>
+                        <th style="width: 40%">${L.item?.en || 'Item'}</th>
                         <th>${L.condition?.en || 'Condition'}</th>
                         <th>${L.warranty?.en || 'Warranty'}</th>
                         <th style="text-align: right">${L.amount?.en || 'Amount'}</th>
