@@ -211,6 +211,8 @@ function toggleSidebar() {
         overlay.classList.toggle('is-visible');
     }
 }
+// Expose to global scope for HTML onclick
+window.toggleSidebar = toggleSidebar;
 
 // ===== NOTIFICATION SYSTEM =====
 var notificationSound = null;

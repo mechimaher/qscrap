@@ -71,6 +71,8 @@ function toggleSidebar() {
         overlay.classList.toggle('is-visible');
     }
 }
+// Expose to global scope for HTML onclick
+window.toggleSidebar = toggleSidebar;
 
 function showApp() {
     document.getElementById('authScreen').style.display = 'none';
