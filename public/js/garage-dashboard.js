@@ -198,6 +198,20 @@ function logout() {
     location.reload();
 }
 
+// Mobile Sidebar Toggle
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('appOverlay');
+
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+
+    if (overlay) {
+        overlay.classList.toggle('is-visible');
+    }
+}
+
 // ===== NOTIFICATION SYSTEM =====
 var notificationSound = null;
 

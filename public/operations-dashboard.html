@@ -48,6 +48,8 @@
 
     <!-- Main App Container -->
     <div class="app-container" id="app" style="display: none;">
+        <!-- Mobile Overlay -->
+        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -142,7 +144,10 @@
 
         <!-- Top Header Bar -->
         <header class="top-header">
-            <div class="header-left">
+            <div class="header-left" style="display: flex; align-items: center;">
+                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
+                    <i class="bi bi-list"></i>
+                </button>
                 <div class="header-greeting">
                     <span id="greetingText">Good morning</span>, <strong id="operatorName">Operator</strong>
                 </div>

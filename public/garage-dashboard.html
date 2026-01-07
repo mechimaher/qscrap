@@ -19,6 +19,8 @@
 <body>
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
+    <!-- Mobile Overlay -->
+    <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
 
     <!-- Login Screen -->
     <div class="login-container" id="loginScreen">
@@ -281,10 +283,17 @@
             <!-- Dashboard Section -->
             <section class="section active" id="sectionDashboard">
                 <div class="page-header">
-                    <h1 class="page-title">Dashboard</h1>
-                    <div class="live-indicator">
-                        <span class="live-dot"></span>
-                        Real-time
+                    <div style="display: flex; align-items: center;">
+                        <button class="menu-toggle" onclick="toggleSidebar()">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <div>
+                            <h1 class="page-title">Dashboard</h1>
+                            <div class="live-indicator">
+                                <div class="live-dot"></div>
+                                Live System Active
+                            </div>
+                        </div>
                     </div>
                 </div>
 

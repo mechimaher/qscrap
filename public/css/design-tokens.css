@@ -111,6 +111,30 @@
     --gray-700: var(--charcoal);
     --gray-800: var(--black);
     --gray-900: var(--black);
+    /* ===== Responsive Breakpoints ===== */
+    --bp-sm: 640px;
+    --bp-md: 768px;
+    --bp-lg: 1024px;
+    --bp-xl: 1280px;
+    --bp-2xl: 1536px;
+
+    /* ===== Spacing Scale ===== */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+
+    /* ===== Z-Index Scale ===== */
+    --z-negative: -1;
+    --z-normal: 1;
+    --z-tooltip: 10;
+    --z-fixed: 100;
+    --z-modal-backdrop: 900;
+    --z-modal: 1000;
+    --z-toast: 1100;
 }
 
 /* ===== Base Resets ===== */
