@@ -178,6 +178,8 @@ function toggleSidebar() {
         overlay.classList.toggle('is-visible');
     }
 }
+// Expose to global scope for HTML onclick
+window.toggleSidebar = toggleSidebar;
 
 async function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
