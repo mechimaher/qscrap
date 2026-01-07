@@ -60,6 +60,7 @@ socket.emit('join_ticket', ticketId);
 |-------|--------|---------|--------|
 | `order_status_updated` | `user_{id}`, `garage_{id}` | `{order_id, order_number, old_status, new_status, notification}` | order.controller, operations.controller |
 | `order_cancelled` | `garage_{id}` or `user_{id}` | `{order_id, order_number, cancellation_reason, notification}` | cancellation.controller |
+| `driver_location_update` | `user_{id}` | `{order_id, order_number, location: {lat, lng, heading, speed}, timestamp}` | driver.service.ts |
 
 ---
 
