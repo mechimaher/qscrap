@@ -41,6 +41,8 @@
 
     <!-- Main App -->
     <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Mobile Overlay -->
+        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -98,9 +100,14 @@
 
         <!-- Top Header Bar -->
         <header class="top-header">
-            <div class="header-left">
-                <span class="header-greeting" id="headerGreeting">Welcome back, Admin</span>
-                <span class="header-subtitle">Platform Management Console</span>
+            <div class="header-left" style="display: flex; align-items: center;">
+                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <span class="header-greeting" id="headerGreeting">Welcome back, Admin</span>
+                    <span class="header-subtitle" style="display: block;">Platform Management Console</span>
+                </div>
             </div>
             <div class="header-right">
                 <div class="header-datetime" id="headerDateTime">
