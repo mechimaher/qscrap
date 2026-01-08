@@ -130,27 +130,16 @@ class DriverApiService {
         const url = `${API_BASE_URL}${endpoint}`;
         console.log('[API] Request:', options.method || 'GET', url);
 
-        // Add timeout to prevent hanging requests
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
         let response: Response;
         try {
             response = await fetch(url, {
                 ...options,
                 headers,
-                signal: controller.signal,
             });
-        } catch (networkError: any) {
-            clearTimeout(timeoutId);
-            if (networkError.name === 'AbortError') {
-                console.error('[API] Request timeout after 10s');
-                throw new Error('Request timed out - please try again');
-            }
+        } catch (networkError) {
             console.error('[API] Network error:', networkError);
             throw new Error('Network error - please check your connection');
         }
-        clearTimeout(timeoutId);
 
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
