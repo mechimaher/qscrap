@@ -400,13 +400,17 @@ function setupSocketListeners() {
         backBtn.innerHTML = '<i class="bi bi-arrow-left"></i> Back';
         backBtn.style.marginBottom = '10px';
         backBtn.onclick = () => {
-            document.querySelector('.support-layout').classList.remove('show-chat');
+            const supportLayout = document.querySelector('.support-layout');
+            if (supportLayout) supportLayout.classList.remove('show-chat');
         };
 
-        // Insert before chat header
+        // Insert before chat header only if it exists AND is a child of chatPanel
         const chatHeader = chatPanel.querySelector('.chat-header');
-        if (chatHeader) {
+        if (chatHeader && chatHeader.parentNode === chatPanel) {
             chatPanel.insertBefore(backBtn, chatHeader);
+        } else {
+            // Fallback: prepend to chat panel
+            chatPanel.prepend(backBtn);
         }
     }
 }
