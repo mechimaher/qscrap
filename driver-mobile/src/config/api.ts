@@ -1,8 +1,8 @@
 // QScrap Driver App - API Configuration
-// Production: Using qscrap.qa domain
+// Production: Using api.qscrap.qa domain
 
-export const API_BASE_URL = 'https://qscrap.qa/api';
-export const SOCKET_URL = 'https://qscrap.qa';
+export const API_BASE_URL = 'https://api.qscrap.qa/api';
+export const SOCKET_URL = 'https://api.qscrap.qa';
 
 // For local development, update these temporarily:
 // export const API_BASE_URL = 'http://192.168.1.x:3000/api';
