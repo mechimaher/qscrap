@@ -1,18 +1,16 @@
 // QScrap Driver App - Live Map View Component
-// Premium real-time map with driver location, assignment route, and animated markers
-// VVIP cutting-edge feature inspired by Uber/Talabat
-// FIXED: Removed duplicate location tracking - now uses parent's location prop
-// MERGED: Includes OSRM routing from remote and Smart Location handling from local
+// MAPLIBRE VERSION - Completely KEYLESS using OpenStreetMap
+// Production-grade, free, unlimited usage
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Dimensions, ActivityIndicator, Text } from 'react-native';
-import MapView, { Marker, Polyline, Region } from 'react-native-maps';
-import * as Location from 'expo-location'; // Type imports
+import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import MapLibreGL from '@maplibre/maplibre-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { Assignment } from '../services/api';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Initialize MapLibre with NO access token (completely free)
+MapLibreGL.setAccessToken(null);
 
 interface DriverLocation {
     latitude: number;
@@ -26,12 +24,33 @@ interface LiveMapViewProps {
     showRoute?: boolean;
 }
 
-// Qatar default center
-const QATAR_CENTER: Region = {
-    latitude: 25.2854,
-    longitude: 51.5310,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
+// OpenStreetMap tile style (FREE, no API key)
+const OSM_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
+
+// Alternative: Use a more detailed OSM style
+const CARTO_STYLE = {
+    version: 8,
+    sources: {
+        'osm-tiles': {
+            type: 'raster',
+            tiles: [
+                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            ],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors',
+        },
+    },
+    layers: [
+        {
+            id: 'osm-tiles-layer',
+            type: 'raster',
+            source: 'osm-tiles',
+            minzoom: 0,
+            maxzoom: 19,
+        },
+    ],
 };
 
 export default function LiveMapView({
@@ -40,11 +59,11 @@ export default function LiveMapView({
     height = 200,
     showRoute = true
 }: LiveMapViewProps) {
-    const { colors, isDarkMode } = useTheme();
-    const mapRef = useRef<MapView>(null);
+    const { colors } = useTheme();
+    const cameraRef = useRef<MapLibreGL.Camera>(null);
 
     // OSRM Route State
-    const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
+    const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
     const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
     const [isLoadingRoute, setIsLoadingRoute] = useState(false);
 
@@ -62,41 +81,20 @@ export default function LiveMapView({
             let destLng: number | undefined;
 
             if (activeAssignment.status === 'assigned' || activeAssignment.status === 'picked_up') {
-                // Navigate to pickup (garage)
                 destLat = activeAssignment.pickup_lat;
                 destLng = activeAssignment.pickup_lng;
             } else if (activeAssignment.status === 'in_transit') {
-                // Navigate to delivery (customer)
                 destLat = activeAssignment.delivery_lat;
                 destLng = activeAssignment.delivery_lng;
             }
 
             if (!destLat || !destLng) {
-                // Fallback to straight line if points missing
-                const fallbackCoords = [];
-                fallbackCoords.push({
-                    latitude: driverLocation.latitude,
-                    longitude: driverLocation.longitude,
-                });
-                if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
-                    fallbackCoords.push({
-                        latitude: activeAssignment.pickup_lat,
-                        longitude: activeAssignment.pickup_lng,
-                    });
-                }
-                if (activeAssignment.delivery_lat && activeAssignment.delivery_lng) {
-                    fallbackCoords.push({
-                        latitude: activeAssignment.delivery_lat,
-                        longitude: activeAssignment.delivery_lng,
-                    });
-                }
-                setRouteCoordinates(fallbackCoords);
+                setRouteCoordinates([]);
                 return;
             }
 
             setIsLoadingRoute(true);
             try {
-                // Dynamic import to avoid cycles if any
                 const { getRoute, formatDistance, formatDuration } = await import('../services/routing.service');
                 const result = await getRoute(
                     { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
@@ -104,25 +102,28 @@ export default function LiveMapView({
                 );
 
                 if (result.success && result.route) {
-                    setRouteCoordinates(result.route.coordinates);
+                    // Convert to [lng, lat] format for MapLibre
+                    const coords: [number, number][] = result.route.coordinates.map(
+                        (c: { latitude: number; longitude: number }) => [c.longitude, c.latitude]
+                    );
+                    setRouteCoordinates(coords);
                     setRouteInfo({
                         distance: formatDistance(result.route.distance),
                         duration: formatDuration(result.route.duration),
                     });
                 } else {
-                    // Fallback to straight line on API failure
+                    // Fallback to straight line
                     setRouteCoordinates([
-                        { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-                        { latitude: destLat, longitude: destLng },
+                        [driverLocation.longitude, driverLocation.latitude],
+                        [destLng, destLat],
                     ]);
                     setRouteInfo(null);
                 }
             } catch (err) {
                 console.error('[LiveMapView] OSRM error:', err);
-                // Fallback to straight line
                 setRouteCoordinates([
-                    { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-                    { latitude: destLat, longitude: destLng },
+                    [driverLocation.longitude, driverLocation.latitude],
+                    [destLng, destLat],
                 ]);
             } finally {
                 setIsLoadingRoute(false);
@@ -132,106 +133,49 @@ export default function LiveMapView({
         fetchRoute();
     }, [driverLocation?.latitude, driverLocation?.longitude, activeAssignment?.status, activeAssignment?.assignment_id]);
 
-    // Camera Logic: Follow driver or fit route
+    // Camera follows driver
     useEffect(() => {
-        if (!mapRef.current || !driverLocation) return;
+        if (!cameraRef.current || !driverLocation) return;
 
-        // 1. If we have a calculated route, fit to it
-        if (routeCoordinates.length > 1) {
-            mapRef.current.fitToCoordinates(routeCoordinates, {
-                edgePadding: { top: 60, right: 40, bottom: 60, left: 40 },
-                animated: true,
-            });
-            return;
-        }
+        cameraRef.current.setCamera({
+            centerCoordinate: [driverLocation.longitude, driverLocation.latitude],
+            zoomLevel: 16,
+            animationDuration: 800,
+        });
+    }, [driverLocation]);
 
-        const points: { latitude: number; longitude: number }[] = [
-            { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-        ];
-
-        // 2. If no route but assignment exists, include endpoints in view
-        if (activeAssignment) {
-            if (activeAssignment.pickup_lat && activeAssignment.pickup_lng) {
-                points.push({
-                    latitude: activeAssignment.pickup_lat,
-                    longitude: activeAssignment.pickup_lng,
-                });
-            }
-            if (activeAssignment.delivery_lat && activeAssignment.delivery_lng) {
-                points.push({
-                    latitude: activeAssignment.delivery_lat,
-                    longitude: activeAssignment.delivery_lng,
-                });
-            }
-        }
-
-        // 3. Apply Camera Update
-        if (points.length === 1) {
-            // Only driver: Center tightly (Smart Strategy: Follow Mode)
-            mapRef.current.animateToRegion({
-                latitude: driverLocation.latitude,
-                longitude: driverLocation.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 1000);
-        } else {
-            // Driver + Destination: Fit bounds
-            mapRef.current.fitToCoordinates(points, {
-                edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-                animated: true,
-            });
-        }
-
-    }, [driverLocation, routeCoordinates, activeAssignment]);
-
-    // Dark mode map style
-    const darkMapStyle = [
-        { elementType: 'geometry', stylers: [{ color: '#1d1d1d' }] },
-        { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ color: '#1d1d1d' }] },
-        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a2a' }] },
-        { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
-        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e0e0e' }] },
-    ];
-
-    // Show loading only if no location yet
+    // Show loading if no location yet
     if (!driverLocation) {
         return (
             <View style={[styles.container, { height, backgroundColor: colors.surface }]}>
                 <ActivityIndicator size="large" color={Colors.primary} />
                 <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-                    Waiting for location...
+                    Acquiring GPS...
                 </Text>
             </View>
         );
     }
 
-    const initialRegion: Region = {
-        latitude: driverLocation.latitude,
-        longitude: driverLocation.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-    };
-
     return (
         <View style={[styles.container, { height }]}>
-            <MapView
-                ref={mapRef}
+            <MapLibreGL.MapView
                 style={styles.map}
-                initialRegion={initialRegion}
-                showsUserLocation={false}
-                showsMyLocationButton={false}
-                customMapStyle={isDarkMode ? darkMapStyle : []}
-                rotateEnabled={false}
-                pitchEnabled={false}
+                styleJSON={JSON.stringify(CARTO_STYLE)}
+                logoEnabled={false}
+                attributionEnabled={false}
             >
-                {/* Driver Location Marker - VVIP animated */}
-                <Marker
-                    coordinate={{
-                        latitude: driverLocation.latitude,
-                        longitude: driverLocation.longitude,
-                    }}
-                    anchor={{ x: 0.5, y: 0.5 }}
+                <MapLibreGL.Camera
+                    ref={cameraRef}
+                    zoomLevel={16}
+                    centerCoordinate={[driverLocation.longitude, driverLocation.latitude]}
+                    animationMode="flyTo"
+                    animationDuration={1000}
+                />
+
+                {/* Driver Location Marker */}
+                <MapLibreGL.PointAnnotation
+                    id="driver-location"
+                    coordinate={[driverLocation.longitude, driverLocation.latitude]}
                 >
                     <View style={styles.driverMarker}>
                         <View style={styles.driverMarkerPulse} />
@@ -239,51 +183,57 @@ export default function LiveMapView({
                             <Text style={styles.driverMarkerIcon}>🚗</Text>
                         </View>
                     </View>
-                </Marker>
+                </MapLibreGL.PointAnnotation>
 
                 {/* Pickup Location Marker */}
                 {activeAssignment?.pickup_lat && activeAssignment?.pickup_lng && (
-                    <Marker
-                        coordinate={{
-                            latitude: activeAssignment.pickup_lat,
-                            longitude: activeAssignment.pickup_lng,
-                        }}
-                        title="Pickup"
-                        description={activeAssignment.pickup_address}
+                    <MapLibreGL.PointAnnotation
+                        id="pickup-location"
+                        coordinate={[activeAssignment.pickup_lng, activeAssignment.pickup_lat]}
                     >
                         <View style={[styles.locationMarker, { backgroundColor: Colors.warning }]}>
                             <Text style={styles.markerIcon}>📦</Text>
                         </View>
-                    </Marker>
+                    </MapLibreGL.PointAnnotation>
                 )}
 
                 {/* Delivery Location Marker */}
                 {activeAssignment?.delivery_lat && activeAssignment?.delivery_lng && (
-                    <Marker
-                        coordinate={{
-                            latitude: activeAssignment.delivery_lat,
-                            longitude: activeAssignment.delivery_lng,
-                        }}
-                        title="Delivery"
-                        description={activeAssignment.delivery_address}
+                    <MapLibreGL.PointAnnotation
+                        id="delivery-location"
+                        coordinate={[activeAssignment.delivery_lng, activeAssignment.delivery_lat]}
                     >
                         <View style={[styles.locationMarker, { backgroundColor: Colors.success }]}>
                             <Text style={styles.markerIcon}>🏠</Text>
                         </View>
-                    </Marker>
+                    </MapLibreGL.PointAnnotation>
                 )}
 
-                {/* OSRM Route Polyline - Real roads */}
+                {/* Route Polyline */}
                 {showRoute && routeCoordinates.length > 1 && (
-                    <Polyline
-                        coordinates={routeCoordinates}
-                        strokeColor={Colors.primary}
-                        strokeWidth={5}
-                        lineCap="round"
-                        lineJoin="round"
-                    />
+                    <MapLibreGL.ShapeSource
+                        id="route-source"
+                        shape={{
+                            type: 'Feature',
+                            properties: {},
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: routeCoordinates,
+                            },
+                        }}
+                    >
+                        <MapLibreGL.LineLayer
+                            id="route-line"
+                            style={{
+                                lineColor: Colors.primary,
+                                lineWidth: 5,
+                                lineCap: 'round',
+                                lineJoin: 'round',
+                            }}
+                        />
+                    </MapLibreGL.ShapeSource>
                 )}
-            </MapView>
+            </MapLibreGL.MapView>
 
             {/* Route Info Overlay */}
             {activeAssignment && (
@@ -292,11 +242,9 @@ export default function LiveMapView({
                         {isLoadingRoute ? (
                             <ActivityIndicator size="small" color={Colors.primary} />
                         ) : routeInfo ? (
-                            <>
-                                <Text style={[styles.routeInfoText, { color: Colors.primary }]}>
-                                    {routeInfo.distance} • {routeInfo.duration}
-                                </Text>
-                            </>
+                            <Text style={[styles.routeInfoText, { color: Colors.primary }]}>
+                                {routeInfo.distance} • {routeInfo.duration}
+                            </Text>
                         ) : (
                             <Text style={[styles.statusText, { color: Colors.primary }]}>
                                 📍 Live Tracking
@@ -324,11 +272,6 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 12,
         fontSize: 14,
-    },
-    errorText: {
-        fontSize: 14,
-        textAlign: 'center',
-        paddingHorizontal: 20,
     },
     driverMarker: {
         width: 50,
