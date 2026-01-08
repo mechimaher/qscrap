@@ -31,6 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (response.driver) {
                         setDriver(response.driver);
                         await api.saveDriver(response.driver);
+
+                        // Start tracking location
+                        locationService.startTracking().catch(console.error);
                     }
                 } catch (error) {
                     // Token invalid, clear it
@@ -54,6 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (profileResponse.driver) {
                 setDriver(profileResponse.driver);
                 await api.saveDriver(profileResponse.driver);
+
+                // Start tracking location
+                locationService.startTracking().catch(console.error);
             }
 
             return { success: true };
@@ -64,6 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
+            // Stop tracking location
+            await locationService.stopTracking().catch(console.error);
+
             // Set status to offline before logout
             try {
                 await api.toggleAvailability('offline');

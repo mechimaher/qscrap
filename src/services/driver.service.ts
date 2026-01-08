@@ -37,7 +37,7 @@ export class DriverService {
         }
 
         // Update driver location
-        await driverRepository.updateDriverLocation(driver.driver_id, lat, lng);
+        await driverRepository.updateDriverLocation(driver.driver_id, lat, lng, heading, speed, accuracy);
 
         // Update assignments and get affected orders
         const affectedOrders = await driverRepository.updateAssignmentsLocation(driver.driver_id, lat, lng);

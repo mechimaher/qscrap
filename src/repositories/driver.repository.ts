@@ -109,7 +109,8 @@ export class DriverRepository {
         return result.rows[0];
     }
 
-    async updateDriverLocation(driverId: string, lat: number, lng: number) {
+    async updateDriverLocation(driverId: string, lat: number, lng: number, heading = 0, speed = 0, accuracy = 0) {
+        // 1. Update Profile (drivers table) - Legacy/Slow changing
         await this.pool.query(`
             UPDATE drivers SET 
                 current_lat = $1, 
@@ -118,6 +119,18 @@ export class DriverRepository {
                 updated_at = NOW()
             WHERE driver_id = $3
         `, [lat, lng, driverId]);
+
+        // 2. Update Real-Time Tracking (driver_locations table) - High velocity
+        await this.pool.query(`
+            INSERT INTO driver_locations (driver_id, latitude, longitude, heading, speed)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (driver_id) DO UPDATE SET
+                latitude = EXCLUDED.latitude,
+                longitude = EXCLUDED.longitude,
+                heading = EXCLUDED.heading,
+                speed = EXCLUDED.speed,
+                updated_at = NOW()
+        `, [driverId, lat, lng, heading || 0, speed || 0]);
     }
 
     async updateAssignmentsLocation(driverId: string, lat: number, lng: number) {
