@@ -1,12 +1,12 @@
 // QScrap Driver App - OSRM Routing Service
-// Free, open-source routing using OpenStreetMap data
-// Provides real road routes instead of straight lines
+// Self-hosted routing using GCC OpenStreetMap data (Qatar, UAE, etc.)
+// Production-grade, no API limits
 
 import { Assignment } from './api';
 
-// OSRM Public API (Qatar region via project-osrm.org)
-// For production: Consider self-hosting OSRM with Qatar OSM data
-const OSRM_API = 'https://router.project-osrm.org';
+// Self-hosted OSRM on QScrap VPS - GCC region map data
+// Includes: Qatar, UAE, Bahrain, Kuwait, Oman, Saudi Arabia
+const OSRM_API = 'http://147.93.89.153:5100';
 
 export interface LatLng {
     latitude: number;

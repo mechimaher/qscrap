@@ -39,12 +39,7 @@
                 "ACCESS_BACKGROUND_LOCATION",
                 "FOREGROUND_SERVICE",
                 "FOREGROUND_SERVICE_LOCATION"
-            ],
-            "config": {
-                "googleMaps": {
-                    "apiKey": "AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs"
-                }
-            }
+            ]
         },
         "plugins": [
             "expo-secure-store",

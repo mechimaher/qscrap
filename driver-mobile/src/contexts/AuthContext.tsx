@@ -1,6 +1,7 @@
 // QScrap Driver App - Auth Context
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, Driver } from '../services/api';
+import { locationService } from '../services/LocationService';
 
 interface AuthContextType {
     driver: Driver | null;
