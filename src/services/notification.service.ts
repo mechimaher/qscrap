@@ -106,6 +106,16 @@ export const createNotification = async (payload: NotificationPayload) => {
 export const markNotificationsRead = async (userId: string, notificationIds: string[]) => {
     if (notificationIds.length === 0) return;
 
+    // Handle "Mark All Read" case
+    if (notificationIds.includes('all')) {
+        await pool.query(
+            `UPDATE notifications SET is_read = true 
+             WHERE user_id = $1 AND is_read = false`,
+            [userId]
+        );
+        return;
+    }
+
     await pool.query(
         `UPDATE notifications SET is_read = true 
          WHERE user_id = $1 AND notification_id = ANY($2::uuid[])`,
