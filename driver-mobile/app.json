@@ -12,6 +12,12 @@
             "resizeMode": "contain",
             "backgroundColor": "#8D1B3D"
         },
+        "notification": {
+            "icon": "./assets/notification-icon.png",
+            "color": "#C9A227",
+            "androidMode": "default",
+            "androidCollapsedTitle": "QScrap Driver"
+        },
         "assetBundlePatterns": [
             "**/*"
         ],
@@ -23,7 +29,8 @@
                 "NSLocationWhenInUseUsageDescription": "QScrap Driver needs your location for navigation and delivery tracking.",
                 "UIBackgroundModes": [
                     "location",
-                    "fetch"
+                    "fetch",
+                    "remote-notification"
                 ]
             }
         },
@@ -38,8 +45,12 @@
                 "ACCESS_FINE_LOCATION",
                 "ACCESS_BACKGROUND_LOCATION",
                 "FOREGROUND_SERVICE",
-                "FOREGROUND_SERVICE_LOCATION"
-            ]
+                "FOREGROUND_SERVICE_LOCATION",
+                "VIBRATE",
+                "RECEIVE_BOOT_COMPLETED",
+                "POST_NOTIFICATIONS"
+            ],
+            "useNextNotificationsApi": true
         },
         "plugins": [
             "expo-secure-store",
@@ -55,7 +66,8 @@
                 "expo-notifications",
                 {
                     "icon": "./assets/notification-icon.png",
-                    "color": "#C9A227"
+                    "color": "#C9A227",
+                    "defaultChannel": "assignments"
                 }
             ],
             [
@@ -81,7 +93,7 @@
         ],
         "extra": {
             "eas": {
-                "projectId": ""
+                "projectId": "47b26c9d-3bd0-4470-8543-dd303a49b287"
             }
         }
     }

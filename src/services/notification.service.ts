@@ -1,7 +1,7 @@
 
 import pool from '../config/db';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
-// import { sendPushNotification } from './push.service'; // Will enable later for mobile
+import { pushService } from './push.service';
 
 interface NotificationPayload {
     userId: string;
@@ -13,19 +13,35 @@ interface NotificationPayload {
 }
 
 /**
+ * Map notification types to Android channels for proper sound/vibration
+ */
+const getChannelId = (type: string): string => {
+    // Driver high-priority channels
+    if (type.includes('assignment') || type === 'new_assignment') return 'assignments';
+
+    // Customer order channels
+    if (type.includes('order') || type.includes('delivery') || type === 'driver_assigned') return 'orders';
+
+    // Bid/negotiation channels
+    if (type.includes('bid') || type.includes('counter_offer')) return 'bids';
+
+    // Chat/support channels
+    if (type.includes('chat') || type.includes('support') || type.includes('message')) return 'messages';
+
+    return 'default';
+};
+
+/**
  * Centralized Notification Service
  * - Persists to DB
  * - Emits Socket.IO event (transient)
- * - Sends Push Notification (mobile - pending)
+ * - Sends Expo Push Notification (mobile)
  */
 export const createNotification = async (payload: NotificationPayload) => {
     const { userId, type, title, message, data = {}, target_role } = payload;
 
     try {
-        // 1. Persist to DB
-        // For operations, we might not have a single userId, but we can store it as system or skip DB per user?
-        // Actually, for Operations, we broadcast. But for specific users/garages, we store it.
-
+        // 1. Persist to DB (skip operations - they don't have user-specific storage)
         if (target_role !== 'operations') {
             await pool.query(
                 `INSERT INTO notifications (user_id, type, title, message, data, is_read)
@@ -34,9 +50,9 @@ export const createNotification = async (payload: NotificationPayload) => {
             );
         }
 
-        // 2. Emit Socket Event
+        // 2. Emit Socket Event for real-time updates
         const socketPayload = {
-            notification_id: 'temp_' + Date.now(), // Will be updated on fetch
+            notification_id: 'temp_' + Date.now(),
             type,
             title,
             message,
@@ -45,42 +61,10 @@ export const createNotification = async (payload: NotificationPayload) => {
         };
 
         if (target_role === 'garage') {
-            // Emitting to garage_${userId} (which is garageId)
-            // Wait, userId here is technically user_id (UUID), but garage rooms are `garage_${garage_id}`.
-            // Notifications table uses user_id. 
-            // We need to verify if we passed user_id or garage_id.
-            // Assumption: payload.userId is the database UUID from `users` table.
-
-            // To find socket room for garage, we usually use `garage_${garageId}`.
-            // We need to resolve garageId from userId if possible, or emit to `user_${userId}` 
-            // The garage dashboard listens to `join_garage_room` with userId (login return).
-            // Let's check garage-dashboard.js: `socket.emit('join_garage_room', userId);`
-            // and `emitToGarage` does `garage_${garageId}`.
-
-            // Wait, garage dashboard logic uses `userId` variable which comes from localStorage 'userId'.
-            // In `auth.controller.ts`, login returns `userId` which is the `users.user_id`.
-            // BUT `join_garage_room` in backend likely expects a garageId?
-            // Let's check `socketAdapter.ts` or where connection happens.
-
-            // If the listener is `socket.on('join_garage_room', (garageId) => ...)`
-            // Then dashboard sends `userId`. Is `userId` == `garageId`?
-            // In QScrap schema, `garages` table has `garage_id`. `users` table has `user_id`.
-            // Usually linked.
-
-            // Let's assume for now we emit to `user_${userId}` as well, because `notifications` are user-centric.
             emitToUser(userId, 'new_notification', socketPayload);
-
-            // Note: The specific events like 'bid_accepted' are separate from generic 'new_notification'.
-            // The dashboard listeners for 'bid_accepted' expect specific data structure.
-            // We should CONTINUE to emit those specific events from Controllers, 
-            // OR standardized everything. 
-            // For this task (Enterprise Fix), we want persistence.
-            // So we will ADD generic notification handling.
-
         } else if (target_role === 'customer') {
             emitToUser(userId, 'new_notification', socketPayload);
         } else if (target_role === 'driver') {
-            // Drivers use driver_${userId} room - emit to that room
             const io = (global as any).io;
             if (io) {
                 io.to(`driver_${userId}`).emit('new_notification', socketPayload);
@@ -89,10 +73,25 @@ export const createNotification = async (payload: NotificationPayload) => {
             emitToOperations('new_notification', socketPayload);
         }
 
-        // 3. Push Notification (Future)
-        // if (target_role === 'driver' || target_role === 'customer') {
-        //    sendPushNotification(userId, title, message, data);
-        // }
+        // 3. Send Expo Push Notification (for mobile apps - customer & driver)
+        if (target_role === 'customer' || target_role === 'driver') {
+            try {
+                await pushService.sendToUser(
+                    userId,
+                    title,
+                    message,
+                    { ...data, type, timestamp: new Date().toISOString() },
+                    {
+                        sound: true,
+                        channelId: getChannelId(type)
+                    }
+                );
+                console.log(`[NotificationService] Push sent to ${target_role}: ${userId}`);
+            } catch (pushErr) {
+                // Don't fail the entire notification if push fails
+                console.error('[NotificationService] Push failed:', pushErr);
+            }
+        }
 
         return true;
     } catch (err) {
