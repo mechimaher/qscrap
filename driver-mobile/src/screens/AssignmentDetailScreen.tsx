@@ -223,7 +223,7 @@ export default function AssignmentDetailScreen() {
                 </View>
 
                 {/* Part Information */}
-                <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.small]}>
+                <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>📦 Part Details</Text>
                     <Text style={[styles.partDescription, { color: colors.text }]}>
                         {assignment.part_description}
@@ -236,7 +236,7 @@ export default function AssignmentDetailScreen() {
                 </View>
 
                 {/* Pickup Location */}
-                <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.small]}>
+                <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.locationDot, { backgroundColor: Colors.warning }]} />
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Pickup Location</Text>
@@ -268,7 +268,7 @@ export default function AssignmentDetailScreen() {
                 </View>
 
                 {/* Delivery Location */}
-                <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.small]}>
+                <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.locationDot, { backgroundColor: Colors.success }]} />
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Location</Text>
@@ -311,7 +311,7 @@ export default function AssignmentDetailScreen() {
                     DELIVERY PROOF - Only for completed orders
                    ===================================================== */}
                 {isCompleted && (
-                    <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.small]}>
+                    <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>📸 Delivery Proof</Text>
 
                         {assignment.delivery_photo_url ? (
@@ -353,7 +353,7 @@ export default function AssignmentDetailScreen() {
 
                 {/* Timeline for completed orders */}
                 {!isActive && (
-                    <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.small]}>
+                    <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>📅 Timeline</Text>
                         <View style={styles.timelineItem}>
                             <View style={[styles.timelineDot, { backgroundColor: colors.textMuted }]} />
