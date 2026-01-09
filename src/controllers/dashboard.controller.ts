@@ -79,6 +79,7 @@ export const getGarageProfile = async (req: AuthRequest, res: Response) => {
                     g.cr_number, g.trade_license_number, g.bank_name, g.bank_account, g.iban,
                     g.approval_status, g.demo_expires_at,
                     g.supplier_type, g.specialized_brands, g.all_brands,
+                    g.location_lat, g.location_lng,
                     u.phone_number,
                     gs.plan_id, gs.status as subscription_status, gs.trial_ends_at, gs.billing_cycle_end,
                     COALESCE(sp.plan_name, 
