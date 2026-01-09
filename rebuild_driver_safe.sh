@@ -12,6 +12,10 @@ npm install
 echo "[2/4] Exo Prebuild (Clean)..."
 npx expo prebuild --clean --platform android
 
+# 2.5. Fix Manifest Package Name (for Autolinking)
+echo "[2.5/4] Patching AndroidManifest.xml..."
+sed -i 's/<manifest/<manifest package="com.qscrap.driver"/' android/app/src/main/AndroidManifest.xml
+
 # 3. Build APK
 echo "[3/4] Gradle Build..."
 cd android

@@ -60,7 +60,7 @@ export default function LiveMapView({
     showRoute = true
 }: LiveMapViewProps) {
     const { colors } = useTheme();
-    const cameraRef = useRef<MapLibreGL.Camera>(null);
+    const cameraRef = useRef<any>(null);
 
     // OSRM Route State
     const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
@@ -160,7 +160,8 @@ export default function LiveMapView({
         <View style={[styles.container, { height }]}>
             <MapLibreGL.MapView
                 style={styles.map}
-                styleJSON={JSON.stringify(CARTO_STYLE)}
+                // @ts-ignore
+                styleURL={OSM_STYLE_URL}
                 logoEnabled={false}
                 attributionEnabled={false}
             >
