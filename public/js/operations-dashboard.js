@@ -521,7 +521,7 @@ function getOrderActions(order) {
         case 'preparing':
             return `<span class="text-muted" style="font-size: 12px;">Awaiting garage</span>`;
         case 'ready_for_pickup':
-            return `<button class="btn btn-primary btn-sm" onclick="assignCollection('${o.order_id}')" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
+            return `<button class="btn btn-primary btn-sm" onclick="openUnifiedAssignmentModal('${o.order_id}', '${o.order_number}', 'collection')" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
         case 'collected':
             return `<span class="status-badge ready" style="font-size: 11px;">Part Collected</span>`;
         case 'qc_failed':
@@ -542,98 +542,7 @@ function getOrderActions(order) {
     }
 }
 
-// Assign driver for collection from garage (for ready_for_pickup orders)
-async function assignCollection(orderId) {
-    // Load available drivers
-    let driversHtml = '<option value="">-- No drivers available --</option>';
-    try {
-        const res = await fetch(`${API_URL}/delivery/drivers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        // Filter for available drivers
-        const drivers = (data.drivers || []).filter(d => d.status === 'available');
-        if (drivers.length > 0) {
-            driversHtml = drivers.map(d => `
-                <option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'} - ${d.vehicle_plate || 'N/A'})</option>
-            `).join('');
-        }
-    } catch (err) {
-        console.error('Failed to load drivers:', err);
-    }
 
-    const modal = document.createElement('div');
-    modal.id = 'collectionAssignModal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-        <div class="modal-container" style="max-width: 450px;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
-                <h3><i class="bi bi-box-arrow-in-down"></i> Assign Collection Driver</h3>
-                <button class="modal-close" onclick="document.getElementById('collectionAssignModal').remove()" style="color: white;">&times;</button>
-            </div>
-            <div class="modal-body" style="padding: 20px;">
-                <p style="margin-bottom: 15px; color: var(--text-secondary);">Assign a driver to collect this order from the garage. Driver will confirm pickup via their app.</p>
-                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver:</label>
-                <select id="collectionDriverSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    ${driversHtml}
-                </select>
-            </div>
-            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
-                <button class="btn btn-ghost" onclick="document.getElementById('collectionAssignModal').remove()">Cancel</button>
-                <button class="btn btn-primary" id="confirmCollectionBtn" onclick="submitCollectionAssignment('${orderId}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                    <i class="bi bi-truck"></i> Assign Driver
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// Submit collection assignment - driver will confirm pickup via their app
-async function submitCollectionAssignment(orderId) {
-    const driverId = document.getElementById('collectionDriverSelect').value;
-    if (!driverId) {
-        showToast('Please select a driver', 'error');
-        return;
-    }
-
-    const btn = document.getElementById('confirmCollectionBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
-
-    try {
-        // NEW FLOW: Assign driver for collection (order stays ready_for_pickup)
-        // Driver will confirm pickup via their app, which will update order to collected
-        const res = await fetch(`${API_URL}/delivery/assign-collection/${orderId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                driver_id: driverId,
-                notes: 'Assigned for collection by operations'
-            })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast(`🚚 Driver ${data.driver?.name || ''} assigned! Awaiting pickup confirmation.`, 'success');
-            document.getElementById('collectionAssignModal').remove();
-            loadOrders();
-            loadStats();
-            loadDeliveryData();
-        } else {
-            showToast(data.error || 'Failed to assign collection driver', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign Driver';
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Assign Driver';
-    }
-}
 
 // Pagination state
 let currentOrdersPage = 1;
@@ -1112,7 +1021,7 @@ async function loadDeliveryOrders(page = 1) {
                 const statusLabel = o.driver_name ? `Assigned to ${escapeHTML(o.driver_name)}` : o.order_status;
                 const actionBtn = o.driver_name
                     ? `<span class="status-badge in_transit">Assigned</span>`
-                    : `<button class="btn btn-primary btn-sm" onclick="openAssignDriverModal('${o.order_id}', '${o.order_number}')"><i class="bi bi-person-plus"></i> Assign</button>`;
+                    : `<button class="btn btn-primary btn-sm" onclick="openUnifiedAssignmentModal('${o.order_id}', '${o.order_number}', 'delivery')"><i class="bi bi-person-plus"></i> Assign</button>`;
                 return `
                     <tr class="${rowClass}">
                         <td><strong>#${o.order_number}</strong></td>
@@ -1269,60 +1178,131 @@ async function submitAddDriver() {
     }
 }
 
-function openAssignDriverModal(orderId, orderNumber) {
+// ==========================================
+// UNIFIED DRIVER ASSIGNMENT LOGIC
+// ==========================================
+
+let assignmentContext = {
+    orderId: null,
+    type: 'collection' // 'collection' or 'delivery'
+};
+
+async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collection') {
+    // 1. Check/Load drivers if needed
     if (availableDrivers.length === 0) {
-        showToast('No available drivers. Add or free up a driver first.', 'error');
-        return;
+        // Try loading drivers if none cached
+        await loadDrivers();
+        if (availableDrivers.length === 0) {
+            showToast('No available drivers. Please add or free up a driver.', 'error');
+            return;
+        }
     }
 
+    assignmentContext = { orderId, type };
+
+    const title = type === 'collection' ? 'Assign Collection Driver' : 'Assign Delivery Driver';
+    const icon = type === 'collection' ? 'bi-box-seam' : 'bi-truck';
+    const description = type === 'collection'
+        ? `Assign a driver to collect Order <strong>#${orderNumber}</strong> from the garage.`
+        : `Assign a driver to deliver Order <strong>#${orderNumber}</strong> to the customer.`;
+
+    // Generate driver options
     const driverOptions = availableDrivers.map(d =>
-        `<option value="${d.driver_id}">${d.full_name} (${d.vehicle_type})</option>`
+        `<option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'}) - ${d.status}</option>`
     ).join('');
 
+    // Remove existing modal if any
+    document.getElementById('unifiedAssignModal')?.remove();
+
     const modal = document.createElement('div');
-    modal.id = 'assignDriverModal';
+    modal.id = 'unifiedAssignModal';
     modal.className = 'modal-overlay active';
     modal.innerHTML = `
-                <div class="modal-container" style="max-width: 400px;">
-                    <div class="modal-header">
-                        <h2><i class="bi bi-person-check"></i> Assign Driver</h2>
-                        <button class="modal-close" onclick="document.getElementById('assignDriverModal').remove()"><i class="bi bi-x-lg"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <p style="margin-bottom: 15px;">Assign a driver to order <strong>#${orderNumber}</strong></p>
-                        <select id="selectedDriver" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
-                            ${driverOptions}
-                        </select>
-                    </div>
-                    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
-                        <button class="btn btn-ghost" onclick="document.getElementById('assignDriverModal').remove()">Cancel</button>
-                        <button class="btn btn-primary" onclick="submitAssignDriver('${orderId}')"><i class="bi bi-check-lg"></i> Assign</button>
-                    </div>
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <h2><i class="bi ${icon}"></i> ${title}</h2>
+                <button class="modal-close" onclick="document.getElementById('unifiedAssignModal').remove()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="margin-bottom: 20px; color: var(--text-secondary); line-height: 1.5;">${description}</p>
+                
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver</label>
+                    <select id="unifiedDriverSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <option value="">-- Choose a Driver --</option>
+                        ${driverOptions}
+                    </select>
                 </div>
-            `;
+
+                ${type === 'collection' ? `
+                <div class="form-group" style="margin-top: 15px;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Notes (Optional)</label>
+                    <input type="text" id="unifiedAssignNotes" class="form-control" placeholder="Instructions for driver..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                </div>` : ''}
+
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-ghost" onclick="document.getElementById('unifiedAssignModal').remove()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitUnifiedAssignment()" id="unifiedSubmitBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); min-width: 120px;">
+                    <i class="bi bi-check-lg"></i> Confirm
+                </button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
 }
 
-async function submitAssignDriver(orderId) {
-    const driverId = document.getElementById('selectedDriver').value;
+async function submitUnifiedAssignment() {
+    const driverId = document.getElementById('unifiedDriverSelect').value;
+    const notes = document.getElementById('unifiedAssignNotes')?.value || '';
+
+    if (!driverId) {
+        showToast('Please select a driver', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('unifiedSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+    const { orderId, type } = assignmentContext;
+    let url = '';
+    let body = { driver_id: driverId };
+
+    if (type === 'collection') {
+        url = `${API_URL}/delivery/assign-collection/${orderId}`;
+        body.notes = notes;
+    } else {
+        url = `${API_URL}/delivery/assign/${orderId}`;
+    }
+
     try {
-        const res = await fetch(`${API_URL}/delivery/assign/${orderId}`, {
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ driver_id: driverId })
+            body: JSON.stringify(body)
         });
+
         const data = await res.json();
+
         if (res.ok) {
-            showToast(data.message || 'Driver assigned!', 'success');
-            document.getElementById('assignDriverModal').remove();
-            loadDeliveryData();
+            showToast(`✅ Driver assigned successfully for ${type}`, 'success');
+            document.getElementById('unifiedAssignModal').remove();
+
+            // Refresh all relevant sections
             loadOrders();
             loadStats();
+            if (typeof loadDeliveryData === 'function') loadDeliveryData();
         } else {
-            showToast(data.error || 'Failed to assign driver', 'error');
+            showToast(data.error || 'Assignment failed', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Confirm';
         }
     } catch (err) {
+        console.error(err);
         showToast('Connection error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Confirm';
     }
 }
 
