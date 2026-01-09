@@ -184,6 +184,17 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
         const commissionRate = parseFloat(order.commission_rate || 0.15);
         const netPayout = parseFloat(order.garage_payout_amount || (partPrice - platformFee));
 
+        // PARSE CATEGORY/SUBCATEGORY from Description (if formatted as [Cat - Sub] Desc)
+        // User requested to keep ONLY Category and Subcategory
+        let displayPartName = order.part_name;
+        const catMatch = order.part_name.match(/^\[(.*?)\s-\s(.*?)\]/);
+        if (catMatch) {
+            // Found [Category - Subcategory] pattern
+            // Keep ONLY "Category - Subcategory"
+            displayPartName = `${catMatch[1]} - ${catMatch[2]}`;
+        }
+
+
         // Build document data based on invoice type
         let documentData: DocumentData;
 
@@ -223,7 +234,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
                 // Item Details
                 item: {
                     vehicle: `${order.car_make} ${order.car_model} ${order.car_year}`,
-                    part_name: order.part_name,
+                    part_name: displayPartName,
                     part_number: order.part_number || 'N/A',
                     condition: formatConditionBilingual(order.part_condition),
                     warranty_days: warrantyDays,
@@ -281,7 +292,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
                 // Item Details
                 item: {
                     vehicle: `${order.car_make} ${order.car_model} ${order.car_year}`,
-                    part_name: order.part_name,
+                    part_name: displayPartName,
                     part_number: order.part_number || 'N/A',
                     condition: formatConditionBilingual(order.part_condition),
                     warranty_days: warrantyDays,
