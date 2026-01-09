@@ -1,16 +1,17 @@
 /**
  * Push Notification Service for QScrap Driver App
  * 
- * Handles local notifications for driver alerts.
+ * Enterprise-grade notifications with high-priority channels
+ * for drivers who may be driving and need loud alerts.
  * Uses Expo Notifications API.
  */
 
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { api } from './api';
 
-// Configure notification behavior
+// Configure notification behavior - critical for drivers!
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowAlert: true,
@@ -18,6 +19,7 @@ Notifications.setNotificationHandler({
         shouldSetBadge: true,
         shouldShowBanner: true,
         shouldShowList: true,
+        priority: Notifications.AndroidNotificationPriority.MAX,
     }),
 });
 
@@ -25,9 +27,8 @@ Notifications.setNotificationHandler({
  * Request notification permissions and get token
  */
 export const registerForPushNotifications = async (): Promise<string | null> => {
-    // Check if running on a physical device (not simulator/emulator)
-    const isDevice = Constants.isDevice ?? true;
-    if (!isDevice) {
+    // Check if running on a physical device
+    if (!Device.isDevice) {
         console.log('[Notifications] Must use physical device for push notifications');
         return null;
     }
@@ -46,17 +47,52 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
             return null;
         }
 
-        // Get Expo push token
+        // Get Expo push token - using the same projectId as customer app
         const tokenData = await Notifications.getExpoPushTokenAsync({
-            projectId: 'qscrap-driver' // Update with actual Expo project ID if needed
+            projectId: '47b26c9d-3bd0-4470-8543-dd303a49b287'
         });
 
         const token = tokenData.data;
         console.log('[Notifications] Push token:', token);
 
+        // Setup Android notification channels
+        if (Platform.OS === 'android') {
+            // CRITICAL: Assignments channel - maximum priority for drivers
+            await Notifications.setNotificationChannelAsync('assignments', {
+                name: 'Delivery Assignments',
+                description: 'New pickup and delivery assignments - URGENT',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 500, 250, 500, 250, 500], // Strong triple vibration
+                enableLights: true,
+                lightColor: '#C9A227',
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                bypassDnd: true, // CRITICAL: Bypass Do Not Disturb for drivers!
+                enableVibrate: true,
+            });
+
+            // Status updates channel - high priority
+            await Notifications.setNotificationChannelAsync('status', {
+                name: 'Status Updates',
+                description: 'Order status changes',
+                importance: Notifications.AndroidImportance.HIGH,
+                vibrationPattern: [0, 250, 250, 250],
+                enableVibrate: true,
+            });
+
+            // Default channel
+            await Notifications.setNotificationChannelAsync('default', {
+                name: 'General',
+                description: 'General notifications',
+                importance: Notifications.AndroidImportance.DEFAULT,
+            });
+
+            console.log('[Notifications] Android channels configured');
+        }
+
         // Register with backend
         try {
             await api.registerPushToken(token, Platform.OS as 'ios' | 'android');
+            console.log('[Notifications] Token registered with backend');
         } catch (e) {
             console.log('[Notifications] Failed to register token with backend:', e);
         }
@@ -69,21 +105,23 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 };
 
 /**
- * Schedule a local notification
+ * Schedule a local notification with high priority
  */
 export const scheduleLocalNotification = async (
     title: string,
     body: string,
-    data?: Record<string, any>
+    data?: Record<string, any>,
+    channelId: string = 'assignments'
 ): Promise<string> => {
     try {
         const id = await Notifications.scheduleNotificationAsync({
             content: {
                 title,
                 body,
-                sound: 'default',
+                sound: true,
                 data: data || {},
-                priority: Notifications.AndroidNotificationPriority.HIGH,
+                priority: Notifications.AndroidNotificationPriority.MAX,
+                vibrate: [0, 500, 250, 500],
             },
             trigger: null, // Immediate
         });
@@ -128,6 +166,14 @@ export const clearBadge = async (): Promise<void> => {
     await Notifications.setBadgeCountAsync(0);
 };
 
+/**
+ * Check if notifications are enabled
+ */
+export const areNotificationsEnabled = async (): Promise<boolean> => {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+};
+
 export default {
     registerForPushNotifications,
     scheduleLocalNotification,
@@ -135,4 +181,6 @@ export default {
     addNotificationResponseListener,
     setBadgeCount,
     clearBadge,
+    areNotificationsEnabled,
 };
+

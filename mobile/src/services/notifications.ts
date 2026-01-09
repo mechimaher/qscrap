@@ -69,33 +69,58 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         // Store token locally
         await storage.setItem(storage.StorageKey.PUSH_TOKEN, token);
 
-        // Configure Android channel
+        // Configure Android channels with Keeta/Talabat-style alerts
         if (Platform.OS === 'android') {
+            // Default channel - maximum importance
             await Notifications.setNotificationChannelAsync('default', {
                 name: 'QScrap Notifications',
                 importance: Notifications.AndroidImportance.MAX,
-                vibrationPattern: [0, 250, 250, 250],
+                vibrationPattern: [0, 400, 200, 400],
                 lightColor: '#6366f1',
+                enableLights: true,
+                enableVibrate: true,
             });
 
-            // Additional channels for different notification types
+            // Orders channel - HIGH priority with strong vibration
             await Notifications.setNotificationChannelAsync('orders', {
                 name: 'Order Updates',
                 description: 'Updates about your orders',
-                importance: Notifications.AndroidImportance.HIGH,
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 500, 250, 500],
+                enableVibrate: true,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             });
 
+            // Delivery channel - CRITICAL for real-time tracking
+            await Notifications.setNotificationChannelAsync('delivery', {
+                name: 'Delivery Tracking',
+                description: 'Real-time delivery updates',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 500, 250, 500, 250, 500],
+                enableVibrate: true,
+                enableLights: true,
+                lightColor: '#22c55e',
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            });
+
+            // Bids channel - high priority
             await Notifications.setNotificationChannelAsync('bids', {
                 name: 'New Bids',
                 description: 'Notifications when you receive new bids',
                 importance: Notifications.AndroidImportance.HIGH,
+                vibrationPattern: [0, 300, 150, 300],
+                enableVibrate: true,
             });
 
+            // Messages channel
             await Notifications.setNotificationChannelAsync('messages', {
                 name: 'Messages',
                 description: 'Support chat messages',
-                importance: Notifications.AndroidImportance.DEFAULT,
+                importance: Notifications.AndroidImportance.HIGH,
+                vibrationPattern: [0, 200, 100, 200],
             });
+
+            console.log('[Notifications] Android channels configured');
         }
 
         // Configure iOS notification categories with action buttons
