@@ -640,10 +640,13 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
         await client.query('BEGIN');
 
         // Get order with customer info for notifications
+        // [FIX] Fetch garage/customer lat/lng for accurate driver navigation
         const orderResult = await client.query(`
             SELECT o.order_id, o.order_number, o.order_status, o.customer_id, o.garage_id,
                    pr.part_description, g.garage_name, g.address as pickup_address,
-                   u.full_name as customer_name, o.delivery_address
+                   g.location_lat as garage_lat, g.location_lng as garage_lng,
+                   u.full_name as customer_name, o.delivery_address,
+                   pr.delivery_lat, pr.delivery_lng
             FROM orders o
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN garages g ON o.garage_id = g.garage_id
@@ -683,20 +686,35 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
             throw new Error(`Driver is currently ${driver.status}`);
         }
 
-        // Create assignment with pickup/delivery addresses
+        // Create assignment with pickup/delivery addresses AND GPS COORDINATES
+        // [FIX] Consistently save lat/lng for OSRM navigation
         const assignResult = await client.query(`
-            INSERT INTO delivery_assignments (order_id, driver_id, pickup_address, delivery_address, estimated_pickup, estimated_delivery)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO delivery_assignments (
+                order_id, driver_id, 
+                pickup_address, pickup_lat, pickup_lng,
+                delivery_address, delivery_lat, delivery_lng,
+                estimated_pickup, estimated_delivery
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (order_id) DO UPDATE SET
                 driver_id = $2,
                 pickup_address = $3,
-                delivery_address = $4,
-                estimated_pickup = $5,
-                estimated_delivery = $6,
+                pickup_lat = $4,
+                pickup_lng = $5,
+                delivery_address = $6,
+                delivery_lat = $7,
+                delivery_lng = $8,
+                estimated_pickup = $9,
+                estimated_delivery = $10,
                 status = 'assigned',
                 updated_at = NOW()
             RETURNING *
-        `, [order_id, driver_id, order.pickup_address, order.delivery_address, estimated_pickup || null, estimated_delivery || null]);
+        `, [
+            order_id, driver_id,
+            order.pickup_address, order.garage_lat, order.garage_lng,
+            order.delivery_address, order.delivery_lat, order.delivery_lng,
+            estimated_pickup || null, estimated_delivery || null
+        ]);
 
         // Update driver status to busy
         await client.query(
@@ -732,16 +750,28 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
                 target_role: 'driver'
             });
 
+            // [FIX] Emit full GPS data for immediate navigation
             io.to(`driver_${driver.user_id}`).emit('new_assignment', {
                 assignment_id: assignResult.rows[0].assignment_id,
                 order_id,
                 order_number: order.order_number,
                 part_description: order.part_description,
+
                 pickup_address: order.pickup_address,
+                pickup_lat: order.garage_lat ? parseFloat(order.garage_lat) : null,
+                pickup_lng: order.garage_lng ? parseFloat(order.garage_lng) : null,
+
                 delivery_address: order.delivery_address,
+                delivery_lat: order.delivery_lat ? parseFloat(order.delivery_lat) : null,
+                delivery_lng: order.delivery_lng ? parseFloat(order.delivery_lng) : null,
+
                 customer_name: order.customer_name,
                 garage_name: order.garage_name,
                 estimated_delivery: estimated_delivery,
+
+                has_pickup_gps: order.garage_lat !== null && order.garage_lng !== null,
+                has_delivery_gps: order.delivery_lat !== null && order.delivery_lng !== null,
+
                 notification: `📦 New assignment: Order #${order.order_number}`
             });
         }
