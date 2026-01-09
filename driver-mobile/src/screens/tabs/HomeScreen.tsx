@@ -104,6 +104,15 @@ export default function HomeScreen() {
         setIsAvailable(driver?.status === 'available');
     }, [driver?.status]);
 
+    // CRITICAL FIX: Auto-start location tracking when app opens if driver is already available
+    // Without this, GPS shows "Acquiring..." forever when reopening the app
+    useEffect(() => {
+        if (driver?.status === 'available' && !isTracking && hasPermission) {
+            console.log('[Home] Auto-starting location tracking (driver already available)');
+            startTracking();
+        }
+    }, [driver?.status, hasPermission]);
+
     const loadData = async () => {
         try {
             const [statsRes, assignmentsRes] = await Promise.all([
