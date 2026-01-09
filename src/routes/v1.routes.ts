@@ -38,6 +38,9 @@ import reviewsRoutes from './reviews.routes';
 import driverRoutes from './driver.routes';
 import chatRoutes from './chat.routes';
 
+// Push Notifications
+import pushRoutes from './push.routes';
+
 // Admin Routes
 import adminRoutes from './admin.routes';
 import addressRoutes from './address.routes';
@@ -96,6 +99,7 @@ v1Router.use('/catalog', showcaseRoutes);
 
 v1Router.use('/driver', driverRoutes);
 v1Router.use('/chat', chatRoutes);
+v1Router.use('/notifications', pushRoutes);
 
 // ==========================================
 // ADMIN ROUTES
