@@ -688,14 +688,16 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
 
         // Create assignment with pickup/delivery addresses AND GPS COORDINATES
         // [FIX] Consistently save lat/lng for OSRM navigation
+        // [FIX] Explicitly set assignment_type = 'delivery' to transition from collection phase
         const assignResult = await client.query(`
             INSERT INTO delivery_assignments (
                 order_id, driver_id, 
                 pickup_address, pickup_lat, pickup_lng,
                 delivery_address, delivery_lat, delivery_lng,
-                estimated_pickup, estimated_delivery
+                estimated_pickup, estimated_delivery,
+                assignment_type
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'delivery')
             ON CONFLICT (order_id) DO UPDATE SET
                 driver_id = $2,
                 pickup_address = $3,
@@ -706,6 +708,7 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
                 delivery_lng = $8,
                 estimated_pickup = $9,
                 estimated_delivery = $10,
+                assignment_type = 'delivery',
                 status = 'assigned',
                 updated_at = NOW()
             RETURNING *
