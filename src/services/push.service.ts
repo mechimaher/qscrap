@@ -30,6 +30,10 @@ interface PushTicket {
     details?: { error?: string };
 }
 
+interface ExpoResponse {
+    data: PushTicket[];
+}
+
 interface SendResult {
     success: boolean;
     ticketId?: string;
@@ -216,7 +220,7 @@ class PushService {
                 return messages.map(() => ({ success: false, error: `HTTP ${response.status}` }));
             }
 
-            const data = await response.json();
+            const data = await response.json() as ExpoResponse;
             const tickets: PushTicket[] = data.data || [];
 
             const results: SendResult[] = tickets.map((ticket, idx) => {
