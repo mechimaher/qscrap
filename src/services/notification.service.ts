@@ -203,3 +203,15 @@ export const createBatchNotifications = async (payloads: NotificationPayload[]) 
         client.release();
     }
 };
+
+/**
+ * Get unread count
+ */
+export const getUnreadCount = async (userId: string) => {
+    const result = await pool.query(
+        `SELECT COUNT(*) FROM notifications 
+         WHERE user_id = $1 AND is_read = false`,
+        [userId]
+    );
+    return parseInt(result.rows[0].count);
+};
