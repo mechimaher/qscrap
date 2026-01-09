@@ -3794,7 +3794,7 @@ async function downloadGarageInvoice(orderId) {
 // ============================================
 
 let unreadNotificationCount = 0;
-let notifications = []; // Define notifications array globally
+// notifications array is defined at the top of the file (line 58)
 
 // Helper function for escaping HTML (assuming it's not defined elsewhere)
 function escapeHTML(str) {
