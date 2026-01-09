@@ -87,7 +87,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.qscrap.driver'
+    namespace 'com.qscrapdriver'
     defaultConfig {
         applicationId 'com.qscrap.driver'
         minSdkVersion rootProject.ext.minSdkVersion

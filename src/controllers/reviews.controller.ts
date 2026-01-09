@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
+import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { createNotification } from '../services/notification.service';
 
 // ============================================
 // PUBLIC/CUSTOMER: Get Garage Reviews
@@ -167,7 +169,7 @@ export const getPendingReviews = async (req: AuthRequest, res: Response) => {
 };
 
 // ============================================
-// OPERATIONS: Get All Reviews (with filters)
+// Placeholder until file verifiedws (with filters)
 // ============================================
 
 export const getAllReviews = async (req: AuthRequest, res: Response) => {
@@ -259,12 +261,14 @@ export const moderateReview = async (req: AuthRequest, res: Response) => {
                 rejection_reason = $3,
                 is_visible = $4
             WHERE review_id = $5
-            RETURNING review_id, moderation_status
+            RETURNING review_id, moderation_status, garage_id
         `, [newStatus, moderatorId, rejection_reason || null, action === 'approve', review_id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Review not found' });
         }
+
+        const review = result.rows[0];
 
         // If approved, trigger garage rating update
         if (action === 'approve') {
@@ -281,8 +285,18 @@ export const moderateReview = async (req: AuthRequest, res: Response) => {
                         FROM order_reviews 
                         WHERE garage_id = g.garage_id AND moderation_status = 'approved'
                     )
-                WHERE g.garage_id = (SELECT garage_id FROM order_reviews WHERE review_id = $1)
-            `, [review_id]);
+                WHERE g.garage_id = $1
+            `, [review.garage_id]);
+
+            // Notify Garage (Persistent)
+            await createNotification({
+                userId: review.garage_id,
+                type: 'new_review',
+                title: 'New Review Received! ⭐',
+                message: 'A customer review has been approved and is now visible.',
+                data: { review_id: review.review_id },
+                target_role: 'garage'
+            });
         }
 
         res.json({

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
+import { createNotification } from '../services/notification.service';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import logger from '../utils/logger';
 
@@ -552,14 +553,23 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
         await client.query('COMMIT');
 
         // =================================================================
-        // Socket.IO Notifications
+        // Socket.IO Notifications + Persistent
         // =================================================================
         const io = (global as any).io;
 
-        // Notify customer - refund approved
+        // Notify customer - refund approved (Persistent)
         const refundMsg = resolution === 'refund_approved'
             ? `Refund of ${finalRefundAmount} QAR approved. Your refund will be processed shortly.`
             : 'Dispute resolved in favor of garage';
+
+        await createNotification({
+            userId: dispute.customer_id,
+            type: 'dispute_resolved',
+            title: resolution === 'refund_approved' ? 'Refund Approved ✅' : 'Dispute Resolved',
+            message: `Your dispute for Order #${dispute.order_number} has been resolved. ${refundMsg}`,
+            data: { dispute_id, order_id: dispute.order_id, order_number: dispute.order_number, resolution, refund_amount: finalRefundAmount },
+            target_role: 'customer'
+        });
 
         io.to(`user_${dispute.customer_id}`).emit('dispute_resolved', {
             dispute_id,
@@ -570,15 +580,26 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             notification: `Your dispute for Order #${dispute.order_number} has been resolved. ${refundMsg}`
         });
 
-        // Notify garage - part return incoming
+        // Notify garage (Persistent)
+        const garageResolutionMsg = resolution === 'refund_approved'
+            ? `Dispute for Order #${dispute.order_number} resolved. Part will be returned to your garage.`
+            : `Dispute for Order #${dispute.order_number} has been resolved in your favor.`;
+
+        await createNotification({
+            userId: dispute.garage_id,
+            type: 'dispute_resolved',
+            title: 'Dispute Resolved ⚖️',
+            message: garageResolutionMsg,
+            data: { dispute_id, order_id: dispute.order_id, order_number: dispute.order_number, resolution },
+            target_role: 'garage'
+        });
+
         io.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', {
             dispute_id,
             order_id: dispute.order_id,
             order_number: dispute.order_number,
             resolution,
-            notification: resolution === 'refund_approved'
-                ? `Dispute for Order #${dispute.order_number} resolved. Part will be returned to your garage.`
-                : `Dispute for Order #${dispute.order_number} has been resolved in your favor.`
+            notification: garageResolutionMsg
         });
 
         // If return assignment created, notify Operations about pending return
