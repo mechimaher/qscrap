@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { pushService } from '../services/push.service';
 
 // ============================================================================
 // DELIVERY CHAT CONTROLLER
@@ -355,6 +356,21 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
                     message: message.trim(),
                     created_at: newMessage.created_at
                 });
+
+                // CRITICAL: Send push notification for background/locked phone delivery
+                // Socket.IO only works when app is active - push notifications work always
+                try {
+                    await pushService.sendChatNotification(
+                        recipientId,        // driver's user_id
+                        'Customer',         // sender name
+                        message.trim(),     // message content
+                        order_id,
+                        assignment.order_number
+                    );
+                } catch (pushError) {
+                    console.error('[Chat] Push notification failed:', pushError);
+                    // Don't fail the request if push fails - socket already sent
+                }
             }
         }
 
