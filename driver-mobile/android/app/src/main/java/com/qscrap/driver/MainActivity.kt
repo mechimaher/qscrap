@@ -1,4 +1,4 @@
-package com.qscrapdriver
+package com.qscrap.driver
 
 import android.os.Build
 import android.os.Bundle
