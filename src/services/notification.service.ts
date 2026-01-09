@@ -138,13 +138,68 @@ export const getUserNotifications = async (userId: string, limit = 50) => {
 };
 
 /**
- * Get unread count
+ * Create multiple notifications efficiently (Batch Insert)
  */
-export const getUnreadCount = async (userId: string) => {
-    const result = await pool.query(
-        `SELECT COUNT(*) FROM notifications 
-         WHERE user_id = $1 AND is_read = false`,
-        [userId]
-    );
-    return parseInt(result.rows[0].count);
+export const createBatchNotifications = async (payloads: NotificationPayload[]) => {
+    if (payloads.length === 0) return 0;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Prepare bulk insert
+        // VALUES ($1,$2,$3,$4,$5), ($6,$7,$8,$9,$10), ...
+        const values: any[] = [];
+        const placeholders: string[] = [];
+        let pIndex = 1;
+
+        payloads.forEach(p => {
+            if (p.target_role !== 'operations') {
+                placeholders.push(`($${pIndex++}, $${pIndex++}, $${pIndex++}, $${pIndex++}, $${pIndex++}, false)`);
+                values.push(p.userId, p.type, p.title, p.message, JSON.stringify(p.data || {}));
+            }
+        });
+
+        if (placeholders.length > 0) {
+            const query = `
+                INSERT INTO notifications (user_id, type, title, message, data, is_read)
+                VALUES ${placeholders.join(', ')}
+            `;
+            await client.query(query, values);
+        }
+
+        await client.query('COMMIT');
+
+        // Emit socket events individually (or use room broadcast if applicable)
+        // For distinct users, we must loop.
+        const io = (global as any).io;
+        if (io) {
+            payloads.forEach(p => {
+                const socketPayload = {
+                    notification_id: 'temp_' + Date.now(),
+                    type: p.type,
+                    title: p.title,
+                    message: p.message,
+                    data: p.data,
+                    created_at: new Date()
+                };
+
+                if (p.target_role === 'garage') {
+                    io.to(`garage_${p.userId}`).emit('new_notification', socketPayload);
+                } else if (p.target_role === 'customer') {
+                    io.to(`user_${p.userId}`).emit('new_notification', socketPayload);
+                } else if (p.target_role === 'driver') {
+                    io.to(`driver_${p.userId}`).emit('new_notification', socketPayload);
+                }
+            });
+        }
+
+        return payloads.length;
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('[NotificationService] Batch create failed:', err);
+        return 0;
+    } finally {
+        client.release();
+    }
 };

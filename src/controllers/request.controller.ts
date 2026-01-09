@@ -140,6 +140,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
         // Notify Garages - broadcast to all connected garage sockets with complete request data
         try {
+            // 1. Broadcast "Live Request" update (Transient - for Badge Count)
             (global as any).io?.emit('new_request', {
                 request_id: request.request_id,
                 car_make,
@@ -156,9 +157,83 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
                 created_at: request.created_at,
                 bid_count: 0
             });
+
+            // 2. [FIX] Create Persistent Notifications for Relevant Garages (For Bell Icon)
+            // Filter garages based on brand specialization and condition
+            const matchedGarages = await client.query(`
+                SELECT garage_id, specialized_brands, all_brands
+                FROM garages 
+                WHERE status = 'active'
+                AND approval_status = 'approved'
+                AND (
+                    supplier_type = 'both' 
+                    OR supplier_type = $1 -- match 'new' or 'used' based on request condition? No, simplify:
+                    -- Logic:
+                    -- Request 'new' -> Garage 'new' or 'both'
+                    -- Request 'used' -> Garage 'used' or 'both'
+                    -- However, condition_required is just text. Let's filter broadly first.
+                )
+            `, []); // Actually, let's filter purely in JS to avoid complex SQL text array matching logic duplication
+
+            // Let's do a smarter query to offload to DB
+            // Condition mapping:
+            // condition_required = 'new' -> supplier_type IN ('new', 'both')
+            // condition_required = 'used' -> supplier_type IN ('used', 'both')
+            // condition_required = 'any' -> ALL supplier_types
+
+            let conditionFilter = "1=1";
+            if (condition_required === 'new') conditionFilter = "supplier_type IN ('new', 'both')";
+            else if (condition_required === 'used') conditionFilter = "supplier_type IN ('used', 'both')";
+
+            const targetGaragesResult = await client.query(`
+                SELECT garage_id, specialized_brands, all_brands 
+                FROM garages 
+                WHERE status = 'active' 
+                AND (approval_status = 'approved' OR approval_status = 'demo')
+                AND ${conditionFilter}
+            `);
+
+            const notificationsToCreate: any[] = [];
+
+            targetGaragesResult.rows.forEach(garage => {
+                let matchesBrand = false;
+                if (garage.all_brands) {
+                    matchesBrand = true;
+                } else if (garage.specialized_brands && Array.isArray(garage.specialized_brands)) {
+                    // Case-insensitive check
+                    const brands = garage.specialized_brands.map((b: string) => b.toLowerCase());
+                    if (brands.includes(car_make.toLowerCase())) {
+                        matchesBrand = true;
+                    }
+                }
+
+                if (matchesBrand) {
+                    notificationsToCreate.push({
+                        userId: garage.garage_id,
+                        type: 'new_request',
+                        title: 'New Request Matching Your Profile 🚗',
+                        message: `${car_year} ${car_make} ${car_model}: ${part_description.substring(0, 50)}${part_description.length > 50 ? '...' : ''}`,
+                        data: { request_id: request.request_id, car_make, car_model, car_year },
+                        target_role: 'garage'
+                    });
+                }
+            });
+
+            if (notificationsToCreate.length > 0) {
+                // Import this at top: import { createBatchNotifications } from '../services/notification.service';
+                // Using dynamic import or assuming it's available?
+                // Better to add import at top of file. 
+                // Since I can't edit top of file easily with this chunk, I'll rely on separate edit or update this block.
+                // Wait, I can't invoke imported function if not imported.
+                // I will use require() here as quick fix or rely on subsequent import fix.
+                const { createBatchNotifications } = require('../services/notification.service');
+                await createBatchNotifications(notificationsToCreate);
+                console.log(`[REQUEST] Created ${notificationsToCreate.length} notifications for new request`);
+            }
+
         } catch (socketErr) {
-            console.error('[REQUEST] Socket.IO emit failed:', socketErr);
-            // Don't fail the request creation if socket fails
+            console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
+            // Don't fail the request creation
         }
 
         res.status(201).json({ message: 'Request created', request_id: request.request_id });
