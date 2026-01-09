@@ -2234,6 +2234,13 @@ async function saveGarageLocation() {
         return;
     }
 
+    const btn = document.querySelector('button[onclick="saveGarageLocation()"]');
+    const originalContent = btn ? btn.innerHTML : 'Save Location';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    }
+
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/location`, {
             method: 'PUT',
@@ -2251,17 +2258,34 @@ async function saveGarageLocation() {
         const data = await res.json();
 
         if (res.ok) {
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Saved!';
+                btn.className = 'btn btn-success';
+            }
             showToast('📍 Location saved! Drivers can now navigate to your garage.', 'success');
+
             if (data.warning) {
                 showToast(data.warning, 'warning');
             }
-            loadProfile(); // Refresh to show GPS Set badge
+
+            // Delay reload slightly so user sees "Saved!"
+            setTimeout(() => {
+                loadProfile();
+            }, 1500);
         } else {
             showToast(data.error || 'Failed to save location', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
         }
     } catch (err) {
         console.error('Save location error:', err);
         showToast('Connection error', 'error');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 }
 
