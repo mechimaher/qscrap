@@ -3823,27 +3823,28 @@ async function loadNotifications() {
 }
 
 function renderNotificationsList() {
-    const list = document.getElementById('notificationList');
-    if (!list) return; // Should be in the dropdown
-
-    // We need to inject the dropdown HTML if it doesn't exist yet? 
-    // Usually header logic is static. Let's assume there is a container.
-    // If not, we might need to adjust the HTML or build it here.
+    const list = document.getElementById('notificationsList');
+    if (!list) return;
 
     if (notifications.length === 0) {
-        list.innerHTML = '<div class="empty-notifications">No notifications</div>';
+        list.innerHTML = `
+            <div class="notification-empty">
+                <i class="bi bi-bell-slash" style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.5;"></i>
+                No notifications
+            </div>
+        `;
         return;
     }
 
     list.innerHTML = notifications.map(n => `
-        <div class="notification-item ${n.is_read ? 'read' : 'unread'}" onclick="markNotificationRead('${n.notification_id}')">
-            <div class="notif-icon">
+        <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.notification_id}')">
+            <div class="icon">
                 ${getNotificationIcon(n.type)}
             </div>
             <div class="notif-content">
-                <div class="notif-title">${escapeHTML(n.title)}</div>
-                <div class="notif-msg">${escapeHTML(n.message)}</div>
-                <div class="notif-time">${getTimeAgo(n.created_at)}</div>
+                <div class="notif-title" style="font-weight: 600; font-size: 14px; margin-bottom: 2px;">${escapeHTML(n.title)}</div>
+                <div class="notif-message" style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">${escapeHTML(n.message)}</div>
+                <div class="notif-time" style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${getTimeAgo(n.created_at)}</div>
             </div>
         </div>
     `).join('');
@@ -3895,18 +3896,11 @@ function prependNotification(n) {
 function updateNotificationBadge(increment = false) {
     if (increment) unreadNotificationCount++;
 
-    const badge = document.querySelector('.notification-badge'); // Needs to be added to HTML
-    // We can also target the icon container
-
-    // Finding the bell icon container in header
-    const bellContainer = document.querySelector('.header-actions .btn-icon');
+    const badge = document.getElementById('notificationBadge');
 
     if (badge) {
         badge.textContent = unreadNotificationCount;
-        badge.style.display = unreadNotificationCount > 0 ? 'block' : 'none';
-    } else {
-        // If badge element missing, try to find bell and append it? 
-        // Best to update HTML file for structure.
+        badge.style.display = unreadNotificationCount > 0 ? 'flex' : 'none'; // Ops uses flex
     }
 }
 
@@ -3934,14 +3928,10 @@ async function markNotificationRead(id) {
     }
 }
 
-function toggleNotificationDropdown() {
-    const dropdown = document.getElementById('notificationDropdown');
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationsDropdown');
     if (dropdown) {
-        dropdown.classList.toggle('active');
-        if (dropdown.classList.contains('active')) {
-            // Maybe mark all displayed as read when opened? OR individual?
-            // Usually individual click or "Mark all read" button.
-        }
+        dropdown.classList.toggle('show'); // Ops uses 'show', Garage used 'active'
     }
 }
 
