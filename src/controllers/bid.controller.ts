@@ -2,7 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
-import { emitToUser, emitToGarage } from '../utils/socketIO';
+import { emitToGarage, emitToUser, emitToOperations } from '../utils/socketIO';
+import { createNotification } from '../services/notification.service';
 import fs from 'fs/promises';
 
 // ============================================
@@ -131,15 +132,23 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
         await client.query('COMMIT');
 
         // Notify Customer (Real-time) - must match mobile app BidNotification interface
+        // Notify Customer (Real-time & Persistent)
         try {
-            emitToUser(customerId, 'new_bid', {
-                bid_id: bidResult.rows[0].bid_id,
-                request_id: targetRequestId,
-                garage_name: `Garage #${bidNumber}`,
-                bid_amount: amountCheck.value,
-                part_condition: part_condition || 'used_good',
-                warranty_days: validatedWarranty || 0,
-                created_at: bidResult.rows[0].created_at
+            await createNotification({
+                userId: customerId,
+                type: 'new_bid',
+                title: 'New Bid Received 🏷️',
+                message: `Garage #${bidNumber} placed a bid of ${amountCheck.value} QAR`,
+                data: {
+                    bid_id: bidResult.rows[0].bid_id,
+                    request_id: targetRequestId,
+                    garage_name: `Garage #${bidNumber}`,
+                    bid_amount: amountCheck.value,
+                    part_condition: part_condition || 'used_good',
+                    warranty_days: validatedWarranty || 0,
+                    created_at: bidResult.rows[0].created_at
+                },
+                target_role: 'customer'
             });
             console.log(`[SOCKET] Emitted new_bid to user_${customerId}`);
         } catch (socketErr) {

@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { io } from '../server';
+import { createNotification } from '../services/notification.service';
 
 // Create a new support ticket
 export const createTicket = async (req: AuthRequest, res: Response) => {
@@ -32,7 +33,16 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify Operations
+        // Notify Operations (Persistent + Socket)
+        await createNotification({
+            userId: 'operations',
+            type: 'new_support_ticket',
+            title: 'New Support Ticket 🎫',
+            message: `New ticket: ${subject}`,
+            data: { ticket_id: ticket.ticket_id, subject },
+            target_role: 'operations'
+        });
+
         io.to('operations').emit('new_ticket', {
             ticket: ticket,
             message: messageResult.rows[0]
@@ -186,13 +196,30 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 
             const message = result.rows[0];
 
-            // Real-time notification
-            // Notify the room specific to the ticket
+            // Real-time notification (Persistent + Socket)
             io.to(`ticket_${ticket_id}`).emit('new_message', message);
 
             if (senderType === 'admin') {
+                // Notify customer of admin reply (Persistent)
+                await createNotification({
+                    userId: customerId,
+                    type: 'support_reply',
+                    title: 'Support Reply 💬',
+                    message: 'You have a new reply from support',
+                    data: { ticket_id },
+                    target_role: 'customer'
+                });
                 io.to(`user_${customerId}`).emit('support_reply', { ticket_id, message });
             } else {
+                // Notify operations of customer message (Persistent)
+                await createNotification({
+                    userId: 'operations',
+                    type: 'support_reply',
+                    title: 'Customer Reply 💬',
+                    message: 'Customer replied to a support ticket',
+                    data: { ticket_id },
+                    target_role: 'operations'
+                });
                 io.to('operations').emit('support_reply', { ticket_id, message });
             }
 

@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { getDeliveryFeeForLocation } from './delivery.controller';
+import { createNotification } from '../services/notification.service';
 
 // Get commission rate based on garage's status and subscription
 // BUSINESS LOGIC:
@@ -150,33 +151,52 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify winning garage (use garage_ room, not user_)
-        (global as any).io.to(`garage_${bid.garage_id}`).emit('bid_accepted', {
-            order_id: order.order_id,
-            order_number: order.order_number,
-            request_id: bid.request_id,
-            notification: "🎉 Congratulations! Your bid was accepted."
+        // Notify winning garage (Persistent)
+        await createNotification({
+            userId: bid.garage_id, // Garage has user_id mechanism or we map it? 
+            // WAIT - Garages table has user_id column? Or is garage login separate?
+            // Garages table has `garage_id`. In `auth.controller` garage login returns `userId` = `garage.garage_id` (actually it returns `garage_id` as `userId`).
+            // So we can use `bid.garage_id` as userId.
+            type: 'bid_accepted',
+            title: 'Bid Accepted! 🎉',
+            message: "Congratulations! Your bid was accepted.",
+            data: {
+                order_id: order.order_id,
+                order_number: order.order_number,
+                request_id: bid.request_id
+            },
+            target_role: 'garage'
         });
 
-        // Notify customer that order is created
-        (global as any).io.to(`user_${customerId}`).emit('order_created', {
-            order_id: order.order_id,
-            order_number: order.order_number,
-            total_amount,
-            notification: `✅ Order #${order.order_number} created! The garage will start preparing your part.`
+        // Notify customer (Persistent)
+        await createNotification({
+            userId: customerId,
+            type: 'order_created',
+            title: 'Order Created ✅',
+            message: `Order #${order.order_number} created! The garage will start preparing your part.`,
+            data: {
+                order_id: order.order_id,
+                order_number: order.order_number,
+                total_amount
+            },
+            target_role: 'customer'
         });
 
-        // Notify rejected garages (also use garage_ room)
+        // Notify rejected garages (Persistent)
         const rejectedBids = await pool.query(
             `SELECT DISTINCT garage_id FROM bids WHERE request_id = $1 AND bid_id != $2`,
             [bid.request_id, bid_id]
         );
-        rejectedBids.rows.forEach((r: Record<string, unknown>) => {
-            (global as any).io.to(`garage_${r.garage_id}`).emit('bid_rejected', {
-                request_id: bid.request_id,
-                notification: "Another bid was selected for this request."
+        for (const r of rejectedBids.rows) {
+            await createNotification({
+                userId: r.garage_id,
+                type: 'bid_rejected',
+                title: 'Bid Update',
+                message: "Another bid was selected for this request.",
+                data: { request_id: bid.request_id },
+                target_role: 'garage'
             });
-        });
+        }
 
         res.json({
             message: 'Order created successfully',
@@ -587,12 +607,20 @@ export const submitReview = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify Operations about new review pending moderation
-        (global as any).io.to('operations').emit('new_review_pending', {
+        // Notify Operations of new review (Persistent)
+        await createNotification({
+            userId: 'operations',
+            type: 'new_review_submission',
+            title: 'New Review Pending',
+            message: `Review pending for Order #${orderCheck.rows[0].order_number}`,
+            data: { order_id },
+            target_role: 'operations'
+        });
+
+        // Broadcast to operations dashboard
+        (global as any).io.to('operations').emit('review_submitted', {
             order_id,
-            garage_id: garageId,
-            overall_rating,
-            notification: `⭐ New ${overall_rating}-star review submitted - pending moderation`
+            notification: 'New review pending moderation'
         });
 
         res.json({ message: 'Thank you for your review!' });

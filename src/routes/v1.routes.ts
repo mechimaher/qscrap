@@ -99,7 +99,9 @@ v1Router.use('/catalog', showcaseRoutes);
 
 v1Router.use('/driver', driverRoutes);
 v1Router.use('/chat', chatRoutes);
-v1Router.use('/notifications', pushRoutes);
+import notificationRoutes from './notification.routes';
+// v1Router.use('/notifications', pushRoutes); // Deprecated in favor of generic notification system
+v1Router.use('/notifications', notificationRoutes);
 
 // ==========================================
 // ADMIN ROUTES

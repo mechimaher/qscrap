@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { createNotification } from '../services/notification.service';
 
 const MAX_NEGOTIATION_ROUNDS = 3;
 
@@ -73,13 +74,17 @@ export const createCounterOffer = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify garage
-        const io = (global as any).io;
-        console.log(`[COUNTER-OFFER] Emitting to garage_${bid.garage_id}`, {
-            counter_offer_id: result.rows[0].counter_offer_id,
-            proposed_amount,
-            original_amount: bid.bid_amount
+        // Notify garage (Persistent + Socket)
+        await createNotification({
+            userId: bid.garage_id,
+            type: 'counter_offer_received',
+            title: 'Counter-Offer Received 💰',
+            message: `Customer counter-offered ${proposed_amount} QAR (was ${bid.bid_amount} QAR)`,
+            data: { counter_offer_id: result.rows[0].counter_offer_id, bid_id, proposed_amount, round: currentRound },
+            target_role: 'garage'
         });
+
+        const io = (global as any).io;
         io.to(`garage_${bid.garage_id}`).emit('counter_offer_received', {
             counter_offer_id: result.rows[0].counter_offer_id,
             bid_id: bid_id,
@@ -156,7 +161,16 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
 
             await client.query('COMMIT');
 
-            // Notify customer
+            // Notify customer (Persistent + Socket)
+            await createNotification({
+                userId: co.customer_id,
+                type: 'counter_offer_accepted',
+                title: 'Offer Accepted! ✅',
+                message: `Your counter-offer of ${co.proposed_amount} QAR was accepted!`,
+                data: { bid_id: co.bid_id, new_amount: co.proposed_amount },
+                target_role: 'customer'
+            });
+
             const io = (global as any).io;
             io.to(`user_${co.customer_id}`).emit('counter_offer_accepted', {
                 bid_id: co.bid_id,
@@ -175,12 +189,23 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
 
             await client.query('COMMIT');
 
-            // Notify customer - different message if at final round
-            const io = (global as any).io;
+            // Notify customer (Persistent + Socket)
             const isFinalRound = co.round_number >= MAX_NEGOTIATION_ROUNDS;
+            const notifMessage = isFinalRound
+                ? `Final round: Your offer of ${co.proposed_amount} QAR was declined. Garage price: ${co.bid_amount} QAR`
+                : `Your counter-offer was declined. Original price: ${co.bid_amount} QAR`;
 
+            await createNotification({
+                userId: co.customer_id,
+                type: 'counter_offer_rejected',
+                title: 'Offer Declined ❌',
+                message: notifMessage,
+                data: { bid_id: co.bid_id, is_final_round: isFinalRound, original_bid_amount: co.bid_amount },
+                target_role: 'customer'
+            });
+
+            const io = (global as any).io;
             if (isFinalRound) {
-                // At round 3/3, guide customer to accept or decline the original bid
                 io.to(`user_${co.customer_id}`).emit('counter_offer_rejected', {
                     bid_id: co.bid_id,
                     is_final_round: true,
@@ -226,7 +251,16 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
 
             await client.query('COMMIT');
 
-            // Notify customer
+            // Notify customer (Persistent + Socket)
+            await createNotification({
+                userId: co.customer_id,
+                type: 'garage_counter_offer',
+                title: 'Garage Counter-Offer 🔄',
+                message: `Garage counter-offered ${counter_amount} QAR`,
+                data: { counter_offer_id: newCo.rows[0].counter_offer_id, bid_id: co.bid_id, proposed_amount: counter_amount, round: co.round_number + 1 },
+                target_role: 'customer'
+            });
+
             const io = (global as any).io;
             io.to(`user_${co.customer_id}`).emit('garage_counter_offer', {
                 counter_offer_id: newCo.rows[0].counter_offer_id,
@@ -302,7 +336,16 @@ export const customerRespondToCounter = async (req: AuthRequest, res: Response) 
 
             await client.query('COMMIT');
 
-            // Notify garage
+            // Notify garage (Persistent + Socket)
+            await createNotification({
+                userId: co.garage_id,
+                type: 'counter_offer_accepted',
+                title: 'Offer Accepted! ✅',
+                message: `Customer accepted your counter-offer of ${co.proposed_amount} QAR!`,
+                data: { bid_id: co.bid_id, new_amount: co.proposed_amount },
+                target_role: 'garage'
+            });
+
             const io = (global as any).io;
             io.to(`garage_${co.garage_id}`).emit('counter_offer_accepted', {
                 bid_id: co.bid_id,
@@ -320,6 +363,16 @@ export const customerRespondToCounter = async (req: AuthRequest, res: Response) 
             );
 
             await client.query('COMMIT');
+
+            // Notify garage (Persistent + Socket)
+            await createNotification({
+                userId: co.garage_id,
+                type: 'counter_offer_rejected',
+                title: 'Offer Rejected ❌',
+                message: 'Customer rejected your counter-offer',
+                data: { bid_id: co.bid_id },
+                target_role: 'garage'
+            });
 
             const io = (global as any).io;
             io.to(`garage_${co.garage_id}`).emit('counter_offer_rejected', {
@@ -349,6 +402,16 @@ export const customerRespondToCounter = async (req: AuthRequest, res: Response) 
             );
 
             await client.query('COMMIT');
+
+            // Notify garage (Persistent + Socket)
+            await createNotification({
+                userId: co.garage_id,
+                type: 'counter_offer_received',
+                title: 'Counter-Offer Received 💰',
+                message: `Customer counter-offered ${counter_amount} QAR`,
+                data: { counter_offer_id: newCo.rows[0].counter_offer_id, bid_id: co.bid_id, proposed_amount: counter_amount, round: co.round_number + 1 },
+                target_role: 'garage'
+            });
 
             const io = (global as any).io;
             io.to(`garage_${co.garage_id}`).emit('counter_offer_received', {
@@ -502,7 +565,16 @@ export const acceptLastGarageOffer = async (req: AuthRequest, res: Response) => 
 
         await client.query('COMMIT');
 
-        // Notify garage
+        // Notify garage (Persistent + Socket)
+        await createNotification({
+            userId: bid.garage_id,
+            type: 'bid_accepted_at_final_price',
+            title: 'Bid Accepted! ✅',
+            message: `Customer accepted your final price: ${finalAmount} QAR`,
+            data: { bid_id, final_amount: finalAmount },
+            target_role: 'garage'
+        });
+
         const io = (global as any).io;
         io.to(`garage_${bid.garage_id}`).emit('bid_accepted_at_final_price', {
             bid_id: bid_id,

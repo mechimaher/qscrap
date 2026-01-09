@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { createNotification } from '../services/notification.service';
 import bcrypt from 'bcrypt';
 // Get payout summary and pending payouts
 export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
@@ -305,8 +306,25 @@ export const createRefund = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify garage about refund impact on their payout
+        // Notify garage about refund impact on their payout (Persistent)
         const io = (global as any).io;
+
+        await createNotification({
+            userId: order.garage_id,
+            type: 'refund_issued',
+            title: 'Refund Issued ⚠️',
+            message: isFullRefund
+                ? `Order #${order.order_number} fully refunded. Payout cancelled.`
+                : `Order #${order.order_number} partially refunded (${refund_amount} QAR). Payout adjusted.`,
+            data: {
+                order_id,
+                order_number: order.order_number,
+                refund_amount,
+                payout_action: payoutResult.action_taken
+            },
+            target_role: 'garage'
+        });
+
         if (io) {
             io.to(`garage_${order.garage_id}`).emit('refund_issued', {
                 order_id,
@@ -748,8 +766,25 @@ export const sendPayment = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify garage via Socket.IO
+        // Notify garage via Socket.IO & Persistent
         const io = (global as any).io;
+
+        await createNotification({
+            userId: payout.garage_id,
+            type: 'payment_sent',
+            title: 'Payment Sent 💰',
+            message: `Payment of ${payout.net_amount} QAR sent via ${payout_method}. Ref: ${payout_reference}`,
+            data: {
+                payout_id,
+                order_number: payout.order_number,
+                amount: payout.net_amount,
+                method: payout_method,
+                reference: payout_reference,
+                deadline: confirmationDeadline.toISOString()
+            },
+            target_role: 'garage'
+        });
+
         if (io) {
             io.to(`garage_${payout.garage_id}`).emit('payment_sent', {
                 payout_id: payout_id,

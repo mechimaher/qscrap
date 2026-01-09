@@ -3,7 +3,8 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
-
+import { createNotification } from '../services/notification.service';
+import fs from 'fs/promises';
 // Dispute reason configurations with refund rules
 const DISPUTE_CONFIGS: Record<string, {
     refundPercent: number;
@@ -111,10 +112,41 @@ export const createDispute = async (req: AuthRequest, res: Response) => {
             [order_id]
         );
 
+        const dispute = disputeResult.rows[0];
+
         await client.query('COMMIT');
 
         // Notify garage with full dispute data
         const io = (global as any).io;
+
+        // Notify Garage (Persistent)
+        await createNotification({
+            userId: order.garage_id,
+            type: 'dispute_created',
+            title: 'New Dispute ⚠️',
+            message: `A dispute was opened for Order #${order.order_number}`,
+            data: {
+                dispute_id: dispute.dispute_id,
+                order_id: order_id,
+                order_number: order.order_number
+            },
+            target_role: 'garage'
+        });
+
+        // Notify Operations (Persistent)
+        await createNotification({
+            userId: 'operations',
+            type: 'dispute_created',
+            title: 'New Dispute Opened',
+            message: `Dispute opened for Order #${order.order_number} (Reason: ${reason})`,
+            data: {
+                dispute_id: dispute.dispute_id,
+                order_id: order_id,
+                garage_id: order.garage_id
+            },
+            target_role: 'operations'
+        });
+
         io.to(`garage_${order.garage_id}`).emit('dispute_created', {
             dispute_id: disputeResult.rows[0].dispute_id,
             order_id: order_id,

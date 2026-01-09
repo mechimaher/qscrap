@@ -272,6 +272,9 @@ async function showDashboard() {
         initializePremiumFeatures();
     }
 
+    // Initial Load of Notifications
+    loadNotifications();
+
     // Sync ignored requests from backend (merge with localStorage)
     try {
         const res = await fetch(`${API_URL}/requests/ignored/list`, {
@@ -298,12 +301,37 @@ async function showDashboard() {
         updateBadge();
     });
 
+    // GENERIC NOTIFICATION LISTENER (Persistent)
+    socket.on('new_notification', (data) => {
+        // Play sound based on type
+        if (data.type === 'bid_accepted') playNotificationSound('success');
+        else if (data.type === 'new_request') playNotificationSound('newRequest');
+        else playNotificationSound('default');
+
+        // Add to list and update badge
+        prependNotification(data);
+        updateNotificationBadge(true); // Increment unread count
+
+        // Show toast
+        showToast(data.message, data.type === 'error' ? 'error' : 'info');
+    });
+
     socket.on('bid_accepted', (data) => {
         playNotificationSound('success');
         showToast(data.notification, 'success');
+
+        // Refresh Data
         loadBids();
         loadOrders();
-        loadStats();
+        loadStats(); // This updates the Active Orders badge
+        loadRequests(); // VVIP FIX: Refresh requests to remove the one that was accepted
+
+        // Instant UI Update: Remove request from local list immediately
+        if (data.request_id) {
+            requests = requests.filter(r => r.request_id !== data.request_id);
+            renderRequests();
+            updateBadge(); // Updates the Requests badge immediately
+        }
     });
 
     socket.on('bid_rejected', (data) => {
@@ -498,6 +526,13 @@ async function loadStats() {
             animateCounter('statAcceptedBids', data.stats.accepted_bids_month, 800);
             animateCounter('statActiveOrders', data.stats.active_orders, 800);
             animateCounter('statRevenue', data.stats.revenue_month, 1000);
+
+            // Update Sidebar Badges
+            const ordersBadge = document.getElementById('activeOrdersBadge');
+            if (ordersBadge) {
+                ordersBadge.textContent = data.stats.active_orders;
+                ordersBadge.style.display = data.stats.active_orders > 0 ? 'flex' : 'none';
+            }
         }
         if (data.profile && data.profile.garage_name) {
             document.getElementById('userName').textContent = data.profile.garage_name;
@@ -3752,6 +3787,178 @@ async function downloadGarageInvoice(orderId) {
         console.error('Invoice download error:', err);
         showToast('Connection error', 'error');
     }
+}
+
+// ============================================
+// NOTIFICATION SYSTEM UI
+// ============================================
+
+let unreadNotificationCount = 0;
+let notifications = []; // Define notifications array globally
+
+// Helper function for escaping HTML (assuming it's not defined elsewhere)
+function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
+async function loadNotifications() {
+    try {
+        const res = await fetch(`${API_URL}/notifications?limit=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.notifications) {
+            notifications = data.notifications; // Update global array
+            renderNotificationsList();
+
+            unreadNotificationCount = data.unread_count || 0;
+            updateNotificationBadge(false);
+        }
+    } catch (err) {
+        console.error('Failed to load notifications:', err);
+    }
+}
+
+function renderNotificationsList() {
+    const list = document.getElementById('notificationList');
+    if (!list) return; // Should be in the dropdown
+
+    // We need to inject the dropdown HTML if it doesn't exist yet? 
+    // Usually header logic is static. Let's assume there is a container.
+    // If not, we might need to adjust the HTML or build it here.
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<div class="empty-notifications">No notifications</div>';
+        return;
+    }
+
+    list.innerHTML = notifications.map(n => `
+        <div class="notification-item ${n.is_read ? 'read' : 'unread'}" onclick="markNotificationRead('${n.notification_id}')">
+            <div class="notif-icon">
+                ${getNotificationIcon(n.type)}
+            </div>
+            <div class="notif-content">
+                <div class="notif-title">${escapeHTML(n.title)}</div>
+                <div class="notif-msg">${escapeHTML(n.message)}</div>
+                <div class="notif-time">${getTimeAgo(n.created_at)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getNotificationIcon(type) {
+    switch (type) {
+        // Bid/Order
+        case 'bid_accepted': return '<i class="bi bi-check-circle-fill text-success"></i>';
+        case 'bid_rejected': return '<i class="bi bi-x-circle-fill text-danger"></i>';
+        case 'bid_accepted_at_final_price': return '<i class="bi bi-check2-all text-success"></i>';
+        case 'new_request': return '<i class="bi bi-inbox-fill text-primary"></i>';
+        case 'request_deleted': return '<i class="bi bi-trash text-secondary"></i>';
+        case 'request_cancelled': return '<i class="bi bi-slash-circle text-warning"></i>';
+        case 'order_status': return '<i class="bi bi-box-seam text-info"></i>';
+        case 'order_cancelled': return '<i class="bi bi-x-octagon text-danger"></i>';
+        case 'order_delivered': return '<i class="bi bi-check2-square text-success"></i>';
+        case 'order_collected': return '<i class="bi bi-box text-info"></i>';
+        // Negotiation
+        case 'counter_offer_received': return '<i class="bi bi-chat-quote-fill text-primary"></i>';
+        case 'counter_offer_accepted': return '<i class="bi bi-hand-thumbs-up-fill text-success"></i>';
+        case 'counter_offer_rejected': return '<i class="bi bi-hand-thumbs-down-fill text-danger"></i>';
+        case 'garage_counter_offer': return '<i class="bi bi-chat-dots-fill text-info"></i>';
+        // Finance
+        case 'payment_sent': return '<i class="bi bi-cash-stack text-success"></i>';
+        case 'refund_issued': return '<i class="bi bi-arrow-counterclockwise text-warning"></i>';
+        case 'payout_completed': return '<i class="bi bi-wallet2 text-success"></i>';
+        case 'payout_released': return '<i class="bi bi-unlock-fill text-info"></i>';
+        // Review
+        case 'new_review': return '<i class="bi bi-star-fill text-warning"></i>';
+        // Dispute
+        case 'dispute_created': return '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+        case 'dispute_resolved': return '<i class="bi bi-shield-check text-success"></i>';
+        // Driver/Delivery
+        case 'collection_driver_assigned': return '<i class="bi bi-truck text-info"></i>';
+        case 'driver_assigned': return '<i class="bi bi-person-badge text-primary"></i>';
+        case 'new_assignment': return '<i class="bi bi-geo-alt-fill text-primary"></i>';
+        // Default
+        default: return '<i class="bi bi-bell-fill text-secondary"></i>';
+    }
+}
+
+function prependNotification(n) {
+    notifications.unshift(n);
+    if (notifications.length > 20) notifications.pop();
+    renderNotificationsList();
+}
+
+function updateNotificationBadge(increment = false) {
+    if (increment) unreadNotificationCount++;
+
+    const badge = document.querySelector('.notification-badge'); // Needs to be added to HTML
+    // We can also target the icon container
+
+    // Finding the bell icon container in header
+    const bellContainer = document.querySelector('.header-actions .btn-icon');
+
+    if (badge) {
+        badge.textContent = unreadNotificationCount;
+        badge.style.display = unreadNotificationCount > 0 ? 'block' : 'none';
+    } else {
+        // If badge element missing, try to find bell and append it? 
+        // Best to update HTML file for structure.
+    }
+}
+
+async function markNotificationRead(id) {
+    try {
+        await fetch(`${API_URL}/notifications/mark-read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ notification_ids: [id] })
+        });
+
+        // Update local state
+        const notif = notifications.find(n => n.notification_id === id);
+        if (notif && !notif.is_read) {
+            notif.is_read = true;
+            unreadNotificationCount = Math.max(0, unreadNotificationCount - 1);
+            updateNotificationBadge();
+            renderNotificationsList();
+        }
+    } catch (err) {
+        console.error('Failed to mark read:', err);
+    }
+}
+
+function toggleNotificationDropdown() {
+    const dropdown = document.getElementById('notificationDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+        if (dropdown.classList.contains('active')) {
+            // Maybe mark all displayed as read when opened? OR individual?
+            // Usually individual click or "Mark all read" button.
+        }
+    }
+}
+
+// Helper to format time
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
 }
 
 // ============================================

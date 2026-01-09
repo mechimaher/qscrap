@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
+import { createNotification } from '../services/notification.service';
 
 // Get all drivers
 export const getDrivers = async (req: AuthRequest, res: Response) => {
@@ -330,32 +331,47 @@ export const assignCollectionDriver = async (req: AuthRequest, res: Response) =>
         // Socket notifications
         const io = (global as any).io;
 
-        // Notify driver about new collection assignment with GPS for one-click navigation
+        // Notify driver about new collection assignment with GPS for one-click navigation (Persistent + Socket)
         if (driver.user_id) {
+            await createNotification({
+                userId: driver.user_id,
+                type: 'new_assignment',
+                title: 'New Collection Assignment 📦',
+                message: `Pick up Order #${order.order_number} from ${order.garage_name}`,
+                data: { assignment_id: assignResult.rows[0].assignment_id, order_id, order_number: order.order_number, assignment_type: 'collection' },
+                target_role: 'driver'
+            });
+
             io.to(`driver_${driver.user_id}`).emit('new_assignment', {
                 assignment_id: assignResult.rows[0].assignment_id,
                 assignment_type: 'collection',
                 order_id,
                 order_number: order.order_number,
                 part_description: order.part_description,
-                // Pickup location (garage) - for collection phase
                 pickup_address: order.garage_address,
                 pickup_lat: order.garage_lat ? parseFloat(order.garage_lat) : null,
                 pickup_lng: order.garage_lng ? parseFloat(order.garage_lng) : null,
-                // Delivery location (customer) - for delivery phase 
                 delivery_address: order.delivery_address,
                 delivery_lat: order.delivery_lat ? parseFloat(order.delivery_lat) : null,
                 delivery_lng: order.delivery_lng ? parseFloat(order.delivery_lng) : null,
                 customer_name: order.customer_name,
                 garage_name: order.garage_name,
-                // Flag to indicate GPS availability for navigation
                 has_pickup_gps: order.garage_lat !== null && order.garage_lng !== null,
                 has_delivery_gps: order.delivery_lat !== null && order.delivery_lng !== null,
                 notification: `📦 New collection: Order #${order.order_number} - Pick up from ${order.garage_name}`
             });
         }
 
-        // Notify garage that driver is on the way
+        // Notify garage that driver is on the way (Persistent + Socket)
+        await createNotification({
+            userId: order.garage_id,
+            type: 'collection_driver_assigned',
+            title: 'Driver En Route 🚚',
+            message: `Driver ${driver.full_name} is on the way to collect Order #${order.order_number}`,
+            data: { order_id, order_number: order.order_number, driver_name: driver.full_name },
+            target_role: 'garage'
+        });
+
         io.to(`garage_${order.garage_id}`).emit('collection_driver_assigned', {
             order_id,
             order_number: order.order_number,
@@ -527,6 +543,16 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             notification: `📦 Order #${order.order_number} collected - ready for QC!`
         });
 
+        // Notify customer (Persistent + Socket)
+        await createNotification({
+            userId: order.customer_id,
+            type: 'order_collected',
+            title: 'Part Collected 📦',
+            message: `Your part has been collected and is heading to quality inspection!`,
+            data: { order_id, order_number: order.order_number },
+            target_role: 'customer'
+        });
+
         io.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
@@ -695,8 +721,17 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
         // Socket notifications
         const io = (global as any).io;
 
-        // Notify the DRIVER about new assignment
+        // Notify the DRIVER about new assignment (Persistent + Socket)
         if (driver.user_id) {
+            await createNotification({
+                userId: driver.user_id,
+                type: 'new_assignment',
+                title: 'New Delivery Assignment 📦',
+                message: `Deliver Order #${order.order_number} to customer`,
+                data: { assignment_id: assignResult.rows[0].assignment_id, order_id, order_number: order.order_number, assignment_type: 'delivery' },
+                target_role: 'driver'
+            });
+
             io.to(`driver_${driver.user_id}`).emit('new_assignment', {
                 assignment_id: assignResult.rows[0].assignment_id,
                 order_id,
@@ -711,7 +746,16 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // Notify customer with driver info
+        // Notify customer with driver info (Persistent + Socket)
+        await createNotification({
+            userId: order.customer_id,
+            type: 'driver_assigned',
+            title: 'Driver Assigned 🚚',
+            message: `Driver ${driver.full_name} is on the way with your part!`,
+            data: { order_id, order_number: order.order_number, driver_name: driver.full_name, driver_phone: driver.phone },
+            target_role: 'customer'
+        });
+
         io.to(`user_${order.customer_id}`).emit('driver_assigned', {
             order_id,
             order_number: order.order_number,
@@ -1025,10 +1069,19 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // CRITICAL: Emit socket notification to customer for real-time update
+        // CRITICAL: Emit socket notification to customer for real-time update + Persist
         const io = (global as any).io;
         if (io && status === 'delivered') {
-            // Notify customer - delivery completed, please confirm
+            // Notify customer - delivery completed (Persistent)
+            await createNotification({
+                userId: assignment.customer_id,
+                type: 'order_delivered',
+                title: 'Order Delivered ✅',
+                message: `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`,
+                data: { order_id: assignment.order_id, order_number: assignment.order_number },
+                target_role: 'customer'
+            });
+
             io.to(`user_${assignment.customer_id}`).emit('order_status_updated', {
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,
@@ -1045,7 +1098,16 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
                 notification: `Your part has arrived! Please confirm delivery to complete the order.`
             });
 
-            // Notify garage
+            // Notify garage (Persistent)
+            await createNotification({
+                userId: assignment.garage_id,
+                type: 'order_delivered',
+                title: 'Order Delivered',
+                message: `Order #${assignment.order_number} has been delivered to customer.`,
+                data: { order_id: assignment.order_id, order_number: assignment.order_number },
+                target_role: 'garage'
+            });
+
             io.to(`garage_${assignment.garage_id}`).emit('order_status_updated', {
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,

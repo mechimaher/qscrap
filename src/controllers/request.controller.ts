@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { createNotification } from '../services/notification.service';
 import fs from 'fs/promises';
 
 // ============================================
@@ -540,12 +541,18 @@ export const deleteRequest = async (req: AuthRequest, res: Response) => {
 
         // Notify all garages that had bids that the request is gone
         const io = (global as any).io;
-        garageIds.forEach((garageId: string) => {
-            io.to(`garage_${garageId}`).emit('request_deleted', {
-                request_id,
-                notification: 'A request you bid on has been deleted by the customer'
+
+        // Persist notifications for affected bidders
+        for (const garageId of garageIds) {
+            await createNotification({
+                userId: garageId,
+                type: 'request_deleted',
+                title: 'Request Deleted',
+                message: 'A request you bid on has been deleted by the customer',
+                data: { request_id },
+                target_role: 'garage'
             });
-        });
+        }
 
         // Also broadcast to all garages that this request no longer exists
         io.emit('request_removed', { request_id });

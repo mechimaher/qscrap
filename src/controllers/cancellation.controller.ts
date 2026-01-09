@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { createNotification } from '../services/notification.service';
 
 // ============================================
 // REQUEST CANCELLATION (by Customer)
@@ -56,14 +57,22 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify all bidding garages
+        // Notify all bidding garages (Persistent + Socket)
         const garageIds = bidsResult.rows.map(r => r.garage_id);
-        garageIds.forEach(garageId => {
+        for (const garageId of garageIds) {
+            await createNotification({
+                userId: garageId,
+                type: 'request_cancelled',
+                title: 'Request Cancelled',
+                message: 'The customer has cancelled this request',
+                data: { request_id },
+                target_role: 'garage'
+            });
             (global as any).io.to(`garage_${garageId}`).emit('request_cancelled', {
                 request_id,
                 message: 'The customer has cancelled this request'
             });
-        });
+        }
 
         // Also broadcast to all garage room so everyone sees the request removed
         (global as any).io.emit('request_cancelled', {
@@ -136,7 +145,16 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify customer
+        // Notify customer (Persistent + Socket)
+        await createNotification({
+            userId: bid.customer_id,
+            type: 'bid_withdrawn',
+            title: 'Bid Withdrawn',
+            message: 'A garage has withdrawn their bid',
+            data: { request_id: bid.request_id },
+            target_role: 'customer'
+        });
+
         (global as any).io.to(`user_${bid.customer_id}`).emit('bid_withdrawn', {
             request_id: bid.request_id,
             message: 'A garage has withdrawn their bid'
@@ -302,7 +320,16 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
 
         await client.query('COMMIT');
 
-        // Notify garage (use garage_ room)
+        // Notify garage (Persistent + Socket)
+        await createNotification({
+            userId: order.garage_id,
+            type: 'order_cancelled',
+            title: 'Order Cancelled 🚫',
+            message: `Customer has cancelled Order #${order.order_number}`,
+            data: { order_id, order_number: order.order_number, cancelled_by: 'customer' },
+            target_role: 'garage'
+        });
+
         (global as any).io.to(`garage_${order.garage_id}`).emit('order_cancelled', {
             order_id,
             order_number: order.order_number,
@@ -411,7 +438,16 @@ export const cancelOrderByGarage = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify customer
+        // Notify customer (Persistent + Socket)
+        await createNotification({
+            userId: order.customer_id,
+            type: 'order_cancelled',
+            title: 'Order Cancelled 🚫',
+            message: `Garage cannot fulfill Order #${order.order_number}. Full refund will be processed.`,
+            data: { order_id, order_number: order.order_number, cancelled_by: 'garage', refund_amount: order.total_amount },
+            target_role: 'customer'
+        });
+
         (global as any).io.to(`user_${order.customer_id}`).emit('order_cancelled', {
             order_id,
             order_number: order.order_number,
