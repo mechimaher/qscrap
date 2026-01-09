@@ -42,8 +42,9 @@ export class DriverRepository {
             SELECT 
                 da.assignment_id, da.order_id, da.status, da.status as assignment_status,
                 da.pickup_address, da.delivery_address,
-                da.pickup_lat, da.pickup_lng, da.delivery_lat, da.delivery_lng,
-                da.current_lat, da.current_lng,
+                da.pickup_lat::FLOAT as pickup_lat, da.pickup_lng::FLOAT as pickup_lng, 
+                da.delivery_lat::FLOAT as delivery_lat, da.delivery_lng::FLOAT as delivery_lng,
+                da.current_lat::FLOAT as current_lat, da.current_lng::FLOAT as current_lng,
                 da.estimated_delivery, da.pickup_at, da.delivered_at,
                 da.delivery_photo_url, da.driver_notes as delivery_notes,
                 da.created_at as assigned_at,
@@ -77,7 +78,13 @@ export class DriverRepository {
         const db = this.getClient(client);
         const result = await db.query(`
             SELECT 
-                da.*, d.driver_id,
+                da.assignment_id, da.order_id, da.driver_id, da.status, da.assignment_type,
+                da.pickup_address, da.delivery_address, 
+                da.pickup_lat::FLOAT as pickup_lat, da.pickup_lng::FLOAT as pickup_lng, 
+                da.delivery_lat::FLOAT as delivery_lat, da.delivery_lng::FLOAT as delivery_lng,
+                da.estimated_pickup, da.estimated_delivery,
+                da.pickup_at, da.delivered_at,
+                da.delivery_photo_url, da.signature_url, da.driver_notes,
                 o.order_number, o.order_status, o.total_amount, o.created_at as order_created,
                 o.customer_id, o.garage_id,
                 pr.part_description, pr.car_make, pr.car_model, pr.car_year,
