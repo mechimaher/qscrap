@@ -1,18 +1,16 @@
-// QScrap Driver App - Navigation Screen
+// QScrap Driver App - Navigation Screen (MapLibre Edition)
 // VVIP Full-screen turn-by-turn navigation with voice guidance
-// Premium feature inspired by Uber/Talabat navigation
+// Uses OpenStreetMap via MapLibre - No Google Maps API Key required
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
-    Dimensions,
     Alert,
-    Platform,
 } from 'react-native';
-import MapView, { Marker, Polyline, Region } from 'react-native-maps';
+import MapLibreGL from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
 import * as Haptics from 'expo-haptics';
@@ -22,7 +20,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { getRoute, formatDistance, formatDuration, getManeuverIcon, LatLng, Route } from '../services/routing.service';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Initialize MapLibre with NO access token
+MapLibreGL.setAccessToken(null);
 
 interface NavigationScreenParams {
     pickupLat?: number;
@@ -34,42 +33,38 @@ interface NavigationScreenParams {
     destinationAddress: string;
 }
 
+
+
 export default function NavigationScreen() {
-    const { colors, isDarkMode } = useTheme();
+    const { colors } = useTheme();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const params: NavigationScreenParams = route.params || {};
 
-    const mapRef = useRef<MapView>(null);
+    const cameraRef = useRef<MapLibreGL.Camera>(null);
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [routeData, setRouteData] = useState<Route | null>(null);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
-    const [isNavigating, setIsNavigating] = useState(true);
     const [voiceEnabled, setVoiceEnabled] = useState(true);
-    const [lastSpokenStep, setLastSpokenStep] = useState(-1);
 
-    // Determine destination
+    // Defensive parsing of coordinates
+    const pickupLat = params.pickupLat ? Number(params.pickupLat) : null;
+    const pickupLng = params.pickupLng ? Number(params.pickupLng) : null;
+    const deliveryLat = params.deliveryLat ? Number(params.deliveryLat) : null;
+    const deliveryLng = params.deliveryLng ? Number(params.deliveryLng) : null;
+
     const destination: LatLng | null = params.destinationType === 'pickup'
-        ? params.pickupLat && params.pickupLng
-            ? { latitude: params.pickupLat, longitude: params.pickupLng }
+        ? pickupLat && pickupLng
+            ? { latitude: pickupLat, longitude: pickupLng }
             : null
-        : params.deliveryLat && params.deliveryLng
-            ? { latitude: params.deliveryLat, longitude: params.deliveryLng }
+        : deliveryLat && deliveryLng
+            ? { latitude: deliveryLat, longitude: deliveryLng }
             : null;
-
-    // Dark mode map style
-    const darkMapStyle = [
-        { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-        { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#38414e' }] },
-        { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9ca5b3' }] },
-        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
-    ];
 
     // Start location tracking
     useEffect(() => {
         let subscription: Location.LocationSubscription | null = null;
+        let isMounted = true;
 
         (async () => {
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -79,41 +74,23 @@ export default function NavigationScreen() {
                 return;
             }
 
-            // Get initial location with robust error handling
-            let currentLocation: Location.LocationObject | null = null;
-            try {
-                currentLocation = await Location.getCurrentPositionAsync({
-                    accuracy: Location.Accuracy.BestForNavigation,
-                });
+            // Get initial location
+            let currentLocation = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.BestForNavigation,
+            });
+
+            if (isMounted) {
                 setLocation(currentLocation);
-            } catch (err) {
-                console.warn('[Navigation] High accuracy location failed, trying lower accuracy:', err);
-                try {
-                    // Fallback to lower accuracy for faster lock
-                    currentLocation = await Location.getCurrentPositionAsync({
-                        accuracy: Location.Accuracy.Balanced,
+                // Initial Route Fetch
+                if (destination) {
+                    fetchRoute({
+                        latitude: currentLocation.coords.latitude,
+                        longitude: currentLocation.coords.longitude
                     });
-                    setLocation(currentLocation);
-                } catch (fallbackErr) {
-                    console.error('[Navigation] All location methods failed:', fallbackErr);
-                    Alert.alert(
-                        'GPS Error',
-                        'Could not get your location. Please ensure GPS is enabled and try again.',
-                        [{ text: 'Go Back', onPress: () => navigation.goBack() }]
-                    );
-                    return;
                 }
             }
 
-            // Fetch route
-            if (destination && currentLocation) {
-                fetchRoute({
-                    latitude: currentLocation.coords.latitude,
-                    longitude: currentLocation.coords.longitude
-                });
-            }
-
-            // Subscribe to high-accuracy updates
+            // Subscribe to updates
             subscription = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.BestForNavigation,
@@ -121,6 +98,7 @@ export default function NavigationScreen() {
                     distanceInterval: 5,
                 },
                 (newLocation) => {
+                    if (!isMounted) return;
                     setLocation(newLocation);
                     updateNavigationProgress(newLocation);
                 }
@@ -128,10 +106,25 @@ export default function NavigationScreen() {
         })();
 
         return () => {
+            isMounted = false;
             subscription?.remove();
             Speech.stop();
         };
     }, []);
+
+    // Camera follow effect
+    useEffect(() => {
+        if (cameraRef.current && location) {
+            cameraRef.current.setCamera({
+                centerCoordinate: [location.coords.longitude, location.coords.latitude],
+                zoomLevel: 17,
+                pitch: 45, // 3D effect for navigation
+                heading: location.coords.heading || 0,
+                animationDuration: 1000,
+                animationMode: 'flyTo',
+            });
+        }
+    }, [location]);
 
     const fetchRoute = async (from: LatLng) => {
         if (!destination) return;
@@ -139,8 +132,6 @@ export default function NavigationScreen() {
         const result = await getRoute(from, destination);
         if (result.success && result.route) {
             setRouteData(result.route);
-
-            // Speak first instruction
             if (result.route.steps.length > 0 && voiceEnabled) {
                 speakInstruction(result.route.steps[0].instruction);
             }
@@ -150,36 +141,27 @@ export default function NavigationScreen() {
     const updateNavigationProgress = (newLocation: Location.LocationObject) => {
         if (!routeData || !destination) return;
 
-        const currentPos = {
-            latitude: newLocation.coords.latitude,
-            longitude: newLocation.coords.longitude,
-        };
+        // Arrival Check
+        const distToDest = calculateDistance(
+            { latitude: newLocation.coords.latitude, longitude: newLocation.coords.longitude },
+            destination
+        );
 
-        // Check if arrived at destination (within 50 meters)
-        const distToDest = calculateDistance(currentPos, destination);
         if (distToDest < 50) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             speakInstruction('You have arrived at your destination');
-            setIsNavigating(false);
-            return;
         }
 
-        // Update current step based on proximity to step waypoints
-        // (Simplified: advance when close to next step waypoint)
-        // Full implementation would use step geometries
+        // Simple step progress logic can be added here
     };
 
     const speakInstruction = (text: string) => {
         if (!voiceEnabled) return;
-        Speech.speak(text, {
-            language: 'en',
-            pitch: 1.0,
-            rate: 0.9,
-        });
+        Speech.speak(text, { language: 'en', pitch: 1.0, rate: 0.9 });
     };
 
     const calculateDistance = (from: LatLng, to: LatLng): number => {
-        const R = 6371000; // Earth radius in meters
+        const R = 6371000;
         const dLat = (to.latitude - from.latitude) * Math.PI / 180;
         const dLng = (to.longitude - from.longitude) * Math.PI / 180;
         const a = Math.sin(dLat / 2) ** 2 +
@@ -192,63 +174,61 @@ export default function NavigationScreen() {
     const toggleVoice = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setVoiceEnabled(!voiceEnabled);
-        if (voiceEnabled) {
-            Speech.stop();
-        }
+        if (voiceEnabled) Speech.stop();
     };
 
     const recenterMap = () => {
-        if (mapRef.current && location) {
-            mapRef.current.animateToRegion({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 500);
+        if (cameraRef.current && location) {
+            cameraRef.current.setCamera({
+                centerCoordinate: [location.coords.longitude, location.coords.latitude],
+                zoomLevel: 17,
+                pitch: 45,
+                heading: location.coords.heading || 0,
+                animationDuration: 500,
+            });
         }
     };
 
     const currentStep = routeData?.steps[currentStepIndex];
-    const nextStep = routeData?.steps[currentStepIndex + 1];
+
+    // Convert route coordinates for MapLibre [lng, lat]
+    const routeLineCoordinates = routeData?.coordinates.map(c => [c.longitude, c.latitude]) || [];
 
     return (
         <View style={styles.container}>
-            {/* Full-screen Map */}
-            <MapView
-                ref={mapRef}
+            <MapLibreGL.MapView
                 style={styles.map}
-                initialRegion={location ? {
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                } : undefined}
-                customMapStyle={isDarkMode ? darkMapStyle : []}
-                showsUserLocation={false}
-                showsCompass={false}
-                rotateEnabled={true}
-                pitchEnabled={true}
+                styleURL="https://tiles.openfreemap.org/styles/liberty"
+                logoEnabled={false}
+                attributionEnabled={false}
+                compassEnabled={false}
+                onMapLoadingError={(event) => console.error("Map Load Error:", event)}
             >
-                {/* Driver Marker */}
+                <MapLibreGL.Camera
+                    ref={cameraRef}
+                    zoomLevel={15}
+                    animationMode="flyTo"
+                    animationDuration={0}
+                />
+
+                {/* Driver Location */}
                 {location && (
-                    <Marker
-                        coordinate={{
-                            latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
-                        }}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        flat={true}
-                        rotation={location.coords.heading || 0}
+                    <MapLibreGL.PointAnnotation
+                        id="driver"
+                        coordinate={[location.coords.longitude, location.coords.latitude]}
                     >
                         <View style={styles.driverMarker}>
                             <Text style={styles.driverIcon}>🚗</Text>
                         </View>
-                    </Marker>
+                    </MapLibreGL.PointAnnotation>
                 )}
 
                 {/* Destination Marker */}
                 {destination && (
-                    <Marker coordinate={destination}>
+                    <MapLibreGL.PointAnnotation
+                        id="destination"
+                        coordinate={[destination.longitude, destination.latitude]}
+                    >
                         <View style={[styles.destMarker, {
                             backgroundColor: params.destinationType === 'pickup' ? Colors.warning : Colors.success
                         }]}>
@@ -256,22 +236,37 @@ export default function NavigationScreen() {
                                 {params.destinationType === 'pickup' ? '📦' : '🏠'}
                             </Text>
                         </View>
-                    </Marker>
+                    </MapLibreGL.PointAnnotation>
                 )}
 
-                {/* Route Polyline */}
-                {routeData && (
-                    <Polyline
-                        coordinates={routeData.coordinates}
-                        strokeColor={Colors.primary}
-                        strokeWidth={6}
-                        lineCap="round"
-                        lineJoin="round"
-                    />
+                {/* Route Line */}
+                {routeLineCoordinates.length > 1 && (
+                    <MapLibreGL.ShapeSource
+                        id="routeSource"
+                        shape={{
+                            type: 'Feature',
+                            properties: {},
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: routeLineCoordinates as any
+                            }
+                        }}
+                    >
+                        <MapLibreGL.LineLayer
+                            id="routeLine"
+                            style={{
+                                lineColor: Colors.primary,
+                                lineWidth: 6,
+                                lineCap: 'round',
+                                lineJoin: 'round',
+                                lineOpacity: 0.8
+                            }}
+                        />
+                    </MapLibreGL.ShapeSource>
                 )}
-            </MapView>
+            </MapLibreGL.MapView>
 
-            {/* Top Navigation Card */}
+            {/* Top Navigation Overlay */}
             <SafeAreaView style={styles.topOverlay} edges={['top']}>
                 <View style={[styles.navCard, { backgroundColor: colors.surface }]}>
                     {currentStep ? (
@@ -298,7 +293,7 @@ export default function NavigationScreen() {
                 </View>
             </SafeAreaView>
 
-            {/* Bottom Info Bar */}
+            {/* Bottom Controls */}
             <SafeAreaView style={styles.bottomOverlay} edges={['bottom']}>
                 <View style={[styles.bottomBar, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
@@ -347,9 +342,9 @@ export default function NavigationScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    map: { ...StyleSheet.absoluteFillObject },
+    map: { flex: 1 },
 
-    // Driver marker
+    // Markers
     driverMarker: {
         width: 44,
         height: 44,
@@ -364,8 +359,6 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     driverIcon: { fontSize: 24 },
-
-    // Destination marker
     destMarker: {
         width: 44,
         height: 44,
@@ -380,13 +373,8 @@ const styles = StyleSheet.create({
     },
     destIcon: { fontSize: 20 },
 
-    // Top overlay
-    topOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-    },
+    // Overlays
+    topOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
     navCard: {
         margin: 16,
         borderRadius: 16,
@@ -414,13 +402,7 @@ const styles = StyleSheet.create({
     navStreet: { fontSize: 16, marginTop: 2 },
     navLoading: { fontSize: 16, flex: 1, textAlign: 'center' },
 
-    // Bottom overlay
-    bottomOverlay: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-    },
+    bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0 },
     bottomBar: {
         margin: 16,
         marginBottom: 8,
@@ -457,8 +439,6 @@ const styles = StyleSheet.create({
     },
     controlButtonOff: { backgroundColor: '#e8e8e8' },
     controlIcon: { fontSize: 20 },
-
-    // Destination info
     destInfo: {
         marginHorizontal: 16,
         marginBottom: 16,

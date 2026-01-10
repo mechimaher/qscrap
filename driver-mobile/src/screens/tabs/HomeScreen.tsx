@@ -118,6 +118,7 @@ export default function HomeScreen() {
             const [statsRes, assignmentsRes] = await Promise.all([
                 api.getStats(),
                 api.getAssignments('active'),
+                refreshDriver(),
             ]);
 
             setStats(statsRes.stats);

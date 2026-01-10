@@ -27,31 +27,7 @@ interface LiveMapViewProps {
 // OpenStreetMap tile style (FREE, no API key)
 const OSM_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
 
-// Alternative: Use a more detailed OSM style
-const CARTO_STYLE = {
-    version: 8,
-    sources: {
-        'osm-tiles': {
-            type: 'raster',
-            tiles: [
-                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors',
-        },
-    },
-    layers: [
-        {
-            id: 'osm-tiles-layer',
-            type: 'raster',
-            source: 'osm-tiles',
-            minzoom: 0,
-            maxzoom: 19,
-        },
-    ],
-};
+
 
 export default function LiveMapView({
     driverLocation,
@@ -160,8 +136,7 @@ export default function LiveMapView({
         <View style={[styles.container, { height }]}>
             <MapLibreGL.MapView
                 style={styles.map}
-                // @ts-ignore
-                styleURL={OSM_STYLE_URL}
+                styleURL="https://tiles.openfreemap.org/styles/liberty"
                 logoEnabled={false}
                 attributionEnabled={false}
             >

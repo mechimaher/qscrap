@@ -37,8 +37,10 @@ try:
     
     print("✅ VPS synced with GitHub!")
     
-    # Note: Backend might restart if nodemon is watching, but usually we should rebuild if dependencies changed.
-    # No deps changed.
+    print("🔄 Rebuilding and restarting containers...")
+    stdin, stdout, stderr = client.exec_command("cd /opt/qscrap && docker compose up -d --build")
+    print(stdout.read().decode())
+    print(stderr.read().decode())
     
     client.close()
 except Exception as e:

@@ -33,7 +33,7 @@ export default function AssignmentDetailScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { assignmentId } = route.params || {};
-    const { location } = useLocation();
+    const { location, startTracking, stopTracking } = useLocation();
 
     const [assignment, setAssignment] = useState<Assignment | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +42,11 @@ export default function AssignmentDetailScreen() {
 
     useEffect(() => {
         loadAssignment();
+        // Start GPS tracking
+        startTracking();
+        return () => {
+            stopTracking();
+        };
     }, [assignmentId]);
 
     const loadAssignment = async () => {
@@ -248,7 +253,7 @@ export default function AssignmentDetailScreen() {
 
                     {/* Actions - Different for active vs completed */}
                     <View style={styles.actionRow}>
-                        {isActive && (
+                        {isActive && assignment.status === 'assigned' && (
                             <TouchableOpacity
                                 style={[styles.actionButton, styles.actionButtonPrimary]}
                                 onPress={() => openNavigation(assignment.pickup_address, assignment.pickup_lat, assignment.pickup_lng, 'pickup')}
@@ -280,7 +285,7 @@ export default function AssignmentDetailScreen() {
 
                     {/* Actions - Different for active vs completed */}
                     <View style={styles.actionRow}>
-                        {isActive && (
+                        {isActive && ['picked_up', 'in_transit'].includes(assignment.status) && (
                             <TouchableOpacity
                                 style={[styles.actionButton, styles.actionButtonPrimary]}
                                 onPress={() => openNavigation(assignment.delivery_address, assignment.delivery_lat, assignment.delivery_lng, 'delivery')}

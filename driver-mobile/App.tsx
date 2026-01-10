@@ -11,6 +11,8 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { SocketProvider } from './src/contexts/SocketContext';
 import { Colors } from './src/constants/theme';
+import * as Notifications from 'expo-notifications';
+import NotificationService from './src/services/notifications';
 
 // Import screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -128,6 +130,35 @@ function AuthNavigator() {
 // Root Navigator
 function RootNavigator() {
     const { isAuthenticated, isLoading } = useAuth();
+    const navigation = React.useRef<any>(null); // Use ref for navigation access if needed outside
+
+    // Initialize Notifications
+    React.useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const register = async () => {
+            const token = await NotificationService.registerForPushNotifications();
+            console.log('Push Token:', token);
+        };
+
+        register();
+
+        // Handle foreground notifications
+        const notificationListener = NotificationService.addNotificationReceivedListener(notification => {
+            console.log('Notification Received:', notification);
+        });
+
+        // Handle background/tap notifications
+        const responseListener = NotificationService.addNotificationResponseListener(response => {
+            console.log('Notification Tapped:', response);
+            // Logic to navigate to deep link could go here
+        });
+
+        return () => {
+            Notifications.removeNotificationSubscription(notificationListener);
+            Notifications.removeNotificationSubscription(responseListener);
+        };
+    }, [isAuthenticated]);
 
     if (isLoading) {
         return (

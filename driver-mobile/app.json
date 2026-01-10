@@ -41,6 +41,8 @@
             },
             "package": "com.qscrap.driver",
             "permissions": [
+                "INTERNET",
+                "ACCESS_NETWORK_STATE",
                 "ACCESS_COARSE_LOCATION",
                 "ACCESS_FINE_LOCATION",
                 "ACCESS_BACKGROUND_LOCATION",

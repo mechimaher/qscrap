@@ -212,7 +212,7 @@ export const subscribeToPlan = async (req: AuthRequest, res: Response) => {
 // Upgrade/Downgrade subscription
 export const changePlan = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
-    const { new_plan_code } = req.body;
+    const { plan_id } = req.body;
 
     const client = await pool.connect();
     try {
@@ -234,12 +234,12 @@ export const changePlan = async (req: AuthRequest, res: Response) => {
 
         // Get new plan
         const newPlan = await client.query(
-            `SELECT * FROM subscription_plans WHERE plan_code = $1 AND is_active = true`,
-            [new_plan_code]
+            `SELECT * FROM subscription_plans WHERE plan_id = $1 AND is_active = true`,
+            [plan_id]
         );
 
         if (newPlan.rows.length === 0) {
-            throw new Error('Invalid plan code');
+            throw new Error('Invalid plan ID');
         }
 
         const current = currentSub.rows[0];

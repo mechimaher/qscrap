@@ -3030,6 +3030,7 @@ async function showPlanOptions() {
 
     if (plansGrid.style.display === 'none') {
         plansGrid.style.display = 'grid';
+        plansGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;"><div class="loading-spinner"></div> Loading plans...</div>';
 
         try {
             const res = await fetch(`${API_URL}/subscriptions/plans`, {
@@ -3086,8 +3087,8 @@ async function changePlan(planId) {
     if (!confirm('Change to this plan? Changes take effect on next billing cycle.')) return;
 
     try {
-        const res = await fetch(`${API_URL}/subscriptions/change`, {
-            method: 'POST',
+        const res = await fetch(`${API_URL}/subscriptions/change-plan`, {
+            method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
