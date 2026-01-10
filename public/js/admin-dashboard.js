@@ -2479,23 +2479,24 @@ async function loadPlanRequests() {
     container.innerHTML = '<div class="empty-state"><i class="bi bi-hourglass"></i><p>Loading requests...</p></div>';
 
     try {
-        const res = await fetch(`${API_URL}/admin/requests`, {
+        // Pass status filter to backend
+        const res = await fetch(`${API_URL}/admin/requests?status=${status}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const requests = await res.json();
+        const data = await res.json();
+        const requests = data.requests || [];
 
-        // Update badge
-        const pendingCount = requests.filter(r => r.status === 'pending').length;
-        const badge = document.getElementById('planRequestsBadge');
-        if (badge) {
-            badge.textContent = pendingCount;
-            badge.style.display = pendingCount > 0 ? 'inline-flex' : 'none'; // Use inline-flex for better alignment
+        // Update badge if viewing pending
+        if (status === 'pending') {
+            const badge = document.getElementById('planRequestsBadge');
+            if (badge) {
+                badge.textContent = requests.length;
+                badge.style.display = requests.length > 0 ? 'inline-flex' : 'none';
+            }
         }
 
-        const filtered = requests.filter(r => r.status === status);
-
-        if (filtered.length > 0) {
-            container.innerHTML = filtered.map(renderRequestCard).join('');
+        if (requests.length > 0) {
+            container.innerHTML = requests.map(renderRequestCard).join('');
         } else {
             container.innerHTML = `
                 <div class="empty-state">
