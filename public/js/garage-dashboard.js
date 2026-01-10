@@ -2942,7 +2942,7 @@ let currentPendingRequest = null;
 
 async function loadSubscription() {
     try {
-        console.log('Garage Dashboard v2026.01.10-FIXED: Loading subscription...');
+        console.log('Garage Dashboard v2026.01.10-FIXED-2: Loading subscription...');
         const res = await fetch(`${API_URL}/subscriptions/my`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -2950,6 +2950,13 @@ async function loadSubscription() {
 
         // Assign pending request from API response
         currentPendingRequest = data.pending_request || null;
+
+        // CRITICAL FIX: If the "pending" request is for the plan we are ALREADY on, ignore it.
+        // This handles cases where admin approved manually but didn't clear the request status.
+        if (data.subscription && currentPendingRequest && currentPendingRequest.to_plan_id === data.subscription.plan_id) {
+            console.log('Suppressing stale pending request (already on target plan)');
+            currentPendingRequest = null;
+        }
 
         if (data.subscription) {
             const sub = data.subscription;
