@@ -548,6 +548,120 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
 // ============================================================================
 
 /**
+ * Get subscription change requests
+ */
+export const getSubscriptionRequests = async (req: AuthRequest, res: Response) => {
+    const { status = 'pending' } = req.query;
+
+    try {
+        const result = await pool.query(`
+            SELECT scr.*, 
+                   g.garage_name, u.phone_number,
+                   fp.plan_name as from_plan_name,
+                   tp.plan_name as to_plan_name,
+                   tp.monthly_fee as new_fee
+            FROM subscription_change_requests scr
+            JOIN garages g ON scr.garage_id = g.garage_id
+            JOIN users u ON g.garage_id = u.user_id
+            LEFT JOIN subscription_plans fp ON scr.from_plan_id = fp.plan_id
+            JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
+            WHERE scr.status = $1
+            ORDER BY scr.created_at ASC
+        `, [status]);
+
+        res.json({ requests: result.rows });
+    } catch (err) {
+        console.error('[ADMIN] getSubscriptionRequests error:', err);
+        res.status(500).json({ error: 'Failed to fetch requests' });
+    }
+};
+
+/**
+ * Approve subscription request
+ */
+export const approveSubscriptionRequest = async (req: AuthRequest, res: Response) => {
+    const { request_id } = req.params;
+    const adminId = req.user?.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Fetch request details
+            const reqQuery = await client.query(`
+                SELECT * FROM subscription_change_requests WHERE request_id = $1 AND status = 'pending' FOR UPDATE
+            `, [request_id]);
+
+            if (reqQuery.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'Request not found or already processed' });
+            }
+            const subReq = reqQuery.rows[0];
+
+            // Update Subscription
+            const newPlanId = subReq.to_plan_id;
+
+            // Logic: Is it upgrade? If so, immediate. If downgrade, schedule?
+            // For now, Admin Approval implies "Do It Now".
+            // Ideally, we might want to schedule downgrades even if admin approves, but let's stick to "Admin Power = Immediate" for flexibility.
+
+            await client.query(`
+                UPDATE garage_subscriptions 
+                SET plan_id = $1, next_plan_id = NULL, updated_at = NOW()
+                WHERE garage_id = $2 AND status IN ('active', 'trial')
+            `, [newPlanId, subReq.garage_id]);
+
+            // Mark Request Approved
+            await client.query(`
+                UPDATE subscription_change_requests
+                SET status = 'approved', processed_by = $1, updated_at = NOW()
+                WHERE request_id = $2
+            `, [adminId, request_id]);
+
+            // Log
+            await client.query(`
+                INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
+                VALUES ($1, 'approve_sub_change', 'garage', $2, $3)
+            `, [adminId, subReq.garage_id, JSON.stringify({ request_id, to_plan: newPlanId })]);
+
+            await client.query('COMMIT');
+            res.json({ message: 'Plan change approved and applied.' });
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        console.error('[ADMIN] approveSubscriptionRequest error:', err);
+        res.status(500).json({ error: 'Failed' });
+    }
+};
+
+/**
+ * Reject subscription request
+ */
+export const rejectSubscriptionRequest = async (req: AuthRequest, res: Response) => {
+    const { request_id } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user?.userId;
+
+    try {
+        await pool.query(`
+            UPDATE subscription_change_requests
+            SET status = 'rejected', admin_notes = $1, processed_by = $2, updated_at = NOW()
+            WHERE request_id = $3
+        `, [reason || 'Rejected by admin', adminId, request_id]);
+
+        res.json({ message: 'Request rejected' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed' });
+    }
+};
+
+/**
  * Get all subscription plans
  */
 export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {

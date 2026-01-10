@@ -36,13 +36,25 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
 
         // First check for active subscription in garage_subscriptions table
         const result = await pool.query(
-            `SELECT gs.*, sp.plan_code, sp.plan_name, sp.monthly_fee, 
-                    sp.commission_rate, sp.max_bids_per_month, sp.features
+            `SELECT gs.*, 
+                    sp.plan_code, sp.plan_name, sp.monthly_fee, 
+                    sp.commission_rate, sp.max_bids_per_month, sp.features,
+                    np.plan_name as next_plan_name
              FROM garage_subscriptions gs
              JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+             LEFT JOIN subscription_plans np ON gs.next_plan_id = np.plan_id
              WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial', 'past_due')
              ORDER BY gs.created_at DESC
              LIMIT 1`,
+            [garageId]
+        );
+
+        // Check for pending requests
+        const pendingRequest = await pool.query(
+            `SELECT scr.*, sp.plan_name as target_plan_name 
+             FROM subscription_change_requests scr
+             JOIN subscription_plans sp ON scr.to_plan_id = sp.plan_id
+             WHERE scr.garage_id = $1 AND scr.status = 'pending'`,
             [garageId]
         );
 
@@ -57,7 +69,8 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
                     ...sub,
                     bids_used_this_cycle: bidsThisMonth, // Use dynamic count
                     bids_remaining: bidsRemaining
-                }
+                },
+                pending_request: pendingRequest.rows[0] || null
             });
         }
 
@@ -209,57 +222,70 @@ export const subscribeToPlan = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Upgrade/Downgrade subscription
+// Upgrade/Downgrade subscription (Request based)
 export const changePlan = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
-    const { plan_id } = req.body;
+    const { plan_id, reason } = req.body;
 
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
+        // Check for existing pending request
+        const pendingCheck = await client.query(
+            `SELECT request_id FROM subscription_change_requests 
+             WHERE garage_id = $1 AND status = 'pending'`,
+            [garageId]
+        );
+
+        if (pendingCheck.rows.length > 0) {
+            throw new Error('You already have a pending plan change request.');
+        }
+
         // Get current subscription
         const currentSub = await client.query(
-            `SELECT gs.*, sp.monthly_fee as current_fee, sp.plan_name as current_plan
-             FROM garage_subscriptions gs
-             JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
-             WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
-             FOR UPDATE`,
+            `SELECT plan_id, monthly_fee FROM garage_subscriptions 
+             JOIN subscription_plans USING (plan_id)
+             WHERE garage_id = $1 AND status IN ('active', 'trial')`,
             [garageId]
         );
 
         if (currentSub.rows.length === 0) {
-            throw new Error('No active subscription to change');
+            throw new Error('No active subscription found.');
         }
 
-        // Get new plan
+        const currentPlanId = currentSub.rows[0].plan_id;
+        const currentFee = parseFloat(currentSub.rows[0].monthly_fee);
+
+        // Get new plan info
         const newPlan = await client.query(
-            `SELECT * FROM subscription_plans WHERE plan_id = $1 AND is_active = true`,
+            `SELECT monthly_fee, plan_name FROM subscription_plans WHERE plan_id = $1`,
             [plan_id]
         );
 
-        if (newPlan.rows.length === 0) {
-            throw new Error('Invalid plan ID');
-        }
+        if (newPlan.rows.length === 0) throw new Error('Invalid plan.');
+        const newFee = parseFloat(newPlan.rows[0].monthly_fee);
 
-        const current = currentSub.rows[0];
-        const newP = newPlan.rows[0];
+        // Determine request type
+        let type = 'upgrade';
+        if (newFee < currentFee) type = 'downgrade';
+        if (newFee === currentFee) type = 'upgrade'; // Side-grade treated as upgrade workflow for now
 
-        // Update subscription with new plan
+        // Create Request
         await client.query(
-            `UPDATE garage_subscriptions 
-             SET plan_id = $1, updated_at = NOW()
-             WHERE subscription_id = $2`,
-            [newP.plan_id, current.subscription_id]
+            `INSERT INTO subscription_change_requests 
+             (garage_id, from_plan_id, to_plan_id, request_type, request_reason)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [garageId, currentPlanId, plan_id, type, reason || `User requested ${type}`]
         );
 
         await client.query('COMMIT');
 
         res.json({
-            message: `Plan changed from ${current.current_plan} to ${newP.plan_name}`,
-            new_commission_rate: newP.commission_rate,
-            effective_immediately: true
+            message: `Request to switch to ${newPlan.rows[0].plan_name} submitted successfully. Waiting for admin approval.`,
+            status: 'pending'
         });
+
     } catch (err) {
         await client.query('ROLLBACK');
         res.status(400).json({ error: getErrorMessage(err) });
