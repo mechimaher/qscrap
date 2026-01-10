@@ -739,85 +739,83 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Socket notifications
+        // ============================================
+        // 4. NOTIFY ALL PARTIES (OUTSIDE TRANSACTION)
+        // ============================================
         const io = (global as any).io;
+        if (io) {
+            // A. Notify DRIVER (Persistent + Socket)
+            try {
+                // Persistent notification
+                await createNotification({
+                    userId: driver.user_id,
+                    type: 'new_assignment',
+                    title: 'New Delivery Assignment 📦',
+                    message: `Deliver Order #${order.order_number} to customer`,
+                    data: { assignment_id: assignResult.rows[0].assignment_id, order_id, order_number: order.order_number, assignment_type: 'delivery' },
+                    target_role: 'driver'
+                });
 
-        // Notify the DRIVER about new assignment (Persistent + Socket)
-        if (driver.user_id) {
-            await createNotification({
-                userId: driver.user_id,
-                type: 'new_assignment',
-                title: 'New Delivery Assignment 📦',
-                message: `Deliver Order #${order.order_number} to customer`,
-                data: { assignment_id: assignResult.rows[0].assignment_id, order_id, order_number: order.order_number, assignment_type: 'delivery' },
-                target_role: 'driver'
-            });
+                // Real-time socket event
+                io.to(`driver_${driver.user_id}`).emit('new_assignment', {
+                    assignment_id: assignResult.rows[0].assignment_id,
+                    order_id,
+                    order_number: order.order_number,
+                    part_description: order.part_description,
+                    pickup_address: order.pickup_address,
+                    pickup_lat: order.garage_lat ? parseFloat(order.garage_lat) : null,
+                    pickup_lng: order.garage_lng ? parseFloat(order.garage_lng) : null,
+                    delivery_address: order.delivery_address,
+                    delivery_lat: order.delivery_lat ? parseFloat(order.delivery_lat) : null,
+                    delivery_lng: order.delivery_lng ? parseFloat(order.delivery_lng) : null,
+                    customer_name: order.customer_name,
+                    garage_name: order.garage_name,
+                    estimated_delivery: estimated_delivery,
+                    has_pickup_gps: order.garage_lat !== null && order.garage_lng !== null,
+                    has_delivery_gps: order.delivery_lat !== null && order.delivery_lng !== null,
+                    notification: `📦 New assignment: Order #${order.order_number}`
+                });
 
-            // [FIX] Emit full GPS data for immediate navigation
-            io.to(`driver_${driver.user_id}`).emit('new_assignment', {
-                assignment_id: assignResult.rows[0].assignment_id,
+                // Status change notification
+                io.to(`driver_${driver.user_id}`).emit('driver_status_changed', {
+                    status: 'busy',
+                    driver_id: driver_id
+                });
+            } catch (notifyErr) {
+                console.error('[DeliveryController] Driver notification failed:', notifyErr);
+            }
+
+            // B. Notify CUSTOMER
+            io.to(`user_${order.customer_id}`).emit('driver_assigned', {
                 order_id,
                 order_number: order.order_number,
-                part_description: order.part_description,
-
-                pickup_address: order.pickup_address,
-                pickup_lat: order.garage_lat ? parseFloat(order.garage_lat) : null,
-                pickup_lng: order.garage_lng ? parseFloat(order.garage_lng) : null,
-
-                delivery_address: order.delivery_address,
-                delivery_lat: order.delivery_lat ? parseFloat(order.delivery_lat) : null,
-                delivery_lng: order.delivery_lng ? parseFloat(order.delivery_lng) : null,
-
-                customer_name: order.customer_name,
-                garage_name: order.garage_name,
+                driver: {
+                    name: driver.full_name,
+                    phone: driver.phone,
+                    vehicle_type: driver.vehicle_type,
+                    vehicle_plate: driver.vehicle_plate
+                },
                 estimated_delivery: estimated_delivery,
+                notification: `🚚 Driver ${driver.full_name} is on the way with your part!`
+            });
 
-                has_pickup_gps: order.garage_lat !== null && order.garage_lng !== null,
-                has_delivery_gps: order.delivery_lat !== null && order.delivery_lng !== null,
+            // Also emit order_status_updated for mobile app real-time updates
+            io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+                order_id,
+                order_number: order.order_number,
+                old_status: 'collected',
+                new_status: 'in_transit',
+                notification: `🚚 Your order is on the way!`
+            });
 
-                notification: `📦 New assignment: Order #${order.order_number}`
+            // C. Notify GARAGE
+            io.to(`garage_${order.garage_id}`).emit('delivery_started', {
+                order_id,
+                order_number: order.order_number,
+                driver_name: driver.full_name,
+                notification: `📦 Order #${order.order_number} is now in transit.`
             });
         }
-
-        // Notify customer with driver info (Persistent + Socket)
-        await createNotification({
-            userId: order.customer_id,
-            type: 'driver_assigned',
-            title: 'Driver Assigned 🚚',
-            message: `Driver ${driver.full_name} is on the way with your part!`,
-            data: { order_id, order_number: order.order_number, driver_name: driver.full_name, driver_phone: driver.phone },
-            target_role: 'customer'
-        });
-
-        io.to(`user_${order.customer_id}`).emit('driver_assigned', {
-            order_id,
-            order_number: order.order_number,
-            driver: {
-                name: driver.full_name,
-                phone: driver.phone,
-                vehicle_type: driver.vehicle_type,
-                vehicle_plate: driver.vehicle_plate
-            },
-            estimated_delivery: estimated_delivery,
-            notification: `🚚 Driver ${driver.full_name} is on the way with your part!`
-        });
-
-        // Also emit order_status_updated for mobile app real-time updates
-        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
-            order_id,
-            order_number: order.order_number,
-            old_status: 'collected',
-            new_status: 'in_transit',
-            notification: `🚚 Your order is on the way!`
-        });
-
-        // Notify garage that delivery started
-        io.to(`garage_${order.garage_id}`).emit('delivery_started', {
-            order_id,
-            order_number: order.order_number,
-            driver_name: driver.full_name,
-            notification: `📦 Order #${order.order_number} is now in transit.`
-        });
 
         res.status(201).json({
             assignment: assignResult.rows[0],
@@ -946,72 +944,83 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Socket.IO notifications to all parties
+        // Socket.IO notifications (AFTER COMMIT to avoid race conditions)
         const io = (global as any).io;
+        if (io) {
+            // 1. Notify OLD driver - assignment removed/cancelled (Persistent + Socket)
+            if (assignment.old_driver_user_id) {
+                await createNotification({
+                    userId: assignment.old_driver_user_id,
+                    type: 'assignment_cancelled',
+                    title: '❌ Assignment Cancelled',
+                    message: `Order #${assignment.order_number} has been reassigned: ${reason}`,
+                    data: { assignment_id, order_id: assignment.order_id, order_number: assignment.order_number, reason },
+                    target_role: 'driver'
+                });
 
-        // 1. Notify OLD driver - assignment removed/cancelled
-        if (assignment.old_driver_user_id) {
-            io.to(`driver_${assignment.old_driver_user_id}`).emit('assignment_removed', {
-                assignment_id,
-                order_number: assignment.order_number,
-                reason: reason,
-                notification: `⚠️ Order #${assignment.order_number} has been reassigned. Reason: ${reason}`
-            });
-            // Also emit assignment_cancelled for driver app compatibility
-            io.to(`driver_${assignment.old_driver_user_id}`).emit('assignment_cancelled', {
-                assignment_id,
+                io.to(`driver_${assignment.old_driver_user_id}`).emit('assignment_removed', {
+                    assignment_id,
+                    order_number: assignment.order_number,
+                    reason: reason,
+                    notification: `⚠️ Order #${assignment.order_number} has been reassigned. Reason: ${reason}`
+                });
+            }
+
+            // 2. Notify NEW driver - new assignment (Persistent + Socket)
+            if (newDriver.user_id) {
+                await createNotification({
+                    userId: newDriver.user_id,
+                    type: 'new_assignment',
+                    title: 'Urgent Delivery Assignment 📦',
+                    message: `Deliver Order #${assignment.order_number} (Reassigned)`,
+                    data: { assignment_id, order_id: assignment.order_id, order_number: assignment.order_number, is_reassignment: true },
+                    target_role: 'driver'
+                });
+
+                io.to(`driver_${newDriver.user_id}`).emit('new_assignment', {
+                    assignment_id,
+                    order_id: assignment.order_id,
+                    order_number: assignment.order_number,
+                    part_description: assignment.part_description,
+                    pickup_address: assignment.pickup_address,
+                    delivery_address: assignment.delivery_address,
+                    garage_name: assignment.garage_name,
+                    is_reassignment: true,
+                    notification: `📦 Urgent assignment: Order #${assignment.order_number} (reassigned)`
+                });
+            }
+
+            // 3. Notify CUSTOMER - driver changed
+            io.to(`user_${assignment.customer_id}`).emit('driver_changed', {
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,
-                reason: reason,
-                message: `Assignment cancelled: ${reason}`
+                new_driver: {
+                    name: newDriver.full_name,
+                    phone: newDriver.phone,
+                    vehicle_type: newDriver.vehicle_type,
+                    vehicle_plate: newDriver.vehicle_plate
+                },
+                reason: 'Driver reassigned for your delivery',
+                notification: `🔄 Your delivery driver has been changed. New driver: ${newDriver.full_name}`
             });
-        }
 
-        // 2. Notify NEW driver - new assignment
-        if (newDriver.user_id) {
-            io.to(`driver_${newDriver.user_id}`).emit('new_assignment', {
-                assignment_id,
+            // 4. Notify GARAGE - driver changed
+            io.to(`garage_${assignment.garage_id}`).emit('driver_changed', {
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,
-                part_description: assignment.part_description,
-                pickup_address: assignment.pickup_address,
-                delivery_address: assignment.delivery_address,
-                garage_name: assignment.garage_name,
-                is_reassignment: true,
-                notification: `📦 Urgent assignment: Order #${assignment.order_number} (reassigned)`
+                new_driver_name: newDriver.full_name,
+                notification: `🔄 Driver changed for Order #${assignment.order_number}`
+            });
+
+            // 5. Notify Operations room
+            io.to('operations').emit('driver_reassigned', {
+                assignment_id,
+                order_number: assignment.order_number,
+                old_driver: assignment.old_driver_name,
+                new_driver: newDriver.full_name,
+                reason
             });
         }
-
-        // 3. Notify CUSTOMER - driver changed
-        io.to(`user_${assignment.customer_id}`).emit('driver_changed', {
-            order_id: assignment.order_id,
-            order_number: assignment.order_number,
-            new_driver: {
-                name: newDriver.full_name,
-                phone: newDriver.phone,
-                vehicle_type: newDriver.vehicle_type,
-                vehicle_plate: newDriver.vehicle_plate
-            },
-            reason: 'Driver reassigned for your delivery',
-            notification: `🔄 Your delivery driver has been changed. New driver: ${newDriver.full_name}`
-        });
-
-        // 4. Notify GARAGE - driver changed
-        io.to(`garage_${assignment.garage_id}`).emit('driver_changed', {
-            order_id: assignment.order_id,
-            order_number: assignment.order_number,
-            new_driver_name: newDriver.full_name,
-            notification: `🔄 Driver changed for Order #${assignment.order_number}`
-        });
-
-        // 5. Notify Operations room
-        io.to('operations').emit('driver_reassigned', {
-            assignment_id,
-            order_number: assignment.order_number,
-            old_driver: assignment.old_driver_name,
-            new_driver: newDriver.full_name,
-            reason
-        });
 
         res.json({
             success: true,
@@ -1102,8 +1111,29 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // CRITICAL: Emit socket notification to customer for real-time update + Persist
+        // Socket notifications (AFTER COMMIT)
         const io = (global as any).io;
+        if (io) {
+            // Notify driver of status change back to available
+            if (assignment.driver_id) {
+                try {
+                    // Get driver user_id
+                    const driverData = await pool.query('SELECT user_id FROM drivers WHERE driver_id = $1', [assignment.driver_id]);
+                    const driverUserId = driverData.rows[0]?.user_id;
+
+                    if (driverUserId) {
+                        io.to(`driver_${driverUserId}`).emit('driver_status_changed', {
+                            status: 'available',
+                            driver_id: assignment.driver_id
+                        });
+                    }
+                } catch (err) {
+                    console.error('[DeliveryController] Status emission failed:', err);
+                }
+            }
+        }
+
+        // CRITICAL: Emit socket notification to customer for real-time update + Persist
         if (io && status === 'delivered') {
             // Notify customer - delivery completed (Persistent)
             await createNotification({

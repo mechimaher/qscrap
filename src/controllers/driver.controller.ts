@@ -142,6 +142,16 @@ export const getMyStats = async (req: AuthRequest, res: Response) => {
 export const toggleAvailability = async (req: AuthRequest, res: Response) => {
     try {
         const result = await driverService.toggleAvailability(req.user!.userId, req.body.status);
+
+        // Real-time status sync
+        const io = (global as any).io;
+        if (io) {
+            io.to(`driver_${req.user!.userId}`).emit('driver_status_changed', {
+                status: req.body.status,
+                user_id: req.user!.userId
+            });
+        }
+
         res.json(result);
     } catch (err) {
         console.error('toggleAvailability Error:', err);
