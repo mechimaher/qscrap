@@ -13,31 +13,47 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { api, Assignment } from '../../services/api';
-import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
+import { useJobStore } from '../../stores/useJobStore';
+import { GlassCard } from '../../components/common/GlassCard';
 
-type FilterType = 'active' | 'completed' | 'all';
+// ... imports
 
 export default function AssignmentsScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
 
-    const [assignments, setAssignments] = useState<Assignment[]>([]);
+    // Store access
+    const assignments = useJobStore(state => state.assignments);
+    const setAssignments = useJobStore(state => state.setAssignments);
+
+    // Local state for UI
     const [filter, setFilter] = useState<FilterType>('active');
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    // Derived state based on filter
+    const filteredAssignments = assignments.filter(a => {
+        if (filter === 'active') return !['delivered', 'failed'].includes(a.status);
+        if (filter === 'completed') return ['delivered', 'failed'].includes(a.status);
+        return true;
+    });
+
     useEffect(() => {
+        // Initial sync
         loadAssignments();
-    }, [filter]);
+    }, []);
 
     const loadAssignments = async () => {
         try {
-            setIsLoading(true);
-            const result = await api.getAssignments(filter);
+            // Only show loader if we have no data
+            if (assignments.length === 0) setIsLoading(true);
+
+            // Fetch all to update store
+            const result = await api.getAssignments('all');
             setAssignments(result.assignments || []);
         } catch (err) {
             console.error('[Assignments] Load error:', err);
+            // Don't show error to user if we have offline data
         } finally {
             setIsLoading(false);
         }
@@ -55,63 +71,65 @@ export default function AssignmentsScreen() {
 
         return (
             <TouchableOpacity
-                style={[styles.card, { backgroundColor: colors.surface }]}
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('AssignmentDetail', { assignmentId: item.assignment_id })}
+                style={{ marginBottom: 12 }}
             >
-                {/* Header Row */}
-                <View style={styles.cardHeader}>
-                    <View style={styles.cardHeaderLeft}>
-                        <Text style={[styles.orderNumber, { color: colors.text }]}>
-                            #{item.order_number}
-                        </Text>
-                        <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '15' }]}>
-                            <Text>{typeConfig?.icon}</Text>
-                            <Text style={[styles.typeText, { color: typeConfig?.color }]}>
-                                {typeConfig?.label}
+                <GlassCard style={styles.card}>
+                    {/* Header Row */}
+                    <View style={styles.cardHeader}>
+                        <View style={styles.cardHeaderLeft}>
+                            <Text style={[styles.orderNumber, { color: colors.text }]}>
+                                #{item.order_number}
+                            </Text>
+                            <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '15' }]}>
+                                <Text>{typeConfig?.icon}</Text>
+                                <Text style={[styles.typeText, { color: typeConfig?.color }]}>
+                                    {typeConfig?.label}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={[styles.statusBadge, { backgroundColor: statusConfig?.color + '20' }]}>
+                            <Text style={styles.statusIcon}>{statusConfig?.icon}</Text>
+                            <Text style={[styles.statusText, { color: statusConfig?.color }]}>
+                                {statusConfig?.label}
                             </Text>
                         </View>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: statusConfig?.color + '20' }]}>
-                        <Text style={styles.statusIcon}>{statusConfig?.icon}</Text>
-                        <Text style={[styles.statusText, { color: statusConfig?.color }]}>
-                            {statusConfig?.label}
-                        </Text>
-                    </View>
-                </View>
 
-                {/* Part Info */}
-                <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {item.part_description}
-                </Text>
+                    {/* Part Info */}
+                    <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
+                        {item.part_description}
+                    </Text>
 
-                {/* Locations */}
-                <View style={styles.locationsContainer}>
-                    <View style={styles.locationItem}>
-                        <View style={[styles.locationDot, { backgroundColor: Colors.primary }]} />
-                        <View style={styles.locationContent}>
-                            <Text style={[styles.locationLabel, { color: colors.textMuted }]}>Pickup</Text>
-                            <Text style={[styles.locationAddress, { color: colors.text }]} numberOfLines={1}>
-                                {item.garage_name}
-                            </Text>
+                    {/* Locations */}
+                    <View style={styles.locationsContainer}>
+                        <View style={styles.locationItem}>
+                            <View style={[styles.locationDot, { backgroundColor: Colors.primary }]} />
+                            <View style={styles.locationContent}>
+                                <Text style={[styles.locationLabel, { color: colors.textMuted }]}>Pickup</Text>
+                                <Text style={[styles.locationAddress, { color: colors.text }]} numberOfLines={1}>
+                                    {item.garage_name}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={[styles.locationLine, { backgroundColor: colors.border }]} />
+                        <View style={styles.locationItem}>
+                            <View style={[styles.locationDot, { backgroundColor: Colors.success }]} />
+                            <View style={styles.locationContent}>
+                                <Text style={[styles.locationLabel, { color: colors.textMuted }]}>Delivery</Text>
+                                <Text style={[styles.locationAddress, { color: colors.text }]} numberOfLines={1}>
+                                    {item.customer_name}
+                                </Text>
+                            </View>
                         </View>
                     </View>
-                    <View style={[styles.locationLine, { backgroundColor: colors.border }]} />
-                    <View style={styles.locationItem}>
-                        <View style={[styles.locationDot, { backgroundColor: Colors.success }]} />
-                        <View style={styles.locationContent}>
-                            <Text style={[styles.locationLabel, { color: colors.textMuted }]}>Delivery</Text>
-                            <Text style={[styles.locationAddress, { color: colors.text }]} numberOfLines={1}>
-                                {item.customer_name}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
 
-                {/* Time */}
-                <Text style={[styles.timeText, { color: colors.textMuted }]}>
-                    {formatDate(item.created_at)}
-                </Text>
+                    {/* Time */}
+                    <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                        {formatDate(item.created_at)}
+                    </Text>
+                </GlassCard>
             </TouchableOpacity>
         );
     };
@@ -148,7 +166,7 @@ export default function AssignmentsScreen() {
 
             {/* List */}
             <FlatList
-                data={assignments}
+                data={filteredAssignments}
                 renderItem={renderAssignment}
                 keyExtractor={(item) => item.assignment_id}
                 contentContainerStyle={styles.listContent}
@@ -225,9 +243,7 @@ const styles = StyleSheet.create({
         paddingTop: 0,
     },
     card: {
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 12,
+        marginBottom: 0, // Handled by Touchable wrapper
     },
     cardHeader: {
         flexDirection: 'row',

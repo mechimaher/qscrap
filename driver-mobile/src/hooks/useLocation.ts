@@ -5,6 +5,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
+import { offlineQueue } from '../services/OfflineQueue';
+import { API_ENDPOINTS } from '../config/api';
 
 interface LocationState {
     latitude: number;
@@ -101,11 +103,19 @@ export function useLocation(): UseLocationResult {
         console.log(`[Location] Updated via ${source}:`, state.latitude.toFixed(6), state.longitude.toFixed(6));
 
         // Also send to API (fire and forget)
-        api.updateLocation(state.latitude, state.longitude, {
-            accuracy: state.accuracy ?? undefined,
-            heading: state.heading ?? undefined,
-            speed: state.speed ?? undefined
-        }).catch(() => { });
+        // Send to OfflineQueue (guaranteed delivery)
+        offlineQueue.enqueue(
+            API_ENDPOINTS.UPDATE_LOCATION,
+            'POST',
+            {
+                lat: state.latitude,
+                lng: state.longitude,
+                accuracy: state.accuracy ?? undefined,
+                heading: state.heading ?? undefined,
+                speed: state.speed ?? undefined,
+                timestamp: state.timestamp
+            }
+        ).catch((err) => console.log('[Location] Queue failed:', err));
     }, []);
 
     const pollLocation = useCallback(async () => {

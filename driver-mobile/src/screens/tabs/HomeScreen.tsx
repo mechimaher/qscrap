@@ -27,6 +27,7 @@ import { api, Assignment, DriverStats } from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating, LiveMapView, AssignmentPopup } from '../../components';
+import { GlassCard } from '../../components/common/GlassCard';
 
 export default function HomeScreen() {
     const { driver, refreshDriver } = useAuth();
@@ -449,62 +450,64 @@ function AssignmentCard({ assignment, colors, onPress }: { assignment: Assignmen
 
     return (
         <TouchableOpacity
-            style={[styles.assignmentCard, { backgroundColor: colors.surface }]}
             activeOpacity={0.8}
             onPress={onPress}
+            style={{ marginBottom: 12 }} // layout only
         >
-            {/* Header */}
-            <View style={styles.assignmentHeader}>
-                <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '20' }]}>
-                    <Text>{typeConfig?.icon}</Text>
-                    <Text style={[styles.typeText, { color: typeConfig?.color }]}>
-                        {typeConfig?.label}
+            <GlassCard style={styles.assignmentCard}>
+                {/* Header */}
+                <View style={styles.assignmentHeader}>
+                    <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '20' }]}>
+                        <Text>{typeConfig?.icon}</Text>
+                        <Text style={[styles.typeText, { color: typeConfig?.color }]}>
+                            {typeConfig?.label}
+                        </Text>
+                    </View>
+                    <View style={[styles.statusBadgeSmall, { backgroundColor: statusConfig?.color + '20' }]}>
+                        <Text style={[styles.statusTextSmall, { color: statusConfig?.color }]}>
+                            {statusConfig?.label}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Order Info */}
+                <Text style={[styles.orderNumber, { color: colors.text }]}>
+                    Order #{assignment.order_number}
+                </Text>
+                <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {assignment.part_description}
+                </Text>
+
+                {/* Locations */}
+                <View style={styles.locationRow}>
+                    <Text style={styles.locationEmoji}>🏪</Text>
+                    <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
+                        {assignment.pickup_address}
                     </Text>
                 </View>
-                <View style={[styles.statusBadgeSmall, { backgroundColor: statusConfig?.color + '20' }]}>
-                    <Text style={[styles.statusTextSmall, { color: statusConfig?.color }]}>
-                        {statusConfig?.label}
+                <View style={styles.locationArrow}>
+                    <Text style={{ color: colors.textMuted }}>↓</Text>
+                </View>
+                <View style={styles.locationRow}>
+                    <Text style={styles.locationEmoji}>📍</Text>
+                    <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
+                        {assignment.delivery_address}
                     </Text>
                 </View>
-            </View>
 
-            {/* Order Info */}
-            <Text style={[styles.orderNumber, { color: colors.text }]}>
-                Order #{assignment.order_number}
-            </Text>
-            <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                {assignment.part_description}
-            </Text>
-
-            {/* Locations */}
-            <View style={styles.locationRow}>
-                <Text style={styles.locationEmoji}>🏪</Text>
-                <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
-                    {assignment.pickup_address}
-                </Text>
-            </View>
-            <View style={styles.locationArrow}>
-                <Text style={{ color: colors.textMuted }}>↓</Text>
-            </View>
-            <View style={styles.locationRow}>
-                <Text style={styles.locationEmoji}>📍</Text>
-                <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
-                    {assignment.delivery_address}
-                </Text>
-            </View>
-
-            {/* Action Button */}
-            {statusConfig?.actionLabel && (
-                <LinearGradient
-                    colors={[Colors.primary, Colors.primaryDark]}
-                    style={styles.actionButton}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                >
-                    <Text style={styles.actionButtonText}>{statusConfig.actionLabel}</Text>
-                    <Text style={styles.actionButtonIcon}>→</Text>
-                </LinearGradient>
-            )}
+                {/* Action Button */}
+                {statusConfig?.actionLabel && (
+                    <LinearGradient
+                        colors={[Colors.primary, Colors.primaryDark]}
+                        style={styles.actionButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                    >
+                        <Text style={styles.actionButtonText}>{statusConfig.actionLabel}</Text>
+                        <Text style={styles.actionButtonIcon}>→</Text>
+                    </LinearGradient>
+                )}
+            </GlassCard>
         </TouchableOpacity>
     );
 }
@@ -655,9 +658,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     assignmentCard: {
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 12,
+        // padding/borderRadius handled by GlassCard default or passed via style
+        // We only kept padding/radius in GlassCard definition, but here we can override if needed
+        marginBottom: 0, // Handled by Touchable wrapper
     },
     assignmentHeader: {
         flexDirection: 'row',

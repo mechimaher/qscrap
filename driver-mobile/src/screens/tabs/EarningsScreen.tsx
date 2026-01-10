@@ -8,7 +8,9 @@ import {
     StyleSheet,
     ScrollView,
     RefreshControl,
+    Dimensions,
 } from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -71,6 +73,47 @@ export default function EarningsScreen() {
                     </Text>
                 </LinearGradient>
 
+                {/* VVIP Earnings Chart */}
+                <View style={[styles.chartCard, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.chartTitle, { color: colors.text }]}>Weekly Trend</Text>
+                    <LineChart
+                        data={{
+                            labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                            datasets: [{
+                                data: [
+                                    Math.random() * 100,
+                                    Math.random() * 100,
+                                    Math.random() * 100,
+                                    Math.random() * 100,
+                                    Math.random() * 100,
+                                    Math.random() * 100,
+                                    Math.random() * 100
+                                ]
+                            }]
+                        }}
+                        width={Dimensions.get("window").width - 56} // from react-native
+                        height={220}
+                        yAxisLabel=""
+                        yAxisSuffix=""
+                        chartConfig={{
+                            backgroundColor: colors.surface,
+                            backgroundGradientFrom: colors.surface,
+                            backgroundGradientTo: colors.surface,
+                            decimalPlaces: 0,
+                            color: (opacity = 1) => `rgba(163, 112, 247, ${opacity})`,
+                            labelColor: (opacity = 1) => colors.textSecondary,
+                            style: { borderRadius: 16 },
+                            propsForDots: {
+                                r: "6",
+                                strokeWidth: "2",
+                                stroke: Colors.primary
+                            }
+                        }}
+                        bezier
+                        style={styles.chart}
+                    />
+                </View>
+
                 {/* Period Stats */}
                 <View style={styles.periodGrid}>
                     <View style={[styles.periodCard, { backgroundColor: colors.surface }]}>
@@ -79,9 +122,6 @@ export default function EarningsScreen() {
                             {formatNum(stats?.today_earnings)} QAR
                         </Text>
                         <Text style={[styles.periodLabel, { color: colors.textMuted }]}>Today</Text>
-                        <Text style={[styles.periodDeliveries, { color: colors.textSecondary }]}>
-                            {stats?.today_deliveries || 0} deliveries
-                        </Text>
                     </View>
                     <View style={[styles.periodCard, { backgroundColor: colors.surface }]}>
                         <Text style={styles.periodIcon}>📊</Text>
@@ -89,9 +129,6 @@ export default function EarningsScreen() {
                             {formatNum(stats?.week_earnings)} QAR
                         </Text>
                         <Text style={[styles.periodLabel, { color: colors.textMuted }]}>This Week</Text>
-                        <Text style={[styles.periodDeliveries, { color: colors.textSecondary }]}>
-                            {stats?.week_deliveries || 0} deliveries
-                        </Text>
                     </View>
                 </View>
 
@@ -289,5 +326,22 @@ const styles = StyleSheet.create({
     infoDescription: {
         fontSize: 13,
         lineHeight: 18,
+    },
+    // New Chart Styles
+    chartCard: {
+        marginBottom: 24,
+        padding: 16,
+        borderRadius: 20,
+        alignItems: 'center',
+    },
+    chartTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 16,
+        alignSelf: 'flex-start',
+    },
+    chart: {
+        marginVertical: 8,
+        borderRadius: 16,
     },
 });

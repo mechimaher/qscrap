@@ -16,6 +16,7 @@ import NotificationService from './src/services/notifications';
 
 // Import screens
 import LoginScreen from './src/screens/auth/LoginScreen';
+import BiometricSetupScreen from './src/screens/auth/BiometricSetupScreen';
 import HomeScreen from './src/screens/tabs/HomeScreen';
 import AssignmentsScreen from './src/screens/tabs/AssignmentsScreen';
 import EarningsScreen from './src/screens/tabs/EarningsScreen';
@@ -24,6 +25,7 @@ import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import PartInspectionScreen from './src/screens/PartInspectionScreen';
 import NavigationScreen from './src/screens/NavigationScreen';
+import ProofOfDeliveryScreen from './src/screens/ProofOfDeliveryScreen';
 
 // Navigation Types
 export type RootStackParamList = {
@@ -32,6 +34,7 @@ export type RootStackParamList = {
     AssignmentDetail: { assignmentId: string };
     Chat: { orderId: string; orderNumber: string; recipientName: string };
     DeliveryConfirmation: { assignmentId: string };
+    ProofOfDelivery: { assignmentId: string };
     PartInspection: { assignmentId: string; orderId?: string; orderNumber?: string; partDescription?: string };
     Navigation: {
         pickupLat?: number; pickupLng?: number;
@@ -43,86 +46,17 @@ export type RootStackParamList = {
     Settings: undefined;
 };
 
+// Auth Navigator
 export type AuthStackParamList = {
     Login: undefined;
+    BiometricSetup: undefined;
 };
 
-export type MainTabParamList = {
-    Home: undefined;
-    Assignments: undefined;
-    Earnings: undefined;
-    Profile: undefined;
-};
-
-const RootStack = createNativeStackNavigator<RootStackParamList>();
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
-
-// Main Tab Navigator with premium driver styling
-function MainTabs() {
-    const { colors } = useTheme();
-
-    return (
-        <Tab.Navigator
-            screenOptions={{
-                headerShown: false,
-                tabBarStyle: {
-                    backgroundColor: colors.surface,
-                    borderTopColor: colors.border,
-                    borderTopWidth: 1,
-                    height: 85,
-                    paddingBottom: 25,
-                    paddingTop: 10,
-                },
-                tabBarActiveTintColor: Colors.primary,
-                tabBarInactiveTintColor: colors.textMuted,
-                tabBarLabelStyle: {
-                    fontSize: 12,
-                    fontWeight: '600',
-                },
-            }}
-        >
-            <Tab.Screen
-                name="Home"
-                component={HomeScreen}
-                options={{
-                    tabBarLabel: 'Home',
-                    tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
-                }}
-            />
-            <Tab.Screen
-                name="Assignments"
-                component={AssignmentsScreen}
-                options={{
-                    tabBarLabel: 'Tasks',
-                    tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>📋</Text>,
-                }}
-            />
-            <Tab.Screen
-                name="Earnings"
-                component={EarningsScreen}
-                options={{
-                    tabBarLabel: 'Earnings',
-                    tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>💰</Text>,
-                }}
-            />
-            <Tab.Screen
-                name="Profile"
-                component={ProfileScreen}
-                options={{
-                    tabBarLabel: 'Profile',
-                    tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
-                }}
-            />
-        </Tab.Navigator>
-    );
-}
-
-// Auth Navigator
 function AuthNavigator() {
     return (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
             <AuthStack.Screen name="Login" component={LoginScreen} />
+            <AuthStack.Screen name="BiometricSetup" component={BiometricSetupScreen} />
         </AuthStack.Navigator>
     );
 }
@@ -180,6 +114,14 @@ function RootNavigator() {
                     <RootStack.Screen name="AssignmentDetail" component={AssignmentDetailScreen} />
                     <RootStack.Screen name="Chat" component={ChatScreen} />
                     <RootStack.Screen name="PartInspection" component={PartInspectionScreen} />
+
+                    {/* VVIP POD Wizard */}
+                    <RootStack.Screen
+                        name="ProofOfDelivery"
+                        component={ProofOfDeliveryScreen}
+                        options={{ animation: 'slide_from_right' }}
+                    />
+
                     <RootStack.Screen
                         name="Navigation"
                         component={NavigationScreen}
