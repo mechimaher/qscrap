@@ -88,6 +88,7 @@ function switchSection(section) {
 
     if (section === 'dashboard') loadDashboard();
     if (section === 'approvals') loadPendingGarages();
+    if (section === 'requests') loadPlanRequests();
     if (section === 'garages') loadGarages();
     if (section === 'users') loadUsers();
     if (section === 'staff') loadStaff();
@@ -2464,5 +2465,148 @@ function checkInactivity() {
     if (inactiveMinutes >= 30) {
         showToast('Session expired due to inactivity', 'error');
         setTimeout(logout, 2000);
+    }
+}
+
+// ============================================
+// PLAN REQUESTS MANAGEMENT
+// ============================================
+
+async function loadPlanRequests() {
+    const container = document.getElementById('planRequestsList');
+    const status = document.getElementById('requestStatusFilter').value;
+
+    container.innerHTML = '<div class="empty-state"><i class="bi bi-hourglass"></i><p>Loading requests...</p></div>';
+
+    try {
+        const res = await fetch(`${API_URL}/admin/requests`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const requests = await res.json();
+
+        // Update badge
+        const pendingCount = requests.filter(r => r.status === 'pending').length;
+        const badge = document.getElementById('planRequestsBadge');
+        if (badge) {
+            badge.textContent = pendingCount;
+            badge.style.display = pendingCount > 0 ? 'inline-flex' : 'none'; // Use inline-flex for better alignment
+        }
+
+        const filtered = requests.filter(r => r.status === status);
+
+        if (filtered.length > 0) {
+            container.innerHTML = filtered.map(renderRequestCard).join('');
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No ${status} requests found</p>
+                </div>
+            `;
+        }
+    } catch (err) {
+        console.error('loadPlanRequests error:', err);
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load requests</p></div>';
+    }
+}
+
+function renderRequestCard(req) {
+    const isPending = req.status === 'pending';
+    const typeLabel = req.request_type === 'upgrade' ? '<span class="badge success">Upgrade</span>' :
+        req.request_type === 'downgrade' ? '<span class="badge warning">Downgrade</span>' :
+            '<span class="badge info">Change</span>';
+
+    return `
+        <div class="garage-card request-card">
+            <div class="garage-card-header">
+                <div>
+                    <h3>${req.garage_name || 'Unknown Garage'}</h3>
+                    <div class="garage-meta">
+                        <i class="bi bi-clock"></i> ${new Date(req.created_at).toLocaleDateString()}
+                    </div>
+                </div>
+                ${typeLabel}
+            </div>
+            
+            <div class="garage-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+                <div class="detail-item">
+                    <label>Current Plan</label>
+                    <div class="value">${req.from_plan_name || '-'}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Requested Plan</label>
+                    <div class="value" style="color: var(--primary-color); font-weight: bold;">
+                        ${req.target_plan_name || req.to_plan_name || 'New Plan'} <i class="bi bi-arrow-right"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-item full">
+                <label>Reason</label>
+                <div class="value">${req.request_reason || 'No reason provided'}</div>
+            </div>
+
+            ${req.admin_notes ? `
+            <div class="detail-item full" style="margin-top: 10px; background: #f9fafb; padding: 8px; border-radius: 6px;">
+                <label>Admin Notes</label>
+                <div class="value small text-muted">${req.admin_notes}</div>
+            </div>` : ''}
+
+            <div class="garage-actions" style="margin-top: 20px;">
+                ${isPending ? `
+                <button class="btn btn-outline" onclick="rejectRequest(${req.request_id})">Reject</button>
+                <button class="btn btn-primary" onclick="approveRequest(${req.request_id})">Approve</button>
+                ` : `
+                <div class="status-badge ${req.status}">${req.status.toUpperCase()}</div>
+                `}
+            </div>
+        </div>
+    `;
+}
+
+async function approveRequest(id) {
+    if (!confirm('Are you sure you want to approve this plan change?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/requests/${id}/approve`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            showToast('Request approved successfully', 'success');
+            loadPlanRequests();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to approve', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function rejectRequest(id) {
+    const reason = prompt('Enter rejection reason:');
+    if (reason === null) return; // Cancelled
+
+    try {
+        const res = await fetch(`${API_URL}/admin/requests/${id}/reject`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        if (res.ok) {
+            showToast('Request rejected', 'success');
+            loadPlanRequests();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to reject', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
     }
 }
