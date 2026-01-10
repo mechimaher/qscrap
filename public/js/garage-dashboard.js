@@ -2997,10 +2997,21 @@ async function loadSubscription() {
             } else if (sub.billing_cycle_end) {
                 // Only show renewal date if there's an actual billing cycle
                 const endDate = new Date(sub.billing_cycle_end);
-                if (endDate.getFullYear() >= 2099) {
-                    document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
+
+                // Show scheduled change if present
+                if (sub.next_plan_name) {
+                    document.getElementById('subRenewal').innerHTML = `
+                        ${endDate.toLocaleDateString()} 
+                        <span class="badge" style="background: var(--warning); color: #000; margin-left:8px; font-size: 10px;">
+                            <i class="bi bi-arrow-right"></i> ${sub.next_plan_name}
+                        </span>
+                    `;
                 } else {
-                    document.getElementById('subRenewal').textContent = endDate.toLocaleDateString();
+                    if (endDate.getFullYear() >= 2099) {
+                        document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
+                    } else {
+                        document.getElementById('subRenewal').textContent = endDate.toLocaleDateString();
+                    }
                 }
             } else {
                 document.getElementById('subRenewal').textContent = '-';
@@ -3008,7 +3019,27 @@ async function loadSubscription() {
 
             // Hide "Change Plan" button for commission plans (they're already on the best model)
             const changePlanBtn = document.querySelector('#currentSubscription .plan-actions button');
-            if (changePlanBtn && sub.is_commission_based) {
+
+            // Check for pending request
+            if (data.pending_request) {
+                const req = data.pending_request;
+                const banner = document.createElement('div');
+                banner.className = 'alert alert-warning';
+                banner.style.marginTop = '16px';
+                banner.innerHTML = `
+                    <i class="bi bi-hourglass-split"></i> 
+                    <strong>Pending Request:</strong> Your request to switch to 
+                    <strong>${req.target_plan_name || 'New Plan'}</strong> 
+                    is awaiting admin approval.
+                `;
+                document.getElementById('currentSubscription').appendChild(banner);
+
+                if (changePlanBtn) {
+                    changePlanBtn.disabled = true;
+                    changePlanBtn.innerHTML = '<i class="bi bi-hourglass"></i> Pending Approval';
+                    changePlanBtn.onclick = null;
+                }
+            } else if (changePlanBtn && sub.is_commission_based) {
                 changePlanBtn.style.display = 'none';
             }
         } else {
@@ -3068,8 +3099,8 @@ async function showPlanOptions() {
                             <div class="plan-actions">
                                 ${plan.plan_name === currentPlan ?
                             '<button class="btn" disabled>Current Plan</button>' :
-                            `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}')">
-                                        Select Plan
+                            `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}')">
+                                        Request Change
                                     </button>`
                         }
                             </div>
@@ -3084,26 +3115,27 @@ async function showPlanOptions() {
     }
 }
 
-async function changePlan(planId) {
-    if (!confirm('Change to this plan? Changes take effect on next billing cycle.')) return;
+async function changePlan(planId, planName) {
+    if (!confirm(`Request to switch to ${planName}? This will be sent to admin for approval.`)) return;
 
     try {
         const res = await fetch(`${API_URL}/subscriptions/change-plan`, {
             method: 'PUT',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ plan_id: planId })
         });
+
         const data = await res.json();
 
         if (res.ok) {
-            showToast('Plan changed successfully!', 'success');
-            loadSubscription();
+            showToast(data.message || 'Request submitted', 'success');
             document.getElementById('plansGrid').style.display = 'none';
+            loadSubscription(); // Reload to show pending state
         } else {
-            showToast(data.error || 'Failed to change plan', 'error');
+            showToast(data.error || 'Failed to submit request', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');
