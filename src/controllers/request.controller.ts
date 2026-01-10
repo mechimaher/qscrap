@@ -159,40 +159,73 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
             });
 
             // 2. [FIX] Create Persistent Notifications for Relevant Garages (For Bell Icon)
-            // Filter garages based on brand specialization and condition
+            let conditionFilter = "1=1";
+            if (condition_required === 'new') conditionFilter = "supplier_type IN ('new', 'both')";
+            else if (condition_required === 'used') conditionFilter = "supplier_type IN ('used', 'both')";
+
+            const targetGaragesResult = await client.query(`
+                SELECT garage_id, specialized_brands, all_brands 
+                FROM garages 
+                WHERE status = 'active' 
+                AND (approval_status = 'approved' OR approval_status = 'demo')
+                AND (${conditionFilter})
+            `);
+
+            const notificationsToCreate: any[] = [];
+            targetGaragesResult.rows.forEach(garage => {
+                let matchesBrand = false;
+                if (garage.all_brands) {
+                    matchesBrand = true;
+                } else if (garage.specialized_brands && Array.isArray(garage.specialized_brands)) {
+                    const brands = garage.specialized_brands.map((b: string) => b.toLowerCase());
+                    if (brands.includes(car_make.toLowerCase())) {
+                        matchesBrand = true;
+                    }
+                }
+
+                if (matchesBrand) {
+                    notificationsToCreate.push({
+                        userId: garage.garage_id,
+                        type: 'new_request',
+                        title: 'New Request Matching Your Profile 🚗',
+                        message: `${yearCheck.value} ${car_make} ${car_model}: ${part_description.substring(0, 50)}${part_description.length > 50 ? '...' : ''}`,
+                        data: { request_id: request.request_id, car_make, car_model, car_year: yearCheck.value },
+                        target_role: 'garage'
+                    });
+                }
+            });
+
             if (notificationsToCreate.length > 0) {
                 await createBatchNotifications(notificationsToCreate);
                 console.log(`[REQUEST] Created ${notificationsToCreate.length} notifications for new request`);
             }
-            console.log(`[REQUEST] Created ${notificationsToCreate.length} notifications for new request`);
-        }
 
         } catch (socketErr) {
-        console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
-        // Don't fail the request creation
-    }
+            console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
+            // Don't fail the request creation
+        }
 
-    res.status(201).json({ message: 'Request created', request_id: request.request_id });
-} catch (err) {
-    await client.query('ROLLBACK');
+        res.status(201).json({ message: 'Request created', request_id: request.request_id });
+    } catch (err) {
+        await client.query('ROLLBACK');
 
-    // Cleanup uploaded files on error
-    if (files && files.length > 0) {
-        for (const file of files) {
-            try {
-                await fs.unlink(file.path);
-                console.log(`[REQUEST] Cleaned up file: ${file.path}`);
-            } catch (unlinkErr) {
-                console.error('[REQUEST] File cleanup error:', unlinkErr);
+        // Cleanup uploaded files on error
+        if (files && files.length > 0) {
+            for (const file of files) {
+                try {
+                    await fs.unlink(file.path);
+                    console.log(`[REQUEST] Cleaned up file: ${file.path}`);
+                } catch (unlinkErr) {
+                    console.error('[REQUEST] File cleanup error:', unlinkErr);
+                }
             }
         }
-    }
 
-    console.error('[REQUEST] Create request error:', err);
-    res.status(500).json({ error: 'Failed to create request. Please try again.' });
-} finally {
-    client.release();
-}
+        console.error('[REQUEST] Create request error:', err);
+        res.status(500).json({ error: 'Failed to create request. Please try again.' });
+    } finally {
+        client.release();
+    }
 };
 
 export const getActiveRequests = async (req: AuthRequest, res: Response) => {
