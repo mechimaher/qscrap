@@ -4813,6 +4813,10 @@ function updateConnectionStatus(isOnline) {
 if (typeof socket !== 'undefined' && socket) {
     socket.on('connect', () => {
         updateConnectionStatus(true);
+        // Re-join room on reconnection (critical for notifications)
+        if (userId) {
+            socket.emit('join_garage_room', userId);
+        }
     });
 
     socket.on('disconnect', () => {

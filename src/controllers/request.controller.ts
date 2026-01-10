@@ -138,26 +138,8 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         const request = result.rows[0];
         await client.query('COMMIT');
 
-        // Notify Garages - broadcast to all connected garage sockets with complete request data
+        // Notify Garages - broadcast to RELEVANT active garage sockets
         try {
-            // 1. Broadcast "Live Request" update (Transient - for Badge Count)
-            (global as any).io?.emit('new_request', {
-                request_id: request.request_id,
-                car_make,
-                car_model,
-                car_year: yearCheck.value,
-                vin_number: vin_number || null,
-                part_description,
-                part_number: part_number || null,
-                part_category: part_category || null,
-                condition_required: condition_required || 'any',
-                image_urls: image_urls,
-                delivery_address_text: delivery_address_text || null,
-                status: 'active',
-                created_at: request.created_at,
-                bid_count: 0
-            });
-
             // 2. [FIX] Create Persistent Notifications for Relevant Garages (For Bell Icon)
             let conditionFilter = "1=1";
             if (condition_required === 'new') conditionFilter = "supplier_type IN ('new', 'both')";
@@ -172,18 +154,46 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
             `);
 
             const notificationsToCreate: any[] = [];
+            const io = (global as any).io; // Access io instance
+
             targetGaragesResult.rows.forEach(garage => {
                 let matchesBrand = false;
+                const hasSpecialization = garage.specialized_brands && Array.isArray(garage.specialized_brands) && garage.specialized_brands.length > 0;
+
                 if (garage.all_brands) {
                     matchesBrand = true;
-                } else if (garage.specialized_brands && Array.isArray(garage.specialized_brands)) {
+                } else if (hasSpecialization) {
                     const brands = garage.specialized_brands.map((b: string) => b.toLowerCase());
                     if (brands.includes(car_make.toLowerCase())) {
                         matchesBrand = true;
                     }
+                } else {
+                    // No specialization set -> Matches everything (consistent with getActiveRequests)
+                    matchesBrand = true;
                 }
 
                 if (matchesBrand) {
+                    // 1. Emit Live Request Update (Targeted)
+                    if (io) {
+                        io.to(`garage_${garage.garage_id}`).emit('new_request', {
+                            request_id: request.request_id,
+                            car_make,
+                            car_model,
+                            car_year: yearCheck.value,
+                            vin_number: vin_number || null,
+                            part_description,
+                            part_number: part_number || null,
+                            part_category: part_category || null,
+                            condition_required: condition_required || 'any',
+                            image_urls: image_urls,
+                            delivery_address_text: delivery_address_text || null,
+                            status: 'active',
+                            created_at: request.created_at,
+                            bid_count: 0
+                        });
+                    }
+
+                    // 2. Prepare Notification
                     notificationsToCreate.push({
                         userId: garage.garage_id,
                         type: 'new_request',
