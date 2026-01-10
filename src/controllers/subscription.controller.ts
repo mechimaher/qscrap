@@ -148,6 +148,7 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
             approval_status: garage.approval_status
         });
     } catch (err) {
+        console.error('getMySubscription Error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
