@@ -131,9 +131,9 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify Customer (Real-time) - must match mobile app BidNotification interface
         // Notify Customer (Real-time & Persistent)
         try {
+            // 1. Create Notification (Persists to DB + Emits 'new_notification' + Sends Push)
             await createNotification({
                 userId: customerId,
                 type: 'new_bid',
@@ -150,7 +150,19 @@ export const submitBid = async (req: AuthRequest, res: Response) => {
                 },
                 target_role: 'customer'
             });
+
+            // 2. Emit Legacy 'new_bid' Event (Required for Mobile App NotificationOverlay & Sound)
+            emitToUser(customerId, 'new_bid', {
+                bid_id: bidResult.rows[0].bid_id,
+                request_id: targetRequestId,
+                garage_name: `Garage #${bidNumber}`,
+                bid_amount: amountCheck.value,
+                part_condition: part_condition || 'used_good',
+                warranty_days: validatedWarranty || 0,
+                created_at: bidResult.rows[0].created_at
+            });
             console.log(`[SOCKET] Emitted new_bid to user_${customerId}`);
+
         } catch (socketErr) {
             console.error('[SOCKET] Failed to emit new_bid:', socketErr);
         }
