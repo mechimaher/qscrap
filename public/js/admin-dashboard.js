@@ -2555,8 +2555,8 @@ function renderRequestCard(req) {
 
             <div class="garage-actions" style="margin-top: 20px;">
                 ${isPending ? `
-                <button class="btn btn-outline" onclick="rejectRequest(${req.request_id})">Reject</button>
-                <button class="btn btn-primary" onclick="approveRequest(${req.request_id})">Approve</button>
+                <button class="btn btn-outline" onclick="rejectRequest('${req.request_id}')">Reject</button>
+                <button class="btn btn-primary" onclick="approveRequest('${req.request_id}')">Approve</button>
                 ` : `
                 <div class="status-badge ${req.status}">${req.status.toUpperCase()}</div>
                 `}
