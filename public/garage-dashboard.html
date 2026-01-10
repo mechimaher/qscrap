@@ -11,7 +11,7 @@
     <script src="/js/chart.min.js"></script>
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
-    <link rel="stylesheet" href="css/garage-dashboard.css?v=20260110a">
+    <link rel="stylesheet" href="css/garage-dashboard.css?v=20260110b">
     <!-- Leaflet CSS for GPS Location Picker -->
     <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
     <script>
@@ -1313,7 +1313,14 @@
     <script src="js/shared/toast.js"></script>
     <script src="js/shared/modal.js"></script>
     <script src="js/pagination-utils.js"></script>
-    <script src="js/garage-dashboard.js?v=20260110a"></script>
+    <script>
+        const script = document.createElement('script');
+        script.src = `js/garage-dashboard.js?v=20260110b`;
+        script.onload = function () {
+            console.log('Garage Dashboard Script Loaded');
+        };
+        document.body.appendChild(script);
+    </script>
 </body>
 
 </html>
