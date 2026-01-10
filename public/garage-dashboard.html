@@ -1315,7 +1315,9 @@
     <script src="js/pagination-utils.js"></script>
     <script>
         const script = document.createElement('script');
-        script.src = `js/garage-dashboard.js?v=20260110-FIXED`;
+        // PERMANENT FIX: Use timestamp to prevent caching issues
+        // In production, we might want to use a build hash, but this guarantees fresh code
+        script.src = `js/garage-dashboard.js?v=${Date.now()}`;
         script.onload = function () {
             console.log('Garage Dashboard Script Loaded');
         };
