@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
-import { createNotification } from '../services/notification.service';
+import { createNotification, createBatchNotifications } from '../services/notification.service';
 import fs from 'fs/promises';
 
 // ============================================
@@ -160,103 +160,39 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
             // 2. [FIX] Create Persistent Notifications for Relevant Garages (For Bell Icon)
             // Filter garages based on brand specialization and condition
-            const matchedGarages = await client.query(`
-                SELECT garage_id, specialized_brands, all_brands
-                FROM garages 
-                WHERE status = 'active'
-                AND approval_status = 'approved'
-                AND (
-                    supplier_type = 'both' 
-                    OR supplier_type = $1 -- match 'new' or 'used' based on request condition? No, simplify:
-                    -- Logic:
-                    -- Request 'new' -> Garage 'new' or 'both'
-                    -- Request 'used' -> Garage 'used' or 'both'
-                    -- However, condition_required is just text. Let's filter broadly first.
-                )
-            `, []); // Actually, let's filter purely in JS to avoid complex SQL text array matching logic duplication
-
-            // Let's do a smarter query to offload to DB
-            // Condition mapping:
-            // condition_required = 'new' -> supplier_type IN ('new', 'both')
-            // condition_required = 'used' -> supplier_type IN ('used', 'both')
-            // condition_required = 'any' -> ALL supplier_types
-
-            let conditionFilter = "1=1";
-            if (condition_required === 'new') conditionFilter = "supplier_type IN ('new', 'both')";
-            else if (condition_required === 'used') conditionFilter = "supplier_type IN ('used', 'both')";
-
-            const targetGaragesResult = await client.query(`
-                SELECT garage_id, specialized_brands, all_brands 
-                FROM garages 
-                WHERE status = 'active' 
-                AND (approval_status = 'approved' OR approval_status = 'demo')
-                AND ${conditionFilter}
-            `);
-
-            const notificationsToCreate: any[] = [];
-
-            targetGaragesResult.rows.forEach(garage => {
-                let matchesBrand = false;
-                if (garage.all_brands) {
-                    matchesBrand = true;
-                } else if (garage.specialized_brands && Array.isArray(garage.specialized_brands)) {
-                    // Case-insensitive check
-                    const brands = garage.specialized_brands.map((b: string) => b.toLowerCase());
-                    if (brands.includes(car_make.toLowerCase())) {
-                        matchesBrand = true;
-                    }
-                }
-
-                if (matchesBrand) {
-                    notificationsToCreate.push({
-                        userId: garage.garage_id,
-                        type: 'new_request',
-                        title: 'New Request Matching Your Profile 🚗',
-                        message: `${car_year} ${car_make} ${car_model}: ${part_description.substring(0, 50)}${part_description.length > 50 ? '...' : ''}`,
-                        data: { request_id: request.request_id, car_make, car_model, car_year },
-                        target_role: 'garage'
-                    });
-                }
-            });
-
             if (notificationsToCreate.length > 0) {
-                // Import this at top: import { createBatchNotifications } from '../services/notification.service';
-                // Using dynamic import or assuming it's available?
-                // Better to add import at top of file. 
-                // Since I can't edit top of file easily with this chunk, I'll rely on separate edit or update this block.
-                // Wait, I can't invoke imported function if not imported.
-                // I will use require() here as quick fix or rely on subsequent import fix.
-                const { createBatchNotifications } = require('../services/notification.service');
                 await createBatchNotifications(notificationsToCreate);
                 console.log(`[REQUEST] Created ${notificationsToCreate.length} notifications for new request`);
             }
+            console.log(`[REQUEST] Created ${notificationsToCreate.length} notifications for new request`);
+        }
 
         } catch (socketErr) {
-            console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
-            // Don't fail the request creation
-        }
+        console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
+        // Don't fail the request creation
+    }
 
-        res.status(201).json({ message: 'Request created', request_id: request.request_id });
-    } catch (err) {
-        await client.query('ROLLBACK');
+    res.status(201).json({ message: 'Request created', request_id: request.request_id });
+} catch (err) {
+    await client.query('ROLLBACK');
 
-        // Cleanup uploaded files on error
-        if (files && files.length > 0) {
-            for (const file of files) {
-                try {
-                    await fs.unlink(file.path);
-                    console.log(`[REQUEST] Cleaned up file: ${file.path}`);
-                } catch (unlinkErr) {
-                    console.error('[REQUEST] File cleanup error:', unlinkErr);
-                }
+    // Cleanup uploaded files on error
+    if (files && files.length > 0) {
+        for (const file of files) {
+            try {
+                await fs.unlink(file.path);
+                console.log(`[REQUEST] Cleaned up file: ${file.path}`);
+            } catch (unlinkErr) {
+                console.error('[REQUEST] File cleanup error:', unlinkErr);
             }
         }
-
-        console.error('[REQUEST] Create request error:', err);
-        res.status(500).json({ error: 'Failed to create request. Please try again.' });
-    } finally {
-        client.release();
     }
+
+    console.error('[REQUEST] Create request error:', err);
+    res.status(500).json({ error: 'Failed to create request. Please try again.' });
+} finally {
+    client.release();
+}
 };
 
 export const getActiveRequests = async (req: AuthRequest, res: Response) => {
@@ -424,65 +360,61 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         // Get Bids with latest counter-offer info
         // IMPORTANT: Include last garage offer even if negotiation ended (for customer to accept final price)
         const bidsResult = await pool.query(
-            `SELECT b.*, g.garage_name, g.rating_average as garage_rating, g.rating_count as garage_review_count, g.total_transactions,
-                    -- Subscription plan for badge display
+            `WITH LatestCounters AS (
+                SELECT *, 
+                       ROW_NUMBER() OVER (PARTITION BY bid_id, offered_by_type ORDER BY created_at DESC) as rn
+                FROM counter_offers
+                WHERE created_at IS NOT NULL
+             )
+             SELECT b.*, 
+                    g.garage_name, 
+                    g.rating_average as garage_rating, 
+                    g.rating_count as garage_review_count, 
+                    g.total_transactions,
                     COALESCE(sp.plan_code, 'starter') as plan_code,
-                    -- Original bid amount (TODO: store separately in future, for now use current bid_amount)
                     b.bid_amount as original_bid_amount,
-                    -- Pending counter-offers from garage (awaiting customer response)
-                    (SELECT co.proposed_amount 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'garage' 
-                       AND co.status = 'pending'
-                     ORDER BY co.created_at DESC LIMIT 1) as garage_counter_amount,
-                    (SELECT co.message 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'garage' 
-                       AND co.status = 'pending'
-                     ORDER BY co.created_at DESC LIMIT 1) as garage_counter_message,
-                    (SELECT co.counter_offer_id 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'garage' 
-                       AND co.status = 'pending'
-                     ORDER BY co.created_at DESC LIMIT 1) as garage_counter_id,
-                    -- LAST garage offer (regardless of status - customer can always accept this)
-                    (SELECT co.proposed_amount 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'garage'
-                     ORDER BY co.created_at DESC LIMIT 1) as last_garage_offer_amount,
-                    (SELECT co.counter_offer_id 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'garage'
-                     ORDER BY co.created_at DESC LIMIT 1) as last_garage_offer_id,
-                    -- LAST customer counter-offer (what customer proposed)
-                    (SELECT co.proposed_amount 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'customer'
-                     ORDER BY co.created_at DESC LIMIT 1) as customer_counter_amount,
-                    (SELECT co.status 
-                     FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id 
-                       AND co.offered_by_type = 'customer'
-                     ORDER BY co.created_at DESC LIMIT 1) as customer_counter_status,
-                    -- Current negotiation round count
+                    
+                    -- Garage Last Offer (Pending)
+                    lc_gp.proposed_amount as garage_counter_amount,
+                    lc_gp.message as garage_counter_message,
+                    lc_gp.counter_offer_id as garage_counter_id,
+                    
+                    -- Garage Last Offer (Any Status)
+                    lc_g.proposed_amount as last_garage_offer_amount,
+                    lc_g.counter_offer_id as last_garage_offer_id,
+                    
+                    -- Customer Last Counter
+                    lc_c.proposed_amount as customer_counter_amount,
+                    lc_c.status as customer_counter_status,
+                    
+                    -- Negotiation Stats
                     (SELECT COUNT(*) FROM counter_offers co WHERE co.bid_id = b.bid_id) as negotiation_rounds,
-                    -- Is negotiation still active?
-                    (SELECT COUNT(*) > 0 FROM counter_offers co 
-                     WHERE co.bid_id = b.bid_id AND co.status = 'pending') as has_pending_negotiation
+                    (SELECT COUNT(*) > 0 FROM counter_offers co WHERE co.bid_id = b.bid_id AND co.status = 'pending') as has_pending_negotiation
+
              FROM bids b
              JOIN garages g ON b.garage_id = g.garage_id
              LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
              LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+             
+             -- Join for Garage Pending Offer
+             LEFT JOIN LatestCounters lc_gp ON b.bid_id = lc_gp.bid_id 
+                                           AND lc_gp.offered_by_type = 'garage' 
+                                           AND lc_gp.status = 'pending' 
+                                           AND lc_gp.rn = 1
+                                           
+             -- Join for Garage Last Offer (Any)
+             LEFT JOIN LatestCounters lc_g ON b.bid_id = lc_g.bid_id 
+                                          AND lc_g.offered_by_type = 'garage' 
+                                          AND lc_g.rn = 1
+                                          
+             -- Join for Customer Last Counter
+             LEFT JOIN LatestCounters lc_c ON b.bid_id = lc_c.bid_id 
+                                          AND lc_c.offered_by_type = 'customer' 
+                                          AND lc_c.rn = 1
+
              WHERE b.request_id = $1 AND b.status IN ('pending', 'accepted')
              ORDER BY 
                  CASE WHEN b.status = 'accepted' THEN 0 ELSE 1 END,
-                 -- Priority sorting: Enterprise > Professional > Starter
                  CASE sp.plan_code WHEN 'enterprise' THEN 0 WHEN 'professional' THEN 1 ELSE 2 END,
                  b.bid_amount ASC`,
             [request_id]

@@ -26,7 +26,7 @@ export class DriverRepository {
             SELECT 
                 d.driver_id, d.full_name, d.phone, d.email,
                 d.vehicle_type, d.vehicle_plate, d.vehicle_model,
-                d.status, d.total_deliveries, d.rating_average, d.rating_count,
+                d.status, d.total_deliveries, d.rating_average::FLOAT as rating_average, d.rating_count,
                 d.current_lat, d.current_lng, d.last_location_update,
                 d.is_active, d.created_at,
                 u.phone_number as login_phone
@@ -48,7 +48,7 @@ export class DriverRepository {
                 da.estimated_delivery, da.pickup_at, da.delivered_at,
                 da.delivery_photo_url, da.driver_notes as delivery_notes,
                 da.created_at as assigned_at,
-                o.order_number, o.order_status, o.total_amount,
+                o.order_number, o.order_status, o.total_amount::FLOAT as total_amount,
                 pr.part_description, pr.car_make, pr.car_model, pr.car_year,
                 u.full_name as customer_name, u.phone_number as customer_phone,
                 g.garage_name, g.address as garage_address,
@@ -85,7 +85,7 @@ export class DriverRepository {
                 da.estimated_pickup, da.estimated_delivery,
                 da.pickup_at, da.delivered_at,
                 da.delivery_photo_url, da.signature_url, da.driver_notes,
-                o.order_number, o.order_status, o.total_amount, o.created_at as order_created,
+                o.order_number, o.order_status, o.total_amount::FLOAT as total_amount, o.created_at as order_created,
                 o.customer_id, o.garage_id,
                 pr.part_description, pr.car_make, pr.car_model, pr.car_year,
                 pr.condition_required,
@@ -326,7 +326,7 @@ export class DriverRepository {
         const result = await this.pool.query(`
             SELECT 
                 d.total_deliveries,
-                d.rating_average,
+                d.rating_average::FLOAT as rating_average,
                 d.rating_count,
                 COUNT(*) FILTER (WHERE da.status = 'delivered' AND DATE(da.delivered_at) = CURRENT_DATE) as today_deliveries,
                 COUNT(*) FILTER (WHERE da.status = 'delivered' AND da.delivered_at >= CURRENT_DATE - INTERVAL '7 days') as week_deliveries,

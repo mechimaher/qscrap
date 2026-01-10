@@ -248,6 +248,33 @@ export const getMyBids = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getBidById = async (req: AuthRequest, res: Response) => {
+    const { bid_id } = req.params;
+    const garageId = req.user!.userId;
+
+    try {
+        const result = await pool.query(
+            `SELECT b.*, 
+                    pr.car_make, pr.car_model, pr.car_year, 
+                    pr.part_description,
+                    pr.request_id
+             FROM bids b
+             JOIN part_requests pr ON b.request_id = pr.request_id
+             WHERE b.bid_id = $1 AND b.garage_id = $2`,
+            [bid_id, garageId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Bid not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('[BID] GetBidById error:', err);
+        res.status(500).json({ error: 'Failed to fetch bid' });
+    }
+};
+
 export const rejectBid = async (req: AuthRequest, res: Response) => {
     const { bid_id } = req.params;
     const userId = req.user!.userId;

@@ -560,8 +560,12 @@ const REQUESTS_PAGE_SIZE = 20;
 
 async function loadRequests(page = 1) {
     currentRequestsPage = page;
+    const urgency = document.getElementById('requestUrgencyFilter')?.value || 'all';
+    const condition = document.getElementById('requestConditionFilter')?.value || 'all';
+    const sort = document.getElementById('requestSortOption')?.value || 'newest';
+
     try {
-        const res = await fetch(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}`, {
+        const res = await fetch(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}&urgency=${urgency}&condition=${condition}&sort=${sort}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -593,72 +597,19 @@ function renderRequests() {
     // Recent Orders section on dashboard is populated by loadDashboard/loadOrders
 }
 
-// Store original requests for filtering
-let originalRequests = [];
-
-// Filter requests based on selected criteria
+// Filter requests - now triggers server reload
 function filterRequests() {
-    const urgencyFilter = document.getElementById('requestUrgencyFilter')?.value || 'all';
-    const conditionFilter = document.getElementById('requestConditionFilter')?.value || 'all';
-
-    let filtered = [...originalRequests];
-
-    // Apply urgency filter
-    if (urgencyFilter !== 'all') {
-        filtered = filtered.filter(req => {
-            const createdAt = req.created_at ? new Date(req.created_at) : new Date();
-            const hoursOld = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
-            if (urgencyFilter === 'high') return hoursOld < 12;
-            if (urgencyFilter === 'medium') return hoursOld >= 12 && hoursOld < 36;
-            if (urgencyFilter === 'low') return hoursOld >= 36;
-            return true;
-        });
-    }
-
-    // Apply condition filter
-    if (conditionFilter !== 'all') {
-        filtered = filtered.filter(req =>
-            (req.condition_required || 'any') === conditionFilter
-        );
-    }
-
-    // Update global requests and re-render
-    requests = filtered;
-    applyRequestSort();
+    loadRequests(1);
 }
 
 // Sort requests based on selected option
 function sortRequests() {
-    applyRequestSort();
+    loadRequests(1);
 }
 
+// Deprecated client-side sort - kept for reference but unused
 function applyRequestSort() {
-    const sortOption = document.getElementById('requestSortOption')?.value || 'newest';
-
-    requests.sort((a, b) => {
-        const aDate = new Date(a.created_at || 0);
-        const bDate = new Date(b.created_at || 0);
-
-        switch (sortOption) {
-            case 'newest':
-                return bDate - aDate;
-            case 'oldest':
-                return aDate - bDate;
-            case 'urgency':
-                // High urgency = newer requests (less hours old)
-                const aHours = (Date.now() - aDate.getTime()) / (1000 * 60 * 60);
-                const bHours = (Date.now() - bDate.getTime()) / (1000 * 60 * 60);
-                return aHours - bHours; // Newer first = more urgent
-            case 'bids_low':
-                return (a.bid_count || 0) - (b.bid_count || 0);
-            case 'bids_high':
-                return (b.bid_count || 0) - (a.bid_count || 0);
-            default:
-                return bDate - aDate;
-        }
-    });
-
-    renderRequests();
+    // Logic moved to backend
 }
 
 // Clear all request filters
@@ -671,9 +622,9 @@ function clearRequestFilters() {
     if (conditionEl) conditionEl.value = 'all';
     if (sortEl) sortEl.value = 'newest';
 
-    // Restore original requests
-    requests = [...originalRequests];
-    applyRequestSort();
+    if (sortEl) sortEl.value = 'newest';
+
+    loadRequests(1);
 }
 
 
@@ -781,16 +732,16 @@ function createRequestCard(req, isNew = false) {
                 <div class="request-card ${isNew ? 'new' : ''} ${isIgnored ? 'ignored' : ''} ${hasBid ? 'bidded' : ''} ${urgencyClass}" data-id="${id}">
                     <div class="request-info">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <h4>${title}</h4>
+                            <h4>${escapeHTML(title)}</h4>
                             <span class="urgency-badge ${urgencyLabel}"><i class="bi bi-fire"></i> ${urgencyLabel.toUpperCase()}</span>
                         </div>
-                        <p>${desc}</p>
+                        <p>${escapeHTML(desc)}</p>
                         
                         <!-- Technical Specs for Garage -->
                         <div class="tech-specs">
-                            ${req.vin_number ? `<span class="spec-item vin"><i class="bi bi-upc-scan"></i> VIN: <strong>${req.vin_number}</strong></span>` : ''}
-                            ${req.part_number ? `<span class="spec-item"><i class="bi bi-hash"></i> Part#: <strong>${req.part_number}</strong></span>` : ''}
-                            ${req.part_category ? `<span class="spec-item"><i class="bi bi-folder"></i> ${req.part_category}</span>` : ''}
+                            ${req.vin_number ? `<span class="spec-item vin"><i class="bi bi-upc-scan"></i> VIN: <strong>${escapeHTML(req.vin_number)}</strong></span>` : ''}
+                            ${req.part_number ? `<span class="spec-item"><i class="bi bi-hash"></i> Part#: <strong>${escapeHTML(req.part_number)}</strong></span>` : ''}
+                            ${req.part_category ? `<span class="spec-item"><i class="bi bi-folder"></i> ${escapeHTML(req.part_category)}</span>` : ''}
                             <span class="spec-item condition ${req.condition_required === 'new' ? 'new' : req.condition_required === 'used' ? 'used' : 'any'}"><i class="bi bi-${req.condition_required === 'new' ? 'star-fill' : req.condition_required === 'used' ? 'recycle' : 'check-circle'}"></i> ${(req.condition_required || 'any').toUpperCase()}</span>
                         </div>
                         
@@ -1716,15 +1667,14 @@ let currentEditBidId = null;
 async function openUpdateBidModal(bidId, title) {
     currentEditBidId = bidId;
 
-    // Find bid info from our loaded bids
+    // Find bid info from server (optimized fetch)
     try {
-        const res = await fetch(`${API_URL}/bids/my`, {
+        const res = await fetch(`${API_URL}/bids/${bidId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const bids = await res.json();
-        const bid = bids.find(b => b.bid_id === bidId);
 
-        if (bid) {
+        if (res.ok) {
+            const bid = await res.json();
             // Pre-fill modal with existing values
             document.getElementById('bidRequestId').value = bid.request_id;
             document.getElementById('bidRequestInfo').textContent = `Updating bid for: ${title} `;
