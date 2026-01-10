@@ -3038,11 +3038,12 @@ async function showPlanOptions() {
             });
             const data = await res.json();
 
-            if (data.plans) {
+            if (data) {
+                const plans = Array.isArray(data) ? data : (data.plans || []);
                 const currentPlan = document.getElementById('subPlanName').textContent;
 
                 plansGrid.innerHTML = '<h3 style="grid-column: 1/-1; margin-bottom: 16px;">Available Plans</h3>' +
-                    data.plans.map(plan => `
+                    plans.map(plan => `
                         <div class="plan-card ${plan.plan_name === currentPlan ? 'current' : ''}">
                             <div class="plan-header">
                                 ${plan.is_featured ? '<div class="plan-badge">Popular</div>' : ''}
