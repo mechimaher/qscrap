@@ -46,18 +46,38 @@ export type RootStackParamList = {
     Settings: undefined;
 };
 
-// Auth Navigator
 export type AuthStackParamList = {
     Login: undefined;
     BiometricSetup: undefined;
 };
 
+const AuthStack = (createNativeStackNavigator as any)();
+const RootStack = (createNativeStackNavigator as any)();
+const Tab = (createBottomTabNavigator as any)();
+
+// Auth Navigator
 function AuthNavigator() {
     return (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
             <AuthStack.Screen name="Login" component={LoginScreen} />
             <AuthStack.Screen name="BiometricSetup" component={BiometricSetupScreen} />
         </AuthStack.Navigator>
+    );
+}
+
+function MainTabs() {
+    return (
+        <Tab.Navigator
+            screenOptions={{
+                headerShown: false,
+                tabBarActiveTintColor: Colors.primary,
+            }}
+        >
+            <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
+            <Tab.Screen name="Assignments" component={AssignmentsScreen} options={{ title: 'Jobs' }} />
+            <Tab.Screen name="Earnings" component={EarningsScreen} options={{ title: 'Earnings' }} />
+            <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+        </Tab.Navigator>
     );
 }
 
@@ -89,8 +109,8 @@ function RootNavigator() {
         });
 
         return () => {
-            Notifications.removeNotificationSubscription(notificationListener);
-            Notifications.removeNotificationSubscription(responseListener);
+            notificationListener.remove();
+            responseListener.remove();
         };
     }, [isAuthenticated]);
 

@@ -136,7 +136,7 @@ export default function LiveMapView({
         <View style={[styles.container, { height }]}>
             <MapLibreGL.MapView
                 style={styles.map}
-                styleURL="https://tiles.openfreemap.org/styles/liberty"
+                mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
                 logoEnabled={false}
                 attributionEnabled={false}
             >

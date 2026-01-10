@@ -17,21 +17,20 @@ const QUEUE_KEY = 'offline_request_queue';
 class OfflineQueueService {
     private queue: QueuedRequest[] = [];
     private isProcessing = false;
+    private initialized = false;
 
-    constructor() {
-        this.loadQueue();
-    }
-
-    private loadQueue() {
-        const json = storage.getString(QUEUE_KEY);
-        if (json) {
-            try {
+    private ensureInitialized() {
+        if (this.initialized) return;
+        this.initialized = true;
+        try {
+            const json = storage.getString(QUEUE_KEY);
+            if (json) {
                 this.queue = JSON.parse(json);
                 console.log(`[OfflineQueue] Loaded ${this.queue.length} pending requests`);
-            } catch (e) {
-                console.error('[OfflineQueue] Failed to parse queue', e);
-                this.queue = [];
             }
+        } catch (e) {
+            console.warn('[OfflineQueue] Failed to load queue', e);
+            this.queue = [];
         }
     }
 
@@ -40,6 +39,7 @@ class OfflineQueueService {
     }
 
     async enqueue(endpoint: string, method: string, body: any) {
+        this.ensureInitialized();
         const request: QueuedRequest = {
             id: Date.now().toString() + Math.random().toString().slice(2, 6),
             endpoint,
@@ -61,6 +61,7 @@ class OfflineQueueService {
     }
 
     async processQueue() {
+        this.ensureInitialized();
         if (this.isProcessing || this.queue.length === 0) return;
 
         const state = await NetInfo.fetch();
@@ -86,7 +87,7 @@ class OfflineQueueService {
                     const fileInfo = await FileSystem.getInfoAsync(req.body.photoPath);
                     if (fileInfo.exists) {
                         const base64 = await FileSystem.readAsStringAsync(req.body.photoPath, {
-                            encoding: FileSystem.EncodingType.Base64
+                            encoding: 'base64'
                         });
                         // Replace photoPath with actual photo data expected by backend
                         bodyToSend = {
@@ -96,9 +97,6 @@ class OfflineQueueService {
                         };
                     } else {
                         console.warn(`[OfflineQueue] File not found: ${req.body.photoPath}, skipping upload part`);
-                        // We might want to fail here, or send without photo. 
-                        // For now, let's try sending without photo (might fail on backend)
-                        // or better, mark as failed and don't retry if file is gone forever.
                     }
                 }
 

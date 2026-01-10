@@ -20,7 +20,7 @@ import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
-import { api } from '../services/api';
+import { api, API_ENDPOINTS } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/theme';
 import { offlineQueue } from '../services/OfflineQueue';
 
@@ -79,7 +79,7 @@ export default function ProofOfDeliveryScreen() {
         try {
             // 1. Save Photo to permanent storage (media service pattern)
             const photoFilename = `pod_${assignmentId}_${Date.now()}.jpg`;
-            const permanentUri = FileSystem.documentDirectory + photoFilename;
+            const permanentUri = ((FileSystem as any).documentDirectory || '') + photoFilename;
             await FileSystem.copyAsync({ from: photoUri, to: permanentUri });
 
             // 2. Queue the upload
@@ -103,29 +103,23 @@ export default function ProofOfDeliveryScreen() {
             // In Session 4 we added `offlineQueue.enqueue`. Let's use that directly here 
             // to guarantee offline support.
 
-            await offlineQueue.enqueue({
-                type: 'UPLOAD_PROOF',
-                payload: {
-                    assignmentId,
+            // 2. Queue the upload
+            await offlineQueue.enqueue(
+                API_ENDPOINTS.UPLOAD_PROOF(assignmentId),
+                'POST',
+                {
                     photoPath: permanentUri,
                     signature: signatureData.replace('data:image/png;base64,', ''),
                     notes: `Payment: ${paymentMethod}`
-                },
-                meta: {
-                    retryCount: 0,
-                    timestamp: Date.now()
                 }
-            });
+            );
 
             // 3. Mark job as delivered locally
-            await offlineQueue.enqueue({
-                type: 'UPDATE_STATUS',
-                payload: {
-                    assignmentId,
-                    status: 'delivered'
-                },
-                meta: { retryCount: 0, timestamp: Date.now() }
-            });
+            await offlineQueue.enqueue(
+                API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
+                'PATCH',
+                { status: 'delivered' }
+            );
 
             setStep('success');
         } catch (err: any) {

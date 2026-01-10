@@ -4,10 +4,11 @@ export const MediaService = {
     async saveToPermanent(uri: string): Promise<string> {
         try {
             const filename = uri.split('/').pop() || `photo_${Date.now()}.jpg`;
-            const dest = `${FileSystem.documentDirectory}photos/${filename}`;
+            const docDir = (FileSystem as any).documentDirectory || ''; // Fallback for older API or check current
+            const dest = `${docDir}photos/${filename}`;
 
             // Ensure directory exists
-            await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory}photos/`, { intermediates: true });
+            await FileSystem.makeDirectoryAsync(`${docDir}photos/`, { intermediates: true });
 
             // Copy file
             await FileSystem.copyAsync({
@@ -24,7 +25,7 @@ export const MediaService = {
 
     async clearPhotos() {
         try {
-            await FileSystem.deleteAsync(`${FileSystem.documentDirectory}photos/`, { idempotent: true });
+            await FileSystem.deleteAsync(`${(FileSystem as any).documentDirectory}photos/`, { idempotent: true });
         } catch (error) {
             console.error('[MediaService] Failed to clear photos:', error);
         }

@@ -41,7 +41,7 @@ export default function NavigationScreen() {
     const route = useRoute<any>();
     const params: NavigationScreenParams = route.params || {};
 
-    const cameraRef = useRef<MapLibreGL.Camera>(null);
+    const cameraRef = useRef<any>(null);
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [routeData, setRouteData] = useState<Route | null>(null);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -198,11 +198,11 @@ export default function NavigationScreen() {
         <View style={styles.container}>
             <MapLibreGL.MapView
                 style={styles.map}
-                styleURL="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+                mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
                 logoEnabled={false}
                 attributionEnabled={false}
                 compassEnabled={false}
-                onMapLoadingError={(event) => console.error("Map Load Error:", event)}
+                onDidFailLoadingMap={() => console.error("Map Load Error")}
             >
                 <MapLibreGL.Camera
                     ref={cameraRef}
