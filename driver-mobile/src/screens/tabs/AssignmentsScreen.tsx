@@ -16,7 +16,10 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useJobStore } from '../../stores/useJobStore';
 import { GlassCard } from '../../components/common/GlassCard';
 
-// ... imports
+import { api, Assignment } from '../../services/api';
+import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
+
+type FilterType = 'active' | 'completed' | 'all';
 
 export default function AssignmentsScreen() {
     const { colors } = useTheme();

@@ -17,8 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../contexts/ThemeContext';
-import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
 

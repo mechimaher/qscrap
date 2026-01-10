@@ -1,5 +1,6 @@
 // QScrap Driver App - API Service
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+export { API_ENDPOINTS };
 import * as SecureStore from 'expo-secure-store';
 
 // Token Storage Keys
@@ -115,7 +116,7 @@ class DriverApiService {
         }
     }
 
-    private async request<T>(
+    public async request<T>(
         endpoint: string,
         options: RequestInit = {}
     ): Promise<T> {

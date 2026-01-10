@@ -2947,6 +2947,9 @@ async function loadSubscription() {
         });
         const data = await res.json();
 
+        // Assign pending request from API response
+        currentPendingRequest = data.pending_request || null;
+
         if (data.subscription) {
             const sub = data.subscription;
 
