@@ -232,17 +232,6 @@ export const changePlan = async (req: AuthRequest, res: Response) => {
     try {
         await client.query('BEGIN');
 
-        // Check for existing pending request
-        const pendingCheck = await client.query(
-            `SELECT request_id FROM subscription_change_requests 
-             WHERE garage_id = $1 AND status = 'pending'`,
-            [garageId]
-        );
-
-        if (pendingCheck.rows.length > 0) {
-            throw new Error('You already have a pending plan change request.');
-        }
-
         // Get current subscription
         const currentSub = await client.query(
             `SELECT plan_id, monthly_fee FROM garage_subscriptions 
@@ -257,6 +246,29 @@ export const changePlan = async (req: AuthRequest, res: Response) => {
 
         const currentPlanId = currentSub.rows[0].plan_id;
         const currentFee = parseFloat(currentSub.rows[0].monthly_fee);
+
+        // Check for existing pending request
+        const pendingCheck = await client.query(
+            `SELECT request_id, to_plan_id FROM subscription_change_requests 
+             WHERE garage_id = $1 AND status = 'pending'`,
+            [garageId]
+        );
+
+        if (pendingCheck.rows.length > 0) {
+            const pendingReq = pendingCheck.rows[0];
+
+            // SELF-HEALING: If pending request is for the plan we are ALREADY on, mark it approved
+            if (pendingReq.to_plan_id === currentPlanId) {
+                await client.query(
+                    `UPDATE subscription_change_requests 
+                     SET status = 'approved', updated_at = NOW(), admin_notes = 'Auto-resolved: User already on target plan'
+                     WHERE request_id = $1`,
+                    [pendingReq.request_id]
+                );
+            } else {
+                throw new Error('You already have a pending plan change request.');
+            }
+        }
 
         // Get new plan info
         const newPlan = await client.query(
