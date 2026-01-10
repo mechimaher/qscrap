@@ -23,6 +23,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocation } from '../hooks/useLocation';
 import { api, Assignment } from '../services/api';
+import { offlineQueue } from '../services/OfflineQueue';
+import { useJobStore } from '../stores/useJobStore';
+import { API_ENDPOINTS } from '../config/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Shadows } from '../constants/theme';
 import { LiveMapView, SwipeToComplete } from '../components';
 
@@ -35,10 +38,24 @@ export default function AssignmentDetailScreen() {
     const { assignmentId } = route.params || {};
     const { location, startTracking, stopTracking } = useLocation();
 
-    const [assignment, setAssignment] = useState<Assignment | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // Store
+    const assignmentFromStore = useJobStore(state =>
+        state.assignments.find(a => a.assignment_id === assignmentId)
+    );
+    const updateLocalStatus = useJobStore(state => state.updateAssignmentStatus);
+    const setAssignments = useJobStore(state => state.setAssignments);
+
+    const [assignment, setAssignment] = useState<Assignment | null>(assignmentFromStore || null);
+    const [isLoading, setIsLoading] = useState(!assignmentFromStore);
     const [isUpdating, setIsUpdating] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+
+    useEffect(() => {
+        if (assignmentFromStore) {
+            setAssignment(assignmentFromStore);
+            setIsLoading(false);
+        }
+    }, [assignmentFromStore]);
 
     useEffect(() => {
         loadAssignment();
@@ -51,10 +68,16 @@ export default function AssignmentDetailScreen() {
 
     const loadAssignment = async () => {
         try {
+            // Fetch fresh data
             const result = await api.getAssignmentDetails(assignmentId);
+            // Update local state (which updates store potentially if we sync full list, but here we just set local)
             setAssignment(result.assignment);
         } catch (err: any) {
-            Alert.alert('Error', err.message || 'Failed to load assignment');
+            console.log('[Detail] Load error (offline?):', err.message);
+            // If we have store data, we are good. If not, show error.
+            if (!assignmentFromStore) {
+                Alert.alert('Error', 'Could not load assignment details');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -411,9 +434,18 @@ export default function AssignmentDetailScreen() {
                                         onPress: async () => {
                                             setIsUpdating(true);
                                             try {
-                                                await api.updateAssignmentStatus(assignment.assignment_id, 'failed');
+                                                // 1. Optimistic Update
+                                                updateLocalStatus(assignment.assignment_id, 'failed');
+
+                                                // 2. Queue for Sync
+                                                await offlineQueue.enqueue(
+                                                    API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                                    'PATCH',
+                                                    { status: 'failed' }
+                                                );
+
                                                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                                                await loadAssignment();
+                                                navigation.goBack();
                                             } catch (err: any) {
                                                 Alert.alert('Error', err.message);
                                             } finally {
@@ -433,9 +465,20 @@ export default function AssignmentDetailScreen() {
                             onComplete={async () => {
                                 setIsUpdating(true);
                                 try {
-                                    await api.updateAssignmentStatus(assignment.assignment_id, nextAction.status);
+                                    // 1. Optimistic Update
+                                    updateLocalStatus(assignment.assignment_id, nextAction.status);
+
+                                    // 2. Queue for Sync
+                                    await offlineQueue.enqueue(
+                                        API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                        'PATCH',
+                                        { status: nextAction.status }
+                                    );
+
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                    await loadAssignment();
+
+                                    // If delivered, maybe ask for photo? For now, we update state.
+                                    // loadAssignment() is not needed as store is updated.
                                 } catch (err: any) {
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                                     Alert.alert('Error', err.message || 'Failed to update');

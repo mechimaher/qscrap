@@ -198,7 +198,7 @@ export default function NavigationScreen() {
         <View style={styles.container}>
             <MapLibreGL.MapView
                 style={styles.map}
-                styleURL="https://tiles.openfreemap.org/styles/liberty"
+                styleURL="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
                 logoEnabled={false}
                 attributionEnabled={false}
                 compassEnabled={false}
@@ -239,30 +239,70 @@ export default function NavigationScreen() {
                     </MapLibreGL.PointAnnotation>
                 )}
 
-                {/* Route Line */}
+                {/* VVIP 3D Buildings Layer */}
+                <MapLibreGL.FillExtrusionLayer
+                    id="3d-buildings"
+                    sourceID="composite"
+                    sourceLayerID="building"
+                    filter={['==', 'extrude', 'true']}
+                    minZoomLevel={15}
+                    style={{
+                        fillExtrusionColor: '#aaa',
+                        fillExtrusionOpacity: 0.6,
+                        fillExtrusionHeight: ['get', 'height'],
+                        fillExtrusionBase: ['get', 'min_height'],
+                    }}
+                />
+
+                {/* VVIP Traffic Layer Simulation (Overlay on route) */}
                 {routeLineCoordinates.length > 1 && (
-                    <MapLibreGL.ShapeSource
-                        id="routeSource"
-                        shape={{
-                            type: 'Feature',
-                            properties: {},
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: routeLineCoordinates as any
-                            }
-                        }}
-                    >
-                        <MapLibreGL.LineLayer
-                            id="routeLine"
-                            style={{
-                                lineColor: Colors.primary,
-                                lineWidth: 6,
-                                lineCap: 'round',
-                                lineJoin: 'round',
-                                lineOpacity: 0.8
+                    <>
+                        {/* Traffic Glow */}
+                        <MapLibreGL.ShapeSource
+                            id="trafficSource"
+                            shape={{
+                                type: 'Feature',
+                                properties: {},
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: routeLineCoordinates as any
+                                }
                             }}
-                        />
-                    </MapLibreGL.ShapeSource>
+                        >
+                            <MapLibreGL.LineLayer
+                                id="trafficGlow"
+                                style={{
+                                    lineColor: Colors.success,
+                                    lineWidth: 10,
+                                    lineBlur: 2,
+                                    lineOpacity: 0.4,
+                                }}
+                            />
+                        </MapLibreGL.ShapeSource>
+
+                        <MapLibreGL.ShapeSource
+                            id="routeSource"
+                            shape={{
+                                type: 'Feature',
+                                properties: {},
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: routeLineCoordinates as any
+                                }
+                            }}
+                        >
+                            <MapLibreGL.LineLayer
+                                id="routeLine"
+                                style={{
+                                    lineColor: Colors.primary,
+                                    lineWidth: 6,
+                                    lineCap: 'round',
+                                    lineJoin: 'round',
+                                    lineOpacity: 0.9,
+                                }}
+                            />
+                        </MapLibreGL.ShapeSource>
+                    </>
                 )}
             </MapLibreGL.MapView>
 
@@ -377,15 +417,19 @@ const styles = StyleSheet.create({
     topOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
     navCard: {
         margin: 16,
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 10,
+        // Glassmorphism
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.5)',
     },
     navIconContainer: {
         width: 56,

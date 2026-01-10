@@ -1,9 +1,11 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { api } from './api';
+import { offlineQueue } from './OfflineQueue';
+import { API_ENDPOINTS } from '../config/api';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
+// Define the background task in global scope
 // Define the background task in global scope
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {
@@ -16,17 +18,21 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         if (location) {
             console.log('[LocationService] Background location:', location.coords);
             try {
-                await api.updateLocation(
-                    location.coords.latitude,
-                    location.coords.longitude,
+                // Use offline queue for guaranteed delivery
+                await offlineQueue.enqueue(
+                    API_ENDPOINTS.UPDATE_LOCATION,
+                    'POST',
                     {
+                        lat: location.coords.latitude,
+                        lng: location.coords.longitude,
                         accuracy: location.coords.accuracy || 0,
                         heading: location.coords.heading || 0,
-                        speed: location.coords.speed || 0
+                        speed: location.coords.speed || 0,
+                        timestamp: location.timestamp
                     }
                 );
             } catch (err) {
-                console.error('[LocationService] Failed to sync location:', err);
+                console.error('[LocationService] Failed to queue location:', err);
             }
         }
     }
