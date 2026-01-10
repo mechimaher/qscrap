@@ -465,7 +465,29 @@ export default function AssignmentDetailScreen() {
                             onComplete={async () => {
                                 setIsUpdating(true);
                                 try {
-                                    // 1. Optimistic Update
+                                    // 1. Determine if we need specialized flow
+                                    if (nextAction.status === 'picked_up') {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        navigation.navigate('PartInspection', {
+                                            assignmentId: assignment.assignment_id,
+                                            orderId: assignment.order_id,
+                                            orderNumber: assignment.order_number,
+                                            partDescription: assignment.part_description
+                                        });
+                                        setIsUpdating(false);
+                                        return;
+                                    }
+
+                                    if (nextAction.status === 'delivered') {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        navigation.navigate('ProofOfDelivery', {
+                                            assignmentId: assignment.assignment_id
+                                        });
+                                        setIsUpdating(false);
+                                        return;
+                                    }
+
+                                    // 2. Default Optimistic Update for other transitions (e.g., in_transit)
                                     updateLocalStatus(assignment.assignment_id, nextAction.status);
 
                                     // 2. Queue for Sync

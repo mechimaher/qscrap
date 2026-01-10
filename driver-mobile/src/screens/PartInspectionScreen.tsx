@@ -137,7 +137,7 @@ export default function PartInspectionScreen() {
                 [
                     {
                         text: 'Start Delivery',
-                        onPress: () => navigation.goBack(),
+                        onPress: () => navigation.navigate('Home'),
                     },
                 ]
             );
