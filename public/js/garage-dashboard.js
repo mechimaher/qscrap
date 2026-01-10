@@ -2942,6 +2942,7 @@ let currentPendingRequest = null;
 
 async function loadSubscription() {
     try {
+        console.log('Garage Dashboard v2026.01.10-FIXED: Loading subscription...');
         const res = await fetch(`${API_URL}/subscriptions/my`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
