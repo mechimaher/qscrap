@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { submitBid, getMyBids, rejectBid, updateBid } from '../controllers/bid.controller';
+import { submitBid, getMyBids, getBidById, rejectBid, updateBid } from '../controllers/bid.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { upload, optimizeFiles } from '../middleware/file.middleware';
 import { validate, createBidSchema } from '../middleware/validation.middleware';
@@ -11,6 +11,9 @@ router.post('/', authenticate, requireRole('garage'), upload.array('images', 10)
 
 // Get my bids (Garage only)
 router.get('/my', authenticate, requireRole('garage'), getMyBids);
+
+// Get single bid (Garage only)
+router.get('/:bid_id', authenticate, requireRole('garage'), getBidById);
 
 // Update bid (Garage only) - modify pending bid
 router.put('/:bid_id', authenticate, requireRole('garage'), updateBid);

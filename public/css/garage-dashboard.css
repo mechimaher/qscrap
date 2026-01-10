@@ -571,9 +571,9 @@ body {
         margin-bottom: 24px;
     }
 
-    /* Fix z-index issue: Sidebar must be above overlay (900) */
+    /* Fix z-index issue: Sidebar must be above overlay (900) and dropdowns (1100) */
     .sidebar {
-        z-index: 1001 !important;
+        z-index: 2000 !important;
     }
 }
 
@@ -3697,106 +3697,7 @@ body {
     font-size: 18px;
 }
 
-/* ============================================
-   PREMIUM UPGRADE - Notifications Dropdown
-   ============================================ */
-
-.header-notifications {
-    position: relative;
-}
-
-.notification-btn {
-    position: relative;
-}
-
-.notification-dot {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 10px;
-    height: 10px;
-    background: var(--danger);
-    border-radius: 50%;
-    border: 2px solid var(--bg-card);
-}
-
-.notifications-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    width: 360px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    display: none;
-    z-index: 1000;
-    overflow: hidden;
-}
-
-.notifications-dropdown.show {
-    display: block;
-    animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.notifications-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-}
-
-.notifications-header span {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.btn-link {
-    background: none;
-    border: none;
-    color: var(--accent);
-    font-size: 13px;
-    cursor: pointer;
-}
-
-.btn-link:hover {
-    text-decoration: underline;
-}
-
-.notifications-list {
-    max-height: 360px;
-    overflow-y: auto;
-}
-
-.notification-item {
-    display: flex;
-    gap: 12px;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.notification-item:hover {
-    background: var(--bg-secondary);
-}
-
-.notification-item:last-child {
-    border-bottom: none;
-}
+/* [REMOVED DUPLICATE NOTIFICATION CSS - See lines 4424+ for definitive styles] */
 
 .notification-item .icon {
     width: 36px;
@@ -4253,6 +4154,7 @@ button.menu-toggle {
         display: block !important;
     }
 }
+
 /* Notification Dropdown */
 .header-notifications {
     position: relative;
@@ -4319,6 +4221,7 @@ button.menu-toggle {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -4372,7 +4275,8 @@ button.menu-toggle {
 }
 
 .notification-item.unread {
-    background: rgba(141, 27, 61, 0.05); /* Slight accent background */
+    background: rgba(141, 27, 61, 0.05);
+    /* Slight accent background */
     border-left: 3px solid var(--accent);
 }
 
@@ -4447,7 +4351,8 @@ button.menu-toggle {
 
 .notification-badge {
     position: absolute;
-    top: 4px; /* Adjusted to sit nicely on icon */
+    top: 4px;
+    /* Adjusted to sit nicely on icon */
     right: 4px;
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
@@ -4466,16 +4371,26 @@ button.menu-toggle {
 }
 
 @keyframes badgePulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
 }
 
 /* Plural class matching Operations */
 .notifications-dropdown {
     position: absolute;
-    top: calc(100% + 10px);
-    right: -10px; /* Slight offset */
-    width: 340px;
+    top: calc(100% + 14px);
+    /* Increased slightly for arrow space */
+    right: -10px;
+    width: 360px;
+    max-width: 90vw;
+    /* Responsive fix for mobile */
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -4485,14 +4400,37 @@ button.menu-toggle {
     overflow: hidden;
 }
 
+/* Visual Pointer Arrow */
+.notifications-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 18px;
+    /* Aligned with bell icon */
+    width: 12px;
+    height: 12px;
+    background: var(--bg-card);
+    transform: rotate(45deg);
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    z-index: 1101;
+}
+
 .notifications-dropdown.show {
     display: block;
     animation: dropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes dropdownSlide {
-    from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .notifications-header {
@@ -4505,8 +4443,8 @@ button.menu-toggle {
 }
 
 .notifications-header h4 {
-    margin: 0; 
-    font-size: 15px; 
+    margin: 0;
+    font-size: 15px;
     font-weight: 600;
 }
 
