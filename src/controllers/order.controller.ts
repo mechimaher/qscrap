@@ -153,10 +153,7 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
 
         // Notify winning garage (Persistent)
         await createNotification({
-            userId: bid.garage_id, // Garage has user_id mechanism or we map it? 
-            // WAIT - Garages table has user_id column? Or is garage login separate?
-            // Garages table has `garage_id`. In `auth.controller` garage login returns `userId` = `garage.garage_id` (actually it returns `garage_id` as `userId`).
-            // So we can use `bid.garage_id` as userId.
+            userId: bid.garage_id,
             type: 'bid_accepted',
             title: 'Bid Accepted! 🎉',
             message: "Congratulations! Your bid was accepted.",
@@ -166,6 +163,15 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
                 request_id: bid.request_id
             },
             target_role: 'garage'
+        });
+
+        // EMIT LIVE EVENT: Required for Garage Dashboard to update "Orders" badge in real-time
+        (global as any).io.to(`garage_${bid.garage_id}`).emit('bid_accepted', {
+            bid_id: bid_id,
+            request_id: bid.request_id,
+            garage_id: bid.garage_id,
+            part_description: request.part_description,
+            notification: "Bid accepted! Order created."
         });
 
         // Notify customer (Persistent)
