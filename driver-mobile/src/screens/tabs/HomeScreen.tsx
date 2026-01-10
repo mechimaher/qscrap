@@ -75,15 +75,17 @@ export default function HomeScreen() {
         // VVIP: Show accept/reject popup for new assignments
         const handleNewAssignment = (data: any) => {
             console.log('[Home] New assignment received:', data);
+
+            // Critical for real-time: reload all data to update badges and lists
+            loadData();
+
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-            // If assignment data is included, show popup
-            if (data && data.assignment) {
-                setPendingAssignment(data.assignment);
+            // If assignment data is included directly or as a property, show popup
+            const assignmentData = data?.assignment || (data?.assignment_id ? data : null);
+            if (assignmentData) {
+                setPendingAssignment(assignmentData);
                 setShowAssignmentPopup(true);
-            } else {
-                // Fallback: just reload data
-                loadData();
             }
         };
 
@@ -92,12 +94,20 @@ export default function HomeScreen() {
         socket.on('assignment_removed', handleUpdate);
         socket.on('order_status_updated', handleUpdate);
 
+        // VVIP: Real-time driver status sync (Available <-> Busy)
+        socket.on('driver_status_changed', (data: any) => {
+            console.log('[Home] Driver status changed:', data.status);
+            refreshDriver();
+            loadData();
+        });
+
         return () => {
             console.log('[Home] Cleaning up socket listeners');
             socket.off('new_assignment', handleNewAssignment);
             socket.off('assignment_cancelled', handleUpdate);
             socket.off('assignment_removed', handleUpdate);
             socket.off('order_status_updated', handleUpdate);
+            socket.off('driver_status_changed');
         };
     }, [isConnected]);
 

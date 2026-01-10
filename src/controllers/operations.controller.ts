@@ -1161,24 +1161,56 @@ export const assignDriverToReturn = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify driver
-        const io = (global as any).io;
-        io.to(`driver_${driver_id}`).emit('return_assignment_assigned', {
-            assignment_id,
-            order_id: assignment.order_id,
-            order_number: assignment.order_number,
-            pickup_address: assignment.pickup_address,
-            delivery_address: assignment.delivery_address,
-            notification: `📦 New return pickup: Order #${assignment.order_number}. Pick up from customer and return to ${assignment.garage_name}`
-        });
+        // Notify driver (Persistent + Socket)
+        try {
+            const io = (global as any).io;
 
-        // Notify garage
-        io.to(`garage_${assignment.garage_id}`).emit('return_driver_assigned', {
-            assignment_id,
-            order_number: assignment.order_number,
-            driver_name: driverResult.rows[0].full_name,
-            notification: `Driver ${driverResult.rows[0].full_name} assigned to return Order #${assignment.order_number}`
-        });
+            // Get user_id for notification
+            const driverUserData = await pool.query('SELECT user_id FROM drivers WHERE driver_id = $1', [driver_id]);
+            const driverUserId = driverUserData.rows[0]?.user_id;
+
+            if (driverUserId) {
+                await createNotification({
+                    userId: driverUserId,
+                    type: 'new_assignment',
+                    title: 'New Return Assignment 📦',
+                    message: `Pick up from customer and return to ${assignment.garage_name}`,
+                    data: { assignment_id, order_id: assignment.order_id, order_number: assignment.order_number, assignment_type: 'return_to_garage' },
+                    target_role: 'driver'
+                });
+
+                if (io) {
+                    io.to(`driver_${driverUserId}`).emit('new_assignment', {
+                        assignment_id,
+                        order_id: assignment.order_id,
+                        order_number: assignment.order_number,
+                        pickup_address: assignment.pickup_address,
+                        delivery_address: assignment.delivery_address,
+                        garage_name: assignment.garage_name,
+                        assignment_type: 'return_to_garage',
+                        notification: `📦 New return pickup: Order #${assignment.order_number}`
+                    });
+
+                    // Real-time status update
+                    io.to(`driver_${driverUserId}`).emit('driver_status_changed', {
+                        status: 'busy',
+                        driver_id: driver_id
+                    });
+                }
+            }
+
+            // Notify garage
+            if (io) {
+                io.to(`garage_${assignment.garage_id}`).emit('return_driver_assigned', {
+                    assignment_id,
+                    order_number: assignment.order_number,
+                    driver_name: driverResult.rows[0].full_name,
+                    notification: `Driver ${driverResult.rows[0].full_name} assigned to return Order #${assignment.order_number}`
+                });
+            }
+        } catch (notifyErr) {
+            console.error('[OperationsController] Notification failed:', notifyErr);
+        }
 
         res.json({
             message: 'Driver assigned to return successfully',
