@@ -50,6 +50,7 @@ let dismissedRequests = JSON.parse(localStorage.getItem('dismissedRequests') || 
 let bidPhotos = [];
 let pendingCounterOffers = []; // Track counter-offers from customers
 let pendingDisputes = []; // Track disputes from customers
+let activeOrdersCount = 0; // Global tracker for badge
 let garageSupplierType = 'both'; // Cache garage supplier type (used/new/both)
 
 // Premium Feature Variables (must be declared before showDashboard call)
@@ -418,7 +419,7 @@ async function showDashboard() {
         // Store in pending disputes queue
         pendingDisputes.push(data);
         // Update badge counter
-        updateDisputeBadge();
+        updateOrdersBadge();
         // Reload orders to show disputed status
         loadOrders();
     });
@@ -528,11 +529,8 @@ async function loadStats() {
             animateCounter('statRevenue', data.stats.revenue_month, 1000);
 
             // Update Sidebar Badges
-            const ordersBadge = document.getElementById('activeOrdersBadge');
-            if (ordersBadge) {
-                ordersBadge.textContent = data.stats.active_orders;
-                ordersBadge.style.display = data.stats.active_orders > 0 ? 'flex' : 'none';
-            }
+            activeOrdersCount = data.stats.active_orders || 0;
+            updateOrdersBadge();
         }
         if (data.profile && data.profile.garage_name) {
             document.getElementById('userName').textContent = data.profile.garage_name;
@@ -2828,7 +2826,8 @@ async function loadPendingDisputes() {
 
         if (data.disputes && data.disputes.length > 0) {
             pendingDisputes = data.disputes.filter(d => d.status === 'pending');
-            updateDisputeBadge();
+            pendingDisputes = data.disputes.filter(d => d.status === 'pending');
+            updateOrdersBadge();
             if (pendingDisputes.length > 0) {
                 showToast(`${pendingDisputes.length} pending dispute(s) - check Orders section`, 'warning');
             }
@@ -2839,11 +2838,31 @@ async function loadPendingDisputes() {
 }
 
 // Update dispute badge counter
-function updateDisputeBadge() {
-    const badge = document.getElementById('disputeBadge');
-    if (badge) {
-        badge.textContent = pendingDisputes.length;
-        badge.style.display = pendingDisputes.length > 0 ? 'flex' : 'none';
+// Update consolidated Orders badge (Active + Disputes merged)
+function updateOrdersBadge() {
+    const badge = document.getElementById('activeOrdersBadge');
+    if (!badge) return;
+
+    // Premium Logic: Single badge.
+    // If disputes exist -> Show ORANGE warning badge (pulse)
+    // Else -> Show PRIMARY info badge (if active orders > 0)
+
+    const disputeCount = pendingDisputes.length;
+
+    if (disputeCount > 0) {
+        // Priority: Dispute Attention
+        badge.textContent = `${activeOrdersCount} ⚠️`; // Show count plus warning
+        badge.style.display = 'flex';
+        badge.className = 'nav-badge pulse-badge'; // Add pulse
+        badge.style.background = '#f59e0b'; // Warning Orange
+        badge.title = `${disputeCount} Pending Disputes`;
+    } else {
+        // Normal State
+        badge.textContent = activeOrdersCount;
+        badge.style.display = activeOrdersCount > 0 ? 'flex' : 'none';
+        badge.className = 'nav-badge'; // Remove pulse
+        badge.style.background = 'var(--primary)'; // Default Primary
+        badge.title = 'Active Orders';
     }
 }
 
