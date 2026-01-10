@@ -387,6 +387,15 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             notification: `Order #${order.order_number} has been collected by QScrap team.`
         });
 
+        // Notify other operations staff
+        io.to('operations').emit('order_status_updated', {
+            order_id,
+            order_number: order.order_number,
+            old_status: 'ready_for_pickup',
+            new_status: 'collected',
+            notification: `Order #${order.order_number} marked as collected by Operations`
+        });
+
         res.json({
             message: 'Order collected successfully',
             order_id,
@@ -600,6 +609,15 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             order_number: dispute.order_number,
             resolution,
             notification: garageResolutionMsg
+        });
+
+        // Notify other operations staff
+        io.to('operations').emit('dispute_resolved', {
+            dispute_id,
+            order_id: dispute.order_id,
+            order_number: dispute.order_number,
+            resolution,
+            notification: `Dispute #${dispute.order_number} resolved by Operations`
         });
 
         // If return assignment created, notify Operations about pending return

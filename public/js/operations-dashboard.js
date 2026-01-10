@@ -253,6 +253,7 @@ function setupSocketListeners() {
         loadOrders();
     });
     socket.on('dispute_created', () => { loadStats(); loadDisputes(); });
+    socket.on('dispute_resolved', () => { loadStats(); loadDisputes(); });
     socket.on('new_order', () => { loadStats(); loadOrders(); });
 
     // Order collected - ready for driver assignment
@@ -608,9 +609,9 @@ async function loadOrders(page = 1) {
             document.getElementById('ordersTable').innerHTML = data.orders.map(o => `
                         <tr class="${getRowClass(o.order_status)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
-                            <td>${o.customer_name}<br><small style="color: var(--text-muted);">${o.customer_phone}</small></td>
-                            <td>${o.garage_name}</td>
-                            <td>${o.car_make} ${o.car_model}<br><small style="color: var(--text-muted);">${o.part_description?.slice(0, 30)}...</small></td>
+                            <td>${escapeHTML(o.customer_name)}<br><small style="color: var(--text-muted);">${escapeHTML(o.customer_phone)}</small></td>
+                            <td>${escapeHTML(o.garage_name)}</td>
+                            <td>${escapeHTML(o.car_make)} ${escapeHTML(o.car_model)}<br><small style="color: var(--text-muted);">${escapeHTML(o.part_description?.slice(0, 30))}...</small></td>
                             <td><span class="status-badge ${statusClass[o.order_status] || ''}">${statusLabels[o.order_status] || o.order_status}</span></td>
                             <td><strong>${o.total_amount} QAR</strong></td>
                             <td>${getOrderActions(o)}</td>
@@ -626,8 +627,8 @@ async function loadOrders(page = 1) {
             document.getElementById('recentOrdersTable').innerHTML = data.orders.slice(0, 5).map(o => `
                         <tr class="${getRowClass(o.order_status)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
-                            <td>${o.customer_name}</td>
-                            <td>${o.part_description?.slice(0, 25)}...</td>
+                            <td>${escapeHTML(o.customer_name)}</td>
+                            <td>${escapeHTML(o.part_description?.slice(0, 25))}...</td>
                             <td><span class="status-badge ${statusClass[o.order_status] || ''}">${statusLabels[o.order_status] || o.order_status}</span></td>
                             <td>${o.total_amount} QAR</td>
                             <td>${getOrderActions(o)}</td>
@@ -693,8 +694,8 @@ async function loadDisputes(page = 1) {
                 return `
                             <tr id="dispute-row-${d.dispute_id}" class="${rowClass}">
                                 <td><strong>#${d.order_number}</strong></td>
-                                <td>${d.customer_name}<br><small style="color: var(--text-muted);">${d.customer_phone}</small></td>
-                                <td>${reasonLabels[d.reason] || d.reason}</td>
+                                <td>${escapeHTML(d.customer_name)}<br><small style="color: var(--text-muted);">${escapeHTML(d.customer_phone)}</small></td>
+                                <td>${escapeHTML(reasonLabels[d.reason] || d.reason)}</td>
                                 <td><span class="status-badge ${d.status}">${d.status}</span></td>
                                 <td><strong>${d.refund_amount} QAR</strong></td>
                                 <td>${actionCol}</td>
@@ -1085,9 +1086,9 @@ async function loadDeliveryHistory(page = 1) {
                     <tr>
                         <td>${createdDate}</td>
                         <td><strong>#${o.order_number}</strong></td>
-                        <td>${o.driver_name || '<span class="text-muted">No driver</span>'}</td>
-                        <td>${o.customer_name || '-'}</td>
-                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${o.delivery_address || ''}">${o.delivery_address || '-'}</td>
+                        <td>${escapeHTML(o.driver_name) || '<span class="text-muted">No driver</span>'}</td>
+                        <td>${escapeHTML(o.customer_name) || '-'}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(o.delivery_address || '')}">${escapeHTML(o.delivery_address || '-')}</td>
                         <td>${deliveryTime}</td>
                         <td><span class="status-badge delivered">Delivered</span></td>
                     </tr>
