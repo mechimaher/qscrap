@@ -460,6 +460,7 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
             SELECT
                 -- Critical metrics
                 (SELECT COUNT(*) FROM garages WHERE approval_status = 'pending' OR approval_status IS NULL) as pending_approvals,
+                (SELECT COUNT(*) FROM subscription_change_requests WHERE status = 'pending') as pending_plan_requests,
                 (SELECT COUNT(*) FROM orders WHERE order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit')) as active_orders,
                 (SELECT COUNT(*) FROM disputes WHERE status IN ('pending', 'contested')) as open_disputes,
                 (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE order_status = 'completed' AND created_at > NOW() - INTERVAL '30 days') as monthly_revenue,

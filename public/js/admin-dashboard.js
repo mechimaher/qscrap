@@ -139,6 +139,14 @@ async function loadDashboard() {
                 badge.style.display = pendingCount > 0 ? 'inline' : 'none';
             }
 
+            // Update Plan Requests badge
+            const planRequestsCount = data.stats.pending_plan_requests || 0;
+            const planBadge = document.getElementById('planRequestsBadge');
+            if (planBadge) {
+                planBadge.textContent = planRequestsCount;
+                planBadge.style.display = planRequestsCount > 0 ? 'inline-flex' : 'none';
+            }
+
             // Update staff badge
             const staffCount = data.stats.total_staff || 0;
             const staffBadge = document.getElementById('staffBadge');
