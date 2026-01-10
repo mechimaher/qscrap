@@ -3021,8 +3021,8 @@ async function loadSubscription() {
             const changePlanBtn = document.querySelector('#currentSubscription .plan-actions button');
 
             // Check for pending request
-            if (data.pending_request) {
-                const req = data.pending_request;
+            if (currentPendingRequest) {
+                const req = currentPendingRequest;
                 const banner = document.createElement('div');
                 banner.className = 'alert alert-warning';
                 banner.style.marginTop = '16px';
@@ -3032,6 +3032,10 @@ async function loadSubscription() {
                     <strong>${req.target_plan_name || 'New Plan'}</strong> 
                     is awaiting admin approval.
                 `;
+                // Remove existing banners if any to avoid stacking
+                const existing = document.querySelector('#currentSubscription .alert-warning');
+                if (existing) existing.remove();
+
                 document.getElementById('currentSubscription').appendChild(banner);
 
                 if (changePlanBtn) {
@@ -3073,6 +3077,9 @@ async function showPlanOptions() {
                 const plans = Array.isArray(data) ? data : (data.plans || []);
                 const currentPlan = document.getElementById('subPlanName').textContent;
 
+                // If there is a pending request, we should disable all buttons
+                const isPending = !!currentPendingRequest;
+
                 plansGrid.innerHTML = '<h3 style="grid-column: 1/-1; margin-bottom: 16px;">Available Plans</h3>' +
                     plans.map(plan => `
                         <div class="plan-card ${plan.plan_name === currentPlan ? 'current' : ''}">
@@ -3099,9 +3106,11 @@ async function showPlanOptions() {
                             <div class="plan-actions">
                                 ${plan.plan_name === currentPlan ?
                             '<button class="btn" disabled>Current Plan</button>' :
-                            `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}')">
-                                        Request Change
-                                    </button>`
+                            isPending ?
+                                `<button class="btn" disabled title="You have a pending request"><i class="bi bi-lock"></i> Request Pending</button>` :
+                                `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}')">
+                                    Request Change
+                                </button>`
                         }
                             </div>
                         </div>
