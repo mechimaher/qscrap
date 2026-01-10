@@ -69,6 +69,11 @@
                     <span>Approvals</span>
                     <span class="nav-badge" id="pendingBadge">0</span>
                 </button>
+                <button class="nav-item" data-section="requests">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Plan Requests</span>
+                    <span class="nav-badge" id="planRequestsBadge">0</span>
+                </button>
                 <button class="nav-item" data-section="garages">
                     <i class="bi bi-shop"></i>
                     <span>Garages</span>
@@ -293,6 +298,25 @@
                 </div>
                 <div id="pendingList" class="cards-grid"></div>
                 <div id="approvalsPagination" class="pagination-container"></div>
+            </section>
+
+            <!-- Plan Requests Section -->
+            <section class="section" id="sectionRequests">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-arrow-left-right"></i> Plan Change Requests</h1>
+                    <div class="header-actions">
+                        <select id="requestStatusFilter" onchange="loadPlanRequests()">
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="loadPlanRequests()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div id="planRequestsList" class="cards-grid"></div>
+                <div id="planRequestsPagination" class="pagination-container"></div>
             </section>
 
             <!-- Garages Section -->
@@ -970,7 +994,11 @@
         </div>
     </div>
 
-    <script src="js/admin-dashboard.js"></script>
+    <script>
+        const script = document.createElement('script');
+        script.src = `js/admin-dashboard.js?v=${Date.now()}`;
+        document.body.appendChild(script);
+    </script>
 </body>
 
 </html>
