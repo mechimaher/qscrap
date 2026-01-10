@@ -317,6 +317,30 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         );
         const garageName = garageResult.rows[0]?.garage_name || 'Garage';
 
+        const pushTitles: Record<string, string> = {
+            'preparing': 'Order Preparing 🔧',
+            'ready_for_pickup': 'Ready for Pickup 📦',
+            'in_transit': 'Out for Delivery 🚚',
+            'delivered': 'Order Delivered ✅'
+        };
+
+        // Notify customer (Persistent + Push)
+        await createNotification({
+            userId: customerId,
+            type: 'order_status_updated',
+            title: pushTitles[order_status] || 'Order Update 🔔',
+            message: statusMessages[order_status] || `Order status updated to ${order_status}`,
+            data: {
+                order_id,
+                order_number: currentOrder.order_number,
+                old_status: oldStatus,
+                new_status: order_status,
+                garage_name: garageName
+            },
+            target_role: 'customer'
+        });
+
+        // Emit Socket Event (for in-app real-time updates)
         (global as any).io.to(`user_${customerId}`).emit('order_status_updated', {
             order_id,
             order_number: currentOrder.order_number,
