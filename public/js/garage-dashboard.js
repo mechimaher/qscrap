@@ -2938,6 +2938,8 @@ async function reviewDisputeForOrder(orderId) {
 }
 
 // ===== SUBSCRIPTION MANAGEMENT =====
+let currentPendingRequest = null;
+
 async function loadSubscription() {
     try {
         const res = await fetch(`${API_URL}/subscriptions/my`, {
