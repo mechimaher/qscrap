@@ -89,17 +89,18 @@ export default function HomeScreen() {
             }
         };
 
+        const handleDriverStatusChange = (data: any) => {
+            console.log('[Home] Driver status changed:', data.status);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            refreshDriver();
+            loadData();
+        };
+
         socket.on('new_assignment', handleNewAssignment);
         socket.on('assignment_cancelled', handleUpdate);
         socket.on('assignment_removed', handleUpdate);
         socket.on('order_status_updated', handleUpdate);
-
-        // VVIP: Real-time driver status sync (Available <-> Busy)
-        socket.on('driver_status_changed', (data: any) => {
-            console.log('[Home] Driver status changed:', data.status);
-            refreshDriver();
-            loadData();
-        });
+        socket.on('driver_status_changed', handleDriverStatusChange);
 
         return () => {
             console.log('[Home] Cleaning up socket listeners');
@@ -107,7 +108,7 @@ export default function HomeScreen() {
             socket.off('assignment_cancelled', handleUpdate);
             socket.off('assignment_removed', handleUpdate);
             socket.off('order_status_updated', handleUpdate);
-            socket.off('driver_status_changed');
+            socket.off('driver_status_changed', handleDriverStatusChange);
         };
     }, [isConnected]);
 

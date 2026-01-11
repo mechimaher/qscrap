@@ -49,6 +49,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         try {
             const socket = await initSocket();
             if (socket) {
+                // If already connected, sync state immediately
+                if (socket.connected) {
+                    setIsConnected(true);
+                }
+
                 socket.on('connect', () => setIsConnected(true));
                 socket.on('disconnect', () => setIsConnected(false));
 
