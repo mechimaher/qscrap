@@ -327,7 +327,7 @@ export default function ProofOfDeliveryScreen() {
 
             <TouchableOpacity
                 style={styles.btnGradientWrapper}
-                onPress={() => navigation.navigate('Home')}
+                onPress={() => navigation.navigate('Main', { screen: 'Home' })}
             >
                 <LinearGradient
                     colors={Colors.gradients.primary}

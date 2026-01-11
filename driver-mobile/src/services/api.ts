@@ -15,6 +15,7 @@ export interface Driver {
     phone: string;
     email?: string;
     vehicle_type: string;
+    vehicle_model?: string;
     vehicle_plate: string;
     status: 'available' | 'busy' | 'offline';
     total_deliveries: number;

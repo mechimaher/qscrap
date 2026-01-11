@@ -43,6 +43,7 @@ export const Colors = {
     danger: '#dc2626',
     error: '#dc2626',
     info: '#C9A227',
+    textMuted: '#6A6A6A',
 
     // Assignment Specific
     assigned: '#C9A227',

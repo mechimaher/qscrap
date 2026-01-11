@@ -15,6 +15,7 @@ import {
     Animated,
     Easing,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -28,6 +29,7 @@ import { getSocket } from '../../services/socket';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating, LiveMapView, AssignmentPopup } from '../../components';
 import { GlassCard } from '../../components/common/GlassCard';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 export default function HomeScreen() {
     const { driver, refreshDriver } = useAuth();
@@ -317,12 +319,19 @@ export default function HomeScreen() {
                 {/* VVIP: Live Map Dashboard - Only render when location is available */}
                 {isAvailable && location && (
                     <View style={styles.mapContainer}>
-                        <LiveMapView
-                            driverLocation={location}
-                            activeAssignment={activeAssignments[0] || null}
-                            height={180}
-                            showRoute={true}
-                        />
+                        <ErrorBoundary name="LiveMap" fallback={
+                            <View style={[styles.mapContainer, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', height: 180 }]}>
+                                <Text style={{ fontSize: 24 }}>🗺️</Text>
+                                <Text style={{ color: colors.textMuted, marginTop: 8 }}>Map unavailable</Text>
+                            </View>
+                        }>
+                            <LiveMapView
+                                driverLocation={location}
+                                activeAssignment={activeAssignments[0] || null}
+                                height={180}
+                                showRoute={true}
+                            />
+                        </ErrorBoundary>
                     </View>
                 )}
 
