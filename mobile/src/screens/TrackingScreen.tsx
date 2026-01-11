@@ -14,7 +14,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import LeafletMap from '../components/LeafletMap';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -415,12 +415,57 @@ export default function TrackingScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Premium Leaflet Map - Driver only visible after QC passed */}
-            <LeafletMap
-                driverLocation={canShowDriver ? driverLocation : null}
-                customerLocation={customerLocation}
-                showRoute={canShowDriver}
-            />
+            {/* Premium Google Map - Driver only visible after QC passed */}
+            <MapView
+                ref={mapRef}
+                provider={PROVIDER_GOOGLE}
+                style={styles.map}
+                initialRegion={defaultRegion}
+                customMapStyle={darkMapStyle}
+                showsUserLocation={true}
+                showsMyLocationButton={false}
+            >
+                {canShowDriver && driverLocation && (
+                    <Marker
+                        coordinate={{
+                            latitude: driverLocation.latitude,
+                            longitude: driverLocation.longitude,
+                        }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        rotation={driverLocation.heading}
+                    >
+                        <View style={styles.driverMarker}>
+                            <View style={[styles.driverMarkerInner, { transform: [{ rotate: `${driverLocation.heading || 0}deg` }] }]}>
+                                <Text style={styles.driverMarkerIcon}>🚗</Text>
+                            </View>
+                        </View>
+                    </Marker>
+                )}
+
+                {customerLocation && (
+                    <Marker
+                        coordinate={customerLocation}
+                        anchor={{ x: 0.5, y: 1.0 }}
+                    >
+                        <View style={styles.destinationMarker}>
+                            <View style={styles.destinationPulse} />
+                            <Text style={styles.destinationMarkerIcon}>📍</Text>
+                        </View>
+                    </Marker>
+                )}
+
+                {canShowDriver && driverLocation && customerLocation && (
+                    <Polyline
+                        coordinates={[
+                            { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
+                            customerLocation
+                        ]}
+                        strokeColor={Colors.primary}
+                        strokeWidth={4}
+                        lineDashPattern={[10, 10]}
+                    />
+                )}
+            </MapView>
 
             {/* Chat Notification Banner */}
             {newChatMessage && (
