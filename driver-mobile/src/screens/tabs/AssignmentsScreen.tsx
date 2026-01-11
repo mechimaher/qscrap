@@ -17,7 +17,7 @@ import { useJobStore } from '../../stores/useJobStore';
 import { GlassCard } from '../../components/common/GlassCard';
 
 import { api, Assignment } from '../../services/api';
-import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
+import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing } from '../../constants/theme';
 
 type FilterType = 'active' | 'completed' | 'all';
 
@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
     listContent: {
         padding: 20,
         paddingTop: 0,
+        paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
     },
     card: {
         marginBottom: 0, // Handled by Touchable wrapper

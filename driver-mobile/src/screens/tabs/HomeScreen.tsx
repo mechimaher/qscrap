@@ -277,24 +277,32 @@ export default function HomeScreen() {
 
                 {/* Status Toggle */}
                 <TouchableOpacity
-                    style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}
                     onPress={toggleAvailability}
                     disabled={isTogglingStatus || driver?.status === 'busy'}
-                    activeOpacity={0.7}
+                    activeOpacity={0.8}
                 >
-                    <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-                    <Text style={[styles.statusText, { color: getStatusColor() }]}>
-                        {getStatusText()}
-                    </Text>
-                    {driver?.status !== 'busy' && (
-                        <Switch
-                            value={isAvailable}
-                            onValueChange={toggleAvailability}
-                            disabled={isTogglingStatus}
-                            trackColor={{ false: colors.border, true: Colors.success }}
-                            thumbColor="#fff"
-                        />
-                    )}
+                    <LinearGradient
+                        colors={isAvailable
+                            ? [Colors.success, '#047857']
+                            : [colors.border, colors.borderLight]}
+                        style={styles.statusBadge}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                    >
+                        <View style={[styles.statusDot, { backgroundColor: '#fff' }]} />
+                        <Text style={[styles.statusText, { color: '#fff' }]}>
+                            {getStatusText()}
+                        </Text>
+                        {driver?.status !== 'busy' && (
+                            <View style={{ marginLeft: 8 }}>
+                                <Ionicons
+                                    name={isAvailable ? "radio-button-on" : "radio-button-off"}
+                                    size={24}
+                                    color="#fff"
+                                />
+                            </View>
+                        )}
+                    </LinearGradient>
                 </TouchableOpacity>
             </Animated.View>
 
@@ -579,6 +587,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingTop: 8,
+        paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
     },
     statsGrid: {
         flexDirection: 'row',
@@ -587,21 +596,30 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     mapContainer: {
-        marginBottom: 16,
-        borderRadius: 16,
+        marginBottom: 20,
+        borderRadius: 24,
         overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 8,
     },
     statCard: {
         flex: 1,
         minWidth: '45%',
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 20,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
     statIcon: {
         fontSize: 24,

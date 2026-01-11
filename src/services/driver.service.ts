@@ -29,6 +29,18 @@ export class DriverService {
         return await driverRepository.getDriverStats(userId);
     }
 
+    async getEarningsTrend(userId: string) {
+        return await driverRepository.getEarningsTrend(userId);
+    }
+
+    async getPayoutHistory(userId: string) {
+        return await driverRepository.getPayoutHistory(userId);
+    }
+
+    async updateProfile(userId: string, data: any) {
+        return await driverRepository.updateDriverProfile(userId, data);
+    }
+
     async updateMyLocation(userId: string, lat: number, lng: number, accuracy: any, heading: any, speed: any) {
         // Get driver_id
         const driver = await driverRepository.findDriverByUserId(userId);

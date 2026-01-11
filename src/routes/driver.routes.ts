@@ -9,13 +9,11 @@ import {
     toggleAvailabilitySchema
 } from '../schemas/driver.schema';
 import {
-    getMyProfile,
-    getMyAssignments,
-    getAssignmentDetails,
-    updateMyLocation,
-    updateAssignmentStatus,
     uploadDeliveryProof,
     getMyStats,
+    getEarningsTrend,
+    getPayoutHistory,
+    updateProfile,
     toggleAvailability
 } from '../controllers/driver.controller';
 
@@ -34,6 +32,15 @@ router.get('/me', getMyProfile as unknown as RequestHandler);
 
 // Get driver's statistics
 router.get('/stats', getMyStats as unknown as RequestHandler);
+
+// Get earnings trend (last 7 days)
+router.get('/stats/trend', getEarningsTrend as unknown as RequestHandler);
+
+// Get payout history
+router.get('/payouts', getPayoutHistory as unknown as RequestHandler);
+
+// Update profile (including bank details)
+router.patch('/profile', updateProfile as unknown as RequestHandler);
 
 // Toggle availability (available/offline)
 router.post('/availability', validate(toggleAvailabilitySchema), toggleAvailability as unknown as RequestHandler);

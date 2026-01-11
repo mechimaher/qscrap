@@ -139,6 +139,40 @@ export const getMyStats = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getEarningsTrend = async (req: AuthRequest, res: Response) => {
+    try {
+        const trend = await driverService.getEarningsTrend(req.user!.userId);
+        res.json({ trend });
+    } catch (err) {
+        console.error('getEarningsTrend Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const getPayoutHistory = async (req: AuthRequest, res: Response) => {
+    try {
+        const payouts = await driverService.getPayoutHistory(req.user!.userId);
+        res.json({ payouts });
+    } catch (err) {
+        console.error('getPayoutHistory Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+    try {
+        const driver = await driverService.updateProfile(req.user!.userId, req.body);
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            driver
+        });
+    } catch (err) {
+        console.error('updateProfile Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
 export const toggleAvailability = async (req: AuthRequest, res: Response) => {
     try {
         const result = await driverService.toggleAvailability(req.user!.userId, req.body.status);

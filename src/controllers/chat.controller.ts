@@ -360,9 +360,10 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
                 // CRITICAL: Send push notification for background/locked phone delivery
                 // Socket.IO only works when app is active - push notifications work always
                 try {
+                    const senderName = senderType === 'customer' ? 'Customer' : (assignment.driver_name || 'Driver');
                     await pushService.sendChatNotification(
-                        recipientId,        // driver's user_id
-                        'Customer',         // sender name
+                        recipientId,        // recipient's user_id
+                        senderName,         // sender name
                         message.trim(),     // message content
                         order_id,
                         assignment.order_number
@@ -372,22 +373,21 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
                     // Don't fail the request if push fails - socket already sent
                 }
             }
-        }
 
-        res.status(201).json({
-            message: {
-                message_id: newMessage.message_id,
-                order_id: order_id,
-                sender_id: userId,
-                sender_type: senderType,
-                sender_name: 'You',
-                message: message.trim(),
-                created_at: newMessage.created_at,
-                is_read: false
-            }
-        });
-    } catch (err) {
-        console.error('sendOrderChatMessage Error:', err);
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
+            res.status(201).json({
+                message: {
+                    message_id: newMessage.message_id,
+                    order_id: order_id,
+                    sender_id: userId,
+                    sender_type: senderType,
+                    sender_name: 'You',
+                    message: message.trim(),
+                    created_at: newMessage.created_at,
+                    is_read: false
+                }
+            });
+        } catch (err) {
+            console.error('sendOrderChatMessage Error:', err);
+            res.status(500).json({ error: getErrorMessage(err) });
+        }
+    };

@@ -20,6 +20,9 @@ export interface Driver {
     total_deliveries: number;
     rating_average: number;
     total_earnings?: number;
+    bank_name?: string;
+    bank_account_iban?: string;
+    bank_account_name?: string;
 }
 
 export interface Assignment {
@@ -263,6 +266,28 @@ class DriverApiService {
         return this.request('/chat/messages', {
             method: 'POST',
             body: JSON.stringify({ order_id: orderId, message }),
+        });
+    }
+
+    // ========== NEW ENTERPRISE FEATURES ==========
+    async getEarningsTrend(): Promise<{ trend: any[] }> {
+        return this.request('/driver/stats/trend');
+    }
+
+    async getPayoutHistory(): Promise<{ payouts: any[] }> {
+        return this.request('/driver/payouts');
+    }
+
+    async updateProfile(data: Partial<Driver>): Promise<{ success: boolean; driver: Driver }> {
+        return this.request('/driver/profile', {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteAccount(): Promise<{ message: string }> {
+        return this.request('/auth/delete-account', {
+            method: 'DELETE',
         });
     }
 }

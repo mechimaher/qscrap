@@ -21,6 +21,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { api } from '../services/api';
+import { offlineQueue } from '../services/OfflineQueue';
+import { API_ENDPOINTS } from '../config/api';
 
 interface ChecklistItem {
     id: string;
@@ -125,10 +127,18 @@ export default function PartInspectionScreen() {
 
         try {
             // Upload photos and inspection data
-            // For now, just mark as picked up and navigate
-            await api.updateAssignmentStatus(assignmentId, 'picked_up', {
-                notes: `Inspection complete. ${photos.length} photo(s) taken. All checks passed.`,
-            });
+            // Upload photos and inspection data
+            // VVIP: Use Offline Queue for guaranteed sync
+            await offlineQueue.enqueue(
+                API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
+                'PATCH',
+                {
+                    status: 'picked_up',
+                    notes: `Inspection complete. ${photos.length} photo(s) taken. All checks passed.`,
+                    // We might want to upload actual photos later or base64 in a separate call
+                    // For now, this mimics the ProofOfDelivery logic
+                }
+            );
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert(
@@ -352,7 +362,7 @@ export default function PartInspectionScreen() {
             {/* Action Buttons */}
             <View style={[styles.actions, { backgroundColor: colors.background }]}>
                 <TouchableOpacity
-                    style={[styles.issueButton, { backgroundColor: Colors.danger + '20' }]}
+                    style={[styles.issueButton, { backgroundColor: Colors.danger + '15', borderWidth: 1, borderColor: Colors.danger + '30' }]}
                     onPress={handleReportIssue}
                 >
                     <Text style={[styles.issueButtonText, { color: Colors.danger }]}>
@@ -369,14 +379,16 @@ export default function PartInspectionScreen() {
                     disabled={!canProceed || isSubmitting}
                 >
                     <LinearGradient
-                        colors={canProceed ? [Colors.success, '#059669'] : ['#9ca3af', '#6b7280']}
+                        colors={canProceed ? Colors.gradients.primary : ['#9ca3af', '#6b7280']}
                         style={styles.proceedGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
                     >
                         {isSubmitting ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <Text style={styles.proceedButtonText}>
-                                ✓ Confirm & Proceed
+                                {canProceed ? '✓ Confirm & Proceed' : 'Complete Checklist'}
                             </Text>
                         )}
                     </LinearGradient>

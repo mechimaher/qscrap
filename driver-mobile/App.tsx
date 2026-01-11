@@ -65,12 +65,64 @@ function AuthNavigator() {
     );
 }
 
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 function MainTabs() {
     return (
         <Tab.Navigator
-            screenOptions={{
+            screenOptions={({ route }: any) => ({
                 headerShown: false,
                 tabBarActiveTintColor: Colors.primary,
+                tabBarInactiveTintColor: '#6A6A6A',
+                tabBarShowLabel: true,
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '600',
+                    marginBottom: 5,
+                },
+                tabBarStyle: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    position: 'absolute',
+                    bottom: 20,
+                    marginHorizontal: 16,
+                    height: 65,
+                    borderRadius: 25,
+                    borderTopWidth: 0,
+                    elevation: 10,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 12,
+                    paddingTop: 8,
+                },
+                tabBarIcon: ({ color, size, focused }: any) => {
+                    let iconName: any;
+                    if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
+                    else if (route.name === 'Assignments') iconName = focused ? 'briefcase' : 'briefcase-outline';
+                    else if (route.name === 'Earnings') iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+                    else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
+
+                    return (
+                        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name={iconName} size={24} color={color} />
+                            {focused && (
+                                <View style={{
+                                    width: 4,
+                                    height: 4,
+                                    borderRadius: 2,
+                                    backgroundColor: Colors.primary,
+                                    marginTop: 4
+                                }} />
+                            )}
+                        </View>
+                    );
+                },
+            })}
+            screenListeners={{
+                state: (e) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                },
             }}
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
