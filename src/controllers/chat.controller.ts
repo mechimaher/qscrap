@@ -373,21 +373,22 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
                     // Don't fail the request if push fails - socket already sent
                 }
             }
-
-            res.status(201).json({
-                message: {
-                    message_id: newMessage.message_id,
-                    order_id: order_id,
-                    sender_id: userId,
-                    sender_type: senderType,
-                    sender_name: 'You',
-                    message: message.trim(),
-                    created_at: newMessage.created_at,
-                    is_read: false
-                }
-            });
-        } catch (err) {
-            console.error('sendOrderChatMessage Error:', err);
-            res.status(500).json({ error: getErrorMessage(err) });
         }
-    };
+
+        res.status(201).json({
+            message: {
+                message_id: newMessage.message_id,
+                order_id: order_id,
+                sender_id: userId,
+                sender_type: senderType,
+                sender_name: 'You',
+                message: message.trim(),
+                created_at: newMessage.created_at,
+                is_read: false
+            }
+        });
+    } catch (err) {
+        console.error('sendOrderChatMessage Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
