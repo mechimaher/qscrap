@@ -15,22 +15,40 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { api, DriverStats } from '../../services/api';
-import { Colors } from '../../constants/theme';
+import { Colors, Spacing } from '../../constants/theme';
 
 export default function EarningsScreen() {
     const { colors } = useTheme();
 
     const [stats, setStats] = useState<DriverStats | null>(null);
+    const [trendData, setTrendData] = useState<{ labels: string[], data: number[] }>({
+        labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        data: [0, 0, 0, 0, 0, 0, 0]
+    });
+    const [payouts, setPayouts] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
-        loadStats();
+        loadAllData();
     }, []);
 
-    const loadStats = async () => {
+    const loadAllData = async () => {
         try {
-            const result = await api.getStats();
-            setStats(result.stats);
+            const [statsRes, trendRes, payoutsRes] = await Promise.all([
+                api.getStats(),
+                api.getEarningsTrend(),
+                api.getPayoutHistory()
+            ]);
+
+            setStats(statsRes.stats);
+            setPayouts(payoutsRes.payouts);
+
+            if (trendRes.trend && trendRes.trend.length > 0) {
+                setTrendData({
+                    labels: trendRes.trend.map((t: any) => t.day_label),
+                    data: trendRes.trend.map((t: any) => parseFloat(t.amount) || 0)
+                });
+            }
         } catch (err) {
             console.error('[Earnings] Load error:', err);
         }
@@ -38,7 +56,7 @@ export default function EarningsScreen() {
 
     const onRefresh = useCallback(async () => {
         setIsRefreshing(true);
-        await loadStats();
+        await loadAllData();
         setIsRefreshing(false);
     }, []);
 
@@ -78,17 +96,9 @@ export default function EarningsScreen() {
                     <Text style={[styles.chartTitle, { color: colors.text }]}>Weekly Trend</Text>
                     <LineChart
                         data={{
-                            labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                            labels: trendData.labels,
                             datasets: [{
-                                data: [
-                                    Math.random() * 100,
-                                    Math.random() * 100,
-                                    Math.random() * 100,
-                                    Math.random() * 100,
-                                    Math.random() * 100,
-                                    Math.random() * 100,
-                                    Math.random() * 100
-                                ]
+                                data: trendData.data
                             }]
                         }}
                         width={Dimensions.get("window").width - 56} // from react-native
@@ -100,13 +110,13 @@ export default function EarningsScreen() {
                             backgroundGradientFrom: colors.surface,
                             backgroundGradientTo: colors.surface,
                             decimalPlaces: 0,
-                            color: (opacity = 1) => `rgba(163, 112, 247, ${opacity})`,
+                            color: (opacity = 1) => `rgba(141, 27, 61, ${opacity})`, // Qatar Maroon
                             labelColor: (opacity = 1) => colors.textSecondary,
                             style: { borderRadius: 16 },
                             propsForDots: {
                                 r: "6",
                                 strokeWidth: "2",
-                                stroke: Colors.primary
+                                stroke: Colors.secondary // Gold accent
                             }
                         }}
                         bezier
@@ -160,18 +170,56 @@ export default function EarningsScreen() {
                     </View>
                 </View>
 
-                {/* Payout Info */}
+                {/* Recent Payouts */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Payout Info</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Payouts</Text>
+                    {payouts.length > 0 ? (
+                        <View style={[styles.performanceCard, { backgroundColor: colors.surface }]}>
+                            {payouts.map((payout, index) => (
+                                <View key={payout.payout_id}>
+                                    <View style={styles.payoutRow}>
+                                        <View style={styles.payoutInfo}>
+                                            <Text style={[styles.payoutNum, { color: colors.text }]}>#{payout.order_number}</Text>
+                                            <Text style={[styles.payoutDate, { color: colors.textMuted }]}>
+                                                {new Date(payout.created_at).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.payoutRight}>
+                                            <Text style={[styles.payoutAmount, { color: Colors.success }]}>
+                                                +{payout.amount} QAR
+                                            </Text>
+                                            <View style={[styles.payoutStatus, { backgroundColor: getPayoutStatusColor(payout.status) + '15' }]}>
+                                                <Text style={[styles.payoutStatusText, { color: getPayoutStatusColor(payout.status) }]}>
+                                                    {payout.status.toUpperCase()}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                    {index < payouts.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={[styles.infoCard, { backgroundColor: colors.surface, justifyContent: 'center' }]}>
+                            <Text style={[styles.infoDescription, { color: colors.textSecondary, textAlign: 'center' }]}>
+                                No payout history found.
+                            </Text>
+                        </View>
+                    )}
+                </View>
+
+                {/* Payout Info */}
+                <View style={[styles.section, { marginBottom: 40 }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Payout Cycle</Text>
 
                     <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
                         <Text style={styles.infoIcon}>💳</Text>
                         <View style={styles.infoContent}>
                             <Text style={[styles.infoTitle, { color: colors.text }]}>
-                                Weekly Payouts
+                                Weekly Bank Transfers
                             </Text>
                             <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
-                                Earnings are paid out every Sunday directly to your registered bank account
+                                Your accumulated earnings are automatically transferred every Sunday to your registered bank account.
                             </Text>
                         </View>
                     </View>
@@ -204,6 +252,15 @@ function PerformanceRow({ icon, label, value, colors }: any) {
     );
 }
 
+function getPayoutStatusColor(status: string) {
+    switch (status) {
+        case 'paid': return Colors.success;
+        case 'pending': return Colors.warning;
+        case 'failed': return Colors.danger;
+        default: return Colors.textMuted;
+    }
+}
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -223,28 +280,37 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingTop: 8,
+        paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
     },
     totalCard: {
-        padding: 24,
-        borderRadius: 20,
-        marginBottom: 16,
+        padding: 32,
+        borderRadius: 24,
+        marginBottom: 20,
         alignItems: 'center',
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+        elevation: 10,
     },
     totalLabel: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 14,
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 16,
         fontWeight: '600',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
     },
     totalAmount: {
         color: '#fff',
-        fontSize: 42,
-        fontWeight: '800',
-        marginTop: 8,
+        fontSize: 48,
+        fontWeight: '900',
+        marginTop: 12,
     },
     totalDeliveries: {
         color: 'rgba(255,255,255,0.8)',
-        fontSize: 14,
-        marginTop: 8,
+        fontSize: 15,
+        marginTop: 12,
+        fontWeight: '500',
     },
     periodGrid: {
         flexDirection: 'row',
@@ -254,8 +320,15 @@ const styles = StyleSheet.create({
     periodCard: {
         flex: 1,
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 20,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
     periodIcon: {
         fontSize: 28,
@@ -343,5 +416,40 @@ const styles = StyleSheet.create({
     chart: {
         marginVertical: 8,
         borderRadius: 16,
+    },
+    // Payout Row Styles
+    payoutRow: {
+        flexDirection: 'row',
+        padding: 16,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    payoutInfo: {
+        flex: 1,
+    },
+    payoutNum: {
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    payoutDate: {
+        fontSize: 12,
+        marginTop: 2,
+    },
+    payoutRight: {
+        alignItems: 'flex-end',
+    },
+    payoutAmount: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    payoutStatus: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+        marginTop: 4,
+    },
+    payoutStatusText: {
+        fontSize: 10,
+        fontWeight: '700',
     },
 });

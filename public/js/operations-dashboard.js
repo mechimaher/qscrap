@@ -298,6 +298,7 @@ function setupSocketListeners() {
 
     socket.on('payout_completed', (data) => {
         showToast(data.notification || '✅ Payout completed!', 'success');
+        loadStats();
         const activeSection = document.querySelector('.section.active');
         if (activeSection && activeSection.id === 'sectionFinance') {
             loadFinance();
@@ -461,6 +462,7 @@ async function loadStats() {
             // Update badges
             updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
             updateBadge('ordersBadge', s.active_orders);
+            updateBadge('deliveryBadge', s.in_transit || 0); // Correctly update Delivery badge
         }
 
         // Also load review badge and finance badge

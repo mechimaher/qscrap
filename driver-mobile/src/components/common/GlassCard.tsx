@@ -17,19 +17,21 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, style, variant =
     const { colors, isDarkMode } = useTheme();
 
     const backgroundColor = isDarkMode
-        ? 'rgba(30, 30, 30, 0.7)'
-        : 'rgba(255, 255, 255, 0.8)';
+        ? 'rgba(30, 30, 30, 0.85)'
+        : 'rgba(255, 255, 255, 0.95)';
 
     const borderColor = isDarkMode
         ? 'rgba(255, 255, 255, 0.1)'
-        : 'rgba(255, 255, 255, 0.4)';
+        : 'rgba(255, 255, 255, 0.3)';
 
     return (
         <View style={[
             styles.card,
             {
                 backgroundColor,
-                borderColor
+                borderColor,
+                // Apply a subtle tint for light mode premium feel
+                borderTopColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.5)',
             },
             style
         ]}>
@@ -40,18 +42,18 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, style, variant =
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 16,
-        borderWidth: 1,
-        padding: 16,
-        // Shadow for depth
+        borderRadius: 24, // VVIP Roundness
+        borderWidth: 1.5,
+        padding: 20,
+        // Premium depth shadow
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 4,
+            height: 12,
         },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
-        overflow: 'hidden', // Ensures content acts like it's inside glass
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+        elevation: 8,
+        overflow: 'hidden',
     }
 });

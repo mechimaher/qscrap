@@ -379,39 +379,40 @@ export default function AssignmentDetailScreen() {
                     </View>
                 )}
 
-                {/* Timeline for completed orders */}
-                {!isActive && (
-                    <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>📅 Timeline</Text>
+                {/* Assignment Timeline - Always visible for premium history tracking */}
+                <View style={[styles.section, { backgroundColor: colors.surface, marginBottom: 24 }, Shadows.sm]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>📅 Assignment Timeline</Text>
+
+                    <View style={styles.timelineItem}>
+                        <View style={[styles.timelineDot, { backgroundColor: Colors.primary }]} />
+                        <View style={styles.timelineContent}>
+                            <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>Driver Assigned</Text>
+                            <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.created_at)}</Text>
+                        </View>
+                    </View>
+
+                    {assignment.pickup_at && (
                         <View style={styles.timelineItem}>
-                            <View style={[styles.timelineDot, { backgroundColor: colors.textMuted }]} />
+                            <View style={[styles.timelineDot, { backgroundColor: Colors.warning }]} />
                             <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>Assigned</Text>
-                                <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.created_at)}</Text>
+                                <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>Part Picked Up</Text>
+                                <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.pickup_at)}</Text>
                             </View>
                         </View>
-                        {assignment.pickup_at && (
-                            <View style={styles.timelineItem}>
-                                <View style={[styles.timelineDot, { backgroundColor: Colors.warning }]} />
-                                <View style={styles.timelineContent}>
-                                    <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>Picked Up</Text>
-                                    <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.pickup_at)}</Text>
-                                </View>
+                    )}
+
+                    {assignment.delivered_at && (
+                        <View style={styles.timelineItem}>
+                            <View style={[styles.timelineDot, { backgroundColor: isCompleted ? Colors.success : Colors.danger }]} />
+                            <View style={styles.timelineContent}>
+                                <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>
+                                    {isCompleted ? 'Successfully Delivered' : 'Delivery Failed'}
+                                </Text>
+                                <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.delivered_at)}</Text>
                             </View>
-                        )}
-                        {assignment.delivered_at && (
-                            <View style={styles.timelineItem}>
-                                <View style={[styles.timelineDot, { backgroundColor: isCompleted ? Colors.success : Colors.danger }]} />
-                                <View style={styles.timelineContent}>
-                                    <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>
-                                        {isCompleted ? 'Delivered' : 'Failed'}
-                                    </Text>
-                                    <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.delivered_at)}</Text>
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                )}
+                        </View>
+                    )}
+                </View>
 
                 {/* Spacer for bottom bar */}
                 {isActive && <View style={{ height: 100 }} />}

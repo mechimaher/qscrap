@@ -75,6 +75,8 @@ export const Spacing = {
     lg: 24,
     xl: 32,
     xxl: 48,
+    // VVIP: Safe bottom padding for floating tab bar
+    BOTTOM_NAV_HEIGHT: 120,
 };
 
 export const BorderRadius = {

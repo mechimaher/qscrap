@@ -29,6 +29,7 @@ export class DriverRepository {
                 d.status, d.total_deliveries, d.rating_average::FLOAT as rating_average, d.rating_count,
                 d.current_lat, d.current_lng, d.last_location_update,
                 d.is_active, d.created_at,
+                d.bank_name, d.bank_account_iban, d.bank_account_name,
                 u.phone_number as login_phone
             FROM drivers d 
             JOIN users u ON d.user_id = u.user_id 
@@ -328,14 +329,78 @@ export class DriverRepository {
                 d.total_deliveries,
                 d.rating_average::FLOAT as rating_average,
                 d.rating_count,
+                d.total_earnings::FLOAT as total_earnings,
+                COALESCE(SUM(dp.amount) FILTER (WHERE DATE(dp.created_at) = CURRENT_DATE), 0)::FLOAT as today_earnings,
+                COALESCE(SUM(dp.amount) FILTER (WHERE dp.created_at >= CURRENT_DATE - INTERVAL '7 days'), 0)::FLOAT as week_earnings,
                 COUNT(*) FILTER (WHERE da.status = 'delivered' AND DATE(da.delivered_at) = CURRENT_DATE) as today_deliveries,
                 COUNT(*) FILTER (WHERE da.status = 'delivered' AND da.delivered_at >= CURRENT_DATE - INTERVAL '7 days') as week_deliveries,
                 COUNT(*) FILTER (WHERE da.status IN ('assigned', 'picked_up', 'in_transit')) as active_assignments
             FROM drivers d
             LEFT JOIN delivery_assignments da ON d.driver_id = da.driver_id
+            LEFT JOIN driver_payouts dp ON d.driver_id = dp.driver_id
             WHERE d.user_id = $1
-            GROUP BY d.driver_id, d.total_deliveries, d.rating_average, d.rating_count
+            GROUP BY d.driver_id, d.total_deliveries, d.rating_average, d.rating_count, d.total_earnings
         `, [userId]);
+        return result.rows[0];
+    }
+
+    async getEarningsTrend(userId: string) {
+        const result = await this.pool.query(`
+            WITH RECURSIVE days AS (
+                SELECT CURRENT_DATE - INTERVAL '6 days' as d
+                UNION ALL
+                SELECT d + INTERVAL '1 day' FROM days WHERE d < CURRENT_DATE
+            )
+            SELECT 
+                TO_CHAR(days.d, 'D') as day_index,
+                TO_CHAR(days.d, 'Dy') as day_label,
+                COALESCE(SUM(dp.amount), 0)::FLOAT as amount
+            FROM days
+            JOIN drivers d ON d.user_id = $1
+            LEFT JOIN driver_payouts dp ON d.driver_id = dp.driver_id AND DATE(dp.created_at) = days.d
+            GROUP BY days.d
+            ORDER BY days.d
+        `, [userId]);
+        return result.rows;
+    }
+
+    async getPayoutHistory(userId: string) {
+        const result = await this.pool.query(`
+            SELECT 
+                dp.payout_id, dp.order_number, dp.amount::FLOAT as amount, 
+                dp.status, dp.created_at, dp.paid_at
+            FROM driver_payouts dp
+            JOIN drivers d ON dp.driver_id = d.driver_id
+            WHERE d.user_id = $1
+            ORDER BY dp.created_at DESC
+            LIMIT 50
+        `, [userId]);
+        return result.rows;
+    }
+
+    async updateDriverProfile(userId: string, data: any) {
+        const {
+            full_name, email, vehicle_type, vehicle_plate, vehicle_model,
+            bank_name, bank_account_iban, bank_account_name
+        } = data;
+
+        const result = await this.pool.query(`
+            UPDATE drivers SET
+                full_name = COALESCE($1, full_name),
+                email = COALESCE($2, email),
+                vehicle_type = COALESCE($3, vehicle_type),
+                vehicle_plate = COALESCE($4, vehicle_plate),
+                vehicle_model = COALESCE($5, vehicle_model),
+                bank_name = COALESCE($6, bank_name),
+                bank_account_iban = COALESCE($7, bank_account_iban),
+                bank_account_name = COALESCE($8, bank_account_name),
+                updated_at = NOW()
+            WHERE user_id = $9
+            RETURNING *
+        `, [
+            full_name, email, vehicle_type, vehicle_plate, vehicle_model,
+            bank_name, bank_account_iban, bank_account_name, userId
+        ]);
         return result.rows[0];
     }
 

@@ -9,16 +9,116 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
+    Modal,
+    TextInput,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Colors } from '../../constants/theme';
+import { Colors, Spacing } from '../../constants/theme';
 
 export default function ProfileScreen() {
-    const { driver, logout } = useAuth();
+    const { driver, logout, refreshDriver } = useAuth();
     const { colors } = useTheme();
+
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [isBankModalVisible, setIsBankModalVisible] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const [editForm, setEditForm] = useState({
+        full_name: driver?.full_name || '',
+        email: driver?.email || '',
+        vehicle_model: driver?.vehicle_model || '',
+        vehicle_plate: driver?.vehicle_plate || '',
+    });
+
+    const [bankForm, setBankForm] = useState({
+        bank_name: driver?.bank_name || '',
+        bank_account_iban: driver?.bank_account_iban || '',
+        bank_account_name: driver?.bank_account_name || '',
+    });
+
+    useEffect(() => {
+        if (driver) {
+            setEditForm({
+                full_name: driver.full_name || '',
+                email: driver.email || '',
+                vehicle_model: driver.vehicle_model || '',
+                vehicle_plate: driver.vehicle_plate || '',
+            });
+            setBankForm({
+                bank_name: driver.bank_name || '',
+                bank_account_iban: driver.bank_account_iban || '',
+                bank_account_name: driver.bank_account_name || '',
+            });
+        }
+    }, [driver]);
+
+    const handleUpdateProfile = async (data: any) => {
+        try {
+            setIsSaving(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            await api.updateProfile(data);
+            await refreshDriver();
+            setIsEditModalVisible(false);
+            setIsBankModalVisible(false);
+            Alert.alert('Success', 'Profile updated successfully');
+        } catch (err) {
+            console.error('[Profile] Update error:', err);
+            Alert.alert('Error', 'Failed to update profile');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleContactSupport = () => {
+        const whatsappUrl = 'whatsapp://send?phone=97455555555'; // Example support number
+        Linking.canOpenURL(whatsappUrl).then(supported => {
+            if (supported) {
+                Linking.openURL(whatsappUrl);
+            } else {
+                Linking.openURL('mailto:support@qscrap.qa');
+            }
+        });
+    };
+
+    const handleTerms = () => {
+        Linking.openURL('https://qscrap.qa/terms');
+    };
+
+    const handlePrivacyPolicy = () => {
+        Linking.openURL('https://qscrap.qa/privacy');
+    };
+
+    const handleDeleteAccount = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        Alert.alert(
+            'Delete Account',
+            'This action is PERMANENT. All your data will be anonymized and you will lose access to your account. Are you absolutely sure?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete Forever',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setIsSaving(true);
+                            await api.deleteAccount();
+                            await logout();
+                            Alert.alert('Success', 'Your account has been deleted.');
+                        } catch (err) {
+                            console.error('[Profile] Delete error:', err);
+                            Alert.alert('Error', 'Failed to delete account. Please contact support.');
+                        } finally {
+                            setIsSaving(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     const handleLogout = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -60,6 +160,12 @@ export default function ProfileScreen() {
             >
                 {/* Profile Card */}
                 <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => setIsEditModalVisible(true)}
+                    >
+                        <Text style={styles.editButtonText}>Edit</Text>
+                    </TouchableOpacity>
                     <View style={styles.avatarContainer}>
                         <Text style={styles.avatarEmoji}>👨‍✈️</Text>
                         <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
@@ -103,15 +209,47 @@ export default function ProfileScreen() {
                     <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
                         <InfoRow
                             icon="🚗"
-                            label="Vehicle Type"
+                            label="Type"
                             value={driver?.vehicle_type || 'Not set'}
                             colors={colors}
                         />
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
                         <InfoRow
+                            icon="🚘"
+                            label="Model"
+                            value={driver?.vehicle_model || 'Not set'}
+                            colors={colors}
+                        />
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <InfoRow
                             icon="🔢"
-                            label="Plate Number"
+                            label="Plate"
                             value={driver?.vehicle_plate || 'Not set'}
+                            colors={colors}
+                        />
+                    </View>
+                </View>
+
+                {/* Bank Details */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Bank Details</Text>
+                        <TouchableOpacity onPress={() => setIsBankModalVisible(true)}>
+                            <Text style={[styles.editLink, { color: Colors.primary }]}>Update</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
+                        <InfoRow
+                            icon="🏦"
+                            label="Bank"
+                            value={driver?.bank_name || 'Not set'}
+                            colors={colors}
+                        />
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <InfoRow
+                            icon="💳"
+                            label="IBAN"
+                            value={driver?.bank_account_iban ? `***${driver.bank_account_iban.slice(-4)}` : 'Not set'}
                             colors={colors}
                         />
                     </View>
@@ -131,22 +269,42 @@ export default function ProfileScreen() {
                             </Text>
                         </TouchableOpacity>
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow}>
+                        <TouchableOpacity style={styles.settingRow} onPress={handleContactSupport}>
                             <Text style={styles.settingIcon}>📞</Text>
                             <Text style={[styles.settingLabel, { color: colors.text }]}>
                                 Contact Support
                             </Text>
                             <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                →
+                                WhatsApp →
                             </Text>
                         </TouchableOpacity>
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow}>
+                        <TouchableOpacity style={styles.settingRow} onPress={handleTerms}>
                             <Text style={styles.settingIcon}>📄</Text>
                             <Text style={[styles.settingLabel, { color: colors.text }]}>
                                 Terms & Conditions
                             </Text>
                             <Text style={[styles.settingValue, { color: Colors.primary }]}>
+                                View →
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <TouchableOpacity style={styles.settingRow} onPress={handlePrivacyPolicy}>
+                            <Text style={styles.settingIcon}>🔒</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>
+                                Privacy Policy
+                            </Text>
+                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
+                                View →
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <TouchableOpacity style={styles.settingRow} onPress={handleDeleteAccount}>
+                            <Text style={styles.settingIcon}>⚠️</Text>
+                            <Text style={[styles.settingLabel, { color: Colors.danger }]}>
+                                Delete Account
+                            </Text>
+                            <Text style={[styles.settingValue, { color: Colors.danger }]}>
                                 →
                             </Text>
                         </TouchableOpacity>
@@ -164,9 +322,129 @@ export default function ProfileScreen() {
 
                 {/* Version */}
                 <Text style={[styles.version, { color: colors.textMuted }]}>
-                    QScrap Driver v1.0.0
+                    QScrap Driver Enterprise v1.1.0 (Build 5658)
                 </Text>
             </ScrollView>
+
+            {/* Edit Profile Modal */}
+            <Modal visible={isEditModalVisible} animationType="slide" transparent>
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Profile</Text>
+
+                        <ScrollView style={styles.modalForm}>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Full Name</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={editForm.full_name}
+                                onChangeText={(val) => setEditForm({ ...editForm, full_name: val })}
+                                placeholder="Enter full name"
+                                placeholderTextColor={colors.textMuted}
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Email Address</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={editForm.email}
+                                onChangeText={(val) => setEditForm({ ...editForm, email: val })}
+                                placeholder="Enter email"
+                                placeholderTextColor={colors.textMuted}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vehicle Model</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={editForm.vehicle_model}
+                                onChangeText={(val) => setEditForm({ ...editForm, vehicle_model: val })}
+                                placeholder="e.g. Honda Shadow"
+                                placeholderTextColor={colors.textMuted}
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Plate Number</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={editForm.vehicle_plate}
+                                onChangeText={(val) => setEditForm({ ...editForm, vehicle_plate: val })}
+                                placeholder="e.g. 12345"
+                                placeholderTextColor={colors.textMuted}
+                            />
+                        </ScrollView>
+
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => setIsEditModalVisible(false)}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.saveButton]}
+                                onPress={() => handleUpdateProfile(editForm)}
+                                disabled={isSaving}
+                            >
+                                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Bank Details Modal */}
+            <Modal visible={isBankModalVisible} animationType="slide" transparent>
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>Bank Details</Text>
+
+                        <ScrollView style={styles.modalForm}>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Bank Name</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={bankForm.bank_name}
+                                onChangeText={(val) => setBankForm({ ...bankForm, bank_name: val })}
+                                placeholder="e.g. QNB"
+                                placeholderTextColor={colors.textMuted}
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Account Name</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={bankForm.bank_account_name}
+                                onChangeText={(val) => setBankForm({ ...bankForm, bank_account_name: val })}
+                                placeholder="Name as per bank record"
+                                placeholderTextColor={colors.textMuted}
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>IBAN</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                value={bankForm.bank_account_iban}
+                                onChangeText={(val) => setBankForm({ ...bankForm, bank_account_iban: val })}
+                                placeholder="QA..."
+                                placeholderTextColor={colors.textMuted}
+                                autoCapitalize="characters"
+                            />
+                        </ScrollView>
+
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => setIsBankModalVisible(false)}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.saveButton]}
+                                onPress={() => handleUpdateProfile(bankForm)}
+                                disabled={isSaving}
+                            >
+                                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -207,6 +485,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingTop: 8,
+        paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
     },
     profileCard: {
         padding: 24,
@@ -346,5 +625,87 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 12,
         marginBottom: 20,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContainer: {
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        padding: 32,
+        paddingTop: 24,
+        maxHeight: '80%',
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        marginBottom: 24,
+        textAlign: 'center',
+    },
+    modalForm: {
+        marginBottom: 24,
+    },
+    inputLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    input: {
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 12,
+        fontSize: 16,
+        marginBottom: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
+        padding: 16,
+        borderRadius: 16,
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: 'rgba(0,0,0,0.05)',
+    },
+    saveButton: {
+        backgroundColor: Colors.primary,
+    },
+    cancelButtonText: {
+        color: Colors.textMuted,
+        fontWeight: '700',
+    },
+    saveButtonText: {
+        color: '#fff',
+        fontWeight: '700',
+    },
+    editButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: Colors.primary + '15',
+    },
+    editButtonText: {
+        color: Colors.primary,
+        fontWeight: '700',
+        fontSize: 12,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    editLink: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });

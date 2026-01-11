@@ -22,6 +22,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { api, API_ENDPOINTS } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/theme';
+import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
 
 type WizardStep = 'photo' | 'signature' | 'payment' | 'success';
@@ -62,11 +63,15 @@ export default function ProofOfDeliveryScreen() {
         }
     };
 
-    const retakePhoto = () => setPhotoUri(null);
+    const retakePhoto = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setPhotoUri(null);
+    };
 
     // --- STEP 2: SIGNATURE ---
     const handleSignatureOK = (signature: string) => {
         // signature is base64 string
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setSignatureData(signature);
         setStep('payment');
     };
@@ -136,8 +141,16 @@ export default function ProofOfDeliveryScreen() {
             return (
                 <View style={styles.center}>
                     <Text style={{ color: colors.text, marginBottom: 20 }}>Camera permission needed</Text>
-                    <TouchableOpacity style={styles.btnPrimary} onPress={requestPermission}>
-                        <Text style={styles.btnText}>Grant Permission</Text>
+                    <TouchableOpacity
+                        style={styles.btnGradientWrapper}
+                        onPress={requestPermission}
+                    >
+                        <LinearGradient
+                            colors={Colors.gradients.primary}
+                            style={styles.btnGradient}
+                        >
+                            <Text style={styles.btnText}>Grant Permission</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 </View>
             );
@@ -149,11 +162,28 @@ export default function ProofOfDeliveryScreen() {
                     <Text style={[styles.title, { color: colors.text }]}>Confirm Photo</Text>
                     <Image source={{ uri: photoUri }} style={styles.previewImage} />
                     <View style={styles.row}>
-                        <TouchableOpacity style={[styles.btnOutline, { borderColor: colors.border }]} onPress={retakePhoto}>
+                        <TouchableOpacity
+                            style={styles.btnOutline}
+                            onPress={retakePhoto}
+                        >
                             <Text style={[styles.btnTextOutline, { color: colors.text }]}>Retake</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('signature')}>
-                            <Text style={styles.btnText}>Next: Signature</Text>
+
+                        <TouchableOpacity
+                            style={styles.btnGradientWrapper}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                setStep('signature');
+                            }}
+                        >
+                            <LinearGradient
+                                colors={Colors.gradients.primary}
+                                style={styles.btnGradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                            >
+                                <Text style={styles.btnText}>Next: Signature →</Text>
+                            </LinearGradient>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -196,11 +226,31 @@ export default function ProofOfDeliveryScreen() {
                 />
             </View>
             <View style={styles.row}>
-                <TouchableOpacity style={[styles.btnOutline, { borderColor: colors.border }]} onPress={() => signatureRef.current?.clearSignature()}>
+                <TouchableOpacity
+                    style={styles.btnOutline}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        signatureRef.current?.clearSignature();
+                    }}
+                >
                     <Text style={[styles.btnTextOutline, { color: colors.text }]}>Clear</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.btnPrimary} onPress={() => signatureRef.current?.readSignature()}>
-                    <Text style={styles.btnText}>Confirm Signature</Text>
+
+                <TouchableOpacity
+                    style={styles.btnGradientWrapper}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        signatureRef.current?.readSignature();
+                    }}
+                >
+                    <LinearGradient
+                        colors={Colors.gradients.primary}
+                        style={styles.btnGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                    >
+                        <Text style={styles.btnText}>Confirm Signature</Text>
+                    </LinearGradient>
                 </TouchableOpacity>
             </View>
         </View>
@@ -213,27 +263,58 @@ export default function ProofOfDeliveryScreen() {
 
             <View style={styles.paymentOptions}>
                 <TouchableOpacity
-                    style={[styles.paymentOption, paymentMethod === 'cash' && styles.paymentSelected, { borderColor: colors.border }]}
-                    onPress={() => setPaymentMethod('cash')}
+                    style={[
+                        styles.paymentOption,
+                        paymentMethod === 'cash' && styles.paymentSelected,
+                        { borderColor: paymentMethod === 'cash' ? Colors.primary : colors.border }
+                    ]}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setPaymentMethod('cash');
+                    }}
                 >
                     <Text style={{ fontSize: 32 }}>💵</Text>
-                    <Text style={[styles.paymentText, { color: colors.text }]}>Cash</Text>
+                    <Text style={[
+                        styles.paymentText,
+                        { color: paymentMethod === 'cash' ? Colors.primary : colors.text }
+                    ]}>Cash</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.paymentOption, paymentMethod === 'online' && styles.paymentSelected, { borderColor: colors.border }]}
-                    onPress={() => setPaymentMethod('online')}
+                    style={[
+                        styles.paymentOption,
+                        paymentMethod === 'online' && styles.paymentSelected,
+                        { borderColor: paymentMethod === 'online' ? Colors.primary : colors.border }
+                    ]}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setPaymentMethod('online');
+                    }}
                 >
                     <Text style={{ fontSize: 32 }}>💳</Text>
-                    <Text style={[styles.paymentText, { color: colors.text }]}>Paid Online</Text>
+                    <Text style={[
+                        styles.paymentText,
+                        { color: paymentMethod === 'online' ? Colors.primary : colors.text }
+                    ]}>Paid Online</Text>
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.btnSuccess} onPress={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.btnText}>Complete Delivery</Text>
-                )}
+            <TouchableOpacity
+                style={styles.btnGradientWrapper}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+            >
+                <LinearGradient
+                    colors={['#059669', '#047857']}
+                    style={styles.btnGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                >
+                    {isSubmitting ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.btnText}>Complete Delivery ✓</Text>
+                    )}
+                </LinearGradient>
             </TouchableOpacity>
         </View>
     );
@@ -243,8 +324,17 @@ export default function ProofOfDeliveryScreen() {
             <Text style={{ fontSize: 64 }}>✅</Text>
             <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>Delivery Complete!</Text>
             <Text style={{ color: colors.textSecondary, marginBottom: 32 }}>Proof of delivery has been queued.</Text>
-            <TouchableOpacity style={styles.btnPrimary} onPress={() => navigation.navigate('Home')}>
-                <Text style={styles.btnText}>Back to Home</Text>
+
+            <TouchableOpacity
+                style={styles.btnGradientWrapper}
+                onPress={() => navigation.navigate('Home')}
+            >
+                <LinearGradient
+                    colors={Colors.gradients.primary}
+                    style={styles.btnGradient}
+                >
+                    <Text style={styles.btnText}>Back to Home</Text>
+                </LinearGradient>
             </TouchableOpacity>
         </View>
     );
@@ -308,10 +398,13 @@ const styles = StyleSheet.create({
     paymentText: { marginTop: 8, fontWeight: '600' },
 
     // Buttons
+    // Buttons
     row: { flexDirection: 'row', gap: 16 },
+    btnGradientWrapper: { flex: 1, borderRadius: 12, overflow: 'hidden' }, // Wrapper for gradient
+    btnGradient: { padding: 18, alignItems: 'center', justifyContent: 'center' },
+
     btnPrimary: { flex: 1, backgroundColor: Colors.primary, padding: 18, borderRadius: 12, alignItems: 'center' },
-    btnSuccess: { flex: 1, backgroundColor: Colors.success, padding: 18, borderRadius: 12, alignItems: 'center' },
-    btnOutline: { flex: 1, borderWidth: 1, padding: 18, borderRadius: 12, alignItems: 'center' },
+    btnOutline: { flex: 1, borderWidth: 1, padding: 18, borderRadius: 12, alignItems: 'center', borderColor: '#E5E5E5' },
     btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
     btnTextOutline: { fontWeight: '700', fontSize: 16 },
 });
