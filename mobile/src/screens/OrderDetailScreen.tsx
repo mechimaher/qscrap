@@ -91,9 +91,34 @@ const getStatusConfig = (status: string) => {
             description: 'Order completed successfully',
             gradient: ['#22C55E', '#16A34A'] as const
         },
+        'cancelled_by_customer': {
+            color: '#EF4444', icon: '✕', label: 'Cancelled',
+            description: 'You cancelled this order',
+            gradient: ['#EF4444', '#DC2626'] as const
+        },
+        'cancelled_by_garage': {
+            color: '#EF4444', icon: '✕', label: 'Cancelled',
+            description: 'Garage cancelled this order',
+            gradient: ['#EF4444', '#DC2626'] as const
+        },
+        'cancelled_by_ops': {
+            color: '#EF4444', icon: '✕', label: 'Cancelled',
+            description: 'Support cancelled this order',
+            gradient: ['#EF4444', '#DC2626'] as const
+        },
+        'disputed': {
+            color: '#F59E0B', icon: '⚠️', label: 'Disputed',
+            description: 'Order is under dispute review',
+            gradient: ['#F59E0B', '#D97706'] as const
+        },
+        'refunded': {
+            color: '#6B7280', icon: '💸', label: 'Refunded',
+            description: 'Payment has been refunded',
+            gradient: ['#6B7280', '#4B5563'] as const
+        },
     };
     return configs[status] || {
-        color: '#6B7280', icon: '•', label: status, description: '',
+        color: '#6B7280', icon: '•', label: status.replace(/_/g, ' '), description: '',
         gradient: ['#6B7280', '#4B5563'] as const
     };
 };

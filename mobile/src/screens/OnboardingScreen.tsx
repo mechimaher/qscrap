@@ -65,7 +65,7 @@ interface OnboardingScreenProps {
  * Shows key features with smooth animations.
  */
 const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
-    const { colors, isDark } = useTheme();
+    const { colors } = useTheme();
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef<FlatList>(null);
     const scrollX = useRef(new Animated.Value(0)).current;

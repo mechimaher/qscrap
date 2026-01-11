@@ -65,13 +65,10 @@ export class DriverService {
             io.to(`user_${row.customer_id}`).emit('driver_location_update', {
                 order_id: row.order_id,
                 order_number: row.order_number,
-                location: {
-                    lat,
-                    lng,
-                    accuracy: accuracy ? parseFloat(accuracy) : null,
-                    heading: heading ? parseFloat(heading) : null,
-                    speed: speed ? parseFloat(speed) : null
-                },
+                latitude: lat,
+                longitude: lng,
+                heading: heading ? parseFloat(heading) : 0,
+                speed: speed ? parseFloat(speed) : 0,
                 timestamp: new Date().toISOString()
             });
 
@@ -100,6 +97,15 @@ export class DriverService {
             }
 
             // 2. Validate Transition
+            if (assignment.status === status) {
+                await client.query('COMMIT');
+                return {
+                    success: true,
+                    assignment,
+                    message: `Status is already ${status}`
+                };
+            }
+
             if (!AssignmentState.isValidTransition(assignment.status, status)) {
                 throw new Error(`Cannot transition from '${assignment.status}' to '${status}'. Allowed: ${AssignmentState.getAllowedTransitions(assignment.status).join(', ')}`);
             }
@@ -219,10 +225,23 @@ export class DriverService {
                 : `Delivery update: ${status.replace('_', ' ')}`
         });
 
+        // 1. Emit 'order_status_updated' (past tense) for useSocket (Global Context)
         io.to(`user_${assignment.customer_id}`).emit('order_status_updated', {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             old_status: assignment.order_status,
+            new_status: status === 'delivered' ? 'delivered' : status,
+            notification: status === 'delivered'
+                ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
+                : `Delivery update: ${status.replace('_', ' ')}`
+        });
+
+        // 2. Emit 'order_status_update' (present tense) for TrackingScreen (Local Socket)
+        io.to(`user_${assignment.customer_id}`).emit('order_status_update', {
+            order_id: assignment.order_id,
+            order_number: assignment.order_number,
+            old_status: assignment.order_status,
+            status: status === 'delivered' ? 'delivered' : status, // TrackingScreen expects 'status'
             new_status: status === 'delivered' ? 'delivered' : status,
             notification: status === 'delivered'
                 ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`

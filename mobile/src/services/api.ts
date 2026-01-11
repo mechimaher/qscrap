@@ -78,9 +78,12 @@ export interface Order {
     created_at: string;
     driver_name?: string;
     driver_phone?: string;
+    driver_id?: string;
     // Tracking fields
     delivery_lat?: number;
     delivery_lng?: number;
+    driver_lat?: number;
+    driver_lng?: number;
     vehicle_info?: string;
 }
 
@@ -473,7 +476,7 @@ class ApiService {
     }
 
     async cancelOrder(orderId: string, reason: string): Promise<any> {
-        return this.request(`/orders/${orderId}/cancel/customer`, {
+        return this.request(API_ENDPOINTS.CANCEL_ORDER(orderId), {
             method: 'POST',
             body: JSON.stringify({ reason })
         });

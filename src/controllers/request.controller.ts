@@ -129,10 +129,10 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
         const result = await client.query(
             `INSERT INTO part_requests
-      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, part_category, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING request_id, created_at`,
-            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null]
+            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, part_category || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null]
         );
 
         const request = result.rows[0];
@@ -148,7 +148,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
             const targetGaragesResult = await client.query(`
                 SELECT garage_id, specialized_brands, all_brands 
                 FROM garages 
-                WHERE status = 'active' 
+                WHERE deleted_at IS NULL 
                 AND (approval_status = 'approved' OR approval_status = 'demo')
                 AND (${conditionFilter})
             `);

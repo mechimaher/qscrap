@@ -251,6 +251,16 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         const currentOrder = check.rows[0];
         const oldStatus = currentOrder.order_status;
 
+        // Idempotency check: If status is already set, return success
+        if (oldStatus === order_status) {
+            await client.query('ROLLBACK');
+            return res.json({
+                message: 'Status already updated',
+                old_status: oldStatus,
+                new_status: order_status
+            });
+        }
+
         // STRICT transition rules for GARAGE role
         const allowedTransitions: Record<string, string[]> = {
             'confirmed': ['preparing'],           // Garage starts work
@@ -341,10 +351,23 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         });
 
         // Emit Socket Event (for in-app real-time updates)
+
+        // 1. Emit 'order_status_updated' (past tense) for useSocket
         (global as any).io.to(`user_${customerId}`).emit('order_status_updated', {
             order_id,
             order_number: currentOrder.order_number,
             old_status: oldStatus,
+            new_status: order_status,
+            garage_name: garageName,
+            notification: statusMessages[order_status] || `Order status updated to ${order_status}`
+        });
+
+        // 2. Emit 'order_status_update' (present tense) for TrackingScreen
+        (global as any).io.to(`user_${customerId}`).emit('order_status_update', {
+            order_id,
+            order_number: currentOrder.order_number,
+            old_status: oldStatus,
+            status: order_status, // TrackingScreen expects 'status'
             new_status: order_status,
             garage_name: garageName,
             notification: statusMessages[order_status] || `Order status updated to ${order_status}`
@@ -401,6 +424,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
         let query = `
             SELECT o.*, 
                    pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
+                   pr.delivery_lat::float, pr.delivery_lng::float,
                    b.warranty_days, b.part_condition, b.brand_name, b.image_urls as bid_images,
                    g.garage_name,
                    da.assignment_id, da.status as delivery_status, 
@@ -447,16 +471,20 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
         const result = await pool.query(
             `SELECT o.*, 
                     pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
+                    pr.delivery_lat::float as delivery_lat, pr.delivery_lng::float as delivery_lng,
                     b.warranty_days, b.part_condition, b.brand_name, b.image_urls as bid_images, b.notes as bid_notes,
                     g.garage_name, g.rating_average, g.rating_count,
                     u.full_name as customer_name, u.phone_number as customer_phone,
-                    d.full_name as driver_name, d.phone as driver_phone, d.vehicle_type, d.vehicle_plate
+                    d.full_name as driver_name, d.phone as driver_phone, d.vehicle_type, d.vehicle_plate,
+                    d.current_lat::float as driver_lat, d.current_lng::float as driver_lng,
+                    da.status as delivery_status, da.estimated_delivery
              FROM orders o
              JOIN part_requests pr ON o.request_id = pr.request_id
              JOIN bids b ON o.bid_id = b.bid_id
              JOIN garages g ON o.garage_id = g.garage_id
              JOIN users u ON o.customer_id = u.user_id
-             LEFT JOIN drivers d ON o.driver_id = d.driver_id
+             LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
+             LEFT JOIN drivers d ON da.driver_id = d.driver_id
              WHERE o.order_id = $1 AND (o.customer_id = $2 OR o.garage_id = $2)`,
             [order_id, userId]
         );

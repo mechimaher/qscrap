@@ -104,9 +104,37 @@ io.on('connection', (socket) => {
         socket.join(roomName);
     });
 
-    socket.on('track_order', (data) => {
+    socket.on('track_order', async (data) => {
         const orderId = data?.order_id || data;
         socket.join(`tracking_${orderId}`);
+
+        // FIX: Immediately send last known driver location
+        try {
+            const result = await pool.query(`
+                SELECT d.current_lat, d.current_lng, dl.heading, dl.speed, d.updated_at
+                FROM orders o
+                JOIN delivery_assignments da ON o.order_id = da.order_id
+                JOIN drivers d ON da.driver_id = d.driver_id
+                LEFT JOIN driver_locations dl ON d.driver_id = dl.driver_id
+                WHERE o.order_id = $1 AND da.status IN ('assigned', 'picked_up', 'in_transit')
+            `, [orderId]);
+
+            if (result.rows.length > 0) {
+                const loc = result.rows[0];
+                if (loc.current_lat && loc.current_lng) {
+                    socket.emit('driver_location_update', {
+                        order_id: orderId,
+                        latitude: parseFloat(loc.current_lat),
+                        longitude: parseFloat(loc.current_lng),
+                        heading: parseFloat(loc.heading || '0'),
+                        speed: parseFloat(loc.speed || '0'),
+                        timestamp: loc.updated_at
+                    });
+                }
+            }
+        } catch (err) {
+            console.error(`[SOCKET] Failed to fetch initial driver location for ${orderId}:`, err);
+        }
     });
 
     socket.on('disconnect', () => {

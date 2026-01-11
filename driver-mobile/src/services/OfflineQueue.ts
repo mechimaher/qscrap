@@ -74,11 +74,10 @@ class OfflineQueueService {
         this.isProcessing = true;
 
         // Process sequentially to maintain order consistency
-        // Create a copy to iterate, but modify original queue safely
-        const snapshot = [...this.queue];
-        const remainingQueue: QueuedRequest[] = [];
+        // We use a while loop to handle items added during processing
+        while (this.queue.length > 0) {
+            const req = this.queue[0];
 
-        for (const req of snapshot) {
             try {
                 let bodyToSend = req.body;
 
@@ -92,7 +91,7 @@ class OfflineQueueService {
                         // Replace photoPath with actual photo data expected by backend
                         bodyToSend = {
                             ...req.body,
-                            photo: base64,
+                            photo_base64: base64,
                             photoPath: undefined // Remove path from payload
                         };
                     } else {
@@ -100,24 +99,50 @@ class OfflineQueueService {
                     }
                 }
 
+                console.log(`[OfflineQueue] Processing: ${req.method} ${req.endpoint} (Attempt ${req.retryCount + 1})`);
                 await api.request(req.endpoint, {
                     method: req.method,
                     body: JSON.stringify(bodyToSend)
                 });
-                console.log(`[OfflineQueue] Successfully processed: ${req.endpoint}`);
-            } catch (err) {
-                console.error(`[OfflineQueue] Failed to process ${req.endpoint}`, err);
+
+                console.log(`[OfflineQueue] ✅ Success: ${req.endpoint}`);
+
+                // Success: remove from queue
+                this.queue.shift();
+                this.saveQueue();
+            } catch (err: any) {
+                console.error(`[OfflineQueue] ❌ Failed ${req.endpoint}:`, err.message || err);
+
+                // If it's a 4xx error (client error), we should probably drop it 
+                // as retrying won't fix a bad request (e.g. invalid status transition)
+                const isClientError = err.message && (
+                    err.message.includes('Cannot transition') ||
+                    err.message.includes('not found') ||
+                    err.message.includes('invalid')
+                );
+
+                if (isClientError) {
+                    console.warn('[OfflineQueue] Client error detected, dropping request to prevent loop');
+                    this.queue.shift();
+                    this.saveQueue();
+                    continue; // Move to next item
+                }
+
+                // Update retry count
                 req.retryCount++;
-                if (req.retryCount < 50) { // Keep trying for a long time (essential for logistics)
-                    remainingQueue.push(req);
-                } else {
+
+                if (req.retryCount >= 50) {
                     console.error('[OfflineQueue] Dropping request after max retries:', req);
+                    this.queue.shift();
+                    this.saveQueue();
+                } else {
+                    // If it failed due to network/server, we stop processing for now 
+                    // to maintain sequence and try again later
+                    break;
                 }
             }
         }
 
-        this.queue = remainingQueue;
-        this.saveQueue();
         this.isProcessing = false;
 
         if (this.queue.length === 0) {

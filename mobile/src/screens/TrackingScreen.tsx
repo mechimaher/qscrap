@@ -14,7 +14,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import LeafletMap from '../components/LeafletMap';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -123,7 +123,7 @@ export default function TrackingScreen() {
     const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
     const [distance, setDistance] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(false);
-    const [driverInfo, setDriverInfo] = useState<{ name: string; phone: string; vehicle: string } | null>(null);
+    const [driverInfo, setDriverInfo] = useState<{ id?: string; name: string; phone: string; vehicle: string } | null>(null);
     const [orderDetails, setOrderDetails] = useState<{
         garage_name: string;
         part_description: string;
@@ -170,25 +170,30 @@ export default function TrackingScreen() {
 
             socket.current.on('driver_location_update', (data: any) => {
                 if (data.order_id === orderId) {
-                    setDriverLocation({
-                        latitude: data.latitude,
-                        longitude: data.longitude,
-                        heading: data.heading || 0,
-                        speed: data.speed || 0,
-                        updated_at: data.timestamp,
-                    });
+                    const lat = parseFloat(String(data.latitude));
+                    const lng = parseFloat(String(data.longitude));
 
-                    // Calculate ETA (simplified)
-                    if (customerLocation) {
-                        const dist = calculateDistance(
-                            data.latitude, data.longitude,
-                            customerLocation.latitude, customerLocation.longitude
-                        );
-                        setDistance(`${dist.toFixed(1)} km`);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        setDriverLocation({
+                            latitude: lat,
+                            longitude: lng,
+                            heading: parseFloat(String(data.heading || 0)),
+                            speed: parseFloat(String(data.speed || 0)),
+                            updated_at: data.timestamp,
+                        });
 
-                        // Estimate: average 30 km/h in city traffic
-                        const etaMinutes = Math.ceil((dist / 30) * 60);
-                        setEta(`${etaMinutes} min`);
+                        // Calculate ETA (simplified)
+                        if (customerLocation) {
+                            const dist = calculateDistance(
+                                lat, lng,
+                                customerLocation.latitude, customerLocation.longitude
+                            );
+                            setDistance(`${dist.toFixed(1)} km`);
+
+                            // Estimate: average 30 km/h in city traffic
+                            const etaMinutes = Math.ceil((dist / 30) * 60);
+                            setEta(`${etaMinutes} min`);
+                        }
                     }
                 }
             });
@@ -234,34 +239,49 @@ export default function TrackingScreen() {
 
     const loadOrderData = async () => {
         try {
-            const data = await api.getMyOrders();
-            const order = data.orders?.find((o: any) => o.order_id === orderId);
+            const response = await api.getOrderDetails(orderId);
+            const order = response.order;
 
             if (order) {
                 // Set customer location from order's delivery coordinates
-                if (order.delivery_lat && order.delivery_lng) {
-                    setCustomerLocation({
-                        latitude: order.delivery_lat,
-                        longitude: order.delivery_lng,
-                    });
+                if (order.delivery_lat != null && order.delivery_lng != null) {
+                    const lat = parseFloat(String(order.delivery_lat));
+                    const lng = parseFloat(String(order.delivery_lng));
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        setCustomerLocation({ latitude: lat, longitude: lng });
+                    }
+                }
+
+                if (order.driver_lat != null && order.driver_lng != null) {
+                    const lat = parseFloat(String(order.driver_lat));
+                    const lng = parseFloat(String(order.driver_lng));
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        setDriverLocation({
+                            latitude: lat,
+                            longitude: lng,
+                            heading: 0,
+                            speed: 0,
+                            updated_at: new Date().toISOString()
+                        });
+                    }
                 }
 
                 if (order.driver_name) {
                     setDriverInfo({
+                        id: order.driver_id,
                         name: order.driver_name,
                         phone: order.driver_phone || '',
-                        vehicle: order.vehicle_info || 'Vehicle',
+                        vehicle: order.vehicle_plate ? `${order.vehicle_type || 'Vehicle'} (${order.vehicle_plate})` : (order.vehicle_type || 'Vehicle'),
                     });
                 }
 
                 // Set order details for display
-                const rawOrder = order as any;
                 setOrderDetails({
                     garage_name: order.garage_name || 'Unknown Garage',
-                    part_description: rawOrder.part_description || rawOrder.part_name || 'Part',
-                    part_condition: rawOrder.part_condition || 'used_good',
-                    warranty_days: parseInt(String(rawOrder.warranty_days)) || 0,
-                    part_price: parseFloat(String(rawOrder.part_price)) || 0,
+                    part_description: order.part_description || order.part_name || 'Part',
+                    part_condition: order.part_condition || 'used_good',
+                    warranty_days: parseInt(String(order.warranty_days)) || 0,
+                    part_price: parseFloat(String(order.part_price)) || 0,
                     delivery_fee: parseFloat(String(order.delivery_fee || 0)),
                     total_amount: parseFloat(String(order.total_amount)) || 0,
                     order_status: order.order_status || 'in_transit',
@@ -415,57 +435,12 @@ export default function TrackingScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Premium Google Map - Driver only visible after QC passed */}
-            <MapView
-                ref={mapRef}
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                initialRegion={defaultRegion}
-                customMapStyle={darkMapStyle}
-                showsUserLocation={true}
-                showsMyLocationButton={false}
-            >
-                {canShowDriver && driverLocation && (
-                    <Marker
-                        coordinate={{
-                            latitude: driverLocation.latitude,
-                            longitude: driverLocation.longitude,
-                        }}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        rotation={driverLocation.heading}
-                    >
-                        <View style={styles.driverMarker}>
-                            <View style={[styles.driverMarkerInner, { transform: [{ rotate: `${driverLocation.heading || 0}deg` }] }]}>
-                                <Text style={styles.driverMarkerIcon}>🚗</Text>
-                            </View>
-                        </View>
-                    </Marker>
-                )}
-
-                {customerLocation && (
-                    <Marker
-                        coordinate={customerLocation}
-                        anchor={{ x: 0.5, y: 1.0 }}
-                    >
-                        <View style={styles.destinationMarker}>
-                            <View style={styles.destinationPulse} />
-                            <Text style={styles.destinationMarkerIcon}>📍</Text>
-                        </View>
-                    </Marker>
-                )}
-
-                {canShowDriver && driverLocation && customerLocation && (
-                    <Polyline
-                        coordinates={[
-                            { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-                            customerLocation
-                        ]}
-                        strokeColor={Colors.primary}
-                        strokeWidth={4}
-                        lineDashPattern={[10, 10]}
-                    />
-                )}
-            </MapView>
+            {/* Premium Leaflet Map - Driver only visible after QC passed */}
+            <LeafletMap
+                driverLocation={canShowDriver ? driverLocation : null}
+                customerLocation={customerLocation}
+                showRoute={canShowDriver}
+            />
 
             {/* Chat Notification Banner */}
             {newChatMessage && (

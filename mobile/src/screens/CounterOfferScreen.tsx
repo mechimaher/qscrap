@@ -18,6 +18,8 @@ import { api } from '../services/api';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useSocketContext } from '../hooks/useSocket';
+import { useToast } from '../components/Toast';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface CounterOffer {
     counter_offer_id: string;
@@ -46,6 +48,8 @@ export default function CounterOfferScreen() {
     const route = useRoute();
     const { bidId, garageName, currentAmount, partDescription, garageCounterId } = route.params as NegotiationParams;
     const { socket } = useSocketContext();
+    const { colors } = useTheme();
+    const toast = useToast();
 
     const [history, setHistory] = useState<CounterOffer[]>([]);
     const [proposedAmount, setProposedAmount] = useState('');
@@ -79,7 +83,8 @@ export default function CounterOfferScreen() {
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert('Offer Accepted!', 'The garage has accepted your counter-offer.');
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                toast.success('Offer Accepted!', 'The garage has accepted your counter-offer.');
             }
         };
 
@@ -144,12 +149,12 @@ export default function CounterOfferScreen() {
         const amount = parseFloat(proposedAmount);
 
         if (isNaN(amount) || amount <= 0) {
-            Alert.alert('Error', 'Please enter a valid amount');
+            toast.error('Error', 'Please enter a valid amount');
             return;
         }
 
         if (amount >= currentAmount) {
-            Alert.alert('Error', 'Counter-offer must be less than the current bid');
+            toast.error('Error', 'Counter-offer must be less than the current bid');
             return;
         }
 
@@ -194,11 +199,16 @@ export default function CounterOfferScreen() {
 
             if (response.ok) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(
-                    'Counter-Offer Sent!',
-                    `Your offer of ${amount} QAR has been sent to ${garageName}. They will respond within 24 hours.`,
-                    [{ text: 'OK', onPress: () => navigation.goBack() }]
-                );
+                toast.show({
+                    type: 'success',
+                    title: 'Counter-Offer Sent!',
+                    message: `Your offer of ${amount} QAR has been sent to ${garageName}.`,
+                    action: {
+                        label: 'OK',
+                        onPress: () => navigation.goBack()
+                    },
+                    duration: 4000
+                });
             } else {
                 let errorMsg = 'Failed to send counter-offer';
                 try {
@@ -207,7 +217,7 @@ export default function CounterOfferScreen() {
                 } catch {
                     errorMsg = `Server error ${response.status}`;
                 }
-                Alert.alert('Error', errorMsg);
+                toast.error('Error', errorMsg);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             }
         } catch (error) {
@@ -215,7 +225,7 @@ export default function CounterOfferScreen() {
             if (error instanceof Error) {
                 errorMsg = error.message;
             }
-            Alert.alert('Error', errorMsg);
+            toast.error('Error', errorMsg);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSending(false);
@@ -255,13 +265,17 @@ export default function CounterOfferScreen() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 if (action === 'accept') {
-                    Alert.alert(
-                        'Offer Accepted!',
-                        `You accepted the garage's offer of ${pendingOffer.proposed_amount} QAR. An order will be created.`,
-                        [{ text: 'OK', onPress: () => navigation.goBack() }]
-                    );
+                    toast.show({
+                        type: 'success',
+                        title: 'Offer Accepted!',
+                        message: `You accepted the offer of ${pendingOffer.proposed_amount} QAR.`,
+                        action: {
+                            label: 'OK',
+                            onPress: () => navigation.goBack()
+                        }
+                    });
                 } else {
-                    Alert.alert('Offer Rejected', 'The counter-offer has been rejected.');
+                    toast.info('Offer Rejected', 'The counter-offer has been rejected.');
                     loadNegotiationHistory();
                 }
             } else {
@@ -269,7 +283,7 @@ export default function CounterOfferScreen() {
                 throw new Error(data.error || 'Failed to respond');
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to respond');
+            toast.error('Error', error.message || 'Failed to respond');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSending(false);
@@ -320,20 +334,20 @@ export default function CounterOfferScreen() {
     const canNegotiate = currentRound < MAX_ROUNDS && !pendingOffer;
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Negotiate Price</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Negotiate Price</Text>
                 <View style={{ width: 60 }} />
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Current Bid Info */}
-                <View style={styles.bidCard}>
-                    <Text style={styles.garageName}>{garageName}</Text>
+                <View style={[styles.bidCard, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.garageName, { color: colors.text }]}>{garageName}</Text>
                     <Text style={styles.partName}>{partDescription}</Text>
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Current Bid</Text>
@@ -400,13 +414,13 @@ export default function CounterOfferScreen() {
 
                 {/* Counter-Offer Form */}
                 {canNegotiate && !pendingOffer && (
-                    <View style={styles.formCard}>
-                        <Text style={styles.formTitle}>Make a Counter-Offer</Text>
+                    <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.formTitle, { color: colors.text }]}>Make a Counter-Offer</Text>
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Your Offer (QAR)</Text>
                             <TextInput
-                                style={styles.amountInput}
+                                style={[styles.amountInput, { backgroundColor: colors.primary + '10', color: colors.primary, borderColor: colors.primary }]}
                                 value={proposedAmount}
                                 onChangeText={setProposedAmount}
                                 placeholder="Enter your proposed amount"
@@ -418,7 +432,7 @@ export default function CounterOfferScreen() {
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Message (Optional)</Text>
                             <TextInput
-                                style={[styles.input, styles.messageInput]}
+                                style={[styles.input, styles.messageInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                                 value={message}
                                 onChangeText={setMessage}
                                 placeholder="Explain your offer..."

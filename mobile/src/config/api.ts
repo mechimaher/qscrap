@@ -19,19 +19,22 @@ export const API_ENDPOINTS = {
     // Requests
     REQUESTS: '/requests',
     MY_REQUESTS: '/requests/my',
+    // FIXED: Backend uses /requests/:id/cancel (customer)
     CANCEL_REQUEST: (requestId: string) => `/requests/${requestId}/cancel`,
     DELETE_REQUEST: (requestId: string) => `/requests/${requestId}`,
 
     // Bids
     REJECT_BID: (bidId: string) => `/bids/${bidId}/reject`,
 
-    // Orders - FIXED: matches backend /orders/accept-bid/:bid_id
+    // Orders
     MY_ORDERS: '/orders/my',
     ACCEPT_BID: (bidId: string) => `/orders/accept-bid/${bidId}`,
     CONFIRM_DELIVERY: (orderId: string) => `/orders/${orderId}/confirm-delivery`,
     SUBMIT_REVIEW: (orderId: string) => `/orders/${orderId}/review`,
+    // FIXED: Order cancellation uses /cancellations/orders/...
+    CANCEL_ORDER: (orderId: string) => `/cancellations/orders/${orderId}/cancel/customer`,
 
-    // Counter-Offers (Negotiation) - FIXED: backend uses /negotiations (plural)
+    // Counter-Offers (Negotiation)
     COUNTER_OFFER: (bidId: string) => `/negotiations/bids/${bidId}/counter-offer`,
     RESPOND_TO_COUNTER: (counterOfferId: string) => `/negotiations/counter-offers/${counterOfferId}/customer-respond`,
     ACCEPT_LAST_OFFER: (bidId: string) => `/negotiations/bids/${bidId}/accept-last-offer`,
@@ -44,6 +47,7 @@ export const API_ENDPOINTS = {
 
     // Notifications
     NOTIFICATIONS: '/dashboard/notifications',
+    // FIXED: Backend uses /notifications/register-token
     NOTIFICATIONS_REGISTER: '/notifications/register-token',
     MARK_NOTIFICATION_READ: (notificationId: string) => `/dashboard/notifications/${notificationId}/read`,
     MARK_ALL_NOTIFICATIONS_READ: '/dashboard/notifications/read-all',
@@ -64,8 +68,11 @@ export const API_ENDPOINTS = {
     CHAT_MESSAGES: (orderId: string) => `/chat/messages/${orderId}`,
     MESSAGES: '/chat/messages',
 
-    // Catalog (Featured Products) - Uses showcase public endpoint
+    // Catalog (Featured Products)
     CATALOG_SEARCH: '/showcase/parts',
+
+    // OCR
+    OCR_VIN: '/ocr/vin/base64',
 };
 
 // App Info

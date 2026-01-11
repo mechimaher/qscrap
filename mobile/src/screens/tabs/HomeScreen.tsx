@@ -21,14 +21,16 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { api, Stats } from '../../services/api';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
+import { useToast } from '../../components/Toast';
 import FeaturedProductsSection from '../../components/FeaturedProductsSection';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
+const SUPPORT_PHONE = '97412345678'; // Should be in constants
 
 // ============================================
 // ANIMATED COUNT-UP COMPONENT
@@ -36,6 +38,7 @@ const cardWidth = (width - Spacing.lg * 3) / 2;
 const AnimatedNumber = ({ value, delay = 0 }: { value: number; delay?: number }) => {
     const [displayValue, setDisplayValue] = useState(0);
     const animRef = useRef<any>(null);
+    const { colors } = useTheme();
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -53,7 +56,7 @@ const AnimatedNumber = ({ value, delay = 0 }: { value: number; delay?: number })
         return () => clearTimeout(timeout);
     }, [value, delay]);
 
-    return <Text style={styles.statValue}>{displayValue}</Text>;
+    return <Text style={[styles.statValue, { color: colors.text }]}>{displayValue}</Text>;
 };
 
 // ============================================
@@ -123,7 +126,7 @@ const HeroWelcome = ({
             { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
         ]}>
             <LinearGradient
-                colors={[Colors.primary, '#6B102C', '#4A0D1F']}
+                colors={ThemeColors.gradients.primary}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.heroGradient}
@@ -153,13 +156,13 @@ const HeroWelcome = ({
                         <Text style={styles.notificationIcon}>🔔</Text>
                         <Animated.View style={[
                             styles.notificationBadge,
-                            { transform: [{ scale: badgeScale }] }
+                            { transform: [{ scale: badgeScale }], backgroundColor: colors.secondary, borderColor: colors.primary }
                         ]} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Gold accent line */}
-                <View style={styles.goldAccent} />
+                <View style={[styles.goldAccent, { backgroundColor: colors.secondary }]} />
             </LinearGradient>
         </Animated.View>
     );
@@ -173,6 +176,7 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
     const glowAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const { colors } = useTheme();
 
     useEffect(() => {
         // Entrance animation
@@ -228,12 +232,12 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                 onPressOut={handlePressOut}
                 activeOpacity={1}
             >
-                <View style={styles.ctaCard}>
+                <View style={[styles.ctaCard, { backgroundColor: colors.surface }]}>
                     {/* Glow effect */}
-                    <Animated.View style={[styles.ctaGlow, { opacity: glowOpacity }]} />
+                    <Animated.View style={[styles.ctaGlow, { opacity: glowOpacity, backgroundColor: colors.primary }]} />
 
                     <LinearGradient
-                        colors={[Colors.primary, '#B31D4A', '#8A1538']}
+                        colors={ThemeColors.gradients.primaryDark}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.ctaGradient}
@@ -285,6 +289,7 @@ const AnimatedStats = ({
         new Animated.Value(0),
         new Animated.Value(0),
     ]).current;
+    const { colors } = useTheme();
 
     useEffect(() => {
         slideAnims.forEach((anim, index) => {
@@ -348,7 +353,7 @@ const AnimatedStats = ({
                     <LinearGradient colors={cardColors} style={styles.statCardInner}>
                         <Text style={styles.statEmoji}>{emoji}</Text>
                         <AnimatedNumber value={value} delay={500 + index * 150} />
-                        <Text style={styles.statLabel}>{label}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </Animated.View>
@@ -357,7 +362,7 @@ const AnimatedStats = ({
 
     return (
         <View style={styles.statsSection}>
-            <Text style={styles.sectionTitle}>📊 Your Activity</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>📊 Your Activity</Text>
             <View style={styles.statsRow}>
                 <StatCard
                     index={0}
@@ -392,11 +397,11 @@ const AnimatedStats = ({
                             <Text style={styles.wideCardEmoji}>📦</Text>
                             <View>
                                 <AnimatedNumber value={stats?.total_orders || 0} delay={700} />
-                                <Text style={styles.wideCardLabel}>Total Orders Completed</Text>
+                                <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>Total Orders Completed</Text>
                             </View>
                         </View>
-                        <View style={styles.wideCardBadge}>
-                            <Text style={styles.wideCardBadgeText}>View All →</Text>
+                        <View style={[styles.wideCardBadge, { backgroundColor: colors.primary + '20' }]}>
+                            <Text style={[styles.wideCardBadgeText, { color: colors.primary }]}>View All →</Text>
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -411,6 +416,7 @@ const AnimatedStats = ({
 const QuickActions = ({ navigation }: { navigation: any }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
+    const { colors } = useTheme();
 
     useEffect(() => {
         Animated.parallel([
@@ -450,11 +456,11 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                 onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
                 activeOpacity={1}
             >
-                <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }] }]}>
+                <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }], backgroundColor: colors.surface }]}>
                     <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
                         <Text style={styles.actionEmoji}>{emoji}</Text>
                     </View>
-                    <Text style={styles.actionLabel}>{label}</Text>
+                    <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>{label}</Text>
                 </Animated.View>
             </TouchableOpacity>
         );
@@ -465,7 +471,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
             styles.actionsSection,
             { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
         ]}>
-            <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>⚡ Quick Actions</Text>
             <View style={styles.actionsGrid}>
                 <ActionButton
                     emoji="📋"
@@ -483,7 +489,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                     emoji="💬"
                     label="Support"
                     bgColor="#E8F5E9"
-                    onPress={() => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support')}
+                    onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}?text=Hi%20QScrap%20Support`)}
                 />
                 <ActionButton
                     emoji="⚙️"
@@ -501,6 +507,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
 // ============================================
 const ProTipCard = () => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const { colors } = useTheme();
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -512,11 +519,11 @@ const ProTipCard = () => {
     }, []);
 
     return (
-        <Animated.View style={[styles.proTipCard, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.proTipCard, { opacity: fadeAnim, backgroundColor: colors.surface }]}>
             <Text style={styles.proTipIcon}>💡</Text>
             <View style={styles.proTipContent}>
-                <Text style={styles.proTipTitle}>Pro Tip</Text>
-                <Text style={styles.proTipText}>
+                <Text style={[styles.proTipTitle, { color: colors.text }]}>Pro Tip</Text>
+                <Text style={[styles.proTipText, { color: colors.textSecondary }]}>
                     Add your VIN number for faster & more accurate quotes
                 </Text>
             </View>
@@ -529,6 +536,7 @@ const ProTipCard = () => {
 // ============================================
 const SkeletonLoading = () => {
     const shimmerAnim = useRef(new Animated.Value(0)).current;
+    const { colors } = useTheme();
 
     useEffect(() => {
         Animated.loop(
@@ -542,8 +550,8 @@ const SkeletonLoading = () => {
     });
 
     const SkeletonBox = ({ style }: { style: any }) => (
-        <View style={[styles.skeletonBox, style]}>
-            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }] }]} />
+        <View style={[styles.skeletonBox, style, { backgroundColor: colors.surfaceSecondary }]}>
+            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }], backgroundColor: colors.surface }]} />
         </View>
     );
 
@@ -567,6 +575,7 @@ export default function HomeScreen() {
     const { user } = useAuth();
     const { colors } = useTheme();
     const { newBids, orderUpdates } = useSocketContext();
+    const toast = useToast();
     const [stats, setStats] = useState<Stats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -577,6 +586,7 @@ export default function HomeScreen() {
             setStats(data.stats);
         } catch (error) {
             console.log('Failed to load stats:', error);
+            toast.error('Error', 'Failed to load stats');
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -663,7 +673,7 @@ export default function HomeScreen() {
 // STYLES
 // ============================================
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
+    container: { flex: 1 },
     scrollView: { flex: 1 },
 
     // Hero Section
@@ -720,13 +730,10 @@ const styles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: Colors.secondary,
         borderWidth: 2,
-        borderColor: Colors.primary,
     },
     goldAccent: {
         height: 3,
-        backgroundColor: Colors.secondary,
         borderRadius: 2,
         marginTop: Spacing.lg,
         width: 60,
@@ -746,7 +753,6 @@ const styles = StyleSheet.create({
         left: -20,
         right: -20,
         bottom: -20,
-        backgroundColor: Colors.primary,
         borderRadius: BorderRadius.xl + 20,
     },
     ctaGradient: { padding: Spacing.lg },
