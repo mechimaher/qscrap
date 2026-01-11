@@ -68,6 +68,11 @@
         "android.permission.POST_NOTIFICATIONS"
       ],
       "useNextNotificationsApi": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

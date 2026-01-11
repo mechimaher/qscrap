@@ -2,7 +2,7 @@
 # QScrap Customer App - Production APK Build Script
 # "Simple & Efficient" - Includes Dependencies Install + Build
 
-export ANDROID_HOME=/home/user/Android/Sdk
+export ANDROID_HOME=/home/rambo/Android/Sdk
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$ANDROID_HOME/platform-tools:$PATH
 

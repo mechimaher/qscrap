@@ -42,6 +42,17 @@ try:
     print(stdout.read().decode())
     print(stderr.read().decode())
     
+    print("⏳ Waiting for services to stabilize...")
+    import time
+    time.sleep(15)
+
+    print("🗄️  Running Database Migrations...")
+    stdin, stdout, stderr = client.exec_command("docker exec qscrap-backend npm run db:migrate")
+    print(stdout.read().decode())
+    err = stderr.read().decode()
+    if err:
+        print(f"Migration Output/Error: {err}")
+    
     client.close()
 except Exception as e:
     print(f"Error: {e}")

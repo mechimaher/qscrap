@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../contexts';
 import { api, getSocket } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
@@ -121,10 +121,12 @@ const DeliveryTrackingScreen: React.FC = () => {
             {/* Map */}
             <MapView
                 ref={mapRef}
+                provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 initialRegion={initialRegion}
                 showsUserLocation
                 showsMyLocationButton={false}
+                customMapStyle={isDark ? darkMapStyle : []}
             >
                 {/* Driver Marker */}
                 {driverLocation && (
