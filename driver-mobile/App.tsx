@@ -13,6 +13,8 @@ import { SocketProvider } from './src/contexts/SocketContext';
 import { Colors } from './src/constants/theme';
 import * as Notifications from 'expo-notifications';
 import NotificationService from './src/services/notifications';
+import { offlineQueue } from './src/services/OfflineQueue';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 // Import screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -120,7 +122,7 @@ function MainTabs() {
                 },
             })}
             screenListeners={{
-                state: (e) => {
+                state: (e: any) => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 },
             }}
@@ -148,6 +150,9 @@ function RootNavigator() {
         };
 
         register();
+
+        // Process any pending offline requests
+        offlineQueue.processQueue();
 
         // Handle foreground notifications
         const notificationListener = NotificationService.addNotificationReceivedListener(notification => {
@@ -221,17 +226,19 @@ function ThemedApp() {
 export default function App() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-                <ThemeProvider>
-                    <AuthProvider>
-                        <SocketProvider>
-                            <NavigationContainer>
-                                <ThemedApp />
-                            </NavigationContainer>
-                        </SocketProvider>
-                    </AuthProvider>
-                </ThemeProvider>
-            </SafeAreaProvider>
+            <ErrorBoundary name="RootApp">
+                <SafeAreaProvider>
+                    <ThemeProvider>
+                        <AuthProvider>
+                            <SocketProvider>
+                                <NavigationContainer>
+                                    <ThemedApp />
+                                </NavigationContainer>
+                            </SocketProvider>
+                        </AuthProvider>
+                    </ThemeProvider>
+                </SafeAreaProvider>
+            </ErrorBoundary>
         </GestureHandlerRootView>
     );
 }

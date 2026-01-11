@@ -1,7 +1,7 @@
 // QScrap Driver App - Profile Screen
 // Driver profile, vehicle info, and settings
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,11 +12,13 @@ import {
     Modal,
     TextInput,
     Linking,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { api } from '../../services/api';
 import { Colors, Spacing } from '../../constants/theme';
 
 export default function ProfileScreen() {
@@ -139,12 +141,21 @@ export default function ProfileScreen() {
     };
 
     const getStatusColor = () => {
-        switch (driver?.status) {
+        if (!driver?.status) return Colors.textMuted;
+        switch (driver.status) {
             case 'available': return Colors.success;
             case 'busy': return Colors.warning;
             default: return Colors.danger;
         }
     };
+
+    if (!driver) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -171,16 +182,16 @@ export default function ProfileScreen() {
                         <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
                     </View>
                     <Text style={[styles.driverName, { color: colors.text }]}>
-                        {driver?.full_name || 'Driver'}
+                        {driver.full_name || 'Driver'}
                     </Text>
                     <Text style={[styles.driverPhone, { color: colors.textSecondary }]}>
-                        {driver?.phone}
+                        {driver.phone || ''}
                     </Text>
                     <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
                         <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
                         <Text style={[styles.statusText, { color: getStatusColor() }]}>
-                            {driver?.status === 'available' ? 'Available' :
-                                driver?.status === 'busy' ? 'On Delivery' : 'Offline'}
+                            {driver.status === 'available' ? 'Available' :
+                                driver.status === 'busy' ? 'On Delivery' : 'Offline'}
                         </Text>
                     </View>
                 </View>
@@ -190,14 +201,14 @@ export default function ProfileScreen() {
                     <View style={[styles.statItem, { backgroundColor: colors.surface }]}>
                         <Text style={styles.statIcon}>📦</Text>
                         <Text style={[styles.statValue, { color: colors.text }]}>
-                            {driver?.total_deliveries || 0}
+                            {String(driver.total_deliveries || 0)}
                         </Text>
                         <Text style={[styles.statLabel, { color: colors.textMuted }]}>Deliveries</Text>
                     </View>
                     <View style={[styles.statItem, { backgroundColor: colors.surface }]}>
                         <Text style={styles.statIcon}>⭐</Text>
                         <Text style={[styles.statValue, { color: colors.text }]}>
-                            {formatRating(driver?.rating_average)}
+                            {formatRating(driver.rating_average)}
                         </Text>
                         <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rating</Text>
                     </View>

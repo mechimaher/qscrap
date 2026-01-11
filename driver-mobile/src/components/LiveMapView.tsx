@@ -132,6 +132,15 @@ export default function LiveMapView({
         );
     }
 
+    // Safety check for invalid coordinates
+    if (isNaN(driverLocation.latitude) || isNaN(driverLocation.longitude)) {
+        return (
+            <View style={[styles.container, { height, backgroundColor: colors.surface }]}>
+                <Text style={{ color: colors.textMuted }}>Invalid GPS Signal</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={[styles.container, { height }]}>
             <MapLibreGL.MapView

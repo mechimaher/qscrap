@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict cwQSragatKM8lQl9esMX1re8nVYU939xnnWsUwyDraImM31YYe2WPXZ21gVgPJA
+\restrict rbSSGe7uh0bOHkaDnJibHndZWsH1j22kGJ2j20aE2S03wZJCUSR3cOBh549X7uw
 
 -- Dumped from database version 14.20
 -- Dumped by pg_dump version 17.7 (Ubuntu 17.7-0ubuntu0.25.10.1)
@@ -260,6 +260,20 @@ CREATE FUNCTION public.update_document_timestamp() RETURNS trigger
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: update_driver_locations_timestamp(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_driver_locations_timestamp() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+   NEW.updated_at = NOW();
+   RETURN NEW;
 END;
 $$;
 
@@ -713,6 +727,20 @@ COMMENT ON TABLE public.documents IS 'Qatar MOCI Compliant Document Storage - 10
 
 
 --
+-- Name: driver_locations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.driver_locations (
+    driver_id uuid NOT NULL,
+    latitude numeric(10,8) NOT NULL,
+    longitude numeric(11,8) NOT NULL,
+    heading numeric(5,2),
+    speed numeric(5,2),
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
 -- Name: driver_payouts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -754,6 +782,9 @@ CREATE TABLE public.drivers (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     total_earnings numeric(10,2) DEFAULT 0,
+    bank_name character varying(100),
+    bank_account_iban character varying(50),
+    bank_account_name character varying(100),
     CONSTRAINT drivers_status_check CHECK (((status)::text = ANY ((ARRAY['available'::character varying, 'busy'::character varying, 'offline'::character varying, 'suspended'::character varying])::text[])))
 );
 
@@ -1656,6 +1687,14 @@ ALTER TABLE ONLY public.documents
 
 ALTER TABLE ONLY public.documents
     ADD CONSTRAINT documents_verification_code_key UNIQUE (verification_code);
+
+
+--
+-- Name: driver_locations driver_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.driver_locations
+    ADD CONSTRAINT driver_locations_pkey PRIMARY KEY (driver_id);
 
 
 --
@@ -2799,6 +2838,13 @@ CREATE TRIGGER trigger_update_garage_rating AFTER INSERT OR UPDATE ON public.ord
 
 
 --
+-- Name: driver_locations update_driver_locations_timestamp; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_driver_locations_timestamp BEFORE UPDATE ON public.driver_locations FOR EACH ROW EXECUTE FUNCTION public.update_driver_locations_timestamp();
+
+
+--
 -- Name: orders update_orders_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -3025,6 +3071,14 @@ ALTER TABLE ONLY public.documents
 
 ALTER TABLE ONLY public.documents
     ADD CONSTRAINT documents_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE SET NULL;
+
+
+--
+-- Name: driver_locations driver_locations_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.driver_locations
+    ADD CONSTRAINT driver_locations_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.drivers(driver_id) ON DELETE CASCADE;
 
 
 --
@@ -3375,5 +3429,5 @@ ALTER TABLE ONLY public.user_addresses
 -- PostgreSQL database dump complete
 --
 
-\unrestrict cwQSragatKM8lQl9esMX1re8nVYU939xnnWsUwyDraImM31YYe2WPXZ21gVgPJA
+\unrestrict rbSSGe7uh0bOHkaDnJibHndZWsH1j22kGJ2j20aE2S03wZJCUSR3cOBh549X7uw
 
