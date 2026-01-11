@@ -129,14 +129,17 @@ export default function PartInspectionScreen() {
             // Upload photos and inspection data
             // Upload photos and inspection data
             // VVIP: Use Offline Queue for guaranteed sync
+            // 1. Optimistic Update
+            const { useJobStore } = require('../stores/useJobStore');
+            useJobStore.getState().updateAssignmentStatus(assignmentId, 'picked_up');
+
+            // 2. Queue for Sync
             await offlineQueue.enqueue(
                 API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
                 'PATCH',
                 {
                     status: 'picked_up',
                     notes: `Inspection complete. ${photos.length} photo(s) taken. All checks passed.`,
-                    // We might want to upload actual photos later or base64 in a separate call
-                    // For now, this mimics the ProofOfDelivery logic
                 }
             );
 

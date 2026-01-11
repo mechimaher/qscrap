@@ -23,6 +23,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
+import { useToast } from '../../components/Toast';
 
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -371,6 +372,7 @@ const ActiveRequestCard = ({
 export default function RequestsScreen() {
     const navigation = useNavigation<RequestsScreenNavigationProp>();
     const { colors } = useTheme();
+    const toast = useToast();
     const [requests, setRequests] = useState<Request[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -381,6 +383,7 @@ export default function RequestsScreen() {
             setRequests(data.requests || []);
         } catch (error) {
             console.log('Failed to load requests:', error);
+            toast.error('Error', 'Failed to load requests');
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -420,8 +423,9 @@ export default function RequestsScreen() {
                             await api.deleteRequest(request.request_id);
                             setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            toast.success('Deleted', 'Request deleted successfully');
                         } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to delete request');
+                            toast.error('Error', error.message || 'Failed to delete request');
                         }
                     },
                 },

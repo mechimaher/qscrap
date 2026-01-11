@@ -9,7 +9,6 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,14 +29,28 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleRegister = async () => {
+        setError('');
+
         if (!fullName || !phone || !password) {
-            Alert.alert('Error', 'Please fill all fields');
+            setError('Please fill all fields');
             return;
         }
+
+        // Phone validation (Qatar numbers start with 3, 5, 6, 7 and are 8 digits)
+        const phoneRegex = /^[3567]\d{7}$/;
+        // Allow +974 prefix or just 8 digits
+        const cleanPhone = phone.replace('+974', '').replace(/\s/g, '');
+
+        if (!phoneRegex.test(cleanPhone)) {
+            setError('Please enter a valid Qatar phone number (8 digits starting with 3, 5, 6, or 7)');
+            return;
+        }
+
         if (password.length < 6) {
-            Alert.alert('Error', 'Password must be at least 6 characters');
+            setError('Password must be at least 6 characters');
             return;
         }
 
@@ -45,7 +58,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         try {
             await register(fullName, phone, password);
         } catch (error: any) {
-            Alert.alert('Registration Failed', error.message);
+            setError(error.message || 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -74,6 +87,15 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
 
                     {/* Form */}
                     <View style={[styles.form, { backgroundColor: colors.surface }, Shadows.lg]}>
+
+                        {/* Error Message */}
+                        {error ? (
+                            <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+                                <Ionicons name="alert-circle" size={20} color={colors.error} />
+                                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+                            </View>
+                        ) : null}
+
                         {/* Full Name */}
                         <View style={styles.inputGroup}>
                             <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
@@ -171,6 +193,11 @@ const styles = StyleSheet.create({
     appName: { fontSize: 28, fontWeight: '700' },
     tagline: { fontSize: FontSize.md, marginTop: Spacing.xs },
     form: { borderRadius: BorderRadius.xl, padding: Spacing.xxl },
+    errorContainer: {
+        flexDirection: 'row', alignItems: 'center', padding: Spacing.md,
+        borderRadius: BorderRadius.md, marginBottom: Spacing.lg, borderWidth: 1, gap: Spacing.sm
+    },
+    errorText: { fontSize: FontSize.sm, flex: 1 },
     inputGroup: { marginBottom: Spacing.lg },
     label: { fontSize: FontSize.sm, fontWeight: '600', marginBottom: Spacing.sm },
     inputContainer: {

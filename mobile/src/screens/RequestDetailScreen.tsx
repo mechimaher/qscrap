@@ -25,6 +25,7 @@ import { API_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
 import { useSocketContext } from '../hooks/useSocket';
+import { useToast } from '../components/Toast';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -617,6 +618,7 @@ export default function RequestDetailScreen() {
     const { requestId } = route.params as { requestId: string };
     const { socket, newBids } = useSocketContext();
     const { colors } = useTheme();
+    const toast = useToast();
 
     const [request, setRequest] = useState<Request | null>(null);
     const [bids, setBids] = useState<Bid[]>([]);
@@ -662,7 +664,7 @@ export default function RequestDetailScreen() {
             const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => a.bid_amount - b.bid_amount);
             setBids(sortedBids);
         } catch (error) {
-            Alert.alert('Error', 'Failed to load request details');
+            toast.error('Error', 'Failed to load request details');
         } finally {
             setIsLoading(false);
         }
@@ -682,13 +684,17 @@ export default function RequestDetailScreen() {
                         try {
                             await api.acceptBid(bid.bid_id);
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert(
-                                '🎉 Order Created!',
-                                'Your order has been created. The garage will prepare your part.',
-                                [{ text: 'View Orders', onPress: () => navigation.goBack() }]
-                            );
+                            toast.show({
+                                type: 'success',
+                                title: '🎉 Order Created!',
+                                message: 'Your order has been created.',
+                                action: {
+                                    label: 'View Orders',
+                                    onPress: () => navigation.goBack()
+                                }
+                            });
                         } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to accept bid');
+                            toast.error('Error', error.message || 'Failed to accept bid');
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                         } finally {
                             setAcceptingBid(null);
@@ -715,7 +721,7 @@ export default function RequestDetailScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             setBids(prev => prev.filter(b => b.bid_id !== bid.bid_id));
                         } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to reject bid');
+                            toast.error('Error', error.message || 'Failed to reject bid');
                         }
                     },
                 },

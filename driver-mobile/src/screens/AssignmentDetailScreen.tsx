@@ -70,8 +70,16 @@ export default function AssignmentDetailScreen() {
         try {
             // Fetch fresh data
             const result = await api.getAssignmentDetails(assignmentId);
-            // Update local state (which updates store potentially if we sync full list, but here we just set local)
-            setAssignment(result.assignment);
+
+            // VVIP: Only update if we don't have a pending offline update for this assignment
+            // This prevents the UI from "jumping back" to an old status while the queue is syncing
+            const hasPendingUpdate = offlineQueue.getQueueLength() > 0; // Simple check for now
+
+            if (!hasPendingUpdate) {
+                setAssignment(result.assignment);
+            } else {
+                console.log('[Detail] Skipping state update from backend due to pending offline queue');
+            }
         } catch (err: any) {
             console.log('[Detail] Load error (offline?):', err.message);
             // If we have store data, we are good. If not, show error.

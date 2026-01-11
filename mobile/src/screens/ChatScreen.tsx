@@ -21,6 +21,8 @@ import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../components/Toast';
 import QuickReplies from '../components/QuickReplies';
 
 interface Message {
@@ -45,6 +47,8 @@ export default function ChatScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const { orderId, orderNumber, recipientName, recipientType } = route.params as ChatParams;
+    const { colors } = useTheme();
+    const toast = useToast();
 
     const flatListRef = useRef<FlatList>(null);
     const socket = useRef<Socket | null>(null);
@@ -96,6 +100,7 @@ export default function ChatScreen() {
             }
         } catch (error) {
             console.log('Failed to load messages:', error);
+            toast.error('Error', 'Failed to load messages');
         } finally {
             setIsLoading(false);
         }
@@ -180,6 +185,7 @@ export default function ChatScreen() {
             }
         } catch (error) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            toast.error('Error', 'Failed to send message');
         } finally {
             setIsSending(false);
         }
@@ -230,15 +236,15 @@ export default function ChatScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Text style={styles.backText}>←</Text>
                 </TouchableOpacity>
                 <View style={styles.headerInfo}>
-                    <Text style={styles.headerTitle}>{recipientName}</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{recipientName}</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
                         Order #{orderNumber} • {isConnected ? '🟢 Online' : '⚪ Connecting...'}
                     </Text>
                 </View>

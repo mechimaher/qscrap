@@ -21,6 +21,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
+import { useToast } from '../../components/Toast';
 
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -341,6 +342,7 @@ export default function OrdersScreen() {
     const navigation = useNavigation<OrdersScreenNavigationProp>();
     const { colors } = useTheme();
     const { orderUpdates } = useSocketContext();
+    const toast = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -351,6 +353,7 @@ export default function OrdersScreen() {
             setOrders(data.orders || []);
         } catch (error) {
             console.log('Failed to load orders:', error);
+            toast.error('Error', 'Failed to load orders');
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);

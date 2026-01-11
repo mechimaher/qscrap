@@ -18,8 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { useAuth, useTheme } from '../../contexts';
+import { Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -28,6 +28,7 @@ const { width } = Dimensions.get('window');
 export default function LoginScreen() {
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const { login } = useAuth();
+    const { colors } = useTheme();
 
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -79,7 +80,7 @@ export default function LoginScreen() {
 
     return (
         <LinearGradient
-            colors={['#0f0c29', '#302b63', '#24243e']}
+            colors={ThemeColors.gradients.primaryDark}
             style={styles.container}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -100,6 +101,7 @@ export default function LoginScreen() {
                                 styles.logoContainer,
                                 {
                                     transform: [{ translateY: floatAnim }],
+                                    shadowColor: colors.primary,
                                 }
                             ]}
                         >
@@ -114,23 +116,27 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Form Card */}
-                    <View style={styles.formCard}>
-                        <Text style={styles.welcomeText}>Welcome Back</Text>
-                        <Text style={styles.subtitleText}>Sign in to your account</Text>
+                    <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.welcomeText, { color: colors.text }]}>Welcome Back</Text>
+                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>Sign in to your account</Text>
 
                         {error ? (
-                            <View style={styles.errorContainer}>
+                            <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
                                 <Text style={styles.errorIcon}>⚠️</Text>
-                                <Text style={styles.errorText}>{error}</Text>
+                                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>📱 Phone Number</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📱 Phone Number</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, {
+                                    backgroundColor: colors.surfaceSecondary,
+                                    color: colors.text,
+                                    borderColor: colors.border
+                                }]}
                                 placeholder="+974 XXXX XXXX"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={colors.textMuted}
                                 value={phone}
                                 onChangeText={setPhone}
                                 keyboardType="phone-pad"
@@ -139,11 +145,15 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>🔒 Password</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🔒 Password</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, {
+                                    backgroundColor: colors.surfaceSecondary,
+                                    color: colors.text,
+                                    borderColor: colors.border
+                                }]}
                                 placeholder="Enter your password"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={colors.textMuted}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -151,7 +161,7 @@ export default function LoginScreen() {
                         </View>
 
                         <TouchableOpacity style={styles.forgotPassword}>
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -161,7 +171,7 @@ export default function LoginScreen() {
                             activeOpacity={0.9}
                         >
                             <LinearGradient
-                                colors={[Colors.primary, '#B31D4A']}
+                                colors={ThemeColors.gradients.primary}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.loginButtonGradient}
@@ -219,7 +229,6 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         overflow: 'hidden',
         marginBottom: Spacing.md,
-        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.4,
         shadowRadius: 20,
@@ -245,7 +254,6 @@ const styles = StyleSheet.create({
         marginTop: Spacing.xs,
     },
     formCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
         ...Shadows.lg,
@@ -253,32 +261,27 @@ const styles = StyleSheet.create({
     welcomeText: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        color: '#1a1a1a', // Always dark on white card
         textAlign: 'center',
         letterSpacing: -0.5,
     },
     subtitleText: {
         fontSize: FontSizes.md,
-        color: '#525252', // Always dark secondary on white card
         textAlign: 'center',
         marginBottom: Spacing.lg,
     },
     errorContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FEE2E2',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#EF4444',
     },
     errorIcon: {
         fontSize: 16,
         marginRight: Spacing.sm,
     },
     errorText: {
-        color: '#EF4444',
         fontSize: FontSizes.sm,
         flex: 1,
     },
@@ -288,24 +291,19 @@ const styles = StyleSheet.create({
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#525252', // Always dark on white card
         marginBottom: Spacing.xs,
     },
     input: {
-        backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.lg,
-        color: '#1a1a1a', // Always dark input text on light background
         borderWidth: 1.5,
-        borderColor: '#E8E8E8',
     },
     forgotPassword: {
         alignSelf: 'flex-end',
         marginBottom: Spacing.md,
     },
     forgotPasswordText: {
-        color: Colors.primary,
         fontSize: FontSizes.sm,
         fontWeight: '600',
     },

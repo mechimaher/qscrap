@@ -13,6 +13,7 @@ import { LanguageProvider, useLanguage } from './src/contexts/LanguageContext';
 import { SocketProvider, useSocketContext } from './src/hooks/useSocket';
 import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
+import { ToastProvider } from './src/components/Toast';
 import { Address } from './src/services/api';
 
 // Import Auth screens
@@ -242,9 +243,11 @@ export default function App() {
           <ThemeProvider>
             <AuthProvider>
               <SocketProvider>
-                <NavigationContainer>
-                  <ThemedApp />
-                </NavigationContainer>
+                <ToastProvider>
+                  <NavigationContainer>
+                    <ThemedApp />
+                  </NavigationContainer>
+                </ToastProvider>
               </SocketProvider>
             </AuthProvider>
           </ThemeProvider>

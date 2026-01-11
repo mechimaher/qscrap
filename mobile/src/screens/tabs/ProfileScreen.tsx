@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../components/Toast';
 import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { user, logout, refreshUser } = useAuth();
     const { colors } = useTheme();
+    const toast = useToast();
     const [profile, setProfile] = useState<any>(null);
     const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
 
@@ -44,6 +46,7 @@ export default function ProfileScreen() {
             setProfile(data);
         } catch (error) {
             console.log('Failed to load profile:', error);
+            toast.error('Error', 'Failed to load profile');
         }
     };
 
@@ -89,9 +92,9 @@ export default function ProfileScreen() {
                             await api.deleteAccount();
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             await logout();
-                            Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
+                            toast.success('Account Deleted', 'Your account has been successfully deleted.');
                         } catch (error: any) {
-                            Alert.alert('Error', error.message || 'Failed to delete account');
+                            toast.error('Error', error.message || 'Failed to delete account');
                         }
                     },
                 },

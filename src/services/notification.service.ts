@@ -44,7 +44,7 @@ export const createNotification = async (payload: NotificationPayload) => {
         // 1. Persist to DB (skip operations - they don't have user-specific storage)
         if (target_role !== 'operations') {
             await pool.query(
-                `INSERT INTO notifications (user_id, type, title, message, data, is_read)
+                `INSERT INTO notifications (user_id, notification_type, title, body, data, is_read)
                  VALUES ($1, $2, $3, $4, $5, false)`,
                 [userId, type, title, message, JSON.stringify(data)]
             );
@@ -162,7 +162,7 @@ export const createBatchNotifications = async (payloads: NotificationPayload[]) 
 
         if (placeholders.length > 0) {
             const query = `
-                INSERT INTO notifications (user_id, type, title, message, data, is_read)
+                INSERT INTO notifications (user_id, notification_type, title, body, data, is_read)
                 VALUES ${placeholders.join(', ')}
             `;
             await client.query(query, values);

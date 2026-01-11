@@ -11,6 +11,8 @@ export const API_CONFIG = {
     TIMEOUT: 15000,
 };
 
+export const DEFAULT_DELIVERY_FEE = 25;
+
 // Part Categories
 export const PART_CATEGORIES = [
     { id: 'engine', name: 'Engine', nameAr: 'محرك', icon: 'cog' },

@@ -114,7 +114,7 @@ export default function ProofOfDeliveryScreen() {
                 'POST',
                 {
                     photoPath: permanentUri,
-                    signature: signatureData.replace('data:image/png;base64,', ''),
+                    signature_base64: signatureData.replace('data:image/png;base64,', ''),
                     notes: `Payment: ${paymentMethod}`
                 }
             );

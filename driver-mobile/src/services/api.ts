@@ -227,8 +227,8 @@ class DriverApiService {
         return this.request(API_ENDPOINTS.UPLOAD_PROOF(assignmentId), {
             method: 'POST',
             body: JSON.stringify({
-                photo: photoBase64,
-                signature: signatureBase64,
+                photo_base64: photoBase64,
+                signature_base64: signatureBase64,
                 notes,
             }),
         });

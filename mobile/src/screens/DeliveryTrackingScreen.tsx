@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../contexts';
+import { useToast } from '../components/Toast';
 import { api, getSocket } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
 
@@ -21,6 +22,7 @@ const { width, height } = Dimensions.get('window');
 
 const DeliveryTrackingScreen: React.FC = () => {
     const { colors, isDark } = useTheme();
+    const toast = useToast();
     const navigation = useNavigation();
     const route = useRoute();
     const { orderId } = route.params as { orderId: string };
@@ -75,7 +77,7 @@ const DeliveryTrackingScreen: React.FC = () => {
             }
         } catch (error) {
             console.error('Failed to load order:', error);
-            Alert.alert('Error', 'Failed to load tracking data');
+            toast.error('Error', 'Failed to load tracking data');
         } finally {
             setLoading(false);
         }

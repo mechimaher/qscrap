@@ -22,7 +22,10 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../components/Toast';
+import { DEFAULT_DELIVERY_FEE } from '../constants/config';
 import SearchableDropdown from '../components/SearchableDropdown';
 
 import ImageViewerModal from '../components/ImageViewerModal';
@@ -35,6 +38,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function NewRequestScreen() {
     const navigation = useNavigation<NavigationProp>();
+    const { colors } = useTheme();
+    const toast = useToast();
 
     // Vehicle State
     const [carMake, setCarMake] = useState('');
@@ -89,7 +94,7 @@ export default function NewRequestScreen() {
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'Location permission is required for delivery');
+                toast.error('Permission Denied', 'Location permission is required for delivery');
                 return;
             }
 
@@ -101,6 +106,8 @@ export default function NewRequestScreen() {
             if (feeData.success) {
                 setDeliveryFee(feeData.delivery_fee);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } else {
+                setDeliveryFee(DEFAULT_DELIVERY_FEE);
             }
 
             // Reverse geocode (simplified)
@@ -111,7 +118,7 @@ export default function NewRequestScreen() {
             }
         } catch (error) {
             console.log('Location error:', error);
-            Alert.alert('Error', 'Failed to get location');
+            toast.error('Error', 'Failed to get location');
         }
     };
 
@@ -132,18 +139,18 @@ export default function NewRequestScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         } else {
                             // If calculation fails, set default fee
-                            setDeliveryFee(25);
-                            Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
+                            setDeliveryFee(DEFAULT_DELIVERY_FEE);
+                            toast.info('Note', `Using standard delivery fee (${DEFAULT_DELIVERY_FEE} QAR)`);
                         }
                     } catch (error) {
                         console.log('[NewRequest] Fee calculation error:', error);
-                        setDeliveryFee(25);
-                        Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
+                        setDeliveryFee(DEFAULT_DELIVERY_FEE);
+                        toast.info('Note', `Using standard delivery fee (${DEFAULT_DELIVERY_FEE} QAR)`);
                     }
                 } else {
                     // No coordinates - use default fee
-                    setDeliveryFee(25);
-                    Alert.alert('Note', 'Address has no coordinates. Using standard delivery fee (25 QAR)');
+                    setDeliveryFee(DEFAULT_DELIVERY_FEE);
+                    toast.info('Note', `Address has no coordinates. Using standard delivery fee (${DEFAULT_DELIVERY_FEE} QAR)`);
                 }
             }
         } as any);
@@ -166,7 +173,7 @@ export default function NewRequestScreen() {
     const handleTakePhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Permission Denied', 'Camera permission is required');
+            toast.error('Permission Denied', 'Camera permission is required');
             return;
         }
 
@@ -184,12 +191,12 @@ export default function NewRequestScreen() {
 
     const handleSubmit = async () => {
         if (!carMake || !carModel || !carYear) {
-            Alert.alert('Vehicle Info Missing', 'Please specify the vehicle details.');
+            toast.error('Vehicle Info Missing', 'Please specify the vehicle details.');
             return;
         }
 
         if (!partCategory && !partDescription) {
-            Alert.alert('Missing Fields', 'Please select a part category or describe the part.');
+            toast.error('Missing Fields', 'Please select a part category or describe the part.');
             return;
         }
 
@@ -204,7 +211,7 @@ export default function NewRequestScreen() {
         }
 
         if (!finalDescription) {
-            Alert.alert('Missing Description', 'Please describe the part you need.');
+            toast.error('Missing Description', 'Please describe the part you need.');
             return;
         }
 
@@ -239,14 +246,15 @@ export default function NewRequestScreen() {
 
             if (result.request_id) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert('Success!', 'Your request has been submitted. Garages will send bids soon!', [
-                    { text: 'OK', onPress: () => navigation.goBack() }
-                ]);
+                toast.success('Success!', 'Your request has been submitted. Garages will send bids soon!');
+                setTimeout(() => {
+                    navigation.goBack();
+                }, 1500);
             } else {
                 throw new Error(result.error || 'Failed to submit');
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to submit request');
+            toast.error('Error', error.message || 'Failed to submit request');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsLoading(false);
@@ -260,29 +268,29 @@ export default function NewRequestScreen() {
     ];
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
                 {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
-                        <Text style={styles.closeText}>✕</Text>
+                <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.closeButton, { backgroundColor: colors.background }]}>
+                        <Text style={[styles.closeText, { color: colors.text }]}>✕</Text>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>New Part Request</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>New Part Request</Text>
                     <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
 
                     {/* Vehicle Metadata */}
-                    <View style={styles.section}>
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionIcon}>🚗</Text>
-                            <Text style={styles.sectionTitle}>Vehicle Information</Text>
-                            <View style={styles.requiredBadge}>
-                                <Text style={styles.requiredText}>REQUIRED</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Vehicle Information</Text>
+                            <View style={[styles.requiredBadge, { backgroundColor: colors.primary + '15' }]}>
+                                <Text style={[styles.requiredText, { color: colors.primary }]}>REQUIRED</Text>
                             </View>
                         </View>
 
@@ -300,9 +308,9 @@ export default function NewRequestScreen() {
 
                         {/* Divider with OR */}
                         <View style={styles.orDivider}>
-                            <View style={styles.orLine} />
-                            <Text style={styles.orText}>OR ENTER MANUALLY</Text>
-                            <View style={styles.orLine} />
+                            <View style={[styles.orLine, { backgroundColor: colors.border }]} />
+                            <Text style={[styles.orText, { color: colors.textMuted }]}>OR ENTER MANUALLY</Text>
+                            <View style={[styles.orLine, { backgroundColor: colors.border }]} />
                         </View>
 
                         {/* Make & Year Row */}
@@ -336,14 +344,14 @@ export default function NewRequestScreen() {
                             onSelect={setCarModel}
                             disabled={!carMake}
                         />
-                        <Text style={styles.modelHint}>💡 Can't find your model? Just type it above</Text>
+                        <Text style={[styles.modelHint, { color: colors.textSecondary }]}>💡 Can't find your model? Just type it above</Text>
                     </View>
 
                     {/* Part Details - Enhanced with Categories */}
-                    <View style={styles.section}>
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionIcon}>🔧</Text>
-                            <Text style={styles.sectionTitle}>Part Details</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Part Details</Text>
                         </View>
 
                         {/* Category */}
@@ -366,34 +374,35 @@ export default function NewRequestScreen() {
                             />
                         )}
 
-                        <Text style={styles.inputLabel}>Descriptions *</Text>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Descriptions *</Text>
                         <TextInput
-                            style={[styles.input, styles.textArea]}
+                            style={[styles.input, styles.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                             placeholder="Additional details (e.g. left side, color...)"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textMuted}
                             value={partDescription}
                             onChangeText={setPartDescription}
                             multiline
                             numberOfLines={3}
                         />
 
-                        <Text style={styles.inputLabel}>Part Number (Optional)</Text>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Part Number (Optional)</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                             placeholder="OEM part number"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textMuted}
                             value={partNumber}
                             onChangeText={setPartNumber}
                         />
 
-                        <Text style={styles.inputLabel}>Condition Required</Text>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Condition Required</Text>
                         <View style={styles.conditionRow}>
                             {conditions.map(c => (
                                 <TouchableOpacity
                                     key={c.value}
                                     style={[
                                         styles.conditionButton,
-                                        condition === c.value && styles.conditionButtonActive
+                                        { backgroundColor: colors.background, borderColor: colors.border },
+                                        condition === c.value && { backgroundColor: colors.primary + '15', borderColor: colors.primary }
                                     ]}
                                     onPress={() => {
                                         setCondition(c.value);
@@ -402,7 +411,8 @@ export default function NewRequestScreen() {
                                 >
                                     <Text style={[
                                         styles.conditionText,
-                                        condition === c.value && styles.conditionTextActive
+                                        { color: colors.textSecondary },
+                                        condition === c.value && { color: colors.primary, fontWeight: '700' }
                                     ]}>{c.label}</Text>
                                 </TouchableOpacity>
                             ))}
@@ -410,23 +420,23 @@ export default function NewRequestScreen() {
                     </View>
 
                     {/* Images Section */}
-                    <View style={styles.section}>
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionIcon}>📷</Text>
-                            <Text style={styles.sectionTitle}>Photos</Text>
-                            <View style={styles.optionalTag}>
-                                <Text style={styles.optionalTagText}>Optional</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Photos</Text>
+                            <View style={[styles.optionalTag, { backgroundColor: colors.background }]}>
+                                <Text style={[styles.optionalTagText, { color: colors.textSecondary }]}>Optional</Text>
                             </View>
                         </View>
 
                         <View style={styles.imageActions}>
-                            <TouchableOpacity style={styles.imageButton} onPress={handleTakePhoto}>
+                            <TouchableOpacity style={[styles.imageButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={handleTakePhoto}>
                                 <Text style={styles.imageButtonIcon}>📷</Text>
-                                <Text style={styles.imageButtonText}>Camera</Text>
+                                <Text style={[styles.imageButtonText, { color: colors.text }]}>Camera</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.imageButton} onPress={handlePickImage}>
+                            <TouchableOpacity style={[styles.imageButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={handlePickImage}>
                                 <Text style={styles.imageButtonIcon}>🖼️</Text>
-                                <Text style={styles.imageButtonText}>Gallery</Text>
+                                <Text style={[styles.imageButtonText, { color: colors.text }]}>Gallery</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -441,7 +451,7 @@ export default function NewRequestScreen() {
                                             <Image source={{ uri }} style={styles.image} />
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                            style={styles.removeImage}
+                                            style={[styles.removeImage, { backgroundColor: colors.error }]}
                                             onPress={() => setImages(images.filter((_, i) => i !== index))}
                                         >
                                             <Text style={styles.removeImageText}>✕</Text>
@@ -453,38 +463,38 @@ export default function NewRequestScreen() {
                     </View>
 
                     {/* Delivery Section */}
-                    <View style={styles.section}>
+                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionIcon}>📦</Text>
-                            <Text style={styles.sectionTitle}>Delivery Location</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Location</Text>
                         </View>
 
                         <View style={styles.locationActions}>
-                            <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
+                            <TouchableOpacity style={[styles.locationButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]} onPress={handleGetLocation}>
                                 <Text style={styles.locationIcon}>📍</Text>
-                                <Text style={styles.locationText}>
+                                <Text style={[styles.locationText, { color: colors.primary }]}>
                                     {location ? 'Current Location Set' : 'Use Current Location'}
                                 </Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.addressBookButton} onPress={handleSelectAddress}>
+                            <TouchableOpacity style={[styles.addressBookButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={handleSelectAddress}>
                                 <Text style={styles.locationIcon}>📖</Text>
-                                <Text style={styles.addressBookText}>Address Book</Text>
+                                <Text style={[styles.addressBookText, { color: colors.text }]}>Address Book</Text>
                             </TouchableOpacity>
                         </View>
 
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                             placeholder="Or enter address manually"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textMuted}
                             value={deliveryAddress}
                             onChangeText={setDeliveryAddress}
                         />
 
                         {deliveryFee !== null && (
-                            <View style={styles.feePreview}>
-                                <Text style={styles.feeLabel}>Estimated Delivery Fee</Text>
-                                <Text style={styles.feeAmount}>{deliveryFee} QAR</Text>
+                            <View style={[styles.feePreview, { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' }]}>
+                                <Text style={[styles.feeLabel, { color: '#1a1a1a' }]}>Estimated Delivery Fee</Text>
+                                <Text style={[styles.feeAmount, { color: '#4CAF50' }]}>{deliveryFee} QAR</Text>
                             </View>
                         )}
                     </View>
@@ -496,7 +506,7 @@ export default function NewRequestScreen() {
                         disabled={isLoading}
                     >
                         <LinearGradient
-                            colors={Colors.gradients.primary}
+                            colors={ThemeColors.gradients.primary}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={styles.submitGradient}
@@ -527,30 +537,26 @@ export default function NewRequestScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
+    container: { flex: 1 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
     },
     closeButton: {
         width: 40,
         height: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F5F5F5',
         borderRadius: 20,
     },
-    closeText: { fontSize: 18, color: '#1a1a1a' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
+    closeText: { fontSize: 18 },
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 },
     scrollView: { flex: 1, padding: Spacing.lg },
     section: {
         marginBottom: Spacing.lg,
-        backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         ...Shadows.sm,
@@ -558,7 +564,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a',
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -571,7 +576,6 @@ const styles = StyleSheet.create({
     },
     requiredBadge: {
         marginLeft: 'auto',
-        backgroundColor: Colors.primary + '15',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 2,
         borderRadius: BorderRadius.full,
@@ -579,12 +583,10 @@ const styles = StyleSheet.create({
     requiredText: {
         fontSize: 9,
         fontWeight: '700',
-        color: Colors.primary,
         letterSpacing: 0.5,
     },
     optionalTag: {
         marginLeft: 'auto',
-        backgroundColor: '#F0F0F0',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 2,
         borderRadius: BorderRadius.full,
@@ -592,30 +594,24 @@ const styles = StyleSheet.create({
     optionalTagText: {
         fontSize: 9,
         fontWeight: '600',
-        color: '#525252',
     },
     row: { flexDirection: 'row', gap: Spacing.md },
     halfInput: { flex: 1 },
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#525252',
         marginBottom: Spacing.xs,
     },
     inputHint: {
         fontSize: FontSizes.xs,
-        color: '#737373',
         marginBottom: Spacing.sm,
         fontStyle: 'italic',
     },
     input: {
-        backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#E8E8E8',
         marginBottom: Spacing.md,
     },
     textArea: { minHeight: 80, textAlignVertical: 'top' },
@@ -624,14 +620,11 @@ const styles = StyleSheet.create({
     vinContainer: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
     vinInput: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         fontSize: FontSizes.md,
-        color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#E8E8E8',
         minHeight: 52,
         textAlignVertical: 'center',
     },
@@ -645,31 +638,22 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.lg,
-        backgroundColor: '#F8F9FA',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#E8E8E8',
     },
-    conditionButtonActive: {
-        backgroundColor: Colors.primary + '15',
-        borderColor: Colors.primary,
-    },
-    conditionText: { fontSize: FontSizes.md, color: '#525252', fontWeight: '500' },
-    conditionTextActive: { color: Colors.primary, fontWeight: '700' },
+    conditionText: { fontSize: FontSizes.md, fontWeight: '500' },
     imageActions: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
     imageButton: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F8F9FA',
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
     },
     imageButtonIcon: { fontSize: 20, marginRight: Spacing.sm },
-    imageButtonText: { fontSize: FontSizes.md, color: '#1a1a1a', fontWeight: '500' },
+    imageButtonText: { fontSize: FontSizes.md, fontWeight: '500' },
     imagePreview: { flexDirection: 'row' },
     imageContainer: { marginRight: Spacing.sm, position: 'relative' },
     image: { width: 80, height: 80, borderRadius: BorderRadius.md },
@@ -680,7 +664,6 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: Colors.error,
         justifyContent: 'center',
         alignItems: 'center',
         ...Shadows.sm,
@@ -692,38 +675,32 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: Colors.primary + '15',
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        borderColor: Colors.primary,
     },
     addressBookButton: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F8F9FA',
         borderWidth: 1,
-        borderColor: '#E8E8E8',
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
     },
-    addressBookText: { fontSize: FontSizes.md, color: '#1a1a1a', fontWeight: '600' },
+    addressBookText: { fontSize: FontSizes.md, fontWeight: '600' },
     locationIcon: { fontSize: 20, marginRight: Spacing.sm },
-    locationText: { fontSize: FontSizes.md, color: Colors.primary, fontWeight: '600' },
+    locationText: { fontSize: FontSizes.md, fontWeight: '600' },
     feePreview: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#E8F5E9',
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        borderColor: '#4CAF50',
     },
-    feeLabel: { fontSize: FontSizes.md, color: '#1a1a1a' },
-    feeAmount: { fontSize: FontSizes.xl, fontWeight: '800', color: '#4CAF50' },
+    feeLabel: { fontSize: FontSizes.md },
+    feeAmount: { fontSize: FontSizes.xl, fontWeight: '800' },
     submitButton: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginTop: Spacing.md, ...Shadows.md },
     submitButtonDisabled: { opacity: 0.7 },
     submitGradient: { paddingVertical: Spacing.lg, alignItems: 'center' },
@@ -738,18 +715,15 @@ const styles = StyleSheet.create({
     orLine: {
         flex: 1,
         height: 1,
-        backgroundColor: '#E8E8E8',
     },
     orText: {
         paddingHorizontal: Spacing.md,
         fontSize: FontSizes.xs,
-        color: '#9ca3af',
         fontWeight: '600',
         letterSpacing: 0.5,
     },
     modelHint: {
         fontSize: FontSizes.xs,
-        color: '#737373',
         marginTop: Spacing.xs,
         fontStyle: 'italic',
     },
