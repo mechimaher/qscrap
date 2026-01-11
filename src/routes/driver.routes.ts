@@ -14,7 +14,12 @@ import {
     getEarningsTrend,
     getPayoutHistory,
     updateProfile,
-    toggleAvailability
+    toggleAvailability,
+    getMyProfile,
+    getMyAssignments,
+    getAssignmentDetails,
+    updateAssignmentStatus,
+    updateMyLocation
 } from '../controllers/driver.controller';
 
 const router = Router();
