@@ -17,6 +17,7 @@ import { useTheme } from '../contexts';
 import { useToast } from '../components/Toast';
 import { api, getSocket } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
+import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 
 const { width, height } = Dimensions.get('window');
 
@@ -228,15 +229,8 @@ const DeliveryTrackingScreen: React.FC = () => {
 };
 
 // Dark map style for better night mode experience
-const darkMapStyle = [
-    { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#38414e' }] },
-    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#212a37' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#746855' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
-];
+// Dark map style for better night mode experience
+const darkMapStyle = VVIP_MIDNIGHT_STYLE;
 
 const styles = StyleSheet.create({
     container: { flex: 1 },

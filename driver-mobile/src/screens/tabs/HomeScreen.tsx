@@ -25,6 +25,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLocation } from '../../hooks/useLocation';
 import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
+import { useJobStore } from '../../stores/useJobStore';
 import { getSocket } from '../../services/socket';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating, LiveMapView, AssignmentPopup } from '../../components';
@@ -32,6 +33,7 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 export default function HomeScreen() {
+    const setStoreAssignments = useJobStore(state => state.setAssignments);
     const { driver, refreshDriver } = useAuth();
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
@@ -129,16 +131,31 @@ export default function HomeScreen() {
 
     const loadData = async () => {
         try {
-            const [statsRes, assignmentsRes] = await Promise.all([
-                api.getStats(),
-                api.getAssignments('active'),
-                refreshDriver(),
-            ]);
+            // VVIP: Decouple assignments from stats to prevent one failure from blocking the other
+            // 1. Fetch Assignments (Critical for workflow)
+            try {
+                const assignmentsRes = await api.getAssignments('active');
+                const assignments = assignmentsRes.assignments || [];
+                setActiveAssignments(assignments);
+                setStoreAssignments(assignments);
+                console.log('[Home] Assignments synced:', assignments.length);
+            } catch (assignErr) {
+                console.error('[Home] Failed to fetch assignments:', assignErr);
+                // We do NOT clear assignments on error to support offline mode
+            }
 
-            setStats(statsRes.stats);
-            setActiveAssignments(assignmentsRes.assignments || []);
+            // 2. Fetch Stats & Driver Data (Secondary)
+            try {
+                const [statsRes] = await Promise.all([
+                    api.getStats(),
+                    refreshDriver(),
+                ]);
+                setStats(statsRes.stats);
+            } catch (statsErr) {
+                console.warn('[Home] Failed to fetch stats:', statsErr);
+            }
 
-            // Start entrance animation after data loads
+            // Start entrance animation regardless of success/partial success
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 1,
@@ -153,7 +170,7 @@ export default function HomeScreen() {
                 }),
             ]).start();
         } catch (err) {
-            console.error('[Home] Load error:', err);
+            console.error('[Home] Critical Load Error:', err);
         } finally {
             setIsLoading(false);
         }

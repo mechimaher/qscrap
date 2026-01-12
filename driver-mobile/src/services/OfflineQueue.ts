@@ -115,10 +115,12 @@ class OfflineQueueService {
 
                 // If it's a 4xx error (client error), we should probably drop it 
                 // as retrying won't fix a bad request (e.g. invalid status transition)
+                // VVIP: Also handle "Already" message
                 const isClientError = err.message && (
                     err.message.includes('Cannot transition') ||
                     err.message.includes('not found') ||
-                    err.message.includes('invalid')
+                    err.message.includes('invalid') ||
+                    err.message.includes('already')
                 );
 
                 if (isClientError) {
@@ -136,6 +138,8 @@ class OfflineQueueService {
                     this.queue.shift();
                     this.saveQueue();
                 } else {
+                    // Update the queue with the incremented retry count
+                    this.saveQueue();
                     // If it failed due to network/server, we stop processing for now 
                     // to maintain sequence and try again later
                     break;
@@ -151,7 +155,35 @@ class OfflineQueueService {
     }
 
     getQueueLength() {
+        this.ensureInitialized();
         return this.queue.length;
+    }
+
+    /**
+     * VVIP: Get IDs of assignments that have pending status updates.
+     * Used to prevent overwriting optimistic local state with stale backend data.
+     */
+    getPendingAssignmentIds(): string[] {
+        this.ensureInitialized();
+        const ids = new Set<string>();
+
+        for (const req of this.queue) {
+            // Check for assignment status update endpoint format: /driver/assignments/{id}/status
+            // We look for endpoints containing /driver/assignments/ and try to extract the ID
+            if (req.endpoint.includes('/driver/assignments/')) {
+                // Remove prefix
+                const afterPrefix = req.endpoint.split('/driver/assignments/')[1];
+                if (afterPrefix) {
+                    // Extract ID (part before the next slash)
+                    const id = afterPrefix.split('/')[0];
+                    if (id) {
+                        ids.add(id);
+                    }
+                }
+            }
+        }
+
+        return Array.from(ids);
     }
 }
 

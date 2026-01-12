@@ -81,6 +81,11 @@ const getStatusConfig = (status: string) => {
             description: 'Driver is heading to you!',
             gradient: ['#22C55E', '#16A34A'] as const
         },
+        'out_for_delivery': {
+            color: '#22C55E', icon: '🛵', label: 'Out for Delivery',
+            description: 'Driver is arriving soon!',
+            gradient: ['#22C55E', '#16A34A'] as const
+        },
         'delivered': {
             color: '#06B6D4', icon: '📍', label: 'Delivered',
             description: 'Please confirm you received it',
@@ -110,6 +115,11 @@ const getStatusConfig = (status: string) => {
             color: '#F59E0B', icon: '⚠️', label: 'Disputed',
             description: 'Order is under dispute review',
             gradient: ['#F59E0B', '#D97706'] as const
+        },
+        'returning_to_garage': {
+            color: '#EF4444', icon: '↩️', label: 'Returning',
+            description: 'Order is being returned to garage',
+            gradient: ['#EF4444', '#DC2626'] as const
         },
         'refunded': {
             color: '#6B7280', icon: '💸', label: 'Refunded',

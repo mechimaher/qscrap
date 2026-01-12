@@ -10,7 +10,7 @@ import logger from '../utils/logger';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SqlParams = unknown[];
 
-import { cacheGetOrSet, CacheTTL, dashboardStatsKey } from '../utils/cache';
+import { cacheGetOrSet, CacheTTL, dashboardStatsKey, invalidateDashboardCache } from '../utils/cache';
 
 // Get live dashboard stats (CACHED: 1 minute TTL for real-time feel)
 export const getDashboardStats = async (req: AuthRequest, res: Response) => {
@@ -266,6 +266,9 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
+        // Invalidate dashboard stats cache so UI updates immediately
+        await invalidateDashboardCache();
+
         // Notify customer and garage
         const io = (global as any).io;
 
@@ -368,6 +371,9 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
         );
 
         await client.query('COMMIT');
+
+        // Invalidate dashboard stats cache
+        await invalidateDashboardCache();
 
         // Notify customer and garage
         const io = (global as any).io;
@@ -560,6 +566,9 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
         }
 
         await client.query('COMMIT');
+
+        // Invalidate dashboard stats cache
+        await invalidateDashboardCache();
 
         // =================================================================
         // Socket.IO Notifications + Persistent
@@ -1160,6 +1169,9 @@ export const assignDriverToReturn = async (req: AuthRequest, res: Response) => {
         );
 
         await client.query('COMMIT');
+
+        // Invalidate dashboard stats cache
+        await invalidateDashboardCache();
 
         // Notify driver (Persistent + Socket)
         try {
