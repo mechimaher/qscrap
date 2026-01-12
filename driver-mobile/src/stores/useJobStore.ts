@@ -23,10 +23,14 @@ export const useJobStore = create<JobState>()(
             activeAssignmentId: null,
             lastSyncTime: null,
 
-            setAssignments: (newAssignments) => set({
-                assignments: newAssignments,
-                lastSyncTime: new Date().toISOString()
-            }),
+            setAssignments: (newAssignments) => {
+                // VVIP: Direct Sync (Removed OfflineQueue merge logic)
+                // Always trust the backend as source of truth to prevent 'Stacked' states
+                set({
+                    assignments: newAssignments,
+                    lastSyncTime: new Date().toISOString()
+                });
+            },
 
             addAssignment: (assignment) => set((state) => ({
                 assignments: [...state.assignments, assignment]

@@ -133,15 +133,8 @@ export default function PartInspectionScreen() {
             const { useJobStore } = require('../stores/useJobStore');
             useJobStore.getState().updateAssignmentStatus(assignmentId, 'picked_up');
 
-            // 2. Queue for Sync
-            await offlineQueue.enqueue(
-                API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
-                'PATCH',
-                {
-                    status: 'picked_up',
-                    notes: `Inspection complete. ${photos.length} photo(s) taken. All checks passed.`,
-                }
-            );
+            // 2. Direct API Call (Removed OfflineQueue for simplicity/reliability)
+            await api.updateAssignmentStatus(assignmentId, 'picked_up', `Inspection complete. ${photos.length} photo(s) taken. All checks passed.`);
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert(
@@ -150,7 +143,11 @@ export default function PartInspectionScreen() {
                 [
                     {
                         text: 'Start Delivery',
-                        onPress: () => navigation.navigate('Home'),
+                        onPress: () => {
+                            // Go back to detail screen which will now show "Start Delivery" or "In Transit"
+                            // triggering the next step in the flow smoothly
+                            navigation.goBack();
+                        },
                     },
                 ]
             );
