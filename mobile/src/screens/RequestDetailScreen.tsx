@@ -690,7 +690,7 @@ export default function RequestDetailScreen() {
                                 message: 'Your order has been created.',
                                 action: {
                                     label: 'View Orders',
-                                    onPress: () => navigation.goBack()
+                                    onPress: () => navigation.navigate('MainTabs', { screen: 'Orders' })
                                 }
                             });
                         } catch (error: any) {
