@@ -25,7 +25,7 @@ import { useLocation } from '../hooks/useLocation';
 import { api, Assignment } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
 import { useJobStore } from '../stores/useJobStore';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, SOCKET_URL } from '../config/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Shadows } from '../constants/theme';
 import { LiveMapView, SwipeToComplete } from '../components';
 
@@ -355,7 +355,11 @@ export default function AssignmentDetailScreen() {
 
                         {assignment.delivery_photo_url ? (
                             <Image
-                                source={{ uri: assignment.delivery_photo_url }}
+                                source={{
+                                    uri: assignment.delivery_photo_url.startsWith('http')
+                                        ? assignment.delivery_photo_url
+                                        : `${SOCKET_URL}${assignment.delivery_photo_url}`
+                                }}
                                 style={styles.proofImage}
                                 resizeMode="cover"
                             />
@@ -372,7 +376,11 @@ export default function AssignmentDetailScreen() {
                             <>
                                 <Text style={[styles.proofSubtitle, { color: colors.text }]}>✍️ Customer Signature</Text>
                                 <Image
-                                    source={{ uri: assignment.signature_url }}
+                                    source={{
+                                        uri: assignment.signature_url.startsWith('http')
+                                            ? assignment.signature_url
+                                            : `${SOCKET_URL}${assignment.signature_url}`
+                                    }}
                                     style={styles.signatureImage}
                                     resizeMode="contain"
                                 />
