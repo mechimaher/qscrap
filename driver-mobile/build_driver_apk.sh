@@ -2,9 +2,9 @@
 # QScrap Driver App - Production APK Build Script
 # Builds a release APK with proper versioning
 
-export ANDROID_HOME=/home/rambo/Android/Sdk
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export PATH=$ANDROID_HOME/platform-tools:$PATH
+# export ANDROID_HOME=/home/rambo/Android/Sdk
+# export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# export PATH=$ANDROID_HOME/platform-tools:$PATH
 
 # Navigate to driver-mobile directory if script is run from root
 if [ -d "driver-mobile" ]; then

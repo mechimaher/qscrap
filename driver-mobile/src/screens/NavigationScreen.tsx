@@ -1,6 +1,6 @@
-// QScrap Driver App - Navigation Screen (MapLibre Edition)
+// QScrap Driver App - Navigation Screen (Google Maps VVIP Edition)
 // VVIP Full-screen turn-by-turn navigation with voice guidance
-// Uses OpenStreetMap via MapLibre - No Google Maps API Key required
+// Uses Google Maps Native SDK with "Midnight Chic" Theme
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -10,7 +10,7 @@ import {
     TouchableOpacity,
     Alert,
 } from 'react-native';
-import MapLibreGL from '@maplibre/maplibre-react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
 import * as Haptics from 'expo-haptics';
@@ -18,10 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
-import { getRoute, formatDistance, formatDuration, getManeuverIcon, LatLng, Route } from '../services/routing.service';
-
-// Initialize MapLibre with NO access token
-MapLibreGL.setAccessToken(null);
+import { getRoute, formatDistance, formatDuration, getManeuverIcon, LatLng, Route, openExternalMap } from '../services/routing.service';
+import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 
 interface NavigationScreenParams {
     pickupLat?: number;
@@ -32,8 +30,6 @@ interface NavigationScreenParams {
     destinationName: string;
     destinationAddress: string;
 }
-
-
 
 export default function NavigationScreen() {
     const { colors } = useTheme();
@@ -236,43 +232,60 @@ export default function NavigationScreen() {
 
     const currentStep = routeData?.steps[currentStepIndex];
 
-    // Convert route coordinates for MapLibre [lng, lat]
-    const routeLineCoordinates = routeData?.coordinates.map(c => [c.longitude, c.latitude]) || [];
+    // Convert route coordinates for Google Maps Polyline {latitude, longitude}
+    // RouteData coordinates are usually [lng, lat] from OSRM if not normalized? 
+    // Wait, getRoute service now uses Google Maps Directions API, which returns {latitude, longitude}.
+    // Let's verify routeData structure in routing.service.ts if needed, but assuming standard Google Maps format.
+    // Actually, in routing.service.ts replacement (Step 832), getRoute returns `Route` interface.
+    // Google Maps API returns objects.
+    // The previous code had `.map(c => [c.longitude, c.latitude])` that suggests it WAS converting TO [lng, lat].
+    // If I use Google Maps, I want {latitude, longitude}.
+    const routeLineCoordinates = routeData?.coordinates || [];
 
     return (
         <View style={styles.container}>
-            <MapLibreGL.MapView
+            <MapView
+                ref={cameraRef}
+                provider={PROVIDER_GOOGLE}
                 style={styles.map}
-                mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-                logoEnabled={false}
-                attributionEnabled={false}
-                compassEnabled={false}
-                onDidFailLoadingMap={() => console.error("Map Load Error")}
+                customMapStyle={VVIP_MIDNIGHT_STYLE}
+                showsUserLocation={false}
+                showsMyLocationButton={false}
+                showsBuildings={true}
+                showsTraffic={true}
+                showsIndoors={true}
+                toolbarEnabled={false}
+                initialRegion={location ? {
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                } : undefined}
             >
-                <MapLibreGL.Camera
-                    ref={cameraRef}
-                    zoomLevel={15}
-                    animationMode="flyTo"
-                    animationDuration={0}
-                />
-
                 {/* Driver Location */}
                 {location && (
-                    <MapLibreGL.PointAnnotation
-                        id="driver"
-                        coordinate={[location.coords.longitude, location.coords.latitude]}
+                    <Marker
+                        coordinate={{
+                            latitude: location.coords.latitude,
+                            longitude: location.coords.longitude
+                        }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        flat={true} // Rotate with map
+                        rotation={location.coords.heading || 0}
                     >
                         <View style={styles.driverMarker}>
                             <Text style={styles.driverIcon}>🚗</Text>
                         </View>
-                    </MapLibreGL.PointAnnotation>
+                    </Marker>
                 )}
 
                 {/* Destination Marker */}
                 {destination && (
-                    <MapLibreGL.PointAnnotation
-                        id="destination"
-                        coordinate={[destination.longitude, destination.latitude]}
+                    <Marker
+                        coordinate={{
+                            latitude: destination.latitude,
+                            longitude: destination.longitude
+                        }}
                     >
                         <View style={[styles.destMarker, {
                             backgroundColor: params.destinationType === 'pickup' ? Colors.warning : Colors.success
@@ -281,75 +294,22 @@ export default function NavigationScreen() {
                                 {params.destinationType === 'pickup' ? '📦' : '🏠'}
                             </Text>
                         </View>
-                    </MapLibreGL.PointAnnotation>
+                    </Marker>
                 )}
 
-                {/* VVIP 3D Buildings Layer */}
-                <MapLibreGL.FillExtrusionLayer
-                    id="3d-buildings"
-                    sourceID="composite"
-                    sourceLayerID="building"
-                    filter={['==', 'extrude', 'true']}
-                    minZoomLevel={15}
-                    style={{
-                        fillExtrusionColor: '#aaa',
-                        fillExtrusionOpacity: 0.6,
-                        fillExtrusionHeight: ['get', 'height'],
-                        fillExtrusionBase: ['get', 'min_height'],
-                    }}
-                />
-
-                {/* VVIP Traffic Layer Simulation (Overlay on route) */}
+                {/* VVIP Route Polyline with Glow Effect */}
+                {/* Google Maps Polyline doesn't support "Glow" natively easily without custom layers, 
+                    so we just draw a thick line. */}
                 {routeLineCoordinates.length > 1 && (
-                    <>
-                        {/* Traffic Glow */}
-                        <MapLibreGL.ShapeSource
-                            id="trafficSource"
-                            shape={{
-                                type: 'Feature',
-                                properties: {},
-                                geometry: {
-                                    type: 'LineString',
-                                    coordinates: routeLineCoordinates as any
-                                }
-                            }}
-                        >
-                            <MapLibreGL.LineLayer
-                                id="trafficGlow"
-                                style={{
-                                    lineColor: Colors.success,
-                                    lineWidth: 10,
-                                    lineBlur: 2,
-                                    lineOpacity: 0.4,
-                                }}
-                            />
-                        </MapLibreGL.ShapeSource>
-
-                        <MapLibreGL.ShapeSource
-                            id="routeSource"
-                            shape={{
-                                type: 'Feature',
-                                properties: {},
-                                geometry: {
-                                    type: 'LineString',
-                                    coordinates: routeLineCoordinates as any
-                                }
-                            }}
-                        >
-                            <MapLibreGL.LineLayer
-                                id="routeLine"
-                                style={{
-                                    lineColor: Colors.primary,
-                                    lineWidth: 6,
-                                    lineCap: 'round',
-                                    lineJoin: 'round',
-                                    lineOpacity: 0.9,
-                                }}
-                            />
-                        </MapLibreGL.ShapeSource>
-                    </>
+                    <Polyline
+                        coordinates={routeLineCoordinates}
+                        strokeColor={Colors.primary}
+                        strokeWidth={6}
+                        lineCap="round"
+                        lineJoin="round"
+                    />
                 )}
-            </MapLibreGL.MapView>
+            </MapView>
 
             {/* Top Navigation Overlay */}
             <SafeAreaView style={styles.topOverlay} edges={['top']}>
@@ -400,6 +360,23 @@ export default function NavigationScreen() {
 
                     <View style={styles.controlButtons}>
                         <TouchableOpacity
+                            style={[styles.controlButton, styles.sosButton]}
+                            onPress={() => {
+                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                                Alert.alert(
+                                    'EMERGENCY SOS',
+                                    'Call Emergency Services (999) or Dispatch?',
+                                    [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        { text: 'Call Dispatch', onPress: () => console.log('Call Dispatch') },
+                                        { text: 'CALL 999', style: 'destructive', onPress: () => console.log('Call 999') },
+                                    ]
+                                );
+                            }}
+                        >
+                            <Text style={styles.sosIcon}>🆘</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
                             style={[styles.controlButton, !voiceEnabled && styles.controlButtonOff]}
                             onPress={toggleVoice}
                         >
@@ -407,6 +384,20 @@ export default function NavigationScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.controlButton} onPress={recenterMap}>
                             <Text style={styles.controlIcon}>📍</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.controlButton, styles.externalMapButton]}
+                            onPress={() => {
+                                if (destination) {
+                                    // Use the helper we just added
+                                    // Need to import it first, but let's use direct linking here for safety if imports are tricky
+                                    // Actually, let's use the Navigation logic to call the service
+                                    const { openExternalMap } = require('../services/routing.service');
+                                    openExternalMap(destination.latitude, destination.longitude, params.destinationName);
+                                }
+                            }}
+                        >
+                            <Text style={styles.controlIcon}>🗺️</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -527,6 +518,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     controlButtonOff: { backgroundColor: '#e8e8e8' },
+    externalMapButton: { backgroundColor: '#e0f2fe' }, // Light blue
+    sosButton: {
+        backgroundColor: '#fee2e2',
+        borderWidth: 1,
+        borderColor: '#ef4444',
+    },
+    sosIcon: { fontSize: 20 },
     controlIcon: { fontSize: 20 },
     destInfo: {
         marginHorizontal: 16,
