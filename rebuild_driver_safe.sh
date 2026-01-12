@@ -10,7 +10,7 @@ npm install
 
 # 2. Prebuild (Clean native folders to link AsyncStorage)
 echo "[2/4] Exo Prebuild (Clean)..."
-npx expo prebuild --clean --platform android
+yes | npx expo prebuild --clean --platform android --no-install
 
 # 2.5. Fix Manifest Package Name (for Autolinking)
 echo "[2.5/4] Patching AndroidManifest.xml..."

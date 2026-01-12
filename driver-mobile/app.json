@@ -52,7 +52,12 @@
                 "RECEIVE_BOOT_COMPLETED",
                 "POST_NOTIFICATIONS"
             ],
-            "useNextNotificationsApi": true
+            "useNextNotificationsApi": true,
+            "config": {
+                "googleMaps": {
+                    "apiKey": "AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw"
+                }
+            }
         },
         "plugins": [
             "expo-secure-store",
@@ -88,7 +93,9 @@
                         "minSdkVersion": 24,
                         "buildToolsVersion": "35.0.0",
                         "kotlinVersion": "2.1.20",
-                        "usesCleartextTraffic": true
+                        "usesCleartextTraffic": true,
+                        "namespace": "com.qscrap.driver",
+                        "applicationId": "com.qscrap.driver"
                     }
                 }
             ]

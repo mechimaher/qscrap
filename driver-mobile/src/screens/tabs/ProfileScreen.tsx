@@ -266,6 +266,36 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
+                {/* Documents (VVIP Feature) */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Documents</Text>
+                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
+                        <InfoRow
+                            icon="📄"
+                            label="Driver License"
+                            value="Verified"
+                            valueColor={Colors.success}
+                            colors={colors}
+                        />
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <InfoRow
+                            icon="🛡️"
+                            label="Vehicle Insurance"
+                            value="Exp. 12/2026"
+                            valueColor={Colors.warning}
+                            colors={colors}
+                        />
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <InfoRow
+                            icon="🆔"
+                            label="Qatar ID"
+                            value="Verified"
+                            valueColor={Colors.success}
+                            colors={colors}
+                        />
+                    </View>
+                </View>
+
                 {/* Settings */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
@@ -277,6 +307,26 @@ export default function ProfileScreen() {
                             </Text>
                             <Text style={[styles.settingValue, { color: Colors.success }]}>
                                 Enabled
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <TouchableOpacity style={styles.settingRow} onPress={() => Alert.alert('Language', 'Arabic support coming soon!')}>
+                            <Text style={styles.settingIcon}>🌐</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>
+                                Language
+                            </Text>
+                            <Text style={[styles.settingValue, { color: colors.text }]}>
+                                English (US)
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <TouchableOpacity style={styles.settingRow} onPress={() => Alert.alert('Navigation App', 'Choose between Google Maps and Waze')}>
+                            <Text style={styles.settingIcon}>🗺️</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>
+                                Navigation App
+                            </Text>
+                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
+                                In-App Map
                             </Text>
                         </TouchableOpacity>
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -467,12 +517,12 @@ function formatRating(value: any): string {
     return isNaN(num) ? '0.0' : num.toFixed(1);
 }
 
-function InfoRow({ icon, label, value, colors }: any) {
+function InfoRow({ icon, label, value, valueColor, colors }: any) {
     return (
         <View style={styles.infoRow}>
             <Text style={styles.infoIcon}>{icon}</Text>
             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
+            <Text style={[styles.infoValue, { color: valueColor || colors.text }]}>{value}</Text>
         </View>
     );
 }

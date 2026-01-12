@@ -1,12 +1,13 @@
-// QScrap Driver App - OSRM Routing Service
-// Self-hosted routing using GCC OpenStreetMap data (Qatar, UAE, etc.)
-// Production-grade, no API limits
+// QScrap Driver App - Google Maps Routing Service
+// "First Class" Premium Routing with Live Traffic & High Accuracy
+// Replaces legacy OSRM implementation
 
 import { Assignment } from './api';
+import { Platform, Linking } from 'react-native';
 
-// Self-hosted OSRM on QScrap VPS - GCC region map data
-// Includes: Qatar, UAE, Bahrain, Kuwait, Oman, Saudi Arabia
-const OSRM_API = 'http://147.93.89.153:5100';
+const GOOGLE_DIRECTIONS_API = 'https://maps.googleapis.com/maps/api/directions/json';
+// VVIP Premium Key
+const GOOGLE_API_KEY = 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw';
 
 export interface LatLng {
     latitude: number;
@@ -20,10 +21,8 @@ export interface RouteStep {
     maneuver: {
         type: string;
         modifier?: string;
-        bearing_before?: number;
-        bearing_after?: number;
     };
-    name: string;
+    html_instructions?: string;
 }
 
 export interface Route {
@@ -32,6 +31,7 @@ export interface Route {
     duration: number; // Total duration in seconds
     steps: RouteStep[];
     summary: string;
+    traffic_duration?: number; // Duration in traffic
 }
 
 export interface RouteResult {
@@ -41,114 +41,114 @@ export interface RouteResult {
 }
 
 /**
- * Decode OSRM polyline to coordinates array
- * OSRM uses polyline6 encoding (precision 6)
+ * Decode Google Polyline (Precision 5)
+ * Google Standard Encoding
  */
-function decodePolyline(encoded: string, precision: number = 6): LatLng[] {
-    const coordinates: LatLng[] = [];
-    let index = 0;
-    let lat = 0;
-    let lng = 0;
-    const factor = Math.pow(10, precision);
+function decodePolyline(encoded: string): LatLng[] {
+    if (!encoded) return [];
+    const poly: LatLng[] = [];
+    let index = 0, len = encoded.length;
+    let lat = 0, lng = 0;
 
-    while (index < encoded.length) {
-        let shift = 0;
-        let result = 0;
-        let byte: number;
-
-        // Decode latitude
+    while (index < len) {
+        let b, shift = 0, result = 0;
         do {
-            byte = encoded.charCodeAt(index++) - 63;
-            result |= (byte & 0x1f) << shift;
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
             shift += 5;
-        } while (byte >= 0x20);
-        lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+        } while (b >= 0x20);
+        const dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+        lat += dlat;
 
-        // Decode longitude
         shift = 0;
         result = 0;
         do {
-            byte = encoded.charCodeAt(index++) - 63;
-            result |= (byte & 0x1f) << shift;
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
             shift += 5;
-        } while (byte >= 0x20);
-        lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+        } while (b >= 0x20);
+        const dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+        lng += dlng;
 
-        coordinates.push({
-            latitude: lat / factor,
-            longitude: lng / factor,
-        });
+        const p = {
+            latitude: lat / 100000.0,
+            longitude: lng / 100000.0,
+        };
+        poly.push(p);
     }
-
-    return coordinates;
+    return poly;
 }
 
 /**
- * Get driving route between two points using OSRM
+ * Get driving route between two points using Google Directions API
+ * Includes Traffic Models (Best Guess)
  */
 export async function getRoute(from: LatLng, to: LatLng): Promise<RouteResult> {
     try {
-        const url = `${OSRM_API}/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=polyline6&steps=true`;
+        const origin = `${from.latitude},${from.longitude}`;
+        const destination = `${to.latitude},${to.longitude}`;
 
-        console.log('[OSRM] Fetching route:', url);
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
+        const params = new URLSearchParams({
+            origin: origin,
+            destination: destination,
+            mode: 'driving',
+            traffic_model: 'best_guess',
+            departure_time: 'now', // Required for traffic info
+            key: GOOGLE_API_KEY
         });
 
-        if (!response.ok) {
-            throw new Error(`OSRM API error: ${response.status}`);
-        }
+        const url = `${GOOGLE_DIRECTIONS_API}?${params.toString()}`;
+        console.log('[GoogleMaps] Fetching route...');
 
+        const response = await fetch(url);
         const data = await response.json();
 
-        if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+        if (data.status !== 'OK') {
+            const errorMsg = data.error_message || data.status;
+            console.error('[GoogleMaps] API Error:', errorMsg);
+
+            // Fallback for "OVER_QUERY_LIMIT" or empty key -> Standard OSRM failover? 
+            // For now, return error to prompt user to check key.
             return {
                 success: false,
-                error: data.message || 'No route found',
+                error: `Google Maps Error: ${errorMsg}`
             };
         }
 
-        const osrmRoute = data.routes[0];
-        const coordinates = decodePolyline(osrmRoute.geometry);
+        const routeData = data.routes[0];
+        const leg = routeData.legs[0];
+        const overviewPolyline = routeData.overview_polyline.points;
+        const coordinates = decodePolyline(overviewPolyline);
 
-        // Parse steps from OSRM response
-        const steps: RouteStep[] = [];
-        if (osrmRoute.legs && osrmRoute.legs[0] && osrmRoute.legs[0].steps) {
-            for (const step of osrmRoute.legs[0].steps) {
-                steps.push({
-                    instruction: step.maneuver?.instruction || step.name || '',
-                    distance: step.distance,
-                    duration: step.duration,
-                    maneuver: {
-                        type: step.maneuver?.type || 'straight',
-                        modifier: step.maneuver?.modifier,
-                        bearing_before: step.maneuver?.bearing_before,
-                        bearing_after: step.maneuver?.bearing_after,
-                    },
-                    name: step.name || '',
-                });
+        // Parse steps
+        const steps: RouteStep[] = leg.steps.map((step: any) => ({
+            instruction: step.html_instructions.replace(/<[^>]*>/g, ''), // Strip HTML
+            html_instructions: step.html_instructions,
+            distance: step.distance.value,
+            duration: step.duration.value,
+            maneuver: {
+                type: step.maneuver || 'straight',
+                modifier: undefined // Google maneuvers are simpler strings
             }
-        }
+        }));
 
         return {
             success: true,
             route: {
                 coordinates,
-                distance: osrmRoute.distance,
-                duration: osrmRoute.duration,
+                distance: leg.distance.value,
+                duration: leg.duration.value,
+                traffic_duration: leg.duration_in_traffic?.value,
                 steps,
-                summary: osrmRoute.legs?.[0]?.summary || '',
-            },
+                summary: routeData.summary || leg.start_address,
+            }
         };
+
     } catch (error) {
-        console.error('[OSRM] Route error:', error);
+        console.error('[GoogleMaps] Network error:', error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Failed to get route',
+            error: error instanceof Error ? error.message : 'Failed to connect to Google Maps'
         };
     }
 }
@@ -172,7 +172,7 @@ export async function getAssignmentRoute(
         totalDuration: 0,
     };
 
-    // Route to pickup (garage)
+    // Route to pickup
     if (assignment.pickup_lat && assignment.pickup_lng) {
         const pickupRoute = await getRoute(driverLocation, {
             latitude: assignment.pickup_lat,
@@ -185,7 +185,7 @@ export async function getAssignmentRoute(
         }
     }
 
-    // Route from pickup to delivery (customer)
+    // Route to delivery
     if (assignment.pickup_lat && assignment.pickup_lng &&
         assignment.delivery_lat && assignment.delivery_lng) {
         const deliveryRoute = await getRoute(
@@ -203,54 +203,42 @@ export async function getAssignmentRoute(
 }
 
 /**
- * Format distance for display
+ * Open External Map App (Google Maps / Waze / Apple Maps)
+ * "Deep Linking" for VVIP native experience
  */
-export function formatDistance(meters: number): string {
-    if (meters < 1000) {
-        return `${Math.round(meters)} m`;
+export function openExternalMap(lat: number, lng: number, label: string = 'Destination') {
+    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+    const latLng = `${lat},${lng}`;
+    const url = Platform.select({
+        ios: `${scheme}${label}@${latLng}`,
+        android: `${scheme}${latLng}(${label})`
+    });
+
+    if (url) {
+        Linking.openURL(url).catch(err => console.error('An error occurred', err));
     }
+}
+
+// Helpers
+export function formatDistance(meters: number): string {
+    if (meters < 1000) return `${Math.round(meters)} m`;
     return `${(meters / 1000).toFixed(1)} km`;
 }
 
-/**
- * Format duration for display
- */
 export function formatDuration(seconds: number): string {
     const minutes = Math.round(seconds / 60);
-    if (minutes < 1) return '< 1 min';
-    if (minutes === 1) return '1 min';
     if (minutes < 60) return `${minutes} min`;
-
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    if (mins === 0) return `${hours}h`;
     return `${hours}h ${mins}m`;
 }
 
-/**
- * Get turn-by-turn instruction icon
- */
 export function getManeuverIcon(type: string, modifier?: string): string {
-    const icons: Record<string, string> = {
-        'turn-left': '↰',
-        'turn-right': '↱',
-        'turn-slight-left': '↖',
-        'turn-slight-right': '↗',
-        'turn-sharp-left': '⤺',
-        'turn-sharp-right': '⤻',
-        'straight': '↑',
-        'depart': '🚗',
-        'arrive': '🏁',
-        'roundabout': '↻',
-        'rotary': '↻',
-        'merge': '↗',
-        'fork-left': '↖',
-        'fork-right': '↗',
-        'off-ramp-left': '↙',
-        'off-ramp-right': '↘',
-        'u-turn': '↩',
-    };
-
-    const key = modifier ? `${type}-${modifier}` : type;
-    return icons[key] || icons[type] || '→';
+    // Basic mapping for Google maneuvers
+    if (type.includes('left')) return '↰';
+    if (type.includes('right')) return '↱';
+    if (type.includes('uturn')) return '↩';
+    if (type.includes('straight')) return '↑';
+    if (type.includes('merge')) return '↗';
+    return '↑';
 }
