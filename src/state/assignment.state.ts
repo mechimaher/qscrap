@@ -3,8 +3,8 @@ export type AssignmentStatus = 'assigned' | 'picked_up' | 'in_transit' | 'delive
 
 export class AssignmentState {
     private static readonly VALID_TRANSITIONS: Record<AssignmentStatus, AssignmentStatus[]> = {
-        'assigned': ['picked_up', 'in_transit'], // Can skip picked_up
-        'picked_up': ['in_transit'],
+        'assigned': ['picked_up', 'in_transit', 'delivered'], // Allow direct completion (robustness)
+        'picked_up': ['in_transit', 'delivered'], // Allow skipping in_transit
         'in_transit': ['delivered', 'failed'],
         'delivered': [], // Terminal state
         'failed': []     // Terminal state
