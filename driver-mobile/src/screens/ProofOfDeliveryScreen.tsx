@@ -108,26 +108,25 @@ export default function ProofOfDeliveryScreen() {
             // In Session 4 we added `offlineQueue.enqueue`. Let's use that directly here 
             // to guarantee offline support.
 
-            // 2. Queue the upload
-            await offlineQueue.enqueue(
-                API_ENDPOINTS.UPLOAD_PROOF(assignmentId),
-                'POST',
-                {
-                    photoPath: permanentUri,
-                    signature_base64: signatureData.replace('data:image/png;base64,', ''),
-                    notes: `Payment: ${paymentMethod}`
-                }
+            // 2. Call API directly (Removed OfflineQueue per request for simplicity)
+            // This uploads the proof immediately. If it fails, the user sees an error and can retry.
+            // Reading the file as base64 first since api.uploadProof expects base64 string
+            const base64Photo = await FileSystem.readAsStringAsync(permanentUri, {
+                encoding: 'base64'
+            });
+
+            await api.uploadProof(
+                assignmentId,
+                base64Photo,
+                signatureData.replace('data:image/png;base64,', ''), // Remove prefix if API expects clean base64
+                `Payment: ${paymentMethod}`
             );
 
-            // 3. Mark job as delivered locally (Optimistic Update)
+            // 3. Update status directly
             const { useJobStore } = require('../stores/useJobStore');
             useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
 
-            await offlineQueue.enqueue(
-                API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
-                'PATCH',
-                { status: 'delivered' }
-            );
+            await api.updateAssignmentStatus(assignmentId, 'delivered', `Delivered via App. Payment: ${paymentMethod}`);
 
             setStep('success');
         } catch (err: any) {
