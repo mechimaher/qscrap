@@ -119,7 +119,10 @@ export default function ProofOfDeliveryScreen() {
                 }
             );
 
-            // 3. Mark job as delivered locally
+            // 3. Mark job as delivered locally (Optimistic Update)
+            const { useJobStore } = require('../stores/useJobStore');
+            useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
+
             await offlineQueue.enqueue(
                 API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
                 'PATCH',

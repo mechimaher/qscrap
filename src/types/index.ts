@@ -133,7 +133,8 @@ export type OrderStatus =
     | 'disputed'
     | 'refunded'
     | 'cancelled_by_customer'
-    | 'cancelled_by_garage';
+    | 'cancelled_by_garage'
+    | 'returning_to_garage';
 
 /**
  * Request status type

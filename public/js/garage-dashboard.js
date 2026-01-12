@@ -1433,13 +1433,6 @@ function updateOrdersBadge(count) {
     // Add badge element if not exists
     let badge = document.getElementById('ordersBadge');
     const ordersNav = document.querySelector('[data-section="orders"]');
-    // Load Garage Dashboard Script
-    const script = document.createElement('script');
-    script.src = `js/garage-dashboard.js?v=20260110b`;
-    script.onload = function () {
-        console.log('Garage Dashboard Script Loaded');
-    };
-    document.body.appendChild(script);
     if (!badge && ordersNav) {
         badge = document.createElement('span');
         badge.id = 'ordersBadge';
