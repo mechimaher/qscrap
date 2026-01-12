@@ -98,20 +98,44 @@ export class DriverService {
 
             // 2. Validate Transition
             if (assignment.status === status) {
-                await client.query('COMMIT');
-                return {
-                    success: true,
-                    assignment,
-                    message: `Status is already ${status}`
-                };
-            }
+                // IDEMPOTENCY CHECK WITH RECOVERY:
+                // Even if assignment is already updated, ensure the Order Status is consistent.
+                // This covers cases where Assignment updated but Order update failed.
+                const currentOrder = await client.query('SELECT order_status FROM orders WHERE order_id = $1', [assignment.order_id]);
+                const currentOrderStatus = currentOrder.rows[0]?.order_status;
 
-            if (!AssignmentState.isValidTransition(assignment.status, status)) {
-                throw new Error(`Cannot transition from '${assignment.status}' to '${status}'. Allowed: ${AssignmentState.getAllowedTransitions(assignment.status).join(', ')}`);
+                let shouldUpdateOrder = false;
+                if (status === 'delivered' && currentOrderStatus !== 'delivered' && currentOrderStatus !== 'completed') {
+                    shouldUpdateOrder = true;
+                } else if (status === 'picked_up' && currentOrderStatus !== 'collected' && currentOrderStatus !== 'in_transit') {
+                    shouldUpdateOrder = true;
+                }
+
+                if (!shouldUpdateOrder) {
+                    await client.query('COMMIT');
+                    return {
+                        success: true,
+                        assignment,
+                        message: `Status is already ${status}`
+                    };
+                }
+                // If we need to fix the order status, fall through to logic below...
+                // But we need to avoid re-updating assignment.
+                // Refactoring flow to separate Assignment Update from Order Update would be best, 
+                // but for minimal diff, I will just proceed and let the SQL update (which is cheap) run again 
+                // or just skip the assignment update part.
             }
 
             // 3. Update Assignment Status
-            const updatedAssignment = await driverRepository.updateAssignmentStatus(assignmentId, status, notes, failureReason, client);
+            // Only update if status implies a change
+            let updatedAssignment = assignment;
+
+            if (assignment.status !== status) {
+                if (!AssignmentState.isValidTransition(assignment.status, status)) {
+                    throw new Error(`Cannot transition from '${assignment.status}' to '${status}'. Allowed: ${AssignmentState.getAllowedTransitions(assignment.status).join(', ')}`);
+                }
+                updatedAssignment = await driverRepository.updateAssignmentStatus(assignmentId, status, notes, failureReason, client);
+            }
 
             // 4. Update Order Status based on assignment type and new status
             let newOrderStatus = null;
