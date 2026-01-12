@@ -38,9 +38,9 @@ export default function AssignmentDetailScreen() {
     const { assignmentId } = route.params || {};
     const { location, startTracking, stopTracking } = useLocation();
 
-    // Store
+    // Store - checking loose equality for robustness
     const assignmentFromStore = useJobStore(state =>
-        state.assignments.find(a => a.assignment_id === assignmentId)
+        state.assignments.find(a => String(a.assignment_id) === String(assignmentId))
     );
     const updateLocalStatus = useJobStore(state => state.updateAssignmentStatus);
     const setAssignments = useJobStore(state => state.setAssignments);
@@ -52,12 +52,19 @@ export default function AssignmentDetailScreen() {
 
     useEffect(() => {
         if (assignmentFromStore) {
+            console.log('[Detail] Found assignment in store', assignmentId);
             setAssignment(assignmentFromStore);
             setIsLoading(false);
         }
     }, [assignmentFromStore]);
 
     useEffect(() => {
+        console.log('[Detail] Mounted with assignmentId:', assignmentId);
+        if (!assignmentId) {
+            Alert.alert('Error', 'Invalid Assignment ID');
+            navigation.goBack();
+            return;
+        }
         loadAssignment();
         // Start GPS tracking
         startTracking();
@@ -73,13 +80,9 @@ export default function AssignmentDetailScreen() {
 
             // VVIP: Only update if we don't have a pending offline update for this assignment
             // This prevents the UI from "jumping back" to an old status while the queue is syncing
-            const hasPendingUpdate = offlineQueue.getQueueLength() > 0; // Simple check for now
-
-            if (!hasPendingUpdate) {
-                setAssignment(result.assignment);
-            } else {
-                console.log('[Detail] Skipping state update from backend due to pending offline queue');
-            }
+            setAssignment(result.assignment);
+            // VVIP: Removed OfflineQueue pending check to prevent 'Stacked' state
+            // relying on backend truth regardless of local queue status
         } catch (err: any) {
             console.log('[Detail] Load error (offline?):', err.message);
             // If we have store data, we are good. If not, show error.
@@ -477,18 +480,21 @@ export default function AssignmentDetailScreen() {
                                     // 1. Determine if we need specialized flow
                                     if (nextAction.status === 'picked_up') {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        // Navigate to inspection
                                         navigation.navigate('PartInspection', {
                                             assignmentId: assignment.assignment_id,
                                             orderId: assignment.order_id,
                                             orderNumber: assignment.order_number,
                                             partDescription: assignment.part_description
                                         });
+                                        // We do NOT update status here, PartInspection does it.
                                         setIsUpdating(false);
                                         return;
                                     }
 
                                     if (nextAction.status === 'delivered') {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        // Navigate to POD
                                         navigation.navigate('ProofOfDelivery', {
                                             assignmentId: assignment.assignment_id
                                         });
@@ -496,20 +502,14 @@ export default function AssignmentDetailScreen() {
                                         return;
                                     }
 
-                                    // 2. Default Optimistic Update for other transitions (e.g., in_transit)
+                                    // 2. Default Optimistic Update (e.g. Start Delivery -> In Transit)
+                                    // Update store first so UI reflects change immediately
                                     updateLocalStatus(assignment.assignment_id, nextAction.status);
 
-                                    // 2. Queue for Sync
-                                    await offlineQueue.enqueue(
-                                        API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                        'PATCH',
-                                        { status: nextAction.status }
-                                    );
+                                    // 3. Direct API Call (Removed OfflineQueue)
+                                    await api.updateAssignmentStatus(assignment.assignment_id, nextAction.status);
 
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-                                    // If delivered, maybe ask for photo? For now, we update state.
-                                    // loadAssignment() is not needed as store is updated.
                                 } catch (err: any) {
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                                     Alert.alert('Error', err.message || 'Failed to update');
