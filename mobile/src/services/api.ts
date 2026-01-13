@@ -118,6 +118,21 @@ export interface Product {
     view_count: number;
 }
 
+// Saved Vehicle (My Vehicles / Family Fleet)
+export interface SavedVehicle {
+    vehicle_id: string;
+    car_make: string;
+    car_model: string;
+    car_year: number;
+    vin_number?: string;
+    front_image_url?: string;
+    rear_image_url?: string;
+    nickname?: string;
+    is_primary: boolean;
+    last_used_at?: string;
+    request_count: number;
+}
+
 // API Helper
 class ApiService {
     private token: string | null = null;
@@ -502,6 +517,34 @@ class ApiService {
             throw new Error(data.error || 'Failed to create dispute');
         }
         return data;
+    }
+
+    // ============================================
+    // MY VEHICLES (Family Fleet)
+    // ============================================
+
+    async getMyVehicles(): Promise<{ success: boolean; vehicles: SavedVehicle[] }> {
+        return this.request('/vehicles');
+    }
+
+    async saveVehicle(vehicle: {
+        car_make: string;
+        car_model: string;
+        car_year: number;
+        vin_number?: string;
+        nickname?: string;
+        is_primary?: boolean;
+    }): Promise<{ success: boolean; vehicle: SavedVehicle }> {
+        return this.request('/vehicles', {
+            method: 'POST',
+            body: JSON.stringify(vehicle)
+        });
+    }
+
+    async deleteVehicle(vehicleId: string): Promise<{ success: boolean }> {
+        return this.request(`/vehicles/${vehicleId}`, {
+            method: 'DELETE'
+        });
     }
 
 }

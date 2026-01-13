@@ -682,17 +682,14 @@ export default function RequestDetailScreen() {
                     onPress: async () => {
                         setAcceptingBid(bid.bid_id);
                         try {
-                            await api.acceptBid(bid.bid_id);
+                            const result = await api.acceptBid(bid.bid_id);
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            toast.show({
-                                type: 'success',
-                                title: '🎉 Order Created!',
-                                message: 'Your order has been created.',
-                                action: {
-                                    label: 'View Orders',
-                                    onPress: () => (navigation as any).navigate('MainTabs', { screen: 'Orders' })
-                                }
-                            });
+                            toast.success('🎉 Order Created!', 'Taking you to your orders...');
+
+                            // Premium UX: Auto-navigate to Orders after acceptance
+                            setTimeout(() => {
+                                (navigation as any).replace('MainTabs', { screen: 'Orders' });
+                            }, 1200);
                         } catch (error: any) {
                             toast.error('Error', error.message || 'Failed to accept bid');
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

@@ -2,7 +2,7 @@
 // VVIP Experience: Step-by-step flow for smooth handoff
 // Steps: Photo -> Signature -> Payment -> Success
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -138,6 +138,20 @@ export default function ProofOfDeliveryScreen() {
             setIsSubmitting(false);
         }
     };
+
+    // Premium UX: Auto-navigate home after success step
+    useEffect(() => {
+        if (step === 'success') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            const timer = setTimeout(() => {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Main' }],
+                });
+            }, 2500);
+            return () => clearTimeout(timer);
+        }
+    }, [step]);
 
     // --- RENDERS ---
 
@@ -328,19 +342,8 @@ export default function ProofOfDeliveryScreen() {
         <View style={styles.center}>
             <Text style={{ fontSize: 64 }}>✅</Text>
             <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>Delivery Complete!</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 32 }}>Proof of delivery has been queued.</Text>
-
-            <TouchableOpacity
-                style={styles.btnGradientWrapper}
-                onPress={() => navigation.navigate('Main', { screen: 'Home' })}
-            >
-                <LinearGradient
-                    colors={Colors.gradients.primary}
-                    style={styles.btnGradient}
-                >
-                    <Text style={styles.btnText}>Back to Home</Text>
-                </LinearGradient>
-            </TouchableOpacity>
+            <Text style={{ color: colors.textSecondary, marginBottom: 32 }}>Returning to home...</Text>
+            <ActivityIndicator color={Colors.primary} size="small" />
         </View>
     );
 

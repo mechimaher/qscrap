@@ -114,4 +114,8 @@ v1Router.use('/addresses', addressRoutes);
 import ocrRoutes from './ocr.routes';
 v1Router.use('/ocr', ocrRoutes);
 
+// Vehicle Routes (My Vehicles / Family Fleet)
+import vehicleRoutes from './vehicle.routes';
+v1Router.use('/vehicles', vehicleRoutes);
+
 export default v1Router;
