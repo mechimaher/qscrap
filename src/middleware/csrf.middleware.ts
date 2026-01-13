@@ -91,7 +91,7 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
         if (process.env.NODE_ENV === 'production') {
             return res.status(403).json({
                 error: 'Invalid origin',
-                message: `Request blocked due to CSRF protection. Origin: ${origin}, Referer: ${referer}`
+                message: 'Request blocked due to CSRF protection'
             });
         }
 
