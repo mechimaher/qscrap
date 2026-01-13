@@ -2495,8 +2495,24 @@ function removeBidPhoto(index) {
     renderBidPhotos();
 }
 
+// Submission lock to prevent double-clicking
+let isSubmittingBid = false;
+
 document.getElementById('bidForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Prevent double submission
+    if (isSubmittingBid) {
+        console.log('[BID] Submission already in progress, ignoring duplicate');
+        return;
+    }
+    isSubmittingBid = true;
+
+    const submitBtn = document.querySelector('#bidForm button[type="submit"]');
+    const originalBtnHtml = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting...';
+
     const reqId = document.getElementById('bidRequestId').value;
     const amount = document.getElementById('bidAmount').value;
     const condition = document.getElementById('bidCondition').value;
@@ -2579,6 +2595,14 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
         }
     } catch (err) {
         showToast('Connection error', 'error');
+    } finally {
+        // Always reset submission lock and button
+        isSubmittingBid = false;
+        const submitBtn = document.querySelector('#bidForm button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = currentEditBidId ? '<i class="bi bi-check-lg"></i> Update Bid' : '<i class="bi bi-send"></i> Submit Bid';
+        }
     }
 });
 

@@ -3,6 +3,7 @@ import { getWritePool } from '../config/db';
 import { driverRepository } from '../repositories/driver.repository';
 import { AssignmentState } from '../state/assignment.state';
 import { storageService } from './storage.service';
+import { walletService } from './wallet.service';
 
 export class DriverService {
     private pool = getWritePool();
@@ -39,6 +40,14 @@ export class DriverService {
 
     async updateProfile(userId: string, data: any) {
         return await driverRepository.updateDriverProfile(userId, data);
+    }
+
+    async getWallet(userId: string) {
+        return await walletService.getWallet(userId);
+    }
+
+    async getWalletHistory(userId: string) {
+        return await walletService.getHistory(userId);
     }
 
     async updateMyLocation(userId: string, lat: number, lng: number, accuracy: any, heading: any, speed: any) {
@@ -214,6 +223,35 @@ export class DriverService {
                     );
 
                     await driverRepository.updateDriverEarnings(assignment.driver_id, payoutAmount, client);
+
+                    // --- WALLET INTEGRATION (Gig Economy Model) ---
+                    try {
+                        // 1. Credit Earnings
+                        await walletService.addTransaction(
+                            assignment.driver_id,
+                            payoutAmount,
+                            'earning',
+                            assignment.order_id,
+                            `Delivery Earning #${order.order_number}`
+                        );
+
+                        // 2. Debit Cash Collection (if COD)
+                        // Assuming 'cash' is the payment method key. Verify with order data.
+                        // For now, we check if payment_status is 'pending' which usually implies COD for delivered items
+                        if (order.payment_method === 'cash' || order.payment_status === 'pending') {
+                            await walletService.addTransaction(
+                                assignment.driver_id,
+                                -orderTotal, // Negative amount
+                                'cash_collection',
+                                assignment.order_id,
+                                `Cash Collected #${order.order_number}`
+                            );
+                        }
+                    } catch (walletErr) {
+                        console.error('Wallet transaction failed:', walletErr);
+                        // Don't fail the whole request, but log it critical
+                    }
+                    // ---------------------------------------------
                 }
             }
 

@@ -14,7 +14,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
-import { api, DriverStats } from '../../services/api';
+import { api, DriverStats, Wallet, WalletTransaction } from '../../services/api';
 import { Colors, Spacing } from '../../constants/theme';
 
 export default function EarningsScreen() {
@@ -26,6 +26,8 @@ export default function EarningsScreen() {
         data: [0, 0, 0, 0, 0, 0, 0]
     });
     const [payouts, setPayouts] = useState<any[]>([]);
+    const [wallet, setWallet] = useState<Wallet | null>(null);
+    const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
@@ -34,14 +36,18 @@ export default function EarningsScreen() {
 
     const loadAllData = async () => {
         try {
-            const [statsRes, trendRes, payoutsRes] = await Promise.all([
+            const [statsRes, trendRes, payoutsRes, walletRes, historyRes] = await Promise.all([
                 api.getStats(),
                 api.getEarningsTrend(),
-                api.getPayoutHistory()
+                api.getPayoutHistory(),
+                api.getWallet(),
+                api.getWalletHistory()
             ]);
 
             setStats(statsRes.stats);
             setPayouts(payoutsRes.payouts);
+            setWallet(walletRes.wallet);
+            setTransactions(historyRes.history);
 
             if (trendRes.trend && trendRes.trend.length > 0) {
                 setTrendData({
@@ -75,20 +81,34 @@ export default function EarningsScreen() {
                 }
                 showsVerticalScrollIndicator={false}
             >
-                {/* Total Earnings Card */}
+                {/* Wallet Balance Card (Gig Economy Style) */}
                 <LinearGradient
-                    colors={[Colors.primary, Colors.primaryDark]}
+                    colors={wallet && wallet.balance < 0 ? [Colors.danger, '#D32F2F'] : [Colors.success, '#388E3C']}
                     style={styles.totalCard}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                 >
-                    <Text style={styles.totalLabel}>Total Earnings</Text>
+                    <Text style={styles.totalLabel}>Wallet Balance</Text>
                     <Text style={styles.totalAmount}>
-                        {formatNum(stats?.total_earnings)} QAR
+                        {formatNum(wallet?.balance)} QAR
                     </Text>
                     <Text style={styles.totalDeliveries}>
-                        {stats?.total_deliveries || 0} deliveries completed
+                        {wallet && wallet.balance < 0
+                            ? 'You owe QScrap (Please Deposit)'
+                            : 'Available for Payout'}
                     </Text>
+
+                    <View style={styles.walletStatsRow}>
+                        <View style={styles.walletStat}>
+                            <Text style={styles.walletStatLabel}>Total Earned</Text>
+                            <Text style={styles.walletStatValue}>{formatNum(wallet?.total_earned)}</Text>
+                        </View>
+                        <View style={styles.walletStatDivider} />
+                        <View style={styles.walletStat}>
+                            <Text style={styles.walletStatLabel}>Cash in Hand</Text>
+                            <Text style={styles.walletStatValue}>{formatNum(wallet?.cash_collected)}</Text>
+                        </View>
+                    </View>
                 </LinearGradient>
 
                 {/* VVIP Earnings Chart */}
@@ -203,6 +223,44 @@ export default function EarningsScreen() {
                         <View style={[styles.infoCard, { backgroundColor: colors.surface, justifyContent: 'center' }]}>
                             <Text style={[styles.infoDescription, { color: colors.textSecondary, textAlign: 'center' }]}>
                                 No payout history found.
+                            </Text>
+                        </View>
+                    )}
+                </View>
+
+                {/* Transaction History */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Transactions</Text>
+                    {transactions.length > 0 ? (
+                        <View style={[styles.performanceCard, { backgroundColor: colors.surface }]}>
+                            {transactions.map((tx, index) => (
+                                <View key={tx.transaction_id}>
+                                    <View style={styles.payoutRow}>
+                                        <View style={styles.payoutInfo}>
+                                            <Text style={[styles.payoutNum, { color: colors.text }]}>{tx.description}</Text>
+                                            <Text style={[styles.payoutDate, { color: colors.textMuted }]}>
+                                                {new Date(tx.created_at).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.payoutRight}>
+                                            <Text style={[styles.payoutAmount, { color: tx.amount >= 0 ? Colors.success : Colors.danger }]}>
+                                                {tx.amount >= 0 ? '+' : ''}{tx.amount} QAR
+                                            </Text>
+                                            <View style={[styles.payoutStatus, { backgroundColor: (tx.amount >= 0 ? Colors.success : Colors.danger) + '15' }]}>
+                                                <Text style={[styles.payoutStatusText, { color: tx.amount >= 0 ? Colors.success : Colors.danger }]}>
+                                                    {tx.type.toUpperCase().replace('_', ' ')}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                    {index < transactions.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={[styles.infoCard, { backgroundColor: colors.surface, justifyContent: 'center' }]}>
+                            <Text style={[styles.infoDescription, { color: colors.textSecondary, textAlign: 'center' }]}>
+                                No transactions found.
                             </Text>
                         </View>
                     )}
@@ -450,6 +508,32 @@ const styles = StyleSheet.create({
     },
     payoutStatusText: {
         fontSize: 10,
+        fontWeight: '700',
+    },
+    walletStatsRow: {
+        flexDirection: 'row',
+        marginTop: 20,
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        borderRadius: 12,
+        padding: 12,
+        width: '100%',
+    },
+    walletStat: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    walletStatDivider: {
+        width: 1,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+    },
+    walletStatLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
+        marginBottom: 4,
+    },
+    walletStatValue: {
+        color: '#fff',
+        fontSize: 16,
         fontWeight: '700',
     },
 });

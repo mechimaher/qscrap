@@ -1,8 +1,8 @@
 // QScrap Driver App - API Configuration
 // Production: Using direct IP for stability (Bypass Cloudflare/SSL issues)
 
-export const API_BASE_URL = 'http://147.93.89.153:3000/api';
-export const SOCKET_URL = 'http://147.93.89.153:3000';
+export const API_BASE_URL = 'https://qscrap.qa/api';
+export const SOCKET_URL = 'https://qscrap.qa';
 
 // For local development, update these temporarily:
 // export const API_BASE_URL = 'http://192.168.1.x:3000/api';

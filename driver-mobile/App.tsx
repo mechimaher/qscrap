@@ -15,6 +15,10 @@ import * as Notifications from 'expo-notifications';
 import NotificationService from './src/services/notifications';
 import { offlineQueue } from './src/services/OfflineQueue';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { I18nProvider } from './src/i18n';
+import { ToastProvider } from './src/components/Toast';
+import { NetworkBanner } from './src/components/NetworkBanner';
+import { SettingsProvider } from './src/contexts/SettingsContext';
 
 // Import screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -28,6 +32,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import PartInspectionScreen from './src/screens/PartInspectionScreen';
 import NavigationScreen from './src/screens/NavigationScreen';
 import ProofOfDeliveryScreen from './src/screens/ProofOfDeliveryScreen';
+import WebViewScreen from './src/screens/WebViewScreen';
 
 // Navigation Types
 export type RootStackParamList = {
@@ -46,6 +51,7 @@ export type RootStackParamList = {
         destinationAddress: string;
     };
     Settings: undefined;
+    WebView: { url: string; title: string };
 };
 
 export type AuthStackParamList = {
@@ -204,6 +210,11 @@ function RootNavigator() {
                         component={NavigationScreen}
                         options={{ animation: 'slide_from_bottom' }}
                     />
+                    <RootStack.Screen
+                        name="WebView"
+                        component={WebViewScreen}
+                        options={{ animation: 'slide_from_bottom' }}
+                    />
                 </>
             )}
         </RootStack.Navigator>
@@ -217,6 +228,7 @@ function ThemedApp() {
     return (
         <>
             <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+            <NetworkBanner />
             <RootNavigator />
         </>
     );
@@ -228,15 +240,21 @@ export default function App() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ErrorBoundary name="RootApp">
                 <SafeAreaProvider>
-                    <ThemeProvider>
-                        <AuthProvider>
-                            <SocketProvider>
-                                <NavigationContainer>
-                                    <ThemedApp />
-                                </NavigationContainer>
-                            </SocketProvider>
-                        </AuthProvider>
-                    </ThemeProvider>
+                    <I18nProvider>
+                        <SettingsProvider>
+                            <ThemeProvider>
+                                <ToastProvider>
+                                    <AuthProvider>
+                                        <SocketProvider>
+                                            <NavigationContainer>
+                                                <ThemedApp />
+                                            </NavigationContainer>
+                                        </SocketProvider>
+                                    </AuthProvider>
+                                </ToastProvider>
+                            </ThemeProvider>
+                        </SettingsProvider>
+                    </I18nProvider>
                 </SafeAreaProvider>
             </ErrorBoundary>
         </GestureHandlerRootView>

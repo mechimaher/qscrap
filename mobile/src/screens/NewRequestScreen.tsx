@@ -250,7 +250,7 @@ export default function NewRequestScreen() {
                 setTimeout(() => {
                     // Navigate to Requests list so user sees their new request immediately
                     // navigation.goBack(); // Old behavior
-                    navigation.navigate('MainTabs', { screen: 'Requests' });
+                    (navigation as any).navigate('MainTabs', { screen: 'Orders' });
                 }, 1500);
             } else {
                 throw new Error(result.error || 'Failed to submit');

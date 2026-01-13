@@ -24,6 +24,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLocation } from '../hooks/useLocation';
 import { api, Assignment } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
+import { executeWithOfflineFallback } from '../utils/syncHelper';
 import { useJobStore } from '../stores/useJobStore';
 import { API_ENDPOINTS, SOCKET_URL } from '../config/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Shadows } from '../constants/theme';
@@ -457,11 +458,15 @@ export default function AssignmentDetailScreen() {
                                                 // 1. Optimistic Update
                                                 updateLocalStatus(assignment.assignment_id, 'failed');
 
-                                                // 2. Queue for Sync
-                                                await offlineQueue.enqueue(
-                                                    API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                                    'PATCH',
-                                                    { status: 'failed' }
+                                                // 2. Hybrid Sync
+                                                await executeWithOfflineFallback(
+                                                    async () => api.updateAssignmentStatus(assignment.assignment_id, 'failed'),
+                                                    {
+                                                        endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                                        method: 'PATCH',
+                                                        body: { status: 'failed' }
+                                                    },
+                                                    { successMessage: 'Marked as failed' }
                                                 );
 
                                                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -514,8 +519,16 @@ export default function AssignmentDetailScreen() {
                                     // Update store first so UI reflects change immediately
                                     updateLocalStatus(assignment.assignment_id, nextAction.status);
 
-                                    // 3. Direct API Call (Removed OfflineQueue)
-                                    await api.updateAssignmentStatus(assignment.assignment_id, nextAction.status);
+                                    // 3. Hybrid Sync
+                                    await executeWithOfflineFallback(
+                                        async () => api.updateAssignmentStatus(assignment.assignment_id, nextAction.status),
+                                        {
+                                            endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                            method: 'PATCH',
+                                            body: { status: nextAction.status }
+                                        },
+                                        { successMessage: 'Status updated' }
+                                    );
 
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                                 } catch (err: any) {

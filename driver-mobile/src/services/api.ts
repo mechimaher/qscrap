@@ -2,6 +2,7 @@
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 export { API_ENDPOINTS };
 import * as SecureStore from 'expo-secure-store';
+import { withRetry } from '../hooks/useRetry';
 
 // Token Storage Keys
 const TOKEN_KEY = 'qscrap_driver_token';
@@ -82,6 +83,23 @@ export interface AuthResponse {
     driver?: Driver;
 }
 
+export interface Wallet {
+    wallet_id: string;
+    balance: number;
+    total_earned: number;
+    cash_collected: number;
+    last_updated: string;
+}
+
+export interface WalletTransaction {
+    transaction_id: string;
+    amount: number;
+    type: 'earning' | 'cash_collection' | 'payout' | 'adjustment' | 'bonus';
+    reference_id?: string;
+    description?: string;
+    created_at: string;
+}
+
 // API Service
 class DriverApiService {
     private token: string | null = null;
@@ -137,12 +155,20 @@ class DriverApiService {
 
         let response: Response;
         try {
-            response = await fetch(url, {
-                ...options,
-                headers,
-            });
+            // Wrap fetch with retry logic for network resilience
+            response = await withRetry(
+                () => fetch(url, {
+                    ...options,
+                    headers,
+                }),
+                {
+                    maxRetries: 3,
+                    initialDelay: 1000,
+                    backoffMultiplier: 2,
+                }
+            );
         } catch (networkError) {
-            console.error('[API] Network error:', networkError);
+            console.error('[API] Network error after retries:', networkError);
             throw new Error('Network error - please check your connection');
         }
 
@@ -277,6 +303,14 @@ class DriverApiService {
 
     async getPayoutHistory(): Promise<{ payouts: any[] }> {
         return this.request('/driver/payouts');
+    }
+
+    async getWallet(): Promise<{ wallet: Wallet }> {
+        return this.request('/driver/wallet');
+    }
+
+    async getWalletHistory(): Promise<{ history: WalletTransaction[] }> {
+        return this.request('/driver/wallet/history');
     }
 
     async updateProfile(data: Partial<Driver>): Promise<{ success: boolean; driver: Driver }> {
