@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
 import {
     getMyVehicles,
     saveVehicle,
@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 // All routes require authentication
-router.use(authMiddleware);
+router.use(authenticate);
 
 // GET /api/vehicles - Get customer's saved vehicles
 router.get('/', getMyVehicles);
