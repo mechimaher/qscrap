@@ -8,7 +8,7 @@ import { getErrorMessage } from '../types';
 // ============================================
 export const getMyVehicles = async (req: AuthRequest, res: Response) => {
     try {
-        const customerId = req.user?.id;
+        const customerId = req.user!.userId;
 
         if (!customerId) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -49,7 +49,7 @@ export const getMyVehicles = async (req: AuthRequest, res: Response) => {
 // ============================================
 export const saveVehicle = async (req: AuthRequest, res: Response) => {
     try {
-        const customerId = req.user?.id;
+        const customerId = req.user!.userId;
 
         if (!customerId) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -159,7 +159,7 @@ export const saveVehicle = async (req: AuthRequest, res: Response) => {
 // ============================================
 export const updateVehicle = async (req: AuthRequest, res: Response) => {
     try {
-        const customerId = req.user?.id;
+        const customerId = req.user!.userId;
         const { vehicleId } = req.params;
 
         if (!customerId) {
@@ -205,7 +205,7 @@ export const updateVehicle = async (req: AuthRequest, res: Response) => {
 // ============================================
 export const deleteVehicle = async (req: AuthRequest, res: Response) => {
     try {
-        const customerId = req.user?.id;
+        const customerId = req.user!.userId;
         const { vehicleId } = req.params;
 
         if (!customerId) {
