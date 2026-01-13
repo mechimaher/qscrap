@@ -377,41 +377,46 @@ export default function HomeScreen() {
                     </View>
                 )}
 
-                {/* Quick Stats */}
+                {/* Quick Stats - 2x2 Grid */}
                 <View style={styles.statsGrid}>
-                    <StatCard
-                        icon="📦"
-                        value={stats?.today_deliveries || 0}
-                        label="Today"
-                        color={Colors.primary}
-                        colors={colors}
-                        delay={0}
-                    />
-                    <StatCard
-                        icon="💰"
-                        value={`${stats?.today_earnings || 0} QAR`}
-                        label="Earnings"
-                        color={Colors.success}
-                        colors={colors}
-                        delay={100}
-                    />
-                    <StatCard
-                        icon="⭐"
-                        value={parseFloat(formatRating(stats?.rating_average))}
-                        label="Rating"
-                        color={Colors.warning}
-                        colors={colors}
-                        delay={200}
-                        isRating={true}
-                    />
-                    <StatCard
-                        icon="📋"
-                        value={stats?.active_assignments || 0}
-                        label="Active"
-                        color={Colors.info}
-                        colors={colors}
-                        delay={300}
-                    />
+                    <View style={styles.statsRow}>
+                        <StatCard
+                            icon="📦"
+                            value={stats?.today_deliveries || 0}
+                            label="Today"
+                            color={Colors.primary}
+                            colors={colors}
+                            delay={0}
+                        />
+                        <StatCard
+                            icon="💰"
+                            value={stats?.today_earnings || 0}
+                            label="Earnings"
+                            color={Colors.success}
+                            colors={colors}
+                            delay={100}
+                            isCurrency={true}
+                        />
+                    </View>
+                    <View style={styles.statsRow}>
+                        <StatCard
+                            icon="⭐"
+                            value={parseFloat(formatRating(stats?.rating_average))}
+                            label="Rating"
+                            color={Colors.warning}
+                            colors={colors}
+                            delay={200}
+                            isRating={true}
+                        />
+                        <StatCard
+                            icon="📋"
+                            value={stats?.active_assignments || 0}
+                            label="Active"
+                            color={Colors.info}
+                            colors={colors}
+                            delay={300}
+                        />
+                    </View>
                 </View>
 
 
@@ -461,7 +466,7 @@ export default function HomeScreen() {
 }
 
 // Helper components
-function StatCard({ icon, value, label, color, colors, delay = 0, isRating = false }: any) {
+function StatCard({ icon, value, label, color, colors, delay = 0, isRating = false, isCurrency = false }: any) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
@@ -472,17 +477,36 @@ function StatCard({ icon, value, label, color, colors, delay = 0, isRating = fal
         Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
     };
 
-    // Parse numeric value from strings like "100 QAR"
-    const numericValue = typeof value === 'string'
-        ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0
-        : value;
-    const suffix = typeof value === 'string' && value.includes('QAR') ? ' QAR' : '';
+    // Format currency with compact notation for large amounts
+    const formatCurrency = (num: number): { value: string; suffix: string } => {
+        if (num >= 10000) {
+            return { value: (num / 1000).toFixed(1), suffix: 'K QAR' };
+        } else if (num >= 1000) {
+            return { value: num.toFixed(0), suffix: ' QAR' };
+        } else {
+            return { value: num.toFixed(num % 1 === 0 ? 0 : 2), suffix: ' QAR' };
+        }
+    };
+
+    // Parse numeric value
+    const numericValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+
+    // Get display values based on type
+    let displayValue = numericValue;
+    let suffix = '';
+
+    if (isCurrency) {
+        const formatted = formatCurrency(numericValue);
+        displayValue = parseFloat(formatted.value);
+        suffix = formatted.suffix;
+    }
 
     return (
         <TouchableOpacity
             activeOpacity={1}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
+            style={styles.statCardWrapper}
         >
             <Animated.View style={[
                 styles.statCard,
@@ -492,12 +516,14 @@ function StatCard({ icon, value, label, color, colors, delay = 0, isRating = fal
                 {isRating ? (
                     <AnimatedRating value={numericValue} delay={delay} style={{ color: colors.text }} />
                 ) : (
-                    <AnimatedNumber
-                        value={numericValue}
-                        delay={delay}
-                        suffix={suffix}
-                        style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}
-                    />
+                    <View style={styles.statValueContainer}>
+                        <AnimatedNumber
+                            value={displayValue}
+                            delay={delay}
+                            suffix={suffix}
+                            style={styles.statValueText}
+                        />
+                    </View>
                 )}
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
             </Animated.View>
@@ -633,10 +659,12 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
     },
     statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
         marginBottom: 20,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 12,
     },
     mapContainer: {
         marginBottom: 20,
@@ -650,12 +678,16 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 8,
     },
+    statCardWrapper: {
+        flex: 1,
+    },
     statCard: {
         flex: 1,
-        minWidth: '45%',
         padding: 16,
         borderRadius: 20,
         alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 100,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.5)',
         shadowColor: '#000',
@@ -663,6 +695,16 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 10,
         elevation: 2,
+    },
+    statValueContainer: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        justifyContent: 'center',
+    },
+    statValueText: {
+        fontSize: 18,
+        fontWeight: '700',
+        textAlign: 'center',
     },
     statIcon: {
         fontSize: 24,
