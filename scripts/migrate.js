@@ -81,20 +81,18 @@ async function runMigrations() {
 
 function updateSchemaFile() {
     return new Promise((resolve, reject) => {
-        const cmd = `pg_dump -h ${process.env.DB_HOST || 'localhost'} -U ${process.env.DB_USER || 'postgres'} -p ${process.env.DB_PORT || '5432'} --schema-only --no-owner --no-privileges ${process.env.DB_NAME || 'qscrap_db'} > "${SCHEMA_FILE}"`;
+        // Use docker exec to run pg_dump inside the container
+        const containerName = 'qscrap-postgres';
+        const dbUser = process.env.DB_USER || 'postgres';
+        const dbName = process.env.DB_NAME || 'qscrap_db';
 
-        // Set password for pg_dump
-        const env = { ...process.env, PGPASSWORD: process.env.DB_PASSWORD || 'password' };
+        const cmd = `docker exec ${containerName} pg_dump -U ${dbUser} --schema-only --no-owner --no-privileges ${dbName} > "${SCHEMA_FILE}"`;
 
-        exec(cmd, { env }, (error, stdout, stderr) => {
+        exec(cmd, (error, stdout, stderr) => {
             if (error) {
                 console.error(`❌ Error updating schema file: ${error.message}`);
                 reject(error);
                 return;
-            }
-            if (stderr) {
-                // pg_dump writes to stderr for info messages too, so just log it
-                // console.log(`pg_dump output: ${stderr}`);
             }
             console.log('✅ database.sql updated successfully');
             resolve();
