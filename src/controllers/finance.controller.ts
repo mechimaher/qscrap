@@ -1095,10 +1095,15 @@ export const resolvePaymentDispute = async (req: AuthRequest, res: Response) => 
             payout: result.rows[0],
             message: `Dispute resolved: ${resolution}`
         });
-    } catch (err) {
+    } catch (err: any) {
         await client.query('ROLLBACK');
         console.error('[FINANCE] resolvePaymentDispute error:', err);
-        res.status(400).json({ error: getErrorMessage(err) });
+
+        if (err.message === 'Payout not found') {
+            return res.status(404).json({ error: 'Payout not found' });
+        }
+
+        res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
     }

@@ -42,17 +42,21 @@ export const createNotification = async (payload: NotificationPayload) => {
 
     try {
         // 1. Persist to DB (skip operations - they don't have user-specific storage)
+        // 1. Persist to DB (skip operations - they don't have user-specific storage)
+        let notificationId = 'temp_' + Date.now();
         if (target_role !== 'operations') {
-            await pool.query(
+            const result = await pool.query(
                 `INSERT INTO notifications (user_id, notification_type, title, body, data, is_read)
-                 VALUES ($1, $2, $3, $4, $5, false)`,
+                 VALUES ($1, $2, $3, $4, $5, false)
+                 RETURNING notification_id`,
                 [userId, type, title, message, JSON.stringify(data)]
             );
+            notificationId = result.rows[0].notification_id;
         }
 
         // 2. Emit Socket Event for real-time updates
         const socketPayload = {
-            notification_id: 'temp_' + Date.now(),
+            notification_id: notificationId,
             type,
             title,
             message,
@@ -116,10 +120,17 @@ export const markNotificationsRead = async (userId: string, notificationIds: str
         return;
     }
 
+    // Filter out invalid UUIDs to prevent SQL errors
+    const validUuids = notificationIds.filter(id =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
+
+    if (validUuids.length === 0) return;
+
     await pool.query(
         `UPDATE notifications SET is_read = true 
          WHERE user_id = $1 AND notification_id = ANY($2::uuid[])`,
-        [userId, notificationIds]
+        [userId, validUuids]
     );
 };
 
