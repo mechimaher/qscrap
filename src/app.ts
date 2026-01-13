@@ -39,7 +39,12 @@ app.use(requestContext);
 // ==========================================
 const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+    : [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://qscrap.qa',
+        'https://www.qscrap.qa'
+    ];
 
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'

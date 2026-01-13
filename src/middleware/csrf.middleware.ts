@@ -10,17 +10,23 @@ import { Request, Response, NextFunction } from 'express';
 
 // Get allowed origins from environment or use defaults
 const getAllowedOrigins = (): string[] => {
-    if (process.env.ALLOWED_ORIGINS) {
-        return process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
-    }
-
-    // Default development origins
-    return [
+    const defaults = [
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         'http://localhost:3001',
-        'http://127.0.0.1:3001'
+        'http://127.0.0.1:3001',
+        'https://qscrap.qa',
+        'https://www.qscrap.qa'
     ];
+
+    const origins = process.env.ALLOWED_ORIGINS
+        ? [...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()), ...defaults]
+        : defaults;
+
+    console.log(`[CSRF-DEBUG] NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`[CSRF-DEBUG] Allowed Origins: ${JSON.stringify(origins)}`);
+
+    return origins;
 };
 
 // Check if origin is valid
@@ -85,7 +91,7 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
         if (process.env.NODE_ENV === 'production') {
             return res.status(403).json({
                 error: 'Invalid origin',
-                message: 'Request blocked due to CSRF protection'
+                message: `Request blocked due to CSRF protection. Origin: ${origin}, Referer: ${referer}`
             });
         }
 
