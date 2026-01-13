@@ -3172,13 +3172,13 @@ async function loadPaymentDisputesData() {
                 <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-sm btn-success" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'resent_payment', ${p.net_amount})" title="Resend Payment">
+                        <button class="btn btn-sm btn-success" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'resent_payment', '${p.net_amount}')" title="Resend Payment">
                             <i class="bi bi-arrow-repeat"></i> Resend
                         </button>
-                        <button class="btn btn-sm btn-primary" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'confirmed_received', ${p.net_amount})" title="Mark as Received">
+                        <button class="btn btn-sm btn-primary" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'confirmed_received', '${p.net_amount}')" title="Mark as Received">
                             <i class="bi bi-check-lg"></i> Confirmed
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'cancelled', ${p.net_amount})" title="Cancel">
+                        <button class="btn btn-sm btn-danger" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'cancelled', '${p.net_amount}')" title="Cancel">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
