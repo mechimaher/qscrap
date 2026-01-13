@@ -5,7 +5,7 @@
 -- Create customer_vehicles table
 CREATE TABLE IF NOT EXISTS customer_vehicles (
     vehicle_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    customer_id UUID NOT NULL REFERENCES customers(customer_id) ON DELETE CASCADE,
+    customer_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     
     -- Vehicle Info
     car_make VARCHAR(100) NOT NULL,
