@@ -65,9 +65,13 @@ async function runMigrations() {
         } else {
             console.log(`🎉 Successfully applied ${appliedCount} migrations`);
 
-            // 5. Update database.sql
-            console.log('📦 Updating database.sql...');
-            await updateSchemaFile();
+            // 5. Update database.sql (only in development, not inside Docker containers)
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('📦 Updating database.sql...');
+                await updateSchemaFile();
+            } else {
+                console.log('📦 Skipping database.sql update (production mode)');
+            }
         }
 
     } catch (err) {
