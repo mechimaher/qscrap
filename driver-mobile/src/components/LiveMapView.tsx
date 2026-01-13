@@ -28,10 +28,11 @@ export default function LiveMapView({
     height = 200,
     showRoute = true
 }: LiveMapViewProps) {
-    const { colors, isDarkMode } = useTheme();
+    const { colors } = useTheme();
 
-    // Theme-aware map style
-    const mapStyle = isDarkMode ? VVIP_MIDNIGHT_STYLE : VVIP_LIGHT_STYLE;
+    // VVIP: Always use Midnight Chic (dark) map style for premium look
+    // The Qatar Maroon & Gold theme looks best with dark maps
+    const mapStyle = VVIP_MIDNIGHT_STYLE;
     const cameraRef = useRef<any>(null);
 
     // Google Maps Route State (LatLng objects)
