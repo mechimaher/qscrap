@@ -116,6 +116,22 @@ export default function HomeScreen() {
         };
     }, [isConnected]);
 
+    // POLLING FALLBACK: Ensure data is fresh even if socket fails
+    useEffect(() => {
+        if (!isAvailable) return;
+
+        console.log('[Home] Starting polling interval (10s)');
+        const intervalId = setInterval(() => {
+            // Silent refresh - don't show loading spinner
+            loadData(true);
+        }, 10000);
+
+        return () => {
+            console.log('[Home] Clearing polling interval');
+            clearInterval(intervalId);
+        };
+    }, [isAvailable]);
+
     useEffect(() => {
         setIsAvailable(driver?.status === 'available');
     }, [driver?.status]);
@@ -129,8 +145,9 @@ export default function HomeScreen() {
         }
     }, [driver?.status, hasPermission]);
 
-    const loadData = async () => {
+    const loadData = async (silent = false) => {
         try {
+            if (!silent) setIsLoading(true);
             // VVIP: Decouple assignments from stats to prevent one failure from blocking the other
             // 1. Fetch Assignments (Critical for workflow)
             try {
@@ -172,7 +189,7 @@ export default function HomeScreen() {
         } catch (err) {
             console.error('[Home] Critical Load Error:', err);
         } finally {
-            setIsLoading(false);
+            if (!silent) setIsLoading(false);
         }
     };
 
