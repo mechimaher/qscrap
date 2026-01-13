@@ -19,14 +19,9 @@ const getAllowedOrigins = (): string[] => {
         'https://www.qscrap.qa'
     ];
 
-    const origins = process.env.ALLOWED_ORIGINS
+    return process.env.ALLOWED_ORIGINS
         ? [...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()), ...defaults]
         : defaults;
-
-    console.log(`[CSRF-DEBUG] NODE_ENV: ${process.env.NODE_ENV}`);
-    console.log(`[CSRF-DEBUG] Allowed Origins: ${JSON.stringify(origins)}`);
-
-    return origins;
 };
 
 // Check if origin is valid
