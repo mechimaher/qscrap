@@ -39,7 +39,7 @@
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#8D1B3D"
             },
-            "package": "com.qscrap.driver",
+            "package": "com.qscrapdriver",
             "permissions": [
                 "INTERNET",
                 "ACCESS_NETWORK_STATE",
@@ -93,9 +93,7 @@
                         "minSdkVersion": 24,
                         "buildToolsVersion": "35.0.0",
                         "kotlinVersion": "2.1.20",
-                        "usesCleartextTraffic": true,
-                        "namespace": "com.qscrap.driver",
-                        "applicationId": "com.qscrap.driver"
+                        "usesCleartextTraffic": true
                     }
                 }
             ]

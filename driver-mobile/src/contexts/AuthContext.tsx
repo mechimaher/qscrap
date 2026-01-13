@@ -40,30 +40,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('[Auth] Token:', token ? 'exists' : 'null');
 
             if (token) {
-                // Verify token and get driver profile
-                console.log('[Auth] Token found, fetching profile...');
-                try {
-                    // Add timeout for profile fetch
-                    const profilePromise = api.getProfile();
-                    const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+                // LOCAL-FIRST: Use cached driver data (like Customer App)
+                // This prevents hanging on network issues during startup
+                console.log('[Auth] Token found, loading cached driver...');
+                const savedDriver = await api.getDriver();
+
+                if (savedDriver) {
+                    console.log('[Auth] Cached driver found:', savedDriver.full_name);
+                    setDriver(savedDriver);
+
+                    // Start location tracking (non-blocking)
+                    locationService.startTracking().catch(e =>
+                        console.warn('[Auth] Location tracking error:', e)
                     );
 
-                    const response = await Promise.race([profilePromise, timeoutPromise]) as any;
-                    console.log('[Auth] Profile response:', response.driver?.full_name || 'no driver');
+                    // Refresh profile in BACKGROUND after UI loads
+                    // This verifies token validity without blocking startup
+                    setTimeout(() => {
+                        console.log('[Auth] Background profile refresh starting...');
+                        api.getProfile()
+                            .then(response => {
+                                if (response.driver) {
+                                    console.log('[Auth] Profile refreshed:', response.driver.full_name);
+                                    setDriver(response.driver);
+                                    api.saveDriver(response.driver);
+                                }
+                            })
+                            .catch(error => {
+                                console.warn('[Auth] Background refresh failed:', error?.message);
+                                // Token might be invalid - clear it and force re-login
+                                if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+                                    console.log('[Auth] Token invalid, clearing...');
+                                    api.clearToken();
+                                    setDriver(null);
+                                }
+                            });
+                    }, 1000); // 1 second delay to let UI render first
+                } else {
+                    // Have token but no cached driver - must verify with network
+                    console.log('[Auth] No cached driver, verifying token...');
+                    try {
+                        const profilePromise = api.getProfile();
+                        const timeoutPromise = new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+                        );
+                        const response = await Promise.race([profilePromise, timeoutPromise]) as any;
 
-                    if (response.driver) {
-                        setDriver(response.driver);
-                        await api.saveDriver(response.driver);
-                        console.log('[Auth] Driver saved, starting location tracking...');
-
-                        // Start tracking location (non-blocking)
-                        locationService.startTracking().catch(e => console.warn('[Auth] Location tracking error:', e));
+                        if (response.driver) {
+                            setDriver(response.driver);
+                            await api.saveDriver(response.driver);
+                            locationService.startTracking().catch(e =>
+                                console.warn('[Auth] Location tracking error:', e)
+                            );
+                        }
+                    } catch (error: any) {
+                        console.log('[Auth] Token verification failed:', error?.message);
+                        await api.clearToken();
                     }
-                } catch (error: any) {
-                    // Token invalid or timeout, clear it
-                    console.log('[Auth] Token invalid or timeout, clearing:', error?.message);
-                    await api.clearToken();
                 }
             } else {
                 console.log('[Auth] No token, user needs to login');
