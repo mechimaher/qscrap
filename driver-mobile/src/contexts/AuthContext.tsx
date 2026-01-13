@@ -19,32 +19,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        console.log('[Auth] ========== APP STARTING ==========');
+
+        // Failsafe: Force app to load after 10 seconds even if auth check hangs
+        const safetyTimer = setTimeout(() => {
+            console.warn('[Auth] Safety timer triggered! Forcing app load.');
+            setIsLoading(false);
+        }, 10000);
+
         checkAuth();
+
+        return () => clearTimeout(safetyTimer);
     }, []);
 
     const checkAuth = async () => {
+        console.log('[Auth] checkAuth started');
         try {
+            console.log('[Auth] Getting token...');
             const token = await api.getToken();
+            console.log('[Auth] Token:', token ? 'exists' : 'null');
+
             if (token) {
                 // Verify token and get driver profile
+                console.log('[Auth] Token found, fetching profile...');
                 try {
-                    const response = await api.getProfile();
+                    // Add timeout for profile fetch
+                    const profilePromise = api.getProfile();
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+                    );
+
+                    const response = await Promise.race([profilePromise, timeoutPromise]) as any;
+                    console.log('[Auth] Profile response:', response.driver?.full_name || 'no driver');
+
                     if (response.driver) {
                         setDriver(response.driver);
                         await api.saveDriver(response.driver);
+                        console.log('[Auth] Driver saved, starting location tracking...');
 
-                        // Start tracking location
-                        locationService.startTracking().catch(console.error);
+                        // Start tracking location (non-blocking)
+                        locationService.startTracking().catch(e => console.warn('[Auth] Location tracking error:', e));
                     }
-                } catch (error) {
-                    // Token invalid, clear it
-                    console.log('[Auth] Token invalid, clearing');
+                } catch (error: any) {
+                    // Token invalid or timeout, clear it
+                    console.log('[Auth] Token invalid or timeout, clearing:', error?.message);
                     await api.clearToken();
                 }
+            } else {
+                console.log('[Auth] No token, user needs to login');
             }
         } catch (error) {
             console.log('[Auth] Check failed:', error);
         } finally {
+            console.log('[Auth] ========== AUTH CHECK COMPLETE, showing UI ==========');
             setIsLoading(false);
         }
     };
