@@ -2,7 +2,7 @@
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 export { API_ENDPOINTS };
 import * as SecureStore from 'expo-secure-store';
-import { withRetry } from '../hooks/useRetry';
+
 
 // Token Storage Keys
 const TOKEN_KEY = 'qscrap_driver_token';
@@ -104,36 +104,103 @@ export interface WalletTransaction {
 class DriverApiService {
     private token: string | null = null;
 
+    // Timeout wrapper to prevent SecureStore from hanging indefinitely
+    private async withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                console.warn(`[API] SecureStore operation timed out after ${timeoutMs}ms, using fallback`);
+                resolve(fallback);
+            }, timeoutMs);
+
+            promise
+                .then((result) => {
+                    clearTimeout(timer);
+                    resolve(result);
+                })
+                .catch((error) => {
+                    clearTimeout(timer);
+                    console.warn('[API] SecureStore error:', error);
+                    resolve(fallback);
+                });
+        });
+    }
+
     async getToken(): Promise<string | null> {
-        if (this.token) return this.token;
-        try {
-            this.token = await SecureStore.getItemAsync(TOKEN_KEY);
+        if (this.token) {
+            console.log('[API] Using cached token');
             return this.token;
-        } catch {
+        }
+        try {
+            console.log('[API] Fetching token from SecureStore...');
+            this.token = await this.withTimeout(
+                SecureStore.getItemAsync(TOKEN_KEY),
+                5000, // 5 second timeout
+                null
+            );
+            console.log('[API] Token retrieved:', this.token ? 'exists' : 'null');
+            return this.token;
+        } catch (error) {
+            console.error('[API] getToken error:', error);
             return null;
         }
     }
 
     async setToken(token: string): Promise<void> {
-        this.token = token;
-        await SecureStore.setItemAsync(TOKEN_KEY, token);
+        console.log('[API] Setting token (in-memory)...');
+        this.token = token; // Set in-memory immediately
+
+        console.log('[API] Persisting token to SecureStore...');
+        try {
+            await this.withTimeout(
+                SecureStore.setItemAsync(TOKEN_KEY, token),
+                5000, // 5 second timeout
+                undefined
+            );
+            console.log('[API] Token persisted successfully');
+        } catch (error) {
+            console.warn('[API] Failed to persist token, continuing with in-memory only:', error);
+        }
     }
 
     async clearToken(): Promise<void> {
+        console.log('[API] Clearing tokens...');
         this.token = null;
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-        await SecureStore.deleteItemAsync(USER_KEY);
+        try {
+            await this.withTimeout(SecureStore.deleteItemAsync(TOKEN_KEY), 5000, undefined);
+            await this.withTimeout(SecureStore.deleteItemAsync(USER_KEY), 5000, undefined);
+            console.log('[API] Tokens cleared');
+        } catch (error) {
+            console.warn('[API] Error clearing tokens:', error);
+        }
     }
 
     async saveDriver(driver: Driver): Promise<void> {
-        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(driver));
+        console.log('[API] Saving driver data...');
+        try {
+            await this.withTimeout(
+                SecureStore.setItemAsync(USER_KEY, JSON.stringify(driver)),
+                5000,
+                undefined
+            );
+            console.log('[API] Driver data saved');
+        } catch (error) {
+            console.warn('[API] Failed to save driver data:', error);
+        }
     }
 
     async getDriver(): Promise<Driver | null> {
         try {
-            const driverData = await SecureStore.getItemAsync(USER_KEY);
-            return driverData ? JSON.parse(driverData) : null;
-        } catch {
+            console.log('[API] Fetching driver from SecureStore...');
+            const driverData = await this.withTimeout(
+                SecureStore.getItemAsync(USER_KEY),
+                5000,
+                null
+            );
+            const driver = driverData ? JSON.parse(driverData) : null;
+            console.log('[API] Driver retrieved:', driver?.full_name || 'null');
+            return driver;
+        } catch (error) {
+            console.error('[API] getDriver error:', error);
             return null;
         }
     }
@@ -155,20 +222,12 @@ class DriverApiService {
 
         let response: Response;
         try {
-            // Wrap fetch with retry logic for network resilience
-            response = await withRetry(
-                () => fetch(url, {
-                    ...options,
-                    headers,
-                }),
-                {
-                    maxRetries: 3,
-                    initialDelay: 1000,
-                    backoffMultiplier: 2,
-                }
-            );
+            response = await fetch(url, {
+                ...options,
+                headers,
+            });
         } catch (networkError) {
-            console.error('[API] Network error after retries:', networkError);
+            console.error('[API] Network error:', networkError);
             throw new Error('Network error - please check your connection');
         }
 
@@ -197,20 +256,33 @@ class DriverApiService {
 
     // ========== AUTH ==========
     async login(phone: string, password: string): Promise<AuthResponse> {
+        console.log('[API] ========== LOGIN START ==========');
+        console.log('[API] Phone:', phone);
+
+        console.log('[API] Calling login endpoint...');
         const data = await this.request<AuthResponse>(API_ENDPOINTS.LOGIN, {
             method: 'POST',
             body: JSON.stringify({ phone_number: phone, password }),
         });
+        console.log('[API] Login response received:', JSON.stringify({ userType: data.userType, userId: data.userId, hasToken: !!data.token }));
 
         // Verify this is a driver account
+        console.log('[API] Checking userType:', data.userType);
         if (data.userType !== 'driver') {
+            console.error('[API] userType mismatch! Expected "driver", got:', data.userType);
             throw new Error('This app is for drivers only. Please use the customer app.');
         }
+        console.log('[API] userType verified as driver ✓');
 
         if (data.token) {
+            console.log('[API] Setting token...');
             await this.setToken(data.token);
+            console.log('[API] Token set successfully ✓');
+        } else {
+            console.warn('[API] No token in response!');
         }
 
+        console.log('[API] ========== LOGIN SUCCESS ==========');
         return data;
     }
 
