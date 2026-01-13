@@ -39,8 +39,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_vehicles_vin_unique
 ON customer_vehicles(customer_id, vin_number) 
 WHERE vin_number IS NOT NULL AND vin_number != '';
 
--- Add vehicle photo columns to requests table
-ALTER TABLE requests 
+-- Add vehicle photo columns to part_requests table
+ALTER TABLE part_requests 
 ADD COLUMN IF NOT EXISTS car_front_image_url VARCHAR(500),
 ADD COLUMN IF NOT EXISTS car_rear_image_url VARCHAR(500),
 ADD COLUMN IF NOT EXISTS saved_vehicle_id UUID REFERENCES customer_vehicles(vehicle_id);
@@ -61,9 +61,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger if not exists
-DROP TRIGGER IF EXISTS trg_update_vehicle_last_used ON requests;
+DROP TRIGGER IF EXISTS trg_update_vehicle_last_used ON part_requests;
 CREATE TRIGGER trg_update_vehicle_last_used
-    AFTER INSERT ON requests
+    AFTER INSERT ON part_requests
     FOR EACH ROW
     EXECUTE FUNCTION update_vehicle_last_used();
 
