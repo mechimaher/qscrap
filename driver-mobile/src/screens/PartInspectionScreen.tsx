@@ -23,6 +23,8 @@ import { Colors } from '../constants/theme';
 import { api } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
 import { API_ENDPOINTS } from '../config/api';
+import { executeWithOfflineFallback } from '../utils/syncHelper';
+import * as FileSystem from 'expo-file-system';
 
 interface ChecklistItem {
     id: string;
@@ -126,15 +128,43 @@ export default function PartInspectionScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
         try {
-            // Upload photos and inspection data
-            // Upload photos and inspection data
-            // VVIP: Use Offline Queue for guaranteed sync
-            // 1. Optimistic Update
+            // 1. Optimistic Update (Immediate UI feedback)
             const { useJobStore } = require('../stores/useJobStore');
             useJobStore.getState().updateAssignmentStatus(assignmentId, 'picked_up');
 
-            // 2. Direct API Call (Removed OfflineQueue for simplicity/reliability)
-            await api.updateAssignmentStatus(assignmentId, 'picked_up', `Inspection complete. ${photos.length} photo(s) taken. All checks passed.`);
+            // 2. Upload Photo (Hybrid Sync)
+            if (photos.length > 0) {
+                const photoUri = photos[0];
+                const inspectionNotes = `Inspection complete. ${photos.length} photo(s) taken. Checks passed.`;
+
+                await executeWithOfflineFallback(
+                    // Primary: Direct Upload
+                    async () => {
+                        const base64 = await FileSystem.readAsStringAsync(photoUri, { encoding: 'base64' });
+                        await api.uploadProof(assignmentId, base64, undefined, inspectionNotes);
+                    },
+                    // Fallback Config
+                    {
+                        endpoint: API_ENDPOINTS.UPLOAD_PROOF(assignmentId),
+                        method: 'POST',
+                        body: { photoPath: photoUri, notes: inspectionNotes }
+                    },
+                    { successMessage: 'Inspection photo uploaded' }
+                );
+            }
+
+            // 3. Update Status (Hybrid Sync)
+            await executeWithOfflineFallback(
+                // Primary
+                async () => api.updateAssignmentStatus(assignmentId, 'picked_up', { notes: notes }),
+                // Fallback Config
+                {
+                    endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
+                    method: 'PATCH',
+                    body: { status: 'picked_up', notes: notes }
+                },
+                { successMessage: 'Status updated' }
+            );
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert(
@@ -144,8 +174,6 @@ export default function PartInspectionScreen() {
                     {
                         text: 'Start Delivery',
                         onPress: () => {
-                            // Go back to detail screen which will now show "Start Delivery" or "In Transit"
-                            // triggering the next step in the flow smoothly
                             navigation.goBack();
                         },
                     },

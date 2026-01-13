@@ -24,6 +24,7 @@ import { api, API_ENDPOINTS } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/theme';
 import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
+import { executeWithOfflineFallback } from '../utils/syncHelper';
 
 type WizardStep = 'photo' | 'signature' | 'payment' | 'success';
 
@@ -87,7 +88,7 @@ export default function ProofOfDeliveryScreen() {
             const permanentUri = ((FileSystem as any).documentDirectory || '') + photoFilename;
             await FileSystem.copyAsync({ from: photoUri, to: permanentUri });
 
-            // 2. Queue the upload
+            // 2. Upload Proof (Hybrid Sync)
             // We use OfflineQueue to ensure this happens even if net drops now
             const payload = {
                 photoPath: permanentUri, // Service will read this
@@ -96,37 +97,39 @@ export default function ProofOfDeliveryScreen() {
                 completedAt: new Date().toISOString()
             };
 
-            // Call API via Queue (simulated via direct for now, or wrapped in queue)
-            // Ideally: offlineQueue.enqueue('UPLOAD_PROOF', { ... })
-            // For now, let's assume direct call but wrapped (api.uploadProof)
-            // But actually we want the Queue to handle the partial offline case.
-            // Let's use the explicit queue method if available, or api.
-
-            // Using API directly for now as per `api.ts`, but it should really stay offline-first.
-            // Let's trust the OfflineQueueService integration we built earlier.
-            // But wait, `api.uploadProof` isn't using queue yet in `api.ts`.
-            // In Session 4 we added `offlineQueue.enqueue`. Let's use that directly here 
-            // to guarantee offline support.
-
-            // 2. Call API directly (Removed OfflineQueue per request for simplicity)
-            // This uploads the proof immediately. If it fails, the user sees an error and can retry.
-            // Reading the file as base64 first since api.uploadProof expects base64 string
-            const base64Photo = await FileSystem.readAsStringAsync(permanentUri, {
-                encoding: 'base64'
-            });
-
-            await api.uploadProof(
-                assignmentId,
-                base64Photo,
-                signatureData.replace('data:image/png;base64,', ''), // Remove prefix if API expects clean base64
-                `Payment: ${paymentMethod}`
+            await executeWithOfflineFallback(
+                async () => {
+                    const base64Photo = await FileSystem.readAsStringAsync(permanentUri, {
+                        encoding: 'base64'
+                    });
+                    await api.uploadProof(
+                        assignmentId,
+                        base64Photo,
+                        signatureData.replace('data:image/png;base64,', ''),
+                        `Payment: ${paymentMethod}`
+                    );
+                },
+                {
+                    endpoint: API_ENDPOINTS.UPLOAD_PROOF(assignmentId),
+                    method: 'POST',
+                    body: payload
+                },
+                { successMessage: 'Proof uploaded' }
             );
 
-            // 3. Update status directly
+            // 3. Update status (Hybrid Sync)
             const { useJobStore } = require('../stores/useJobStore');
             useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
 
-            await api.updateAssignmentStatus(assignmentId, 'delivered', `Delivered via App. Payment: ${paymentMethod}`);
+            await executeWithOfflineFallback(
+                async () => api.updateAssignmentStatus(assignmentId, 'delivered', { notes: `Delivered via App. Payment: ${paymentMethod}` }),
+                {
+                    endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
+                    method: 'PATCH',
+                    body: { status: 'delivered', notes: `Delivered via App. Payment: ${paymentMethod}` }
+                },
+                { successMessage: 'Delivery completed' }
+            );
 
             setStep('success');
         } catch (err: any) {

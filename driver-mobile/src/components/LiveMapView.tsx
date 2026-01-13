@@ -8,7 +8,7 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { Assignment } from '../services/api';
-import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
+import { VVIP_MIDNIGHT_STYLE, VVIP_LIGHT_STYLE } from '../constants/mapStyle';
 
 interface DriverLocation {
     latitude: number;
@@ -28,7 +28,10 @@ export default function LiveMapView({
     height = 200,
     showRoute = true
 }: LiveMapViewProps) {
-    const { colors } = useTheme();
+    const { colors, isDarkMode } = useTheme();
+
+    // Theme-aware map style
+    const mapStyle = isDarkMode ? VVIP_MIDNIGHT_STYLE : VVIP_LIGHT_STYLE;
     const cameraRef = useRef<any>(null);
 
     // Google Maps Route State (LatLng objects)
@@ -144,7 +147,7 @@ export default function LiveMapView({
                 ref={cameraRef}
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
-                customMapStyle={VVIP_MIDNIGHT_STYLE}
+                customMapStyle={mapStyle}
                 showsUserLocation={true} // Enable native blue dot as backup/reference
                 showsMyLocationButton={true} // Allow driver to recenter
                 loadingEnabled={true} // Show loading spinner while tiles load

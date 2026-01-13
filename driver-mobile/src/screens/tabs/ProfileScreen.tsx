@@ -15,15 +15,24 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import { api } from '../../services/api';
 import { Colors, Spacing } from '../../constants/theme';
+import { LEGAL_DOCS } from '../../constants/legal';
 
 export default function ProfileScreen() {
+    const navigation = useNavigation<any>();
     const { driver, logout, refreshDriver } = useAuth();
     const { colors } = useTheme();
+    const {
+        navApp, setNavApp,
+        language, setLanguage,
+        notificationsEnabled, setNotificationsEnabled
+    } = useSettings();
 
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [isBankModalVisible, setIsBankModalVisible] = useState(false);
@@ -87,11 +96,11 @@ export default function ProfileScreen() {
     };
 
     const handleTerms = () => {
-        Linking.openURL('https://qscrap.qa/terms');
+        navigation.navigate('WebView', { html: LEGAL_DOCS.TERMS, title: 'Terms & Conditions' });
     };
 
     const handlePrivacyPolicy = () => {
-        Linking.openURL('https://qscrap.qa/privacy');
+        navigation.navigate('WebView', { html: LEGAL_DOCS.PRIVACY, title: 'Privacy Policy' });
     };
 
     const handleDeleteAccount = () => {
@@ -138,6 +147,38 @@ export default function ProfileScreen() {
                 },
             ]
         );
+    };
+
+    const handleNavAppChange = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            'Preferred Navigation',
+            'Select your default navigation app:',
+            [
+                { text: 'In-App Map', onPress: () => setNavApp('in_app'), style: navApp === 'in_app' ? 'default' : 'default' },
+                { text: 'Google Maps', onPress: () => setNavApp('google'), style: navApp === 'google' ? 'default' : 'default' },
+                { text: 'Waze', onPress: () => setNavApp('waze'), style: navApp === 'waze' ? 'default' : 'default' },
+                { text: 'Cancel', style: 'cancel' }
+            ]
+        );
+    };
+
+    const handleLanguageChange = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            'Language / اللغة',
+            'Select your preferred language:',
+            [
+                { text: 'English', onPress: () => setLanguage('en'), style: language === 'en' ? 'default' : 'default' },
+                { text: 'العربية (Arabic)', onPress: () => setLanguage('ar'), style: language === 'ar' ? 'default' : 'default' },
+                { text: 'Cancel', style: 'cancel' }
+            ]
+        );
+    };
+
+    const toggleNotifications = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setNotificationsEnabled(!notificationsEnabled);
     };
 
     const getStatusColor = () => {
@@ -300,33 +341,39 @@ export default function ProfileScreen() {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
                     <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-                        <TouchableOpacity style={styles.settingRow}>
+                        <TouchableOpacity style={styles.settingRow} onPress={toggleNotifications}>
                             <Text style={styles.settingIcon}>🔔</Text>
                             <Text style={[styles.settingLabel, { color: colors.text }]}>
                                 Notifications
                             </Text>
-                            <Text style={[styles.settingValue, { color: Colors.success }]}>
-                                Enabled
-                            </Text>
+                            <View style={[
+                                styles.toggle,
+                                { backgroundColor: notificationsEnabled ? Colors.success : colors.border }
+                            ]}>
+                                <View style={[
+                                    styles.toggleKnob,
+                                    { transform: [{ translateX: notificationsEnabled ? 12 : 0 }] }
+                                ]} />
+                            </View>
                         </TouchableOpacity>
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={() => Alert.alert('Language', 'Arabic support coming soon!')}>
+                        <TouchableOpacity style={styles.settingRow} onPress={handleLanguageChange}>
                             <Text style={styles.settingIcon}>🌐</Text>
                             <Text style={[styles.settingLabel, { color: colors.text }]}>
                                 Language
                             </Text>
                             <Text style={[styles.settingValue, { color: colors.text }]}>
-                                English (US)
+                                {language === 'en' ? 'English (US)' : 'العربية'}
                             </Text>
                         </TouchableOpacity>
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={() => Alert.alert('Navigation App', 'Choose between Google Maps and Waze')}>
+                        <TouchableOpacity style={styles.settingRow} onPress={handleNavAppChange}>
                             <Text style={styles.settingIcon}>🗺️</Text>
                             <Text style={[styles.settingLabel, { color: colors.text }]}>
                                 Navigation App
                             </Text>
                             <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                In-App Map
+                                {navApp === 'in_app' ? 'In-App Map' : navApp === 'google' ? 'Google Maps' : 'Waze'}
                             </Text>
                         </TouchableOpacity>
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -768,5 +815,23 @@ const styles = StyleSheet.create({
     editLink: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    toggle: {
+        width: 36,
+        height: 20,
+        borderRadius: 12,
+        padding: 2,
+        justifyContent: 'center',
+    },
+    toggleKnob: {
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 2,
     },
 });

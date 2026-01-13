@@ -326,7 +326,7 @@ export default function NavigationScreen() {
                                     {formatDistance(currentStep.distance)}
                                 </Text>
                                 <Text style={[styles.navStreet, { color: colors.text }]} numberOfLines={1}>
-                                    {currentStep.name || 'Continue straight'}
+                                    {currentStep.instruction || 'Continue straight'}
                                 </Text>
                             </View>
                         </>

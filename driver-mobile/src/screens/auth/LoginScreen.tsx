@@ -13,6 +13,7 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -147,6 +148,12 @@ export default function LoginScreen() {
                         <Text style={styles.footerSubtext}>
                             Contact support if you need assistance
                         </Text>
+                        <TouchableOpacity
+                            style={styles.helpButton}
+                            onPress={() => Linking.openURL('whatsapp://send?phone=97455555555')}
+                        >
+                            <Text style={styles.helpButtonText}>Need Help?</Text>
+                        </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
             </SafeAreaView>
@@ -275,6 +282,18 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.4)',
         fontSize: 11,
         marginTop: 4,
+    },
+    helpButton: {
+        marginTop: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 20,
+    },
+    helpButtonText: {
+        color: Colors.secondary,
+        fontSize: 12,
+        fontWeight: 'bold',
     },
 });
 

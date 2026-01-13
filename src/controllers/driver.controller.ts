@@ -139,6 +139,26 @@ export const getMyStats = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getWallet = async (req: AuthRequest, res: Response) => {
+    try {
+        const wallet = await driverService.getWallet(req.user!.userId);
+        res.json({ wallet });
+    } catch (err) {
+        console.error('getWallet Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const getWalletHistory = async (req: AuthRequest, res: Response) => {
+    try {
+        const history = await driverService.getWalletHistory(req.user!.userId);
+        res.json({ history });
+    } catch (err) {
+        console.error('getWalletHistory Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
 export const getEarningsTrend = async (req: AuthRequest, res: Response) => {
     try {
         const trend = await driverService.getEarningsTrend(req.user!.userId);
