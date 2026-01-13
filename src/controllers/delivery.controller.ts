@@ -97,17 +97,61 @@ export const createDriver = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Name and phone are required' });
     }
 
+    const client = await pool.connect();
     try {
-        const result = await pool.query(`
-            INSERT INTO drivers (full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-        `, [full_name, phone, email || null, vehicle_type || 'motorcycle', vehicle_plate || null, vehicle_model || null]);
+        await client.query('BEGIN');
 
-        res.status(201).json({ driver: result.rows[0], message: 'Driver created successfully' });
+        // 1. Check if user already exists with this phone
+        const existingUser = await client.query(
+            'SELECT user_id FROM users WHERE phone_number = $1',
+            [phone]
+        );
+
+        if (existingUser.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'A user with this phone number already exists' });
+        }
+
+        // 2. Create user record first (so they can login)
+        const bcrypt = require('bcryptjs');
+        const defaultPassword = 'QScrap2026';
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+        const userResult = await client.query(`
+            INSERT INTO users (phone_number, password_hash, user_type, full_name, email, is_active)
+            VALUES ($1, $2, 'driver', $3, $4, true)
+            RETURNING user_id
+        `, [phone, passwordHash, full_name, email || null]);
+
+        const userId = userResult.rows[0].user_id;
+
+        // 3. Create driver record linked to user
+        const driverResult = await client.query(`
+            INSERT INTO drivers (user_id, full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model, status, is_active)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'available', true)
+            RETURNING *
+        `, [
+            userId,
+            full_name,
+            phone,
+            email || null,
+            vehicle_type || 'motorcycle',
+            vehicle_plate || null,
+            vehicle_model || null
+        ]);
+
+        await client.query('COMMIT');
+
+        res.status(201).json({
+            driver: driverResult.rows[0],
+            message: 'Driver created successfully. Default password: ' + defaultPassword
+        });
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error('createDriver Error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
+    } finally {
+        client.release();
     }
 };
 
