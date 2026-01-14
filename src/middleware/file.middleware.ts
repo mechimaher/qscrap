@@ -64,12 +64,28 @@ export const optimizeImage = async (req: Request, res: Response, next: NextFunct
     }
 };
 
-// 4. Multiple Image Optimization (for arrays like car photos)
+// 4. Multiple Image Optimization (for arrays OR fields object)
 export const optimizeFiles = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) return next();
+    if (!req.files) return next();
+
+    // Handle both upload.array() (returns File[]) and upload.fields() (returns { fieldName: File[] })
+    let allFiles: Express.Multer.File[] = [];
+
+    if (Array.isArray(req.files)) {
+        // upload.array() format
+        allFiles = req.files as Express.Multer.File[];
+    } else {
+        // upload.fields() format - collect all files from all fields
+        const fieldsObj = req.files as { [fieldname: string]: Express.Multer.File[] };
+        for (const fieldName of Object.keys(fieldsObj)) {
+            allFiles.push(...(fieldsObj[fieldName] || []));
+        }
+    }
+
+    if (allFiles.length === 0) return next();
 
     try {
-        const promises = (req.files as Express.Multer.File[]).map(async (file) => {
+        const promises = allFiles.map(async (file) => {
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
             const filename = uniqueSuffix + '.webp';
             const filepath = path.join(uploadDir, filename);
