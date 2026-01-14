@@ -122,15 +122,15 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
     // Handle files - upload.fields() returns { fieldName: File[] }
     const fileFields = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
-    // Part images
-    const partImages = fileFields?.['images'] || [];
+    // Part images - filter out any files without paths
+    const partImages = (fileFields?.['images'] || []).filter(f => f && f.path);
     const image_urls = partImages.map(f => '/' + f.path.replace(/\\/g, '/'));
 
-    // Vehicle photos (optional)
+    // Vehicle photos (optional) - with defensive checks
     const frontImageFile = fileFields?.['car_front_image']?.[0];
     const rearImageFile = fileFields?.['car_rear_image']?.[0];
-    const car_front_image_url = frontImageFile ? '/' + frontImageFile.path.replace(/\\/g, '/') : null;
-    const car_rear_image_url = rearImageFile ? '/' + rearImageFile.path.replace(/\\/g, '/') : null;
+    const car_front_image_url = frontImageFile?.path ? '/' + frontImageFile.path.replace(/\\/g, '/') : null;
+    const car_rear_image_url = rearImageFile?.path ? '/' + rearImageFile.path.replace(/\\/g, '/') : null;
 
     const client = await pool.connect();
     try {
