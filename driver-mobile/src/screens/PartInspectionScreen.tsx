@@ -167,13 +167,17 @@ export default function PartInspectionScreen() {
             );
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            // 4. SEAMLESS FLOW: Navigate back with success - AssignmentDetail will detect new status
+            // and show "Start Delivery" button automatically
             Alert.alert(
                 '✅ Inspection Complete',
-                'Part verified. Proceeding to delivery.',
+                'Part verified! Swipe to start delivery when ready.',
                 [
                     {
-                        text: 'Start Delivery',
+                        text: 'Continue',
                         onPress: () => {
+                            // Go back to assignment detail - it will auto-refresh and show next action
                             navigation.goBack();
                         },
                     },
