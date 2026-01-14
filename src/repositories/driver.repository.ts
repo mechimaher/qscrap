@@ -79,7 +79,7 @@ export class DriverRepository {
         const db = this.getClient(client);
         const result = await db.query(`
             SELECT 
-                da.assignment_id, da.order_id, da.driver_id, da.status, da.assignment_type,
+                da.assignment_id, da.order_id, da.driver_id, da.status, da.assignment_type, da.created_at,
                 da.pickup_address, da.delivery_address, 
                 da.pickup_lat::FLOAT as pickup_lat, da.pickup_lng::FLOAT as pickup_lng, 
                 da.delivery_lat::FLOAT as delivery_lat, da.delivery_lng::FLOAT as delivery_lng,
