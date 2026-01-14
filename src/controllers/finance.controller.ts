@@ -854,7 +854,16 @@ export const confirmPayment = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify operations
+        // Notify operations (Persistent)
+        await createNotification({
+            userId: 'operations',
+            type: 'payment_confirmed',
+            title: 'Payment Confirmed ✅',
+            message: `Garage confirmed receipt of ${payout.net_amount} QAR payment for Order #${payout.order_number}`,
+            data: { payout_id, order_number: payout.order_number, amount: payout.net_amount, garage_id: garageId },
+            target_role: 'operations'
+        });
+
         const io = (global as any).io;
         if (io) {
             io.emit('payment_confirmed', {

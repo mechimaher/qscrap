@@ -77,8 +77,9 @@ export const createNotification = async (payload: NotificationPayload) => {
             emitToOperations('new_notification', socketPayload);
         }
 
-        // 3. Send Expo Push Notification (for mobile apps - customer & driver)
-        if (target_role === 'customer' || target_role === 'driver') {
+        // 3. Send Expo Push Notification (for mobile apps - customer, driver & garage)
+        // Garages also have mobile dashboard access and should receive push notifications
+        if (target_role === 'customer' || target_role === 'driver' || target_role === 'garage') {
             try {
                 await pushService.sendToUser(
                     userId,

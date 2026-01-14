@@ -373,8 +373,17 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             notification: statusMessages[order_status] || `Order status updated to ${order_status}`
         });
 
-        // Notify Operations when order is ready for collection
+        // Notify Operations when order is ready for collection (Persistent)
         if (order_status === 'ready_for_pickup') {
+            await createNotification({
+                userId: 'operations',
+                type: 'order_ready_for_pickup',
+                title: 'Ready for Collection 📦',
+                message: `Order #${currentOrder.order_number} is ready for collection!`,
+                data: { order_id, order_number: currentOrder.order_number },
+                target_role: 'operations'
+            });
+
             (global as any).io.to('operations').emit('order_ready_for_pickup', {
                 order_id,
                 order_number: currentOrder.order_number,
@@ -578,7 +587,16 @@ export const confirmDelivery = async (req: AuthRequest, res: Response) => {
 
         await client.query('COMMIT');
 
-        // Notify garage (use garage_ room)
+        // Notify garage order completed (Persistent + Push)
+        await createNotification({
+            userId: order.garage_id,
+            type: 'order_completed',
+            title: 'Order Completed ✅',
+            message: `Order #${order.order_number} delivered! Payment of ${order.garage_payout_amount} QAR will be processed soon.`,
+            data: { order_id, order_number: order.order_number, payout_amount: order.garage_payout_amount },
+            target_role: 'garage'
+        });
+
         (global as any).io.to(`garage_${order.garage_id}`).emit('order_completed', {
             order_id,
             order_number: order.order_number,
@@ -586,7 +604,16 @@ export const confirmDelivery = async (req: AuthRequest, res: Response) => {
             payout_amount: order.garage_payout_amount
         });
 
-        // CRITICAL: Notify Operations dashboard for real-time update
+        // Notify Operations dashboard (Persistent)
+        await createNotification({
+            userId: 'operations',
+            type: 'order_completed',
+            title: 'Order Completed',
+            message: `Order #${order.order_number} completed - customer confirmed receipt`,
+            data: { order_id, order_number: order.order_number, garage_id: order.garage_id },
+            target_role: 'operations'
+        });
+
         (global as any).io.to('operations').emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
