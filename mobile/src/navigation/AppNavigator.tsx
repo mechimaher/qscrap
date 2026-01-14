@@ -148,12 +148,50 @@ const MainStack: React.FC = () => {
     );
 };
 
+import { createNavigationContainerRef } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
+
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 // Root Navigator
 const AppNavigator: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
     const { isDark, colors } = useTheme();
     const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
     const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+
+    // Deep Linking & Notification Handling
+    useEffect(() => {
+        // Handle notification taps
+        const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+            const data = response.notification.request.content.data;
+            const type = data?.type;
+
+            console.log('[AppNavigator] Notification tapped:', type, data);
+
+            if (navigationRef.isReady()) {
+                // Handle different notification types
+                if (type === 'bid_accepted' || type === 'order_update' || type === 'order_created' || type === 'delivery_update') {
+                    const orderId = data?.order_id || data?.orderId;
+                    if (orderId) {
+                        // Navigate to Order Details
+                        navigationRef.navigate('OrderDetails', { orderId });
+                    }
+                } else if (type === 'new_bid' || type === 'bid_update') {
+                    const requestId = data?.request_id || data?.requestId;
+                    if (requestId) {
+                        // Navigate to Request Details
+                        navigationRef.navigate('RequestDetails', { requestId });
+                    }
+                } else if (type === 'message') {
+                    // Optionally navigate to chat if supported
+                    // navigationRef.navigate('Support');
+                }
+            }
+        });
+
+        return () => subscription.remove();
+    }, []);
 
     // Check if onboarding has been completed
     useEffect(() => {
@@ -215,7 +253,10 @@ const AppNavigator: React.FC = () => {
     }
 
     return (
-        <NavigationContainer theme={isDark ? DarkNavigationTheme : LightNavigationTheme}>
+        <NavigationContainer
+            ref={navigationRef}
+            theme={isDark ? DarkNavigationTheme : LightNavigationTheme}
+        >
             {isAuthenticated ? <MainStack /> : <AuthStack />}
         </NavigationContainer>
     );
