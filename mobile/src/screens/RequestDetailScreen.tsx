@@ -686,25 +686,14 @@ export default function RequestDetailScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             toast.success('🎉 Order Created!', 'Taking you to your orders...');
 
-                            // Premium UX: Auto-navigate to Orders after acceptance
+                            // Premium UX: Auto-navigate to Order Details after acceptance
                             setTimeout(() => {
-                                // Use reset to navigate to MainTabs with Orders as initial tab
+                                // Navigate to Order Details for the newly created order
                                 navigation.reset({
-                                    index: 0,
+                                    index: 1,
                                     routes: [
-                                        {
-                                            name: 'MainTabs',
-                                            state: {
-                                                routes: [
-                                                    { name: 'Home' },
-                                                    { name: 'Requests' },
-                                                    { name: 'Orders' },
-                                                    { name: 'Profile' },
-                                                    { name: 'Support' },
-                                                ],
-                                                index: 2, // Orders tab index
-                                            },
-                                        },
+                                        { name: 'MainTabs' },
+                                        { name: 'OrderDetails', params: { orderId: result.order_id } },
                                     ],
                                 });
                             }, 1200);
