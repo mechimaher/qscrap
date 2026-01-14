@@ -20,7 +20,12 @@ const handleMulterError = (fn: any) => (req: Request, res: Response, next: NextF
 };
 
 // Customer creates request (with compressed images)
-router.post('/', authenticate, requireRole('customer'), handleMulterError(upload.array('images', 5)), optimizeFiles, createRequest);
+// Accept: images[] (up to 5), car_front_image (1), car_rear_image (1)
+router.post('/', authenticate, requireRole('customer'), handleMulterError(upload.fields([
+    { name: 'images', maxCount: 5 },
+    { name: 'car_front_image', maxCount: 1 },
+    { name: 'car_rear_image', maxCount: 1 }
+])), optimizeFiles, createRequest);
 
 // Customer views their requests
 router.get('/my', authenticate, requireRole('customer'), getMyRequests);

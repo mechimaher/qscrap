@@ -119,9 +119,18 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: modelCheck.message });
     }
 
-    // Handle files - normalize paths to /uploads/filename format
-    const files = req.files as Express.Multer.File[];
-    const image_urls = files ? files.map(f => '/' + f.path.replace(/\\/g, '/')) : [];
+    // Handle files - upload.fields() returns { fieldName: File[] }
+    const fileFields = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+    // Part images
+    const partImages = fileFields?.['images'] || [];
+    const image_urls = partImages.map(f => '/' + f.path.replace(/\\/g, '/'));
+
+    // Vehicle photos (optional)
+    const frontImageFile = fileFields?.['car_front_image']?.[0];
+    const rearImageFile = fileFields?.['car_rear_image']?.[0];
+    const car_front_image_url = frontImageFile ? '/' + frontImageFile.path.replace(/\\/g, '/') : null;
+    const car_rear_image_url = rearImageFile ? '/' + rearImageFile.path.replace(/\\/g, '/') : null;
 
     const client = await pool.connect();
     try {
@@ -129,10 +138,10 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
         const result = await client.query(
             `INSERT INTO part_requests
-      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, part_category, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, part_category, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng, car_front_image_url, car_rear_image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING request_id, created_at`,
-            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, part_category || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null]
+            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, part_category || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null, car_front_image_url, car_rear_image_url]
         );
 
         const request = result.rows[0];
@@ -220,14 +229,17 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         await client.query('ROLLBACK');
 
         // Cleanup uploaded files on error
-        if (files && files.length > 0) {
-            for (const file of files) {
-                try {
-                    await fs.unlink(file.path);
-                    console.log(`[REQUEST] Cleaned up file: ${file.path}`);
-                } catch (unlinkErr) {
-                    console.error('[REQUEST] File cleanup error:', unlinkErr);
-                }
+        const allFiles = [
+            ...(fileFields?.['images'] || []),
+            ...(fileFields?.['car_front_image'] || []),
+            ...(fileFields?.['car_rear_image'] || [])
+        ];
+        for (const file of allFiles) {
+            try {
+                await fs.unlink(file.path);
+                console.log(`[REQUEST] Cleaned up file: ${file.path}`);
+            } catch (unlinkErr) {
+                console.error('[REQUEST] File cleanup error:', unlinkErr);
             }
         }
 
