@@ -16,11 +16,44 @@ interface SyncOptions {
 }
 
 /**
+ * Check if error is a network error that warrants offline fallback
+ */
+const isNetworkError = (error: any): boolean => {
+    if (!error) return false;
+
+    const message = error.message?.toLowerCase() || '';
+    const name = error.name?.toLowerCase() || '';
+
+    // Common network error patterns
+    const networkPatterns = [
+        'network request failed',
+        'network error',
+        'failed to fetch',
+        'networkerror',
+        'timeout',
+        'connection refused',
+        'econnrefused',
+        'enotfound',
+        'socket hang up',
+        'abort',
+        'no internet',
+        'offline'
+    ];
+
+    // Check if it's a TypeError (common for fetch failures)
+    if (name === 'typeerror' && message.includes('fetch')) {
+        return true;
+    }
+
+    return networkPatterns.some(pattern => message.includes(pattern));
+};
+
+/**
  * Executes an API call with an offline fallback option.
  * 1. Tries the direct API call.
  * 2. If successful, calls onSuccess.
- * 3. If it fails, checks if it's a network error (or generic failure) and asks the user to queue it.
- * 4. If user accepts, enqueues the request and calls onQueued.
+ * 3. If it fails with a NETWORK error, asks the user to queue it.
+ * 4. If it fails with a SERVER error, shows the actual error message.
  */
 export const executeWithOfflineFallback = async (
     apiCall: () => Promise<any>,
@@ -33,7 +66,6 @@ export const executeWithOfflineFallback = async (
 
         // 2. Success
         if (options.successMessage) {
-            // Optional: Toast or simple log
             console.log(`[Sync] Success: ${options.successMessage}`);
         }
         options.onSuccess?.(result);
@@ -42,11 +74,15 @@ export const executeWithOfflineFallback = async (
     } catch (error: any) {
         console.log('[Sync] Direct call failed:', error.message);
 
-        // 3. Fallback Logic
-        // We assume most errors during an action like this might be network related 
-        // or server timeout if the logic was otherwise correct.
-        // We give the user the choice.
+        // 3. Check if this is actually a network error
+        if (!isNetworkError(error)) {
+            // It's a server error (400, 500, etc.) - show actual error, don't offer offline queue
+            console.log('[Sync] Server error, not offering offline fallback');
+            options.onError?.(error);
+            throw error; // Re-throw so caller can handle it properly
+        }
 
+        // 4. Network error - offer offline fallback
         return new Promise((resolve) => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
