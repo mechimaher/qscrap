@@ -4,6 +4,7 @@ import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import { createNotification, createBatchNotifications } from '../services/notification.service';
+import { autoSaveVehicle } from './vehicle.controller';
 import fs from 'fs/promises';
 
 // ============================================
@@ -222,6 +223,22 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         } catch (socketErr) {
             console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
             // Don't fail the request creation
+        }
+
+        // Auto-save vehicle for repeat orders (My Vehicles feature)
+        try {
+            await autoSaveVehicle(
+                userId,
+                car_make,
+                car_model,
+                yearCheck.value,
+                vin_number || undefined,
+                car_front_image_url || undefined,
+                car_rear_image_url || undefined
+            );
+        } catch (autoSaveErr) {
+            console.error('[REQUEST] Vehicle auto-save failed:', autoSaveErr);
+            // Non-blocking
         }
 
         res.status(201).json({ message: 'Request created', request_id: request.request_id });
