@@ -572,6 +572,16 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
         // Notify garage and customer
         const io = (global as any).io;
 
+        // Notify garage order collected (Persistent + Push)
+        await createNotification({
+            userId: order.garage_id,
+            type: 'order_collected',
+            title: 'Part Collected 📦',
+            message: `Order #${order.order_number} has been collected for QC inspection`,
+            data: { order_id, order_number: order.order_number },
+            target_role: 'garage'
+        });
+
         io.to(`garage_${order.garage_id}`).emit('order_collected', {
             order_id,
             order_number: order.order_number,
@@ -579,7 +589,16 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             notification: `📦 Order #${order.order_number} has been collected for QC inspection`
         });
 
-        // Notify operations dashboard to update Quality badge
+        // Notify operations dashboard (Persistent)
+        await createNotification({
+            userId: 'operations',
+            type: 'order_collected',
+            title: 'Order Collected',
+            message: `Order #${order.order_number} collected - ready for QC!`,
+            data: { order_id, order_number: order.order_number },
+            target_role: 'operations'
+        });
+
         io.to('operations').emit('order_collected', {
             order_id,
             order_number: order.order_number,
@@ -829,7 +848,16 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
                 console.error('[DeliveryController] Driver notification failed:', notifyErr);
             }
 
-            // B. Notify CUSTOMER
+            // B. Notify CUSTOMER (Persistent + Push)
+            await createNotification({
+                userId: order.customer_id,
+                type: 'driver_assigned',
+                title: 'Driver On The Way 🚚',
+                message: `Driver ${driver.full_name} is on the way with your part!`,
+                data: { order_id, order_number: order.order_number, driver_name: driver.full_name },
+                target_role: 'customer'
+            });
+
             io.to(`user_${order.customer_id}`).emit('driver_assigned', {
                 order_id,
                 order_number: order.order_number,
@@ -852,7 +880,16 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
                 notification: `🚚 Your order is on the way!`
             });
 
-            // C. Notify GARAGE
+            // C. Notify GARAGE (Persistent + Push)
+            await createNotification({
+                userId: order.garage_id,
+                type: 'delivery_started',
+                title: 'Delivery Started 📦',
+                message: `Order #${order.order_number} is now in transit to customer`,
+                data: { order_id, order_number: order.order_number, driver_name: driver.full_name },
+                target_role: 'garage'
+            });
+
             io.to(`garage_${order.garage_id}`).emit('delivery_started', {
                 order_id,
                 order_number: order.order_number,

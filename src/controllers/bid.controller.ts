@@ -315,6 +315,16 @@ export const rejectBid = async (req: AuthRequest, res: Response) => {
             [bid_id]
         );
 
+        // Notify garage their bid was rejected (Persistent + Push)
+        await createNotification({
+            userId: bid.garage_id,
+            type: 'bid_rejected',
+            title: 'Bid Not Selected',
+            message: `Your bid for ${bid.car_make} ${bid.car_model} was not selected.`,
+            data: { bid_id, car_make: bid.car_make, car_model: bid.car_model },
+            target_role: 'garage'
+        });
+
         emitToGarage(bid.garage_id, 'bid_rejected', {
             bid_id,
             message: `Your bid for ${bid.car_make} ${bid.car_model} was not selected.`
@@ -381,6 +391,16 @@ export const updateBid = async (req: AuthRequest, res: Response) => {
             [bid_amount, warranty_days, notes, part_condition, brand_name, bid_id]
         );
 
+        // Notify customer of bid update (Persistent + Push)
+        await createNotification({
+            userId: bid.customer_id,
+            type: 'bid_updated',
+            title: 'Bid Updated 🔄',
+            message: `A garage updated their bid for ${bid.car_make} ${bid.car_model}`,
+            data: { bid_id, request_id: bid.request_id, new_amount: bid_amount },
+            target_role: 'customer'
+        });
+
         emitToUser(bid.customer_id, 'bid_updated', {
             request_id: bid.request_id,
             message: `A garage updated their bid for ${bid.car_make} ${bid.car_model}`,
@@ -426,6 +446,16 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
             'UPDATE part_requests SET bid_count = GREATEST(0, bid_count - 1) WHERE request_id = $1',
             [bid.request_id]
         );
+
+        // Notify customer of bid withdrawal (Persistent + Push)
+        await createNotification({
+            userId: bid.customer_id,
+            type: 'bid_withdrawn',
+            title: 'Bid Withdrawn',
+            message: `A garage withdrew their bid for ${bid.car_make} ${bid.car_model}`,
+            data: { bid_id, request_id: bid.request_id },
+            target_role: 'customer'
+        });
 
         emitToUser(bid.customer_id, 'bid_withdrawn', {
             request_id: bid.request_id,
