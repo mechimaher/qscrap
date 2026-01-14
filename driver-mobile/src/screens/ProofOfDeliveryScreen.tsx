@@ -146,7 +146,7 @@ export default function ProofOfDeliveryScreen() {
             const timer = setTimeout(() => {
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'Main' }],
+                    routes: [{ name: 'MainTabs' }],
                 });
             }, 2500);
             return () => clearTimeout(timer);
