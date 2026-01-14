@@ -688,7 +688,25 @@ export default function RequestDetailScreen() {
 
                             // Premium UX: Auto-navigate to Orders after acceptance
                             setTimeout(() => {
-                                (navigation as any).replace('MainTabs', { screen: 'Orders' });
+                                // Use reset to navigate to MainTabs with Orders as initial tab
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [
+                                        {
+                                            name: 'MainTabs',
+                                            state: {
+                                                routes: [
+                                                    { name: 'Home' },
+                                                    { name: 'Requests' },
+                                                    { name: 'Orders' },
+                                                    { name: 'Profile' },
+                                                    { name: 'Support' },
+                                                ],
+                                                index: 2, // Orders tab index
+                                            },
+                                        },
+                                    ],
+                                });
                             }, 1200);
                         } catch (error: any) {
                             toast.error('Error', error.message || 'Failed to accept bid');
