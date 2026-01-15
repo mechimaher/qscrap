@@ -69,14 +69,14 @@ function isAuthorizedUser(token) {
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
+    const phone_number = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
     try {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ phone_number, password })
         });
         const data = await res.json();
         if (res.ok && data.token) {
