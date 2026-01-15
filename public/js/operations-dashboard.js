@@ -2443,15 +2443,6 @@ async function resolveDispute(disputeId, resolution, skipConfirm = false) {
     }
 }
 
-// Search with debouncing
-let searchTimeout = null;
-function searchOrders() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        loadOrders();
-    }, 300);
-}
-
 // Logout function
 function logout() {
     localStorage.removeItem('opsToken');
@@ -2742,6 +2733,54 @@ async function loadDeliveryData() {
         loadReturns()
     ]);
 }
+
+// ============================================
+// DELIVERY TAB SWITCHER
+// ============================================
+document.getElementById('deliveryTabs')?.addEventListener('click', (e) => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+
+    const panel = tab.dataset.panel;
+    if (!panel) return;
+
+    // Update active tab styling
+    document.querySelectorAll('#deliveryTabs .tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    // Get all delivery content cards
+    const allCards = document.querySelectorAll('#sectionDelivery .content-card');
+    const statsGrid = document.querySelector('#sectionDelivery .stats-grid');
+
+    // Panel mapping to content sections
+    const panelVisibility = {
+        'deliveryPanelAll': { show: 'all', hideStats: false },
+        'deliveryPanelCollection': { show: [0], hideStats: true },    // Collection table
+        'deliveryPanelDelivery': { show: [1], hideStats: true },      // Delivery table
+        'deliveryPanelActive': { show: [2], hideStats: true },        // Active deliveries
+        'deliveryPanelDrivers': { show: [3], hideStats: true },       // Drivers list
+        'deliveryPanelHistory': { show: [4], hideStats: false },      // Delivery history
+        'deliveryPanelReturns': { show: [5], hideStats: false }       // Returns
+    };
+
+    const config = panelVisibility[panel];
+    if (!config) return;
+
+    // Show/hide stats
+    if (statsGrid) {
+        statsGrid.style.display = config.hideStats ? 'none' : '';
+    }
+
+    // Show/hide content cards based on panel
+    allCards.forEach((card, idx) => {
+        if (config.show === 'all') {
+            card.style.display = '';
+        } else if (Array.isArray(config.show)) {
+            card.style.display = config.show.includes(idx) ? '' : 'none';
+        }
+    });
+});
+
 
 // Load orders ready for collection from garages
 async function loadCollectionOrders() {
