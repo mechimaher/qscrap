@@ -69,23 +69,26 @@ function isAuthorizedUser(token) {
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const phone_number = document.getElementById('loginEmail').value;
+    const phone = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
     try {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone_number, password })
+            body: JSON.stringify({ phone_number: phone, password })
         });
         const data = await res.json();
-        if (res.ok && data.token) {
+
+        if (data.token) {
             if (!isAuthorizedUser(data.token)) {
                 showToast('Access denied. Support access required.', 'error');
                 return;
             }
+            localStorage.setItem('supportToken', data.token);
+            localStorage.setItem('userId', data.userId);
+            localStorage.setItem('userType', data.userType);
             token = data.token;
-            localStorage.setItem('supportToken', token);
             showDashboard();
         } else {
             showToast(data.error || 'Login failed', 'error');
