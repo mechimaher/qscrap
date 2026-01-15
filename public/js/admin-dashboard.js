@@ -6,9 +6,17 @@
 const API_URL = '/api';
 let token = localStorage.getItem('adminToken');
 let currentGarageId = null;
-let searchDebounce = null;
 let autoRefreshInterval = null;
 let lastActivityTime = Date.now();
+
+// ============================================
+// UNIFIED DEBOUNCE UTILITY
+// ============================================
+const debounceTimers = {};
+function createDebounce(key, fn, delay = 300) {
+    clearTimeout(debounceTimers[key]);
+    debounceTimers[key] = setTimeout(fn, delay);
+}
 
 // ============================================
 // INITIALIZATION
@@ -185,11 +193,8 @@ function animateStat(elementId, value) {
 // PENDING APPROVALS / GARAGE APPROVALS
 // ============================================
 
-let approvalSearchDebounce = null;
-
 function debounceApprovalSearch() {
-    clearTimeout(approvalSearchDebounce);
-    approvalSearchDebounce = setTimeout(() => loadPendingGarages(1), 300);
+    createDebounce('approval', () => loadPendingGarages(1));
 }
 
 async function loadPendingGarages(page = 1) {
@@ -286,8 +291,7 @@ async function loadGarages(page = 1) {
 }
 
 function debounceSearch() {
-    clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(() => loadGarages(), 300);
+    createDebounce('garage', () => loadGarages());
 }
 
 // ============================================
@@ -947,13 +951,11 @@ function renderPagination(containerId, pagination, loadFunctionName, options = {
 // USER MANAGEMENT
 // ============================================
 
-let userSearchDebounce = null;
 let currentUsersPage = 1;
 let currentUserData = null;
 
 function debounceUserSearch() {
-    clearTimeout(userSearchDebounce);
-    userSearchDebounce = setTimeout(() => loadUsers(), 300);
+    createDebounce('user', () => loadUsers());
 }
 
 async function loadUsers(page = 1) {
@@ -1667,7 +1669,6 @@ async function submitCreateUser() {
 // STAFF MANAGEMENT
 // ============================================
 
-let staffSearchDebounce = null;
 const STAFF_ROLE_ICONS = {
     operations: '🎯',
     accounting: '💰',
@@ -1679,8 +1680,7 @@ const STAFF_ROLE_ICONS = {
 };
 
 function debounceStaffSearch() {
-    clearTimeout(staffSearchDebounce);
-    staffSearchDebounce = setTimeout(() => loadStaff(), 300);
+    createDebounce('staff', () => loadStaff());
 }
 
 async function loadStaff(page = 1) {
@@ -1788,11 +1788,8 @@ function renderStaffCard(staff) {
 // DRIVER MANAGEMENT
 // ============================================
 
-let driverSearchDebounce = null;
-
 function debounceDriverSearch() {
-    clearTimeout(driverSearchDebounce);
-    driverSearchDebounce = setTimeout(() => loadDrivers(), 300);
+    createDebounce('driver', () => loadDrivers());
 }
 
 async function loadDrivers(page = 1) {
