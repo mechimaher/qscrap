@@ -259,3 +259,162 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+// ==========================================
+// SUPPORT DASHBOARD ENDPOINTS
+// ==========================================
+
+// Get support stats for dashboard overview
+export const getStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const statsResult = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'open') as open_tickets,
+                COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_tickets,
+                COUNT(*) FILTER (WHERE status = 'resolved' AND DATE(updated_at) = CURRENT_DATE) as resolved_today
+            FROM support_tickets
+        `);
+
+        const disputeResult = await pool.query(`
+            SELECT COUNT(*) as order_disputes 
+            FROM order_disputes WHERE status = 'pending'
+        `);
+
+        const paymentDisputeResult = await pool.query(`
+            SELECT COUNT(*) as payment_disputes 
+            FROM garage_payouts WHERE status = 'disputed'
+        `);
+
+        const reviewResult = await pool.query(`
+            SELECT COUNT(*) as pending_reviews 
+            FROM reviews WHERE status = 'pending'
+        `);
+
+        const stats = statsResult.rows[0];
+
+        res.json({
+            open_tickets: parseInt(stats.open_tickets) || 0,
+            in_progress_tickets: parseInt(stats.in_progress_tickets) || 0,
+            resolved_today: parseInt(stats.resolved_today) || 0,
+            order_disputes: parseInt(disputeResult.rows[0]?.order_disputes) || 0,
+            payment_disputes: parseInt(paymentDisputeResult.rows[0]?.payment_disputes) || 0,
+            pending_reviews: parseInt(reviewResult.rows[0]?.pending_reviews) || 0
+        });
+    } catch (err) {
+        console.error('[SUPPORT] getStats error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Get urgent items requiring immediate action
+export const getUrgent = async (req: AuthRequest, res: Response) => {
+    try {
+        // Get tickets open for more than 24 hours
+        const urgentTickets = await pool.query(`
+            SELECT 
+                ticket_id as id,
+                'ticket' as type,
+                subject as title,
+                created_at
+            FROM support_tickets
+            WHERE status = 'open'
+              AND created_at < NOW() - INTERVAL '24 hours'
+            ORDER BY created_at ASC
+            LIMIT 5
+        `);
+
+        // Get escalated disputes
+        const urgentDisputes = await pool.query(`
+            SELECT 
+                dispute_id as id,
+                'dispute' as type,
+                reason as title,
+                created_at
+            FROM order_disputes
+            WHERE status = 'pending'
+              AND created_at < NOW() - INTERVAL '48 hours'
+            ORDER BY created_at ASC
+            LIMIT 5
+        `);
+
+        const items = [
+            ...urgentTickets.rows,
+            ...urgentDisputes.rows
+        ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+        res.json({ items });
+    } catch (err) {
+        console.error('[SUPPORT] getUrgent error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Get recent activity for dashboard
+export const getActivity = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                t.ticket_id,
+                'ticket' as type,
+                t.subject,
+                t.status,
+                t.created_at,
+                u.full_name as customer_name
+            FROM support_tickets t
+            JOIN users u ON t.customer_id = u.user_id
+            ORDER BY t.last_message_at DESC
+            LIMIT 10
+        `);
+
+        res.json({ activities: result.rows });
+    } catch (err) {
+        console.error('[SUPPORT] getActivity error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Get single ticket with full details
+export const getTicketDetail = async (req: AuthRequest, res: Response) => {
+    const { ticket_id } = req.params;
+    const userId = req.user!.userId;
+    const userType = req.user!.userType;
+
+    try {
+        // Get ticket
+        const ticketResult = await pool.query(`
+            SELECT t.*, u.full_name as customer_name, o.order_number
+            FROM support_tickets t
+            JOIN users u ON t.customer_id = u.user_id
+            LEFT JOIN orders o ON t.order_id = o.order_id
+            WHERE t.ticket_id = $1
+        `, [ticket_id]);
+
+        if (ticketResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        const ticket = ticketResult.rows[0];
+
+        // Security check for customers
+        if (userType === 'customer' && ticket.customer_id !== userId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Get messages
+        const messagesResult = await pool.query(`
+            SELECT m.*, u.full_name as sender_name
+            FROM chat_messages m
+            JOIN users u ON m.sender_id = u.user_id
+            WHERE m.ticket_id = $1
+            ORDER BY m.created_at ASC
+        `, [ticket_id]);
+
+        res.json({
+            ticket,
+            messages: messagesResult.rows
+        });
+    } catch (err) {
+        console.error('[SUPPORT] getTicketDetail error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};

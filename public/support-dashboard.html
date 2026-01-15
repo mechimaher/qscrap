@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QScrap Support Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/operations-dashboard.css">
+    <script>
+        window.toggleSidebar = function () {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('appOverlay');
+            if (sidebar) sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('is-visible');
+        };
+    </script>
+</head>
+
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="assets/images/qscrap-logo.png" alt="QScrap" class="login-logo">
+                <h1 class="login-title">Support Center</h1>
+                <p class="login-subtitle">Customer Service Dashboard</p>
+            </div>
+            <form id="loginForm" autocomplete="off">
+                <div class="form-group">
+                    <label>Email / Phone</label>
+                    <input type="text" class="form-control" id="loginEmail" placeholder="Enter credentials" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="app" style="display: none;">
+        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="assets/images/qscrap-logo.png" alt="QScrap" class="sidebar-logo-img">
+                    <div>
+                        <div class="logo-text">QScrap</div>
+                        <div class="logo-subtitle">Support</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a class="nav-item active" data-section="overview">
+                        <i class="bi bi-grid-1x2-fill"></i> Overview
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Tickets</div>
+                    <a class="nav-item" data-section="open">
+                        <i class="bi bi-envelope-open"></i> Open Tickets
+                        <span class="nav-badge" id="openBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="inProgress">
+                        <i class="bi bi-hourglass-split"></i> In Progress
+                        <span class="nav-badge" id="progressBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="resolved">
+                        <i class="bi bi-check-circle"></i> Resolved
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Disputes</div>
+                    <a class="nav-item" data-section="orderDisputes">
+                        <i class="bi bi-box-seam"></i> Order Disputes
+                        <span class="nav-badge" id="orderDisputeBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="paymentDisputes">
+                        <i class="bi bi-cash"></i> Payment Disputes
+                        <span class="nav-badge" id="paymentDisputeBadge" style="display: none;">0</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Moderation</div>
+                    <a class="nav-item" data-section="reviews">
+                        <i class="bi bi-star-half"></i> Reviews
+                        <span class="nav-badge" id="reviewBadge" style="display: none;">0</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">S</div>
+                    <div>
+                        <div class="user-name" id="userName">Support</div>
+                        <div class="user-role">Agent</div>
+                    </div>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left" style="display: flex; align-items: center;">
+                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-greeting">
+                    <span id="greetingText">Support Center</span>
+                </div>
+                <div class="header-datetime" id="headerDateTime">Loading...</div>
+            </div>
+            <div class="header-right">
+                <button class="header-btn" onclick="refreshCurrentSection()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+                <div class="header-status">
+                    <span class="status-dot"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Overview Section -->
+            <section class="section active" id="sectionOverview">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-headset"></i> Support Overview</h1>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span> Real-time
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="stat-card highlight">
+                        <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                            <i class="bi bi-envelope-open"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statOpenTickets">0</div>
+                            <div class="stat-label">Open Tickets</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statPendingDisputes">0</div>
+                            <div class="stat-label">Pending Disputes</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8D1B3D, #A82050);">
+                            <i class="bi bi-star-half"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statPendingReviews">0</div>
+                            <div class="stat-label">Pending Reviews</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statResolvedToday">0</div>
+                            <div class="stat-label">Resolved Today</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Urgent Items -->
+                <div class="content-card" style="margin-top: 24px; border-left: 4px solid var(--danger);">
+                    <h3 style="margin-bottom: 15px; color: var(--danger);"><i class="bi bi-lightning-charge"></i>
+                        Urgent: Requires Immediate Action</h3>
+                    <div id="urgentItems">
+                        <p class="empty-state">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="content-card" style="margin-top: 24px;">
+                    <div class="content-header">
+                        <h3 class="content-title">Recent Activity</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Subject</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivityTable">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Open Tickets Section -->
+            <section class="section" id="sectionOpen">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-envelope-open"></i> Open Tickets</h1>
+                </div>
+
+                <div class="support-layout" style="display: flex; gap: 20px; height: calc(100vh - 140px);">
+                    <!-- Ticket List -->
+                    <div class="ticket-list-panel"
+                        style="flex: 1; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+                        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                            <div class="search-box" style="width: 100%;">
+                                <i class="bi bi-search"></i>
+                                <input type="text" placeholder="Search tickets..." id="ticketSearch">
+                            </div>
+                        </div>
+                        <div id="openTicketList" style="flex: 1; overflow-y: auto;">
+                            <!-- Tickets loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Chat View -->
+                    <div class="ticket-chat-panel"
+                        style="flex: 2; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+                        <div id="emptyChatState"
+                            style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                            <div style="text-align: center;">
+                                <i class="bi bi-chat-left-text" style="font-size: 48px; opacity: 0.3;"></i>
+                                <p style="margin-top: 15px;">Select a ticket to view conversation</p>
+                            </div>
+                        </div>
+                        <div id="activeTicketView" style="display: none; flex-direction: column; height: 100%;">
+                            <div class="chat-header" style="padding: 16px; border-bottom: 1px solid var(--border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h3 id="ticketSubject" style="font-size: 16px; font-weight: 600;">Subject</h3>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">
+                                            Order: <span id="ticketOrder">#123</span> • <span
+                                                id="ticketCustomer">Customer</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <select id="ticketStatus" onchange="updateTicketStatus(this.value)"
+                                            class="form-control" style="width: auto; font-size: 13px;">
+                                            <option value="open">Open</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="resolved">Resolved</option>
+                                            <option value="closed">Closed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-messages" id="chatMessages"
+                                style="flex: 1; overflow-y: auto; padding: 20px;">
+                                <!-- Messages -->
+                            </div>
+                            <div class="chat-input-area" style="padding: 16px; border-top: 1px solid var(--border);">
+                                <textarea id="chatInput" class="form-control" rows="2"
+                                    placeholder="Type your reply..."></textarea>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                                    <button class="btn btn-primary" onclick="sendReply()">Send Reply</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Order Disputes Section -->
+            <section class="section" id="sectionOrderDisputes">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-box-seam" style="color: var(--primary);"></i> Order Disputes
+                    </h1>
+                    <p style="color: var(--text-secondary);">Customers reporting issues with received parts</p>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Part</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderDisputesTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Payment Disputes Section -->
+            <section class="section" id="sectionPaymentDisputes">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-cash" style="color: var(--warning);"></i> Payment Disputes
+                    </h1>
+                    <p style="color: var(--text-secondary);">Garages reporting issues with payment receipts</p>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Amount</th>
+                                <th>Issue</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentDisputesTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reviews Moderation Section -->
+            <section class="section" id="sectionReviews">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
+                    </h1>
+                    <p style="color: var(--text-secondary);">Approve or reject customer reviews</p>
+                </div>
+
+                <div class="tabs" id="reviewTabs">
+                    <div class="tab active" data-status="pending">Pending</div>
+                    <div class="tab" data-status="approved">Approved</div>
+                    <div class="tab" data-status="rejected">Rejected</div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Garage</th>
+                                <th>Rating</th>
+                                <th>Review</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="js/shared/utils.js"></script>
+    <script src="js/shared/toast.js"></script>
+    <script src="js/shared/modal.js"></script>
+    <script src="js/pagination-utils.js"></script>
+    <script src="js/support-dashboard.js"></script>
+</body>
+
+</html>

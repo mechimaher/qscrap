@@ -758,6 +758,42 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Return Assignments Panel (NEW) -->
+                <div class="content-card" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--text-primary);">
+                            <i class="bi bi-arrow-return-left" style="color: #f59e0b;"></i> Return Assignments
+                            <span id="returnsBadgeCount" class="badge" style="background: var(--warning); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;">0</span>
+                        </h3>
+                        <button class="btn btn-secondary" onclick="loadReturns()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">
+                        Parts that need to be returned to garages (rejected after inspection)
+                    </p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Garage</th>
+                                <th>Part</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <i class="bi bi-check-circle" style="font-size: 24px; color: var(--success);"></i>
+                                    <p>No pending returns</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
 

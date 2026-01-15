@@ -6,9 +6,14 @@ import { emitToGarage, emitToUser, emitToOperations } from '../utils/socketIO';
 import { createNotification } from '../services/notification.service';
 import fs from 'fs/promises';
 
+import { catchAsync } from '../utils/catchAsync';
+import { submitBid as serviceSubmitBid } from '../services/bid.service';
+
 // ============================================
-// VALIDATION HELPERS
+// VALIDATION HELPERS (Required for updateBid)
 // ============================================
+
+const VALID_PART_CONDITIONS = ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished'];
 
 const validateBidAmount = (amount: unknown): { valid: boolean; value: number; message?: string } => {
     const numAmount = parseFloat(String(amount));
@@ -24,184 +29,34 @@ const validateBidAmount = (amount: unknown): { valid: boolean; value: number; me
     return { valid: true, value: numAmount };
 };
 
-const validateWarrantyDays = (days: unknown): number | null => {
-    if (days === undefined || days === null || days === '') return null;
-    const numDays = parseInt(String(days), 10);
-    if (isNaN(numDays) || numDays < 0 || numDays > 365) return null;
-    return numDays;
-};
-
-const VALID_PART_CONDITIONS = ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished'];
-
 // ============================================
 // BID CONTROLLERS
 // ============================================
 
-export const submitBid = async (req: AuthRequest, res: Response) => {
+export const submitBid = catchAsync(async (req: AuthRequest, res: Response) => {
     const { request_id } = req.params;
     const { request_id: bodyRequestId, bid_amount, warranty_days, notes, part_condition, brand_name, part_number } = req.body;
-
-    console.log('[BID] Submit request body:', JSON.stringify(req.body, null, 2));
-    console.log('[BID] Submit request files:', req.files ? (req.files as any[]).length : 0);
-
-    const targetRequestId = request_id || bodyRequestId;
     const garageId = req.user!.userId;
 
-    // Validate bid amount
-    const amountCheck = validateBidAmount(bid_amount);
-    if (!amountCheck.valid) {
-        console.log('[BID] Amount validation failed:', amountCheck.message);
-        return res.status(400).json({ error: amountCheck.message });
-    }
+    const targetRequestId = request_id || bodyRequestId;
 
-    // Validate warranty days
-    const validatedWarranty = validateWarrantyDays(warranty_days);
+    const result = await serviceSubmitBid({
+        requestId: targetRequestId,
+        garageId,
+        bidAmount: bid_amount,
+        warrantyDays: warranty_days,
+        notes,
+        partCondition: part_condition,
+        brandName: brand_name,
+        partNumber: part_number,
+        files: req.files as Express.Multer.File[]
+    });
 
-    // Part condition validation (REQUIRED - must be new, used, or refurbished)
-    if (!part_condition || !VALID_PART_CONDITIONS.includes(part_condition)) {
-        console.log('[BID] Condition validation failed:', part_condition);
-        return res.status(400).json({ error: `Part condition is required. Must be one of: ${VALID_PART_CONDITIONS.join(', ')}` });
-    }
-
-    // Files
-    const files = req.files as Express.Multer.File[];
-    const image_urls = files ? files.map(f => '/' + f.path.replace(/\\/g, '/')) : [];
-
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        // Check request validity
-        const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [targetRequestId]);
-        if (reqCheck.rows.length === 0) throw new Error('Request not found');
-        if (reqCheck.rows[0].status !== 'active') throw new Error('Request is no longer active');
-
-        const customerId = reqCheck.rows[0].customer_id;
-
-        // Check if garage already bid on this request
-        const existingBid = await client.query(
-            'SELECT bid_id FROM bids WHERE request_id = $1 AND garage_id = $2',
-            [targetRequestId, garageId]
-        );
-        if (existingBid.rows.length > 0) {
-            throw new Error('You have already submitted a bid for this request');
-        }
-
-        // Check subscription limits
-        const subCheck = await client.query(
-            `SELECT sp.max_bids_per_month, gs.bids_used_this_cycle, gs.status
-             FROM garage_subscriptions gs
-             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
-             WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
-             ORDER BY gs.created_at DESC LIMIT 1`,
-            [garageId]
-        );
-
-        if (subCheck.rows.length > 0) {
-            const { max_bids_per_month, bids_used_this_cycle } = subCheck.rows[0];
-            if (max_bids_per_month !== null && bids_used_this_cycle >= max_bids_per_month) {
-                throw new Error('Bid limit reached for your subscription plan. Please upgrade to continue.');
-            }
-        }
-
-        // Insert Bid
-        const bidResult = await client.query(
-            `INSERT INTO bids 
-       (request_id, garage_id, bid_amount, warranty_days, notes, part_condition, brand_name, part_number, image_urls)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING bid_id, created_at`,
-            [targetRequestId, garageId, amountCheck.value, validatedWarranty, notes, part_condition, brand_name, part_number, image_urls]
-        );
-
-        // Update Request Count
-        await client.query(
-            `UPDATE part_requests SET bid_count = bid_count + 1 WHERE request_id = $1`,
-            [targetRequestId]
-        );
-
-        // NOTE: Subscription bid counter is automatically incremented by database trigger
-        // 'enforce_subscription_for_bid' - no manual increment needed to avoid duplication
-
-        // Get bid count for anonymization
-        const bidCountResult = await client.query(
-            'SELECT COUNT(*) FROM bids WHERE request_id = $1',
-            [targetRequestId]
-        );
-        const bidNumber = parseInt(bidCountResult.rows[0].count);
-
-        await client.query('COMMIT');
-
-        // Notify Customer (Real-time & Persistent)
-        try {
-            // 1. Create Notification (Persists to DB + Emits 'new_notification' + Sends Push)
-            await createNotification({
-                userId: customerId,
-                type: 'new_bid',
-                title: 'New Bid Received 🏷️',
-                message: `Garage #${bidNumber} placed a bid of ${amountCheck.value} QAR`,
-                data: {
-                    bid_id: bidResult.rows[0].bid_id,
-                    request_id: targetRequestId,
-                    garage_name: `Garage #${bidNumber}`,
-                    bid_amount: amountCheck.value,
-                    part_condition: part_condition || 'used_good',
-                    warranty_days: validatedWarranty || 0,
-                    created_at: bidResult.rows[0].created_at
-                },
-                target_role: 'customer'
-            });
-
-            // 2. Emit Legacy 'new_bid' Event (Required for Mobile App NotificationOverlay & Sound)
-            emitToUser(customerId, 'new_bid', {
-                bid_id: bidResult.rows[0].bid_id,
-                request_id: targetRequestId,
-                garage_name: `Garage #${bidNumber}`,
-                bid_amount: amountCheck.value,
-                part_condition: part_condition || 'used_good',
-                warranty_days: validatedWarranty || 0,
-                created_at: bidResult.rows[0].created_at
-            });
-            console.log(`[SOCKET] Emitted new_bid to user_${customerId}`);
-
-        } catch (socketErr) {
-            console.error('[SOCKET] Failed to emit new_bid:', socketErr);
-        }
-
-        res.status(201).json({
-            message: 'Bid submitted successfully',
-            bid_id: bidResult.rows[0].bid_id
-        });
-    } catch (err) {
-        await client.query('ROLLBACK');
-
-        // Cleanup uploaded files on error
-        if (files && files.length > 0) {
-            for (const file of files) {
-                try {
-                    await fs.unlink(file.path);
-                    console.log(`[BID] Cleaned up file: ${file.path}`);
-                } catch (unlinkErr) {
-                    console.error('[BID] File cleanup error:', unlinkErr);
-                }
-            }
-        }
-
-        console.error('[BID] Submit error:', getErrorMessage(err));
-
-        // Return user-friendly error messages
-        let userMessage = 'Failed to submit bid';
-        if (getErrorMessage(err).includes('not found')) userMessage = 'Request not found';
-        else if (getErrorMessage(err).includes('not active')) userMessage = 'Request is no longer active';
-        else if (getErrorMessage(err).includes('already submitted')) userMessage = 'You already bid on this request';
-        else if (getErrorMessage(err).includes('limit reached')) userMessage = getErrorMessage(err);
-        else if (getErrorMessage(err).includes('No active subscription')) userMessage = getErrorMessage(err);
-        else if (getErrorMessage(err).includes('demo trial has expired')) userMessage = getErrorMessage(err);
-
-        res.status(400).json({ error: userMessage });
-    } finally {
-        client.release();
-    }
-};
+    res.status(201).json({
+        message: result.message,
+        bid_id: result.bid.bid_id
+    });
+});
 
 export const getMyBids = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
@@ -466,5 +321,30 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
     } catch (err) {
         console.error('[BID] Withdraw error:', getErrorMessage(err));
         res.status(500).json({ error: 'Failed to withdraw bid' });
+    }
+};
+
+import { pricingService } from '../services/pricing.service';
+
+// GET /api/v1/bids/estimate
+export const getFairPriceEstimate = async (req: AuthRequest, res: Response) => {
+    const { part_name, car_make, car_model, car_year } = req.query;
+
+    if (!part_name || !car_make || !car_model) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    try {
+        const estimate = await pricingService.getFairPriceEstimate(
+            String(part_name),
+            String(car_make),
+            String(car_model),
+            Number(car_year) || 0
+        );
+
+        res.json({ estimate });
+    } catch (err) {
+        console.error('[BID] Estimate error:', err);
+        res.status(500).json({ error: 'Failed to get estimate' });
     }
 };
