@@ -597,17 +597,17 @@ async function loadRefunds() {
         const refunds = data.transactions || data.refunds || [];
 
         if (refunds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No refunds</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i> No refunds processed</td></tr>';
             return;
         }
 
         tbody.innerHTML = refunds.map(r => `
             <tr>
-                <td>#${escapeHTML(r.order_number)}</td>
-                <td>${escapeHTML(r.customer_name)}</td>
-                <td style="color: var(--danger);">-${formatCurrency(r.amount)}</td>
-                <td>${escapeHTML(r.reason)}</td>
-                <td>${escapeHTML(r.created_by)}</td>
+                <td>#${escapeHTML(r.order_number || r.order_id?.slice(0, 8))}</td>
+                <td>${escapeHTML(r.customer_name || '-')}</td>
+                <td style="color: var(--danger); font-weight: 600;">-${formatCurrency(r.amount || r.refund_amount)}</td>
+                <td>${escapeHTML(r.reason || r.refund_reason || '-')}</td>
+                <td>${escapeHTML(r.created_by || 'Finance')}</td>
                 <td>${formatDate(r.created_at)}</td>
             </tr>
         `).join('');
@@ -617,15 +617,180 @@ async function loadRefunds() {
 }
 
 function openRefundModal() {
-    // TODO: Implement refund creation modal
-    showToast('Refund creation coming soon', 'info');
+    // Reset form
+    document.getElementById('refundOrderNumber').value = '';
+    document.getElementById('refundOrderDetails').style.display = 'none';
+    document.getElementById('submitRefundBtn').disabled = true;
+    document.getElementById('refundModal').style.display = 'flex';
+}
+
+function closeRefundModal() {
+    document.getElementById('refundModal').style.display = 'none';
+}
+
+async function searchOrderForRefund() {
+    const orderNumber = document.getElementById('refundOrderNumber').value.trim();
+    if (!orderNumber) {
+        showToast('Enter an order number', 'error');
+        return;
+    }
+
+    try {
+        // Search for order by order_number
+        const res = await fetch(`${API_URL}/operations/orders?search=${encodeURIComponent(orderNumber)}&limit=1`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const orders = data.orders || data || [];
+        if (orders.length === 0) {
+            showToast('Order not found', 'error');
+            return;
+        }
+
+        const order = orders[0];
+
+        // Populate order details
+        document.getElementById('refundOrderId').textContent = `#${order.order_number}`;
+        document.getElementById('refundCustomerName').textContent = order.customer_name || 'Customer';
+        document.getElementById('refundGarageName').textContent = order.garage_name || 'Garage';
+        document.getElementById('refundOrderAmount').textContent = formatCurrency(order.total_amount);
+        document.getElementById('refundOrderIdHidden').value = order.order_id;
+        document.getElementById('refundAmount').value = '';
+        document.getElementById('refundAmount').max = order.total_amount;
+        document.getElementById('refundReason').value = '';
+        document.getElementById('refundNotes').value = '';
+
+        // Show order details section
+        document.getElementById('refundOrderDetails').style.display = 'block';
+        document.getElementById('submitRefundBtn').disabled = false;
+
+        showToast('Order found!', 'success');
+    } catch (err) {
+        console.error('Error searching order:', err);
+        showToast('Failed to search order', 'error');
+    }
+}
+
+async function submitRefund() {
+    const orderId = document.getElementById('refundOrderIdHidden').value;
+    const amount = document.getElementById('refundAmount').value;
+    const reason = document.getElementById('refundReason').value;
+    const method = document.getElementById('refundMethod').value;
+    const notes = document.getElementById('refundNotes').value;
+
+    if (!orderId) {
+        showToast('Please search for an order first', 'error');
+        return;
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+        showToast('Enter a valid refund amount', 'error');
+        return;
+    }
+
+    if (!reason) {
+        showToast('Select a refund reason', 'error');
+        return;
+    }
+
+    // Confirm action
+    const orderNumber = document.getElementById('refundOrderId').textContent;
+    if (!confirm(`Process refund of ${formatCurrency(amount)} for ${orderNumber}?\n\nThis will adjust the garage payout and notify them.`)) {
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('submitRefundBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+        const res = await fetch(`${API_URL}/finance/refund/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                refund_amount: parseFloat(amount),
+                refund_reason: reason + (notes ? ` - ${notes}` : ''),
+                refund_method: method
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Refund of ${formatCurrency(amount)} processed successfully!`, 'success');
+            closeRefundModal();
+            loadRefunds();
+            loadOverview(); // Refresh stats
+        } else {
+            showToast(data.error || 'Failed to process refund', 'error');
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-return-left"></i> Process Refund';
+    } catch (err) {
+        console.error('Error processing refund:', err);
+        showToast('Connection error', 'error');
+        document.getElementById('submitRefundBtn').disabled = false;
+        document.getElementById('submitRefundBtn').innerHTML = '<i class="bi bi-arrow-return-left"></i> Process Refund';
+    }
 }
 
 // ==========================================
 // EXPORT
 // ==========================================
 
-function exportPayouts() {
-    showToast('Preparing CSV export...', 'info');
-    // TODO: Implement full export
+async function exportPayouts() {
+    showToast('Generating CSV export...', 'info');
+
+    try {
+        // Fetch all completed payouts
+        const res = await fetch(`${API_URL}/finance/payouts?status=confirmed&limit=1000`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const payouts = data.payouts || [];
+
+        if (payouts.length === 0) {
+            showToast('No payouts to export', 'error');
+            return;
+        }
+
+        // Generate CSV
+        const headers = ['Garage', 'Order #', 'Net Amount', 'Payment Method', 'Reference', 'Date'];
+        const rows = payouts.map(p => [
+            p.garage_name,
+            p.order_number,
+            p.net_amount,
+            p.payment_method || 'Bank Transfer',
+            p.payout_reference || '-',
+            new Date(p.confirmed_at || p.created_at).toLocaleDateString()
+        ]);
+
+        let csv = headers.join(',') + '\n';
+        rows.forEach(row => {
+            csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+        });
+
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `qscrap_payouts_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast(`Exported ${payouts.length} payouts`, 'success');
+    } catch (err) {
+        console.error('Export failed:', err);
+        showToast('Export failed', 'error');
+    }
+}
+
+function exportCompletedPayouts() {
+    exportPayouts();
 }
