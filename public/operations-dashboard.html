@@ -110,29 +110,23 @@
                         Disputes
                         <span class="nav-badge" id="disputesBadge" style="display: none;">0</span>
                     </a>
-                    <a class="nav-item" data-section="reviewModeration">
-                        <i class="bi bi-star-half"></i>
-                        Reviews
-                        <span class="nav-badge" id="reviewModerationBadge" style="display: none;">0</span>
-                    </a>
-                    <a class="nav-item" data-section="support">
-                        <i class="bi bi-headset"></i>
-                        Support
-                        <span class="nav-badge" id="supportBadge" style="display: none;">0</span>
+                    <a class="nav-item" data-section="reports">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        Reports
                     </a>
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-section-title">Management</div>
-
-                    <a class="nav-item" data-section="finance">
-                        <i class="bi bi-cash-stack"></i>
-                        Finance
-                        <span class="nav-badge" id="financeBadge" style="display: none;">0</span>
+                    <div class="nav-section-title">Quick Links</div>
+                    <a class="nav-item" href="/finance-dashboard.html" target="_blank"
+                        style="justify-content: space-between;">
+                        <span><i class="bi bi-cash-stack"></i> Finance Center</span>
+                        <i class="bi bi-box-arrow-up-right" style="font-size: 11px; opacity: 0.6;"></i>
                     </a>
-                    <a class="nav-item" data-section="reports">
-                        <i class="bi bi-file-earmark-bar-graph"></i>
-                        Reports
+                    <a class="nav-item" href="/support-dashboard.html" target="_blank"
+                        style="justify-content: space-between;">
+                        <span><i class="bi bi-headset"></i> Support Center</span>
+                        <i class="bi bi-box-arrow-up-right" style="font-size: 11px; opacity: 0.6;"></i>
                     </a>
                 </div>
             </nav>
@@ -344,74 +338,6 @@
 
 
 
-            <!-- Support Section -->
-            <section class="section" id="sectionSupport">
-                <div class="page-header">
-                    <h1 class="page-title">Support Tickets</h1>
-                </div>
-
-                <div class="support-layout" style="display: flex; gap: 20px; height: calc(100vh - 140px);">
-                    <!-- Ticket List -->
-                    <div class="ticket-list-panel"
-                        style="flex: 1; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
-                        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid var(--border);">
-                            <div class="search-box" style="width: 100%;">
-                                <i class="bi bi-search"></i>
-                                <input type="text" placeholder="Search tickets..." id="ticketSearch">
-                            </div>
-                        </div>
-                        <div id="supportTicketList" style="flex: 1; overflow-y: auto;">
-                            <!-- Tickets loaded here -->
-                        </div>
-                    </div>
-
-                    <!-- Chat View -->
-                    <div class="ticket-chat-panel"
-                        style="flex: 2; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
-                        <div id="emptyChatState"
-                            style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
-                            Select a ticket to view conversation
-                        </div>
-                        <div id="activeTicketView" style="display: none; flex-direction: column; height: 100%;">
-                            <div class="chat-header"
-                                style="background: var(--bg-secondary); color: var(--text-primary); border-bottom: 1px solid var(--border); padding: 16px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <h3 id="opsTicketSubject"
-                                            style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Subject</h3>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">
-                                            Order: <span id="opsTicketOrder">#123</span> • <span
-                                                id="opsTicketCustomer">Customer</span>
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; gap: 8px;">
-                                        <select id="opsTicketStatus" onchange="updateTicketStatus(this.value)"
-                                            class="form-control" style="width: auto; font-size: 13px;">
-                                            <option value="open">Open</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="resolved">Resolved</option>
-                                            <option value="closed">Closed</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="chat-messages" id="opsChatMessages"
-                                style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-primary);">
-                                <!-- Messages -->
-                            </div>
-                            <div class="chat-input-area"
-                                style="padding: 16px; border-top: 1px solid var(--border); background: var(--bg-primary);">
-                                <textarea id="opsChatInput" class="form-control" rows="2"
-                                    placeholder="Type your reply..."></textarea>
-                                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                                    <button class="btn btn-primary" onclick="sendOpsMessage()">Send Reply</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- Disputes Section -->
             <section class="section" id="sectionDisputes">
                 <div class="page-header">
@@ -523,44 +449,6 @@
                         </tbody>
                     </table>
                 </div>
-            </section>
-
-            <!-- Review Moderation Section -->
-            <section class="section" id="sectionReviewModeration">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
-                    </h1>
-                    <p style="color: var(--text-secondary);">Approve or reject customer reviews before they are visible
-                    </p>
-                </div>
-
-                <div class="tabs" id="reviewTabs">
-                    <div class="tab active" data-status="pending">Pending</div>
-                    <div class="tab" data-status="approved">Approved</div>
-                    <div class="tab" data-status="rejected">Rejected</div>
-                </div>
-
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>Garage</th>
-                                <th>Rating</th>
-                                <th>Review</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reviewModerationTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Pagination Container -->
-                <div id="reviewsPagination"></div>
             </section>
 
             <!-- Delivery Section -->
@@ -761,10 +649,12 @@
 
                 <!-- Return Assignments Panel (NEW) -->
                 <div class="content-card" style="margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h3 style="color: var(--text-primary);">
                             <i class="bi bi-arrow-return-left" style="color: #f59e0b;"></i> Return Assignments
-                            <span id="returnsBadgeCount" class="badge" style="background: var(--warning); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;">0</span>
+                            <span id="returnsBadgeCount" class="badge"
+                                style="background: var(--warning); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;">0</span>
                         </h3>
                         <button class="btn btn-secondary" onclick="loadReturns()">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
@@ -796,114 +686,6 @@
                 </div>
             </section>
 
-
-
-            <!-- Finance Section --!>
-            <section class="section" id="sectionFinance">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-cash-stack"></i> Finance & Payouts</h1>
-                </div>
-
-                <!-- Finance Stats -->
-            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
-                <div class="stat-card highlight">
-                    <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
-                        <i class="bi bi-currency-dollar"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="financeTotalRevenue">0 QAR</div>
-                        <div class="stat-label">Platform Revenue</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="financePendingPayouts">0 QAR</div>
-                        <div class="stat-label">Pending Payouts</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #8D1B3D, #A82050);">
-                        <i class="bi bi-hourglass-split"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="financeProcessingPayouts">0 QAR</div>
-                        <div class="stat-label">Awaiting Confirmation</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value" id="financeCompletedPayouts">0 QAR</div>
-                        <div class="stat-label">Paid Out (Total)</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pending Payouts Table -->
-            <div class="content-card">
-                <div class="table-header">
-                    <h3><i class="bi bi-clock-history" style="color: var(--warning);"></i> Pending Payouts</h3>
-                    <button class="btn btn-primary" onclick="processAllPayouts()"
-                        style="display: flex; align-items: center; gap: 8px;">
-                        <i class="bi bi-check2-all"></i> Process All
-                    </button>
-                </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Garage</th>
-                            <th>Order</th>
-                            <th>Gross Amount</th>
-                            <th>Commission</th>
-                            <th>Net Payout</th>
-                            <th>Scheduled</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingPayoutsTable">
-                        <tr>
-                            <td colspan="7" class="empty-state">
-                                <i class="bi bi-hourglass" style="font-size: 32px; color: var(--text-muted);"></i>
-                                <p>Loading payouts...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="pendingPayoutsPagination"></div>
-            </div>
-
-            <!-- Recent Transactions -->
-            <div class="content-card" style="margin-top: 24px;">
-                <div class="table-header">
-                    <h3><i class="bi bi-list-check" style="color: var(--accent);"></i> Recent Transactions</h3>
-                </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Order</th>
-                            <th>Garage</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsTable">
-                        <tr>
-                            <td colspan="6" class="empty-state">
-                                <i class="bi bi-inbox" style="font-size: 32px; color: var(--text-muted);"></i>
-                                <p>Loading transactions...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            </section>
 
             <!-- Reports Section -->
             <section class="section" id="sectionReports">
