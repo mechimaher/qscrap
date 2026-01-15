@@ -492,15 +492,114 @@
         </div>
     </div>
 
+    <!-- Refund Modal -->
+    <div class="modal-overlay" id="refundModal" style="display: none;">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+                <h2><i class="bi bi-arrow-return-left"></i> Create Refund</h2>
+                <button class="modal-close" onclick="closeRefundModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Order Search -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Order Number *</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="refundOrderNumber" class="form-control" placeholder="e.g. ORD-12345">
+                        <button class="btn btn-secondary" onclick="searchOrderForRefund()">
+                            <i class="bi bi-search"></i> Find
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Order Details (initially hidden) -->
+                <div id="refundOrderDetails" style="display: none;">
+                    <div
+                        style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Order:</span>
+                            <strong id="refundOrderId">#-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Customer:</span>
+                            <span id="refundCustomerName">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Garage:</span>
+                            <span id="refundGarageName">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">Order Amount:</span>
+                            <strong id="refundOrderAmount" style="color: var(--accent);">0 QAR</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Refund Amount *</label>
+                        <div style="position: relative;">
+                            <input type="number" id="refundAmount" class="form-control" placeholder="0" min="1"
+                                step="0.01">
+                            <span
+                                style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">QAR</span>
+                        </div>
+                        <small style="color: var(--text-secondary);">Enter partial or full refund amount</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Refund Reason *</label>
+                        <select id="refundReason" class="form-control">
+                            <option value="">Select reason...</option>
+                            <option value="Part damaged during delivery">Part damaged during delivery</option>
+                            <option value="Wrong part sent">Wrong part sent</option>
+                            <option value="Part defective/not working">Part defective/not working</option>
+                            <option value="Order cancelled by customer">Order cancelled by customer</option>
+                            <option value="Order not delivered">Order not delivered</option>
+                            <option value="Duplicate order">Duplicate order</option>
+                            <option value="Other">Other (specify in notes)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Refund Method</label>
+                        <select id="refundMethod" class="form-control">
+                            <option value="original_payment">Return to Original Payment</option>
+                            <option value="wallet_credit">Wallet Credit</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Notes (Optional)</label>
+                        <textarea id="refundNotes" class="form-control" rows="2"
+                            placeholder="Additional notes..."></textarea>
+                    </div>
+
+                    <input type="hidden" id="refundOrderIdHidden">
+
+                    <div
+                        style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Warning:</strong> This action will
+                        automatically adjust or cancel the garage payout. The garage will be notified.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeRefundModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="submitRefund()" id="submitRefundBtn" disabled>
+                    <i class="bi bi-arrow-return-left"></i> Process Refund
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-    <script src="js/shared/utils.js?v=20260115b"></script>
-    <script src="js/shared/toast.js?v=20260115b"></script>
-    <script src="js/shared/modal.js?v=20260115b"></script>
-    <script src="js/pagination-utils.js?v=20260115b"></script>
-    <script src="js/finance-dashboard.js?v=20260115b"></script>
+    <script src="js/shared/utils.js?v=20260115c"></script>
+    <script src="js/shared/toast.js?v=20260115c"></script>
+    <script src="js/shared/modal.js?v=20260115c"></script>
+    <script src="js/pagination-utils.js?v=20260115c"></script>
+    <script src="js/finance-dashboard.js?v=20260115c"></script>
 </body>
 
 </html>
