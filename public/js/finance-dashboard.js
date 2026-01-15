@@ -621,11 +621,17 @@ function openRefundModal() {
     document.getElementById('refundOrderNumber').value = '';
     document.getElementById('refundOrderDetails').style.display = 'none';
     document.getElementById('submitRefundBtn').disabled = true;
-    document.getElementById('refundModal').style.display = 'flex';
+
+    const modal = document.getElementById('refundModal');
+    modal.style.display = 'flex';
+    // CSS requires .active class for visibility (opacity/visibility transition)
+    setTimeout(() => modal.classList.add('active'), 10);
 }
 
 function closeRefundModal() {
-    document.getElementById('refundModal').style.display = 'none';
+    const modal = document.getElementById('refundModal');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300); // Wait for transition
 }
 
 async function searchOrderForRefund() {
