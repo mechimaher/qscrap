@@ -551,10 +551,164 @@ function getOrderActions(order) {
 let currentOrdersPage = 1;
 const ORDERS_PER_PAGE = 20;
 
+// Order filter state
+let orderFilters = {
+    search: '',
+    dateFrom: '',
+    dateTo: '',
+    garageId: ''
+};
+
+// Debounce timer for search
+let searchDebounceTimer = null;
+
+// Debounced search function
+function debounceSearch() {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        orderFilters.search = document.getElementById('orderSearch').value.trim();
+        loadOrders(1);
+    }, 300);
+}
+
+// Apply all order filters
+function applyOrderFilters() {
+    orderFilters.dateFrom = document.getElementById('orderDateFrom')?.value || '';
+    orderFilters.dateTo = document.getElementById('orderDateTo')?.value || '';
+    orderFilters.garageId = document.getElementById('orderGarageFilter')?.value || '';
+    loadOrders(1);
+}
+
+// Clear all filters
+function clearOrderFilters() {
+    document.getElementById('orderSearch').value = '';
+    document.getElementById('orderDateFrom').value = '';
+    document.getElementById('orderDateTo').value = '';
+    document.getElementById('orderGarageFilter').value = '';
+    orderFilters = { search: '', dateFrom: '', dateTo: '', garageId: '' };
+    loadOrders(1);
+}
+
+// Refresh orders (alias)
+function refreshOrders() {
+    loadOrdersStats();
+    loadOrders(currentOrdersPage);
+    loadGarageFilter();
+    showToast('Orders refreshed', 'success');
+}
+
+// Load order stats for stats cards
+async function loadOrdersStats() {
+    try {
+        const res = await fetch(`${API_URL}/operations/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        // Update stats cards if elements exist
+        const today = new Date().toISOString().split('T')[0];
+
+        // Today's orders (from overview stats)
+        document.getElementById('ordersTotalToday').textContent = data.orders_today || data.todayOrders || 0;
+        document.getElementById('ordersPendingConfirm').textContent = data.pending_confirmation || data.pending || 0;
+        document.getElementById('ordersReadyPickup').textContent = data.ready_for_pickup || 0;
+        document.getElementById('ordersCompletedToday').textContent = data.completed_today || 0;
+    } catch (err) {
+        console.error('Failed to load order stats:', err);
+    }
+}
+
+// Load garage dropdown filter
+async function loadGarageFilter() {
+    try {
+        const select = document.getElementById('orderGarageFilter');
+        if (!select || select.options.length > 1) return; // Already loaded
+
+        const res = await fetch(`${API_URL}/admin/garages?status=approved&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const garages = data.garages || [];
+
+        garages.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.business_name || g.name;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Failed to load garages for filter:', err);
+    }
+}
+
+// Export orders to CSV
+async function exportOrdersCSV() {
+    showToast('Generating CSV export...', 'info');
+
+    try {
+        // Build query with current filters
+        let url = `${API_URL}/operations/orders?status=${currentOrderStatus}&limit=1000`;
+        if (orderFilters.search) url += `&search=${encodeURIComponent(orderFilters.search)}`;
+        if (orderFilters.dateFrom) url += `&from=${orderFilters.dateFrom}`;
+        if (orderFilters.dateTo) url += `&to=${orderFilters.dateTo}`;
+        if (orderFilters.garageId) url += `&garage_id=${orderFilters.garageId}`;
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const orders = data.orders || [];
+
+        if (orders.length === 0) {
+            showToast('No orders to export', 'error');
+            return;
+        }
+
+        // Generate CSV
+        const headers = ['Order #', 'Customer', 'Garage', 'Part', 'Status', 'Amount', 'Date'];
+        const rows = orders.map(o => [
+            o.order_number,
+            o.customer_name || 'N/A',
+            o.garage_name || 'N/A',
+            o.part_name || o.part_description || 'N/A',
+            o.status,
+            o.total_amount,
+            new Date(o.created_at).toLocaleDateString()
+        ]);
+
+        let csv = headers.join(',') + '\n';
+        rows.forEach(row => {
+            csv += row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',') + '\n';
+        });
+
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url2 = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url2;
+        a.download = `qscrap_orders_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url2);
+
+        showToast(`Exported ${orders.length} orders`, 'success');
+    } catch (err) {
+        console.error('Export failed:', err);
+        showToast('Export failed', 'error');
+    }
+}
+
 async function loadOrders(page = 1) {
     try {
         currentOrdersPage = page;
-        const res = await fetch(`${API_URL}/operations/orders?status=${currentOrderStatus}&page=${page}&limit=${ORDERS_PER_PAGE}`, {
+
+        // Build query with filters
+        let url = `${API_URL}/operations/orders?status=${currentOrderStatus}&page=${page}&limit=${ORDERS_PER_PAGE}`;
+        if (orderFilters.search) url += `&search=${encodeURIComponent(orderFilters.search)}`;
+        if (orderFilters.dateFrom) url += `&from=${orderFilters.dateFrom}`;
+        if (orderFilters.dateTo) url += `&to=${orderFilters.dateTo}`;
+        if (orderFilters.garageId) url += `&garage_id=${orderFilters.garageId}`;
+
+        const res = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -5118,6 +5272,8 @@ function refreshCurrentSection() {
             break;
         case 'orders':
             loadOrders();
+            loadOrdersStats();
+            loadGarageFilter();
             break;
         case 'delivery':
             loadDeliveryData();
