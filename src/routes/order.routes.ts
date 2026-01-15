@@ -16,11 +16,12 @@ import {
     orderIdParamSchema,
     bidIdParamSchema
 } from '../middleware/validation.middleware';
+import { orderWriteLimiter } from '../middleware/rateLimiter.middleware';
 
 const router = Router();
 
-// Customer: Accept a bid and create order
-router.post('/accept-bid/:bid_id', authenticate, requireRole('customer'), validateParams(bidIdParamSchema), acceptBid);
+// Customer: Accept a bid and create order (rate limited)
+router.post('/accept-bid/:bid_id', authenticate, requireRole('customer'), orderWriteLimiter, validateParams(bidIdParamSchema), acceptBid);
 
 // Both: Get my orders (filtered by user type)
 router.get('/my', authenticate, getMyOrders);

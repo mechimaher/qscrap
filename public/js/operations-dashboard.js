@@ -1182,6 +1182,140 @@ async function submitAddDriver() {
 }
 
 // ==========================================
+// RETURN ASSIGNMENTS MANAGEMENT
+// ==========================================
+
+async function loadReturns() {
+    try {
+        const res = await fetch(`${API_URL}/operations/returns`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const returns = data.returns || data || [];
+        const tbody = document.getElementById('returnsTable');
+        const badgeCount = document.getElementById('returnsBadgeCount');
+
+        if (badgeCount) {
+            badgeCount.textContent = returns.length;
+            badgeCount.style.display = returns.length > 0 ? 'inline' : 'none';
+        }
+
+        if (returns.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="bi bi-check-circle" style="font-size: 24px; color: var(--success);"></i>
+                        <p>No pending returns</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = returns.map(r => {
+            const statusBadge = r.status === 'assigned'
+                ? `<span class="status-badge in_transit">Driver Assigned</span>`
+                : `<span class="status-badge pending">Awaiting Driver</span>`;
+
+            const actionBtn = r.driver_id
+                ? `<span class="status-badge completed">In Progress</span>`
+                : `<button class="btn btn-warning btn-sm" onclick="assignReturnDriver('${r.assignment_id}', '${r.order_number}')">
+                    <i class="bi bi-person-plus"></i> Assign
+                   </button>`;
+
+            return `
+                <tr>
+                    <td><strong>#${escapeHTML(r.order_number || 'N/A')}</strong></td>
+                    <td>${escapeHTML(r.garage_name || 'Unknown')}</td>
+                    <td>${escapeHTML(r.part_description || 'N/A').substring(0, 30)}...</td>
+                    <td>${escapeHTML(r.return_reason || 'QC Failed')}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionBtn}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Failed to load returns:', err);
+        document.getElementById('returnsTable').innerHTML = `
+            <tr><td colspan="6" class="empty-state">Failed to load returns</td></tr>
+        `;
+    }
+}
+
+async function assignReturnDriver(assignmentId, orderNumber) {
+    if (availableDrivers.length === 0) {
+        await loadDrivers();
+        if (availableDrivers.length === 0) {
+            showToast('No available drivers', 'error');
+            return;
+        }
+    }
+
+    const driverOptions = availableDrivers.map(d =>
+        `<option value="${d.driver_id}">${escapeHTML(d.full_name)} (${d.vehicle_type || 'Car'})</option>`
+    ).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'returnAssignModal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 400px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <h2><i class="bi bi-arrow-return-left"></i> Assign Return Driver</h2>
+                <button class="modal-close" onclick="document.getElementById('returnAssignModal').remove()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="margin-bottom: 15px;">Assign driver to return Order <strong>#${orderNumber}</strong> to garage.</p>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver</label>
+                    <select id="returnDriverSelect" class="form-control" style="width: 100%;">
+                        <option value="">-- Choose Driver --</option>
+                        ${driverOptions}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px; border-top: 1px solid var(--border-color);">
+                <button class="btn btn-ghost" onclick="document.getElementById('returnAssignModal').remove()">Cancel</button>
+                <button class="btn btn-warning" onclick="submitReturnAssignment('${assignmentId}')">
+                    <i class="bi bi-check-lg"></i> Confirm
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function submitReturnAssignment(assignmentId) {
+    const driverId = document.getElementById('returnDriverSelect').value;
+    if (!driverId) {
+        showToast('Please select a driver', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/operations/returns/${assignmentId}/assign-driver`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driver_id: driverId })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Return driver assigned!', 'success');
+            document.getElementById('returnAssignModal').remove();
+            loadReturns();
+            loadDrivers();
+        } else {
+            showToast(data.error || 'Failed to assign driver', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// ==========================================
 // UNIFIED DRIVER ASSIGNMENT LOGIC
 // ==========================================
 
@@ -2450,7 +2584,8 @@ async function loadDeliveryData() {
         loadCollectionOrders(),
         loadDeliveryPending(),
         loadActiveDeliveries(),
-        loadDriversList()
+        loadDriversList(),
+        loadReturns()
     ]);
 }
 

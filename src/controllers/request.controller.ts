@@ -3,64 +3,16 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
-import { createNotification, createBatchNotifications } from '../services/notification.service';
-import { autoSaveVehicle } from './vehicle.controller';
-import fs from 'fs/promises';
+import { createNotification } from '../services/notification.service';
+import { catchAsync } from '../utils/catchAsync';
+import { createRequest as createRequestService } from '../services/request.service';
 
 // ============================================
-// VALIDATION HELPERS
+// REQUEST CONTROLLERS
 // ============================================
 
-const validateCarYear = (year: unknown): { valid: boolean; value: number; message?: string } => {
-    const currentYear = new Date().getFullYear();
-    const numYear = parseInt(String(year), 10);
-
-    if (isNaN(numYear)) {
-        return { valid: false, value: 0, message: 'Car year must be a number' };
-    }
-    if (numYear < 1900) {
-        return { valid: false, value: 0, message: 'Car year must be 1900 or later' };
-    }
-    if (numYear > currentYear + 2) {
-        return { valid: false, value: 0, message: `Car year cannot be more than ${currentYear + 2}` };
-    }
-    return { valid: true, value: numYear };
-};
-
-const validateVIN = (vin: string | undefined): { valid: boolean; message?: string } => {
-    if (!vin || vin.trim() === '') {
-        return { valid: true }; // VIN is optional
-    }
-    const cleaned = vin.trim().toUpperCase();
-    if (cleaned.length !== 17) {
-        return { valid: false, message: 'VIN number must be exactly 17 characters' };
-    }
-    // Basic VIN format check (alphanumeric, no I, O, Q)
-    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(cleaned)) {
-        return { valid: false, message: 'Invalid VIN format' };
-    }
-    return { valid: true };
-};
-
-const validateConditionRequired = (condition: string | undefined): { valid: boolean; message?: string } => {
-    const validConditions = ['new', 'used', 'any'];
-    const cond = (condition || 'any').toLowerCase();
-
-    if (!validConditions.includes(cond)) {
-        return { valid: false, message: `Condition must be one of: ${validConditions.join(', ')}` };
-    }
-    return { valid: true };
-};
-
-const validateStringLength = (value: string, fieldName: string, maxLength: number): { valid: boolean; message?: string } => {
-    if (value && value.length > maxLength) {
-        return { valid: false, message: `${fieldName} cannot exceed ${maxLength} characters` };
-    }
-    return { valid: true };
-};
-
-export const createRequest = async (req: AuthRequest, res: Response) => {
-    const {
+export const createRequest = catchAsync(async (req: AuthRequest, res: Response) => {
+    let {
         car_make,
         car_model,
         car_year,
@@ -75,197 +27,24 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
     } = req.body;
     const userId = req.user!.userId;
 
-    // ============================================
-    // INPUT VALIDATION
-    // ============================================
+    const result = await createRequestService({
+        userId,
+        carMake: car_make,
+        carModel: car_model,
+        carYear: car_year,
+        vinNumber: vin_number,
+        partDescription: part_description,
+        partNumber: part_number,
+        partCategory: part_category,
+        conditionRequired: condition_required,
+        deliveryAddressText: delivery_address_text,
+        deliveryLat: delivery_lat ? parseFloat(delivery_lat) : undefined,
+        deliveryLng: delivery_lng ? parseFloat(delivery_lng) : undefined,
+        files: req.files as { [fieldname: string]: Express.Multer.File[] }
+    });
 
-    // Required fields
-    if (!car_make || !car_model || !car_year || !part_description) {
-        return res.status(400).json({
-            error: 'Missing required fields: car_make, car_model, car_year, part_description'
-        });
-    }
-
-    // Validate car_year
-    const yearCheck = validateCarYear(car_year);
-    if (!yearCheck.valid) {
-        return res.status(400).json({ error: yearCheck.message });
-    }
-
-    // Validate VIN if provided
-    const vinCheck = validateVIN(vin_number);
-    if (!vinCheck.valid) {
-        return res.status(400).json({ error: vinCheck.message });
-    }
-
-    // Validate condition_required
-    const conditionCheck = validateConditionRequired(condition_required);
-    if (!conditionCheck.valid) {
-        return res.status(400).json({ error: conditionCheck.message });
-    }
-
-    // String length validations
-    const descCheck = validateStringLength(part_description, 'Part description', 1000);
-    if (!descCheck.valid) {
-        return res.status(400).json({ error: descCheck.message });
-    }
-
-    const makeCheck = validateStringLength(car_make, 'Car make', 100);
-    if (!makeCheck.valid) {
-        return res.status(400).json({ error: makeCheck.message });
-    }
-
-    const modelCheck = validateStringLength(car_model, 'Car model', 100);
-    if (!modelCheck.valid) {
-        return res.status(400).json({ error: modelCheck.message });
-    }
-
-    // Handle files - upload.fields() returns { fieldName: File[] }
-    const fileFields = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-
-    // Part images - filter out any files without paths
-    const partImages = (fileFields?.['images'] || []).filter(f => f && f.path);
-    const image_urls = partImages.map(f => '/' + f.path.replace(/\\/g, '/'));
-
-    // Vehicle photos (optional) - with defensive checks
-    const frontImageFile = fileFields?.['car_front_image']?.[0];
-    const rearImageFile = fileFields?.['car_rear_image']?.[0];
-    const car_front_image_url = frontImageFile?.path ? '/' + frontImageFile.path.replace(/\\/g, '/') : null;
-    const car_rear_image_url = rearImageFile?.path ? '/' + rearImageFile.path.replace(/\\/g, '/') : null;
-
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        const result = await client.query(
-            `INSERT INTO part_requests
-      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, part_category, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng, car_front_image_url, car_rear_image_url)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      RETURNING request_id, created_at`,
-            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, part_category || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null, car_front_image_url, car_rear_image_url]
-        );
-
-        const request = result.rows[0];
-        await client.query('COMMIT');
-
-        // Notify Garages - broadcast to RELEVANT active garage sockets
-        try {
-            // 2. [FIX] Create Persistent Notifications for Relevant Garages (For Bell Icon)
-            let conditionFilter = "1=1";
-            if (condition_required === 'new') conditionFilter = "supplier_type IN ('new', 'both')";
-            else if (condition_required === 'used') conditionFilter = "supplier_type IN ('used', 'both')";
-
-            const targetGaragesResult = await client.query(`
-                SELECT garage_id, specialized_brands, all_brands 
-                FROM garages 
-                WHERE deleted_at IS NULL 
-                AND (approval_status = 'approved' OR approval_status = 'demo')
-                AND (${conditionFilter})
-            `);
-
-            const notificationsToCreate: any[] = [];
-            const io = (global as any).io; // Access io instance
-
-            targetGaragesResult.rows.forEach(garage => {
-                let matchesBrand = false;
-                const hasSpecialization = garage.specialized_brands && Array.isArray(garage.specialized_brands) && garage.specialized_brands.length > 0;
-
-                if (garage.all_brands) {
-                    matchesBrand = true;
-                } else if (hasSpecialization) {
-                    const brands = garage.specialized_brands.map((b: string) => b.toLowerCase());
-                    if (brands.includes(car_make.toLowerCase())) {
-                        matchesBrand = true;
-                    }
-                } else {
-                    // No specialization set -> Matches everything (consistent with getActiveRequests)
-                    matchesBrand = true;
-                }
-
-                if (matchesBrand) {
-                    // 1. Emit Live Request Update (Targeted)
-                    if (io) {
-                        io.to(`garage_${garage.garage_id}`).emit('new_request', {
-                            request_id: request.request_id,
-                            car_make,
-                            car_model,
-                            car_year: yearCheck.value,
-                            vin_number: vin_number || null,
-                            part_description,
-                            part_number: part_number || null,
-                            part_category: part_category || null,
-                            condition_required: condition_required || 'any',
-                            image_urls: image_urls,
-                            delivery_address_text: delivery_address_text || null,
-                            status: 'active',
-                            created_at: request.created_at,
-                            bid_count: 0
-                        });
-                    }
-
-                    // 2. Prepare Notification
-                    notificationsToCreate.push({
-                        userId: garage.garage_id,
-                        type: 'new_request',
-                        title: 'New Request Matching Your Profile 🚗',
-                        message: `${yearCheck.value} ${car_make} ${car_model}: ${part_description.substring(0, 50)}${part_description.length > 50 ? '...' : ''}`,
-                        data: { request_id: request.request_id, car_make, car_model, car_year: yearCheck.value },
-                        target_role: 'garage'
-                    });
-                }
-            });
-
-            if (notificationsToCreate.length > 0) {
-                await createBatchNotifications(notificationsToCreate);
-                console.log(`[REQUEST] Created ${notificationsToCreate.length} notifications for new request`);
-            }
-
-        } catch (socketErr) {
-            console.error('[REQUEST] Notification/Socket logic failed:', socketErr);
-            // Don't fail the request creation
-        }
-
-        // Auto-save vehicle for repeat orders (My Vehicles feature)
-        try {
-            await autoSaveVehicle(
-                userId,
-                car_make,
-                car_model,
-                yearCheck.value,
-                vin_number || undefined,
-                car_front_image_url || undefined,
-                car_rear_image_url || undefined
-            );
-        } catch (autoSaveErr) {
-            console.error('[REQUEST] Vehicle auto-save failed:', autoSaveErr);
-            // Non-blocking
-        }
-
-        res.status(201).json({ message: 'Request created', request_id: request.request_id });
-    } catch (err) {
-        await client.query('ROLLBACK');
-
-        // Cleanup uploaded files on error
-        const allFiles = [
-            ...(fileFields?.['images'] || []),
-            ...(fileFields?.['car_front_image'] || []),
-            ...(fileFields?.['car_rear_image'] || [])
-        ];
-        for (const file of allFiles) {
-            try {
-                await fs.unlink(file.path);
-                console.log(`[REQUEST] Cleaned up file: ${file.path}`);
-            } catch (unlinkErr) {
-                console.error('[REQUEST] File cleanup error:', unlinkErr);
-            }
-        }
-
-        console.error('[REQUEST] Create request error:', err);
-        res.status(500).json({ error: 'Failed to create request. Please try again.' });
-    } finally {
-        client.release();
-    }
-};
+    res.status(201).json({ message: result.message, request_id: result.request.request_id });
+});
 
 export const getActiveRequests = async (req: AuthRequest, res: Response) => {
     // For Garages - with pagination and filtering

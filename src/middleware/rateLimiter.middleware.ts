@@ -49,7 +49,54 @@ export const driverLocationLimiter = rateLimit({
     legacyHeaders: false,
     message: {
         error: 'Location updates are rate limited to once per 5 seconds',
-        retryAfter: 5
     }
 });
 
+// ============================================
+// WRITE OPERATION RATE LIMITERS
+// For high-value mutating endpoints
+// ============================================
+
+// Order creation/acceptance rate limiter
+// Prevents order spam and marketplace manipulation
+export const orderWriteLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 10, // 10 order actions per minute
+    keyGenerator: (req: any) => req.user?.userId || 'anonymous',
+    message: 'Order rate limit exceeded. Please wait before placing more orders.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Bid submission rate limiter
+// Prevents bid spam from garages
+export const bidWriteLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 20, // 20 bids per minute (garages may bid on multiple requests)
+    keyGenerator: (req: any) => req.user?.userId || 'anonymous',
+    message: 'Bid rate limit exceeded. Please wait before submitting more bids.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Request creation rate limiter
+// Prevents spam part requests
+export const requestWriteLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 5, // 5 requests per 5 minutes
+    keyGenerator: (req: any) => req.user?.userId || 'anonymous',
+    message: 'Request rate limit exceeded. Please wait before creating more requests.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Admin action rate limiter
+// Prevents mass admin operations
+export const adminWriteLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 30, // 30 admin actions per minute
+    keyGenerator: (req: any) => req.user?.userId || 'anonymous',
+    message: 'Admin action rate limit exceeded.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});

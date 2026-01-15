@@ -24,7 +24,7 @@ import { api } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
 import { API_ENDPOINTS } from '../config/api';
 import { executeWithOfflineFallback } from '../utils/syncHelper';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 interface ChecklistItem {
     id: string;

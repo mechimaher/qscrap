@@ -4,6 +4,7 @@ import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { getDeliveryFeeForLocation } from './delivery.controller';
 import { createNotification } from '../services/notification.service';
+import { predictiveService } from '../services/predictive.service';
 
 // Get commission rate based on garage's status and subscription
 // BUSINESS LOGIC:
@@ -35,69 +36,40 @@ const getGarageCommissionRate = async (garageId: string): Promise<number> => {
     return result.rows.length > 0 ? parseFloat(result.rows[0].commission_rate) : 0.15;
 };
 
+import { catchAsync } from '../utils/catchAsync';
+import { createOrderFromBid } from '../services/order.service';
+
+
 // Accept a bid and create order
-export const acceptBid = async (req: AuthRequest, res: Response) => {
+export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
     const { bid_id } = req.params;
     const customerId = req.user!.userId;
     const { payment_method, delivery_notes } = req.body;
 
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+    // Get delivery fee (Can be refactored later, keeping here for now to pass to service)
+    // We need request details first to know location.
+    // This part is slightly weird: we need to query request to calculate fee
+    const requestResult = await pool.query(
+        'SELECT delivery_lat, delivery_lng, delivery_address_text FROM part_requests WHERE request_id = (SELECT request_id FROM bids WHERE bid_id = $1)',
+        [bid_id]
+    );
 
-        // Lock Bid
-        const bidResult = await client.query(
-            'SELECT * FROM bids WHERE bid_id = $1 FOR UPDATE',
-            [bid_id]
-        );
-        if (bidResult.rows.length === 0) throw new Error('Bid not found');
-        const bid = bidResult.rows[0];
+    if (requestResult.rows.length === 0) {
+        // Service will handle "Bid not found" or we can fail early here.
+        // Let's rely on service validation for bid, but we need location for fee.
+        // The service re-fetches bid/request properly.
+        // Ideally: Service should calculate fee too.
+        // For Phase 1 speed: let's do minimal changes.
+    }
+    const request = requestResult.rows[0];
 
-        if (bid.status !== 'pending') throw new Error('Bid no longer available');
+    // Calculate delivery fee
+    let delivery_fee = 25.00; // Default
+    let delivery_zone_id: number | null = null;
+    let deliveryAddress = '';
 
-        // Lock Request
-        const reqResult = await client.query(
-            'SELECT * FROM part_requests WHERE request_id = $1 FOR UPDATE',
-            [bid.request_id]
-        );
-        if (reqResult.rows.length === 0) throw new Error('Request not found');
-        const request = reqResult.rows[0];
-
-        if (request.customer_id !== customerId) throw new Error('Access denied');
-        if (request.status !== 'active') throw new Error('Request already processed');
-
-        // Get dynamic commission rate based on garage subscription
-        const commissionRate = await getGarageCommissionRate(bid.garage_id);
-
-        // CRITICAL: Get the final negotiated price, not the original bid amount
-        // Priority: accepted customer counter > pending garage counter > last garage offer > original bid
-        const negotiatedPriceResult = await client.query(
-            `SELECT 
-                COALESCE(
-                    -- First check for accepted customer counter-offer (negotiation complete)
-                    (SELECT proposed_amount FROM counter_offers 
-                     WHERE bid_id = $1 AND status = 'accepted' AND offered_by_type = 'customer'
-                     ORDER BY created_at DESC LIMIT 1),
-                    -- Then check for pending garage counter-offer
-                    (SELECT proposed_amount FROM counter_offers 
-                     WHERE bid_id = $1 AND status = 'pending' AND offered_by_type = 'garage'
-                     ORDER BY created_at DESC LIMIT 1),
-                    -- Then check for last garage offer (from any round)
-                    (SELECT proposed_amount FROM counter_offers 
-                     WHERE bid_id = $1 AND offered_by_type = 'garage'
-                     ORDER BY created_at DESC LIMIT 1),
-                    -- Fall back to original bid amount
-                    $2
-                ) as final_price`,
-            [bid_id, bid.bid_amount]
-        );
-
-        const part_price = parseFloat(negotiatedPriceResult.rows[0].final_price);
-        const platform_fee = Math.round(part_price * commissionRate * 100) / 100;
-
-        // Get zone-based delivery fee if GPS coordinates available
-        let delivery_fee = 25.00; // Default fallback
-        let delivery_zone_id: number | null = null;
+    if (request) {
+        deliveryAddress = request.delivery_address_text;
         if (request.delivery_lat && request.delivery_lng) {
             const zoneInfo = await getDeliveryFeeForLocation(
                 parseFloat(request.delivery_lat),
@@ -106,117 +78,25 @@ export const acceptBid = async (req: AuthRequest, res: Response) => {
             delivery_fee = zoneInfo.fee;
             delivery_zone_id = zoneInfo.zone_id;
         }
-
-        const total_amount = part_price + delivery_fee;
-        const garage_payout = part_price - platform_fee;
-
-        // Get delivery address
-        const deliveryAddress = request.delivery_address_text || request.delivery_address;
-
-        // Create Order with enhanced fields
-        const orderResult = await client.query(
-            `INSERT INTO orders 
-             (request_id, bid_id, customer_id, garage_id, part_price, commission_rate, 
-              platform_fee, delivery_fee, total_amount, garage_payout_amount, 
-              payment_method, delivery_address, delivery_notes)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-             RETURNING order_id, order_number`,
-            [bid.request_id, bid_id, customerId, bid.garage_id, part_price, commissionRate,
-                platform_fee, delivery_fee, total_amount, garage_payout,
-            payment_method || 'cash', deliveryAddress, delivery_notes]
-        );
-        const order = orderResult.rows[0];
-
-        // Update statuses
-        await client.query("UPDATE bids SET status = 'accepted', updated_at = NOW() WHERE bid_id = $1", [bid_id]);
-        await client.query(
-            "UPDATE bids SET status = 'rejected', updated_at = NOW() WHERE request_id = $1 AND bid_id != $2 AND status = 'pending'",
-            [bid.request_id, bid_id]
-        );
-        await client.query("UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1", [bid.request_id]);
-
-        // Log initial status
-        await client.query(
-            `INSERT INTO order_status_history 
-             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-             VALUES ($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted bid')`,
-            [order.order_id, customerId]
-        );
-
-        // Update garage transaction count
-        await client.query(
-            `UPDATE garages SET total_transactions = total_transactions + 1, updated_at = NOW() WHERE garage_id = $1`,
-            [bid.garage_id]
-        );
-
-        await client.query('COMMIT');
-
-        // Notify winning garage (Persistent)
-        await createNotification({
-            userId: bid.garage_id,
-            type: 'bid_accepted',
-            title: 'Bid Accepted! 🎉',
-            message: "Congratulations! Your bid was accepted.",
-            data: {
-                order_id: order.order_id,
-                order_number: order.order_number,
-                request_id: bid.request_id
-            },
-            target_role: 'garage'
-        });
-
-        // EMIT LIVE EVENT: Required for Garage Dashboard to update "Orders" badge in real-time
-        (global as any).io.to(`garage_${bid.garage_id}`).emit('bid_accepted', {
-            bid_id: bid_id,
-            request_id: bid.request_id,
-            garage_id: bid.garage_id,
-            part_description: request.part_description,
-            notification: "Bid accepted! Order created."
-        });
-
-        // Notify customer (Persistent)
-        await createNotification({
-            userId: customerId,
-            type: 'order_created',
-            title: 'Order Created ✅',
-            message: `Order #${order.order_number} created! The garage will start preparing your part.`,
-            data: {
-                order_id: order.order_id,
-                order_number: order.order_number,
-                total_amount
-            },
-            target_role: 'customer'
-        });
-
-        // Notify rejected garages (Persistent)
-        const rejectedBids = await pool.query(
-            `SELECT DISTINCT garage_id FROM bids WHERE request_id = $1 AND bid_id != $2`,
-            [bid.request_id, bid_id]
-        );
-        for (const r of rejectedBids.rows) {
-            await createNotification({
-                userId: r.garage_id,
-                type: 'bid_rejected',
-                title: 'Bid Update',
-                message: "Another bid was selected for this request.",
-                data: { request_id: bid.request_id },
-                target_role: 'garage'
-            });
-        }
-
-        res.json({
-            message: 'Order created successfully',
-            order_id: order.order_id,
-            order_number: order.order_number,
-            total_amount
-        });
-    } catch (err) {
-        await client.query('ROLLBACK');
-        res.status(400).json({ error: getErrorMessage(err) });
-    } finally {
-        client.release();
     }
-};
+
+    const { order, totalAmount } = await createOrderFromBid({
+        bidId: bid_id,
+        customerId,
+        paymentMethod: payment_method,
+        deliveryNotes: delivery_notes,
+        deliveryFee: delivery_fee,
+        deliveryZoneId: delivery_zone_id,
+        deliveryAddress: deliveryAddress
+    });
+
+    res.json({
+        message: 'Order created successfully',
+        order_id: order.order_id,
+        order_number: order.order_number,
+        total_amount: totalAmount
+    });
+});
 
 // Update order status (Garage) - Strict role-based transitions
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
@@ -630,6 +510,30 @@ export const confirmDelivery = async (req: AuthRequest, res: Response) => {
             payout_amount: order.garage_payout_amount,
             notification: `💰 Order #${order.order_number} complete - payout pending for garage`
         });
+
+        // INTELLIGENT UPGRADE: Predictive Maintenance Nudge
+        try {
+            const partDescResult = await client.query('SELECT part_description FROM part_requests WHERE request_id = (SELECT request_id FROM orders WHERE order_id = $1)', [order_id]);
+            const partName = partDescResult.rows[0]?.part_description;
+
+            if (partName) {
+                const suggestions = predictiveService.getSuggestions(partName);
+                if (suggestions.length > 0) {
+                    const suggestion = suggestions[0];
+                    // Nudge the user
+                    await createNotification({
+                        userId: customerId,
+                        type: 'maintenance_reminder',
+                        title: '💡 Smart Tip for your Car',
+                        message: `Since you bought ${partName}, we recommend a ${suggestion.service_name} soon.`,
+                        data: { suggestion },
+                        target_role: 'customer'
+                    });
+                }
+            }
+        } catch (predErr) {
+            console.error('[ORDER] Predictive service failed:', predErr);
+        }
 
         res.json({
             message: 'Delivery confirmed. Thank you!',

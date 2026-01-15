@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { Response, NextFunction } from 'express';
+import { adminWriteLimiter } from '../middleware/rateLimiter.middleware';
 import {
     getPendingGarages,
     getAllGaragesAdmin,
@@ -61,6 +62,7 @@ const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
 
 router.use(authenticate);
 router.use(requireAdmin);
+router.use(adminWriteLimiter); // Rate limit all admin write operations
 
 // ============================================================================
 // DASHBOARD

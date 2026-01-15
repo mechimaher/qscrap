@@ -118,4 +118,16 @@ v1Router.use('/ocr', ocrRoutes);
 import vehicleRoutes from './vehicle.routes';
 v1Router.use('/vehicles', vehicleRoutes);
 
+// Service Routes (Repair, Home Services)
+import serviceRoutes from './services.routes';
+v1Router.use('/services', serviceRoutes);
+
+// Insurance Routes (B2B)
+import insuranceRoutes from './insurance.routes';
+v1Router.use('/insurance', insuranceRoutes);
+
+// History Routes (Public/Data)
+import historyRoutes from './history.routes';
+v1Router.use('/history', historyRoutes);
+
 export default v1Router;
