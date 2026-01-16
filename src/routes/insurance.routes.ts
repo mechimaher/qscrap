@@ -20,7 +20,13 @@ import {
     verifyMOIReport,
     holdEscrow,
     releaseEscrow,
-    getEscrowStatus
+    getEscrowStatus,
+    // Price Benchmarking Endpoints
+    checkPrice,
+    getBenchmark,
+    recordInvoicePrice,
+    getPriceTrend,
+    getInflatedParts
 } from '../controllers/insurance.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 
@@ -102,5 +108,24 @@ router.post('/claims/:claim_id/escrow/release', authenticate, requireRole('insur
 
 // Get escrow status
 router.get('/escrow/status/:escrow_id', authenticate, getEscrowStatus);
+
+// ==========================================
+// PRICE BENCHMARKING & FRAUD DETECTION
+// ==========================================
+
+// Check if quoted price is an outlier
+router.post('/price-check', authenticate, requireRole('insurance_agent'), checkPrice);
+
+// Get benchmark statistics for a part
+router.get('/benchmarks/:part_name', authenticate, requireRole('insurance_agent'), getBenchmark);
+
+// Record actual invoice price
+router.post('/record-price', authenticate, requireRole('insurance_agent'), recordInvoicePrice);
+
+// Get price trend over time
+router.get('/price-trend/:part_name', authenticate, requireRole('insurance_agent'), getPriceTrend);
+
+// Get top inflated parts (fraud detection)
+router.get('/inflated-parts', authenticate, requireRole('insurance_agent'), getInflatedParts);
 
 export default router;
