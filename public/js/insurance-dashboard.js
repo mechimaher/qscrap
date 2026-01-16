@@ -501,6 +501,7 @@ async function generateHistoryReport() {
 
         if (data.report) {
             const r = data.report;
+            lastGeneratedReport = r; // Store for PDF/share
             resultsContainer.innerHTML = `
                 <div class="content-card" style="margin-top: 24px; border: 2px solid var(--insurance-gold);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
@@ -586,14 +587,144 @@ async function generateHistoryReport() {
         `;
     }
 }
+// Store last generated report for PDF/share
+let lastGeneratedReport = null;
 
 function downloadReport(vin) {
-    showToast('Report downloaded (PDF)', 'success');
+    if (!lastGeneratedReport) {
+        showToast('No report data available. Please generate a report first.', 'error');
+        return;
+    }
+
+    // Generate PDF content using browser print
+    const r = lastGeneratedReport;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>MOTAR CERTIFIED™ History Report - ${vin}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
+                .header { display: flex; justify-content: space-between; border-bottom: 3px solid #f59e0b; padding-bottom: 20px; margin-bottom: 30px; }
+                .logo { font-size: 28px; font-weight: bold; color: #1e40af; }
+                .certified { background: #f59e0b; color: #000; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
+                .vin { font-size: 14px; color: #64748b; margin-top: 8px; }
+                .stats { display: flex; gap: 40px; margin: 30px 0; }
+                .stat { text-align: center; }
+                .stat-value { font-size: 36px; font-weight: bold; color: #1e40af; }
+                .stat-label { font-size: 12px; color: #64748b; }
+                table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+                th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; }
+                td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+                .clean-history { text-align: center; padding: 60px; background: #f0fdf4; border-radius: 12px; margin: 30px 0; }
+                .clean-history h3 { color: #10b981; margin: 0; }
+                @media print { body { padding: 20px; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div>
+                    <div class="logo">MOTAR CERTIFIED™</div>
+                    <div class="vin">Vehicle History Report</div>
+                    <div class="vin">VIN: ${vin}</div>
+                </div>
+                <div class="certified">✓ VERIFIED</div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">${r.total_repairs || 0}</div>
+                    <div class="stat-label">Total Repairs</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${r.parts_replaced || 0}</div>
+                    <div class="stat-label">Parts Replaced</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${r.certified_repairs || 0}</div>
+                    <div class="stat-label">Certified Repairs</div>
+                </div>
+            </div>
+            
+            ${r.history && r.history.length > 0 ? `
+                <h3>Repair History</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Part</th>
+                            <th>Garage</th>
+                            <th>Certification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${r.history.map(h => `
+                            <tr>
+                                <td>${h.date}</td>
+                                <td>${h.part_name}</td>
+                                <td>${h.garage_name}</td>
+                                <td>${h.certification}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            ` : `
+                <div class="clean-history">
+                    <h3>✓ Clean History</h3>
+                    <p>No repairs recorded through Motar network for this VIN</p>
+                </div>
+            `}
+            
+            <div class="footer">
+                <p><strong>Report ID:</strong> ${r.certification?.report_id || 'MCR-' + Date.now()}</p>
+                <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>Verified by:</strong> Motar Technologies W.L.L., Qatar</p>
+                <p style="margin-top: 20px;">This report certifies the repair history of the above vehicle as recorded through the Motar/QScrap network. For verification, contact support@qscrap.qa</p>
+            </div>
+            
+            <script>window.print();</script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    showToast('PDF ready for download', 'success');
 }
 
 function shareReport(vin) {
-    navigator.clipboard.writeText(`https://qscrap.qa/insurance/history/${vin}`);
-    showToast('Report link copied to clipboard', 'success');
+    const shareUrl = `https://qscrap.qa/verify/${vin}`;
+
+    // Check if Web Share API is available
+    if (navigator.share) {
+        navigator.share({
+            title: 'MOTAR CERTIFIED™ Vehicle History Report',
+            text: `View verified repair history for VIN: ${vin}`,
+            url: shareUrl
+        }).then(() => {
+            showToast('Report shared successfully', 'success');
+        }).catch(() => {
+            // Fallback to clipboard
+            copyToClipboard(shareUrl);
+        });
+    } else {
+        copyToClipboard(shareUrl);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Report link copied to clipboard!', 'success');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Report link copied to clipboard!', 'success');
+    });
 }
 
 // ============================================
