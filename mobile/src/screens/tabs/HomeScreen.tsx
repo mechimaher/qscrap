@@ -474,6 +474,12 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>⚡ Quick Actions</Text>
             <View style={styles.actionsGrid}>
                 <ActionButton
+                    emoji="⚡"
+                    label="Quick Services"
+                    bgColor="#FEF3C7"
+                    onPress={() => navigation.navigate('QuickServices')}
+                />
+                <ActionButton
                     emoji="📋"
                     label="Requests"
                     bgColor="#FFF3E0"
@@ -490,12 +496,6 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                     label="Support"
                     bgColor="#E8F5E9"
                     onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}?text=Hi%20QScrap%20Support`)}
-                />
-                <ActionButton
-                    emoji="⚙️"
-                    label="Settings"
-                    bgColor="#F3E5F5"
-                    onPress={() => navigation.navigate('Main', { screen: 'Profile' })}
                 />
             </View>
         </Animated.View>
