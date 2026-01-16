@@ -106,20 +106,25 @@ async function loadDashboard() {
         const data = await res.json();
 
         if (data.claims) {
-            // Update stats
+            // Update stats (with null checks)
             const activeClaims = data.claims.filter(c => c.status !== 'completed' && c.status !== 'cancelled');
-            document.getElementById('statActiveClaims').textContent = activeClaims.length;
-            document.getElementById('claimsBadge').textContent = activeClaims.length;
+            const statActiveClaims = document.getElementById('statActiveClaims');
+            const claimsBadge = document.getElementById('claimsBadge');
+            if (statActiveClaims) statActiveClaims.textContent = activeClaims.length;
+            if (claimsBadge) claimsBadge.textContent = activeClaims.length;
 
             // Calculate savings (mock for now)
             const totalSavings = data.claims.reduce((sum, c) => sum + (c.savings || 0), 0);
-            document.getElementById('statTotalSavings').textContent = `QAR ${formatNumber(totalSavings)}`;
+            const statTotalSavings = document.getElementById('statTotalSavings');
+            if (statTotalSavings) statTotalSavings.textContent = `QAR ${formatNumber(totalSavings)}`;
 
             // Parts ordered
-            document.getElementById('statPartsOrdered').textContent = data.claims.length;
+            const statPartsOrdered = document.getElementById('statPartsOrdered');
+            if (statPartsOrdered) statPartsOrdered.textContent = data.claims.length;
 
             // Avg delivery (mock)
-            document.getElementById('statAvgDelivery').textContent = '4.2h';
+            const statAvgDelivery = document.getElementById('statAvgDelivery');
+            if (statAvgDelivery) statAvgDelivery.textContent = '4.2h';
 
             // Recent activity
             const recentTable = document.getElementById('recentActivityTable');
@@ -1065,9 +1070,9 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 4000);
 }
 
-// ============================================
-// FRAUD ANALYTICS
-// ============================================
+// Make fraud analytics functions globally accessible for onclick handlers
+window.loadFraudDashboard = loadFraudDashboard;
+window.loadInflatedParts = loadInflatedParts;
 
 if (document.querySelector('.nav-item[data-section="fraudAnalytics"]')) {
     document.querySelector('.nav-item[data-section="fraudAnalytics"]').addEventListener('click', () => {
@@ -1079,9 +1084,12 @@ if (document.querySelector('.nav-item[data-section="fraudAnalytics"]')) {
 function loadFraudDashboard() {
     // Mock summary stats for the dashboard (endpoint to be implemented in Week 6)
     // These would typically come from /api/insurance/analytics/fraud-summary
-    document.getElementById('fraudTotalFlagged').textContent = '12';
-    document.getElementById('fraudGaragesRisk').textContent = '3';
-    document.getElementById('fraudSavings').textContent = 'QAR 4,250';
+    const fraudTotalFlagged = document.getElementById('fraudTotalFlagged');
+    const fraudGaragesRisk = document.getElementById('fraudGaragesRisk');
+    const fraudSavings = document.getElementById('fraudSavings');
+    if (fraudTotalFlagged) fraudTotalFlagged.textContent = '12';
+    if (fraudGaragesRisk) fraudGaragesRisk.textContent = '3';
+    if (fraudSavings) fraudSavings.textContent = 'QAR 4,250';
 }
 
 async function loadInflatedParts() {
