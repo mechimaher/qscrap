@@ -9,41 +9,42 @@
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.css">
     <style>
-        /* Insurance Portal Premium Theme */
+        /* Insurance Portal - QScrap Official Premium Theme */
+        /* Qatar Maroon & Gold - Elegant & Professional */
         :root {
-            --insurance-primary: #1e40af;
-            --insurance-secondary: #3b82f6;
-            --insurance-accent: #0ea5e9;
-            --insurance-gold: #f59e0b;
-            --insurance-success: #10b981;
-            --insurance-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --insurance-primary: #8D1B3D;
+            --insurance-secondary: #A82550;
+            --insurance-accent: #C9A227;
+            --insurance-gold: #C9A227;
+            --insurance-success: #059669;
+            --insurance-dark: #1A1A1A;
+            --glass-bg: rgba(255, 255, 255, 0.98);
+            --glass-border: rgba(141, 27, 61, 0.15);
         }
 
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            background: linear-gradient(135deg, #F8F8F8 0%, #FBF3F6 50%, #F8F8F8 100%);
             min-height: 100vh;
         }
 
-        /* Auth Screen */
+        /* Auth Screen - Premium Light Theme */
         .auth-screen {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 50%, #5A1228 100%);
         }
 
         .auth-card {
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid rgba(141, 27, 61, 0.1);
             border-radius: 24px;
             padding: 48px;
             width: 100%;
             max-width: 440px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(141, 27, 61, 0.25);
         }
 
         .auth-card .logo-section {
@@ -57,7 +58,7 @@
         }
 
         .auth-card .logo-section h1 {
-            color: #fff;
+            color: var(--insurance-primary);
             font-size: 24px;
             font-weight: 700;
             margin: 0;
@@ -88,17 +89,17 @@
             min-height: 100vh;
         }
 
-        /* Sidebar */
+        /* Sidebar - Premium Light */
         .sidebar {
             width: 280px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid var(--glass-border);
+            background: #FFFFFF;
+            border-right: 1px solid #E5E5E5;
             display: flex;
             flex-direction: column;
             position: fixed;
             height: 100vh;
             z-index: 100;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
         }
 
         .sidebar-header {
@@ -124,7 +125,7 @@
         }
 
         .sidebar-header .company-name {
-            color: #fff;
+            color: var(--insurance-dark);
             font-size: 16px;
             font-weight: 600;
         }
@@ -167,14 +168,14 @@
         }
 
         .nav-item:hover {
-            background: var(--glass-bg);
-            color: #fff;
+            background: var(--qatar-maroon-lighter, #FBF3F6);
+            color: var(--insurance-primary);
         }
 
         .nav-item.active {
             background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-secondary));
             color: #fff;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 15px rgba(141, 27, 61, 0.3);
         }
 
         .nav-item i {
@@ -209,7 +210,7 @@
         }
 
         .page-title {
-            color: #fff;
+            color: var(--insurance-dark);
             font-size: 28px;
             font-weight: 700;
             display: flex;
@@ -260,7 +261,7 @@
         .stat-value {
             font-size: 32px;
             font-weight: 700;
-            color: #fff;
+            color: var(--insurance-dark);
             margin-bottom: 4px;
         }
 
