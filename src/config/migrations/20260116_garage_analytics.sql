@@ -14,8 +14,7 @@ SELECT
         EXTRACT(EPOCH FROM (o.updated_at - o.created_at)) / 3600
     ) as avg_fulfillment_hours,
     COUNT(CASE WHEN o.order_status = 'completed' THEN 1 END) as completed_orders,
-    COUNT(CASE WHEN o.order_status = 'cancelled' THEN 1 END) as cancelled_orders,
-    AVG(CASE WHEN o.order_status = 'completed' THEN o.rating END) as avg_rating
+    COUNT(CASE WHEN o.order_status = 'cancelled' THEN 1 END) as cancelled_orders
 FROM orders o
 WHERE o.created_at >= CURRENT_DATE - INTERVAL '365 days'
 GROUP BY o.garage_id, DATE_TRUNC('day', o.created_at);
@@ -55,10 +54,10 @@ SELECT
     b.garage_id,
     DATE_TRUNC('month', b.created_at) as month,
     COUNT(*) as total_bids,
-    COUNT(CASE WHEN b.bid_status = 'accepted' THEN 1 END) as won_bids,
-    COUNT(CASE WHEN b.bid_status = 'rejected' THEN 1 END) as lost_bids,
+    COUNT(CASE WHEN b.status = 'accepted' THEN 1 END) as won_bids,
+    COUNT(CASE WHEN b.status = 'rejected' THEN 1 END) as lost_bids,
     ROUND(
-        COUNT(CASE WHEN b.bid_status = 'accepted' THEN 1 END)::NUMERIC / 
+        COUNT(CASE WHEN b.status = 'accepted' THEN 1 END)::NUMERIC / 
         NULLIF(COUNT(*), 0) * 100, 
         2
     ) as win_rate_percentage,
