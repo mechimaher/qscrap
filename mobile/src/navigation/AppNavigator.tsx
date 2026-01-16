@@ -40,6 +40,7 @@ export type RootStackParamList = {
     MainTabs: undefined;
     Login: undefined;
     Register: undefined;
+    QuickServices: undefined; // Quick automotive services
     RequestDetails: { requestId: string };
     OrderDetails: { orderId: string };
     DeliveryTracking: { orderId: string };
