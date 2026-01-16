@@ -129,7 +129,9 @@ export default function QuickServiceBookingScreen() {
             }
         } catch (error: any) {
             console.error('Booking error:', error);
-            toast.error('Error', error.message || 'Failed to book service');
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            const errorMsg = error?.message || error?.error || JSON.stringify(error) || 'Failed to book service';
+            toast.error('Error', errorMsg);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsLoading(false);
