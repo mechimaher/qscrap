@@ -9,38 +9,39 @@
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.css">
     <style>
-        /* Repair Garage Portal Theme - Professional Blue */
+        /* Repair Garage Portal Theme - Qatar Maroon Premium */
         :root {
-            --repair-primary: #0d9488;
-            --repair-secondary: #14b8a6;
-            --repair-accent: #2dd4bf;
-            --repair-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --repair-primary: #8D1B3D;
+            --repair-secondary: #A82550;
+            --repair-accent: #C9A227;
+            --repair-dark: #1A1A1A;
+            --glass-bg: rgba(255, 255, 255, 0.98);
+            --glass-border: rgba(141, 27, 61, 0.15);
         }
 
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #134e4a 50%, #0f172a 100%);
+            background: linear-gradient(135deg, #F8F8F8 0%, #FBF3F6 50%, #F8F8F8 100%);
             min-height: 100vh;
         }
 
-        /* Auth Screen */
+        /* Auth Screen - Qatar Maroon Premium */
         .auth-screen {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 50%, #5A1228 100%);
         }
 
         .auth-card {
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid rgba(141, 27, 61, 0.1);
             border-radius: 24px;
             padding: 48px;
             width: 100%;
             max-width: 440px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(141, 27, 61, 0.25);
         }
 
         .auth-card .logo-section {
@@ -49,12 +50,12 @@
         }
 
         .auth-card .logo-section img {
-            height: 60px;
+            height: 80px;
             margin-bottom: 16px;
         }
 
         .auth-card .logo-section h1 {
-            color: #fff;
+            color: var(--repair-primary);
             font-size: 24px;
             font-weight: 700;
         }
@@ -69,7 +70,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(135deg, var(--repair-primary), var(--repair-secondary));
+            background: linear-gradient(135deg, #C9A227, #A68520);
             color: #fff;
             padding: 8px 16px;
             border-radius: 20px;
@@ -77,6 +78,7 @@
             font-weight: 600;
             margin-top: 12px;
         }
+
 
         /* App Container */
         .app-container {
