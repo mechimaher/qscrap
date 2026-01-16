@@ -1186,6 +1186,105 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Fraud Analytics Section -->
+            <section class="section" id="sectionFraudAnalytics">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-shield-exclamation"></i>
+                        Fraud Analytics
+                    </h1>
+                    <div class="header-actions">
+                        <span class="status-badge status-high">
+                            <i class="bi bi-broadcast"></i> Live Monitoring
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-left: 4px solid #ef4444;">
+                        <div class="stat-value" id="fraudTotalFlagged">0</div>
+                        <div class="stat-label">Claims Flagged (30d)</div>
+                        <div class="stat-trend down">
+                            <i class="bi bi-arrow-up-short"></i> 12% vs last month
+                        </div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+                        <div class="stat-value" id="fraudGaragesRisk">0</div>
+                        <div class="stat-label">High Risk Garages</div>
+                        <div class="stat-trend">
+                            <i class="bi bi-dash"></i> Stable
+                        </div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #10b981;">
+                        <div class="stat-value" id="fraudSavings">QAR 0</div>
+                        <div class="stat-label">Potential Catch</div>
+                        <div class="stat-trend">
+                            <i class="bi bi-arrow-up-short"></i> 8% vs last month
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                    <!-- Top Inflated Parts -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="bi bi-graph-up-arrow"></i> Top Inflated Parts
+                            </h2>
+                            <button class="btn btn-sm btn-outline" onclick="loadInflatedParts()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Part Name</th>
+                                    <th>Garage</th>
+                                    <th>Avg Quoted</th>
+                                    <th>Market Avg</th>
+                                    <th>Inflation</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inflatedPartsTable">
+                                <tr>
+                                    <td colspan="6" class="empty-state">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Risk Distribution -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Risk Distribution</h2>
+                        </div>
+                        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+                            <!-- Placeholder for chart -->
+                            <div style="text-align: center; color: var(--text-secondary);">
+                                <i class="bi bi-pie-chart-fill" style="font-size: 48px; opacity: 0.5;"></i>
+                                <p style="margin-top: 16px;">Risk Level Breakdown</p>
+                            </div>
+                        </div>
+                        <div class="risk-legend" style="margin-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span><span style="color: #ef4444;">●</span> Critical (>50%)</span>
+                                <span id="riskCountCritical">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span><span style="color: #f59e0b;">●</span> High (30-50%)</span>
+                                <span id="riskCountHigh">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><span style="color: #10b981;">●</span> Normal</span>
+                                <span id="riskCountNormal">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
