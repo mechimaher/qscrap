@@ -130,15 +130,15 @@ const QUICK_SERVICES: QuickService[] = [
     },
     {
         id: 'breakdown',
-        title: '🚨 Breakdown',
-        titleAr: '🚨 عطل',
+        title: 'Breakdown Service',
+        titleAr: 'خدمة الأعطال',
         icon: '🚨',
-        price: 'Free Quote',
-        priceAr: 'تقييم مجاني',
-        duration: 'ASAP',
-        durationAr: 'فورا',
-        description: "Car won't start? We diagnose",
-        descriptionAr: 'السيارة لا تعمل؟ نشخص المشكلة',
+        price: '70-100 QAR',
+        priceAr: '70-100 ريال',
+        duration: '30 mins',
+        durationAr: '30 دقيقة',
+        description: 'Towing & emergency roadside help',
+        descriptionAr: 'سحب السيارة ومساعدة طارئة',
         gradient: ['#FEE2E2', '#EF4444'],
         priority: 1,
     },
