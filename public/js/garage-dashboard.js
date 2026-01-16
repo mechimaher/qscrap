@@ -5556,3 +5556,191 @@ function previewFullImage(url) {
         window.open(url, '_blank');
     }
 }
+
+// ============================================
+// QUICK SERVICES
+// ============================================
+
+let quickServicesInterval = null;
+
+async function loadQuickServices() {
+    try {
+        const response = await fetchWithAuth('/api/services/quick/garage/requests');
+        const container = document.getElementById('quickServicesContainer');
+        
+        if (!container) return;
+
+        if (!response.success || !response.requests || response.requests.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+                    <div style="font-size: 48px; margin-bottom: 12px;">⚡</div>
+                    <p style="font-size: 15px;">No active quick service requests</p>
+                    <p style="font-size: 13px; margin-top: 8px;">Requests will appear here when customers book services</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = response.requests.map(request => {
+            const serviceIcons = {
+                battery: '🔋',
+                oil: '🛢️',
+                wash: '🧼',
+                tire: '🛞',
+                ac: '❄️',
+                breakdown: '🚨'
+            };
+
+            const statusColors = {
+                assigned: '#F59E0B',
+                accepted: '#3B82F6',
+                en_route: '#8B5CF6',
+                in_progress: '#EC4899',
+                completed: '#10B981'
+            };
+
+            const icon = serviceIcons[request.service_type] || '⚡';
+            const statusColor = statusColors[request.status] || '#6B7280';
+
+            return `
+                <div class="request-card" style="border-left: 4px solid ${statusColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; marginbottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 32px;">${icon}</div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 16px; color: var(--text-primary);">
+                                    ${request.service_type.toUpperCase()} Service
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                                    ${request.vehicle_make} ${request.vehicle_model} ${request.vehicle_year}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="status-badge" style="background: ${statusColor}15; color: ${statusColor}; border: 1px solid ${statusColor};">
+                            ${request.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                    </div>
+
+                    <div style="margin: 12px 0; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">
+                            <strong>Customer:</strong> ${request.customer_name}
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">
+                            <strong>Phone:</strong> ${request.customer_phone}
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">
+                            <strong>Location:</strong> ${request.location_address}
+                        </div>
+                        ${request.notes ? `
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">
+                                "${request.notes}"
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        ${request.status === 'assigned' ? `
+                            <button onclick="acceptQuickService('${request.request_id}')" 
+                                style="flex: 1; padding: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                ✓ Accept
+                            </button>
+                            <button onclick="declineQuickService('${request.request_id}')" 
+                                style="padding: 10px 16px; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                ✕ Decline
+                            </button>
+                        ` : request.status === 'accepted' || request.status === 'en_route' ? `
+                            <button onclick="completeQuickService('${request.request_id}')" 
+                                style="flex: 1; padding: 10px; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                ✓ Mark Complete
+                            </button>
+                        ` : request.status === 'completed' ? `
+                            <div style="flex: 1; padding: 10px; text-align: center; color: #10B981; font-weight: 600;">
+                                ✓ Service Completed
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; text-align: right;">
+                        Requested ${formatTimestamp(request.created_at)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Failed to load quick services:', error);
+    }
+}
+
+async function acceptQuickService(requestId) {
+    if (!confirm('Accept this quick service request?')) return;
+
+    try {
+        const response = await fetchWithAuth(`/api/services/quick/${requestId}/accept`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estimated_arrival_minutes: 30 })
+        });
+
+        if (response.success) {
+            showToast('Service accepted! Customer has been notified.', 'success');
+            await loadQuickServices();
+        } else {
+            showToast(response.error || 'Failed to accept service', 'error');
+        }
+    } catch (error) {
+        console.error('Accept error:', error);
+        showToast('Failed to accept service', 'error');
+    }
+}
+
+async function declineQuickService(requestId) {
+    if (!confirm('Decline this quick service request? It will be reassigned to another provider.')) return;
+
+    try {
+        const response = await fetchWithAuth(`/api/services/quick/${requestId}/decline`, {
+            method: 'POST'
+        });
+
+        if (response.success) {
+            showToast('Service declined and reassigned', 'info');
+            await loadQuickServices();
+        } else {
+            show Toast(response.error || 'Failed to decline service', 'error');
+        }
+    } catch (error) {
+        console.error('Decline error:', error);
+        showToast('Failed to decline service', 'error');
+    }
+}
+
+async function completeQuickService(requestId) {
+    const price = prompt('Enter final service price (QAR):');
+    if (!price) return;
+
+    try {
+        const response = await fetchWithAuth(`/api/services/quick/${requestId}/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ final_price: parseFloat(price) })
+        });
+
+        if (response.success) {
+            showToast('Service marked as complete!', 'success');
+            await loadQuickServices();
+        } else {
+            showToast(response.error || 'Failed to complete service', 'error');
+        }
+    } catch (error) {
+        console.error('Complete error:', error);
+        showToast('Failed to complete service', 'error');
+    }
+}
+
+// Auto-refresh quick services every 10 seconds
+if (quickServicesInterval) clearInterval(quickServicesInterval);
+quickServicesInterval = setInterval(loadQuickServices, 10000);
+
+// Initial load
+setTimeout(() => loadQuickServices(), 1000);
+
