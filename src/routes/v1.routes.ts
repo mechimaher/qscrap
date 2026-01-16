@@ -130,4 +130,8 @@ v1Router.use('/insurance', insuranceRoutes);
 import historyRoutes from './history.routes';
 v1Router.use('/history', historyRoutes);
 
+// Repair Marketplace Routes (Requests, Bids, Bookings)
+import repairRoutes from './repair.routes';
+v1Router.use('/repair', repairRoutes);
+
 export default v1Router;
