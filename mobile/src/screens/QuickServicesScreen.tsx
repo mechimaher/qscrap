@@ -45,6 +45,34 @@ const QUICK_SERVICES: QuickService[] = [
         priority: 1,
     },
     {
+        id: 'diagnostic',
+        title: 'Computer Diagnostic',
+        titleAr: 'فحص كمبيوتر السيارة',
+        icon: '💻',
+        price: '100-150 QAR',
+        priceAr: '100-150 ريال',
+        duration: '20 mins',
+        durationAr: '20 دقيقة',
+        description: 'Check engine light? Get OBD scan',
+        descriptionAr: 'لمبة المحرك مضيئة؟ فحص شامل',
+        gradient: ['#E0E7FF', '#C7D2FE'],
+        priority: 1,
+    },
+    {
+        id: 'electrician',
+        title: 'Auto Electrician',
+        titleAr: 'كهربائي سيارات',
+        icon: '⚡',
+        price: '80-200 QAR',
+        priceAr: '80-200 ريال',
+        duration: '45 mins',
+        durationAr: '45 دقيقة',
+        description: 'Lights, wiring, sensors fixed',
+        descriptionAr: 'إصلاح الأنوار والأسلاك والحساسات',
+        gradient: ['#FEF9C3', '#FDE047'],
+        priority: 1,
+    },
+    {
         id: 'wash',
         title: 'Home Car Wash',
         titleAr: 'غسيل السيارة في المنزل',

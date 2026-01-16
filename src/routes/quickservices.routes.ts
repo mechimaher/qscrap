@@ -118,7 +118,7 @@ router.post('/request', authenticateToken, async (req: Request, res: Response) =
         } = req.body;
 
         // Validate service type
-        const validTypes = ['battery', 'oil', 'wash', 'tire', 'ac', 'breakdown'];
+        const validTypes = ['battery', 'oil', 'wash', 'tire', 'ac', 'breakdown', 'diagnostic', 'electrician'];
         if (!validTypes.includes(service_type)) {
             return res.status(400).json({ success: false, error: 'Invalid service type' });
         }
@@ -389,6 +389,8 @@ router.post('/:requestId/complete', authenticateToken, async (req: Request, res:
 router.get('/pricing', async (req: Request, res: Response) => {
     const pricing = {
         battery: { min: 150, max: 250, currency: 'QAR', duration: '30 mins' },
+        diagnostic: { min: 100, max: 150, currency: 'QAR', duration: '20 mins' },
+        electrician: { min: 80, max: 200, currency: 'QAR', duration: '45 mins' },
         oil: { min: 120, max: 200, currency: 'QAR', duration: '30 mins' },
         wash: { min: 80, max: 120, currency: 'QAR', duration: '45 mins' },
         tire: { min: 50, max: 150, currency: 'QAR', duration: '20 mins' },
