@@ -285,3 +285,54 @@ export async function getTopInflatedParts(
         return [];
     }
 }
+
+// ============================================
+// BACKWARD COMPATIBILITY
+// Legacy export for bid.controller.ts
+// ============================================
+
+/**
+ * Get fair price estimate for a part (legacy method for bid controller)
+ */
+async function getFairPriceEstimate(
+    partName: string,
+    carMake: string,
+    carModel: string,
+    carYear: number
+): Promise<{
+    estimated_price: number;
+    price_range: { min: number; max: number };
+    confidence: string;
+    data_points: number;
+}> {
+    const stats = await getPriceStatistics(partName, carMake, carModel);
+
+    if (!stats || stats.sample_size < 3) {
+        // Return default estimate when no data available
+        return {
+            estimated_price: 0,
+            price_range: { min: 0, max: 0 },
+            confidence: 'low',
+            data_points: 0
+        };
+    }
+
+    return {
+        estimated_price: stats.avg_price,
+        price_range: { min: stats.min_price, max: stats.max_price },
+        confidence: stats.sample_size >= 10 ? 'high' : stats.sample_size >= 5 ? 'medium' : 'low',
+        data_points: stats.sample_size
+    };
+}
+
+// Export as object for backward compatibility with bid.controller.ts
+export const pricingService = {
+    getFairPriceEstimate,
+    getPriceStatistics,
+    checkPriceOutlier,
+    performPriceCheck,
+    recordPrice,
+    getPriceTrend,
+    refreshBenchmarks,
+    getTopInflatedParts
+};
