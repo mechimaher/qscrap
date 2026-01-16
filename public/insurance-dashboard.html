@@ -353,22 +353,27 @@
         .search-form select {
             width: 100%;
             padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--glass-border);
+            background: #FFFFFF;
+            border: 1px solid #E5E5E5;
             border-radius: 12px;
-            color: #fff;
+            color: #1A1A1A;
             font-size: 14px;
         }
 
+        .search-form select option {
+            background: #FFFFFF;
+            color: #1A1A1A;
+        }
+
         .search-form input::placeholder {
-            color: var(--text-muted);
+            color: #9A9A9A;
         }
 
         .search-form input:focus,
         .search-form select:focus {
             outline: none;
-            border-color: var(--insurance-accent);
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+            border-color: var(--insurance-primary);
+            box-shadow: 0 0 0 3px rgba(141, 27, 61, 0.15);
         }
 
         .btn-search {
