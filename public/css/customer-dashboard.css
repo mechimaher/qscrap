@@ -85,7 +85,7 @@ body {
 /* ===== AUTH SCREEN ===== */
 .auth-screen {
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--primary) 0%, #A82050 50%, #C9A227 100%);
+    background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 50%, #5A1228 100%);
     display: flex;
     align-items: center;
     justify-content: center;
