@@ -33,6 +33,11 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import RepairRequestScreen from '../screens/RepairRequestScreen';
 import MyRepairsScreen from '../screens/MyRepairsScreen';
 
+// Quick Services Screens
+import QuickServicesScreen from '../screens/QuickServicesScreen';
+import QuickServiceBookingScreen from '../screens/QuickServiceBookingScreen';
+import QuickServiceTrackingScreen from '../screens/QuickServiceTrackingScreen';
+
 // Stacks
 export type RootStackParamList = {
     Auth: undefined;
@@ -148,6 +153,11 @@ const MainStack: React.FC = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="MainTabs" component={MainTabs} />
+            {/* Quick Services */}
+            <Stack.Screen name="QuickServices" component={QuickServicesScreen} />
+            <Stack.Screen name="QuickServiceBooking" component={QuickServiceBookingScreen} />
+            <Stack.Screen name="QuickServiceTracking" component={QuickServiceTrackingScreen} />
+            {/* Other Screens */}
             <Stack.Screen name="RequestDetails" component={RequestDetailScreen} />
             <Stack.Screen name="OrderDetails" component={OrderDetailScreen} />
             <Stack.Screen name="DeliveryTracking" component={DeliveryTrackingScreen} />
