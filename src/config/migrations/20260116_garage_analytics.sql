@@ -13,9 +13,9 @@ SELECT
     AVG(
         EXTRACT(EPOCH FROM (o.updated_at - o.created_at)) / 3600
     ) as avg_fulfillment_hours,
-    COUNT(CASE WHEN o.status = 'completed' THEN 1 END) as completed_orders,
-    COUNT(CASE WHEN o.status = 'cancelled' THEN 1 END) as cancelled_orders,
-    AVG(CASE WHEN o.status = 'completed' THEN o.customer_rating END) as avg_rating
+    COUNT(CASE WHEN o.order_status = 'completed' THEN 1 END) as completed_orders,
+    COUNT(CASE WHEN o.order_status = 'cancelled' THEN 1 END) as cancelled_orders,
+    AVG(CASE WHEN o.order_status = 'completed' THEN o.rating END) as avg_rating
 FROM orders o
 WHERE o.created_at >= CURRENT_DATE - INTERVAL '365 days'
 GROUP BY o.garage_id, DATE_TRUNC('day', o.created_at);
@@ -31,10 +31,10 @@ ON garage_daily_analytics(date DESC);
 CREATE MATERIALIZED VIEW garage_popular_parts AS
 SELECT 
     o.garage_id,
-    pr.part_name,
+    pr.part_description as part_name,
     pr.car_make,
     pr.car_model,
-    pr.category,
+    COALESCE(pr.part_category, 'Other') as category,
     COUNT(*) as order_count,
     SUM(o.total_amount) as total_revenue,
     AVG(o.total_amount) as avg_price,
@@ -42,8 +42,8 @@ SELECT
 FROM orders o
 JOIN part_requests pr ON o.request_id = pr.request_id
 WHERE o.created_at >= CURRENT_DATE - INTERVAL '90 days'
-  AND o.status IN ('completed', 'delivered')
-GROUP BY o.garage_id, pr.part_name, pr.car_make, pr.car_model, pr.category
+  AND o.order_status IN ('completed', 'delivered')
+GROUP BY o.garage_id, pr.part_description, pr.car_make, pr.car_model, pr.part_category
 HAVING COUNT(*) >= 2;
 
 CREATE INDEX idx_garage_popular_parts_garage 
@@ -55,14 +55,14 @@ SELECT
     b.garage_id,
     DATE_TRUNC('month', b.created_at) as month,
     COUNT(*) as total_bids,
-    COUNT(CASE WHEN b.status = 'accepted' THEN 1 END) as won_bids,
-    COUNT(CASE WHEN b.status = 'rejected' THEN 1 END) as lost_bids,
+    COUNT(CASE WHEN b.bid_status = 'accepted' THEN 1 END) as won_bids,
+    COUNT(CASE WHEN b.bid_status = 'rejected' THEN 1 END) as lost_bids,
     ROUND(
-        COUNT(CASE WHEN b.status = 'accepted' THEN 1 END)::NUMERIC / 
+        COUNT(CASE WHEN b.bid_status = 'accepted' THEN 1 END)::NUMERIC / 
         NULLIF(COUNT(*), 0) * 100, 
         2
     ) as win_rate_percentage,
-    AVG(b.amount) as avg_bid_amount,
+    AVG(b.bid_amount) as avg_bid_amount,
     AVG(
         EXTRACT(EPOCH FROM (b.updated_at - b.created_at)) / 60
     ) as avg_response_time_minutes
