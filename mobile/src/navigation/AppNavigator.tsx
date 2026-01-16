@@ -29,6 +29,10 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsScreen from '../screens/TermsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 
+// Repair Marketplace Screens
+import RepairRequestScreen from '../screens/RepairRequestScreen';
+import MyRepairsScreen from '../screens/MyRepairsScreen';
+
 // Stacks
 export type RootStackParamList = {
     Auth: undefined;
@@ -43,6 +47,10 @@ export type RootStackParamList = {
     Dispute: { orderId: string };
     PrivacyPolicy: undefined;
     Terms: undefined;
+    // Repair Marketplace
+    RepairRequest: undefined;
+    MyRepairs: undefined;
+    RepairDetail: { request_id: string };
 };
 
 export type MainTabParamList = {
@@ -144,6 +152,9 @@ const MainStack: React.FC = () => {
             <Stack.Screen name="Dispute" component={DisputeScreen} />
             <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <Stack.Screen name="Terms" component={TermsScreen} />
+            {/* Repair Marketplace */}
+            <Stack.Screen name="RepairRequest" component={RepairRequestScreen} />
+            <Stack.Screen name="MyRepairs" component={MyRepairsScreen} />
         </Stack.Navigator>
     );
 };
