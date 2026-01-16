@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motar Insurance Partner Portal | Parts Sourcing & Tracking</title>
+    <link rel="stylesheet" href="css/design-tokens.css">
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.css">
+    <style>
+        /* Insurance Portal Premium Theme */
+        :root {
+            --insurance-primary: #1e40af;
+            --insurance-secondary: #3b82f6;
+            --insurance-accent: #0ea5e9;
+            --insurance-gold: #f59e0b;
+            --insurance-success: #10b981;
+            --insurance-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+
+        /* Auth Screen */
+        .auth-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+        }
+
+        .auth-card {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-card .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-card .logo-section img {
+            height: 60px;
+            margin-bottom: 16px;
+        }
+
+        .auth-card .logo-section h1 {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .auth-card .logo-section p {
+            color: var(--insurance-accent);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .auth-card .partner-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-secondary));
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* App Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .sidebar-header .company-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-header .company-logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .sidebar-header .company-name {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .sidebar-header .agent-name {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .nav-section-title {
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 16px 12px 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: var(--glass-bg);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-secondary));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--insurance-gold);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 24px;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title i {
+            color: var(--insurance-accent);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--insurance-primary), var(--insurance-accent));
+        }
+
+        .stat-card.savings::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .stat-card.claims::before {
+            background: linear-gradient(90deg, var(--insurance-gold), #fbbf24);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .stat-trend {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--insurance-success);
+        }
+
+        .stat-trend.down {
+            color: #ef4444;
+        }
+
+        /* Content Cards */
+        .content-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--insurance-accent);
+        }
+
+        /* Search Hub */
+        .search-hub {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.2), rgba(14, 165, 233, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .search-hub h2 {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .search-hub p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .search-form .form-group label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .search-form input,
+        .search-form select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .search-form input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-form input:focus,
+        .search-form select:focus {
+            outline: none;
+            border-color: var(--insurance-accent);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-accent));
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .part-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .part-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--insurance-accent);
+        }
+
+        .part-card .part-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .part-card .part-name {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .part-card .part-condition {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .part-card .part-condition.premium {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
+        }
+
+        .part-card .part-condition.certified {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #fff;
+        }
+
+        .part-card .part-condition.standard {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .part-card .garage-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .price-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .price-box {
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .price-box.agency {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .price-box.scrapyard {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .price-box .price-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .price-box.agency .price-value {
+            color: #ef4444;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .price-box.scrapyard .price-value {
+            color: #10b981;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .savings-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .part-card .btn-order {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-secondary));
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Tracking Timeline */
+        .tracking-timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .tracking-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--glass-border);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -33px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--glass-border);
+            border: 3px solid var(--insurance-dark);
+        }
+
+        .timeline-item.completed::before {
+            background: var(--insurance-success);
+        }
+
+        .timeline-item.active::before {
+            background: var(--insurance-accent);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.3);
+        }
+
+        .timeline-item .timeline-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .timeline-item .timeline-title {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .timeline-item .timeline-time {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Photo Gallery */
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .photo-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            cursor: pointer;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-card .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        }
+
+        .photo-card .photo-label {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .photo-card .photo-date {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .data-table td {
+            padding: 16px;
+            color: #fff;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .data-table tr:hover {
+            background: var(--glass-bg);
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: var(--glass-border);
+            margin-bottom: 16px;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Auth Screen -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <div class="logo-section">
+                <img src="assets/images/qscrap-logo.png" alt="Motar">
+                <h1>Insurance Partner Portal</h1>
+                <p>Parts Sourcing & Tracking Platform</p>
+                <div class="partner-badge">
+                    <i class="bi bi-shield-check"></i>
+                    Authorized Partner Access
+                </div>
+            </div>
+            <form id="loginForm" autocomplete="off">
+                <div class="form-group">
+                    <label>Agent Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="+974 XXXX XXXX" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter secure password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                    <i class="bi bi-box-arrow-in-right"></i> Access Portal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="company-info">
+                    <div class="company-logo">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div>
+                        <div class="company-name" id="companyName">Insurance Co.</div>
+                        <div class="agent-name" id="agentName">Agent</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Overview</div>
+                <button class="nav-item active" data-section="dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <div class="nav-section-title">Gap-Filling Services</div>
+                <button class="nav-item" data-section="partsSearch">
+                    <i class="bi bi-search"></i>
+                    <span>Parts Search</span>
+                </button>
+                <button class="nav-item" data-section="priceCompare">
+                    <i class="bi bi-graph-down-arrow"></i>
+                    <span>Price Comparison</span>
+                </button>
+                <button class="nav-item" data-section="tracking">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>Live Tracking</span>
+                </button>
+
+                <div class="nav-section-title">Verification</div>
+                <button class="nav-item" data-section="photos">
+                    <i class="bi bi-camera"></i>
+                    <span>Photo Audit</span>
+                </button>
+                <button class="nav-item" data-section="history">
+                    <i class="bi bi-file-earmark-check"></i>
+                    <span>History Reports</span>
+                    <span class="nav-badge">$</span>
+                </button>
+
+                <div class="nav-section-title">Claims</div>
+                <button class="nav-item" data-section="claims">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>My Claims</span>
+                    <span class="nav-badge" id="claimsBadge">0</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer" style="padding: 16px; border-top: 1px solid var(--glass-border);">
+                <button class="btn btn-outline" onclick="logout()" style="width: 100%;">
+                    <i class="bi bi-box-arrow-left"></i> Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section class="section active" id="sectionDashboard">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-speedometer2"></i>
+                        Partner Dashboard
+                    </h1>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-outline" onclick="loadDashboard()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card savings">
+                        <div class="stat-value" id="statTotalSavings">QAR 0</div>
+                        <div class="stat-label">Total Savings (30 days)</div>
+                        <div class="stat-trend"><i class="bi bi-arrow-up"></i> vs. Agency Pricing</div>
+                    </div>
+                    <div class="stat-card claims">
+                        <div class="stat-value" id="statActiveClaims">0</div>
+                        <div class="stat-label">Active Claims</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statPartsOrdered">0</div>
+                        <div class="stat-label">Parts Ordered</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgDelivery">0h</div>
+                        <div class="stat-label">Avg. Delivery Time</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                        <button class="btn btn-primary" onclick="switchSection('partsSearch')"
+                            style="padding: 20px; flex-direction: column; gap: 8px;">
+                            <i class="bi bi-search" style="font-size: 24px;"></i>
+                            <span>Search Parts</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="switchSection('priceCompare')"
+                            style="padding: 20px; flex-direction: column; gap: 8px;">
+                            <i class="bi bi-graph-down-arrow" style="font-size: 24px;"></i>
+                            <span>Price Compare</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="switchSection('tracking')"
+                            style="padding: 20px; flex-direction: column; gap: 8px;">
+                            <i class="bi bi-geo-alt" style="font-size: 24px;"></i>
+                            <span>Track Order</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="switchSection('history')"
+                            style="padding: 20px; flex-direction: column; gap: 8px;">
+                            <i class="bi bi-file-earmark-check" style="font-size: 24px;"></i>
+                            <span>History Report</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="bi bi-clock-history"></i> Recent Activity</h3>
+                        <button class="btn btn-ghost" onclick="switchSection('claims')">View All</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Claim #</th>
+                                <th>Vehicle</th>
+                                <th>Part</th>
+                                <th>Status</th>
+                                <th>Savings</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivityTable">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Parts Search Section -->
+            <section class="section" id="sectionPartsSearch">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-search"></i>
+                        Parts Search
+                    </h1>
+                </div>
+
+                <div class="search-hub">
+                    <h2>Search 50+ Scrapyard Inventory</h2>
+                    <p>Real-time access to parts that insurance portals can't provide</p>
+                    <div class="search-form">
+                        <div class="form-group">
+                            <label>Part Name / OEM Number</label>
+                            <input type="text" id="searchPartName" placeholder="e.g., Front Bumper, 5LE49ZZZAK">
+                        </div>
+                        <div class="form-group">
+                            <label>Vehicle Make</label>
+                            <select id="searchMake">
+                                <option value="">Any Make</option>
+                                <option value="Toyota">Toyota</option>
+                                <option value="Nissan">Nissan</option>
+                                <option value="Honda">Honda</option>
+                                <option value="Lexus">Lexus</option>
+                                <option value="BMW">BMW</option>
+                                <option value="Mercedes">Mercedes</option>
+                                <option value="Land Rover">Land Rover</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Condition</label>
+                            <select id="searchCondition">
+                                <option value="">Any</option>
+                                <option value="premium">Premium</option>
+                                <option value="certified">Certified</option>
+                                <option value="standard">Standard</option>
+                            </select>
+                        </div>
+                        <button class="btn-search" onclick="searchParts()">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results-grid" id="partsResults">
+                    <div class="empty-state">
+                        <i class="bi bi-box-seam"></i>
+                        <p>Search for parts to see available inventory</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Price Comparison Section -->
+            <section class="section" id="sectionPriceCompare">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-graph-down-arrow"></i>
+                        Price Comparison
+                    </h1>
+                </div>
+
+                <div class="search-hub">
+                    <h2>Agency vs. Scrapyard Pricing</h2>
+                    <p>See exactly how much you save with used parts</p>
+                    <div class="search-form" style="grid-template-columns: 2fr 1fr auto;">
+                        <div class="form-group">
+                            <label>Part Name</label>
+                            <input type="text" id="comparePartName" placeholder="e.g., Headlight Assembly">
+                        </div>
+                        <div class="form-group">
+                            <label>Vehicle Make</label>
+                            <select id="compareMake">
+                                <option value="">Any Make</option>
+                                <option value="Toyota">Toyota</option>
+                                <option value="Nissan">Nissan</option>
+                                <option value="Honda">Honda</option>
+                                <option value="Lexus">Lexus</option>
+                                <option value="BMW">BMW</option>
+                                <option value="Mercedes">Mercedes</option>
+                            </select>
+                        </div>
+                        <button class="btn-search" onclick="comparePrices()">
+                            <i class="bi bi-calculator"></i> Compare
+                        </button>
+                    </div>
+                </div>
+
+                <div id="comparisonResults">
+                    <div class="empty-state">
+                        <i class="bi bi-calculator"></i>
+                        <p>Enter a part name to see price comparison</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tracking Section -->
+            <section class="section" id="sectionTracking">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-geo-alt"></i>
+                        Live Tracking
+                    </h1>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Track Claim Order</h3>
+                    </div>
+                    <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                        <input type="text" id="trackClaimId" placeholder="Enter Claim ID" class="form-control"
+                            style="flex: 1;">
+                        <button class="btn btn-primary" onclick="trackClaim()">
+                            <i class="bi bi-geo-alt"></i> Track
+                        </button>
+                    </div>
+                    <div id="trackingResults">
+                        <div class="empty-state">
+                            <i class="bi bi-truck"></i>
+                            <p>Enter a claim ID to track in real-time</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Photo Verification Section -->
+            <section class="section" id="sectionPhotos">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-camera"></i>
+                        Photo Audit
+                    </h1>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Fraud Prevention - Photo Verification</h3>
+                    </div>
+                    <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                        <input type="text" id="photoClaimId" placeholder="Enter Claim ID" class="form-control"
+                            style="flex: 1;">
+                        <button class="btn btn-primary" onclick="loadPhotos()">
+                            <i class="bi bi-search"></i> Load Photos
+                        </button>
+                    </div>
+                    <div id="photoResults">
+                        <div class="empty-state">
+                            <i class="bi bi-images"></i>
+                            <p>Enter a claim ID to view verification photos</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Reports Section -->
+            <section class="section" id="sectionHistory">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-file-earmark-check"></i>
+                        Certified History Reports
+                    </h1>
+                    <span class="nav-badge" style="font-size: 14px; padding: 8px 16px;">Premium Service</span>
+                </div>
+
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.05)); border-color: rgba(245, 158, 11, 0.3);">
+                    <div class="card-header">
+                        <h3 class="card-title" style="color: var(--insurance-gold);"><i class="bi bi-award"></i> MOTAR
+                            CERTIFIED™ Report</h3>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                        Generate verified repair history reports for vehicles. This fills a critical gap in Qatar's used
+                        car market -
+                        providing transparency on parts history, helping insurance companies assess vehicle value and
+                        risk.
+                    </p>
+                    <div style="display: flex; gap: 16px;">
+                        <input type="text" id="historyVin" placeholder="Enter VIN Number" class="form-control"
+                            style="flex: 1;">
+                        <button class="btn btn-primary" onclick="generateHistoryReport()"
+                            style="background: linear-gradient(135deg, var(--insurance-gold), #fbbf24);">
+                            <i class="bi bi-file-earmark-check"></i> Generate Report (QAR 50)
+                        </button>
+                    </div>
+                </div>
+
+                <div id="historyResults"></div>
+            </section>
+
+            <!-- Claims Section -->
+            <section class="section" id="sectionClaims">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-folder2-open"></i>
+                        My Claims
+                    </h1>
+                    <button class="btn btn-primary" onclick="openNewClaimModal()">
+                        <i class="bi bi-plus-lg"></i> New Claim
+                    </button>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Claim #</th>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Part</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="claimsTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading claims...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- New Claim Modal -->
+    <div class="modal-overlay" id="newClaimModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, var(--insurance-primary), var(--insurance-secondary));">
+                <h3><i class="bi bi-plus-circle"></i> Create New Claim</h3>
+                <button class="modal-close" onclick="closeModal('newClaimModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="claimCustomerName" class="form-control" placeholder="Full name">
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Vehicle Make</label>
+                        <input type="text" id="claimVehicleMake" class="form-control" placeholder="e.g., Toyota">
+                    </div>
+                    <div class="form-group">
+                        <label>Vehicle Model</label>
+                        <input type="text" id="claimVehicleModel" class="form-control" placeholder="e.g., Camry">
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="number" id="claimVehicleYear" class="form-control" placeholder="2020">
+                    </div>
+                    <div class="form-group">
+                        <label>VIN Number</label>
+                        <input type="text" id="claimVin" class="form-control"
+                            placeholder="Vehicle Identification Number">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Required Part</label>
+                    <input type="text" id="claimPartName" class="form-control"
+                        placeholder="e.g., Front Bumper Assembly">
+                </div>
+                <div class="form-group">
+                    <label>Claim Notes</label>
+                    <textarea id="claimNotes" class="form-control" rows="3"
+                        placeholder="Additional details..."></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal('newClaimModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitNewClaim()">
+                    <i class="bi bi-check-lg"></i> Create Claim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/insurance-dashboard.js?v=1.0"></script>
+</body>
+
+</html>
