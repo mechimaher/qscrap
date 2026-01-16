@@ -150,6 +150,192 @@ async function loadDashboard() {
 }
 
 // ============================================
+// QATAR WORKFLOW: PENDING APPROVALS
+// ============================================
+
+async function loadPendingApprovals() {
+    const container = document.getElementById('pendingApprovalsList');
+    container.innerHTML = '<div class="empty-state"><i class="bi bi-hourglass"></i>Loading pending approvals...</div>';
+
+    try {
+        const res = await fetch(`${API_URL}/insurance/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.pending && data.pending.length > 0) {
+            // Update badge
+            document.getElementById('pendingBadge').textContent = data.pending.length;
+
+            container.innerHTML = data.pending.map(claim => `
+                <div class="content-card" style="margin-bottom: 16px; border-left: 4px solid var(--insurance-gold);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                        <div>
+                            <h3 style="color: #fff; margin: 0 0 4px 0;">
+                                ${escapeHtml(claim.customer_name || 'Customer')}
+                            </h3>
+                            <p style="color: var(--text-secondary); margin: 0;">
+                                ${escapeHtml(claim.vehicle || 'Vehicle')} • ${escapeHtml(claim.part_needed)}
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color: var(--text-muted); font-size: 12px;">Claim #${claim.claim_reference || claim.claim_id.slice(0, 8)}</span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="price-box agency">
+                            <div class="price-label">Agency Price</div>
+                            <div class="price-value">QAR ${formatNumber(claim.estimates?.agency || 0)}</div>
+                        </div>
+                        <div class="price-box scrapyard">
+                            <div class="price-label">Scrapyard Price</div>
+                            <div class="price-value">QAR ${formatNumber(claim.estimates?.scrapyard || 0)}</div>
+                        </div>
+                        <div style="background: rgba(16,185,129,0.2); border-radius: 10px; padding: 12px; text-align: center;">
+                            <div style="color: var(--text-muted); font-size: 11px;">Your Savings</div>
+                            <div style="color: #10b981; font-size: 18px; font-weight: 700;">
+                                ${claim.estimates?.savings_percent || 0}% 
+                                <span style="font-size: 14px;">(QAR ${formatNumber(claim.estimates?.savings || 0)})</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${claim.garage?.name ? `
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--text-secondary); font-size: 13px;">
+                            <i class="bi bi-building"></i>
+                            <span>Submitted by: <strong style="color: #fff;">${escapeHtml(claim.garage.name)}</strong></span>
+                            ${claim.garage.rating ? `<span>⭐ ${claim.garage.rating.toFixed(1)}</span>` : ''}
+                        </div>
+                    ` : ''}
+
+                    ${claim.damage_description ? `
+                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                            <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">Damage Description</div>
+                            <div style="color: #fff;">${escapeHtml(claim.damage_description)}</div>
+                        </div>
+                    ` : ''}
+
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-primary" onclick="approveClaim('${claim.claim_id}')" style="flex: 1;">
+                            <i class="bi bi-check-lg"></i> Approve Scrapyard Sourcing
+                        </button>
+                        <button class="btn btn-outline" onclick="showRejectModal('${claim.claim_id}')" style="flex: 1; border-color: #ef4444; color: #ef4444;">
+                            <i class="bi bi-x-lg"></i> Reject
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('pendingBadge').textContent = '0';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No pending approvals</p>
+                    <p style="color: var(--text-muted); font-size: 13px;">Garages will submit claims here for your review</p>
+                </div>
+            `;
+        }
+    } catch (err) {
+        console.error('Error loading pending approvals:', err);
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load pending approvals</p></div>';
+    }
+}
+
+async function approveClaim(claimId) {
+    if (!confirm('Approve this claim for scrapyard sourcing?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/insurance/approve/${claimId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ approved_source: 'scrapyard', notes: 'Approved via partner portal' })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Claim ${data.claim_reference || claimId} approved successfully`, 'success');
+            loadPendingApprovals();
+            loadApprovedOrders();
+        } else {
+            showToast(data.error || 'Failed to approve claim', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+function showRejectModal(claimId) {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason && reason.trim()) {
+        rejectClaim(claimId, reason.trim());
+    }
+}
+
+async function rejectClaim(claimId, reason) {
+    try {
+        const res = await fetch(`${API_URL}/insurance/reject/${claimId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Claim rejected: ${reason}`, 'success');
+            loadPendingApprovals();
+        } else {
+            showToast(data.error || 'Failed to reject claim', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// ============================================
+// QATAR WORKFLOW: APPROVED ORDERS
+// ============================================
+
+async function loadApprovedOrders() {
+    const tableBody = document.getElementById('approvedOrdersTable');
+    tableBody.innerHTML = '<tr><td colspan="5" class="empty-state">Loading...</td></tr>';
+
+    try {
+        const res = await fetch(`${API_URL}/insurance/approved`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.approved && data.approved.length > 0) {
+            tableBody.innerHTML = data.approved.map(order => `
+                <tr>
+                    <td><strong>${order.claim_reference || order.claim_id.slice(0, 8)}</strong></td>
+                    <td>${escapeHtml(order.customer_name || 'N/A')}</td>
+                    <td>${escapeHtml(order.part || 'N/A')}</td>
+                    <td>
+                        ${order.order ? `
+                            <span class="status-badge ${order.order.status || 'pending'}">${formatStatus(order.order.status || 'pending')}</span>
+                        ` : '<span style="color: var(--text-muted);">Awaiting order</span>'}
+                    </td>
+                    <td>${order.approved_at ? new Date(order.approved_at).toLocaleDateString() : 'N/A'}</td>
+                </tr>
+            `).join('');
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="5" class="empty-state">No approved orders yet</td></tr>';
+        }
+    } catch (err) {
+        console.error('Error loading approved orders:', err);
+        tableBody.innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load</td></tr>';
+    }
+}
+
+// ============================================
 // PARTS SEARCH
 // ============================================
 

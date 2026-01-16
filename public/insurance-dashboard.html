@@ -763,36 +763,36 @@
                     <span>Dashboard</span>
                 </button>
 
-                <div class="nav-section-title">Gap-Filling Services</div>
-                <button class="nav-item" data-section="partsSearch">
-                    <i class="bi bi-search"></i>
-                    <span>Parts Search</span>
+                <div class="nav-section-title">Approvals</div>
+                <button class="nav-item" data-section="pendingApprovals">
+                    <i class="bi bi-hourglass-split"></i>
+                    <span>Pending Approvals</span>
+                    <span class="nav-badge" id="pendingBadge">0</span>
                 </button>
-                <button class="nav-item" data-section="priceCompare">
-                    <i class="bi bi-graph-down-arrow"></i>
-                    <span>Price Comparison</span>
-                </button>
-                <button class="nav-item" data-section="tracking">
-                    <i class="bi bi-geo-alt"></i>
-                    <span>Live Tracking</span>
+                <button class="nav-item" data-section="approvedOrders">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Approved Orders</span>
                 </button>
 
-                <div class="nav-section-title">Verification</div>
-                <button class="nav-item" data-section="photos">
-                    <i class="bi bi-camera"></i>
-                    <span>Photo Audit</span>
-                </button>
+                <div class="nav-section-title">Reports & Verification</div>
                 <button class="nav-item" data-section="history">
                     <i class="bi bi-file-earmark-check"></i>
                     <span>History Reports</span>
                     <span class="nav-badge">$</span>
                 </button>
+                <button class="nav-item" data-section="photos">
+                    <i class="bi bi-camera"></i>
+                    <span>Photo Audit</span>
+                </button>
 
-                <div class="nav-section-title">Claims</div>
-                <button class="nav-item" data-section="claims">
-                    <i class="bi bi-folder2-open"></i>
-                    <span>My Claims</span>
-                    <span class="nav-badge" id="claimsBadge">0</span>
+                <div class="nav-section-title">Tools</div>
+                <button class="nav-item" data-section="partsSearch">
+                    <i class="bi bi-search"></i>
+                    <span>Parts Lookup</span>
+                </button>
+                <button class="nav-item" data-section="priceCompare">
+                    <i class="bi bi-graph-down-arrow"></i>
+                    <span>Price Analysis</span>
                 </button>
             </nav>
 
@@ -846,25 +846,25 @@
                         <h3 class="card-title"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-                        <button class="btn btn-primary" onclick="switchSection('partsSearch')"
+                        <button class="btn btn-primary" onclick="switchSection('pendingApprovals')"
                             style="padding: 20px; flex-direction: column; gap: 8px;">
-                            <i class="bi bi-search" style="font-size: 24px;"></i>
-                            <span>Search Parts</span>
+                            <i class="bi bi-hourglass-split" style="font-size: 24px;"></i>
+                            <span>Review Pending</span>
                         </button>
-                        <button class="btn btn-outline" onclick="switchSection('priceCompare')"
+                        <button class="btn btn-outline" onclick="switchSection('approvedOrders')"
                             style="padding: 20px; flex-direction: column; gap: 8px;">
-                            <i class="bi bi-graph-down-arrow" style="font-size: 24px;"></i>
-                            <span>Price Compare</span>
-                        </button>
-                        <button class="btn btn-outline" onclick="switchSection('tracking')"
-                            style="padding: 20px; flex-direction: column; gap: 8px;">
-                            <i class="bi bi-geo-alt" style="font-size: 24px;"></i>
-                            <span>Track Order</span>
+                            <i class="bi bi-check-circle" style="font-size: 24px;"></i>
+                            <span>Track Orders</span>
                         </button>
                         <button class="btn btn-outline" onclick="switchSection('history')"
                             style="padding: 20px; flex-direction: column; gap: 8px;">
                             <i class="bi bi-file-earmark-check" style="font-size: 24px;"></i>
                             <span>History Report</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="switchSection('partsSearch')"
+                            style="padding: 20px; flex-direction: column; gap: 8px;">
+                            <i class="bi bi-search" style="font-size: 24px;"></i>
+                            <span>Parts Lookup</span>
                         </button>
                     </div>
                 </div>
@@ -891,6 +891,69 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Pending Approvals Section (QATAR WORKFLOW) -->
+            <section class="section" id="sectionPendingApprovals">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-hourglass-split"></i>
+                        Pending Approvals
+                    </h1>
+                    <button class="btn btn-outline" onclick="loadPendingApprovals()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent); border-color: rgba(245, 158, 11, 0.3);">
+                    <p style="color: var(--insurance-gold); margin: 0;">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Qatar Workflow:</strong> Garages submit damage assessments for your review. Approve
+                        scrapyard sourcing to save 40-60% vs agency pricing.
+                    </p>
+                </div>
+
+                <div id="pendingApprovalsList">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>No pending approvals. Garages will submit claims here for your review.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Approved Orders Section (QATAR WORKFLOW) -->
+            <section class="section" id="sectionApprovedOrders">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="bi bi-check-circle"></i>
+                        Approved Orders
+                    </h1>
+                    <button class="btn btn-outline" onclick="loadApprovedOrders()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="approvedOrdersList">
+                    <div class="content-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Claim #</th>
+                                    <th>Customer</th>
+                                    <th>Part</th>
+                                    <th>Order Status</th>
+                                    <th>Approved On</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approvedOrdersTable">
+                                <tr>
+                                    <td colspan="5" class="empty-state">Loading approved orders...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
