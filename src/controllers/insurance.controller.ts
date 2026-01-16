@@ -426,3 +426,282 @@ export const getHistoryReport = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
+
+// ==========================================
+// QATAR WORKFLOW: GARAGE → INSURANCE APPROVAL
+// ==========================================
+
+/**
+ * Get pending claims awaiting approval (Insurance Agent)
+ * Qatar Workflow: Garages submit, insurance reviews
+ */
+export const getPendingApprovals = async (req: Request, res: Response) => {
+    try {
+        const agentId = (req as any).user.user_id;
+
+        // Get agent's company
+        const agentResult = await readPool.query('SELECT insurance_company_id FROM users WHERE user_id = $1', [agentId]);
+        const companyId = agentResult.rows[0]?.insurance_company_id;
+
+        // Get pending claims for this company (or all if no company assigned)
+        const result = await readPool.query(`
+            SELECT 
+                ic.*,
+                g.garage_name,
+                g.rating_average,
+                g.phone as garage_phone,
+                pr.part_description,
+                pr.image_urls as request_images,
+                pr.bid_count
+            FROM insurance_claims ic
+            LEFT JOIN garages g ON ic.submitted_by_garage_id = g.garage_id
+            LEFT JOIN part_requests pr ON ic.part_request_id = pr.request_id
+            WHERE ic.approval_status = 'pending'
+              AND ($1::uuid IS NULL OR ic.company_id = $1)
+            ORDER BY ic.created_at DESC
+        `, [companyId]);
+
+        res.json({
+            pending: result.rows.map(row => ({
+                claim_id: row.claim_id,
+                claim_reference: row.claim_reference_number,
+                customer_name: row.customer_name,
+                vehicle: `${row.vehicle_make || ''} ${row.vehicle_model || ''} ${row.vehicle_year || ''}`.trim(),
+                vin: row.vin_number,
+                part_needed: row.part_name || row.part_description || 'Not specified',
+                damage_description: row.damage_description,
+                damage_photos: row.damage_photos || row.request_images || [],
+                garage: {
+                    name: row.garage_name || 'Direct Submission',
+                    rating: row.rating_average,
+                    phone: row.garage_phone
+                },
+                estimates: {
+                    agency: row.agency_estimate || 0,
+                    scrapyard: row.scrapyard_estimate || 0,
+                    savings: row.agency_estimate && row.scrapyard_estimate
+                        ? Math.round(row.agency_estimate - row.scrapyard_estimate)
+                        : 0,
+                    savings_percent: row.agency_estimate && row.scrapyard_estimate
+                        ? Math.round((1 - row.scrapyard_estimate / row.agency_estimate) * 100)
+                        : 0
+                },
+                submitted_at: row.created_at,
+                bid_count: row.bid_count || 0
+            })),
+            total: result.rowCount || 0
+        });
+    } catch (error) {
+        console.error('Error getting pending approvals:', error);
+        res.status(500).json({ error: 'Failed to get pending approvals' });
+    }
+};
+
+/**
+ * Approve a claim (Insurance Agent)
+ * Qatar Workflow: After review, approve parts sourcing
+ */
+export const approveClaim = async (req: Request, res: Response) => {
+    try {
+        const { claim_id } = req.params;
+        const { notes, approved_source } = req.body; // 'agency' or 'scrapyard'
+        const agentId = (req as any).user.user_id;
+
+        const result = await writePool.query(`
+            UPDATE insurance_claims 
+            SET approval_status = 'approved',
+                approved_by = $1,
+                approved_at = NOW(),
+                notes = COALESCE(notes || ' | ', '') || $2,
+                status = 'approved'
+            WHERE claim_id = $3
+            RETURNING claim_id, claim_reference_number
+        `, [agentId, notes || `Approved for ${approved_source || 'scrapyard'} sourcing`, claim_id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Claim not found' });
+        }
+
+        res.json({
+            message: 'Claim approved successfully',
+            claim_id: result.rows[0].claim_id,
+            claim_reference: result.rows[0].claim_reference_number
+        });
+    } catch (error) {
+        console.error('Error approving claim:', error);
+        res.status(500).json({ error: 'Failed to approve claim' });
+    }
+};
+
+/**
+ * Reject a claim (Insurance Agent)
+ * Qatar Workflow: Reject with documented reason
+ */
+export const rejectClaim = async (req: Request, res: Response) => {
+    try {
+        const { claim_id } = req.params;
+        const { reason } = req.body;
+        const agentId = (req as any).user.user_id;
+
+        if (!reason) {
+            return res.status(400).json({ error: 'Rejection reason is required' });
+        }
+
+        const result = await writePool.query(`
+            UPDATE insurance_claims 
+            SET approval_status = 'rejected',
+                approved_by = $1,
+                approved_at = NOW(),
+                rejection_reason = $2,
+                status = 'rejected'
+            WHERE claim_id = $3
+            RETURNING claim_id, claim_reference_number
+        `, [agentId, reason, claim_id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Claim not found' });
+        }
+
+        res.json({
+            message: 'Claim rejected',
+            claim_id: result.rows[0].claim_id,
+            claim_reference: result.rows[0].claim_reference_number
+        });
+    } catch (error) {
+        console.error('Error rejecting claim:', error);
+        res.status(500).json({ error: 'Failed to reject claim' });
+    }
+};
+
+/**
+ * Get approved orders for tracking (Insurance Agent)
+ * Qatar Workflow: Monitor parts delivery for approved claims
+ */
+export const getApprovedOrders = async (req: Request, res: Response) => {
+    try {
+        const agentId = (req as any).user.user_id;
+
+        // Get agent's company
+        const agentResult = await readPool.query('SELECT insurance_company_id FROM users WHERE user_id = $1', [agentId]);
+        const companyId = agentResult.rows[0]?.insurance_company_id;
+
+        const result = await readPool.query(`
+            SELECT 
+                ic.*,
+                g.garage_name,
+                o.order_number,
+                o.order_status,
+                o.total_amount,
+                da.status as delivery_status
+            FROM insurance_claims ic
+            LEFT JOIN garages g ON ic.submitted_by_garage_id = g.garage_id
+            LEFT JOIN part_requests pr ON ic.part_request_id = pr.request_id
+            LEFT JOIN orders o ON o.request_id = pr.request_id
+            LEFT JOIN delivery_assignments da ON da.order_id = o.order_id
+            WHERE ic.approval_status = 'approved'
+              AND ($1::uuid IS NULL OR ic.company_id = $1)
+            ORDER BY ic.approved_at DESC
+        `, [companyId]);
+
+        res.json({
+            approved: result.rows.map(row => ({
+                claim_id: row.claim_id,
+                claim_reference: row.claim_reference_number,
+                customer_name: row.customer_name,
+                vehicle: `${row.vehicle_make || ''} ${row.vehicle_model || ''}`.trim(),
+                part: row.part_name,
+                garage: row.garage_name,
+                order: row.order_number ? {
+                    number: row.order_number,
+                    status: row.order_status,
+                    amount: row.total_amount,
+                    delivery_status: row.delivery_status
+                } : null,
+                approved_at: row.approved_at,
+                status: row.status
+            })),
+            total: result.rowCount || 0
+        });
+    } catch (error) {
+        console.error('Error getting approved orders:', error);
+        res.status(500).json({ error: 'Failed to get approved orders' });
+    }
+};
+
+/**
+ * Garage submits claim to insurance (Called from Garage Dashboard)
+ * Qatar Workflow: Garage initiates the claim after customer arrives
+ */
+export const submitToInsurance = async (req: Request, res: Response) => {
+    try {
+        const {
+            insurance_company_id,
+            customer_name,
+            vehicle_make,
+            vehicle_model,
+            vehicle_year,
+            vin_number,
+            damage_description,
+            damage_photos,
+            part_name,
+            agency_estimate,
+            scrapyard_estimate,
+            police_report_number
+        } = req.body;
+        const garageId = (req as any).user.garage_id;
+
+        if (!garageId) {
+            return res.status(403).json({ error: 'Only garages can submit insurance claims' });
+        }
+
+        if (!insurance_company_id || !customer_name || !part_name) {
+            return res.status(400).json({ error: 'Insurance company, customer name, and part required' });
+        }
+
+        const result = await writePool.query(`
+            INSERT INTO insurance_claims (
+                company_id, submitted_by_garage_id,
+                customer_name, vehicle_make, vehicle_model, vehicle_year, vin_number,
+                damage_description, damage_photos, part_name,
+                agency_estimate, scrapyard_estimate,
+                claim_reference_number,
+                approval_status, status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending', 'pending_approval')
+            RETURNING claim_id, claim_reference_number
+        `, [
+            insurance_company_id, garageId,
+            customer_name, vehicle_make, vehicle_model, vehicle_year, vin_number,
+            damage_description, damage_photos || [], part_name,
+            agency_estimate || 0, scrapyard_estimate || 0,
+            `CLM-${Date.now()}-${police_report_number || 'NA'}`
+        ]);
+
+        res.status(201).json({
+            message: 'Claim submitted to insurance for approval',
+            claim_id: result.rows[0].claim_id,
+            claim_reference: result.rows[0].claim_reference_number
+        });
+    } catch (error) {
+        console.error('Error submitting to insurance:', error);
+        res.status(500).json({ error: 'Failed to submit claim' });
+    }
+};
+
+/**
+ * Get list of insurance companies (for garage dropdown)
+ */
+export const getInsuranceCompanies = async (req: Request, res: Response) => {
+    try {
+        const result = await readPool.query(`
+            SELECT company_id, name, company_code
+            FROM insurance_companies
+            WHERE is_active = true
+            ORDER BY name
+        `);
+
+        res.json({ companies: result.rows });
+    } catch (error) {
+        console.error('Error getting insurance companies:', error);
+        res.status(500).json({ error: 'Failed to get companies' });
+    }
+};
