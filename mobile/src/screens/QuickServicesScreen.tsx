@@ -124,21 +124,16 @@ export default function QuickServicesScreen() {
     const handleServicePress = (service: QuickService) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        Alert.alert(
-            service.title,
-            `${service.description}\n\nPrice: ${service.price}\nTime: ${service.duration}\n\nProceed to book?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Book Now',
-                    onPress: () => {
-                        // TODO: Navigate to booking screen with service type
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        Alert.alert('Success', 'Feature coming soon! Your request will be processed.');
-                    }
-                }
-            ]
-        );
+        // Navigate to booking confirmation screen
+        (navigation as any).navigate('QuickServiceBooking', {
+            service: {
+                type: service.id,
+                name: service.title,
+                icon: service.icon,
+                priceRange: service.price,
+                duration: service.duration,
+            }
+        });
     };
 
     const ServiceCard = ({ service }: { service: QuickService }) => {
