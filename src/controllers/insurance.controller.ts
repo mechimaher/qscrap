@@ -349,6 +349,10 @@ export const getHistoryReport = async (req: Request, res: Response) => {
     try {
         const { vin_number } = req.params;
 
+        if (!vin_number || vin_number.length !== 17) {
+            return res.status(400).json({ error: 'Invalid VIN. Must be exactly 17 characters.' });
+        }
+
         // Get all orders/repairs for this VIN
         const result = await readPool.query(`
             SELECT 
@@ -372,24 +376,25 @@ export const getHistoryReport = async (req: Request, res: Response) => {
 
         const historyCount = result.rowCount || 0;
 
+        // Return report object with history array (can be empty)
         res.json({
-            vin_number,
-            report_generated: new Date().toISOString(),
-            total_repairs: historyCount,
-            repairs: result.rows.map(r => ({
-                date: r.created_at,
-                completed_date: r.completed_at,
-                part: r.part_description,
-                garage: r.garage_name,
-                garage_rating: r.rating_average,
-                amount: r.total_amount,
-                order_number: r.order_number,
-                insurance_claim: r.claim_reference_number || null
-            })),
-            certification: {
-                status: 'MOTAR_CERTIFIED',
-                verified_by: 'Motar Technologies W.L.L.',
-                report_id: `MCR-${Date.now()}`
+            report: {
+                vin_number,
+                report_generated: new Date().toISOString(),
+                total_repairs: historyCount,
+                parts_replaced: historyCount,
+                certified_repairs: historyCount,
+                history: result.rows.map(r => ({
+                    date: new Date(r.created_at).toLocaleDateString('en-QA'),
+                    part_name: r.part_description,
+                    garage_name: r.garage_name,
+                    certification: 'MOTAR_CERTIFIED'
+                })),
+                certification: {
+                    status: 'MOTAR_CERTIFIED',
+                    verified_by: 'Motar Technologies W.L.L.',
+                    report_id: `MCR-${Date.now()}`
+                }
             }
         });
     } catch (error) {
