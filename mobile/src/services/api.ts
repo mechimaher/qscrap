@@ -547,6 +547,35 @@ class ApiService {
         });
     }
 
+    // ============================================
+    // QUICK SERVICES
+    // ============================================
+
+    async createQuickServiceRequest(data: {
+        service_type: string;
+        location_lat: number;
+        location_lng: number;
+        location_address: string;
+        vehicle_make: string;
+        vehicle_model: string;
+        vehicle_year: number;
+        notes?: string;
+        payment_method: 'cash' | 'card';
+    }): Promise<any> {
+        return this.request('/services/quick/request', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getMyQuickServiceRequests(): Promise<any> {
+        return this.request('/services/quick/my-requests');
+    }
+
+    async getQuickServiceDetails(requestId: string): Promise<any> {
+        return this.request(`/services/quick/${requestId}`);
+    }
+
 }
 
 export const api = new ApiService();
