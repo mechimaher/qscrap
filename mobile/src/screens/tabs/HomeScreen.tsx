@@ -477,7 +477,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                     emoji="⚡"
                     label="Quick Services"
                     bgColor="#FEF3C7"
-                    onPress={() => navigation.navigate('QuickServices')}
+                    onPress={() => navigation.getParent()?.navigate('QuickServices')}
                 />
                 <ActionButton
                     emoji="📋"
