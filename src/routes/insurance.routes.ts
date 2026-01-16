@@ -13,7 +13,14 @@ import {
     rejectClaim,
     getApprovedOrders,
     submitToInsurance,
-    getInsuranceCompanies
+    getInsuranceCompanies,
+    // MOI & Escrow Endpoints
+    uploadMOIReport,
+    getMOIReport,
+    verifyMOIReport,
+    holdEscrow,
+    releaseEscrow,
+    getEscrowStatus
 } from '../controllers/insurance.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 
@@ -67,7 +74,33 @@ router.get('/track/:claim_id', authenticate, requireRole('insurance_agent'), tra
 // Photo Verification - Fraud prevention with photo proof
 router.get('/photos/:claim_id', authenticate, requireRole('insurance_agent'), getClaimPhotos);
 
-// History Report - Certified repair history (monetization)
-router.get('/history/:vin_number', authenticate, requireRole('insurance_agent'), getHistoryReport);
+// History Report - VIN lookup for vehicle claims/repair history
+router.post('/history', authenticate, requireRole('insurance_agent'), getHistoryReport);
+
+// ==========================================
+// MOI ACCIDENT REPORTS
+// ==========================================
+
+// Upload MOI accident report for a claim
+router.post('/claims/:claim_id/moi-report', authenticate, uploadMOIReport);
+
+// Get MOI report for a claim
+router.get('/claims/:claim_id/moi-report', authenticate, getMOIReport);
+
+// Verify/reject MOI report (insurance adjuster)
+router.patch('/moi-reports/:report_id/verify', authenticate, requireRole('insurance_agent'), verifyMOIReport);
+
+// ==========================================
+// ESCROW PAYMENTS
+// ==========================================
+
+// Create escrow hold when approving claim
+router.post('/claims/:claim_id/escrow/hold', authenticate, requireRole('insurance_agent'), holdEscrow);
+
+// Release escrow payment after work verification
+router.post('/claims/:claim_id/escrow/release', authenticate, requireRole('insurance_agent'), releaseEscrow);
+
+// Get escrow status
+router.get('/escrow/status/:escrow_id', authenticate, getEscrowStatus);
 
 export default router;
