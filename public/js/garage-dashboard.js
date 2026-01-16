@@ -5567,7 +5567,7 @@ async function loadQuickServices() {
     try {
         const response = await fetchWithAuth('/api/services/quick/garage/requests');
         const container = document.getElementById('quickServicesContainer');
-        
+
         if (!container) return;
 
         if (!response.success || !response.requests || response.requests.length === 0) {
@@ -5584,6 +5584,8 @@ async function loadQuickServices() {
         container.innerHTML = response.requests.map(request => {
             const serviceIcons = {
                 battery: '🔋',
+                diagnostic: '💻',
+                electrician: '⚡',
                 oil: '🛢️',
                 wash: '🧼',
                 tire: '🛞',
