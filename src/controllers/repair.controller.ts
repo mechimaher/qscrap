@@ -1,6 +1,9 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { readPool, writePool } from '../config/db';
+import { getReadPool, getWritePool } from '../config/db';
+
+const readPool = getReadPool();
+const writePool = getWritePool();
 import { getErrorMessage } from '../types';
 import { emitToUser, emitToGarage } from '../utils/socketIO';
 
@@ -15,7 +18,7 @@ import { emitToUser, emitToGarage } from '../utils/socketIO';
 
 export async function createRepairRequest(req: AuthRequest, res: Response) {
     try {
-        const customer_id = req.user?.user_id;
+        const customer_id = req.user?.userId;
         if (!customer_id) {
             return res.status(401).json({ error: 'Authentication required' });
         }
@@ -78,7 +81,7 @@ export async function createRepairRequest(req: AuthRequest, res: Response) {
 
 export async function getMyRepairRequests(req: AuthRequest, res: Response) {
     try {
-        const customer_id = req.user?.user_id;
+        const customer_id = req.user?.userId;
         if (!customer_id) {
             return res.status(401).json({ error: 'Authentication required' });
         }
@@ -106,7 +109,7 @@ export async function getMyRepairRequests(req: AuthRequest, res: Response) {
 export async function getRepairRequestDetails(req: AuthRequest, res: Response) {
     try {
         const { request_id } = req.params;
-        const user_id = req.user?.user_id;
+        const user_id = req.user?.userId;
 
         const requestResult = await readPool.query(`
             SELECT r.*, u.full_name as customer_name, u.phone_number as customer_phone
@@ -150,7 +153,7 @@ export async function getRepairRequestDetails(req: AuthRequest, res: Response) {
 
 export async function acceptRepairBid(req: AuthRequest, res: Response) {
     try {
-        const customer_id = req.user?.user_id;
+        const customer_id = req.user?.userId;
         const { bid_id } = req.params;
         const { scheduled_date, scheduled_time, customer_notes } = req.body;
 
@@ -246,7 +249,7 @@ export async function acceptRepairBid(req: AuthRequest, res: Response) {
 
 export async function getMyRepairBookings(req: AuthRequest, res: Response) {
     try {
-        const customer_id = req.user?.user_id;
+        const customer_id = req.user?.userId;
         if (!customer_id) {
             return res.status(401).json({ error: 'Authentication required' });
         }
@@ -278,7 +281,7 @@ export async function getMyRepairBookings(req: AuthRequest, res: Response) {
 
 export async function getActiveRepairRequests(req: AuthRequest, res: Response) {
     try {
-        const garage_id = req.user?.user_id; // For workshops, user_id IS the garage_id
+        const garage_id = req.user?.userId; // For workshops, user_id IS the garage_id
         if (!garage_id) {
             return res.status(403).json({ error: 'Workshop access required' });
         }
@@ -312,7 +315,7 @@ export async function getActiveRepairRequests(req: AuthRequest, res: Response) {
 
 export async function submitRepairBid(req: AuthRequest, res: Response) {
     try {
-        const garage_id = req.user?.user_id; // For workshops, user_id IS the garage_id
+        const garage_id = req.user?.userId; // For workshops, user_id IS the garage_id
         if (!garage_id) {
             return res.status(403).json({ error: 'Workshop access required' });
         }
@@ -401,7 +404,7 @@ export async function submitRepairBid(req: AuthRequest, res: Response) {
 
 export async function getMyRepairBids(req: AuthRequest, res: Response) {
     try {
-        const garage_id = req.user?.user_id; // For workshops, user_id IS the garage_id
+        const garage_id = req.user?.userId; // For workshops, user_id IS the garage_id
         if (!garage_id) {
             return res.status(403).json({ error: 'Workshop access required' });
         }
@@ -430,7 +433,7 @@ export async function getMyRepairBids(req: AuthRequest, res: Response) {
 
 export async function getWorkshopBookings(req: AuthRequest, res: Response) {
     try {
-        const garage_id = req.user?.user_id; // For workshops, user_id IS the garage_id
+        const garage_id = req.user?.userId; // For workshops, user_id IS the garage_id
         if (!garage_id) {
             return res.status(403).json({ error: 'Workshop access required' });
         }
@@ -480,7 +483,7 @@ export async function getWorkshopBookings(req: AuthRequest, res: Response) {
 
 export async function updateBookingStatus(req: AuthRequest, res: Response) {
     try {
-        const garage_id = req.user?.user_id; // For workshops, user_id IS the garage_id
+        const garage_id = req.user?.userId; // For workshops, user_id IS the garage_id
         const { booking_id } = req.params;
         const { status, workshop_notes, final_cost, completion_notes } = req.body;
 
