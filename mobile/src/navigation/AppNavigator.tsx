@@ -41,6 +41,8 @@ export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     QuickServices: undefined; // Quick automotive services
+    QuickServiceBooking: { service: { type: string; name: string; icon: string; priceRange: string; duration: string } };
+    QuickServiceTracking: { requestId: string };
     RequestDetails: { requestId: string };
     OrderDetails: { orderId: string };
     DeliveryTracking: { orderId: string };
