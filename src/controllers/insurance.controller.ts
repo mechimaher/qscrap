@@ -1002,3 +1002,139 @@ export const getEscrowStatus = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to get escrow status' });
     }
 };
+
+// ============================================
+// PRICE BENCHMARKING ENDPOINTS
+// ============================================
+
+import * as pricingService from '../services/pricing.service';
+
+/**
+ * Check if a quoted price is an outlier
+ */
+export const checkPrice = async (req: Request, res: Response) => {
+    try {
+        const { part_name, vehicle_make, vehicle_model, quoted_price } = req.body;
+
+        if (!part_name || !quoted_price) {
+            return res.status(400).json({ error: 'part_name and quoted_price are required' });
+        }
+
+        const result = await pricingService.performPriceCheck(
+            part_name,
+            vehicle_make || '',
+            vehicle_model || '',
+            parseFloat(quoted_price)
+        );
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error checking price:', error);
+        res.status(500).json({ error: 'Failed to check price' });
+    }
+};
+
+/**
+ * Get price benchmarks for a part
+ */
+export const getBenchmark = async (req: Request, res: Response) => {
+    try {
+        const { part_name } = req.params;
+        const { vehicle_make, vehicle_model } = req.query;
+
+        const benchmark = await pricingService.getPriceStatistics(
+            part_name,
+            vehicle_make as string,
+            vehicle_model as string
+        );
+
+        if (!benchmark) {
+            return res.status(404).json({
+                error: 'No benchmark data available for this part',
+                message: 'Insufficient historical data for accurate pricing'
+            });
+        }
+
+        res.json({ benchmark });
+    } catch (error) {
+        console.error('Error getting benchmark:', error);
+        res.status(500).json({ error: 'Failed to get benchmark' });
+    }
+};
+
+/**
+ * Record actual invoice price (for future benchmarking)
+ */
+export const recordInvoicePrice = async (req: Request, res: Response) => {
+    try {
+        const {
+            part_name,
+            vehicle_make,
+            vehicle_model,
+            vehicle_year,
+            price,
+            claim_id,
+            garage_id
+        } = req.body;
+
+        if (!part_name || !price) {
+            return res.status(400).json({ error: 'part_name and price are required' });
+        }
+
+        await pricingService.recordPrice(
+            part_name,
+            vehicle_make,
+            vehicle_model,
+            vehicle_year ? parseInt(vehicle_year) : null,
+            parseFloat(price),
+            'invoice',
+            claim_id,
+            garage_id
+        );
+
+        res.json({ message: 'Invoice price recorded successfully' });
+    } catch (error) {
+        console.error('Error recording price:', error);
+        res.status(500).json({ error: 'Failed to record price' });
+    }
+};
+
+/**
+ * Get price trend for a part
+ */
+export const getPriceTrend = async (req: Request, res: Response) => {
+    try {
+        const { part_name } = req.params;
+        const { vehicle_make, vehicle_model } = req.query;
+
+        const trend = await pricingService.getPriceTrend(
+            part_name,
+            vehicle_make as string,
+            vehicle_model as string
+        );
+
+        res.json({ trend });
+    } catch (error) {
+        console.error('Error getting price trend:', error);
+        res.status(500).json({ error: 'Failed to get price trend' });
+    }
+};
+
+/**
+ * Get top inflated parts (fraud detection)
+ */
+export const getInflatedParts = async (req: Request, res: Response) => {
+    try {
+        const { garage_id, limit } = req.query;
+
+        const inflatedParts = await pricingService.getTopInflatedParts(
+            garage_id as string,
+            limit ? parseInt(limit as string) : 10
+        );
+
+        res.json({ inflated_parts: inflatedParts });
+    } catch (error) {
+        console.error('Error getting inflated parts:', error);
+        res.status(500).json({ error: 'Failed to get inflated parts' });
+    }
+};
