@@ -75,24 +75,29 @@ export const createClaim = async (req: Request, res: Response) => {
 export const getMyClaims = async (req: Request, res: Response) => {
     try {
         const agentId = (req as any).user.user_id;
-        const companyId = (req as any).user.insurance_company_id; // Added via middleware ideally, or query again
 
-        // If query doesn't have it (middleware not yet updated to inject company_id), fetch it
-        let targetCompanyId = companyId;
-        if (!targetCompanyId) {
-            const userRes = await readPool.query('SELECT insurance_company_id FROM users WHERE user_id = $1', [agentId]);
-            targetCompanyId = userRes.rows[0]?.insurance_company_id;
+        // Fetch agent's company_id
+        const userRes = await readPool.query('SELECT insurance_company_id FROM users WHERE user_id = $1', [agentId]);
+        const companyId = userRes.rows[0]?.insurance_company_id;
+
+        // Query claims - by company if available, otherwise by agent
+        let result;
+        if (companyId) {
+            result = await readPool.query(`
+                SELECT * FROM insurance_claims
+                WHERE company_id = $1
+                ORDER BY created_at DESC
+            `, [companyId]);
+        } else {
+            // Agent without company - show their own claims
+            result = await readPool.query(`
+                SELECT * FROM insurance_claims
+                WHERE agent_id = $1
+                ORDER BY created_at DESC
+            `, [agentId]);
         }
 
-        const result = await readPool.query(`
-            SELECT ic.*, pr.status as part_request_status, pr.bid_count
-            FROM insurance_claims ic
-            LEFT JOIN part_requests pr ON ic.part_request_id = pr.request_id
-            WHERE ic.company_id = $1
-            ORDER BY ic.created_at DESC
-        `, [targetCompanyId]);
-
-        res.json(result.rows);
+        res.json({ claims: result.rows });
     } catch (error) {
         console.error('Error fetching claims:', error);
         res.status(500).json({ error: 'Internal server error' });
