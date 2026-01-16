@@ -163,8 +163,9 @@ body {
 
 .sidebar {
     width: 260px;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border);
+    background: linear-gradient(180deg, #8D1B3D 0%, #5A1228 100%);
+    color: white;
+    border-right: none;
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -270,22 +271,22 @@ body {
     padding: 12px;
     border-radius: 8px;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.7);
     transition: all 0.2s;
     margin-bottom: 4px;
     text-decoration: none;
 }
 
 .nav-item:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
 }
 
 .nav-item.active {
-    background: var(--accent-light);
-    color: var(--accent);
-    font-weight: 500;
-    border-left: 3px solid var(--accent);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+    border-left: 3px solid #C9A227;
 }
 
 .nav-item i {
