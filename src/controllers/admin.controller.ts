@@ -1438,7 +1438,7 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Phone, password, name, and user type are required' });
     }
 
-    if (!['customer', 'garage', 'driver', 'admin', 'staff'].includes(user_type)) {
+    if (!['customer', 'garage', 'driver', 'admin', 'staff', 'insurance_agent'].includes(user_type)) {
         return res.status(400).json({ error: 'Invalid user type' });
     }
 
