@@ -98,7 +98,7 @@ export default function QuickServiceBookingScreen() {
         setIsLoading(true);
 
         try {
-            const response = await api.post('/services/quick/request', {
+            const response = await api.createQuickServiceRequest({
                 service_type: serviceDetails.type,
                 location_lat: location.lat,
                 location_lng: location.lng,
