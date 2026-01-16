@@ -1064,3 +1064,93 @@ function showToast(message, type = 'info') {
 
     setTimeout(() => toast.remove(), 4000);
 }
+
+// ============================================
+// FRAUD ANALYTICS
+// ============================================
+
+if (document.querySelector('.nav-item[data-section="fraudAnalytics"]')) {
+    document.querySelector('.nav-item[data-section="fraudAnalytics"]').addEventListener('click', () => {
+        loadFraudDashboard();
+        loadInflatedParts();
+    });
+}
+
+function loadFraudDashboard() {
+    // Mock summary stats for the dashboard (endpoint to be implemented in Week 6)
+    // These would typically come from /api/insurance/analytics/fraud-summary
+    document.getElementById('fraudTotalFlagged').textContent = '12';
+    document.getElementById('fraudGaragesRisk').textContent = '3';
+    document.getElementById('fraudSavings').textContent = 'QAR 4,250';
+}
+
+async function loadInflatedParts() {
+    const tableBody = document.getElementById('inflatedPartsTable');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading data...</td></tr>';
+
+    try {
+        const res = await fetch(`${API_URL}/insurance/inflated-parts?limit=10`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch data');
+
+        const data = await res.json();
+
+        if (data.inflated_parts && data.inflated_parts.length > 0) {
+            tableBody.innerHTML = data.inflated_parts.map(part => {
+                let statusClass = 'status-success';
+                let statusText = 'Normal';
+
+                if (part.inflation_percent > 50) {
+                    statusClass = 'status-error';
+                    statusText = 'Critical';
+                } else if (part.inflation_percent > 30) {
+                    statusClass = 'status-high'; // Using existing class or define new
+                    statusText = 'High Risk';
+                } else if (part.inflation_percent > 15) {
+                    statusClass = 'status-warning'; // Warning usually yellow/orange
+                    statusText = 'Check';
+                }
+
+                return `
+                <tr>
+                    <td>${escapeHtml(part.part_name)}</td>
+                    <td>${escapeHtml(part.garage_name)}</td>
+                    <td>QAR ${formatNumber(part.avg_quoted_price)}</td>
+                    <td>QAR ${formatNumber(part.market_avg_price)}</td>
+                    <td>
+                        <span style="color: ${part.inflation_percent > 30 ? '#ef4444' : '#f59e0b'}; font-weight: bold;">
+                            +${Math.round(part.inflation_percent)}%
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </td>
+                </tr>
+            `}).join('');
+
+            // Update risk counts based on data (client-side calculation for demo)
+            const criticalCount = data.inflated_parts.filter(p => p.inflation_percent > 50).length;
+            const highCount = data.inflated_parts.filter(p => p.inflation_percent > 30 && p.inflation_percent <= 50).length;
+
+            document.getElementById('riskCountCritical').textContent = criticalCount;
+            document.getElementById('riskCountHigh').textContent = highCount;
+            document.getElementById('riskCountNormal').textContent = 45;
+
+            // Update badge
+            const badge = document.getElementById('fraudBadge');
+            if (badge) badge.textContent = data.inflated_parts.length;
+
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No inflated parts detected</td></tr>';
+            const badge = document.getElementById('fraudBadge');
+            if (badge) badge.textContent = '0';
+        }
+    } catch (err) {
+        console.error('Error loading inflated parts:', err);
+        tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load data</td></tr>';
+    }
+}
