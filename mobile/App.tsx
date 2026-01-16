@@ -39,6 +39,11 @@ import CounterOfferScreen from './src/screens/CounterOfferScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import SupportScreen from './src/screens/SupportScreen';
 
+// Quick Services Screens
+import QuickServicesScreen from './src/screens/QuickServicesScreen';
+import QuickServiceBookingScreen from './src/screens/QuickServiceBookingScreen';
+import QuickServiceTrackingScreen from './src/screens/QuickServiceTrackingScreen';
+
 // Navigation Types
 export type RootStackParamList = {
   Auth: undefined;
@@ -54,6 +59,9 @@ export type RootStackParamList = {
   CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string; garageCounterId?: string | null };
   Notifications: undefined;
   Support: undefined;
+  QuickServices: undefined;
+  QuickServiceBooking: { service: any };
+  QuickServiceTracking: { requestId: string };
 };
 
 export type AuthStackParamList = {
@@ -222,6 +230,23 @@ function RootNavigator() {
             <RootStack.Screen
               name="Support"
               component={SupportScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+
+            {/* Quick Services */}
+            <RootStack.Screen
+              name="QuickServices"
+              component={QuickServicesScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="QuickServiceBooking"
+              component={QuickServiceBookingScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="QuickServiceTracking"
+              component={QuickServiceTrackingScreen}
               options={{ animation: 'slide_from_right' }}
             />
           </>
