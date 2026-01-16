@@ -395,7 +395,7 @@ router.get('/pricing', async (req: Request, res: Response) => {
         wash: { min: 80, max: 120, currency: 'QAR', duration: '45 mins' },
         tire: { min: 50, max: 150, currency: 'QAR', duration: '20 mins' },
         ac: { min: 200, max: 300, currency: 'QAR', duration: '45 mins' },
-        breakdown: { min: 0, max: 0, currency: 'QAR', duration: 'ASAP', note: 'Free diagnosis' }
+        breakdown: { min: 70, max: 100, currency: 'QAR', duration: '30 mins', note: 'Towing & emergency' }
     };
 
     res.json({ success: true, pricing });
