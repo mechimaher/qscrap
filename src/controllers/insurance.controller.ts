@@ -218,8 +218,6 @@ export const priceCompare = async (req: Request, res: Response) => {
 
         const stats = result.rows[0];
         const avgScrapyardPrice = parseFloat(stats.avg_scrapyard_price) || 0;
-        const agencyPriceNum = parseFloat(agency_price) || 0;
-        const savings = agencyPriceNum > 0 ? ((agencyPriceNum - avgScrapyardPrice) / agencyPriceNum * 100) : 0;
 
         // Return format matching frontend comparison display
         res.json({
