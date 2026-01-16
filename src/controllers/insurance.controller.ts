@@ -705,3 +705,300 @@ export const getInsuranceCompanies = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to get companies' });
     }
 };
+
+// ============================================
+// MOI ACCIDENT REPORT ENDPOINTS
+// ============================================
+
+/**
+ * Upload MOI accident report for a claim
+ */
+export const uploadMOIReport = async (req: Request, res: Response) => {
+    try {
+        const { claim_id } = req.params;
+        const {
+            report_number,
+            accident_date,
+            police_station,
+            vehicle_vin,
+            vehicle_registration,
+            driver_name,
+            driver_id_number,
+            report_document_url,
+            parsed_data
+        } = req.body;
+
+        const userId = (req as any).user.user_id;
+
+        // Verify claim exists and user has access
+        const claimCheck = await readPool.query(
+            'SELECT claim_id FROM insurance_claims WHERE claim_id = $1',
+            [claim_id]
+        );
+
+        if (claimCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Claim not found' });
+        }
+
+        const result = await writePool.query(`
+            INSERT INTO moi_accident_reports (
+                claim_id, report_number, accident_date, police_station,
+                vehicle_vin, vehicle_registration, driver_name, driver_id_number,
+                report_document_url, parsed_data, created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING *
+        `, [
+            claim_id, report_number, accident_date, police_station,
+            vehicle_vin, vehicle_registration, driver_name, driver_id_number,
+            report_document_url, parsed_data ? JSON.stringify(parsed_data) : null,
+            userId
+        ]);
+
+        // Update claim to indicate MOI report attached
+        await writePool.query(
+            'UPDATE insurance_claims SET has_moi_report = true WHERE claim_id = $1',
+            [claim_id]
+        );
+
+        res.json({
+            message: 'MOI report uploaded successfully',
+            report: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error uploading MOI report:', error);
+        res.status(500).json({ error: 'Failed to upload MOI report' });
+    }
+};
+
+/**
+ * Get MOI report for a claim
+ */
+export const getMOIReport = async (req: Request, res: Response) => {
+    try {
+        const { claim_id } = req.params;
+
+        const result = await readPool.query(`
+            SELECT * FROM moi_accident_reports
+            WHERE claim_id = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+        `, [claim_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'No MOI report found for this claim' });
+        }
+
+        res.json({ report: result.rows[0] });
+    } catch (error) {
+        console.error('Error getting MOI report:', error);
+        res.status(500).json({ error: 'Failed to get MOI report' });
+    }
+};
+
+/**
+ * Verify/reject MOI report (insurance adjuster)
+ */
+export const verifyMOIReport = async (req: Request, res: Response) => {
+    try {
+        const { report_id } = req.params;
+        const { verification_status, verification_notes } = req.body;
+        const userId = (req as any).user.user_id;
+
+        if (!['verified', 'rejected'].includes(verification_status)) {
+            return res.status(400).json({ error: 'Invalid verification status' });
+        }
+
+        const result = await writePool.query(`
+            UPDATE moi_accident_reports
+            SET 
+                verification_status = $1,
+                verification_notes = $2,
+                verified_by = $3,
+                verified_at = NOW(),
+                updated_at = NOW()
+            WHERE report_id = $4
+            RETURNING *
+        `, [verification_status, verification_notes, userId, report_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'MOI report not found' });
+        }
+
+        res.json({
+            message: `MOI report ${verification_status}`,
+            report: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error verifying MOI report:', error);
+        res.status(500).json({ error: 'Failed to verify MOI report' });
+    }
+};
+
+// ============================================
+// ESCROW PAYMENT ENDPOINTS
+// ============================================
+
+/**
+ * Create escrow hold when claim is approved
+ */
+export const holdEscrow = async (req: Request, res: Response) => {
+    const client = await writePool.connect();
+    try {
+        const { claim_id } = req.params;
+        const { approved_amount } = req.body;
+        const userId = (req as any).user.user_id;
+
+        await client.query('BEGIN');
+
+        // Get claim details
+        const claimResult = await client.query(`
+            SELECT 
+                ic.claim_id,
+                ic.company_id,
+                ic.status,
+                u.user_id as garage_id
+            FROM insurance_claims ic
+            LEFT JOIN part_requests pr ON ic.part_request_id = pr.request_id
+            LEFT JOIN users u ON pr.user_id = u.user_id
+            WHERE ic.claim_id = $1
+        `, [claim_id]);
+
+        if (claimResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Claim not found' });
+        }
+
+        const claim = claimResult.rows[0];
+
+        // Create escrow payment
+        const escrowResult = await client.query(`
+            INSERT INTO escrow_payments (
+                claim_id, insurance_company_id, garage_id,
+                approved_amount, held_amount, status,
+                hold_date, expiry_date
+            ) VALUES ($1, $2, $3, $4, $5, 'held', NOW(), NOW() + INTERVAL '30 days')
+            RETURNING *
+        `, [claim_id, claim.company_id, claim.garage_id, approved_amount, approved_amount]);
+
+        // Update claim with escrow reference
+        await client.query(`
+            UPDATE insurance_claims
+            SET escrow_id = $1, payment_status = 'held'
+            WHERE claim_id = $2
+        `, [escrowResult.rows[0].escrow_id, claim_id]);
+
+        await client.query('COMMIT');
+
+        res.json({
+            message: 'Escrow payment held successfully',
+            escrow: escrowResult.rows[0]
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error holding escrow:', error);
+        res.status(500).json({ error: 'Failed to hold escrow payment' });
+    } finally {
+        client.release();
+    }
+};
+
+/**
+ * Release escrow payment after work verification
+ */
+export const releaseEscrow = async (req: Request, res: Response) => {
+    const client = await writePool.connect();
+    try {
+        const { claim_id } = req.params;
+        const { release_notes, completion_photos } = req.body;
+        const userId = (req as any).user.user_id;
+
+        await client.query('BEGIN');
+
+        // Get escrow details
+        const escrowResult = await client.query(`
+            SELECT * FROM escrow_payments
+            WHERE claim_id = $1 AND status = 'held'
+        `, [claim_id]);
+
+        if (escrowResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'No active escrow found for this claim' });
+        }
+
+        const escrow = escrowResult.rows[0];
+
+        // Release payment
+        await client.query(`
+            UPDATE escrow_payments
+            SET 
+                status = 'released',
+                released_amount = held_amount,
+                release_date = NOW(),
+                release_approved_by = $1,
+                release_notes = $2,
+                completion_photos = $3,
+                completion_verified_by = $1,
+                work_completed_at = NOW()
+            WHERE escrow_id = $4
+        `, [userId, release_notes, completion_photos ? JSON.stringify(completion_photos) : null, escrow.escrow_id]);
+
+        // Update claim payment status
+        await client.query(`
+            UPDATE insurance_claims
+            SET payment_status = 'released'
+            WHERE claim_id = $1
+        `, [claim_id]);
+
+        await client.query('COMMIT');
+
+        res.json({
+            message: 'Escrow payment released successfully',
+            released_amount: escrow.held_amount
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error releasing escrow:', error);
+        res.status(500).json({ error: 'Failed to release escrow payment' });
+    } finally {
+        client.release();
+    }
+};
+
+/**
+ * Get escrow status
+ */
+export const getEscrowStatus = async (req: Request, res: Response) => {
+    try {
+        const { escrow_id } = req.params;
+
+        const result = await readPool.query(`
+            SELECT 
+                ep.*,
+                ic.claim_reference_number,
+                u.full_name as garage_name
+            FROM escrow_payments ep
+            LEFT JOIN insurance_claims ic ON ep.claim_id = ic.claim_id
+            LEFT JOIN users u ON ep.garage_id = u.user_id
+            WHERE ep.escrow_id = $1
+        `, [escrow_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Escrow not found' });
+        }
+
+        // Get activity log
+        const logResult = await readPool.query(`
+            SELECT * FROM escrow_activity_log
+            WHERE escrow_id = $1
+            ORDER BY created_at DESC
+        `, [escrow_id]);
+
+        res.json({
+            escrow: result.rows[0],
+            activity_log: logResult.rows
+        });
+    } catch (error) {
+        console.error('Error getting escrow status:', error);
+        res.status(500).json({ error: 'Failed to get escrow status' });
+    }
+};
