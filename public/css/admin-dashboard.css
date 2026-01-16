@@ -241,7 +241,7 @@
 /* Sidebar */
 .sidebar {
     width: 260px;
-    background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+    background: linear-gradient(180deg, #8D1B3D 0%, #5A1228 100%);
     color: white;
     display: flex;
     flex-direction: column;
@@ -1249,7 +1249,7 @@
 }
 
 .data-table thead {
-    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    background: linear-gradient(135deg, #8D1B3D, #5A1228);
     color: white;
 }
 
