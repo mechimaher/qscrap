@@ -21,6 +21,7 @@ import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../components/Toast';
+import { extractErrorMessage } from '../utils/errorHandler';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteParamsProp = RouteProp<RootStackParamList, 'QuickServiceBooking'>;
@@ -125,24 +126,14 @@ export default function QuickServiceBookingScreen() {
                     });
                 }, 1200);
             } else {
-                // Handle error - could be string or object
-                const errorInfo = response.error;
-                const errorMessage = typeof errorInfo === 'string'
-                    ? errorInfo
-                    : (errorInfo?.message || errorInfo?.error || JSON.stringify(errorInfo) || 'Booking failed');
+                // Backend returns { success: false, error: 'string message' }
+                const errorMessage = response.error || 'Booking failed';
                 throw new Error(errorMessage);
             }
         } catch (error: any) {
             console.error('Booking error:', error);
-            // Extract string message safely
-            let errorMsg = 'Failed to book service';
-            if (typeof error === 'string') {
-                errorMsg = error;
-            } else if (error?.message) {
-                errorMsg = error.message;
-            } else if (error?.error) {
-                errorMsg = typeof error.error === 'string' ? error.error : 'Booking failed';
-            }
+            // Use standardized error extraction
+            const errorMsg = extractErrorMessage(error) || 'Failed to book service';
             toast.error('Error', errorMsg);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
