@@ -16,6 +16,8 @@ import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../components/Toast';
+import { handleApiError } from '../utils/errorHandler';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteParamsProp = RouteProp<RootStackParamList, 'QuickServiceTracking'>;
@@ -24,6 +26,7 @@ export default function QuickServiceTrackingScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<RouteParamsProp>();
     const { colors } = useTheme();
+    const toast = useToast();
 
     const requestId = route.params?.requestId;
 
@@ -47,6 +50,7 @@ export default function QuickServiceTrackingScreen() {
             }
         } catch (error) {
             console.error('Failed to fetch request status:', error);
+            handleApiError(error, toast, 'Failed to load tracking information');
         } finally {
             setIsLoading(false);
         }

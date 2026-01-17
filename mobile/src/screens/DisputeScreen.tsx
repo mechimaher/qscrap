@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../contexts';
 import { api } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
+import { extractErrorMessage } from '../utils/errorHandler';
 
 const DISPUTE_REASONS = [
     { id: 'wrong_item', label: 'Wrong Item Received', icon: 'swap-horizontal-outline', refund: '100%' },
@@ -118,7 +119,8 @@ const DisputeScreen: React.FC = () => {
                 [{ text: 'OK', onPress: () => navigation.navigate('MainTabs') }]
             );
         } catch (error: any) {
-            Alert.alert('Error', error.response?.data?.error || 'Failed to submit dispute');
+            const errorMsg = extractErrorMessage(error) || 'Failed to submit dispute';
+            Alert.alert('Error', errorMsg);
         } finally {
             setLoading(false);
         }

@@ -125,12 +125,24 @@ export default function QuickServiceBookingScreen() {
                     });
                 }, 1200);
             } else {
-                throw new Error(response.error || 'Booking failed');
+                // Handle error - could be string or object
+                const errorInfo = response.error;
+                const errorMessage = typeof errorInfo === 'string'
+                    ? errorInfo
+                    : (errorInfo?.message || errorInfo?.error || JSON.stringify(errorInfo) || 'Booking failed');
+                throw new Error(errorMessage);
             }
         } catch (error: any) {
             console.error('Booking error:', error);
-            console.error('Error details:', JSON.stringify(error, null, 2));
-            const errorMsg = error?.message || error?.error || JSON.stringify(error) || 'Failed to book service';
+            // Extract string message safely
+            let errorMsg = 'Failed to book service';
+            if (typeof error === 'string') {
+                errorMsg = error;
+            } else if (error?.message) {
+                errorMsg = error.message;
+            } else if (error?.error) {
+                errorMsg = typeof error.error === 'string' ? error.error : 'Booking failed';
+            }
             toast.error('Error', errorMsg);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
