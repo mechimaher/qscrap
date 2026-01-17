@@ -15,13 +15,12 @@ export { default as RequestDetailScreen } from './RequestDetailScreen';
 export { default as OrderDetailScreen } from './OrderDetailScreen';
 
 // Functional screens (root level)
-export { default as RegisterScreen } from './RegisterScreen';
+export { default as RegisterScreen } from './auth/RegisterScreen';
 export { default as NewRequestScreen } from './NewRequestScreen';
 export { default as ChatScreen } from './ChatScreen';
 export { default as CounterOfferScreen } from './CounterOfferScreen';
 export { default as DisputeScreen } from './DisputeScreen';
 export { default as DeliveryTrackingScreen } from './DeliveryTrackingScreen';
-export { default as TrackingScreen } from './TrackingScreen';
 export { default as CancellationPreviewScreen } from './CancellationPreviewScreen';
 export { default as SupportScreen } from './SupportScreen';
 export { default as NotificationsScreen } from './NotificationsScreen';
