@@ -20,6 +20,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useSocketContext } from '../hooks/useSocket';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../contexts/ThemeContext';
+import { extractErrorMessage } from '../utils/errorHandler';
 
 interface CounterOffer {
     counter_offer_id: string;
@@ -82,7 +83,6 @@ export default function CounterOfferScreen() {
             console.log('[CounterOffer] Counter-offer accepted:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 toast.success('Offer Accepted!', 'The garage has accepted your counter-offer.');
             }
@@ -210,13 +210,8 @@ export default function CounterOfferScreen() {
                     duration: 4000
                 });
             } else {
-                let errorMsg = 'Failed to send counter-offer';
-                try {
-                    const data = await response.json();
-                    errorMsg = data.error || data.message || `Server error ${response.status}`;
-                } catch {
-                    errorMsg = `Server error ${response.status}`;
-                }
+                const data = await response.json();
+                const errorMsg = extractErrorMessage(data) || `Server error ${response.status}`;
                 toast.error('Error', errorMsg);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             }
@@ -280,10 +275,12 @@ export default function CounterOfferScreen() {
                 }
             } else {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to respond');
+                const errorMsg = extractErrorMessage(data) || 'Failed to respond';
+                throw new Error(errorMsg);
             }
         } catch (error: any) {
-            toast.error('Error', error.message || 'Failed to respond');
+            const errorMsg = extractErrorMessage(error) || 'Failed to respond';
+            toast.error('Error', errorMsg);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSending(false);
