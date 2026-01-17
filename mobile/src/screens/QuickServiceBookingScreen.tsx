@@ -22,6 +22,8 @@ import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../components/Toast';
 import { extractErrorMessage } from '../utils/errorHandler';
+import MyVehiclesSelector from '../components/MyVehiclesSelector';
+import { SavedVehicle } from '../services/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteParamsProp = RouteProp<RootStackParamList, 'QuickServiceBooking'>;
@@ -47,6 +49,7 @@ export default function QuickServiceBookingScreen() {
     const [vehicleMake, setVehicleMake] = useState('');
     const [vehicleModel, setVehicleModel] = useState('');
     const [vehicleYear, setVehicleYear] = useState('');
+    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
     const [notes, setNotes] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
     const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +57,30 @@ export default function QuickServiceBookingScreen() {
 
     useEffect(() => {
         getCurrentLocation();
+        loadLastUsedVehicle();
     }, []);
+
+    const loadLastUsedVehicle = async () => {
+        try {
+            const result = await api.getMyVehicles();
+            if (result.success && result.vehicles.length > 0) {
+                // Auto-select primary or most recently used vehicle
+                const vehicle = result.vehicles[0];
+                handleVehicleSelect(vehicle);
+            }
+        } catch (error) {
+            console.log('[QuickService] Failed to load vehicles:', error);
+            // Non-blocking - user can still enter manually
+        }
+    };
+
+    const handleVehicleSelect = (vehicle: SavedVehicle) => {
+        setVehicleMake(vehicle.car_make);
+        setVehicleModel(vehicle.car_model);
+        setVehicleYear(vehicle.car_year.toString());
+        setSelectedVehicleId(vehicle.vehicle_id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    };
 
     const getCurrentLocation = async () => {
         setGettingLocation(true);
@@ -112,6 +138,17 @@ export default function QuickServiceBookingScreen() {
             });
 
             if (response.success) {
+                // Auto-save vehicle for future use (non-blocking)
+                try {
+                    await api.saveVehicle({
+                        car_make: vehicleMake,
+                        car_model: vehicleModel,
+                        car_year: parseInt(vehicleYear),
+                    });
+                } catch (saveError) {
+                    console.log('[QuickService] Vehicle auto-save failed (non-blocking):', saveError);
+                }
+
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 toast.success(
@@ -193,6 +230,12 @@ export default function QuickServiceBookingScreen() {
                 {/* Vehicle Info */}
                 <View style={[styles.section, { backgroundColor: colors.surface }]}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>🚗 Vehicle Details</Text>
+
+                    {/* My Vehicles Selector */}
+                    <MyVehiclesSelector
+                        onSelect={handleVehicleSelect}
+                        selectedVehicleId={selectedVehicleId}
+                    />
 
                     <View style={styles.inputGroup}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Make *</Text>
