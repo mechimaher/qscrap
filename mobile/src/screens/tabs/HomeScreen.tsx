@@ -26,6 +26,7 @@ import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
 import { useToast } from '../../components/Toast';
 import FeaturedProductsSection from '../../components/FeaturedProductsSection';
+import QuickServicesBanner from '../../components/QuickServicesBanner';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -474,20 +475,14 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>⚡ Quick Actions</Text>
             <View style={styles.actionsGrid}>
                 <ActionButton
-                    emoji="⚡"
-                    label="Quick Services"
-                    bgColor="#FEF3C7"
-                    onPress={() => navigation.getParent()?.navigate('QuickServices')}
-                />
-                <ActionButton
                     emoji="📋"
-                    label="Requests"
+                    label="My Requests"
                     bgColor="#FFF3E0"
                     onPress={() => navigation.navigate('Main', { screen: 'Requests' })}
                 />
                 <ActionButton
                     emoji="📦"
-                    label="Orders"
+                    label="My Orders"
                     bgColor="#E3F2FD"
                     onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                 />
@@ -642,6 +637,26 @@ export default function HomeScreen() {
 
                 {/* Signature CTA */}
                 <SignatureCTA onPress={handleNewRequest} />
+
+                {/* Quick Services Banner */}
+                <QuickServicesBanner
+                    onServicePress={(serviceId, serviceName, icon, priceRange, duration) => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        (navigation as any).navigate('QuickServiceBooking', {
+                            service: {
+                                type: serviceId,
+                                name: serviceName,
+                                icon: icon,
+                                priceRange: priceRange,
+                                duration: duration,
+                            }
+                        });
+                    }}
+                    onViewAll={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.getParent()?.navigate('QuickServices');
+                    }}
+                />
 
                 {/* Featured Products */}
                 <FeaturedProductsSection

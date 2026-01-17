@@ -10,7 +10,7 @@ import * as storage from '../utils/storage';
 
 // Screens - Auth
 import LoginScreen from '../screens/auth/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
 
 // Screens - Tabs
 import HomeScreen from '../screens/tabs/HomeScreen';
@@ -29,6 +29,15 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsScreen from '../screens/TermsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 
+// Screens - Profile & Account
+import NewRequestScreen from '../screens/NewRequestScreen';
+import AddressesScreen from '../screens/AddressesScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import ChatScreen from '../screens/ChatScreen';
+import CounterOfferScreen from '../screens/CounterOfferScreen';
+
 // Repair Marketplace Screens
 import RepairRequestScreen from '../screens/RepairRequestScreen';
 import MyRepairsScreen from '../screens/MyRepairsScreen';
@@ -45,14 +54,25 @@ export type RootStackParamList = {
     MainTabs: undefined;
     Login: undefined;
     Register: undefined;
-    QuickServices: undefined; // Quick automotive services
+    // Quick Services
+    QuickServices: undefined;
     QuickServiceBooking: { service: { type: string; name: string; icon: string; priceRange: string; duration: string } };
     QuickServiceTracking: { requestId: string };
+    // Request & Order Flow
+    NewRequest: undefined;
     RequestDetails: { requestId: string };
     OrderDetails: { orderId: string };
     DeliveryTracking: { orderId: string };
     CancellationPreview: { orderId: string };
     Dispute: { orderId: string };
+    CounterOffer: { bidId: string; requestId: string; currentAmount: number; garageName: string };
+    Chat: { orderId?: string; requestId?: string; garageId?: string };
+    // Profile & Account
+    Addresses: undefined;
+    Notifications: undefined;
+    EditProfile: undefined;
+    Settings: undefined;
+    // Legal
     PrivacyPolicy: undefined;
     Terms: undefined;
     // Repair Marketplace
@@ -99,7 +119,7 @@ const MainTabs: React.FC = () => {
 
                     switch (route.name) {
                         case 'Home':
-                            iconName = focused ? 'add-circle' : 'add-circle-outline';
+                            iconName = focused ? 'home' : 'home-outline';
                             break;
                         case 'Requests':
                             iconName = focused ? 'list' : 'list-outline';
@@ -119,7 +139,7 @@ const MainTabs: React.FC = () => {
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'New Request' }} />
+            <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
             <Tab.Screen name="Requests" component={RequestsScreen} options={{ tabBarLabel: 'Requests' }} />
             <Tab.Screen name="Orders" component={OrdersScreen} options={{ tabBarLabel: 'Orders' }} />
             <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Profile' }} />
@@ -157,12 +177,21 @@ const MainStack: React.FC = () => {
             <Stack.Screen name="QuickServices" component={QuickServicesScreen} />
             <Stack.Screen name="QuickServiceBooking" component={QuickServiceBookingScreen} />
             <Stack.Screen name="QuickServiceTracking" component={QuickServiceTrackingScreen} />
-            {/* Other Screens */}
+            {/* Request & Order Flow */}
+            <Stack.Screen name="NewRequest" component={NewRequestScreen} />
             <Stack.Screen name="RequestDetails" component={RequestDetailScreen} />
             <Stack.Screen name="OrderDetails" component={OrderDetailScreen} />
             <Stack.Screen name="DeliveryTracking" component={DeliveryTrackingScreen} />
             <Stack.Screen name="CancellationPreview" component={CancellationPreviewScreen} />
             <Stack.Screen name="Dispute" component={DisputeScreen} />
+            <Stack.Screen name="CounterOffer" component={CounterOfferScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} />
+            {/* Profile & Account */}
+            <Stack.Screen name="Addresses" component={AddressesScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            {/* Legal */}
             <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <Stack.Screen name="Terms" component={TermsScreen} />
             {/* Repair Marketplace */}
