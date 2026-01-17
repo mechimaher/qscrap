@@ -15,6 +15,7 @@ import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
 import { ToastProvider } from './src/components/Toast';
 import { Address } from './src/services/api';
+import OfflineIndicator from './src/components/OfflineIndicator';
 
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -30,7 +31,7 @@ import ProfileScreen from './src/screens/tabs/ProfileScreen';
 import NewRequestScreen from './src/screens/NewRequestScreen';
 import RequestDetailScreen from './src/screens/RequestDetailScreen';
 import OrderDetailScreen from './src/screens/OrderDetailScreen';
-import TrackingScreen from './src/screens/TrackingScreen';
+import DeliveryTrackingScreen from './src/screens/DeliveryTrackingScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import AddressesScreen from './src/screens/AddressesScreen';
@@ -51,7 +52,7 @@ export type RootStackParamList = {
   NewRequest: undefined;
   RequestDetail: { requestId: string };
   OrderDetail: { orderId: string };
-  Tracking: { orderId: string; orderNumber: string; deliveryAddress?: string };
+  DeliveryTracking: { orderId: string; orderNumber?: string; deliveryAddress?: string };
   Chat: { orderId: string; orderNumber: string; recipientName: string; recipientType: 'driver' | 'garage' };
   EditProfile: undefined;
   Addresses: { onSelect?: (address: Address) => void } | undefined;
@@ -196,8 +197,8 @@ function RootNavigator() {
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
-              name="Tracking"
-              component={TrackingScreen}
+              name="DeliveryTracking"
+              component={DeliveryTrackingScreen}
               options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
             />
             <RootStack.Screen
@@ -301,6 +302,7 @@ function ThemedApp() {
     <>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <RootNavigator />
+      <OfflineIndicator />
     </>
   );
 }
