@@ -17,7 +17,7 @@ import {
 export class QuickServiceService {
     constructor(
         private pool: Pool,
-        private io: SocketServer
+        private io: SocketServer | null
     ) { }
 
     /**
@@ -121,7 +121,7 @@ export class QuickServiceService {
             const request = requestDetails.rows[0];
 
             // Send WebSocket notification to garage
-            this.io.to(`garage_${assignedGarage.garage_id}`).emit('new_quick_service', {
+            this.io?.to(`garage_${assignedGarage.garage_id}`).emit('new_quick_service', {
                 request_id: requestId,
                 service_type: serviceType,
                 customer_name: request.customer_name,
@@ -281,7 +281,7 @@ export class QuickServiceService {
         const customerId = result.rows[0].customer_id;
 
         // Notify customer
-        this.io.to(`user_${customerId}`).emit('service_update', {
+        this.io?.to(`user_${customerId}`).emit('service_update', {
             request_id: requestId,
             status: newStatus,
             ...additionalData
@@ -352,7 +352,7 @@ export class QuickServiceService {
         `, [quotedPrice, notes, requestId]);
 
         // Notify customer
-        this.io.to(`user_${request.customer_id}`).emit('quote_received', {
+        this.io?.to(`user_${request.customer_id}`).emit('quote_received', {
             request_id: requestId,
             quoted_price: quotedPrice,
             notes
@@ -384,7 +384,7 @@ export class QuickServiceService {
         const garageId = result.rows[0].assigned_garage_id;
 
         if (garageId) {
-            this.io.to(`garage_${garageId}`).emit('service_cancelled', {
+            this.io?.to(`garage_${garageId}`).emit('service_cancelled', {
                 request_id: requestId
             });
         }

@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { getErrorMessage } from '../types';
 import pool from '../config/db';
-import { io } from '../server';
+import { getIO } from '../utils/socketIO';
 import { createNotification } from '../services/notification.service';
 import { SupportService } from '../services/support';
 
@@ -22,7 +22,7 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
             data: { ticket_id: result.ticket.ticket_id, subject: req.body.subject },
             target_role: 'operations'
         });
-        io.to('operations').emit('new_ticket', result);
+        getIO()?.to('operations').emit('new_ticket', result);
 
         res.status(201).json(result);
     } catch (err) {
@@ -76,14 +76,14 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         const message = await supportService.sendMessage(req.params.ticket_id, req.user!.userId, senderType, req.body.message_text);
 
         // Real-time notifications
-        io.to(`ticket_${req.params.ticket_id}`).emit('new_message', message);
+        getIO()?.to(`ticket_${req.params.ticket_id}`).emit('new_message', message);
 
         if (senderType === 'admin') {
             await createNotification({ userId: access.customerId!, type: 'support_reply', title: 'Support Reply 💬', message: 'You have a new reply from support', data: { ticket_id: req.params.ticket_id }, target_role: 'customer' });
-            io.to(`user_${access.customerId}`).emit('support_reply', { ticket_id: req.params.ticket_id, message });
+            getIO()?.to(`user_${access.customerId}`).emit('support_reply', { ticket_id: req.params.ticket_id, message });
         } else {
             await createNotification({ userId: 'operations', type: 'support_reply', title: 'Customer Reply 💬', message: 'Customer replied to a support ticket', data: { ticket_id: req.params.ticket_id }, target_role: 'operations' });
-            io.to('operations').emit('support_reply', { ticket_id: req.params.ticket_id, message });
+            getIO()?.to('operations').emit('support_reply', { ticket_id: req.params.ticket_id, message });
         }
 
         res.json(message);
@@ -97,7 +97,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
     try {
         const ticket = await supportService.updateTicketStatus(req.params.ticket_id, req.body.status);
-        io.to(`ticket_${req.params.ticket_id}`).emit('ticket_updated', { status: req.body.status });
+        getIO()?.to(`ticket_${req.params.ticket_id}`).emit('ticket_updated', { status: req.body.status });
         res.json(ticket);
     } catch (err) {
         console.error('[SUPPORT] updateTicketStatus error:', getErrorMessage(err));

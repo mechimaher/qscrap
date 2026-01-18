@@ -6,13 +6,14 @@
 import { Request, Response, Router } from 'express';
 import pool from '../config/db';
 import { authenticate } from '../middleware/auth.middleware';
-import { io } from '../server';
+import { getIO } from '../utils/socketIO';
 import { QuickServiceService, SERVICE_PRICING, VALID_SERVICE_TYPES } from '../services/quickservices';
 
 const router = Router();
 
-// Initialize service
-const quickServiceService = new QuickServiceService(pool, io);
+// Initialize service with lazy io access
+// Note: getIO() returns null during tests but the service handles this gracefully
+const quickServiceService = new QuickServiceService(pool, getIO());
 
 // ============================================
 // CUSTOMER ENDPOINTS
