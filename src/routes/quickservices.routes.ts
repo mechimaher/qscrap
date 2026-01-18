@@ -43,6 +43,9 @@ router.post('/request', authenticate, async (req: Request, res: Response) => {
         if (error.message?.includes('already have an active')) {
             return res.status(400).json({ success: false, error: error.message });
         }
+        if (error.message?.includes('Invalid')) {
+            return res.status(400).json({ success: false, error: error.message });
+        }
         res.status(500).json({ success: false, error: 'Failed to create request' });
     }
 });
