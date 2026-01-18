@@ -12,8 +12,8 @@ describe('Loyalty Service', () => {
     beforeAll(async () => {
         // Create test customer with loyalty data
         await pool.query(`
-            INSERT INTO users (user_id, full_name, phone_number, user_type)
-            VALUES ($1, 'Test Customer', '+97412340000', 'customer')
+            INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
+            VALUES ($1, 'Test Customer', '+97412340000', 'customer', '$2b$10$dummyhashfortesting123456789012345')
             ON CONFLICT (user_id) DO NOTHING
         `, [testCustomerId]);
 
