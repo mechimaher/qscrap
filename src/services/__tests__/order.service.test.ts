@@ -14,11 +14,11 @@ import {
  */
 
 describe('Order Service', () => {
-    // Test IDs - use UUIDs that won't conflict with real data
-    const testCustomerId = 'test-cust-0000-0000-000000000001';
-    const testGarageId = 'test-gara-0000-0000-000000000001';
-    const testRequestId = 'test-req-00000-0000-000000000001';
-    const testBidId = 'test-bid-00000-0000-000000000001';
+    // Test IDs - use valid UUIDs that won't conflict with real data
+    const testCustomerId = '11111111-1111-1111-1111-111111111111';
+    const testGarageId = '22222222-2222-2222-2222-222222222222';
+    const testRequestId = '33333333-3333-3333-3333-333333333333';
+    const testBidId = '44444444-4444-4444-4444-444444444444';
     let createdOrderId: string | null = null;
 
     beforeAll(async () => {
@@ -26,15 +26,15 @@ describe('Order Service', () => {
 
         // 1. Create test customer user
         await pool.query(`
-            INSERT INTO users (user_id, full_name, phone_number, user_type)
-            VALUES ($1, 'Test Customer', '+97400000001', 'customer')
+            INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
+            VALUES ($1, 'Test Customer', '+97430000001', 'customer', '$2b$10$dummyhashfortesting123456789012345')
             ON CONFLICT (user_id) DO NOTHING
         `, [testCustomerId]);
 
         // 2. Create test garage user
         await pool.query(`
-            INSERT INTO users (user_id, full_name, phone_number, user_type)
-            VALUES ($1, 'Test Garage', '+97400000002', 'garage')
+            INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
+            VALUES ($1, 'Test Garage', '+97430000002', 'garage', '$2b$10$dummyhashfortesting123456789012345')
             ON CONFLICT (user_id) DO NOTHING
         `, [testGarageId]);
 
@@ -43,6 +43,14 @@ describe('Order Service', () => {
             INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
             VALUES ($1, 'Test Garage LLC', 'approved', 25.276987, 51.520008)
             ON CONFLICT (garage_id) DO NOTHING
+        `, [testGarageId]);
+
+        // 3.5. Create test garage subscription (required for bidding)
+        // Delete any existing subscription first, then insert
+        await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
+        await pool.query(`
+            INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
+            VALUES ($1, '1af9e120-e679-43d5-9c47-895ceadfe48e', 'active', NOW(), NOW() + INTERVAL '30 days')
         `, [testGarageId]);
 
         // 4. Create test part request
