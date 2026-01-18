@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { api } from '../services/api';
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_V1_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useSocketContext } from '../hooks/useSocket';
 import { useToast } from '../components/Toast';
@@ -111,7 +111,7 @@ export default function CounterOfferScreen() {
         setIsLoading(true);
         try {
             const token = await api.getToken();
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NEGOTIATION_HISTORY(bidId)}`, {
+            const response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.NEGOTIATION_HISTORY(bidId)}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -168,7 +168,7 @@ export default function CounterOfferScreen() {
             if (respondingToOfferId) {
                 // We're responding to a garage counter-offer
                 response = await fetch(
-                    `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`,
+                    `${API_V1_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`,
                     {
                         method: 'POST',
                         headers: {
@@ -184,7 +184,7 @@ export default function CounterOfferScreen() {
                 );
             } else {
                 // Initial counter-offer (no pending garage offer)
-                response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
+                response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -245,7 +245,7 @@ export default function CounterOfferScreen() {
         try {
             const token = await api.getToken();
             const response = await fetch(
-                `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(pendingOffer.counter_offer_id)}`,
+                `${API_V1_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(pendingOffer.counter_offer_id)}`,
                 {
                     method: 'POST',
                     headers: {

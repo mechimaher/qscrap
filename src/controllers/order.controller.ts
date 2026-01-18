@@ -1,66 +1,47 @@
+/**
+ * Order Controller - Refactored to use Service Layer
+ * Delegates to OrderLifecycleService, OrderQueryService, and ReviewService
+ */
+
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { getDeliveryFeeForLocation } from './delivery.controller';
-import { createNotification } from '../services/notification.service';
-import { predictiveService } from '../services/predictive.service';
-
-// Get commission rate based on garage's status and subscription
-// BUSINESS LOGIC:
-// - Demo trial: 0% commission (garage keeps 100%)
-// - Subscribed/Approved: 15% commission (or plan-specific rate)
-const getGarageCommissionRate = async (garageId: string): Promise<number> => {
-    // First check if garage is in demo mode
-    const garageResult = await pool.query(
-        `SELECT approval_status FROM garages WHERE garage_id = $1`,
-        [garageId]
-    );
-
-    if (garageResult.rows.length > 0 && garageResult.rows[0].approval_status === 'demo') {
-        // Demo trial = 0% commission
-        return 0;
-    }
-
-    // Check for active subscription with custom commission rate
-    const result = await pool.query(
-        `SELECT sp.commission_rate 
-         FROM garage_subscriptions gs
-         JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
-         WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
-         ORDER BY gs.created_at DESC LIMIT 1`,
-        [garageId]
-    );
-
-    // Use subscription rate if found, otherwise default 15%
-    return result.rows.length > 0 ? parseFloat(result.rows[0].commission_rate) : 0.15;
-};
-
 import { catchAsync } from '../utils/catchAsync';
 import { createOrderFromBid } from '../services/order.service';
+import {
+    OrderLifecycleService,
+    OrderQueryService,
+    ReviewService,
+    isOrderError,
+    getHttpStatusForError
+} from '../services/order';
 
+// Initialize services
+const orderLifecycleService = new OrderLifecycleService(pool);
+const orderQueryService = new OrderQueryService(pool);
+const reviewService = new ReviewService(pool);
 
-// Accept a bid and create order
+// ============================================
+// ORDER CREATION (uses existing order.service.ts)
+// ============================================
+
+/**
+ * Accept a bid and create order
+ * Uses existing createOrderFromBid service
+ */
 export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
     const { bid_id } = req.params;
     const customerId = req.user!.userId;
     const { payment_method, delivery_notes } = req.body;
 
-    // Get delivery fee (Can be refactored later, keeping here for now to pass to service)
-    // We need request details first to know location.
-    // This part is slightly weird: we need to query request to calculate fee
+    // Get delivery fee (requires request location)
     const requestResult = await pool.query(
         'SELECT delivery_lat, delivery_lng, delivery_address_text FROM part_requests WHERE request_id = (SELECT request_id FROM bids WHERE bid_id = $1)',
         [bid_id]
     );
 
-    if (requestResult.rows.length === 0) {
-        // Service will handle "Bid not found" or we can fail early here.
-        // Let's rely on service validation for bid, but we need location for fee.
-        // The service re-fetches bid/request properly.
-        // Ideally: Service should calculate fee too.
-        // For Phase 1 speed: let's do minimal changes.
-    }
     const request = requestResult.rows[0];
 
     // Calculate delivery fee
@@ -98,562 +79,164 @@ export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
     });
 });
 
-// Update order status (Garage) - Strict role-based transitions
+// ============================================
+// ORDER LIFECYCLE (uses OrderLifecycleService)
+// ============================================
+
+/**
+ * Update order status (Garage only)
+ * Garages can transition: confirmed → preparing → ready_for_pickup
+ */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const { order_status, notes } = req.body;
-    const garageId = req.user!.userId;
-
-    // GARAGE can only change to these statuses (their responsibility ends at ready_for_pickup)
-    const garageAllowedStatuses = ['preparing', 'ready_for_pickup'];
-    if (!garageAllowedStatuses.includes(order_status)) {
-        return res.status(400).json({
-            error: 'Garages can only set status to "preparing" or "ready_for_pickup"',
-            hint: 'Collection and delivery are handled by Operations team'
-        });
-    }
-
-    const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        const { order_id } = req.params;
+        const { order_status, notes } = req.body;
+        const garageId = req.user!.userId;
 
-        // Verify Ownership and get current status
-        const check = await client.query(
-            'SELECT customer_id, order_status, order_number FROM orders WHERE order_id = $1 AND garage_id = $2 FOR UPDATE',
-            [order_id, garageId]
-        );
-
-        if (check.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(403).json({ error: 'Order not found or not yours' });
-        }
-
-        const currentOrder = check.rows[0];
-        const oldStatus = currentOrder.order_status;
-
-        // Idempotency check: If status is already set, return success
-        if (oldStatus === order_status) {
-            await client.query('ROLLBACK');
-            return res.json({
-                message: 'Status already updated',
-                old_status: oldStatus,
-                new_status: order_status
-            });
-        }
-
-        // STRICT transition rules for GARAGE role
-        const allowedTransitions: Record<string, string[]> = {
-            'confirmed': ['preparing'],           // Garage starts work
-            'preparing': ['ready_for_pickup']     // Garage marks as ready
-        };
-
-        const allowed = allowedTransitions[oldStatus] || [];
-
-        if (!allowed.includes(order_status)) {
-            await client.query('ROLLBACK');
-
-            // Provide helpful error messages
-            const stageMessages: Record<string, string> = {
-                'ready_for_pickup': 'Order is waiting for QScrap collection',
-                'collected': 'Order has been collected - awaiting driver assignment',
-                'in_transit': 'Order is being delivered',
-                'delivered': 'Order has been delivered',
-                'completed': 'Order is completed'
-            };
-
+        // Validate garage-allowed statuses
+        const garageAllowedStatuses = ['preparing', 'ready_for_pickup'];
+        if (!garageAllowedStatuses.includes(order_status)) {
             return res.status(400).json({
-                error: `Cannot change status from "${oldStatus}" to "${order_status}"`,
-                reason: stageMessages[oldStatus] || `Order is in "${oldStatus}" stage`,
-                hint: 'Once marked as ready, Operations team handles the rest'
+                error: 'Garages can only set status to "preparing" or "ready_for_pickup"',
+                hint: 'Collection and delivery are handled by Operations team'
             });
         }
 
-        // Update order
-        const updateFields: string[] = ['order_status = $1', 'updated_at = NOW()'];
-        const updateValues: unknown[] = [order_status, order_id];
-
-        if (order_status === 'delivered') {
-            updateFields.push('actual_delivery_at = NOW()');
-        }
-
-        await client.query(
-            `UPDATE orders SET ${updateFields.join(', ')} WHERE order_id = $2`,
-            updateValues
-        );
-
-        // Log status change
-        await client.query(
-            `INSERT INTO order_status_history 
-             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-             VALUES ($1, $2, $3, $4, 'garage', $5)`,
-            [order_id, oldStatus, order_status, garageId, notes]
-        );
-
-        await client.query('COMMIT');
-
-        // Notify customer
-        const customerId = currentOrder.customer_id;
-        const statusMessages: Record<string, string> = {
-            'preparing': '🔧 Your order is being prepared',
-            'ready_for_pickup': '📦 Your order is ready and waiting for pickup',
-            'in_transit': '🚚 Your order is on the way!',
-            'delivered': '✅ Your order has been delivered'
-        };
-
-        // Get garage name for notification
-        const garageResult = await pool.query(
-            'SELECT garage_name FROM garages WHERE garage_id = $1',
-            [garageId]
-        );
-        const garageName = garageResult.rows[0]?.garage_name || 'Garage';
-
-        const pushTitles: Record<string, string> = {
-            'preparing': 'Order Preparing 🔧',
-            'ready_for_pickup': 'Ready for Pickup 📦',
-            'in_transit': 'Out for Delivery 🚚',
-            'delivered': 'Order Delivered ✅'
-        };
-
-        // Notify customer (Persistent + Push)
-        await createNotification({
-            userId: customerId,
-            type: 'order_status_updated',
-            title: pushTitles[order_status] || 'Order Update 🔔',
-            message: statusMessages[order_status] || `Order status updated to ${order_status}`,
-            data: {
-                order_id,
-                order_number: currentOrder.order_number,
-                old_status: oldStatus,
-                new_status: order_status,
-                garage_name: garageName
-            },
-            target_role: 'customer'
-        });
-
-        // Emit Socket Event (for in-app real-time updates)
-
-        // 1. Emit 'order_status_updated' (past tense) for useSocket
-        (global as any).io.to(`user_${customerId}`).emit('order_status_updated', {
+        const result = await orderLifecycleService.updateOrderStatus(
             order_id,
-            order_number: currentOrder.order_number,
-            old_status: oldStatus,
-            new_status: order_status,
-            garage_name: garageName,
-            notification: statusMessages[order_status] || `Order status updated to ${order_status}`
-        });
-
-        // 2. Emit 'order_status_update' (present tense) for TrackingScreen
-        (global as any).io.to(`user_${customerId}`).emit('order_status_update', {
-            order_id,
-            order_number: currentOrder.order_number,
-            old_status: oldStatus,
-            status: order_status, // TrackingScreen expects 'status'
-            new_status: order_status,
-            garage_name: garageName,
-            notification: statusMessages[order_status] || `Order status updated to ${order_status}`
-        });
-
-        // Notify Operations when order is ready for collection (Persistent)
-        if (order_status === 'ready_for_pickup') {
-            await createNotification({
-                userId: 'operations',
-                type: 'order_ready_for_pickup',
-                title: 'Ready for Collection 📦',
-                message: `Order #${currentOrder.order_number} is ready for collection!`,
-                data: { order_id, order_number: currentOrder.order_number },
-                target_role: 'operations'
-            });
-
-            (global as any).io.to('operations').emit('order_ready_for_pickup', {
-                order_id,
-                order_number: currentOrder.order_number,
-                notification: `📦 Order #${currentOrder.order_number} is ready for collection!`
-            });
-        }
+            garageId,
+            order_status,
+            notes
+        );
 
         res.json({
             message: 'Status updated successfully',
-            old_status: oldStatus,
-            new_status: order_status
+            old_status: result.old_status,
+            new_status: result.new_status
         });
     } catch (err) {
-        await client.query('ROLLBACK');
-        res.status(500).json({ error: getErrorMessage(err) });
-    } finally {
-        client.release();
-    }
-};
-
-// Get customer's orders with driver info for tracking - with pagination
-export const getMyOrders = async (req: AuthRequest, res: Response) => {
-    const userId = req.user!.userId;
-    const userType = req.user!.userType;
-    const { status, page = 1, limit = 20 } = req.query;
-
-    const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20));
-    const offset = (pageNum - 1) * limitNum;
-
-    try {
-        const field = userType === 'customer' ? 'customer_id' : 'garage_id';
-
-        // Build count query
-        let countQuery = `SELECT COUNT(*) FROM orders o WHERE o.${field} = $1`;
-        const countParams: unknown[] = [userId];
-        if (status) {
-            countQuery += ` AND o.order_status = $2`;
-            countParams.push(status);
+        console.error('[ORDER] updateOrderStatus error:', err);
+        if (isOrderError(err)) {
+            return res.status(getHttpStatusForError(err))
+                .json({ error: (err as Error).message });
         }
-
-        const countResult = await pool.query(countQuery, countParams);
-        const total = parseInt(countResult.rows[0].count);
-        const totalPages = Math.ceil(total / limitNum);
-
-        // Build main query
-        let query = `
-            SELECT o.*, 
-                   pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
-                   pr.delivery_lat::float, pr.delivery_lng::float,
-                   b.warranty_days, b.part_condition, b.brand_name, b.image_urls as bid_images,
-                   g.garage_name,
-                   da.assignment_id, da.status as delivery_status, 
-                   da.estimated_delivery, da.pickup_at, da.delivered_at,
-                   d.driver_id, d.full_name as driver_name, d.phone as driver_phone,
-                   d.vehicle_type, d.vehicle_plate, d.current_lat as driver_lat, d.current_lng as driver_lng,
-                   r.review_id
-            FROM orders o
-            JOIN part_requests pr ON o.request_id = pr.request_id
-            JOIN bids b ON o.bid_id = b.bid_id
-            JOIN garages g ON o.garage_id = g.garage_id
-            LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
-            LEFT JOIN drivers d ON da.driver_id = d.driver_id
-            LEFT JOIN order_reviews r ON o.order_id = r.order_id
-            WHERE o.${field} = $1
-        `;
-        const params: unknown[] = [userId];
-        let paramIndex = 2;
-
-        if (status) {
-            query += ` AND o.order_status = $${paramIndex++}`;
-            params.push(status);
-        }
-
-        query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
-        params.push(limitNum, offset);
-
-        const result = await pool.query(query, params);
-        res.json({
-            orders: result.rows,
-            pagination: { page: pageNum, limit: limitNum, total, pages: totalPages }
-        });
-    } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
-// Get order details
-export const getOrderDetails = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const userId = req.user!.userId;
-
-    try {
-        const result = await pool.query(
-            `SELECT o.*, 
-                    pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
-                    pr.delivery_lat::float as delivery_lat, pr.delivery_lng::float as delivery_lng,
-                    b.warranty_days, b.part_condition, b.brand_name, b.image_urls as bid_images, b.notes as bid_notes,
-                    g.garage_name, g.rating_average, g.rating_count,
-                    u.full_name as customer_name, u.phone_number as customer_phone,
-                    d.full_name as driver_name, d.phone as driver_phone, d.vehicle_type, d.vehicle_plate,
-                    d.current_lat::float as driver_lat, d.current_lng::float as driver_lng,
-                    da.status as delivery_status, da.estimated_delivery
-             FROM orders o
-             JOIN part_requests pr ON o.request_id = pr.request_id
-             JOIN bids b ON o.bid_id = b.bid_id
-             JOIN garages g ON o.garage_id = g.garage_id
-             JOIN users u ON o.customer_id = u.user_id
-             LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
-             LEFT JOIN drivers d ON da.driver_id = d.driver_id
-             WHERE o.order_id = $1 AND (o.customer_id = $2 OR o.garage_id = $2)`,
-            [order_id, userId]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
-
-        // Get status history
-        const history = await pool.query(
-            `SELECT * FROM order_status_history WHERE order_id = $1 ORDER BY created_at ASC`,
-            [order_id]
-        );
-
-        // Get review if exists
-        const review = await pool.query(
-            `SELECT * FROM order_reviews WHERE order_id = $1`,
-            [order_id]
-        );
-
-        res.json({
-            order: result.rows[0],
-            status_history: history.rows,
-            review: review.rows[0] || null
-        });
-    } catch (err) {
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
-
-// Confirm delivery (Customer)
+/**
+ * Confirm delivery (Customer)
+ * Marks order complete, creates payout, releases driver
+ */
 export const confirmDelivery = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const customerId = req.user!.userId;
-
-    const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        const { order_id } = req.params;
+        const customerId = req.user!.userId;
 
-        const result = await client.query(
-            `UPDATE orders 
-             SET order_status = 'completed', 
-                 completed_at = NOW(),
-                 payment_status = 'paid',
-                 updated_at = NOW()
-             WHERE order_id = $1 AND customer_id = $2 AND order_status = 'delivered'
-             RETURNING garage_id, order_number, garage_payout_amount`,
-            [order_id, customerId]
-        );
-
-        if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: 'Order not found or not in delivered status' });
-        }
-
-        const order = result.rows[0];
-
-        // Log status change
-        await client.query(
-            `INSERT INTO order_status_history 
-             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-             VALUES ($1, 'delivered', 'completed', $2, 'customer', 'Customer confirmed receipt')`,
-            [order_id, customerId]
-        );
-
-        // Create payout record for garage (skip if already exists from dispute/re-delivery)
-        await client.query(
-            `INSERT INTO garage_payouts 
-             (garage_id, order_id, gross_amount, commission_amount, net_amount, scheduled_for)
-             SELECT garage_id, order_id, part_price, platform_fee, garage_payout_amount, 
-                    CURRENT_DATE + INTERVAL '7 days'
-             FROM orders o WHERE o.order_id = $1
-             AND NOT EXISTS (SELECT 1 FROM garage_payouts gp WHERE gp.order_id = o.order_id)`,
-            [order_id]
-        );
-
-        // Free up the driver - set status back to available ONLY if no other active assignments
-        await client.query(
-            `UPDATE drivers 
-             SET status = 'available', updated_at = NOW()
-             WHERE driver_id = (SELECT driver_id FROM orders WHERE order_id = $1)
-             AND driver_id IS NOT NULL
-             AND NOT EXISTS (
-                 SELECT 1 FROM delivery_assignments 
-                 WHERE driver_id = drivers.driver_id 
-                 AND status IN ('assigned', 'picked_up', 'in_transit')
-                 AND order_id != $1
-             )`,
-            [order_id]
-        );
-
-        await client.query('COMMIT');
-
-        // Notify garage order completed (Persistent + Push)
-        await createNotification({
-            userId: order.garage_id,
-            type: 'order_completed',
-            title: 'Order Completed ✅',
-            message: `Order #${order.order_number} delivered! Payment of ${order.garage_payout_amount} QAR will be processed soon.`,
-            data: { order_id, order_number: order.order_number, payout_amount: order.garage_payout_amount },
-            target_role: 'garage'
-        });
-
-        (global as any).io.to(`garage_${order.garage_id}`).emit('order_completed', {
-            order_id,
-            order_number: order.order_number,
-            notification: '✅ Customer confirmed delivery. Payment will be processed soon.',
-            payout_amount: order.garage_payout_amount
-        });
-
-        // Notify Operations dashboard (Persistent)
-        await createNotification({
-            userId: 'operations',
-            type: 'order_completed',
-            title: 'Order Completed',
-            message: `Order #${order.order_number} completed - customer confirmed receipt`,
-            data: { order_id, order_number: order.order_number, garage_id: order.garage_id },
-            target_role: 'operations'
-        });
-
-        (global as any).io.to('operations').emit('order_status_updated', {
-            order_id,
-            order_number: order.order_number,
-            old_status: 'delivered',
-            new_status: 'completed',
-            notification: `Order #${order.order_number} completed - customer confirmed receipt`
-        });
-
-        // Notify Operations about pending payout for finance badge
-        (global as any).io.to('operations').emit('payout_pending', {
-            order_id,
-            order_number: order.order_number,
-            garage_id: order.garage_id,
-            payout_amount: order.garage_payout_amount,
-            notification: `💰 Order #${order.order_number} complete - payout pending for garage`
-        });
-
-        // INTELLIGENT UPGRADE: Predictive Maintenance Nudge
-        try {
-            const partDescResult = await client.query('SELECT part_description FROM part_requests WHERE request_id = (SELECT request_id FROM orders WHERE order_id = $1)', [order_id]);
-            const partName = partDescResult.rows[0]?.part_description;
-
-            if (partName) {
-                const suggestions = predictiveService.getSuggestions(partName);
-                if (suggestions.length > 0) {
-                    const suggestion = suggestions[0];
-                    // Nudge the user
-                    await createNotification({
-                        userId: customerId,
-                        type: 'maintenance_reminder',
-                        title: '💡 Smart Tip for your Car',
-                        message: `Since you bought ${partName}, we recommend a ${suggestion.service_name} soon.`,
-                        data: { suggestion },
-                        target_role: 'customer'
-                    });
-                }
-            }
-        } catch (predErr) {
-            console.error('[ORDER] Predictive service failed:', predErr);
-        }
+        await orderLifecycleService.confirmDelivery(order_id, customerId);
 
         res.json({
             message: 'Delivery confirmed. Thank you!',
             prompt_review: true
         });
     } catch (err) {
-        await client.query('ROLLBACK');
+        console.error('[ORDER] confirmDelivery error:', err);
+        if (isOrderError(err)) {
+            return res.status(getHttpStatusForError(err))
+                .json({ error: (err as Error).message });
+        }
         res.status(500).json({ error: getErrorMessage(err) });
-    } finally {
-        client.release();
     }
 };
 
-// Submit review (Customer)
-export const submitReview = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const customerId = req.user!.userId;
-    const { overall_rating, part_quality_rating, communication_rating, delivery_rating, review_text } = req.body;
+// ============================================
+// ORDER QUERIES (uses OrderQueryService)
+// ============================================
 
-    if (!overall_rating || overall_rating < 1 || overall_rating > 5) {
-        return res.status(400).json({ error: 'Overall rating (1-5) is required' });
-    }
-
-    const client = await pool.connect();
+/**
+ * Get customer's or garage's orders with pagination
+ */
+export const getMyOrders = async (req: AuthRequest, res: Response) => {
     try {
-        await client.query('BEGIN');
+        const userId = req.user!.userId;
+        const userType = req.user!.userType;
+        const { status, page, limit } = req.query;
 
-        // Verify order belongs to customer and is completed
-        const orderCheck = await client.query(
-            `SELECT garage_id FROM orders 
-             WHERE order_id = $1 AND customer_id = $2 AND order_status = 'completed'`,
-            [order_id, customerId]
-        );
-
-        if (orderCheck.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: 'Order not found or not completed' });
-        }
-
-        const garageId = orderCheck.rows[0].garage_id;
-
-        // Insert review with pending moderation status
-        await client.query(
-            `INSERT INTO order_reviews 
-             (order_id, customer_id, garage_id, overall_rating, part_quality_rating, 
-              communication_rating, delivery_rating, review_text, moderation_status, is_visible)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', false)
-             ON CONFLICT (order_id) DO UPDATE SET
-                overall_rating = EXCLUDED.overall_rating,
-                part_quality_rating = EXCLUDED.part_quality_rating,
-                communication_rating = EXCLUDED.communication_rating,
-                delivery_rating = EXCLUDED.delivery_rating,
-                review_text = EXCLUDED.review_text,
-                moderation_status = 'pending',
-                is_visible = false,
-                updated_at = NOW()`,
-            [order_id, customerId, garageId, overall_rating, part_quality_rating,
-                communication_rating, delivery_rating, review_text]
-        );
-
-        await client.query('COMMIT');
-
-        // Notify Operations of new review (Persistent)
-        await createNotification({
-            userId: 'operations',
-            type: 'new_review_submission',
-            title: 'New Review Pending',
-            message: `Review pending for Order #${orderCheck.rows[0].order_number}`,
-            data: { order_id },
-            target_role: 'operations'
+        const result = await orderQueryService.getMyOrders(userId, userType, {
+            status: status as string,
+            page: page ? parseInt(page as string) : undefined,
+            limit: limit ? parseInt(limit as string) : undefined
         });
 
-        // Broadcast to operations dashboard
-        (global as any).io.to('operations').emit('review_submitted', {
-            order_id,
-            notification: 'New review pending moderation'
+        res.json(result);
+    } catch (err) {
+        console.error('[ORDER] getMyOrders error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Get full order details with history and review
+ */
+export const getOrderDetails = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id } = req.params;
+        const userId = req.user!.userId;
+
+        const result = await orderQueryService.getOrderDetails(order_id, userId);
+        res.json(result);
+    } catch (err) {
+        console.error('[ORDER] getOrderDetails error:', err);
+        if (isOrderError(err)) {
+            return res.status(getHttpStatusForError(err))
+                .json({ error: (err as Error).message });
+        }
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// ============================================
+// REVIEWS (uses ReviewService)
+// ============================================
+
+/**
+ * Submit review (Customer)
+ */
+export const submitReview = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id } = req.params;
+        const customerId = req.user!.userId;
+        const { overall_rating, part_quality_rating, communication_rating, delivery_rating, review_text } = req.body;
+
+        await reviewService.submitReview(order_id, customerId, {
+            overall_rating,
+            part_quality_rating,
+            communication_rating,
+            delivery_rating,
+            review_text
         });
 
         res.json({ message: 'Thank you for your review!' });
     } catch (err) {
-        await client.query('ROLLBACK');
+        console.error('[ORDER] submitReview error:', err);
+        if (isOrderError(err)) {
+            return res.status(getHttpStatusForError(err))
+                .json({ error: (err as Error).message });
+        }
         res.status(500).json({ error: getErrorMessage(err) });
-    } finally {
-        client.release();
     }
 };
 
-// Get garage reviews
+/**
+ * Get garage reviews (public)
+ */
 export const getGarageReviews = async (req: AuthRequest, res: Response) => {
-    const { garage_id } = req.params;
-
     try {
-        const result = await pool.query(
-            `SELECT r.*, u.full_name as customer_name
-             FROM order_reviews r
-             JOIN users u ON r.customer_id = u.user_id
-             WHERE r.garage_id = $1 AND r.is_visible = true
-             ORDER BY r.created_at DESC
-             LIMIT 50`,
-            [garage_id]
-        );
-
-        const stats = await pool.query(
-            `SELECT 
-                COUNT(*) as total_reviews,
-                ROUND(AVG(overall_rating)::numeric, 2) as avg_rating,
-                ROUND(AVG(part_quality_rating)::numeric, 2) as avg_part_quality,
-                ROUND(AVG(communication_rating)::numeric, 2) as avg_communication,
-                ROUND(AVG(delivery_rating)::numeric, 2) as avg_delivery
-             FROM order_reviews
-             WHERE garage_id = $1 AND is_visible = true`,
-            [garage_id]
-        );
-
-        res.json({
-            reviews: result.rows,
-            stats: stats.rows[0]
-        });
+        const { garage_id } = req.params;
+        const result = await reviewService.getGarageReviews(garage_id);
+        res.json(result);
     } catch (err) {
+        console.error('[ORDER] getGarageReviews error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
-

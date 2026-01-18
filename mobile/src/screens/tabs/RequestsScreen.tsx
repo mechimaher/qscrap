@@ -11,6 +11,7 @@ import {
     Alert,
     Animated,
     Easing,
+    TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -376,6 +377,19 @@ export default function RequestsScreen() {
     const [requests, setRequests] = useState<Request[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Filter requests by search query
+    const filteredRequests = requests.filter(r => {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            (r.car_make?.toLowerCase() || '').includes(query) ||
+            (r.car_model?.toLowerCase() || '').includes(query) ||
+            (r.part_description?.toLowerCase() || '').includes(query) ||
+            String(r.car_year || '').includes(query)
+        );
+    });
 
     const loadRequests = useCallback(async () => {
         try {
@@ -439,7 +453,7 @@ export default function RequestsScreen() {
             colors={colors}
             onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate('RequestDetail', { requestId: item.request_id });
+                navigation.navigate('RequestDetails', { requestId: item.request_id });
             }}
             onDelete={(close) => handleDeleteRequest(item, close)}
         />
@@ -498,13 +512,35 @@ export default function RequestsScreen() {
                 </TouchableOpacity>
             </View>
 
+            {/* Search Bar */}
+            {requests.length > 0 && (
+                <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+                    <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
+                        <Text style={styles.searchIcon}>🔍</Text>
+                        <TextInput
+                            style={[styles.searchInput, { color: colors.text }]}
+                            placeholder="Search by car, part, or year..."
+                            placeholderTextColor={colors.textMuted}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            returnKeyType="search"
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <Text style={styles.clearIcon}>✕</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+            )}
+
             {isLoading ? (
                 <View style={styles.loadingContainer}>
                     <LoadingList count={4} />
                 </View>
             ) : (
                 <FlatList
-                    data={requests}
+                    data={filteredRequests}
                     keyExtractor={(item, index) => `${item.request_id}-${item.status}-${index}`}
                     renderItem={renderRequest}
                     contentContainerStyle={styles.listContent}
@@ -828,5 +864,32 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         opacity: 0.8,
     },
+    // Search bar styles
+    searchContainer: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    searchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.lg,
+    },
+    searchIcon: {
+        fontSize: 16,
+        marginRight: Spacing.sm,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: FontSizes.md,
+        paddingVertical: Spacing.xs,
+    },
+    clearIcon: {
+        fontSize: 14,
+        color: '#9CA3AF',
+        paddingHorizontal: Spacing.sm,
+    },
 });
-

@@ -16,6 +16,7 @@ import NotificationOverlay from './src/components/NotificationOverlay';
 import { ToastProvider } from './src/components/Toast';
 import { Address } from './src/services/api';
 import OfflineIndicator from './src/components/OfflineIndicator';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -50,8 +51,8 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   NewRequest: undefined;
-  RequestDetail: { requestId: string };
-  OrderDetail: { orderId: string };
+  RequestDetails: { requestId: string };
+  OrderDetails: { orderId: string };
   DeliveryTracking: { orderId: string; orderNumber?: string; deliveryAddress?: string };
   Chat: { orderId: string; orderNumber: string; recipientName: string; recipientType: 'driver' | 'garage' };
   EditProfile: undefined;
@@ -180,7 +181,7 @@ function RootNavigator() {
               options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
             />
             <RootStack.Screen
-              name="RequestDetail"
+              name="RequestDetails"
               component={RequestDetailScreen}
               options={{ animation: 'slide_from_right' }}
             />
@@ -192,7 +193,7 @@ function RootNavigator() {
 
             {/* Order Flow */}
             <RootStack.Screen
-              name="OrderDetail"
+              name="OrderDetails"
               component={OrderDetailScreen}
               options={{ animation: 'slide_from_right' }}
             />
@@ -271,7 +272,9 @@ export default function App() {
               <SocketProvider>
                 <ToastProvider>
                   <NavigationContainer>
-                    <ThemedApp />
+                    <ErrorBoundary>
+                      <ThemedApp />
+                    </ErrorBoundary>
                   </NavigationContainer>
                 </ToastProvider>
               </SocketProvider>

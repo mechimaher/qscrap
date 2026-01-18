@@ -1,5 +1,5 @@
 // QScrap API Service - Full Backend Integration
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_BASE_URL, API_V1_BASE_URL, API_ENDPOINTS } from '../config/api';
 import * as SecureStore from 'expo-secure-store';
 
 // Token Storage Keys
@@ -173,8 +173,10 @@ class ApiService {
 
     private async request<T>(
         endpoint: string,
-        options: RequestInit = {}
+        options: RequestInit = {},
+        retryCount: number = 0
     ): Promise<T> {
+        const MAX_RETRIES = 3;
         const token = await this.getToken();
 
         const headers: HeadersInit = {
@@ -183,27 +185,49 @@ class ApiService {
             ...options.headers,
         };
 
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers,
-        });
+        try {
+            const response = await fetch(`${API_V1_BASE_URL}${endpoint}`, {
+                ...options,
+                headers,
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (!response.ok) {
-            // Safely extract error message to prevent [object Object]
-            let errorMessage = 'Request failed';
-            if (typeof data.error === 'string') {
-                errorMessage = data.error;
-            } else if (data.error?.message) {
-                errorMessage = data.error.message;
-            } else if (typeof data.message === 'string') {
-                errorMessage = data.message;
+            if (!response.ok) {
+                // Safely extract error message to prevent [object Object]
+                let errorMessage = 'Request failed';
+                if (typeof data.error === 'string') {
+                    errorMessage = data.error;
+                } else if (data.error?.message) {
+                    errorMessage = data.error.message;
+                } else if (typeof data.message === 'string') {
+                    errorMessage = data.message;
+                }
+
+                // Retry on 5xx server errors
+                if (response.status >= 500 && retryCount < MAX_RETRIES) {
+                    console.log(`[API] Retry ${retryCount + 1}/${MAX_RETRIES} for ${endpoint}`);
+                    await this.delay(Math.pow(2, retryCount) * 1000); // Exponential backoff
+                    return this.request<T>(endpoint, options, retryCount + 1);
+                }
+
+                throw new Error(errorMessage);
             }
-            throw new Error(errorMessage);
-        }
 
-        return data;
+            return data;
+        } catch (error: any) {
+            // Retry on network errors
+            if (error.name === 'TypeError' && retryCount < MAX_RETRIES) {
+                console.log(`[API] Network retry ${retryCount + 1}/${MAX_RETRIES} for ${endpoint}`);
+                await this.delay(Math.pow(2, retryCount) * 1000);
+                return this.request<T>(endpoint, options, retryCount + 1);
+            }
+            throw error;
+        }
+    }
+
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     // Auth
@@ -249,6 +273,14 @@ class ApiService {
         return this.request(API_ENDPOINTS.PROFILE);
     }
 
+    async getUrgentActions(): Promise<any> {
+        return this.request('/dashboard/customer/urgent-actions');
+    }
+
+    async getContextualData(): Promise<any> {
+        return this.request('/dashboard/customer/contextual-data');
+    }
+
     // Requests
     async getMyRequests(): Promise<{ requests: Request[] }> {
         return this.request(API_ENDPOINTS.MY_REQUESTS);
@@ -266,7 +298,7 @@ class ApiService {
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
         try {
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
+            const response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -514,7 +546,7 @@ class ApiService {
     // Disputes
     async createDispute(formData: FormData): Promise<any> {
         const token = await this.getToken();
-        const response = await fetch(`${API_BASE_URL}/disputes`, {
+        const response = await fetch(`${API_V1_BASE_URL}/disputes`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -577,12 +609,36 @@ class ApiService {
         });
     }
 
-    async getMyQuickServiceRequests(): Promise<any> {
+    async getMyQuickServiceRequests(): Promise<{ success: boolean; requests: any[] }> {
         return this.request('/services/quick/my-requests');
     }
 
     async getQuickServiceDetails(requestId: string): Promise<any> {
         return this.request(`/services/quick/${requestId}`);
+    }
+
+    async acceptQuickServiceQuote(requestId: string): Promise<any> {
+        return this.request(`/services/quick/${requestId}/accept-quote`, {
+            method: 'POST',
+        });
+    }
+
+    async rejectQuickServiceQuote(requestId: string, findAnother: boolean): Promise<any> {
+        return this.request(`/services/quick/${requestId}/reject-quote`, {
+            method: 'POST',
+            body: JSON.stringify({ find_another: findAnother }),
+        });
+    }
+
+    async cancelQuickService(requestId: string): Promise<any> {
+        return this.request(`/services/quick/${requestId}/cancel`, {
+            method: 'POST',
+        });
+    }
+
+    // Unified Activity Feed (Quick Services + Spare Parts)
+    async getCustomerActivity(limit: number = 20, offset: number = 0): Promise<any> {
+        return this.request(`/dashboard/customer/activity?limit=${limit}&offset=${offset}`);
     }
 
 }

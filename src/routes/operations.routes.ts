@@ -10,17 +10,7 @@ import {
     getDisputes,
     getDisputeDetails,
     resolveDispute,
-    getUsers,
-    getUserDetails,
-    suspendUser,
-    activateUser,
-    getAnalytics,
-    getUserStats,
-    getGarages,
-    // Return assignment management
-    getPendingReturns,
-    assignDriverToReturn,
-    getReturnStats
+    getUsers
 } from '../controllers/operations.controller';
 
 const router = Router();
@@ -31,7 +21,7 @@ router.use(authorizeOperations);
 
 // Dashboard & Analytics
 router.get('/dashboard/stats', getDashboardStats);
-router.get('/analytics', getAnalytics);
+// router.get('/analytics', getAnalytics); // TODO: Implement getAnalytics
 
 // Orders
 router.get('/orders', getOrders);
@@ -45,18 +35,18 @@ router.get('/disputes/:dispute_id', getDisputeDetails);
 router.post('/disputes/:dispute_id/resolve', resolveDispute);
 
 // Return Assignments
-router.get('/returns', getPendingReturns);
-router.get('/returns/stats', getReturnStats);
-router.post('/returns/:assignment_id/assign-driver', assignDriverToReturn);
+// router.get('/returns', getPendingReturns); // TODO: Implement getPendingReturns
+// router.get('/returns/stats', getReturnStats); // TODO: Implement getReturnStats
+// router.post('/returns/:assignment_id/assign-driver', assignDriverToReturn); // TODO: Implement assignDriverToReturn
 
 // Users
 router.get('/users', getUsers);
-router.get('/users/stats', getUserStats);
-router.get('/users/:user_id', getUserDetails);
-router.post('/users/:user_id/suspend', suspendUser);
-router.post('/users/:user_id/activate', activateUser);
+// router.get('/users/stats', getUserStats); // TODO: Implement getUserStats
+// router.get('/users/:user_id', getUserDetails); // TODO: Implement getUserDetails
+// router.post('/users/:user_id/suspend', suspendUser); // TODO: Implement suspendUser
+// router.post('/users/:user_id/activate', activateUser); // TODO: Implement activateUser
 
 // Garages
-router.get('/garages', getGarages);
+// router.get('/garages', getGarages); // TODO: Implement getGarages
 
 export default router;

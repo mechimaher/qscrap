@@ -12,6 +12,10 @@ import {
     markNotificationRead,
     markAllNotificationsRead
 } from '../controllers/dashboard.controller';
+import {
+    getCustomerUrgentActions,
+    getCustomerContextualData
+} from '../controllers/dashboard-urgent.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -33,6 +37,81 @@ router.put('/garage/location', authenticate, requireRole('garage'), updateGarage
 
 // Customer: Get dashboard stats
 router.get('/customer/stats', authenticate, requireRole('customer'), getCustomerStats);
+
+// Customer: Get unified activity feed (Quick Services + Spare Parts)
+router.get('/customer/activity', authenticate, requireRole('customer'), async (req, res) => {
+    try {
+        const userId = (req as any).user.userId;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const offset = parseInt(req.query.offset as string) || 0;
+
+        // Import pool at the top of the file instead of from req.app
+        const pool = (await import('../config/db')).default;
+
+        // Union both Quick Services and Spare Parts with type discriminator
+        const result = await pool.query(`
+            (
+                SELECT 
+                    request_id::text as id,
+                    'quick_service' as type,
+                    created_at as date,
+                    status,
+                    INITCAP(service_type) || ' Service' as title,
+                    COALESCE(vehicle_make || ' ' || vehicle_model || ' ' || vehicle_year, 'Vehicle') as subtitle,
+                    COALESCE(final_price, quoted_price, 0) as price,
+                    'QAR' as currency,
+                    service_type as icon_key,
+                    completed_at,
+                    location_address
+                FROM quick_service_requests
+                WHERE customer_id = $1
+            )
+            UNION ALL
+            (
+                SELECT 
+                    order_id::text as id,
+                    'spare_part' as type,
+                    created_at as date,
+                    order_status as status,
+                    'Spare Parts Order' as title,
+                    'Order #' || SUBSTRING(order_id::text, 1, 8) as subtitle,
+                    COALESCE(total_amount, 0) as price,
+                    'QAR' as currency,
+                    'spare_part' as icon_key,
+                    actual_delivery_at as completed_at,
+                    delivery_address
+                FROM orders
+                WHERE customer_id = $1
+            )
+            ORDER BY date DESC
+            LIMIT $2 OFFSET $3
+        `, [userId, limit, offset]);
+
+        // Get total count for pagination
+        const countResult = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM quick_service_requests WHERE customer_id = $1) +
+                (SELECT COUNT(*) FROM orders WHERE customer_id = $1) as total
+        `, [userId]);
+
+        res.json({
+            success: true,
+            activities: result.rows,
+            total: parseInt(countResult.rows[0].total),
+            page: Math.floor(offset / limit) + 1,
+            limit
+        });
+    } catch (error) {
+        console.error('[Dashboard] Get customer activity error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch activity' });
+    }
+});
+
+// Customer: Get urgent actions (priority-based)
+router.get('/customer/urgent-actions', authenticate, requireRole('customer'), getCustomerUrgentActions);
+
+// Customer: Get contextual data (insights, unread counts)
+router.get('/customer/contextual-data', authenticate, requireRole('customer'), getCustomerContextualData);
 
 // Customer: Profile (for the profile section)
 router.get('/profile', authenticate, getCustomerProfile);

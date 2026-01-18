@@ -152,12 +152,6 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
             [order.order_id, customerId]
         );
 
-        // 8. Update Stats
-        await client.query(
-            `UPDATE garages SET total_transactions = total_transactions + 1, updated_at = NOW() WHERE garage_id = $1`,
-            [bid.garage_id]
-        );
-
         await client.query('COMMIT');
 
         // 9. Notifications (Async)

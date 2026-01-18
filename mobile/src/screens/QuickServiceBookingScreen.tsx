@@ -88,11 +88,13 @@ export default function QuickServiceBookingScreen() {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 toast.error('Permission Denied', 'Location required for service');
-                navigation.goBack();
+                setGettingLocation(false);
                 return;
             }
 
-            const loc = await Location.getCurrentPositionAsync({});
+            const loc = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced, // Faster, less accurate
+            });
             setLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
 
             // Reverse geocode
@@ -178,19 +180,7 @@ export default function QuickServiceBookingScreen() {
         }
     };
 
-    if (gettingLocation) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={[styles.loadingText, { color: colors.text }]}>
-                        Getting your location...
-                    </Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
-
+    // Removed heavy loading screen - show UI immediately with inline loading
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}

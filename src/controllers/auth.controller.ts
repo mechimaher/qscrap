@@ -1,311 +1,71 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import pool from '../config/db';
-import {
-    getJwtSecret,
-    BCRYPT_ROUNDS,
-    TRIAL_DAYS,
-    TOKEN_EXPIRY_SECONDS
-} from '../config/security';
 import { getErrorMessage } from '../types';
 import { AuthRequest } from '../middleware/auth.middleware';
 import logger from '../utils/logger';
 import { catchAsync } from '../utils/catchAsync';
+import { AuthService } from '../services/auth';
 
-// ============================================
-// VALIDATION HELPERS
-// ============================================
+const authService = new AuthService(pool);
 
-// Phone number validation (Qatar format: +974XXXXXXXX or 974XXXXXXXX or XXXXXXXX)
+// Qatar phone number validation
 const isValidPhoneNumber = (phone: string): boolean => {
-    // Remove spaces and dashes
     const cleaned = phone.replace(/[\s-]/g, '');
-    // Accept: +974XXXXXXXX, 974XXXXXXXX, or 8-digit local number
-    const qatarPhoneRegex = /^(\+?974)?[3-7]\d{7}$/;
-    return qatarPhoneRegex.test(cleaned);
+    return /^(\+?974)?[3-7]\d{7}$/.test(cleaned);
 };
-
-// Password strength validation
-const isStrongPassword = (password: string): { valid: boolean; message?: string } => {
-    if (password.length < 8) {
-        return { valid: false, message: 'Password must be at least 8 characters long' };
-    }
-    if (!/[A-Z]/.test(password)) {
-        return { valid: false, message: 'Password must contain at least one uppercase letter' };
-    }
-    if (!/[a-z]/.test(password)) {
-        return { valid: false, message: 'Password must contain at least one lowercase letter' };
-    }
-    if (!/[0-9]/.test(password)) {
-        return { valid: false, message: 'Password must contain at least one number' };
-    }
-    return { valid: true };
-};
-
-// Note: JWT secret handling is now centralized in config/security.ts
-
-// ============================================
-// CONTROLLERS
-// ============================================
 
 export const register = catchAsync(async (req: Request, res: Response) => {
-    const {
-        phone_number, password, user_type, full_name, garage_name, address,
-        // Garage specialization fields
-        supplier_type, specialized_brands, all_brands,
-        // Garage location fields (GPS coordinates)
-        location_lat, location_lng
-    } = req.body;
+    const { phone_number, password, user_type, full_name, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat, location_lng } = req.body;
 
-    // Basic field validation
-    if (!phone_number || !password || !user_type) {
-        return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' });
-    }
+    if (!phone_number || !password || !user_type) return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' });
+    if (!isValidPhoneNumber(phone_number)) return res.status(400).json({ error: 'Invalid phone number format', hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number' });
+    if (password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
+    if (!['customer', 'garage'].includes(user_type)) return res.status(400).json({ error: 'Invalid user_type. Must be "customer" or "garage"' });
 
-    // Phone number format validation
-    if (!isValidPhoneNumber(phone_number)) {
-        return res.status(400).json({
-            error: 'Invalid phone number format',
-            hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number'
-        });
-    }
+    const exists = await authService.checkUserExists(phone_number);
+    if (exists) return res.status(400).json({ error: 'User with this phone number already exists' });
 
-    // Password length only (no complex requirements)
-    if (password.length < 4) {
-        return res.status(400).json({ error: 'Password must be at least 4 characters' });
-    }
+    if (user_type === 'garage' && !garage_name) return res.status(400).json({ error: 'Garage name is required for garage registration' });
 
-    // User type validation
-    if (!['customer', 'garage'].includes(user_type)) {
-        return res.status(400).json({ error: 'Invalid user_type. Must be "customer" or "garage"' });
-    }
-
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        // Check existing user
-        const existing = await client.query('SELECT * FROM users WHERE phone_number = $1', [phone_number]);
-        if (existing.rows.length > 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: 'User with this phone number already exists' });
+    let validLat: number | undefined, validLng: number | undefined;
+    if (location_lat !== undefined && location_lng !== undefined) {
+        const lat = parseFloat(location_lat), lng = parseFloat(location_lng);
+        if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            validLat = lat; validLng = lng;
+            if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) logger.warn('Garage location outside Qatar bounds', { lat, lng });
         }
-
-        const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-
-        // Insert User
-        const userResult = await client.query(
-            'INSERT INTO users (phone_number, password_hash, user_type, full_name) VALUES ($1, $2, $3, $4) RETURNING user_id',
-            [phone_number, hash, user_type, full_name]
-        );
-        const userId = userResult.rows[0].user_id;
-
-
-        // Insert Garage Profile if needed - AUTO-GRANT 30-DAY DEMO TRIAL
-        if (user_type === 'garage') {
-            if (!garage_name) {
-                await client.query('ROLLBACK');
-                return res.status(400).json({ error: 'Garage name is required for garage registration' });
-            }
-
-            // Validate GPS coordinates if provided
-            let validLat: number | null = null;
-            let validLng: number | null = null;
-
-            if (location_lat !== undefined && location_lng !== undefined) {
-                const lat = parseFloat(location_lat);
-                const lng = parseFloat(location_lng);
-
-                // Basic coordinate validation
-                if (!isNaN(lat) && !isNaN(lng) &&
-                    lat >= -90 && lat <= 90 &&
-                    lng >= -180 && lng <= 180) {
-                    validLat = lat;
-                    validLng = lng;
-
-                    // Log warning if outside Qatar bounds (but don't reject)
-                    if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) {
-                        logger.warn('Garage location outside Qatar bounds', { userId, lat, lng });
-                    }
-                } else {
-                    logger.warn('Invalid GPS coordinates provided during registration', { userId, location_lat, location_lng });
-                }
-            }
-
-            // Calculate demo expiry date (30 days from now)
-            const demoExpiresAt = new Date();
-            demoExpiresAt.setDate(demoExpiresAt.getDate() + TRIAL_DAYS);
-
-            // Create garage with auto demo trial, specialization, and location
-            await client.query(
-                `INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng,
-                                      approval_status, demo_expires_at,
-                                      supplier_type, specialized_brands, all_brands) 
-                 VALUES ($1, $2, $3, $4, $5, 'demo', $6, $7, $8, $9)`,
-                [userId, garage_name, address, validLat, validLng, demoExpiresAt,
-                    supplier_type || 'used',
-                    specialized_brands || [],
-                    all_brands !== false]
-            );
-
-            // Note: During demo, garage operates without formal subscription
-            // Commission = 0% during demo
-            // After demo expires, they must subscribe to continue
-        }
-
-        await client.query('COMMIT');
-
-        const token = jwt.sign(
-            { userId, userType: user_type },
-            getJwtSecret(),
-            { expiresIn: TOKEN_EXPIRY_SECONDS }
-        );
-
-        res.status(201).json({ token, userId, userType: user_type });
-    } finally {
-        client.release();
     }
+
+    const result = await authService.registerUser({ phone_number, password, user_type, full_name, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat: validLat, location_lng: validLng });
+    res.status(201).json({ token: result.token, userId: result.userId, userType: user_type });
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
     const { phone_number, password } = req.body;
+    if (!phone_number || !password) return res.status(400).json({ error: 'Phone number and password are required' });
 
-    if (!phone_number || !password) {
-        return res.status(400).json({ error: 'Phone number and password are required' });
+    try {
+        const result = await authService.login(phone_number, password);
+        res.json(result);
+    } catch (err) {
+        const message = getErrorMessage(err);
+        if (message === 'Invalid credentials') return res.status(401).json({ error: message });
+        if (message === 'Account deactivated') return res.status(403).json({ error: message, message: 'Your account has been deactivated. Please contact support.' });
+        if (message.startsWith('Account suspended') || message === 'Account suspended') return res.status(403).json({ error: 'Account suspended', message });
+        if (message === 'pending_approval') return res.status(403).json({ error: 'pending_approval', message: 'Your account is pending approval.', status: 'pending' });
+        if (message.startsWith('application_rejected:')) return res.status(403).json({ error: 'application_rejected', message: message.split(':')[1], status: 'rejected' });
+        throw err;
     }
-
-    const result = await pool.query('SELECT * FROM users WHERE phone_number = $1', [phone_number]);
-    if (result.rows.length === 0) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check if user is active
-    if (user.is_active === false) {
-        return res.status(403).json({
-            error: 'Account deactivated',
-            message: 'Your account has been deactivated. Please contact support.'
-        });
-    }
-
-    // Check if user is suspended
-    if (user.is_suspended) {
-        return res.status(403).json({
-            error: 'Account suspended',
-            message: user.suspension_reason || 'Your account has been suspended. Please contact support.'
-        });
-    }
-
-    // ============================================
-    // GARAGE APPROVAL CHECK (Admin Module)
-    // ============================================
-    if (user.user_type === 'garage') {
-        const garageResult = await pool.query(
-            `SELECT approval_status, demo_expires_at, rejection_reason 
-             FROM garages WHERE garage_id = $1`,
-            [user.user_id]
-        );
-
-        if (garageResult.rows.length > 0) {
-            const garage = garageResult.rows[0];
-            const approvalStatus = garage.approval_status || 'pending';
-
-            if (approvalStatus === 'pending') {
-                return res.status(403).json({
-                    error: 'pending_approval',
-                    message: 'Your account is pending approval.',
-                    status: 'pending'
-                });
-            }
-
-            if (approvalStatus === 'rejected') {
-                return res.status(403).json({
-                    error: 'application_rejected',
-                    message: garage.rejection_reason || 'Your application has been rejected.',
-                    status: 'rejected'
-                });
-            }
-
-            if (approvalStatus === 'demo' && garage.demo_expires_at) {
-                const demoExpiry = new Date(garage.demo_expires_at);
-                if (demoExpiry < new Date()) {
-                    await pool.query(`UPDATE garages SET approval_status = 'expired' WHERE garage_id = $1`, [user.user_id]);
-
-                    const token = jwt.sign(
-                        { userId: user.user_id, userType: user.user_type },
-                        getJwtSecret(),
-                        { expiresIn: TOKEN_EXPIRY_SECONDS }
-                    );
-                    await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-                    return res.json({ token, userType: user.user_type, userId: user.user_id, status: 'expired', message: 'Demo expired. Please upgrade.' });
-                }
-            }
-
-            if (approvalStatus === 'expired') {
-                const token = jwt.sign(
-                    { userId: user.user_id, userType: user.user_type },
-                    getJwtSecret(),
-                    { expiresIn: TOKEN_EXPIRY_SECONDS }
-                );
-                await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-                return res.json({ token, userType: user.user_type, userId: user.user_id, status: 'expired', message: 'Subscription expired. Please upgrade.' });
-            }
-        }
-    }
-
-    // Update last login timestamp
-    await pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-
-    const token = jwt.sign(
-        { userId: user.user_id, userType: user.user_type },
-        getJwtSecret(),
-        { expiresIn: TOKEN_EXPIRY_SECONDS }
-    );
-
-    res.json({ token, userType: user.user_type, userId: user.user_id });
 });
 
 export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const client = await pool.connect();
+    if (!req.user?.userId) return res.status(401).json({ error: 'Unauthorized' });
+    logger.info('Deleting user account', { userId: req.user.userId });
     try {
-        await client.query('BEGIN');
-
-        const userResult = await client.query('SELECT user_type FROM users WHERE user_id = $1', [userId]);
-        if (userResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        logger.info('Deleting user account', { userId });
-
-        const anonymizedPhone = `deleted_${userId}_${Date.now()}`;
-        await client.query(
-            `UPDATE users SET phone_number = $1, full_name = 'Deleted User', is_active = false, password_hash = 'deleted', fcm_token = NULL WHERE user_id = $2`,
-            [anonymizedPhone, userId]
-        );
-
-        if (userResult.rows[0].user_type === 'garage') {
-            await client.query(
-                `UPDATE garages SET approval_status = 'rejected', garage_name = $1 WHERE garage_id = $2`,
-                [`Deleted Garage ${userId}`, userId]
-            );
-        }
-
-        await client.query('COMMIT');
+        await authService.deleteAccount(req.user.userId);
         res.json({ message: 'Account deleted successfully' });
-    } finally {
-        client.release();
+    } catch (err) {
+        if (getErrorMessage(err) === 'User not found') return res.status(404).json({ error: 'User not found' });
+        throw err;
     }
 });

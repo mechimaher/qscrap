@@ -1,6 +1,6 @@
 import request from 'supertest';
-import app from '../app';
-import pool from '../config/db';
+import app from '../../app';
+import pool from '../../config/db';
 import bcrypt from 'bcryptjs';
 
 /**

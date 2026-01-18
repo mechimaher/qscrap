@@ -14,19 +14,10 @@ import {
     getApprovedOrders,
     submitToInsurance,
     getInsuranceCompanies,
-    // MOI & Escrow Endpoints
+    // MOI Endpoints
     uploadMOIReport,
     getMOIReport,
-    verifyMOIReport,
-    holdEscrow,
-    releaseEscrow,
-    getEscrowStatus,
-    // Price Benchmarking Endpoints
-    checkPrice,
-    getBenchmark,
-    recordInvoicePrice,
-    getPriceTrend,
-    getInflatedParts
+    verifyMOIReport
 } from '../controllers/insurance.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 
@@ -97,35 +88,35 @@ router.get('/claims/:claim_id/moi-report', authenticate, getMOIReport);
 router.patch('/moi-reports/:report_id/verify', authenticate, requireRole('insurance_agent'), verifyMOIReport);
 
 // ==========================================
-// ESCROW PAYMENTS
+// ESCROW PAYMENTS (TODO: Implement)
 // ==========================================
 
 // Create escrow hold when approving claim
-router.post('/claims/:claim_id/escrow/hold', authenticate, requireRole('insurance_agent'), holdEscrow);
+// router.post('/claims/:claim_id/escrow/hold', authenticate, requireRole('insurance_agent'), holdEscrow);
 
 // Release escrow payment after work verification
-router.post('/claims/:claim_id/escrow/release', authenticate, requireRole('insurance_agent'), releaseEscrow);
+// router.post('/claims/:claim_id/escrow/release', authenticate, requireRole('insurance_agent'), releaseEscrow);
 
 // Get escrow status
-router.get('/escrow/status/:escrow_id', authenticate, getEscrowStatus);
+// router.get('/escrow/status/:escrow_id', authenticate, getEscrowStatus);
 
 // ==========================================
-// PRICE BENCHMARKING & FRAUD DETECTION
+// PRICE BENCHMARKING & FRAUD DETECTION (TODO: Implement)
 // ==========================================
 
 // Check if quoted price is an outlier
-router.post('/price-check', authenticate, requireRole('insurance_agent'), checkPrice);
+// router.post('/price-check', authenticate, requireRole('insurance_agent'), checkPrice);
 
 // Get benchmark statistics for a part
-router.get('/benchmarks/:part_name', authenticate, requireRole('insurance_agent'), getBenchmark);
+// router.get('/benchmarks/:part_name', authenticate, requireRole('insurance_agent'), getBenchmark);
 
 // Record actual invoice price
-router.post('/record-price', authenticate, requireRole('insurance_agent'), recordInvoicePrice);
+// router.post('/record-price', authenticate, requireRole('insurance_agent'), recordInvoicePrice);
 
 // Get price trend over time
-router.get('/price-trend/:part_name', authenticate, requireRole('insurance_agent'), getPriceTrend);
+// router.get('/price-trend/:part_name', authenticate, requireRole('insurance_agent'), getPriceTrend);
 
 // Get top inflated parts (fraud detection)
-router.get('/inflated-parts', authenticate, requireRole('insurance_agent'), getInflatedParts);
+// router.get('/inflated-parts', authenticate, requireRole('insurance_agent'), getInflatedParts);
 
 export default router;

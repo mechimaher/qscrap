@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
+import { passwordRateLimiter } from '../middleware/rateLimiter';
 import {
     getPayoutSummary,
     getPayouts,
@@ -62,8 +63,8 @@ router.get('/payouts/awaiting-confirmation', requireRole('garage'), getAwaitingC
 // Garage: Confirm payment receipt
 router.post('/payouts/:payout_id/confirm', requireRole('garage'), confirmPayment);
 
-// Garage: Bulk confirm all payouts (requires password)
-router.post('/payouts/confirm-all', requireRole('garage'), confirmAllPayouts);
+// Garage: Bulk confirm all payouts (requires password) - RATE LIMITED
+router.post('/payouts/confirm-all', requireRole('garage'), passwordRateLimiter, confirmAllPayouts);
 
 // Garage: Dispute/report issue with payment
 router.post('/payouts/:payout_id/dispute', requireRole('garage'), disputePayment);

@@ -119,7 +119,12 @@ import vehicleRoutes from './vehicle.routes';
 v1Router.use('/vehicles', vehicleRoutes);
 
 // Service Routes (Repair, Home Services)
-import serviceRoutes from './services.routes'; \nv1Router.use('/services', serviceRoutes); \n\n// Quick Services Routes (Battery, Oil, Wash, Tire, AC, Breakdown, Diagnostic, Electrician)\nimport quickservicesRoutes from './quickservices.routes';\nv1Router.use('/services/quick', quickservicesRoutes);
+import serviceRoutes from './services.routes';
+v1Router.use('/services', serviceRoutes);
+
+// Quick Services Routes (Battery, Oil, Wash, Tire, AC, Breakdown, Diagnostic, Electrician)
+import quickservicesRoutes from './quickservices.routes';
+v1Router.use('/services/quick', quickservicesRoutes);
 
 // Insurance Routes (B2B)
 import insuranceRoutes from './insurance.routes';
