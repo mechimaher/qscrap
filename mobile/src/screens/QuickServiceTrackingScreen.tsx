@@ -1,4 +1,4 @@
-// Quick Service Tracking Screen
+// Quick Service Tracking Screen with Full Quote Flow
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -7,11 +7,13 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     ScrollView,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Haptics from 'expo-haptics';
 import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
@@ -32,16 +34,17 @@ export default function QuickServiceTrackingScreen() {
 
     const [request, setRequest] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isActioning, setIsActioning] = useState(false);
 
     useEffect(() => {
         fetchRequestStatus();
-        const interval = setInterval(fetchRequestStatus, 5000); // Poll every 5s
+        const interval = setInterval(fetchRequestStatus, 5000);
         return () => clearInterval(interval);
     }, [requestId]);
 
     const fetchRequestStatus = async () => {
         try {
-            const response = await api.get(`/services/quick/my-requests`);
+            const response = await api.getMyQuickServiceRequests();
             if (response.success && response.requests) {
                 const currentRequest = response.requests.find((r: any) => r.request_id === requestId);
                 if (currentRequest) {
@@ -50,7 +53,9 @@ export default function QuickServiceTrackingScreen() {
             }
         } catch (error) {
             console.error('Failed to fetch request status:', error);
-            handleApiError(error, toast, 'Failed to load tracking information');
+            if (!request) {
+                handleApiError(error, toast, 'Failed to load tracking information');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -63,11 +68,11 @@ export default function QuickServiceTrackingScreen() {
             case 'pending':
                 return { icon: '🔍', text: 'Finding service provider...', color: '#F59E0B' };
             case 'assigned':
-                return { icon: '✅', text: 'Service provider assigned!', color: '#10B981' };
+                return { icon: '📱', text: 'Waiting for price quote...', color: '#10B981' };
+            case 'quoted':
+                return { icon: '💰', text: 'Price Quote Received!', color: Colors.primary };
             case 'accepted':
                 return { icon: '🚗', text: 'Technician on the way', color: '#3B82F6' };
-            case 'en_route':
-                return { icon: '🛣️', text: 'Arriving soon', color: '#8B5CF6' };
             case 'in_progress':
                 return { icon: '🔧', text: 'Service in progress', color: '#EC4899' };
             case 'completed':
@@ -78,6 +83,91 @@ export default function QuickServiceTrackingScreen() {
                 return { icon: '⏳', text: 'Processing...', color: colors.textMuted };
         }
     };
+
+    // Handle accept quote
+    const handleAcceptQuote = async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setIsActioning(true);
+        try {
+            const response = await api.acceptQuickServiceQuote(requestId);
+            if (response.success) {
+                toast.success('Success', 'Quote accepted! Technician is on the way.');
+                fetchRequestStatus();
+            } else {
+                toast.error('Error', response.message || 'Failed to accept quote');
+            }
+        } catch (error) {
+            handleApiError(error, toast, 'Failed to accept quote');
+        } finally {
+            setIsActioning(false);
+        }
+    };
+
+    // Handle reject quote - show options
+    const handleRejectQuote = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            'Reject Price Quote',
+            'Would you like to find another service provider or cancel the request?',
+            [
+                { text: 'Cancel Request', style: 'destructive', onPress: () => rejectQuote(false) },
+                { text: 'Find Another', onPress: () => rejectQuote(true) },
+                { text: 'Keep Quote', style: 'cancel' },
+            ]
+        );
+    };
+
+    const rejectQuote = async (findAnother: boolean) => {
+        setIsActioning(true);
+        try {
+            const response = await api.rejectQuickServiceQuote(requestId, findAnother);
+            if (response.success) {
+                toast.info('Info', findAnother ? 'Finding another provider...' : 'Request cancelled');
+                fetchRequestStatus();
+            } else {
+                toast.warning('Warning', response.message || 'No other providers available');
+                fetchRequestStatus();
+            }
+        } catch (error) {
+            handleApiError(error, toast, 'Failed to reject quote');
+        } finally {
+            setIsActioning(false);
+        }
+    };
+
+    // Handle cancel request
+    const handleCancelRequest = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            'Cancel Request',
+            'Are you sure you want to cancel this service request?',
+            [
+                { text: 'Keep Request', style: 'cancel' },
+                { text: 'Cancel', style: 'destructive', onPress: cancelRequest },
+            ]
+        );
+    };
+
+    const cancelRequest = async () => {
+        setIsActioning(true);
+        try {
+            const response = await api.cancelQuickService(requestId);
+            if (response.success) {
+                toast.success('Success', 'Request cancelled successfully');
+                navigation.goBack();
+            } else {
+                toast.error('Error', response.message || 'Failed to cancel request');
+            }
+        } catch (error) {
+            handleApiError(error, toast, 'Failed to cancel request');
+        } finally {
+            setIsActioning(false);
+        }
+    };
+
+    // Can show actions?
+    const canCancel = ['pending', 'assigned', 'quoted'].includes(request?.status);
+    const showQuoteActions = request?.status === 'quoted';
 
     if (isLoading) {
         return (
@@ -112,12 +202,56 @@ export default function QuickServiceTrackingScreen() {
                     <Text style={[styles.statusText, { color: statusInfo.color }]}>
                         {statusInfo.text}
                     </Text>
-                    {request?.estimated_arrival && (
-                        <Text style={[styles.eta, { color: colors.textSecondary }]}>
-                            ETA: {new Date(request.estimated_arrival).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                    )}
                 </View>
+
+                {/* Price Quote Display */}
+                {request?.quoted_price && (
+                    <View style={[styles.priceCard, { backgroundColor: Colors.primary + '15', borderColor: Colors.primary }]}>
+                        <Text style={styles.priceLabel}>💰 Quoted Price</Text>
+                        <Text style={[styles.priceAmount, { color: Colors.primary }]}>
+                            {request.quoted_price} QAR
+                        </Text>
+                        {request.status === 'quoted' && (
+                            <Text style={[styles.priceNote, { color: colors.textSecondary }]}>
+                                Accept or reject this price quote
+                            </Text>
+                        )}
+                    </View>
+                )}
+
+                {/* Quote Actions (when status is 'quoted') */}
+                {showQuoteActions && (
+                    <View style={styles.quoteActions}>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.acceptButton]}
+                            onPress={handleAcceptQuote}
+                            disabled={isActioning}
+                        >
+                            <LinearGradient
+                                colors={['#10B981', '#059669']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.buttonGradient}
+                            >
+                                {isActioning ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.buttonText}>✅ Accept Price</Text>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.rejectButton, { borderColor: Colors.primary }]}
+                            onPress={handleRejectQuote}
+                            disabled={isActioning}
+                        >
+                            <Text style={[styles.rejectButtonText, { color: Colors.primary }]}>
+                                🔄 Find Another Provider
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 {/* Service Details */}
                 <View style={[styles.section, { backgroundColor: colors.surface }]}>
@@ -158,9 +292,20 @@ export default function QuickServiceTrackingScreen() {
                 <View style={[styles.section, { backgroundColor: colors.surface }]}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Progress</Text>
 
-                    {['pending', 'assigned', 'accepted', 'in_progress', 'completed'].map((status, index) => {
-                        const isCompleted = ['pending', 'assigned', 'accepted', 'in_progress', 'completed'].indexOf(request?.status) >= index;
+                    {['pending', 'assigned', 'quoted', 'accepted', 'in_progress', 'completed'].map((status, index) => {
+                        const statusOrder = ['pending', 'assigned', 'quoted', 'accepted', 'in_progress', 'completed'];
+                        const currentIndex = statusOrder.indexOf(request?.status);
+                        const isCompleted = currentIndex >= index;
                         const isCurrent = request?.status === status;
+
+                        const statusLabels: Record<string, string> = {
+                            pending: 'Finding Provider',
+                            assigned: 'Provider Assigned',
+                            quoted: 'Price Quoted',
+                            accepted: 'Quote Accepted',
+                            in_progress: 'Service In Progress',
+                            completed: 'Completed'
+                        };
 
                         return (
                             <View key={status} style={styles.timelineItem}>
@@ -174,19 +319,31 @@ export default function QuickServiceTrackingScreen() {
                                     { color: isCompleted ? colors.text : colors.textMuted },
                                     isCurrent && { fontWeight: '700' }
                                 ]}>
-                                    {status.replace('_', ' ').toUpperCase()}
+                                    {statusLabels[status] || status.replace('_', ' ').toUpperCase()}
                                 </Text>
                             </View>
                         );
                     })}
                 </View>
 
-                <View style={{ height: 40 }} />
+                <View style={{ height: 100 }} />
             </ScrollView>
 
             {/* Footer Actions */}
-            {request?.garage_phone && request.status !== 'completed' && (
-                <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+            <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+                {/* Cancel button (when allowed) */}
+                {canCancel && (
+                    <TouchableOpacity
+                        style={[styles.cancelButton, { borderColor: '#EF4444' }]}
+                        onPress={handleCancelRequest}
+                        disabled={isActioning}
+                    >
+                        <Text style={styles.cancelButtonText}>🚫 Cancel Request</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Call button (when garage assigned) */}
+                {request?.garage_phone && request.status !== 'completed' && request.status !== 'cancelled' && (
                     <TouchableOpacity style={styles.callButton}>
                         <LinearGradient
                             colors={Colors.gradients.primary}
@@ -194,11 +351,11 @@ export default function QuickServiceTrackingScreen() {
                             end={{ x: 1, y: 0 }}
                             style={styles.callGradient}
                         >
-                            <Text style={styles.callText}>📞 Call Service Provider</Text>
+                            <Text style={styles.callText}>📞 Call Provider</Text>
                         </LinearGradient>
                     </TouchableOpacity>
-                </View>
-            )}
+                )}
+            </View>
         </SafeAreaView>
     );
 }
@@ -226,7 +383,34 @@ const styles = StyleSheet.create({
     },
     statusIcon: { fontSize: 64, marginBottom: Spacing.md },
     statusText: { fontSize: FontSizes.xl, fontWeight: '700', textAlign: 'center' },
-    eta: { fontSize: FontSizes.md, marginTop: Spacing.sm },
+
+    // Price Card
+    priceCard: {
+        padding: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        marginBottom: Spacing.lg,
+        borderWidth: 2,
+        alignItems: 'center',
+    },
+    priceLabel: { fontSize: FontSizes.md, marginBottom: Spacing.xs },
+    priceAmount: { fontSize: 36, fontWeight: '800' },
+    priceNote: { fontSize: FontSizes.sm, marginTop: Spacing.xs },
+
+    // Quote Actions
+    quoteActions: { gap: Spacing.md, marginBottom: Spacing.lg },
+    actionButton: { borderRadius: BorderRadius.xl, overflow: 'hidden' },
+    acceptButton: {},
+    buttonGradient: { padding: Spacing.lg, alignItems: 'center' },
+    buttonText: { color: '#fff', fontSize: FontSizes.lg, fontWeight: '700' },
+    rejectButton: {
+        padding: Spacing.lg,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderRadius: BorderRadius.xl,
+        backgroundColor: 'transparent',
+    },
+    rejectButtonText: { fontSize: FontSizes.md, fontWeight: '600' },
+
     section: {
         padding: Spacing.lg,
         borderRadius: BorderRadius.xl,
@@ -261,7 +445,15 @@ const styles = StyleSheet.create({
     footer: {
         padding: Spacing.lg,
         borderTopWidth: 1,
+        gap: Spacing.md,
     },
+    cancelButton: {
+        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 2,
+        alignItems: 'center',
+    },
+    cancelButtonText: { color: '#EF4444', fontSize: FontSizes.md, fontWeight: '600' },
     callButton: { borderRadius: BorderRadius.xl, overflow: 'hidden' },
     callGradient: {
         padding: Spacing.lg,

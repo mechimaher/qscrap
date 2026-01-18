@@ -20,7 +20,7 @@ router.get('/tiers', authenticate, getTierBenefits); // Available to all authent
 router.get('/calculate', authenticate, calculateRewards);
 
 // Admin endpoints (require admin/operations authentication)
-router.post('/admin/bonus', authenticate, requireRole('admin', 'operations'), awardBonusPoints);
-router.get('/admin/stats', authenticate, requireRole('admin', 'operations'), getLoyaltyStats);
+router.post('/admin/bonus', authenticate, requireRole('admin'), awardBonusPoints);
+router.get('/admin/stats', authenticate, requireRole('admin'), getLoyaltyStats);
 
 export default router;

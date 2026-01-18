@@ -380,33 +380,55 @@ export default function OrdersScreen() {
 
     const handleOrderPress = (order: Order) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.navigate('OrderDetail', { orderId: order.order_id });
+        navigation.navigate('OrderDetails', { orderId: order.order_id });
     };
 
     const handleTrack = (order: Order) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        navigation.navigate('Tracking', {
-            orderId: order.order_id,
-            orderNumber: order.order_number,
-            deliveryAddress: order.delivery_address,
-        });
+        navigation.navigate('DeliveryTracking', { orderId: order.order_id });
     };
 
-    const activeOrders = orders.filter(o =>
-        !['completed', 'cancelled', 'refunded'].includes(o.order_status)
-    );
+    const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+
+    const filteredOrders = orders.filter(o => {
+        if (filter === 'active') return !['completed', 'cancelled', 'refunded'].includes(o.order_status);
+        if (filter === 'completed') return ['completed', 'delivered'].includes(o.order_status);
+        return true;
+    });
 
     const EmptyState = () => (
         <View style={styles.emptyState}>
             <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>📦</Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Orders Yet</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Your orders will appear here once you accept a bid
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                {filter === 'all' ? 'No Orders Yet' : `No ${filter} orders`}
             </Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                {filter === 'all'
+                    ? 'Your orders will appear here once you accept a bid'
+                    : `You don't have any ${filter} orders at the moment`}
+            </Text>
+            {filter === 'all' && (
+                <TouchableOpacity
+                    style={styles.emptyCTA}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.navigate('NewRequest' as never);
+                    }}
+                >
+                    <LinearGradient
+                        colors={[Colors.primary, '#B31D4A']}
+                        style={styles.emptyCTAGradient}
+                    >
+                        <Text style={styles.emptyCTAText}>+ Create Part Request</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            )}
         </View>
     );
+
+    const activeOrders = orders.filter(o => !['completed', 'cancelled', 'refunded'].includes(o.order_status));
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -426,13 +448,31 @@ export default function OrdersScreen() {
                 )}
             </View>
 
+            {/* Filter Tabs */}
+            <View style={[styles.filterTabs, { backgroundColor: colors.surface }]}>
+                {(['all', 'active', 'completed'] as const).map(tab => (
+                    <TouchableOpacity
+                        key={tab}
+                        style={[styles.filterTab, filter === tab && styles.filterTabActive]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setFilter(tab);
+                        }}
+                    >
+                        <Text style={[styles.filterTabText, filter === tab && styles.filterTabTextActive]}>
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
             {isLoading ? (
                 <View style={styles.skeletonContainer}>
                     {[0, 1, 2, 3].map(i => <SkeletonCard key={i} index={i} />)}
                 </View>
             ) : (
                 <FlatList
-                    data={orders}
+                    data={filteredOrders}
                     keyExtractor={(item) => item.order_id}
                     renderItem={({ item, index }) => (
                         <PremiumOrderCard
@@ -636,5 +676,44 @@ const styles = StyleSheet.create({
         // color set dynamically
         textAlign: 'center',
         lineHeight: 22,
+    },
+    emptyCTA: {
+        marginTop: Spacing.lg,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+    },
+    emptyCTAGradient: {
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.xl,
+    },
+    emptyCTAText: {
+        color: '#fff',
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
+    filterTabs: {
+        flexDirection: 'row',
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+        gap: Spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    filterTab: {
+        paddingVertical: Spacing.xs,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.full,
+        backgroundColor: '#F5F5F5',
+    },
+    filterTabActive: {
+        backgroundColor: Colors.primary,
+    },
+    filterTabText: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        color: '#6B7280',
+    },
+    filterTabTextActive: {
+        color: '#fff',
     },
 });

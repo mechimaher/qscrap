@@ -22,7 +22,7 @@ router.get('/campaigns/:id/performance', authenticate, requireRole('garage'), ge
 router.put('/campaigns/:id/status', authenticate, requireRole('garage'), updateCampaignStatus);
 
 // Admin endpoints
-router.post('/admin/review', authenticate, requireRole('admin', 'operations'), reviewCampaign);
-router.get('/admin/stats', authenticate, requireRole('admin', 'operations'), getAdStats);
+router.post('/admin/review', authenticate, requireRole('admin'), reviewCampaign);
+router.get('/admin/stats', authenticate, requireRole('admin'), getAdStats);
 
 export default router;
