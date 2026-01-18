@@ -22,7 +22,19 @@ describe('Order Service', () => {
     let createdOrderId: string | null = null;
 
     beforeAll(async () => {
-        // Setup test data in correct order (respecting FK constraints)
+        // FIRST: Clean up any stale test data from previous runs in correct FK order
+        await pool.query('DELETE FROM garage_payouts WHERE order_id IN (SELECT order_id FROM orders WHERE bid_id = $1)', [testBidId]);
+        await pool.query('DELETE FROM reward_transactions WHERE order_id IN (SELECT order_id FROM orders WHERE bid_id = $1)', [testBidId]);
+        await pool.query('DELETE FROM order_status_history WHERE order_id IN (SELECT order_id FROM orders WHERE bid_id = $1)', [testBidId]);
+        await pool.query('DELETE FROM orders WHERE bid_id = $1', [testBidId]);
+        await pool.query('DELETE FROM bids WHERE bid_id = $1', [testBidId]);
+        await pool.query('DELETE FROM bids WHERE request_id = $1', [testRequestId]);
+        await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
+        await pool.query('DELETE FROM part_requests WHERE request_id = $1', [testRequestId]);
+        await pool.query('DELETE FROM garages WHERE garage_id = $1', [testGarageId]);
+        await pool.query('DELETE FROM users WHERE user_id IN ($1, $2)', [testCustomerId, testGarageId]);
+
+        // NOW: Setup test data in correct order (respecting FK constraints)
 
         // 1. Create test customer user
         await pool.query(`
@@ -69,14 +81,22 @@ describe('Order Service', () => {
     });
 
     afterAll(async () => {
-        // Cleanup in reverse order of creation
-        if (createdOrderId) {
-            await pool.query('DELETE FROM order_status_history WHERE order_id = $1', [createdOrderId]);
-            await pool.query('DELETE FROM orders WHERE order_id = $1', [createdOrderId]);
-        }
+        // Cleanup in reverse order of creation - respecting FK constraints
+        // 0. Delete garage payouts and reward transactions (they reference orders)
+        await pool.query('DELETE FROM garage_payouts WHERE order_id IN (SELECT order_id FROM orders WHERE bid_id = $1)', [testBidId]);
+        await pool.query('DELETE FROM reward_transactions WHERE order_id IN (SELECT order_id FROM orders WHERE bid_id = $1)', [testBidId]);
+        // 1. Delete all orders (they reference bids)
+        await pool.query('DELETE FROM order_status_history WHERE order_id IN (SELECT order_id FROM orders WHERE bid_id = $1)', [testBidId]);
+        await pool.query('DELETE FROM orders WHERE bid_id = $1', [testBidId]);
+        // 2. Delete test bids
         await pool.query('DELETE FROM bids WHERE bid_id = $1', [testBidId]);
+        // 3. Delete subscription (before garage)
+        await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
+        // 4. Delete part requests
         await pool.query('DELETE FROM part_requests WHERE request_id = $1', [testRequestId]);
+        // 5. Delete garages
         await pool.query('DELETE FROM garages WHERE garage_id = $1', [testGarageId]);
+        // 6. Delete users last
         await pool.query('DELETE FROM users WHERE user_id IN ($1, $2)', [testCustomerId, testGarageId]);
     });
 
@@ -165,7 +185,7 @@ describe('Order Service', () => {
         });
 
         it('should return null for non-existent order', async () => {
-            const order = await getOrderWithDetails('non-existent-order-id');
+            const order = await getOrderWithDetails('99999999-9999-9999-9999-999999999999');  // Valid UUID that doesn't exist
             expect(order).toBeNull();
         });
     });
