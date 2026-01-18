@@ -11,6 +11,7 @@ export const authRateLimiter = rateLimit({
     skipSuccessfulRequests: true, // Don't count successful logins
     standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
     legacyHeaders: false, // Disable `X-RateLimit-*` headers
+    skip: () => process.env.NODE_ENV === 'test', // Skip rate limiting in tests
     handler: (req, res) => {
         logger.warn('Auth rate limit exceeded', {
             ip: req.ip,
@@ -36,6 +37,7 @@ export const passwordRateLimiter = rateLimit({
     skipSuccessfulRequests: true,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test', // Skip rate limiting in tests
     handler: (req, res) => {
         logger.warn('Password verification rate limit exceeded', {
             ip: req.ip,
@@ -60,6 +62,7 @@ export const apiRateLimiter = rateLimit({
     max: 100, // 100 requests per minute
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test', // Skip rate limiting in tests
     handler: (req, res) => {
         logger.warn('API rate limit exceeded', {
             ip: req.ip,

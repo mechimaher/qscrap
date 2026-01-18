@@ -8,6 +8,7 @@ export const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
+    skip: () => process.env.NODE_ENV === 'test', // Skip in test environment
     // Trust X-Forwarded-For from Cloudflare/Nginx
     validate: { xForwardedForHeader: false }
 });
@@ -19,6 +20,7 @@ export const registerLimiter = rateLimit({
     message: 'Too many registration attempts. Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test', // Skip in test environment
     validate: { xForwardedForHeader: false }
 });
 
@@ -29,6 +31,7 @@ export const apiLimiter = rateLimit({
     message: 'Too many requests. Please slow down.',
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test', // Skip in test environment
     validate: { xForwardedForHeader: false }
 });
 
