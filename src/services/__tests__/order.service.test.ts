@@ -26,14 +26,14 @@ describe('Order Service', () => {
 
         // 1. Create test customer user
         await pool.query(`
-            INSERT INTO users (user_id, full_name, phone_number, role)
+            INSERT INTO users (user_id, full_name, phone_number, user_type)
             VALUES ($1, 'Test Customer', '+97400000001', 'customer')
             ON CONFLICT (user_id) DO NOTHING
         `, [testCustomerId]);
 
         // 2. Create test garage user
         await pool.query(`
-            INSERT INTO users (user_id, full_name, phone_number, role)
+            INSERT INTO users (user_id, full_name, phone_number, user_type)
             VALUES ($1, 'Test Garage', '+97400000002', 'garage')
             ON CONFLICT (user_id) DO NOTHING
         `, [testGarageId]);
