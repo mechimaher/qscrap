@@ -151,11 +151,22 @@ export class DocumentGenerationService {
         const commissionRate = parseFloat(order.commission_rate || 0.15);
         const netPayout = parseFloat(order.garage_payout_amount || (partPrice - platformFee));
 
-        // Parse category/subcategory from part name
-        let displayPartName = order.part_name;
-        const catMatch = order.part_name.match(/^\[(.*?)\s-\s(.*?)\]/);
-        if (catMatch) {
-            displayPartName = `${catMatch[1]} - ${catMatch[2]}`;
+        // Parse category/subcategory from part name - format: [Category - Subcategory] Description
+        let displayPartName = 'Spare Part';  // Default fallback
+        let category = '';
+        let subcategory = '';
+
+        if (order.part_name) {
+            // Try to match [Category - Subcategory] pattern
+            const catMatch = order.part_name.match(/^\[(.*?)\s*-\s*(.*?)\]/);
+            if (catMatch) {
+                category = catMatch[1].trim();
+                subcategory = catMatch[2].trim();
+                displayPartName = `${category} > ${subcategory}`;
+            } else {
+                // No category pattern - use description or fallback
+                displayPartName = order.part_name.trim() || 'Spare Part';
+            }
         }
 
         if (invoiceType === 'garage') {
@@ -187,6 +198,8 @@ export class DocumentGenerationService {
 
                 item: {
                     vehicle: `${order.car_make} ${order.car_model} ${order.car_year}`,
+                    category: category || 'Spare Part',
+                    subcategory: subcategory || '',
                     part_name: displayPartName,
                     part_number: order.part_number || 'N/A',
                     condition: formatConditionBilingual(order.part_condition),
@@ -236,6 +249,8 @@ export class DocumentGenerationService {
 
                 item: {
                     vehicle: `${order.car_make} ${order.car_model} ${order.car_year}`,
+                    category: category || 'Spare Part',
+                    subcategory: subcategory || '',
                     part_name: displayPartName,
                     part_number: order.part_number || 'N/A',
                     condition: formatConditionBilingual(order.part_condition),

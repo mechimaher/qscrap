@@ -43,6 +43,8 @@ export interface DocumentData {
     // Item details
     item?: {
         vehicle: string;
+        category?: string;
+        subcategory?: string;
         part_name: string;
         part_number: string;
         condition: { en: string; ar: string };
