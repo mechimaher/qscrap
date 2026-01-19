@@ -5574,7 +5574,7 @@ const ALL_CAR_MAKES = ['Toyota', 'Lexus', 'Nissan', 'Infiniti', 'Honda', 'Mazda'
 
 async function loadSupplierSettings() {
     try {
-        const response = await fetch('/api/v1/dashboard/profile', {
+        const response = await fetch('/api/v1/dashboard/garage/profile', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await response.json();
@@ -5583,7 +5583,8 @@ async function loadSupplierSettings() {
         const typeRadio = document.querySelector(`input[name="supplier_type"][value="${supplierType}"]`);
         if (typeRadio) typeRadio.checked = true;
 
-        const allBrands = data.all_brands !== false;
+        // Only default to all_brands if explicitly true - false or null means specific brands
+        const allBrands = data.all_brands === true;
         const allBrandsToggle = document.getElementById('allBrandsToggle');
         if (allBrandsToggle) {
             allBrandsToggle.checked = allBrands;
