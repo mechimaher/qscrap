@@ -1873,7 +1873,7 @@ async function loadProfile() {
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon yellow"><i class="bi bi-percent"></i></div>
-                    <div class="stat-value">${profile.commission_rate ? (profile.commission_rate * 100).toFixed(0) + '%' : '15%'}</div>
+                    <div class="stat-value">${profile.approval_status === 'demo' ? '0% <small style="font-size:10px;opacity:0.7">(Demo)</small>' : (profile.commission_rate !== null && profile.commission_rate !== undefined ? (profile.commission_rate * 100).toFixed(0) + '%' : '15%')}</div>
                     <div class="stat-label">Commission Rate</div>
                 </div>
             </div>
