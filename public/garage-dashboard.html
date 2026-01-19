@@ -196,12 +196,7 @@
                     <span class="nav-badge" id="activeOrdersBadge"
                         style="background: var(--primary); display: none;">0</span>
                 </a>
-                <a class="nav-item" data-section="quick-services">
-                    <i class="bi bi-lightning-charge-fill"></i>
-                    Quick Services
-                    <span class="nav-badge pulse-badge" id="quickServicesBadge"
-                        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: none;">0</span>
-                </a>
+                <!-- Quick Services nav removed (Jan 19 purge) -->
                 <a class="nav-item" data-section="subscription">
                     <i class="bi bi-credit-card-fill"></i>
                     Subscription
@@ -366,20 +361,7 @@
                 <div id="dashboardRecentOrders" class="requests-grid"></div>
             </section>
 
-            <!-- Quick Services Section -->
-            <section class="section" id="sectionQuickServices">
-                <div class="page-header">
-                    <h1 class="page-title">⚡ Quick Services</h1>
-                    <div class="live-indicator">
-                        <span class="live-dot"></span>
-                        Active Requests
-                    </div>
-                </div>
-
-                <div id="quickServicesContainer" class="requests-grid">
-                    <!-- Quick service cards will be loaded here -->
-                </div>
-            </section>
+            <!-- Quick Services section removed (Jan 19 purge - Parts Marketplace only) -->
 
             <!-- Requests Section -->
             <section class="section" id="sectionRequests">
@@ -540,112 +522,7 @@
                 <div id="ordersPagination" style="margin-top: 20px;"></div>
             </section>
 
-            <!-- Quick Services Section -->
-            <section class="section" id="sectionQuick-services">
-                <div class="page-header">
-                    <h1 class="page-title">
-                        <i class="bi bi-lightning-charge-fill"></i> Quick Services
-                        <span class="badge"
-                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-left: 8px;">Mobile
-                            Technician</span>
-                    </h1>
-                </div>
-
-                <!-- Settings Card -->
-                <div class="card" style="margin-bottom: 24px;">
-                    <div class="card-header"
-                        style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3><i class="bi bi-gear-fill"></i> Quick Services Settings</h3>
-                        <label class="toggle-switch"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <span style="font-size: 14px; color: var(--text-secondary);">Enable Quick Services</span>
-                            <input type="checkbox" id="enableQuickServices" onchange="toggleQuickServicesEnabled()">
-                            <span class="switch-slider"
-                                style="width: 50px; height: 26px; background: var(--border); border-radius: 13px; position: relative; transition: 0.3s;"></span>
-                        </label>
-                    </div>
-                    <div class="card-body" id="quickServicesSettingsBody">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                            <!-- Services Offered -->
-                            <div>
-                                <h4 style="margin-bottom: 12px; font-size: 15px; color: var(--text-primary);">
-                                    <i class="bi bi-tools"></i> Services You Offer
-                                </h4>
-                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                    <label class="service-checkbox"
-                                        style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="quick-service-cb" value="battery"> 🔋 Battery
-                                    </label>
-                                    <label class="service-checkbox"
-                                        style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="quick-service-cb" value="oil"> 🛢️ Oil Change
-                                    </label>
-                                    <label class="service-checkbox"
-                                        style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="quick-service-cb" value="wash"> 🚿 Car Wash
-                                    </label>
-                                    <label class="service-checkbox"
-                                        style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="quick-service-cb" value="tire"> 🛞 Tire Service
-                                    </label>
-                                    <label class="service-checkbox"
-                                        style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="quick-service-cb" value="ac"> ❄️ AC Service
-                                    </label>
-                                    <label class="service-checkbox"
-                                        style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="quick-service-cb" value="breakdown"> 🔧 Breakdown
-                                    </label>
-                                </div>
-                            </div>
-                            <!-- Service Radius -->
-                            <div>
-                                <h4 style="margin-bottom: 12px; font-size: 15px; color: var(--text-primary);">
-                                    <i class="bi bi-geo-alt"></i> Service Radius
-                                </h4>
-                                <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                        <span>Maximum distance:</span>
-                                        <span id="radiusValue" style="font-weight: 700; color: var(--accent);">15
-                                            km</span>
-                                    </div>
-                                    <input type="range" id="serviceRadius" min="5" max="50" value="15"
-                                        oninput="document.getElementById('radiusValue').textContent = this.value + ' km'"
-                                        style="width: 100%; accent-color: var(--accent);">
-                                    <div
-                                        style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-                                        <span>5 km</span><span>50 km</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary" style="margin-top: 16px; width: 100%;"
-                                    onclick="saveQuickServicesSettings()">
-                                    <i class="bi bi-check-lg"></i> Save Settings
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Incoming Quick Service Requests -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="bi bi-inbox-fill"></i> Incoming Requests</h3>
-                        <span class="badge" id="incomingRequestsCount" style="background: var(--accent);">0</span>
-                    </div>
-                    <div class="card-body">
-                        <div id="quickServiceRequests" style="display: flex; flex-direction: column; gap: 12px;">
-                            <div class="empty-state"
-                                style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                <i class="bi bi-inbox"
-                                    style="font-size: 48px; display: block; margin-bottom: 12px;"></i>
-                                <p>No incoming requests</p>
-                                <p style="font-size: 13px;">When customers request Quick Services in your area, they'll
-                                    appear here.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Quick Services settings section removed (Jan 19 purge - Parts Marketplace only) -->
 
             <!-- Subscription Section -->
             <section class="section" id="sectionSubscription">

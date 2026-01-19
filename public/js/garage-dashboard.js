@@ -5559,372 +5559,12 @@ function previewFullImage(url) {
 }
 
 // ============================================
-// QUICK SERVICES
+// QUICK SERVICES - REMOVED (Jan 19, 2026)
 // ============================================
+// Quick Services feature was purged per "Simplicity is Beauty" mandate
+// Platform is now Parts Marketplace only (Used, Commercial, Genuine)
+// ~367 lines of dead code removed
 
-let quickServicesInterval = null;
-let quickServicesSettings = null;
-
-// Load garage's Quick Services settings
-async function loadQuickServicesSettings() {
-    try {
-        const res = await fetch(`${API_URL}/services/quick/garage/settings`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            quickServicesSettings = data.settings;
-
-            // Update UI
-            document.getElementById('enableQuickServices').checked = data.settings.provides_quick_services || false;
-            document.getElementById('serviceRadius').value = data.settings.mobile_service_radius_km || 15;
-            document.getElementById('radiusValue').textContent = (data.settings.mobile_service_radius_km || 15) + ' km';
-
-            // Check service checkboxes
-            const services = data.settings.quick_services_offered || [];
-            document.querySelectorAll('.quick-service-cb').forEach(cb => {
-                cb.checked = services.includes(cb.value);
-            });
-
-            // Show/hide settings based on enabled state
-            toggleQuickServicesEnabledUI(data.settings.provides_quick_services);
-        }
-    } catch (err) {
-        console.error('Failed to load Quick Services settings:', err);
-    }
-}
-
-// Save Quick Services settings
-async function saveQuickServicesSettings() {
-    const enabled = document.getElementById('enableQuickServices').checked;
-    const radius = parseInt(document.getElementById('serviceRadius').value) || 15;
-    const services = Array.from(document.querySelectorAll('.quick-service-cb:checked')).map(cb => cb.value);
-
-    try {
-        const res = await fetch(`${API_URL}/services/quick/garage/settings`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                provides_quick_services: enabled,
-                quick_services_offered: services,
-                mobile_service_radius_km: radius
-            })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            showToast('Quick Services settings saved!', 'success');
-        } else {
-            showToast(data.error || 'Failed to save settings', 'error');
-        }
-    } catch (err) {
-        console.error('Failed to save Quick Services settings:', err);
-        showToast('Failed to save settings', 'error');
-    }
-}
-
-// Toggle Quick Services enabled state
-function toggleQuickServicesEnabled() {
-    const enabled = document.getElementById('enableQuickServices').checked;
-    toggleQuickServicesEnabledUI(enabled);
-}
-
-function toggleQuickServicesEnabledUI(enabled) {
-    const body = document.getElementById('quickServicesSettingsBody');
-    if (body) {
-        body.style.opacity = enabled ? '1' : '0.5';
-        body.style.pointerEvents = enabled ? 'auto' : 'none';
-    }
-}
-
-// Quote a price to customer
-async function quoteQuickService(requestId) {
-    const price = prompt('Enter your price quote (QAR):');
-    if (!price || isNaN(parseFloat(price))) return;
-
-    try {
-        const res = await fetch(`${API_URL}/services/quick/${requestId}/quote`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                quoted_price: parseFloat(price),
-                estimated_arrival_minutes: 30
-            })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            showToast(`Quote of ${price} QAR sent to customer!`, 'success');
-            loadQuickServicesRequests();
-        } else {
-            showToast(data.error || 'Failed to send quote', 'error');
-        }
-    } catch (err) {
-        console.error('Quote error:', err);
-        showToast('Failed to send quote', 'error');
-    }
-}
-
-// Load Quick Services requests for this garage
-async function loadQuickServicesRequests() {
-    try {
-        const res = await fetch(`${API_URL}/services/quick/garage/requests`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        const container = document.getElementById('quickServiceRequests');
-
-        if (!container) return;
-
-        // Update badge
-        const activeCounts = (data.requests || []).filter(r => !['completed', 'cancelled'].includes(r.status)).length;
-        const badge = document.getElementById('quickServicesBadge');
-        const countBadge = document.getElementById('incomingRequestsCount');
-        if (badge) {
-            badge.textContent = activeCounts;
-            badge.style.display = activeCounts > 0 ? 'inline-flex' : 'none';
-        }
-        if (countBadge) countBadge.textContent = activeCounts;
-
-        if (!data.success || !data.requests || data.requests.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 12px;"></i>
-                    <p>No incoming requests</p>
-                    <p style="font-size: 13px;">When customers request Quick Services in your area, they'll appear here.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = data.requests.map(req => {
-            const icons = { battery: '🔋', oil: '🛢️', wash: '🚿', tire: '🛞', ac: '❄️', breakdown: '🔧', diagnostic: '💻', electrician: '⚡' };
-            const icon = icons[req.service_type] || '⚙️';
-
-            const statusColors = {
-                assigned: '#F59E0B', quoted: '#A82050', accepted: '#3B82F6',
-                en_route: '#8B5CF6', in_progress: '#EC4899', completed: '#10B981', cancelled: '#6B7280'
-            };
-            const color = statusColors[req.status] || '#6B7280';
-
-            // Professional dispatch flow
-            let actions = '';
-            switch (req.status) {
-                case 'assigned':
-                    actions = `
-                        <button onclick="quoteQuickService('${req.request_id}')" 
-                            class="btn btn-primary" style="flex: 1;">
-                            💰 Send Quote
-                        </button>
-                        <button onclick="declineQuickService('${req.request_id}')" 
-                            class="btn btn-outline" style="color: var(--text-muted);">
-                            ✕ Decline
-                        </button>`;
-                    break;
-                case 'quoted':
-                    actions = `
-                        <div style="text-align: center; padding: 12px; background: rgba(168, 32, 80, 0.1); border-radius: 8px; border: 1px dashed var(--accent);">
-                            <div style="font-size: 18px; font-weight: 700; color: var(--accent);">${req.quoted_price} QAR</div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">⏳ Waiting for customer to accept...</div>
-                        </div>`;
-                    break;
-                case 'accepted':
-                    actions = `
-                        <button onclick="dispatchTechnician('${req.request_id}')" 
-                            class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
-                            🚗 Dispatch Technician
-                        </button>
-                        <a href="tel:${req.customer_phone}" class="btn btn-outline" style="color: var(--text-secondary);">
-                            📞 Call Customer
-                        </a>`;
-                    break;
-                case 'en_route':
-                    actions = `
-                        <div style="background: rgba(139, 92, 246, 0.1); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 8px;">
-                            <span style="color: #8B5CF6; font-weight: 600;">🚗 Technician En Route</span>
-                        </div>
-                        <button onclick="markArrived('${req.request_id}')" 
-                            class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #EC4899, #DB2777);">
-                            📍 Mark Arrived
-                        </button>
-                        <a href="tel:${req.customer_phone}" class="btn btn-outline" style="color: var(--text-secondary);">
-                            📞 Call
-                        </a>`;
-                    break;
-                case 'in_progress':
-                    actions = `
-                        <div style="background: rgba(236, 72, 153, 0.1); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 8px;">
-                            <span style="color: #EC4899; font-weight: 600;">🔧 Service In Progress</span>
-                            <div style="font-size: 12px; color: var(--text-muted);">Price: ${req.quoted_price} QAR</div>
-                        </div>
-                        <button onclick="markCompleted('${req.request_id}', ${req.quoted_price})" 
-                            class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #10B981, #059669);">
-                            ✓ Mark Complete
-                        </button>`;
-                    break;
-                case 'completed':
-                    actions = `
-                        <div style="text-align: center; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
-                            <div style="color: #10B981; font-weight: 700; font-size: 18px;">✓ Service Completed</div>
-                            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Final: ${req.final_price || req.quoted_price} QAR</div>
-                        </div>`;
-                    break;
-                case 'cancelled':
-                    actions = `
-                        <div style="text-align: center; padding: 10px; color: var(--text-muted);">
-                            ✕ Cancelled
-                        </div>`;
-                    break;
-            }
-
-            return `
-                <div class="request-card" style="border-left: 4px solid ${color}; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div style="display: flex; gap: 12px; align-items: center;">
-                            <span style="font-size: 32px;">${icon}</span>
-                            <div>
-                                <div style="font-weight: 700; font-size: 16px;">${req.service_type.toUpperCase()} Service</div>
-                                <div style="font-size: 13px; color: var(--text-muted);">${req.vehicle_make} ${req.vehicle_model} ${req.vehicle_year}</div>
-                            </div>
-                        </div>
-                        <span class="badge" style="background: ${color}20; color: ${color}; border: 1px solid ${color};">
-                            ${req.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                    </div>
-                    <div style="margin: 12px 0; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
-                        <div style="font-size: 13px; margin-bottom: 4px;"><strong>Customer:</strong> ${escapeHTML(req.customer_name)}</div>
-                        <div style="font-size: 13px; margin-bottom: 4px;">
-                            <strong>Phone:</strong> 
-                            <a href="tel:${req.customer_phone}" style="color: var(--accent); text-decoration: none;">${req.customer_phone}</a>
-                        </div>
-                        <div style="font-size: 13px; margin-bottom: 8px;">
-                            <strong>Location:</strong> ${escapeHTML(req.location_address || 'Customer location')}
-                        </div>
-                        ${req.location_lat && req.location_lng ? `
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${req.location_lat},${req.location_lng}" 
-                           target="_blank" 
-                           style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: linear-gradient(135deg, #4285F4, #34A853); color: white; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 600;">
-                            🗺️ Navigate
-                        </a>
-                        ` : ''}
-                        <a href="https://wa.me/${(req.customer_phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm the technician from QScrap for your ${req.service_type} service. I'm on my way! Please share your live location so I can reach you faster. 📍`)}" 
-                           target="_blank" 
-                           style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: #25D366; color: white; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 600; margin-left: 8px;">
-                            💬 WhatsApp
-                        </a>
-                        ${req.notes ? `<div style="font-size: 13px; margin-top: 8px; font-style: italic; color: var(--text-secondary);">"${escapeHTML(req.notes)}"</div>` : ''}
-                    </div>
-                    <div style="display: flex; gap: 8px;">${actions}</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: right;">
-                        Requested ${getTimeAgo(req.created_at)}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-    } catch (error) {
-        console.error('Failed to load quick services:', error);
-    }
-}
-
-async function declineQuickService(requestId) {
-    if (!confirm('Decline this quick service request? It will be reassigned to another provider.')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/services/quick/${requestId}/decline`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            showToast('Service declined and reassigned', 'info');
-            loadQuickServicesRequests();
-        } else {
-            showToast(data.error || 'Failed to decline service', 'error');
-        }
-    } catch (error) {
-        console.error('Decline error:', error);
-        showToast('Failed to decline service', 'error');
-    }
-}
-
-async function dispatchTechnician(requestId) {
-    if (!confirm('Dispatch technician to customer location?')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/services/quick/${requestId}/dispatch`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            showToast('Technician dispatched! Customer notified.', 'success');
-            loadQuickServicesRequests();
-        } else {
-            showToast(data.error || 'Failed to dispatch', 'error');
-        }
-    } catch (error) {
-        console.error('Dispatch error:', error);
-        showToast('Failed to dispatch technician', 'error');
-    }
-}
-
-async function markArrived(requestId) {
-    try {
-        const res = await fetch(`${API_URL}/services/quick/${requestId}/arrived`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            showToast('Marked as arrived - Service in progress', 'success');
-            loadQuickServicesRequests();
-        } else {
-            showToast(data.error || 'Failed to update status', 'error');
-        }
-    } catch (error) {
-        console.error('Arrived error:', error);
-        showToast('Failed to mark arrived', 'error');
-    }
-}
-
-async function markCompleted(requestId, quotedPrice) {
-    if (!confirm(`Complete this service for ${quotedPrice} QAR?`)) return;
-
-    try {
-        const res = await fetch(`${API_URL}/services/quick/${requestId}/complete`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ final_price: quotedPrice })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            showToast('Service completed! 🎉', 'success');
-            loadQuickServicesRequests();
-        } else {
-            showToast(data.error || 'Failed to complete', 'error');
-        }
-    } catch (error) {
-        console.error('Complete error:', error);
-        showToast('Failed to complete service', 'error');
-    }
-}
 
 // ============================================
 // Supplier Type & Brand Specialization
@@ -5938,18 +5578,18 @@ async function loadSupplierSettings() {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await response.json();
-        
+
         const supplierType = data.supplier_type || 'used';
         const typeRadio = document.querySelector(`input[name="supplier_type"][value="${supplierType}"]`);
         if (typeRadio) typeRadio.checked = true;
-        
+
         const allBrands = data.all_brands !== false;
         const allBrandsToggle = document.getElementById('allBrandsToggle');
         if (allBrandsToggle) {
             allBrandsToggle.checked = allBrands;
             toggleBrandsList();
         }
-        
+
         if (!allBrands && data.specialized_brands && Array.isArray(data.specialized_brands)) {
             data.specialized_brands.forEach(brand => {
                 const checkbox = document.getElementById(`brand_${brand}`);
@@ -5965,7 +5605,7 @@ async function loadSupplierSettings() {
 function renderBrandCheckboxes() {
     const container = document.getElementById('brandCheckboxes');
     if (!container) return;
-    
+
     container.innerHTML = ALL_CAR_MAKES.map(brand => `
         <div class="brand-checkbox">
             <input type="checkbox" id="brand_${brand}" value="${brand}" onchange="updateSelectedBrandsCount()">
@@ -5977,7 +5617,7 @@ function renderBrandCheckboxes() {
 function filterBrands() {
     const searchInput = document.getElementById('brandSearch');
     if (!searchInput) return;
-    
+
     const search = searchInput.value.toLowerCase();
     document.querySelectorAll('.brand-checkbox').forEach(el => {
         const label = el.querySelector('label');
@@ -5991,9 +5631,9 @@ function toggleBrandsList() {
     const allBrandsToggle = document.getElementById('allBrandsToggle');
     const brandsContainer = document.getElementById('brandSelectionContainer');
     const label = document.getElementById('allBrandsLabel');
-    
+
     if (!allBrandsToggle || !brandsContainer || !label) return;
-    
+
     const allBrandsChecked = allBrandsToggle.checked;
     brandsContainer.style.display = allBrandsChecked ? 'none' : 'block';
     label.textContent = allBrandsChecked ? 'All Brands' : 'Specific Brands';
@@ -6002,7 +5642,7 @@ function toggleBrandsList() {
 function updateSelectedBrandsCount() {
     const countEl = document.getElementById('selectedBrandsCount');
     if (!countEl) return;
-    
+
     const selected = document.querySelectorAll('#brandCheckboxes input[type="checkbox"]:checked').length;
     countEl.textContent = `${selected} brand${selected !== 1 ? 's' : ''} selected`;
 }
@@ -6010,26 +5650,26 @@ function updateSelectedBrandsCount() {
 function initSupplierSettingsUI() {
     renderBrandCheckboxes();
     loadSupplierSettings();
-    
+
     const form = document.getElementById('supplierSettingsForm');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const typeRadio = document.querySelector('input[name="supplier_type"]:checked');
             if (!typeRadio) {
                 showToast('Please select a supplier type', 'error');
                 return;
             }
-            
+
             const supplierType = typeRadio.value;
             const allBrandsToggle = document.getElementById('allBrandsToggle');
             const allBrands = allBrandsToggle ? allBrandsToggle.checked : true;
-            
-            const specializedBrands = allBrands ? [] : 
+
+            const specializedBrands = allBrands ? [] :
                 Array.from(document.querySelectorAll('#brandCheckboxes input[type="checkbox"]:checked'))
                     .map(cb => cb.value);
-            
+
             try {
                 const response = await fetch('/api/v1/dashboard/specialization', {
                     method: 'PUT',
@@ -6043,7 +5683,7 @@ function initSupplierSettingsUI() {
                         all_brands: allBrands
                     })
                 });
-                
+
                 if (response.ok) {
                     showToast('✅ Business settings updated successfully!', 'success');
                 } else {
@@ -6060,11 +5700,11 @@ function initSupplierSettingsUI() {
 
 // Initialize when switching to Profile section
 const originalSwitchSection = window.switchSection;
-window.switchSection = function(sectionName) {
+window.switchSection = function (sectionName) {
     if (typeof originalSwitchSection === 'function') {
         originalSwitchSection(sectionName);
     }
-    
+
     if (sectionName === 'profile') {
         setTimeout(() => {
             initSupplierSettingsUI();
