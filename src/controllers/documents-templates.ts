@@ -1,7 +1,7 @@
 /**
  * Document HTML Template Generators
  * Qatar Ministry of Commerce Compliant - Bilingual Arabic/English
- * PRINT-OPTIMIZED: Single page, minimal ink usage
+ * PRINT-OPTIMIZED: Single page, minimal ink usage, light lines only
  */
 
 import { DocumentData } from '../services/documents/types';
@@ -35,14 +35,16 @@ const BILINGUAL_LABELS = {
     scan_to_verify: { en: 'Scan to verify', ar: 'امسح للتحقق' },
     cr_number: { en: 'CR', ar: 'السجل التجاري' },
     generated_via: { en: 'Generated via QScrap Platform', ar: 'صدرت عبر منصة كيو سكراب' },
+    vehicle: { en: 'Vehicle', ar: 'المركبة' },
+    category: { en: 'Category', ar: 'الفئة' },
 };
 
-// Qatar Theme - Print-friendly (borders only, no filled backgrounds)
+// Theme - Print-friendly (light thin lines only, no gold)
 const THEME = {
     maroon: '#8D1B3D',
-    gold: '#C9A227',
     gray: '#666666',
-    border: '#DDDDDD',
+    lightGray: '#CCCCCC',  // Light thin lines
+    border: '#E5E5E5',     // Very light borders
 };
 
 // ============================================
@@ -73,52 +75,52 @@ export function generateBilingualCustomerInvoiceHTML(
         .arabic { font-family: 'Noto Sans Arabic', Arial, sans-serif; direction: rtl; }
         .invoice { max-width: 210mm; margin: 0 auto; padding: 15px 20px; }
         
-        /* Header - Minimal ink */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 3px solid ${THEME.maroon}; margin-bottom: 12px; }
-        .logo-section { display: flex; align-items: center; gap: 10px; }
-        .logo-section img { height: 40px; }
-        .brand-name { font-size: 20px; font-weight: 700; color: ${THEME.maroon}; letter-spacing: 1px; }
+        /* Header - Light border only */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 1px solid ${THEME.lightGray}; margin-bottom: 10px; }
+        .logo-section { display: flex; align-items: center; gap: 8px; }
+        .logo-section img { height: 35px; }
+        .brand-name { font-size: 18px; font-weight: 700; color: ${THEME.maroon}; }
         .title-section { text-align: center; }
-        .title-en { font-size: 18px; font-weight: 700; color: ${THEME.maroon}; letter-spacing: 2px; }
-        .title-ar { font-size: 14px; font-weight: 600; color: ${THEME.maroon}; margin-top: 2px; }
-        .doc-number { font-size: 10px; color: ${THEME.gray}; margin-top: 4px; font-weight: 600; }
-        .date-section { text-align: right; font-size: 10px; color: ${THEME.gray}; }
+        .title-en { font-size: 16px; font-weight: 700; color: ${THEME.maroon}; letter-spacing: 1px; }
+        .title-ar { font-size: 12px; font-weight: 600; color: ${THEME.maroon}; margin-top: 2px; }
+        .doc-number { font-size: 9px; color: ${THEME.gray}; margin-top: 3px; }
+        .date-section { text-align: right; font-size: 9px; color: ${THEME.gray}; }
         
-        /* Info Grid - Compact */
-        .info-grid { display: flex; gap: 15px; margin-bottom: 12px; }
-        .info-card { flex: 1; border: 1px solid ${THEME.border}; border-left: 3px solid ${THEME.gold}; padding: 10px 12px; border-radius: 4px; }
-        .info-header { display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: ${THEME.maroon}; text-transform: uppercase; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid ${THEME.border}; }
-        .info-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
-        .info-detail { font-size: 9px; color: ${THEME.gray}; margin-bottom: 2px; }
+        /* Info Grid */
+        .info-grid { display: flex; gap: 12px; margin-bottom: 10px; }
+        .info-card { flex: 1; border: 1px solid ${THEME.border}; padding: 8px 10px; border-radius: 3px; }
+        .info-header { display: flex; justify-content: space-between; font-size: 8px; font-weight: 700; color: ${THEME.maroon}; text-transform: uppercase; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid ${THEME.border}; }
+        .info-name { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
+        .info-detail { font-size: 9px; color: ${THEME.gray}; margin-bottom: 1px; }
         
         /* Order Badge */
-        .order-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 12px; border: 1px solid ${THEME.gold}; border-radius: 4px; }
-        .order-label { font-size: 9px; color: ${THEME.gray}; text-transform: uppercase; }
-        .order-value { font-size: 12px; font-weight: 700; color: ${THEME.maroon}; }
+        .order-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 6px 10px; border: 1px solid ${THEME.border}; border-radius: 3px; }
+        .order-label { font-size: 8px; color: ${THEME.gray}; text-transform: uppercase; }
+        .order-value { font-size: 11px; font-weight: 700; color: ${THEME.maroon}; }
         
         /* Item Table */
-        .section { margin-bottom: 12px; }
-        .section-header { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: ${THEME.maroon}; padding: 6px 0; border-bottom: 2px solid ${THEME.maroon}; margin-bottom: 8px; }
+        .section { margin-bottom: 10px; }
+        .section-header { display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: ${THEME.maroon}; padding: 5px 0; border-bottom: 1px solid ${THEME.lightGray}; margin-bottom: 6px; }
         .item-table { width: 100%; border-collapse: collapse; }
-        .item-table th { background: #f8f8f8; padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid ${THEME.border}; }
-        .item-table td { padding: 8px; border-bottom: 1px solid ${THEME.border}; vertical-align: top; }
-        .item-name { font-weight: 700; font-size: 11px; }
-        .item-meta { font-size: 9px; color: ${THEME.gray}; }
+        .item-table th { background: #fafafa; padding: 5px 6px; text-align: left; font-size: 8px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid ${THEME.border}; }
+        .item-table td { padding: 6px; border-bottom: 1px solid ${THEME.border}; vertical-align: top; }
+        .item-name { font-weight: 700; font-size: 10px; }
+        .item-meta { font-size: 8px; color: ${THEME.gray}; }
         
-        /* Totals - Compact */
-        .totals { width: 220px; margin-left: auto; margin-top: 10px; }
-        .total-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid ${THEME.border}; font-size: 10px; }
-        .total-row.grand { border: 2px solid ${THEME.gold}; padding: 8px 10px; margin-top: 6px; font-weight: 700; font-size: 12px; border-radius: 4px; }
+        /* Totals */
+        .totals { width: 200px; margin-left: auto; margin-top: 8px; }
+        .total-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid ${THEME.border}; font-size: 9px; }
+        .total-row.grand { border: 1px solid ${THEME.lightGray}; padding: 6px 8px; margin-top: 5px; font-weight: 700; font-size: 11px; border-radius: 3px; }
         .total-row.grand .label { color: ${THEME.maroon}; }
         
-        /* Footer - Inline */
-        .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid ${THEME.maroon}; }
-        .verify-section { font-size: 9px; color: ${THEME.gray}; }
-        .verify-code { font-family: monospace; font-weight: 700; color: ${THEME.maroon}; font-size: 11px; border: 1px solid ${THEME.maroon}; padding: 3px 8px; display: inline-block; margin: 4px 0; }
-        .qr-code { border: 2px solid ${THEME.gold}; padding: 5px; border-radius: 4px; }
-        .qr-code img { width: 60px; height: 60px; }
+        /* Footer */
+        .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid ${THEME.lightGray}; }
+        .verify-section { font-size: 8px; color: ${THEME.gray}; }
+        .verify-code { font-family: monospace; font-weight: 700; color: ${THEME.maroon}; font-size: 10px; border: 1px solid ${THEME.lightGray}; padding: 2px 6px; display: inline-block; margin: 3px 0; }
+        .qr-code { border: 1px solid ${THEME.lightGray}; padding: 4px; border-radius: 3px; }
+        .qr-code img { width: 55px; height: 55px; }
         
-        @media print { body { -webkit-print-color-adjust: exact; } .invoice { padding: 10px 15px; } }
+        @media print { body { -webkit-print-color-adjust: exact; } .invoice { padding: 8px 12px; } }
     </style>
 </head>
 <body>
@@ -145,7 +147,7 @@ export function generateBilingualCustomerInvoiceHTML(
                 <div class="info-name">${data.seller?.name || 'N/A'}</div>
                 <div class="info-detail">📞 ${data.seller?.phone || 'N/A'}</div>
                 <div class="info-detail">📍 ${data.seller?.address || 'Qatar'}</div>
-                ${data.seller?.cr_number ? `<div class="info-detail">${L.cr_number?.en || 'CR'}: ${data.seller.cr_number}</div>` : ''}
+                ${data.seller?.cr_number ? `<div class="info-detail">CR: ${data.seller.cr_number}</div>` : ''}
             </div>
             <div class="info-card">
                 <div class="info-header"><span>${L.buyer?.en || 'Buyer'}</span><span class="arabic">${L.buyer?.ar || 'المشتري'}</span></div>
@@ -156,16 +158,17 @@ export function generateBilingualCustomerInvoiceHTML(
         </div>
         
         <div class="order-row">
-            <div><span class="order-label">${L.order_number?.en || 'Order'}</span> <span class="arabic" style="margin-left: 8px;">${L.order_number?.ar || 'رقم الطلب'}</span></div>
+            <div><span class="order-label">${L.order_number?.en || 'Order'}</span> <span class="arabic" style="margin-left:6px">${L.order_number?.ar || 'رقم الطلب'}</span></div>
             <div class="order-value">${data.order_number}</div>
         </div>
         
         <div class="section">
             <div class="section-header"><span>${L.item_details?.en || 'Item Details'}</span><span class="arabic">${L.item_details?.ar || 'تفاصيل القطعة'}</span></div>
             <table class="item-table">
-                <thead><tr><th style="width:45%">${L.item?.en || 'Item'}</th><th>${L.condition?.en || 'Condition'}</th><th>${L.warranty?.en || 'Warranty'}</th><th style="text-align:right">${L.amount?.en || 'Amount'}</th></tr></thead>
+                <thead><tr><th style="width:40%">${L.item?.en || 'Item'}</th><th>Vehicle</th><th>${L.condition?.en || 'Condition'}</th><th>${L.warranty?.en || 'Warranty'}</th><th style="text-align:right">${L.amount?.en || 'Amount'}</th></tr></thead>
                 <tbody><tr>
-                    <td><div class="item-name">${data.item?.part_name || 'Auto Part'}</div><div class="item-meta">Vehicle: ${data.item?.vehicle || 'N/A'} | Part #: ${data.item?.part_number || 'N/A'}</div></td>
+                    <td><div class="item-name">${data.item?.part_name || 'Spare Part'}</div></td>
+                    <td><div class="item-meta">${data.item?.vehicle || 'N/A'}</div></td>
                     <td>${cond.en} <span class="arabic" style="color:#888">(${cond.ar})</span></td>
                     <td>${data.item?.warranty_days || 30} ${L.days?.en || 'Days'}</td>
                     <td style="text-align:right;font-weight:700">${formatMoney(data.pricing?.part_price || 0)} QAR</td>
@@ -220,54 +223,54 @@ export function generateGaragePayoutStatementHTML(
         .invoice { max-width: 210mm; margin: 0 auto; padding: 15px 20px; }
         
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 3px solid ${THEME.maroon}; margin-bottom: 12px; }
-        .logo-section { display: flex; align-items: center; gap: 10px; }
-        .logo-section img { height: 40px; }
-        .brand-name { font-size: 20px; font-weight: 700; color: ${THEME.maroon}; letter-spacing: 1px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 1px solid ${THEME.lightGray}; margin-bottom: 10px; }
+        .logo-section { display: flex; align-items: center; gap: 8px; }
+        .logo-section img { height: 35px; }
+        .brand-name { font-size: 18px; font-weight: 700; color: ${THEME.maroon}; }
         .title-section { text-align: center; }
-        .title-en { font-size: 16px; font-weight: 700; color: ${THEME.maroon}; letter-spacing: 1px; }
-        .title-ar { font-size: 13px; font-weight: 600; color: ${THEME.maroon}; margin-top: 2px; }
-        .doc-number { font-size: 10px; color: ${THEME.gray}; margin-top: 4px; font-weight: 600; }
-        .date-section { text-align: right; font-size: 10px; color: ${THEME.gray}; }
+        .title-en { font-size: 14px; font-weight: 700; color: ${THEME.maroon}; letter-spacing: 1px; }
+        .title-ar { font-size: 11px; font-weight: 600; color: ${THEME.maroon}; margin-top: 2px; }
+        .doc-number { font-size: 9px; color: ${THEME.gray}; margin-top: 3px; }
+        .date-section { text-align: right; font-size: 9px; color: ${THEME.gray}; }
         
         /* Info Grid */
-        .info-grid { display: flex; gap: 15px; margin-bottom: 12px; }
-        .info-card { flex: 1; border: 1px solid ${THEME.border}; border-left: 3px solid ${THEME.gold}; padding: 10px 12px; border-radius: 4px; }
-        .info-card.highlight { border-left-color: ${THEME.maroon}; border: 2px solid ${THEME.gold}; }
-        .info-header { font-size: 9px; font-weight: 700; color: ${THEME.maroon}; text-transform: uppercase; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid ${THEME.border}; }
-        .info-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
-        .info-detail { font-size: 9px; color: ${THEME.gray}; margin-bottom: 2px; }
+        .info-grid { display: flex; gap: 12px; margin-bottom: 10px; }
+        .info-card { flex: 1; border: 1px solid ${THEME.border}; padding: 8px 10px; border-radius: 3px; }
+        .info-card.highlight { border: 1px solid ${THEME.lightGray}; background: #fafafa; }
+        .info-header { font-size: 8px; font-weight: 700; color: ${THEME.maroon}; text-transform: uppercase; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid ${THEME.border}; }
+        .info-name { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
+        .info-detail { font-size: 9px; color: ${THEME.gray}; margin-bottom: 1px; }
         
         /* Section */
-        .section { margin-bottom: 12px; }
-        .section-header { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: ${THEME.maroon}; padding: 6px 0; border-bottom: 2px solid ${THEME.maroon}; margin-bottom: 8px; }
-        .section-content { padding: 10px; border: 1px solid ${THEME.border}; border-radius: 4px; }
+        .section { margin-bottom: 10px; }
+        .section-header { display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: ${THEME.maroon}; padding: 5px 0; border-bottom: 1px solid ${THEME.lightGray}; margin-bottom: 6px; }
+        .section-content { padding: 8px; border: 1px solid ${THEME.border}; border-radius: 3px; }
         
         /* Item */
         .item-row { display: flex; justify-content: space-between; align-items: flex-start; }
         .item-main { flex: 1; }
-        .item-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
-        .item-meta { font-size: 9px; color: ${THEME.gray}; }
-        .item-condition { text-align: right; font-size: 10px; }
-        .condition-label { font-size: 9px; color: ${THEME.gray}; }
+        .item-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+        .item-meta { font-size: 8px; color: ${THEME.gray}; }
+        .item-condition { text-align: right; font-size: 9px; }
+        .condition-label { font-size: 8px; color: ${THEME.gray}; }
         .condition-value { font-weight: 700; color: ${THEME.maroon}; }
         
         /* Pricing */
-        .pricing { margin-top: 12px; }
-        .price-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid ${THEME.border}; font-size: 11px; }
+        .pricing { margin-top: 10px; }
+        .price-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid ${THEME.border}; font-size: 10px; }
         .price-row.fee { color: #dc2626; }
-        .price-row.payout { border: 2px solid ${THEME.gold}; padding: 10px 12px; margin-top: 8px; font-weight: 700; font-size: 14px; border-radius: 4px; }
+        .price-row.payout { border: 1px solid ${THEME.lightGray}; padding: 8px 10px; margin-top: 6px; font-weight: 700; font-size: 12px; border-radius: 3px; background: #fafafa; }
         .price-row.payout .label { color: ${THEME.maroon}; }
-        .price-label-ar { font-size: 9px; color: ${THEME.gray}; }
+        .price-label-ar { font-size: 8px; color: ${THEME.gray}; }
         
         /* Footer */
-        .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid ${THEME.maroon}; }
-        .footer-info { font-size: 9px; color: ${THEME.gray}; line-height: 1.8; }
+        .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 8px; border-top: 1px solid ${THEME.lightGray}; }
+        .footer-info { font-size: 8px; color: ${THEME.gray}; line-height: 1.6; }
         .footer-info strong { color: ${THEME.maroon}; }
-        .qr-code { border: 2px solid ${THEME.gold}; padding: 5px; border-radius: 4px; }
-        .qr-code img { width: 60px; height: 60px; }
+        .qr-code { border: 1px solid ${THEME.lightGray}; padding: 4px; border-radius: 3px; }
+        .qr-code img { width: 55px; height: 55px; }
         
-        @media print { body { -webkit-print-color-adjust: exact; } .invoice { padding: 10px 15px; } }
+        @media print { body { -webkit-print-color-adjust: exact; } .invoice { padding: 8px 12px; } }
     </style>
 </head>
 <body>
@@ -294,7 +297,7 @@ export function generateGaragePayoutStatementHTML(
                 <div class="info-name">${data.garage?.name || 'N/A'}</div>
                 <div class="info-detail">📞 ${data.garage?.phone || 'N/A'}</div>
                 <div class="info-detail">📍 ${data.garage?.address || 'Qatar'}</div>
-                ${data.garage?.cr_number && data.garage.cr_number !== 'N/A' ? `<div class="info-detail">${L.cr_number?.en || 'CR'}: ${data.garage.cr_number}</div>` : ''}
+                ${data.garage?.cr_number && data.garage.cr_number !== 'N/A' ? `<div class="info-detail">CR: ${data.garage.cr_number}</div>` : ''}
             </div>
             <div class="info-card">
                 <div class="info-header">${L.platform?.en || 'Platform'} / ${L.platform?.ar || 'المنصة'}</div>
@@ -309,13 +312,13 @@ export function generateGaragePayoutStatementHTML(
             <div class="section-content">
                 <div class="item-row">
                     <div class="item-main">
-                        <div class="item-name">${data.item?.part_name || 'Auto Part'}</div>
-                        <div class="item-meta">Vehicle: ${data.item?.vehicle || 'N/A'} | Part #: ${data.item?.part_number || 'N/A'}</div>
+                        <div class="item-name">${data.item?.part_name || 'Spare Part'}</div>
+                        <div class="item-meta">Vehicle: ${data.item?.vehicle || 'N/A'}</div>
                     </div>
                     <div class="item-condition">
                         <div class="condition-label">${L.condition?.en || 'Condition'}</div>
                         <div class="condition-value">${cond.en}</div>
-                        <div class="arabic" style="font-size:9px;color:#666">${cond.ar}</div>
+                        <div class="arabic" style="font-size:8px;color:#666">${cond.ar}</div>
                     </div>
                 </div>
             </div>

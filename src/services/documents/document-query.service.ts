@@ -157,6 +157,9 @@ export class DocumentQueryService {
             },
             item: docData?.item || {},
             pricing: docData?.pricing || {},
+            // Additional info for verification display
+            vehicle: docData?.item?.vehicle || 'N/A',
+            total_amount: docData?.pricing?.total || docData?.pricing?.net_payout || 0,
         };
     }
 }
