@@ -255,10 +255,16 @@ export class AnalyticsService {
         period: 'today' | 'week' | 'month' | 'year' = 'month'
     ): Promise<AnalyticsSummary> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM calculate_garage_summary($1, $2)',
-                [garageId, period]
-            );
+            const daysBack = this.getPeriodDays(period);
+            const result = await pool.query(`
+                SELECT 
+                    COALESCE((SELECT COUNT(*) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as total_orders,
+                    COALESCE((SELECT SUM(garage_payout_amount) FROM orders WHERE garage_id = $1 AND order_status = 'completed' AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as total_revenue,
+                    COALESCE((SELECT COUNT(*) FROM bids WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as total_bids,
+                    COALESCE((SELECT ROUND(COUNT(*) FILTER (WHERE status = 'accepted')::numeric * 100 / NULLIF(COUNT(*), 0), 1) FROM bids WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as win_rate,
+                    COALESCE((SELECT ROUND(AVG(overall_rating)::numeric, 1) FROM order_reviews WHERE garage_id = $1), 0) as avg_rating,
+                    COALESCE((SELECT COUNT(DISTINCT customer_id) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as unique_customers
+            `, [garageId]);
 
             return result.rows[0] || {
                 total_orders: 0,
@@ -310,13 +316,13 @@ export class AnalyticsService {
             const previousResult = await pool.query(
                 `SELECT 
                     COUNT(DISTINCT o.order_id)::INTEGER as total_orders,
-                    COALESCE(SUM(o.total_amount), 0) as total_revenue,
-                    COALESCE(AVG(o.customer_rating), 0) as avg_rating
+                    COALESCE(SUM(o.garage_payout_amount), 0) as total_revenue,
+                    COALESCE((SELECT ROUND(AVG(overall_rating)::numeric, 1) FROM order_reviews WHERE garage_id = $1), 0) as avg_rating
                  FROM orders o
                  WHERE o.garage_id = $1
                    AND o.created_at >= CURRENT_DATE - INTERVAL '${daysBack * 2} days'
                    AND o.created_at < CURRENT_DATE - INTERVAL '${daysBack} days'
-                   AND o.status IN ('completed', 'delivered')`,
+                   AND o.order_status IN ('completed', 'delivered')`,
                 [garageId]
             );
 
