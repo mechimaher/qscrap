@@ -1903,6 +1903,42 @@ async function loadProfile() {
                 </div>
             </div>
             
+            <!-- Specialization (Supplier Type & Brands) -->
+            <div class="stat-card" style="margin-top: 24px;">
+                <h3 style="margin: 0 0 8px; display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-car-front" style="color: var(--accent);"></i> Specialization
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                    <i class="bi bi-info-circle"></i> Your parts specialization determines which requests you receive.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Parts Type</div>
+                        <div style="font-weight: 600;">
+                            ${profile.supplier_type === 'new' ? '<i class="bi bi-patch-check-fill" style="color: var(--success);"></i> New Parts' :
+                profile.supplier_type === 'used' ? '<i class="bi bi-recycle" style="color: var(--warning);"></i> Used Parts' :
+                    '<i class="bi bi-collection" style="color: var(--accent);"></i> New & Used Parts'}
+                        </div>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Brands</div>
+                        <div style="font-weight: 600;">
+                            ${profile.all_brands === true ? '<i class="bi bi-globe2" style="color: var(--accent);"></i> All Brands' :
+                (profile.specialized_brands && profile.specialized_brands.length > 0 ?
+                    '<i class="bi bi-star-fill" style="color: #f59e0b;"></i> ' + profile.specialized_brands.join(', ') :
+                    '<span style="color: var(--text-muted);">Not set</span>')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px;">
+                    <button type="button" class="btn btn-outline" onclick="showSection('settings'); setTimeout(() => document.getElementById('supplierSettings')?.scrollIntoView({behavior: 'smooth'}), 100);">
+                        <i class="bi bi-gear"></i> Edit Specialization
+                    </button>
+                </div>
+            </div>
+            
             <!-- Business Registration (Qatar Legal Requirements) -->
             <div class="stat-card" style="margin-top: 24px;">
                 <h3 style="margin: 0 0 8px; display: flex; align-items: center; gap: 10px;">
