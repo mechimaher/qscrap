@@ -96,7 +96,15 @@ export const getMyShowcaseParts = async (req: AuthRequest, res: Response) => {
             status as string
         );
 
-        res.json({ parts });
+        // Calculate analytics from parts
+        const analytics = {
+            total_parts: parts.length,
+            active_parts: parts.filter((p: any) => p.status === 'active').length,
+            total_views: parts.reduce((sum: number, p: any) => sum + (p.view_count || 0), 0),
+            total_orders: parts.reduce((sum: number, p: any) => sum + (p.order_count || 0), 0)
+        };
+
+        res.json({ parts, analytics });
     } catch (err) {
         console.error('[SHOWCASE] getMyShowcaseParts error:', err);
         if (isShowcaseError(err)) {

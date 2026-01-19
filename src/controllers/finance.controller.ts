@@ -166,7 +166,7 @@ export const getAwaitingConfirmation = async (req: AuthRequest, res: Response) =
     try {
         const garageId = req.user!.userId;
         const payouts = await payoutService.getAwaitingConfirmation(garageId);
-        res.json({ payouts });
+        res.json({ awaiting_confirmation: payouts });
     } catch (err) {
         console.error('getAwaitingConfirmation Error:', err);
         if (isFinanceError(err)) {

@@ -58,7 +58,7 @@ export const getNegotiationHistory = async (req: AuthRequest, res: Response) => 
 export const getPendingCounterOffers = async (req: AuthRequest, res: Response) => {
     try {
         const offers = await negotiationService.getPendingCounterOffers(req.user!.userId);
-        res.json({ counter_offers: offers });
+        res.json({ pending_offers: offers });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
     }
