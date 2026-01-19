@@ -73,24 +73,13 @@ export class VehicleService {
         const activeOrdersCount = parseInt(activeOrdersResult.rows[0].count);
         console.log('[DELETE-VEHICLE] Active orders count:', activeOrdersCount);
 
-        // Check for active quick service bookings
-        const activeBookingsResult = await this.pool.query(
-            `SELECT COUNT(*) as count FROM quick_service_bookings
-             WHERE customer_id = $1
-             AND car_make = $2 AND car_model = $3 AND car_year = $4
-             AND status IN ('requested', 'confirmed', 'in_progress')`,
-            [customerId, vehicle.car_make, vehicle.car_model, vehicle.car_year]
-        );
-
-        const activeBookingsCount = parseInt(activeBookingsResult.rows[0].count);
-        console.log('[DELETE-VEHICLE] Active bookings count:', activeBookingsCount);
 
         // Block deletion if any active items exist
-        if (activeRequestsCount > 0 || activeOrdersCount > 0 || activeBookingsCount > 0) {
+        // NOTE: quick_service_bookings check removed - table purged with Quick Services feature
+        if (activeRequestsCount > 0 || activeOrdersCount > 0) {
             const errors = [];
             if (activeRequestsCount > 0) errors.push(`${activeRequestsCount} active request${activeRequestsCount > 1 ? 's' : ''}`);
             if (activeOrdersCount > 0) errors.push(`${activeOrdersCount} active order${activeOrdersCount > 1 ? 's' : ''}`);
-            if (activeBookingsCount > 0) errors.push(`${activeBookingsCount} active service booking${activeBookingsCount > 1 ? 's' : ''}`);
 
             const errorMessage = `Cannot delete vehicle. This vehicle has ${errors.join(', ')}. Please complete or cancel them first.`;
             console.log('[DELETE-VEHICLE] BLOCKED:', errorMessage);
