@@ -713,14 +713,36 @@ function createRequestCard(req, isNew = false) {
                 </div>`;
     }
 
-    // Safe image handling with URL normalization
+    // Safe image handling with URL normalization - include car images
     let imagesHtml = '';
+    const allImages = [];
+
+    // Add car front image first (if exists)
+    if (req.car_front_image_url) {
+        const url = req.car_front_image_url.startsWith('/') ? req.car_front_image_url : '/' + req.car_front_image_url;
+        allImages.push({ url, type: 'car', label: 'Front' });
+    }
+
+    // Add car rear image (if exists)
+    if (req.car_rear_image_url) {
+        const url = req.car_rear_image_url.startsWith('/') ? req.car_rear_image_url : '/' + req.car_rear_image_url;
+        allImages.push({ url, type: 'car', label: 'Rear' });
+    }
+
+    // Add part images
     if (req.image_urls && req.image_urls.length > 0) {
-        const normalizedUrls = req.image_urls.map(url => url.startsWith('/') ? url : '/' + url);
+        req.image_urls.forEach(imgUrl => {
+            const url = imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl;
+            allImages.push({ url, type: 'part', label: 'Part' });
+        });
+    }
+
+    if (allImages.length > 0) {
         imagesHtml = `<div class="request-thumbnails">
-                    ${normalizedUrls.map((url, idx) => `
-                        <div class="thumb" onclick="openRequestLightbox('${id}', ${idx})">
-                            <img src="${url}" onerror="this.src='https://placehold.co/100?text=No+Image'">
+                    ${allImages.map((img, idx) => `
+                        <div class="thumb ${img.type === 'car' ? 'car-image' : ''}" onclick="openRequestLightbox('${id}', ${idx})" title="${img.label}">
+                            <img src="${img.url}" onerror="this.src='https://placehold.co/100?text=No+Image'">
+                            ${img.type === 'car' ? `<span class="car-badge"><i class="bi bi-car-front-fill"></i> ${img.label}</span>` : ''}
                         </div>
                     `).join('')}
                  </div>`;
@@ -758,8 +780,16 @@ function createRequestCard(req, isNew = false) {
 function openRequestLightbox(id, index) {
     // Find request in the global list
     const req = requests.find(r => r.request_id === id);
-    if (req && req.image_urls) {
-        openLightbox(req.image_urls, index);
+    if (!req) return;
+
+    // Build combined image array (same order as thumbnails)
+    const allImages = [];
+    if (req.car_front_image_url) allImages.push(req.car_front_image_url.startsWith('/') ? req.car_front_image_url : '/' + req.car_front_image_url);
+    if (req.car_rear_image_url) allImages.push(req.car_rear_image_url.startsWith('/') ? req.car_rear_image_url : '/' + req.car_rear_image_url);
+    if (req.image_urls) allImages.push(...req.image_urls.map(u => u.startsWith('/') ? u : '/' + u));
+
+    if (allImages.length > 0) {
+        openLightbox(allImages, index);
     }
 }
 
@@ -776,6 +806,8 @@ function prependRequest(data) {
         part_category: data.part_category,
         condition_required: data.condition_required,
         image_urls: data.image_urls || [],
+        car_front_image_url: data.car_front_image_url || null,
+        car_rear_image_url: data.car_rear_image_url || null,
         delivery_address_text: data.delivery_address_text,
         status: data.status || 'active',
         created_at: data.created_at || new Date().toISOString(),
