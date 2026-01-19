@@ -152,8 +152,9 @@ export class DocumentGenerationService {
         const netPayout = parseFloat(order.garage_payout_amount || (partPrice - platformFee));
 
         // Parse category/subcategory from part name - format: [Category - Subcategory] Description
-        let displayPartName = 'Spare Part';  // Default fallback
-        let category = '';
+        // IMPORTANT: Always use generic text if no category - description could be long paragraph with errors
+        let displayPartName = 'Car Spare Part';  // Generic fallback (NOT customer description)
+        let category = 'Car Spare Part';
         let subcategory = '';
 
         if (order.part_name) {
@@ -163,10 +164,8 @@ export class DocumentGenerationService {
                 category = catMatch[1].trim();
                 subcategory = catMatch[2].trim();
                 displayPartName = `${category} > ${subcategory}`;
-            } else {
-                // No category pattern - use description or fallback
-                displayPartName = order.part_name.trim() || 'Spare Part';
             }
+            // If no match, keep using generic "Car Spare Part" - do NOT use customer description
         }
 
         if (invoiceType === 'garage') {
