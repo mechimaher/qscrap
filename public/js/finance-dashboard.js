@@ -318,8 +318,106 @@ async function processBulkPayouts() {
         showToast('Select at least one payout', 'error');
         return;
     }
-    // TODO: Implement bulk processing
-    showToast(`Processing ${selected.length} payouts...`, 'info');
+
+    // Calculate total amount
+    let totalAmount = 0;
+    selected.forEach(id => {
+        const row = document.querySelector(`.payout-checkbox[data-id="${id}"]`)?.closest('tr');
+        if (row) {
+            const amountCell = row.querySelectorAll('td')[5];
+            if (amountCell) {
+                const amountText = amountCell.textContent.replace(/[^\d.]/g, '');
+                totalAmount += parseFloat(amountText) || 0;
+            }
+        }
+    });
+
+    // Open bulk payment modal
+    openBulkPaymentModal(selected, totalAmount);
+}
+
+function openBulkPaymentModal(payoutIds, totalAmount) {
+    // Update modal content for bulk
+    document.getElementById('spPayoutId').value = payoutIds.join(',');
+    document.getElementById('spGarageName').textContent = `${payoutIds.length} garages`;
+    document.getElementById('spAmount').textContent = formatCurrency(totalAmount);
+    document.getElementById('spPaymentMethod').value = '';
+    document.getElementById('spReference').value = '';
+    document.getElementById('spNotes').value = '';
+    document.getElementById('sendPaymentModal').style.display = 'flex';
+}
+
+async function submitSendPayment() {
+    const payoutIdValue = document.getElementById('spPayoutId').value;
+    const method = document.getElementById('spPaymentMethod').value;
+    const reference = document.getElementById('spReference').value;
+    const notes = document.getElementById('spNotes').value;
+
+    if (!method || !reference) {
+        showToast('Payment method and reference are required', 'error');
+        return;
+    }
+
+    // Check if bulk or single
+    const payoutIds = payoutIdValue.includes(',') ? payoutIdValue.split(',') : [payoutIdValue];
+
+    if (payoutIds.length === 1) {
+        // Single payout - original behavior
+        try {
+            const res = await fetch(`${API_URL}/finance/payouts/${payoutIds[0]}/send`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payment_method: method, reference_number: reference, notes })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                showToast('Payment sent! Awaiting garage confirmation.', 'success');
+                closeSendPaymentModal();
+                loadPendingPayouts();
+                loadBadges();
+            } else {
+                showToast(data.error || 'Failed to send payment', 'error');
+            }
+        } catch (err) {
+            showToast('Connection error', 'error');
+        }
+    } else {
+        // Bulk payouts
+        showToast(`Processing ${payoutIds.length} payouts...`, 'info');
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const payoutId of payoutIds) {
+            try {
+                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payment_method: method, reference_number: reference, notes })
+                });
+
+                if (res.ok) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            } catch (err) {
+                failCount++;
+            }
+        }
+
+        closeSendPaymentModal();
+
+        if (failCount === 0) {
+            showToast(`All ${successCount} payments sent successfully!`, 'success');
+        } else {
+            showToast(`${successCount} sent, ${failCount} failed`, successCount > 0 ? 'warning' : 'error');
+        }
+
+        loadPendingPayouts();
+        loadBadges();
+    }
 }
 
 // ==========================================
@@ -340,38 +438,8 @@ function closeSendPaymentModal() {
     document.getElementById('sendPaymentModal').style.display = 'none';
 }
 
-async function submitSendPayment() {
-    const payoutId = document.getElementById('spPayoutId').value;
-    const method = document.getElementById('spPaymentMethod').value;
-    const reference = document.getElementById('spReference').value;
-    const notes = document.getElementById('spNotes').value;
 
-    if (!method || !reference) {
-        showToast('Payment method and reference are required', 'error');
-        return;
-    }
 
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payment_method: method, reference_number: reference, notes })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('Payment sent! Awaiting garage confirmation.', 'success');
-            closeSendPaymentModal();
-            loadPendingPayouts();
-            loadBadges();
-        } else {
-            showToast(data.error || 'Failed to send payment', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
 
 async function holdPayout(payoutId) {
     const reason = prompt('Reason for holding this payout:');
