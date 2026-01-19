@@ -3029,8 +3029,23 @@ async function loadSubscription() {
                 document.getElementById('subCommission').textContent = '-';
             }
 
-            // Renewal date - not applicable for commission-only plans (no monthly fee)
-            if (sub.is_commission_based || sub.monthly_fee === 0) {
+            // Renewal/Expiry date display
+            if (sub.is_demo && sub.billing_cycle_end) {
+                // Demo trial - show expiry date prominently
+                const expiryDate = new Date(sub.billing_cycle_end);
+                const today = new Date();
+                const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const dateStr = expiryDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                if (daysLeft <= 0) {
+                    document.getElementById('subRenewal').innerHTML = `<span style="color: var(--danger);"><i class="bi bi-exclamation-triangle"></i> Expired</span>`;
+                } else if (daysLeft <= 3) {
+                    document.getElementById('subRenewal').innerHTML = `<span style="color: var(--danger);"><i class="bi bi-clock"></i> ${dateStr} (${daysLeft} days left!)</span>`;
+                } else {
+                    document.getElementById('subRenewal').innerHTML = `<span style="color: var(--warning);"><i class="bi bi-calendar-event"></i> ${dateStr} (${daysLeft} days left)</span>`;
+                }
+            } else if (sub.is_commission_based) {
+                // Commission-based plans - no expiry
                 document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
             } else if (sub.billing_cycle_end) {
                 // Only show renewal date if there's an actual billing cycle
