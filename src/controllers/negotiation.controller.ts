@@ -49,7 +49,7 @@ export const getNegotiationHistory = async (req: AuthRequest, res: Response) => 
     try {
         const { bid_id } = req.params;
         const history = await negotiationService.getNegotiationHistory(bid_id);
-        res.json({ history });
+        res.json({ negotiations: history });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
     }
