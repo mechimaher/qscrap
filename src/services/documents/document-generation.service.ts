@@ -192,6 +192,7 @@ export class DocumentGenerationService {
 
                 customer_ref: {
                     name: order.customer_name,
+                    phone: order.customer_phone,
                     order_number: order.order_number,
                 },
 

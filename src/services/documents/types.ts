@@ -37,6 +37,7 @@ export interface DocumentData {
     };
     customer_ref?: {
         name: string;
+        phone?: string;
         order_number: string;
     };
 
