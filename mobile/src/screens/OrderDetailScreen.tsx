@@ -81,11 +81,6 @@ const getStatusConfig = (status: string) => {
             description: 'Driver is heading to you!',
             gradient: ['#22C55E', '#16A34A'] as const
         },
-        'out_for_delivery': {
-            color: '#22C55E', icon: '🛵', label: 'Out for Delivery',
-            description: 'Driver is arriving soon!',
-            gradient: ['#22C55E', '#16A34A'] as const
-        },
         'delivered': {
             color: '#06B6D4', icon: '📍', label: 'Delivered',
             description: 'Please confirm you received it',
@@ -115,11 +110,6 @@ const getStatusConfig = (status: string) => {
             color: '#F59E0B', icon: '⚠️', label: 'Disputed',
             description: 'Order is under dispute review',
             gradient: ['#F59E0B', '#D97706'] as const
-        },
-        'returning_to_garage': {
-            color: '#EF4444', icon: '↩️', label: 'Returning',
-            description: 'Order is being returned to garage',
-            gradient: ['#EF4444', '#DC2626'] as const
         },
         'refunded': {
             color: '#6B7280', icon: '💸', label: 'Refunded',
@@ -604,22 +594,51 @@ export default function OrderDetailScreen() {
                     </View>
 
                     {order.order_status === 'completed' && (
-                        <TouchableOpacity
-                            style={[styles.invoiceButton, isDownloadingInvoice && { opacity: 0.6 }]}
-                            onPress={handleDownloadInvoice}
-                            disabled={isDownloadingInvoice}
-                        >
-                            <LinearGradient colors={['#6366f1', '#4f46e5']} style={styles.invoiceGradient}>
-                                {isDownloadingInvoice ? (
-                                    <ActivityIndicator color="#fff" size="small" />
-                                ) : (
-                                    <>
-                                        <Text style={styles.invoiceIcon}>📄</Text>
-                                        <Text style={styles.invoiceText}>Download Invoice</Text>
-                                    </>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
+                        <>
+                            <TouchableOpacity
+                                style={[styles.invoiceButton, isDownloadingInvoice && { opacity: 0.6 }]}
+                                onPress={handleDownloadInvoice}
+                                disabled={isDownloadingInvoice}
+                            >
+                                <LinearGradient colors={['#6366f1', '#4f46e5']} style={styles.invoiceGradient}>
+                                    {isDownloadingInvoice ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <>
+                                            <Text style={styles.invoiceIcon}>📄</Text>
+                                            <Text style={styles.invoiceText}>Download Invoice</Text>
+                                        </>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.reorderButton}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    navigation.navigate('NewRequest', {
+                                        prefill: {
+                                            carMake: order.car_make,
+                                            carModel: order.car_model,
+                                            carYear: order.car_year,
+                                            partDescription: order.part_description || '',
+                                            partCategory: order.part_category || '',
+                                            partSubCategory: order.part_subcategory || '',
+                                        }
+                                    });
+                                }}
+                            >
+                                <LinearGradient
+                                    colors={['#8D1B3D', '#C9A227']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.reorderGradient}
+                                >
+                                    <Text style={styles.reorderIcon}>🔄</Text>
+                                    <Text style={styles.reorderText}>Order Again</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </>
                     )}
                 </View>
 
@@ -800,6 +819,10 @@ const styles = StyleSheet.create({
     invoiceGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
     invoiceIcon: { fontSize: 20, marginRight: Spacing.sm },
     invoiceText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
+    reorderButton: { marginTop: Spacing.md, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
+    reorderGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
+    reorderIcon: { fontSize: 20, marginRight: Spacing.sm },
+    reorderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
 
     // Address
     addressCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, padding: Spacing.lg, ...Shadows.sm },

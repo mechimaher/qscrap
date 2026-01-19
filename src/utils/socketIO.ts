@@ -9,6 +9,9 @@ import { Server } from 'socket.io';
 
 let ioInstance: Server | null = null;
 
+// Track viewers per request for real-time viewer count
+const requestViewers = new Map<string, Set<string>>();
+
 /**
  * Initialize the Socket.IO singleton
  * Called once during server startup
@@ -18,6 +21,64 @@ export function initializeSocketIO(io: Server): void {
         throw new Error('Socket.IO already initialized');
     }
     ioInstance = io;
+
+    io.on('connection', (socket) => {
+        console.log(`[Socket.IO] Client connected: ${socket.id}`);
+
+        socket.on('track_request_view', ({ request_id }: { request_id: string }) => {
+            if (!requestViewers.has(request_id)) {
+                requestViewers.set(request_id, new Set());
+            }
+            requestViewers.get(request_id)!.add(socket.id);
+            socket.join(`request_${request_id}`);
+
+            // Broadcast updated count to all viewers
+            const count = requestViewers.get(request_id)!.size;
+            io.to(`request_${request_id}`).emit('viewer_count_update', {
+                request_id,
+                count
+            });
+
+            console.log(`[Socket.IO] User ${socket.id} tracking request ${request_id}, total viewers: ${count}`);
+        });
+
+        socket.on('untrack_request_view', ({ request_id }: { request_id: string }) => {
+            if (requestViewers.has(request_id)) {
+                requestViewers.get(request_id)!.delete(socket.id);
+                socket.leave(`request_${request_id}`);
+
+                const count = requestViewers.get(request_id)!.size;
+                io.to(`request_${request_id}`).emit('viewer_count_update', {
+                    request_id,
+                    count
+                });
+
+                if (count === 0) {
+                    requestViewers.delete(request_id);
+                }
+            }
+        });
+
+        socket.on('disconnect', () => {
+            console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+
+            // Remove from all tracked requests
+            requestViewers.forEach((viewers, requestId) => {
+                if (viewers.has(socket.id)) {
+                    viewers.delete(socket.id);
+                    const count = viewers.size;
+                    io.to(`request_${requestId}`).emit('viewer_count_update', {
+                        request_id: requestId,
+                        count
+                    });
+
+                    if (count === 0) {
+                        requestViewers.delete(requestId);
+                    }
+                }
+            });
+        });
+    });
 }
 
 /**

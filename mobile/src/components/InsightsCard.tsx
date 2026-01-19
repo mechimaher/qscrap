@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: Colors.text,
+        color: Colors.theme.text,
     },
     statsGrid: {
         flexDirection: 'row',

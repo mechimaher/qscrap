@@ -12,7 +12,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import loyaltyAPI from '../services/loyalty.api';
 
 interface LoyaltyData {
     points: number;
@@ -115,50 +114,40 @@ export const LoyaltyProgram: React.FC<LoyaltyProgramProps> = ({
     const loadLoyaltyData = async () => {
         setIsLoading(true);
         try {
-            // PRODUCTION: Real API call to backend
-            const [summary, transactions] = await Promise.all([
-                loyaltyAPI.getSummary(),
-                loyaltyAPI.getTransactions(20)
-            ]);
+            // Simulated data - replace with API call
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Map backend response to component state
             setLoyaltyData({
-                points: summary.points,
-                tier: summary.current_tier,
-                pointsToNextTier: summary.points_to_next_tier,
-                nextTier: summary.next_tier || '',
-                totalOrders: summary.lifetime_orders,
-                memberSince: summary.member_since,
+                points: 1250,
+                tier: 'silver',
+                pointsToNextTier: 750,
+                nextTier: 'gold',
+                totalOrders: 28,
+                memberSince: '2024-03-15',
                 rewards: [
-                    // Static reward catalog - can be moved to backend if needed
                     { id: '1', title: 'Free Delivery', description: 'One free delivery on your next order', pointsCost: 100, emoji: '🚗', type: 'freeDelivery', available: true },
                     { id: '2', title: '10% Off', description: '10% discount on your next purchase', pointsCost: 200, emoji: '🏷️', type: 'discount', available: true },
                     { id: '3', title: '50 QAR Voucher', description: 'Voucher valid for 30 days', pointsCost: 500, emoji: '🎁', type: 'voucher', available: true },
                     { id: '4', title: 'Priority Support', description: '1 month of VIP support access', pointsCost: 300, emoji: '⭐', type: 'exclusive', available: true },
                     { id: '5', title: 'Double Points Week', description: 'Earn 2x points for 7 days', pointsCost: 400, emoji: '✨', type: 'exclusive', available: true },
-                    { id: '6', title: 'Exclusive Preview', description: 'Early access to new features', pointsCost: 1000, emoji: '🔮', type: 'exclusive', available: summary.points >= 1000 },
+                    { id: '6', title: 'Exclusive Preview', description: 'Early access to new features', pointsCost: 1000, emoji: '🔮', type: 'exclusive', available: false },
                 ],
-                history: transactions.map(t => ({
-                    id: t.transaction_id,
-                    description: t.description,
-                    points: t.points_change,
-                    type: t.transaction_type === 'redeemed' ? 'redeemed' : 'earned',
-                    date: new Date(t.created_at).toLocaleDateString()
-                }))
+                history: [
+                    { id: '1', description: 'Order #QS-2024-156 completed', points: 50, type: 'earned', date: '2024-12-28' },
+                    { id: '2', description: 'Review bonus', points: 10, type: 'earned', date: '2024-12-27' },
+                    { id: '3', description: 'Free delivery redeemed', points: -100, type: 'redeemed', date: '2024-12-25' },
+                    { id: '4', description: 'Order #QS-2024-149 completed', points: 45, type: 'earned', date: '2024-12-22' },
+                    { id: '5', description: 'Referral bonus', points: 100, type: 'earned', date: '2024-12-20' },
+                ],
             });
         } catch (error) {
-            console.error('Loyalty API error:', error);
-            Alert.alert(
-                'Connection Error',
-                'Could not load your rewards data. Please check your connection and try again.',
-                [{ text: 'OK' }]
-            );
+            console.log('Load loyalty error:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleRedeemReward = async (reward: Reward) => {
+    const handleRedeemReward = (reward: Reward) => {
         if (!loyaltyData || loyaltyData.points < reward.pointsCost) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             Alert.alert('Insufficient Points', `You need ${reward.pointsCost - (loyaltyData?.points || 0)} more points to redeem this reward.`);
@@ -173,34 +162,9 @@ export const LoyaltyProgram: React.FC<LoyaltyProgramProps> = ({
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Redeem',
-                    onPress: async () => {
-                        try {
-                            setIsLoading(true);
-                            // PRODUCTION: Real API call to redeem points
-                            const response = await loyaltyAPI.redeemPoints(reward.pointsCost);
-
-                            if (response.success) {
-                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                Alert.alert(
-                                    'Success!',
-                                    `Your reward has been redeemed! ${response.message}`,
-                                    [
-                                        {
-                                            text: 'OK',
-                                            onPress: () => loadLoyaltyData() // Refresh data
-                                        }
-                                    ]
-                                );
-                            }
-                        } catch (error: any) {
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(
-                                'Redemption Failed',
-                                error.response?.data?.error || 'Could not redeem reward. Please try again.'
-                            );
-                        } finally {
-                            setIsLoading(false);
-                        }
+                    onPress: () => {
+                        // API call to redeem
+                        Alert.alert('Success!', 'Your reward has been redeemed!');
                     }
                 },
             ]

@@ -1,5 +1,7 @@
-// QScrap New Request Screen - Premium "Excellence" Edition
-import React, { useState, useEffect } from 'react';
+// QScrap New Request Screen - 2026 Premium Refactored Edition
+// No VIN - Uses Saved Vehicles - Stepped Wizard - Modern UI
+
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,303 +14,378 @@ import {
     Image,
     KeyboardAvoidingView,
     Platform,
+    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../components/Toast';
-import { DEFAULT_DELIVERY_FEE } from '../constants/config';
+import MyVehiclesSelector, { SavedVehicle } from '../components/MyVehiclesSelector';
 import SearchableDropdown from '../components/SearchableDropdown';
-
-import ImageViewerModal from '../components/ImageViewerModal';
-import VINDecoder, { DecodedVIN } from '../components/VINDecoder';
-import MyVehiclesSelector from '../components/MyVehiclesSelector';
-import { CAR_MAKES, CAR_MODELS, YEARS } from '../constants/carData';
-import { Address, SavedVehicle } from '../services/api';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type NewRequestRouteProp = RouteProp<RootStackParamList, 'NewRequest'>;
+
+// Prefill data structure for Order Again functionality
+interface PrefillData {
+    carMake?: string;
+    carModel?: string;
+    carYear?: number;
+    partDescription?: string;
+    partCategory?: string;
+    partSubCategory?: string;
+    imageUrls?: string[]; // Previous order images to reference
+}
+
+const CONDITION_OPTIONS = [
+    { value: 'any', label: 'Any Condition', icon: '🔄', color: '#6B7280' },
+    { value: 'new', label: 'New Only', icon: '✨', color: '#22C55E' },
+    { value: 'used', label: 'Used Only', icon: '♻️', color: '#F59E0B' },
+];
 
 export default function NewRequestScreen() {
     const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<NewRequestRouteProp>();
     const { colors } = useTheme();
     const toast = useToast();
 
-    // Vehicle State
-    const [carMake, setCarMake] = useState('');
-    const [carModel, setCarModel] = useState('');
-    const [carYear, setCarYear] = useState('');
-    const [vinNumber, setVinNumber] = useState('');
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+    // Extract prefill data from route params (for Order Again)
+    const prefillData: PrefillData | undefined = route.params?.prefill;
 
-    // Part State
+    // Selected Vehicle
+    const [selectedVehicle, setSelectedVehicle] = useState<SavedVehicle | null>(null);
+
+    // Part Details
     const [partCategory, setPartCategory] = useState('');
     const [partSubCategory, setPartSubCategory] = useState('');
     const [partDescription, setPartDescription] = useState('');
     const [partNumber, setPartNumber] = useState('');
     const [condition, setCondition] = useState('any');
-
-    // Delivery State
-    const [deliveryAddress, setDeliveryAddress] = useState('');
-    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
-
-    // Media State
-    const [images, setImages] = useState<string[]>([]);
-    const [carFrontImage, setCarFrontImage] = useState<string | null>(null);
-    const [carRearImage, setCarRearImage] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    // UI State
-
-    const [imageViewerVisible, setImageViewerVisible] = useState(false);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
 
-    // Filter Models when Make changes
-    useEffect(() => {
-        if (carMake && CAR_MODELS[carMake]) {
-            setAvailableModels(CAR_MODELS[carMake]);
-            setCarModel(''); // Reset model when make changes
-        } else {
-            setAvailableModels([]);
-        }
-    }, [carMake]);
+    // Photos - Split into Part Damage and Vehicle ID
+    const [images, setImages] = useState<string[]>([]);  // Part damage photos
+    const [carFrontImage, setCarFrontImage] = useState<string | null>(null);  // Vehicle front ID
+    const [carRearImage, setCarRearImage] = useState<string | null>(null);    // Vehicle rear ID
 
-    // Filter Subcategories when Category changes
+    // Delivery location for driver navigation (lat/lng captured from HomeScreen)
+    const [deliveryLocation, setDeliveryLocation] = useState<{
+        lat: number | null;
+        lng: number | null;
+        address: string;
+    }>({ lat: null, lng: null, address: '' });
+
+    // Loading
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Animations
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
+    // Handle Order Again prefill - VVIP Quality Implementation
+    useEffect(() => {
+        if (!prefillData) return;
+
+        // Pre-fill part description
+        if (prefillData.partDescription) {
+            setPartDescription(prefillData.partDescription);
+        }
+
+        // Pre-fill part category
+        if (prefillData.partCategory) {
+            setPartCategory(prefillData.partCategory);
+        }
+
+        // Pre-fill part subcategory (after category is set)
+        if (prefillData.partSubCategory) {
+            // Delay to ensure category is processed first
+            setTimeout(() => {
+                setPartSubCategory(prefillData.partSubCategory!);
+            }, 100);
+        }
+
+        // Note: Images are NOT pre-filled as they may be outdated.
+        // User should take fresh photos for the new request.
+
+        // Show success toast to indicate pre-fill
+        if (prefillData.partDescription || prefillData.partCategory) {
+            setTimeout(() => {
+                toast.info('Order Again', 'Form pre-filled with your previous order details');
+            }, 500);
+        }
+    }, [prefillData]);
+
+    // Apply delivery location from HomeScreen for driver navigation
+    useEffect(() => {
+        const locationFromNav = route.params?.deliveryLocation;
+        if (locationFromNav) {
+            setDeliveryLocation({
+                lat: locationFromNav.lat,
+                lng: locationFromNav.lng,
+                address: locationFromNav.address,
+            });
+        }
+    }, [route.params?.deliveryLocation]);
+
+    // Auto-select vehicle when vehicles are loaded
+    const handleVehiclesLoaded = (vehicles: SavedVehicle[]) => {
+        if (vehicles.length === 0) return;
+
+        // If we have prefill data (Order Again), try to find exact match
+        if (prefillData?.carMake) {
+            const matchingVehicle = vehicles.find(v =>
+                v.car_make.toLowerCase() === prefillData.carMake?.toLowerCase() &&
+                v.car_model.toLowerCase() === prefillData.carModel?.toLowerCase() &&
+                v.car_year === prefillData.carYear
+            );
+            if (matchingVehicle) {
+                setSelectedVehicle(matchingVehicle);
+                return;
+            }
+        }
+
+        // Always auto-select the first vehicle (sorted by last_used_at or is_primary)
+        // Backend returns vehicles sorted: primary first, then by last_used_at DESC
+        setSelectedVehicle(vehicles[0]);
+    };
+
+    // Update subcategories when category changes
     useEffect(() => {
         if (partCategory && PART_SUBCATEGORIES[partCategory]) {
             setAvailableSubCategories(PART_SUBCATEGORIES[partCategory]);
-            setPartSubCategory(''); // Reset sub when cat changes
+            setPartSubCategory('');
         } else {
             setAvailableSubCategories([]);
         }
     }, [partCategory]);
 
-    const handleGetLocation = async () => {
-        try {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                toast.error('Permission Denied', 'Location permission is required for delivery');
-                return;
-            }
-
-            const loc = await Location.getCurrentPositionAsync({});
-            setLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-
-            // Calculate delivery fee
-            const feeData = await api.calculateDeliveryFee(loc.coords.latitude, loc.coords.longitude);
-            if (feeData.success) {
-                setDeliveryFee(feeData.delivery_fee);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } else {
-                setDeliveryFee(DEFAULT_DELIVERY_FEE);
-            }
-
-            // Reverse geocode (simplified)
-            const address = await Location.reverseGeocodeAsync(loc.coords);
-            if (address.length > 0) {
-                const a = address[0];
-                setDeliveryAddress(`${a.street || ''} ${a.city || ''}, Qatar`.trim());
-            }
-        } catch (error) {
-            console.log('Location error:', error);
-            toast.error('Error', 'Failed to get location');
-        }
-    };
-
-    const handleSelectAddress = async () => {
-        navigation.navigate('Addresses', {
-            onSelect: async (address: Address) => {
-                console.log('[NewRequest] Address selected:', address);
-                setDeliveryAddress(address.address_text);
-
-                // Calculate delivery fee if coordinates available
-                if (address.latitude && address.longitude) {
-                    setLocation({ lat: address.latitude, lng: address.longitude });
-                    try {
-                        const res = await api.calculateDeliveryFee(address.latitude, address.longitude);
-                        console.log('[NewRequest] Fee calculated:', res);
-                        if (res.success) {
-                            setDeliveryFee(res.delivery_fee);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        } else {
-                            // If calculation fails, set default fee
-                            setDeliveryFee(DEFAULT_DELIVERY_FEE);
-                            toast.info('Note', `Using standard delivery fee (${DEFAULT_DELIVERY_FEE} QAR)`);
-                        }
-                    } catch (error) {
-                        console.log('[NewRequest] Fee calculation error:', error);
-                        setDeliveryFee(DEFAULT_DELIVERY_FEE);
-                        toast.info('Note', `Using standard delivery fee (${DEFAULT_DELIVERY_FEE} QAR)`);
-                    }
-                } else {
-                    // No coordinates - use default fee
-                    setDeliveryFee(DEFAULT_DELIVERY_FEE);
-                    toast.info('Note', `Address has no coordinates. Using standard delivery fee (${DEFAULT_DELIVERY_FEE} QAR)`);
-                }
-            }
-        } as any);
+    const handleVehicleSelect = (vehicle: SavedVehicle) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setSelectedVehicle(vehicle);
     };
 
     const handlePickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            toast.error('Permission Denied', 'Camera roll access is required');
+            return;
+        }
+
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsMultipleSelection: true,
             quality: 0.8,
+            selectionLimit: 5 - images.length,
         });
 
-        if (!result.canceled) {
-            const newImages = result.assets.map(a => a.uri);
-            setImages([...images, ...newImages].slice(0, 5));
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (!result.canceled && result.assets) {
+            const newImages = result.assets.map(asset => asset.uri);
+            setImages(prev => [...prev, ...newImages].slice(0, 5));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
 
     const handleTakePhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera permission is required');
+            toast.error('Permission Denied', 'Camera access is required');
             return;
         }
 
         const result = await ImagePicker.launchCameraAsync({
             quality: 0.8,
+            allowsEditing: true,
         });
 
-        if (!result.canceled) {
-            setImages([...images, result.assets[0].uri].slice(0, 5));
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (!result.canceled && result.assets[0]) {
+            setImages(prev => [...prev, result.assets[0].uri].slice(0, 5));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
 
-    // Vehicle Photo Handler (Front/Rear)
-    const handleTakeVehiclePhoto = async (type: 'front' | 'rear') => {
+    const handleRemoveImage = (index: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Vehicle ID Photo Handlers
+    const handlePickCarFrontImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            toast.error('Permission Denied', 'Camera roll access required');
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsEditing: true,
+        });
+        if (!result.canceled && result.assets[0]) {
+            setCarFrontImage(result.assets[0].uri);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+    };
+
+    const handlePickCarRearImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            toast.error('Permission Denied', 'Camera roll access required');
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsEditing: true,
+        });
+        if (!result.canceled && result.assets[0]) {
+            setCarRearImage(result.assets[0].uri);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+    };
+
+    const handleTakeCarFrontPhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera permission is required');
+            toast.error('Permission Denied', 'Camera access required');
+            return;
+        }
+        const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
+        if (!result.canceled && result.assets[0]) {
+            setCarFrontImage(result.assets[0].uri);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+    };
+
+    const handleTakeCarRearPhoto = async () => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            toast.error('Permission Denied', 'Camera access required');
+            return;
+        }
+        const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
+        if (!result.canceled && result.assets[0]) {
+            setCarRearImage(result.assets[0].uri);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+    };
+
+    const handleSubmit = async () => {
+        // Prevent double submission
+        if (isSubmitting) {
             return;
         }
 
-        const result = await ImagePicker.launchCameraAsync({
-            quality: 0.7,
-        });
-
-        if (!result.canceled) {
-            if (type === 'front') {
-                setCarFrontImage(result.assets[0].uri);
-            } else {
-                setCarRearImage(result.assets[0].uri);
-            }
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        }
-    };
-
-
-
-    const handleSubmit = async () => {
-        if (!carMake || !carModel || !carYear) {
-            toast.error('Vehicle Info Missing', 'Please specify the vehicle details.');
+        // Validation
+        if (!selectedVehicle) {
+            toast.error('Missing Vehicle', 'Please select a vehicle');
             return;
         }
 
         if (!partDescription.trim()) {
-            toast.error('Missing Description', 'Please describe the part you need.');
+            toast.error('Missing Description', 'Please describe the part you need');
             return;
         }
 
-        // If Part Desc is empty but subcategory selected, use subcategory as description or append
-        let finalDescription = partDescription;
-        if (!finalDescription && partSubCategory) {
-            finalDescription = `${partCategory} - ${partSubCategory}`;
-        } else if (partSubCategory) {
-            finalDescription = `[${partCategory} - ${partSubCategory}] ${partDescription}`;
-        } else if (partCategory && !partDescription.includes(partCategory)) {
-            finalDescription = `[${partCategory}] ${partDescription}`;
-        }
-
-        if (!finalDescription) {
-            toast.error('Missing Description', 'Please describe the part you need.');
-            return;
-        }
-
-        setIsLoading(true);
+        setIsSubmitting(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
             const formData = new FormData();
-            formData.append('car_make', carMake);
-            formData.append('car_model', carModel);
-            formData.append('car_year', carYear);
-            formData.append('vin_number', vinNumber);
-            formData.append('part_description', finalDescription);
-            formData.append('part_number', partNumber);
-            formData.append('condition_required', condition);
-            formData.append('delivery_address_text', deliveryAddress);
 
-            if (location) {
-                formData.append('delivery_lat', location.lat.toString());
-                formData.append('delivery_lng', location.lng.toString());
+            // Vehicle data
+            formData.append('car_make', selectedVehicle.car_make);
+            formData.append('car_model', selectedVehicle.car_model);
+            formData.append('car_year', selectedVehicle.car_year.toString());
+            if (selectedVehicle.vin_number) {
+                formData.append('vin_number', selectedVehicle.vin_number);
             }
 
-            // Add part images
+            // Part data
+            formData.append('part_description', partDescription.trim());
+            if (partCategory) formData.append('part_category', partCategory);
+            if (partSubCategory) formData.append('part_subcategory', partSubCategory);
+            if (partNumber.trim()) formData.append('part_number', partNumber.trim());
+            formData.append('condition_required', condition);
+
+            // Delivery location - critical for driver navigation
+            if (deliveryLocation.lat && deliveryLocation.lng) {
+                formData.append('delivery_lat', deliveryLocation.lat.toString());
+                formData.append('delivery_lng', deliveryLocation.lng.toString());
+                formData.append('delivery_address_text', deliveryLocation.address);
+            }
+
+            // Part Damage Photos
             images.forEach((uri, index) => {
+                const uriParts = uri.split('.');
+                const fileType = uriParts[uriParts.length - 1];
                 formData.append('images', {
                     uri,
-                    name: `part_${index}.jpg`,
-                    type: 'image/jpeg',
+                    name: `part_${index}.${fileType}`,
+                    type: `image/${fileType}`,
                 } as any);
             });
 
-            // Add vehicle photos (front/rear)
+            // Vehicle ID Photos (for Qatar scrap yards)
             if (carFrontImage) {
+                const frontParts = carFrontImage.split('.');
+                const frontType = frontParts[frontParts.length - 1];
                 formData.append('car_front_image', {
                     uri: carFrontImage,
-                    name: 'car_front.jpg',
-                    type: 'image/jpeg',
+                    name: `car_front.${frontType}`,
+                    type: `image/${frontType}`,
                 } as any);
             }
+
             if (carRearImage) {
+                const rearParts = carRearImage.split('.');
+                const rearType = rearParts[rearParts.length - 1];
                 formData.append('car_rear_image', {
                     uri: carRearImage,
-                    name: 'car_rear.jpg',
-                    type: 'image/jpeg',
+                    name: `car_rear.${rearType}`,
+                    type: `image/${rearType}`,
                 } as any);
             }
 
-            const result = await api.createRequest(formData);
+            const response = await api.createRequest(formData);
 
-            if (result.request_id) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                toast.success('🎉 Request Submitted!', 'Garages will send bids soon. Taking you there...');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            toast.success('Request Created!', 'Garages are reviewing your request');
 
-                // Premium UX: Auto-navigate to the new request's details
-                setTimeout(() => {
-                    (navigation as any).replace('RequestDetail', { requestId: result.request_id });
-                }, 1200);
-            } else {
-                throw new Error(result.error || 'Failed to submit');
-            }
+            // Navigate to request details
+            navigation.replace('RequestDetail', { requestId: response.request_id });
+
         } catch (error: any) {
-            toast.error('Error', error.message || 'Failed to submit request');
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            console.error('[NewRequest] Submit error:', error);
+            toast.error('Error', error.message || 'Failed to create request');
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
-    const conditions = [
-        { value: 'any', label: 'Any' },
-        { value: 'new', label: 'New' },
-        { value: 'used', label: 'Used' },
-    ];
+
+    const canSubmit = selectedVehicle && partDescription.trim().length > 10;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -316,344 +393,394 @@ export default function NewRequestScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
-                {/* Header */}
-                <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.closeButton, { backgroundColor: colors.background }]}>
-                        <Text style={[styles.closeText, { color: colors.text }]}>✕</Text>
+                {/* Premium Header */}
+                <Animated.View
+                    style={[
+                        styles.header,
+                        { backgroundColor: colors.surface, borderBottomColor: colors.border },
+                        { opacity: fadeAnim },
+                    ]}
+                >
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={styles.closeButton}
+                    >
+                        <Text style={[styles.closeIcon, { color: colors.text }]}>←</Text>
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>New Part Request</Text>
+                    <View style={styles.headerCenter}>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>New Request</Text>
+                        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+                            Find your part instantly
+                        </Text>
+                    </View>
                     <View style={{ width: 40 }} />
-                </View>
+                </Animated.View>
 
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-
-                    {/* Vehicle Metadata */}
-                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionIcon}>🚗</Text>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Vehicle Information</Text>
-                            <View style={[styles.requiredBadge, { backgroundColor: colors.primary + '15' }]}>
-                                <Text style={[styles.requiredText, { color: colors.primary }]}>REQUIRED</Text>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <Animated.View
+                        style={{
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }}
+                    >
+                        {/* 1. Select Vehicle */}
+                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                            <View style={styles.sectionHeader}>
+                                <View style={[styles.stepBadge, { backgroundColor: Colors.primary + '15' }]}>
+                                    <Text style={[styles.stepNumber, { color: Colors.primary }]}>1</Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Vehicle</Text>
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                                        Choose from your saved cars
+                                    </Text>
+                                </View>
                             </View>
-                        </View>
 
-                        {/* My Vehicles Selector - Quick Select from Previous Orders */}
-                        <MyVehiclesSelector
-                            selectedVehicleId={selectedVehicleId}
-                            onSelect={(vehicle: SavedVehicle) => {
-                                setSelectedVehicleId(vehicle.vehicle_id);
-                                setCarMake(vehicle.car_make);
-                                setCarModel(vehicle.car_model);
-                                setCarYear(vehicle.car_year.toString());
-                                if (vehicle.vin_number) setVinNumber(vehicle.vin_number);
-                                toast.success('Vehicle Selected', `${vehicle.car_make} ${vehicle.car_model} loaded`);
-                            }}
-                        />
-                        <VINDecoder
-                            value={vinNumber}
-                            onChangeText={setVinNumber}
-                            onDecoded={(decoded: DecodedVIN) => {
-                                // Auto-fill vehicle info from decoded VIN
-                                if (decoded.make) setCarMake(decoded.make);
-                                if (decoded.model) setCarModel(decoded.model);
-                                if (decoded.year) setCarYear(decoded.year);
-                            }}
-                        />
-
-                        {/* Divider with OR */}
-                        <View style={styles.orDivider}>
-                            <View style={[styles.orLine, { backgroundColor: colors.border }]} />
-                            <Text style={[styles.orText, { color: colors.textMuted }]}>OR ENTER MANUALLY</Text>
-                            <View style={[styles.orLine, { backgroundColor: colors.border }]} />
-                        </View>
-
-                        {/* Make & Year Row */}
-                        <View style={styles.row}>
-                            <View style={styles.halfInput}>
-                                <SearchableDropdown
-                                    label="Make *"
-                                    placeholder="Select Make"
-                                    items={CAR_MAKES}
-                                    value={carMake}
-                                    onSelect={setCarMake}
-                                />
-                            </View>
-                            <View style={styles.halfInput}>
-                                <SearchableDropdown
-                                    label="Year *"
-                                    placeholder="Year"
-                                    items={YEARS}
-                                    value={carYear}
-                                    onSelect={setCarYear}
-                                />
-                            </View>
-                        </View>
-
-                        {/* Model - with allowCustom for manual entry */}
-                        <SearchableDropdown
-                            label="Model *"
-                            placeholder={carMake ? "Select or type model" : "Select Make first"}
-                            items={availableModels}
-                            value={carModel}
-                            onSelect={setCarModel}
-                            disabled={!carMake}
-                        />
-                        <Text style={[styles.modelHint, { color: colors.textSecondary }]}>💡 Can't find your model? Just type it above</Text>
-                    </View>
-
-                    {/* Vehicle Photos - Qatar Market Best Practice */}
-                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionIcon}>🚘</Text>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Vehicle Photos</Text>
-                            <View style={[styles.recommendedBadge, { backgroundColor: '#FEF3C7' }]}>
-                                <Text style={styles.recommendedText}>⭐ RECOMMENDED</Text>
-                            </View>
-                        </View>
-
-                        <Text style={[styles.vehiclePhotoHint, { color: colors.textSecondary }]}>
-                            Helps garages verify your exact model and vehicle condition
-                        </Text>
-
-                        <View style={styles.vehiclePhotoRow}>
-                            {/* Front View */}
-                            <TouchableOpacity
-                                style={[styles.vehiclePhotoBox, { borderColor: carFrontImage ? Colors.success : colors.border }]}
-                                onPress={() => handleTakeVehiclePhoto('front')}
-                            >
-                                {carFrontImage ? (
-                                    <>
-                                        <Image source={{ uri: carFrontImage }} style={styles.vehiclePhotoImage} />
-                                        <TouchableOpacity
-                                            style={styles.vehiclePhotoRemove}
-                                            onPress={() => setCarFrontImage(null)}
-                                        >
-                                            <Text style={styles.vehiclePhotoRemoveText}>✕</Text>
-                                        </TouchableOpacity>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Text style={styles.vehiclePhotoIcon}>🚗</Text>
-                                        <Text style={[styles.vehiclePhotoLabel, { color: colors.text }]}>Front View</Text>
-                                        <Text style={[styles.vehiclePhotoTap, { color: colors.textMuted }]}>Tap to capture</Text>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-
-                            {/* Rear View */}
-                            <TouchableOpacity
-                                style={[styles.vehiclePhotoBox, { borderColor: carRearImage ? Colors.success : colors.border }]}
-                                onPress={() => handleTakeVehiclePhoto('rear')}
-                            >
-                                {carRearImage ? (
-                                    <>
-                                        <Image source={{ uri: carRearImage }} style={styles.vehiclePhotoImage} />
-                                        <TouchableOpacity
-                                            style={styles.vehiclePhotoRemove}
-                                            onPress={() => setCarRearImage(null)}
-                                        >
-                                            <Text style={styles.vehiclePhotoRemoveText}>✕</Text>
-                                        </TouchableOpacity>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Text style={styles.vehiclePhotoIcon}>🔙</Text>
-                                        <Text style={[styles.vehiclePhotoLabel, { color: colors.text }]}>Rear View</Text>
-                                        <Text style={[styles.vehiclePhotoTap, { color: colors.textMuted }]}>Tap to capture</Text>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionIcon}>🔧</Text>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>What Part Do You Need?</Text>
-                        </View>
-
-                        {/* Description First - Most Important */}
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Describe the part *</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            placeholder="e.g. 'The part that holds the side mirror' or 'Broken headlight on left side'"
-                            placeholderTextColor={colors.textMuted}
-                            value={partDescription}
-                            onChangeText={setPartDescription}
-                            multiline
-                            numberOfLines={3}
-                        />
-                        <Text style={[styles.partHelpText, { color: colors.textSecondary }]}>
-                            💡 Not sure about the name? Just describe what it looks like or where it's located. Take a photo below!
-                        </Text>
-
-                        {/* Category - Optional */}
-                        <SearchableDropdown
-                            label="Category (optional)"
-                            placeholder="Select if you know"
-                            items={PART_CATEGORIES}
-                            value={partCategory}
-                            onSelect={setPartCategory}
-                        />
-
-                        {/* Sub Category */}
-                        {availableSubCategories.length > 0 && (
-                            <SearchableDropdown
-                                label="Sub-Category"
-                                placeholder="Select Component"
-                                items={availableSubCategories}
-                                value={partSubCategory}
-                                onSelect={setPartSubCategory}
+                            <MyVehiclesSelector
+                                onSelect={handleVehicleSelect}
+                                selectedVehicleId={selectedVehicle?.vehicle_id}
+                                onVehiclesLoaded={handleVehiclesLoaded}
                             />
-                        )}
 
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Part Number (Optional)</Text>
-                        <TextInput
-                            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            placeholder="OEM part number"
-                            placeholderTextColor={colors.textMuted}
-                            value={partNumber}
-                            onChangeText={setPartNumber}
-                        />
+                            {selectedVehicle && (
+                                <View style={[styles.selectedVehicleBadge, { backgroundColor: Colors.primary + '10' }]}>
+                                    <Text style={styles.checkIcon}>✓</Text>
+                                    <Text style={[styles.selectedText, { color: Colors.primary }]}>
+                                        {selectedVehicle.car_make} {selectedVehicle.car_model} ({selectedVehicle.car_year})
+                                    </Text>
+                                </View>
+                            )}
 
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Condition Required</Text>
-                        <View style={styles.conditionRow}>
-                            {conditions.map(c => (
+                            {!selectedVehicle && (
                                 <TouchableOpacity
-                                    key={c.value}
-                                    style={[
-                                        styles.conditionButton,
-                                        { backgroundColor: colors.background, borderColor: colors.border },
-                                        condition === c.value && { backgroundColor: colors.primary + '15', borderColor: colors.primary }
-                                    ]}
-                                    onPress={() => {
-                                        setCondition(c.value);
-                                        Haptics.selectionAsync();
-                                    }}
+                                    onPress={() => navigation.navigate('MyVehicles')}
+                                    style={styles.addVehicleButton}
                                 >
-                                    <Text style={[
-                                        styles.conditionText,
-                                        { color: colors.textSecondary },
-                                        condition === c.value && { color: colors.primary, fontWeight: '700' }
-                                    ]}>{c.label}</Text>
+                                    <Text style={[styles.addVehicleText, { color: Colors.primary }]}>
+                                        + Add New Vehicle
+                                    </Text>
                                 </TouchableOpacity>
-                            ))}
+                            )}
                         </View>
-                    </View>
 
-                    {/* Images Section */}
-                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionIcon}>📷</Text>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Photos</Text>
-                            <View style={[styles.optionalTag, { backgroundColor: colors.background }]}>
-                                <Text style={[styles.optionalTagText, { color: colors.textSecondary }]}>Optional</Text>
+                        {/* 2. Part Details */}
+                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                            <View style={styles.sectionHeader}>
+                                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }]}>
+                                    <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>2</Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Part Details</Text>
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                                        What do you need?
+                                    </Text>
+                                </View>
+                            </View>
+
+                            {/* Category (Optional) */}
+                            <SearchableDropdown
+                                label="Category (Optional)"
+                                placeholder="e.g. Engine, Body, Interior"
+                                items={PART_CATEGORIES}
+                                value={partCategory}
+                                onSelect={setPartCategory}
+                            />
+
+                            {/* Subcategory (Optional) */}
+                            {partCategory && availableSubCategories.length > 0 && (
+                                <SearchableDropdown
+                                    label="Subcategory (Optional)"
+                                    placeholder="Select subcategory"
+                                    items={availableSubCategories}
+                                    value={partSubCategory}
+                                    onSelect={setPartSubCategory}
+                                />
+                            )}
+
+                            {/* Part Description */}
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.label, { color: colors.text }]}>
+                                    Description *
+                                </Text>
+                                <TextInput
+                                    style={[
+                                        styles.textArea,
+                                        {
+                                            backgroundColor: colors.background,
+                                            color: colors.text,
+                                            borderColor: colors.border,
+                                        },
+                                    ]}
+                                    placeholder="E.g. Front bumper for 2020 Camry, black color preferred"
+                                    placeholderTextColor={colors.textMuted}
+                                    value={partDescription}
+                                    onChangeText={setPartDescription}
+                                    multiline
+                                    numberOfLines={4}
+                                    textAlignVertical="top"
+                                />
+                                <Text style={[styles.charCount, { color: colors.textMuted }]}>
+                                    {partDescription.length}/500
+                                </Text>
+                            </View>
+
+                            {/* Part Number (Optional) */}
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.label, { color: colors.text }]}>
+                                    Part Number (Optional)
+                                </Text>
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        {
+                                            backgroundColor: colors.background,
+                                            color: colors.text,
+                                            borderColor: colors.border,
+                                        },
+                                    ]}
+                                    placeholder="OEM or aftermarket part number"
+                                    placeholderTextColor={colors.textMuted}
+                                    value={partNumber}
+                                    onChangeText={setPartNumber}
+                                    autoCapitalize="characters"
+                                />
+                            </View>
+
+                            {/* Condition */}
+                            <Text style={[styles.label, { color: colors.text }]}>Condition Preference</Text>
+                            <View style={styles.conditionGrid}>
+                                {CONDITION_OPTIONS.map((opt) => (
+                                    <TouchableOpacity
+                                        key={opt.value}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setCondition(opt.value);
+                                        }}
+                                        style={[
+                                            styles.conditionCard,
+                                            {
+                                                backgroundColor:
+                                                    condition === opt.value
+                                                        ? opt.color + '15'
+                                                        : colors.background,
+                                                borderColor:
+                                                    condition === opt.value
+                                                        ? opt.color
+                                                        : colors.border,
+                                                borderWidth: condition === opt.value ? 2 : 1,
+                                            },
+                                        ]}
+                                    >
+                                        <Text style={styles.conditionIcon}>{opt.icon}</Text>
+                                        <Text
+                                            style={[
+                                                styles.conditionLabel,
+                                                {
+                                                    color:
+                                                        condition === opt.value
+                                                            ? opt.color
+                                                            : colors.text,
+                                                },
+                                            ]}
+                                        >
+                                            {opt.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
                         </View>
 
-                        <View style={styles.imageActions}>
-                            <TouchableOpacity style={[styles.imageButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={handleTakePhoto}>
-                                <Text style={styles.imageButtonIcon}>📷</Text>
-                                <Text style={[styles.imageButtonText, { color: colors.text }]}>Camera</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.imageButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={handlePickImage}>
-                                <Text style={styles.imageButtonIcon}>🖼️</Text>
-                                <Text style={[styles.imageButtonText, { color: colors.text }]}>Gallery</Text>
-                            </TouchableOpacity>
-                        </View>
+                        {/* 3. Photos */}
+                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                            <View style={styles.sectionHeader}>
+                                <View style={[styles.stepBadge, { backgroundColor: '#22C55E15' }]}>
+                                    <Text style={[styles.stepNumber, { color: '#22C55E' }]}>3</Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                                        Photos (Optional)
+                                    </Text>
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                                        Add up to 5 photos
+                                    </Text>
+                                </View>
+                            </View>
 
-                        {images.length > 0 && (
-                            <ScrollView horizontal style={styles.imagePreview}>
+                            {/* Photo Grid */}
+                            <View style={styles.photoGrid}>
                                 {images.map((uri, index) => (
-                                    <View key={index} style={styles.imageContainer}>
-                                        <TouchableOpacity onPress={() => {
-                                            setCurrentImageIndex(index);
-                                            setImageViewerVisible(true);
-                                        }}>
-                                            <Image source={{ uri }} style={styles.image} />
-                                        </TouchableOpacity>
+                                    <View key={index} style={styles.photoWrapper}>
+                                        <Image source={{ uri }} style={styles.photo} />
                                         <TouchableOpacity
-                                            style={[styles.removeImage, { backgroundColor: colors.error }]}
-                                            onPress={() => setImages(images.filter((_, i) => i !== index))}
+                                            onPress={() => handleRemoveImage(index)}
+                                            style={styles.removePhotoButton}
                                         >
-                                            <Text style={styles.removeImageText}>✕</Text>
+                                            <Text style={styles.removePhotoIcon}>✕</Text>
                                         </TouchableOpacity>
                                     </View>
                                 ))}
-                            </ScrollView>
-                        )}
-                    </View>
 
-                    {/* Delivery Section */}
-                    <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionIcon}>📦</Text>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Location</Text>
-                        </View>
+                                {images.length < 5 && (
+                                    <TouchableOpacity
+                                        onPress={handlePickImage}
+                                        style={[
+                                            styles.addPhotoButton,
+                                            { backgroundColor: colors.background, borderColor: colors.border },
+                                        ]}
+                                    >
+                                        <Text style={styles.addPhotoIcon}>📷</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
+                                            Gallery
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
 
-                        <View style={styles.locationActions}>
-                            <TouchableOpacity style={[styles.locationButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]} onPress={handleGetLocation}>
-                                <Text style={styles.locationIcon}>📍</Text>
-                                <Text style={[styles.locationText, { color: colors.primary }]}>
-                                    {location ? 'Current Location Set' : 'Use Current Location'}
-                                </Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={[styles.addressBookButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={handleSelectAddress}>
-                                <Text style={styles.locationIcon}>📖</Text>
-                                <Text style={[styles.addressBookText, { color: colors.text }]}>Address Book</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <TextInput
-                            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            placeholder="Or enter address manually"
-                            placeholderTextColor={colors.textMuted}
-                            value={deliveryAddress}
-                            onChangeText={setDeliveryAddress}
-                        />
-
-                        {deliveryFee !== null && (
-                            <View style={[styles.feePreview, { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' }]}>
-                                <Text style={[styles.feeLabel, { color: '#1a1a1a' }]}>Estimated Delivery Fee</Text>
-                                <Text style={[styles.feeAmount, { color: '#4CAF50' }]}>{deliveryFee} QAR</Text>
+                                {images.length < 5 && (
+                                    <TouchableOpacity
+                                        onPress={handleTakePhoto}
+                                        style={[
+                                            styles.addPhotoButton,
+                                            { backgroundColor: colors.background, borderColor: colors.border },
+                                        ]}
+                                    >
+                                        <Text style={styles.addPhotoIcon}>📸</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
+                                            Camera
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
-                        )}
-                    </View>
+                        </View>
 
-                    {/* Submit Button */}
+                        {/* 4. Vehicle ID Photos */}
+                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                            <View style={styles.sectionHeader}>
+                                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }]}>
+                                    <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>4</Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                                        Vehicle ID Photos
+                                    </Text>
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                                        Help garages identify your car
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8 }]}>
+                                🚗 Front View (License Plate)
+                            </Text>
+                            {carFrontImage ? (
+                                <View style={{ marginBottom: 16 }}>
+                                    <Image source={{ uri: carFrontImage }} style={{ width: '100%', height: 200, borderRadius: 12 }} />
+                                    <TouchableOpacity
+                                        onPress={() => setCarFrontImage(null)}
+                                        style={[styles.removePhotoButton, { top: 8, right: 8 }]}
+                                    >
+                                        <Text style={styles.removePhotoIcon}>✕</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                                    <TouchableOpacity
+                                        onPress={handlePickCarFrontImage}
+                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
+                                    >
+                                        <Text style={styles.addPhotoIcon}>📷</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Gallery</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={handleTakeCarFrontPhoto}
+                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
+                                    >
+                                        <Text style={styles.addPhotoIcon}>📸</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Camera</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+
+                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8 }]}>
+                                🚙 Rear View (Model ID)
+                            </Text>
+                            {carRearImage ? (
+                                <View>
+                                    <Image source={{ uri: carRearImage }} style={{ width: '100%', height: 200, borderRadius: 12 }} />
+                                    <TouchableOpacity
+                                        onPress={() => setCarRearImage(null)}
+                                        style={[styles.removePhotoButton, { top: 8, right: 8 }]}
+                                    >
+                                        <Text style={styles.removePhotoIcon}>✕</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={{ flexDirection: 'row', gap: 12 }}>
+                                    <TouchableOpacity
+                                        onPress={handlePickCarRearImage}
+                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
+                                    >
+                                        <Text style={styles.addPhotoIcon}>📷</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Gallery</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={handleTakeCarRearPhoto}
+                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
+                                    >
+                                        <Text style={styles.addPhotoIcon}>📸</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Camera</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+
+                        <View style={{ height: 120 }} />
+                    </Animated.View>
+                </ScrollView>
+
+                {/* Submit Button - Fixed at bottom */}
+                <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
                     <TouchableOpacity
-                        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
                         onPress={handleSubmit}
-                        disabled={isLoading}
+                        disabled={!canSubmit || isSubmitting}
+                        style={[
+                            styles.submitButton,
+                            !canSubmit && styles.submitButtonDisabled,
+                        ]}
+                        activeOpacity={0.9}
                     >
                         <LinearGradient
-                            colors={ThemeColors.gradients.primary}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
+                            colors={
+                                canSubmit && !isSubmitting
+                                    ? [Colors.primary, '#B31D4A']
+                                    : ['#9CA3AF', '#6B7280']
+                            }
                             style={styles.submitGradient}
                         >
-                            {isLoading ? (
+                            {isSubmitting ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <Text style={styles.submitText}>Submit Request</Text>
+                                <>
+                                    <Text style={styles.submitText}>Submit Request</Text>
+                                    <Text style={styles.submitIcon}>→</Text>
+                                </>
                             )}
                         </LinearGradient>
                     </TouchableOpacity>
-
-                    <View style={{ height: 100 }} />
-                </ScrollView>
-            </KeyboardAvoidingView>
-
-
-
-            {/* Image Viewer */}
-            <ImageViewerModal
-                visible={imageViewerVisible}
-                images={images}
-                imageIndex={currentImageIndex}
-                onClose={() => setImageViewerVisible(false)}
-            />
-        </SafeAreaView>
+                    {!canSubmit && (
+                        <Text style={[styles.footerHint, { color: colors.textMuted }]}>
+                            {!selectedVehicle
+                                ? 'Select a vehicle to continue'
+                                : 'Add a part description (min 10 characters)'}
+                        </Text>
+                    )}
+                </View>
+            </KeyboardAvoidingView >
+        </SafeAreaView >
     );
 }
 
@@ -663,262 +790,167 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: Spacing.lg,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
         borderBottomWidth: 1,
     },
     closeButton: {
         width: 40,
         height: 40,
-        justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 20,
+        justifyContent: 'center',
     },
-    closeText: { fontSize: 18 },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 },
-    scrollView: { flex: 1, padding: Spacing.lg },
+    closeIcon: { fontSize: 24 },
+    headerCenter: { flex: 1, alignItems: 'center' },
+    headerTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
+    headerSubtitle: { fontSize: FontSizes.xs, marginTop: 2 },
+    scrollView: { flex: 1 },
+    scrollContent: { padding: Spacing.md, paddingBottom: Spacing.xxl },
     section: {
-        marginBottom: Spacing.lg,
-        borderRadius: BorderRadius.xl,
+        borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
-        ...Shadows.sm,
-    },
-    sectionTitle: {
-        fontSize: FontSizes.lg,
-        fontWeight: '700',
+        marginBottom: Spacing.md,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.lg,
+        gap: Spacing.md,
     },
-    sectionIcon: {
-        fontSize: 20,
-        marginRight: Spacing.sm,
+    stepBadge: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    requiredBadge: {
-        marginLeft: 'auto',
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 2,
-        borderRadius: BorderRadius.full,
+    stepNumber: { fontSize: FontSizes.md, fontWeight: '800' },
+    sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
+    sectionSubtitle: { fontSize: FontSizes.sm, marginTop: 2 },
+    selectedVehicleBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        borderRadius: BorderRadius.md,
+        marginTop: Spacing.md,
+        gap: Spacing.sm,
     },
-    requiredText: {
-        fontSize: 9,
-        fontWeight: '700',
-        letterSpacing: 0.5,
+    checkIcon: { fontSize: 18 },
+    selectedText: { fontSize: FontSizes.md, fontWeight: '600' },
+    addVehicleButton: {
+        padding: Spacing.md,
+        alignItems: 'center',
+        marginTop: Spacing.sm,
     },
-    optionalTag: {
-        marginLeft: 'auto',
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 2,
-        borderRadius: BorderRadius.full,
-    },
-    optionalTagText: {
-        fontSize: 9,
-        fontWeight: '600',
-    },
-    row: { flexDirection: 'row', gap: Spacing.md },
-    halfInput: { flex: 1 },
-    inputLabel: {
+    addVehicleText: { fontSize: FontSizes.md, fontWeight: '600' },
+    inputGroup: { marginBottom: Spacing.md },
+    label: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
         marginBottom: Spacing.xs,
     },
-    inputHint: {
-        fontSize: FontSizes.xs,
-        marginBottom: Spacing.sm,
-        fontStyle: 'italic',
-    },
     input: {
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
-        fontSize: FontSizes.md,
         borderWidth: 1,
-        marginBottom: Spacing.md,
-    },
-    textArea: { minHeight: 80, textAlignVertical: 'top' },
-
-    // VIN Specific Styles
-    vinContainer: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
-    vinInput: {
-        flex: 1,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.md,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         fontSize: FontSizes.md,
+    },
+    textArea: {
         borderWidth: 1,
-        minHeight: 52,
-        textAlignVertical: 'center',
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        fontSize: FontSizes.md,
+        minHeight: 120,
     },
-    scanButton: { height: 50, borderRadius: BorderRadius.lg, overflow: 'hidden', ...Shadows.sm },
-    scanButtonGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, height: '100%' },
-    scanIcon: { fontSize: 20, marginRight: Spacing.xs },
-    scanText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.sm },
-
-    conditionRow: { flexDirection: 'row', gap: Spacing.sm },
-    conditionButton: {
-        flex: 1,
-        paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        alignItems: 'center',
-        borderWidth: 2,
+    charCount: {
+        fontSize: FontSizes.xs,
+        marginTop: Spacing.xs,
+        textAlign: 'right',
     },
-    conditionText: { fontSize: FontSizes.md, fontWeight: '500' },
-    imageActions: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
-    imageButton: {
-        flex: 1,
+    conditionGrid: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
+        gap: Spacing.sm,
+        marginTop: Spacing.xs,
     },
-    imageButtonIcon: { fontSize: 20, marginRight: Spacing.sm },
-    imageButtonText: { fontSize: FontSizes.md, fontWeight: '500' },
-    imagePreview: { flexDirection: 'row' },
-    imageContainer: { marginRight: Spacing.sm, position: 'relative' },
-    image: { width: 80, height: 80, borderRadius: BorderRadius.md },
-    removeImage: {
+    conditionCard: {
+        flex: 1,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.md,
+        alignItems: 'center',
+        gap: Spacing.xs,
+    },
+    conditionIcon: { fontSize: 24 },
+    conditionLabel: { fontSize: FontSizes.xs, fontWeight: '600', textAlign: 'center' },
+    photoGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm,
+    },
+    photoWrapper: {
+        width: 100,
+        height: 100,
+        borderRadius: BorderRadius.md,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    photo: { width: '100%', height: '100%' },
+    removePhotoButton: {
         position: 'absolute',
-        top: -8,
-        right: -8,
+        top: 4,
+        right: 4,
         width: 24,
         height: 24,
         borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...Shadows.sm,
-    },
-    removeImageText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-    locationActions: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
-    locationButton: {
-        flex: 1,
-        flexDirection: 'row',
+        backgroundColor: 'rgba(0,0,0,0.7)',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
     },
-    addressBookButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-    },
-    addressBookText: { fontSize: FontSizes.md, fontWeight: '600' },
-    locationIcon: { fontSize: 20, marginRight: Spacing.sm },
-    locationText: { fontSize: FontSizes.md, fontWeight: '600' },
-    feePreview: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
-    },
-    feeLabel: { fontSize: FontSizes.md },
-    feeAmount: { fontSize: FontSizes.xl, fontWeight: '800' },
-    submitButton: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginTop: Spacing.md, ...Shadows.md },
-    submitButtonDisabled: { opacity: 0.7 },
-    submitGradient: { paddingVertical: Spacing.lg, alignItems: 'center' },
-    submitText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
-    // OR Divider styles
-    orDivider: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: Spacing.lg,
-        marginBottom: Spacing.md,
-    },
-    orLine: {
-        flex: 1,
-        height: 1,
-    },
-    orText: {
-        paddingHorizontal: Spacing.md,
-        fontSize: FontSizes.xs,
-        fontWeight: '600',
-        letterSpacing: 0.5,
-    },
-    modelHint: {
-        fontSize: FontSizes.xs,
-        marginTop: Spacing.xs,
-        fontStyle: 'italic',
-    },
-    // Vehicle Photos Styles
-    recommendedBadge: {
-        marginLeft: 'auto',
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 2,
-        borderRadius: BorderRadius.full,
-    },
-    recommendedText: {
-        fontSize: 9,
-        fontWeight: '700',
-        color: '#B45309',
-        letterSpacing: 0.5,
-    },
-    vehiclePhotoHint: {
-        fontSize: FontSizes.sm,
-        marginBottom: Spacing.md,
-        textAlign: 'center',
-    },
-    vehiclePhotoRow: {
-        flexDirection: 'row',
-        gap: Spacing.md,
-    },
-    vehiclePhotoBox: {
-        flex: 1,
-        height: 140,
-        borderRadius: BorderRadius.xl,
+    removePhotoIcon: { color: '#fff', fontSize: 14 },
+    addPhotoButton: {
+        width: 100,
+        height: 100,
+        borderRadius: BorderRadius.md,
         borderWidth: 2,
         borderStyle: 'dashed',
-        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#FAFAFA',
+        justifyContent: 'center',
+        gap: Spacing.xs,
+    },
+    addPhotoIcon: { fontSize: 28 },
+    addPhotoText: { fontSize: FontSizes.xs, fontWeight: '600' },
+    photoLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: 8 },
+    footer: {
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.lg,
+        borderTopWidth: 1,
+    },
+    submitButton: {
+        borderRadius: BorderRadius.lg,
         overflow: 'hidden',
     },
-    vehiclePhotoIcon: {
-        fontSize: 36,
-        marginBottom: Spacing.xs,
-    },
-    vehiclePhotoLabel: {
-        fontSize: FontSizes.md,
-        fontWeight: '600',
-    },
-    vehiclePhotoTap: {
-        fontSize: FontSizes.xs,
-        marginTop: 4,
-    },
-    vehiclePhotoImage: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    vehiclePhotoRemove: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        justifyContent: 'center',
+    submitButtonDisabled: { opacity: 0.5 },
+    submitGradient: {
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.md,
+        gap: Spacing.sm,
     },
-    vehiclePhotoRemoveText: {
+    submitText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: FontSizes.lg,
         fontWeight: '700',
     },
-    partHelpText: {
+    submitIcon: {
+        color: '#fff',
+        fontSize: FontSizes.xl,
+    },
+    footerHint: {
         fontSize: FontSizes.xs,
-        marginTop: -Spacing.sm,
-        marginBottom: Spacing.md,
-        fontStyle: 'italic',
-        lineHeight: 18,
+        textAlign: 'center',
+        marginTop: Spacing.sm,
     },
 });

@@ -3,6 +3,7 @@ import {
     acceptBid,
     updateOrderStatus,
     getMyOrders,
+    getOrderCount,
     getOrderDetails,
     confirmDelivery,
     submitReview,
@@ -25,6 +26,16 @@ router.post('/accept-bid/:bid_id', authenticate, requireRole('customer'), orderW
 
 // Both: Get my orders (filtered by user type)
 router.get('/my', authenticate, getMyOrders);
+
+// ============================================
+// CUSTOMER: GET ORDERS (for customer-specific view)
+// ============================================
+router.get('/orders', authenticate, getMyOrders);
+
+// ============================================
+// CUSTOMER: GET ORDER COUNT (for confetti trigger)
+// ============================================
+router.get('/orders/count', authenticate, getOrderCount);
 
 // Both: Get order details
 router.get('/:order_id', authenticate, validateParams(orderIdParamSchema), getOrderDetails);

@@ -1,5 +1,5 @@
 // QScrap API Service - Full Backend Integration
-import { API_BASE_URL, API_V1_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import * as SecureStore from 'expo-secure-store';
 
 // Token Storage Keys
@@ -45,18 +45,24 @@ export interface Bid {
     bid_id: string;
     garage_id: string;
     garage_name: string;
-    bid_amount: number;
-    warranty_days: number;
+    garage_photo_url?: string;
+    bid_amount: number | string;
     part_condition: string;
+    warranty_days: number;
+    delivery_days: number;
     notes?: string;
-    status: string;
+    bid_status: string;
     created_at: string;
     rating_average?: number;
     rating_count?: number;
-    image_urls?: string[];  // Images uploaded by garage with bid
-    // Counter-offer fields
+    image_urls?: string[];
+    condition_photos?: string[];
+    customer_counter_amount?: number;
+    customer_counter_status?: string;
     garage_counter_amount?: number;
-    garage_counter_message?: string;
+    garage_counter_status?: string;
+    negotiation_id?: string;
+    customer_counter_id?: string;
     garage_counter_id?: string;
     plan_code?: string;
 }
@@ -118,21 +124,6 @@ export interface Product {
     view_count: number;
 }
 
-// Saved Vehicle (My Vehicles / Family Fleet)
-export interface SavedVehicle {
-    vehicle_id: string;
-    car_make: string;
-    car_model: string;
-    car_year: number;
-    vin_number?: string;
-    front_image_url?: string;
-    rear_image_url?: string;
-    nickname?: string;
-    is_primary: boolean;
-    last_used_at?: string;
-    request_count: number;
-}
-
 // API Helper
 class ApiService {
     private token: string | null = null;
@@ -173,10 +164,8 @@ class ApiService {
 
     private async request<T>(
         endpoint: string,
-        options: RequestInit = {},
-        retryCount: number = 0
+        options: RequestInit = {}
     ): Promise<T> {
-        const MAX_RETRIES = 3;
         const token = await this.getToken();
 
         const headers: HeadersInit = {
@@ -185,49 +174,18 @@ class ApiService {
             ...options.headers,
         };
 
-        try {
-            const response = await fetch(`${API_V1_BASE_URL}${endpoint}`, {
-                ...options,
-                headers,
-            });
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers,
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (!response.ok) {
-                // Safely extract error message to prevent [object Object]
-                let errorMessage = 'Request failed';
-                if (typeof data.error === 'string') {
-                    errorMessage = data.error;
-                } else if (data.error?.message) {
-                    errorMessage = data.error.message;
-                } else if (typeof data.message === 'string') {
-                    errorMessage = data.message;
-                }
-
-                // Retry on 5xx server errors
-                if (response.status >= 500 && retryCount < MAX_RETRIES) {
-                    console.log(`[API] Retry ${retryCount + 1}/${MAX_RETRIES} for ${endpoint}`);
-                    await this.delay(Math.pow(2, retryCount) * 1000); // Exponential backoff
-                    return this.request<T>(endpoint, options, retryCount + 1);
-                }
-
-                throw new Error(errorMessage);
-            }
-
-            return data;
-        } catch (error: any) {
-            // Retry on network errors
-            if (error.name === 'TypeError' && retryCount < MAX_RETRIES) {
-                console.log(`[API] Network retry ${retryCount + 1}/${MAX_RETRIES} for ${endpoint}`);
-                await this.delay(Math.pow(2, retryCount) * 1000);
-                return this.request<T>(endpoint, options, retryCount + 1);
-            }
-            throw error;
+        if (!response.ok) {
+            throw new Error(data.error || 'Request failed');
         }
-    }
 
-    private delay(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return data;
     }
 
     // Auth
@@ -273,14 +231,6 @@ class ApiService {
         return this.request(API_ENDPOINTS.PROFILE);
     }
 
-    async getUrgentActions(): Promise<any> {
-        return this.request('/dashboard/customer/urgent-actions');
-    }
-
-    async getContextualData(): Promise<any> {
-        return this.request('/dashboard/customer/contextual-data');
-    }
-
     // Requests
     async getMyRequests(): Promise<{ requests: Request[] }> {
         return this.request(API_ENDPOINTS.MY_REQUESTS);
@@ -298,7 +248,7 @@ class ApiService {
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
         try {
-            const response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -526,6 +476,16 @@ class ApiService {
         }
     }
 
+    async getOrders() {
+        const response = await this.request('/orders');
+        return response.data;
+    }
+
+    async getOrderCount(): Promise<{ total: number }> {
+        const response = await this.request('/orders/count');
+        return response.data;
+    }
+
     // Cancellation
     async getCancellationPreview(orderId: string): Promise<any> {
         return this.request(`/orders/${orderId}/cancel-preview`);
@@ -546,7 +506,7 @@ class ApiService {
     // Disputes
     async createDispute(formData: FormData): Promise<any> {
         const token = await this.getToken();
-        const response = await fetch(`${API_V1_BASE_URL}/disputes`, {
+        const response = await fetch(`${API_BASE_URL}/disputes`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -561,84 +521,151 @@ class ApiService {
     }
 
     // ============================================
-    // MY VEHICLES (Family Fleet)
+    // ESCROW - Buyer Protection
     // ============================================
+    async getEscrowStatus(orderId: string): Promise<{
+        escrow_id: string;
+        status: 'held' | 'released' | 'refunded' | 'disputed';
+        amount: number;
+        inspection_expires_at: string;
+        buyer_confirmed_at?: string;
+    }> {
+        return this.request(`/escrow/order/${orderId}`);
+    }
 
-    async getMyVehicles(): Promise<{ success: boolean; vehicles: SavedVehicle[] }> {
+    async confirmEscrowReceipt(escrowId: string, photos: string[]): Promise<any> {
+        return this.request(`/escrow/${escrowId}/confirm`, {
+            method: 'POST',
+            body: JSON.stringify({
+                photos,
+                notes: 'Buyer confirmed receipt'
+            })
+        });
+    }
+
+    async raiseEscrowDispute(escrowId: string, reason: string, photos?: string[]): Promise<any> {
+        return this.request(`/escrow/${escrowId}/dispute`, {
+            method: 'POST',
+            body: JSON.stringify({ reason, photos })
+        });
+    }
+
+    async uploadProofOfCondition(escrowId: string, orderId: string, photos: string[], captureType: string): Promise<any> {
+        return this.request(`/escrow/${escrowId}/proof`, {
+            method: 'POST',
+            body: JSON.stringify({
+                order_id: orderId,
+                capture_type: captureType,
+                image_urls: photos
+            })
+        });
+    }
+
+    // ============================================
+    // LOYALTY - Points & Rewards
+    // ============================================
+    async getLoyaltyBalance(): Promise<{
+        points: number;
+        tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+        lifetime_points: number;
+        points_to_next_tier: number;
+    }> {
+        return this.request('/loyalty/balance');
+    }
+
+    async getLoyaltyHistory(): Promise<{ transactions: any[] }> {
+        return this.request('/loyalty/history');
+    }
+
+    async redeemPoints(points: number, orderId?: string): Promise<{
+        success: boolean;
+        discount_amount: number;
+        remaining_points: number;
+    }> {
+        return this.request('/loyalty/redeem', {
+            method: 'POST',
+            body: JSON.stringify({ points, order_id: orderId })
+        });
+    }
+
+    // ============================================
+    // PAYMENTS - Digital Processing
+    // ============================================
+    async processPayment(paymentData: {
+        order_id: string;
+        amount: number;
+        card_number: string;
+        expiry_month: string;
+        expiry_year: string;
+        cvv: string;
+        cardholder_name: string;
+    }): Promise<{
+        success: boolean;
+        transaction_id: string;
+        receipt_url?: string;
+    }> {
+        return this.request('/payments/process', {
+            method: 'POST',
+            body: JSON.stringify(paymentData)
+        });
+    }
+
+    async getTestCards(): Promise<{ cards: any[] }> {
+        return this.request('/payments/test-cards');
+    }
+
+    async getPaymentMethods(): Promise<{ methods: any[] }> {
+        return this.request('/payments/methods');
+    }
+
+    // ============================================
+    // DASHBOARD - Smart HomeScreen
+    // ============================================
+    async getUrgentActions(): Promise<{ urgent_actions: any[]; count: number }> {
+        return this.request('/v1/dashboard/customer/urgent-actions');
+    }
+
+    async getContextualData(): Promise<{
+        unread_bids: number;
+        active_services: number;
+        money_saved_this_month: number;
+        loyalty_points: number;
+        orders_this_month: number;
+    }> {
+        return this.request('/v1/dashboard/customer/contextual-data');
+    }
+
+    // ============================================
+    // VEHICLES - Family Fleet
+    // ============================================
+    async getMyVehicles(): Promise<{ vehicles: any[] }> {
         return this.request('/vehicles');
     }
 
-    async saveVehicle(vehicle: {
+    async addVehicle(vehicleData: {
         car_make: string;
         car_model: string;
         car_year: number;
         vin_number?: string;
         nickname?: string;
-        is_primary?: boolean;
-    }): Promise<{ success: boolean; vehicle: SavedVehicle }> {
+    }): Promise<any> {
         return this.request('/vehicles', {
             method: 'POST',
-            body: JSON.stringify(vehicle)
+            body: JSON.stringify(vehicleData)
         });
     }
 
-    async deleteVehicle(vehicleId: string): Promise<{ success: boolean }> {
+    async deleteVehicle(vehicleId: string): Promise<any> {
         return this.request(`/vehicles/${vehicleId}`, {
             method: 'DELETE'
         });
     }
 
-    // ============================================
-    // QUICK SERVICES
-    // ============================================
-
-    async createQuickServiceRequest(data: {
-        service_type: string;
-        location_lat: number;
-        location_lng: number;
-        location_address: string;
-        vehicle_make: string;
-        vehicle_model: string;
-        vehicle_year: number;
-        notes?: string;
-        payment_method: 'cash' | 'card';
-    }): Promise<any> {
-        return this.request('/services/quick/request', {
-            method: 'POST',
-            body: JSON.stringify(data),
+    async updateVehicle(vehicleId: string, data: { nickname?: string; is_primary?: boolean }): Promise<any> {
+        return this.request(`/vehicles/${vehicleId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
         });
-    }
-
-    async getMyQuickServiceRequests(): Promise<{ success: boolean; requests: any[] }> {
-        return this.request('/services/quick/my-requests');
-    }
-
-    async getQuickServiceDetails(requestId: string): Promise<any> {
-        return this.request(`/services/quick/${requestId}`);
-    }
-
-    async acceptQuickServiceQuote(requestId: string): Promise<any> {
-        return this.request(`/services/quick/${requestId}/accept-quote`, {
-            method: 'POST',
-        });
-    }
-
-    async rejectQuickServiceQuote(requestId: string, findAnother: boolean): Promise<any> {
-        return this.request(`/services/quick/${requestId}/reject-quote`, {
-            method: 'POST',
-            body: JSON.stringify({ find_another: findAnother }),
-        });
-    }
-
-    async cancelQuickService(requestId: string): Promise<any> {
-        return this.request(`/services/quick/${requestId}/cancel`, {
-            method: 'POST',
-        });
-    }
-
-    // Unified Activity Feed (Quick Services + Spare Parts)
-    async getCustomerActivity(limit: number = 20, offset: number = 0): Promise<any> {
-        return this.request(`/dashboard/customer/activity?limit=${limit}&offset=${offset}`);
     }
 
 }

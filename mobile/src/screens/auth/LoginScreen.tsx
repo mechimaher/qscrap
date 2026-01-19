@@ -35,8 +35,11 @@ export default function LoginScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Logo animation
+    // Animations
     const floatAnim = useRef(new Animated.Value(0)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const goldShimmerAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         // Floating animation
@@ -53,6 +56,21 @@ export default function LoginScreen() {
                     useNativeDriver: true,
                 }),
             ])
+        ).start();
+
+        // Entrance fade
+        Animated.parallel([
+            Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+            Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
+        ]).start();
+
+        // Gold shimmer effect
+        Animated.loop(
+            Animated.timing(goldShimmerAnim, {
+                toValue: 1,
+                duration: 3000,
+                useNativeDriver: true,
+            })
         ).start();
     }, []);
 
@@ -95,16 +113,21 @@ export default function LoginScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Logo Section with Premium Animation */}
-                    <View style={styles.logoSection}>
+                    <Animated.View style={[
+                        styles.logoSection,
+                        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+                    ]}>
                         <Animated.View
                             style={[
                                 styles.logoContainer,
                                 {
                                     transform: [{ translateY: floatAnim }],
-                                    shadowColor: colors.primary,
+                                    shadowColor: '#D4AF37',
                                 }
                             ]}
                         >
+                            {/* Gold Ring */}
+                            <View style={styles.goldRing} />
                             <Image
                                 source={require('../../../assets/logo.png')}
                                 style={styles.logo}
@@ -112,13 +135,25 @@ export default function LoginScreen() {
                             />
                         </Animated.View>
                         <Text style={styles.logoText}>QScrap</Text>
-                        <Text style={styles.tagline}>Qatar Auto Parts Marketplace</Text>
-                    </View>
+                        <View style={styles.taglineContainer}>
+                            <View style={styles.goldLine} />
+                            <Text style={styles.tagline}>Qatar's Premier Auto Parts</Text>
+                            <View style={styles.goldLine} />
+                        </View>
+                        <Text style={styles.taglineSubtext}>Used • Commercial • Genuine OEM</Text>
+                    </Animated.View>
 
-                    {/* Form Card */}
+                    {/* Form Card with Gold Accent */}
                     <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
+                        {/* Gold Top Accent */}
+                        <LinearGradient
+                            colors={['#D4AF37', '#F5D67B', '#D4AF37']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.goldTopAccent}
+                        />
                         <Text style={[styles.welcomeText, { color: colors.text }]}>Welcome Back</Text>
-                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>Sign in to your account</Text>
+                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>Sign in to continue</Text>
 
                         {error ? (
                             <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
@@ -227,17 +262,17 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 24,
-        overflow: 'hidden',
         marginBottom: Spacing.md,
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+        elevation: 12,
     },
     logo: {
         width: 100,
         height: 100,
         borderRadius: 24,
+        overflow: 'hidden',
     },
     logoText: {
         fontSize: 42,
@@ -250,12 +285,51 @@ const styles = StyleSheet.create({
     },
     tagline: {
         fontSize: FontSizes.md,
-        color: 'rgba(255, 255, 255, 0.8)',
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontWeight: '600',
+        marginHorizontal: Spacing.sm,
+    },
+    taglineContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: Spacing.sm,
+    },
+    taglineSubtext: {
+        fontSize: FontSizes.sm,
+        color: 'rgba(212, 175, 55, 0.9)',
         marginTop: Spacing.xs,
+        fontWeight: '500',
+    },
+    goldLine: {
+        width: 30,
+        height: 2,
+        backgroundColor: '#D4AF37',
+        borderRadius: 1,
+    },
+    goldRing: {
+        position: 'absolute',
+        top: -4,
+        left: -4,
+        right: -4,
+        bottom: -4,
+        borderRadius: 28,
+        borderWidth: 3,
+        borderColor: '#D4AF37',
+    },
+    goldTopAccent: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        borderTopLeftRadius: BorderRadius.xl,
+        borderTopRightRadius: BorderRadius.xl,
     },
     formCard: {
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
+        paddingTop: Spacing.xl + 4,
+        overflow: 'hidden',
         ...Shadows.lg,
     },
     welcomeText: {

@@ -5,7 +5,7 @@
 
 import { LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { RootStackParamList } from '../../App';
 
 // URL Scheme prefix for QScrap
 const prefix = Linking.createURL('/');

@@ -141,14 +141,17 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
     const modelCheck = validateStringLength(carModel, 'Car model', 100);
     if (!modelCheck.valid) throw new Error(modelCheck.message);
 
-    // 3. File Handling
+    // File Handling - Part Photos
     const partImages = (files?.['images'] || []).filter(f => f && f.path);
     const imageUrls = partImages.map(f => '/' + f.path.replace(/\\/g, '/'));
 
-    const frontImageFile = files?.['car_front_image']?.[0];
-    const rearImageFile = files?.['car_rear_image']?.[0];
-    const carFrontImageUrl = frontImageFile?.path ? '/' + frontImageFile.path.replace(/\\/g, '/') : null;
-    const carRearImageUrl = rearImageFile?.path ? '/' + rearImageFile.path.replace(/\\/g, '/') : null;
+    // Vehicle ID Photos (for Qatar scrap garages)
+    const carFrontImageFile = files?.['car_front_image']?.[0];
+    const carRearImageFile = files?.['car_rear_image']?.[0];
+    const carFrontImageUrl = carFrontImageFile?.path ? '/' + carFrontImageFile.path.replace(/\\/g, '/') : null;
+    const carRearImageUrl = carRearImageFile?.path ? '/' + carRearImageFile.path.replace(/\\/g, '/') : null;
+
+
 
     const client = await pool.connect();
     try {

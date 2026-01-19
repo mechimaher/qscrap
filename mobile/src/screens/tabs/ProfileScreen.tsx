@@ -16,7 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../components/Toast';
-import { PRIVACY_URL, TERMS_URL, APP_VERSION, SUPPORT_PHONE, SUPPORT_WHATSAPP, SUPPORT_EMAIL } from '../../config/api';
+import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
                         style={styles.editButton}
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            navigation.navigate('EditProfile' as never);
+                            navigation.navigate('EditProfile');
                         }}
                     >
                         <Text style={styles.editButtonText}>Edit</Text>
@@ -200,9 +200,9 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Account</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses' as never)} />
-                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications' as never)} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
-                        <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings' as never)} />
+                        <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses')} />
+                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications')} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
+                        <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings')} />
                     </View>
                 </View>
 
@@ -210,13 +210,13 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Support</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="🎫" label="Support Tickets" onPress={() => navigation.navigate('Support' as never)} />
+                        <MenuItem icon="🎫" label="Support Tickets" onPress={() => navigation.navigate('Support')} />
                         <MenuItem icon="💬" label="Help Center" onPress={() => Alert.alert(
                             'Help Center',
                             'How can we help you today?',
                             [
                                 { text: 'FAQs', onPress: () => Alert.alert('FAQs', '• How to request a part?\nGo to Home > New Part Request\n\n• How long for delivery?\nTypically 1-3 business days\n\n• Payment methods?\nCash on delivery or card') },
-                                { text: 'Contact Support', onPress: () => Linking.openURL(`${SUPPORT_WHATSAPP}?text=Hi%20QScrap%20Support`) },
+                                { text: 'Contact Support', onPress: () => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support') },
                                 { text: 'Cancel', style: 'cancel' }
                             ]
                         )} />
@@ -224,9 +224,9 @@ export default function ProfileScreen() {
                             'Contact QScrap',
                             'Choose how to reach us:',
                             [
-                                { text: '📱 WhatsApp', onPress: () => Linking.openURL(SUPPORT_WHATSAPP) },
-                                { text: '📞 Call Us', onPress: () => Linking.openURL(`tel:${SUPPORT_PHONE}`) },
-                                { text: '✉️ Email', onPress: () => Linking.openURL(`mailto:${SUPPORT_EMAIL}`) },
+                                { text: '📱 WhatsApp', onPress: () => Linking.openURL('https://wa.me/97412345678') },
+                                { text: '📞 Call Us', onPress: () => Linking.openURL('tel:+97412345678') },
+                                { text: '✉️ Email', onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
                                 { text: 'Cancel', style: 'cancel' }
                             ]
                         )} />
@@ -268,7 +268,7 @@ export default function ProfileScreen() {
                     <View style={styles.versionBadge}>
                         <Text style={styles.versionText}>QScrap v{APP_VERSION}</Text>
                     </View>
-                    <Text style={styles.copyrightText}>© 2026 QScrap. All rights reserved.</Text>
+                    <Text style={styles.copyrightText}>© 2024 QScrap. All rights reserved.</Text>
                     <Text style={styles.madeWithText}>Made with ❤️ in Qatar</Text>
                 </View>
 

@@ -1,37 +1,60 @@
-// ErrorBoundary - Catches React component errors and shows recovery UI
-import React, { Component, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
 
 interface Props {
     children: ReactNode;
     fallback?: ReactNode;
-    onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
     hasError: boolean;
     error: Error | null;
+    errorInfo: ErrorInfo | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+/**
+ * ErrorBoundary catches JavaScript errors anywhere in the child component tree,
+ * logs those errors, and displays a fallback UI instead of crashing the app.
+ * 
+ * Required for app store certification - prevents white screen crashes.
+ */
+export class ErrorBoundary extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = { hasError: false, error: null };
+        this.state = {
+            hasError: false,
+            error: null,
+            errorInfo: null,
+        };
     }
 
-    static getDerivedStateFromError(error: Error): State {
+    static getDerivedStateFromError(error: Error): Partial<State> {
         return { hasError: true, error };
     }
 
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error('[ErrorBoundary] Caught error:', error, errorInfo);
-        this.props.onError?.(error, errorInfo);
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        // Log error to console (in production, send to error reporting service)
+        console.error('ErrorBoundary caught an error:', error, errorInfo);
+        this.setState({ errorInfo });
+
+        // TODO: Send to crash reporting service (Sentry, Crashlytics, etc.)
+        // crashReportingService.logError(error, errorInfo);
     }
 
-    handleRetry = () => {
-        this.setState({ hasError: false, error: null });
+    handleRestart = () => {
+        this.setState({
+            hasError: false,
+            error: null,
+            errorInfo: null,
+        });
     };
 
     render() {
@@ -43,24 +66,45 @@ class ErrorBoundary extends Component<Props, State> {
             return (
                 <View style={styles.container}>
                     <View style={styles.content}>
-                        <Text style={styles.icon}>⚠️</Text>
-                        <Text style={styles.title}>Something went wrong</Text>
+                        {/* Error Icon */}
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="warning-outline" size={64} color={Colors.dark.warning} />
+                        </View>
+
+                        {/* Error Message */}
+                        <Text style={styles.title}>Oops! Something went wrong</Text>
                         <Text style={styles.message}>
-                            We're sorry, but something unexpected happened. Please try again.
+                            We apologize for the inconvenience. The app encountered an unexpected error.
                         </Text>
+
+                        {/* Error Details (Dev Mode) */}
                         {__DEV__ && this.state.error && (
-                            <Text style={styles.errorDetail}>
-                                {this.state.error.message}
-                            </Text>
+                            <ScrollView style={styles.errorDetails} nestedScrollEnabled>
+                                <Text style={styles.errorText}>
+                                    {this.state.error.toString()}
+                                </Text>
+                                {this.state.errorInfo && (
+                                    <Text style={styles.stackTrace}>
+                                        {this.state.errorInfo.componentStack}
+                                    </Text>
+                                )}
+                            </ScrollView>
                         )}
-                        <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
-                            <LinearGradient
-                                colors={[Colors.primary, '#B31D4A']}
-                                style={styles.buttonGradient}
-                            >
-                                <Text style={styles.buttonText}>Try Again</Text>
-                            </LinearGradient>
+
+                        {/* Retry Button */}
+                        <TouchableOpacity
+                            style={styles.retryButton}
+                            onPress={this.handleRestart}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="refresh" size={20} color="#fff" />
+                            <Text style={styles.retryText}>Try Again</Text>
                         </TouchableOpacity>
+
+                        {/* Help Text */}
+                        <Text style={styles.helpText}>
+                            If the problem persists, please contact support.
+                        </Text>
                     </View>
                 </View>
             );
@@ -73,56 +117,77 @@ class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: Colors.dark.background,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#FAFAFA',
         padding: Spacing.xl,
     },
     content: {
         alignItems: 'center',
-        maxWidth: 300,
+        maxWidth: 320,
     },
-    icon: {
-        fontSize: 64,
-        marginBottom: Spacing.lg,
+    iconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: Colors.dark.warning + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.xl,
     },
     title: {
-        fontSize: FontSizes.xxl,
-        fontWeight: '800',
-        color: '#1A1A1A',
-        marginBottom: Spacing.sm,
+        fontSize: FontSize.xxl,
+        fontWeight: '700',
+        color: '#1a1a1a',
         textAlign: 'center',
+        marginBottom: Spacing.md,
     },
     message: {
-        fontSize: FontSizes.md,
-        color: '#6A6A6A',
+        fontSize: FontSize.md,
+        color: '#525252',
         textAlign: 'center',
         lineHeight: 22,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.xl,
     },
-    errorDetail: {
-        fontSize: FontSizes.sm,
-        color: Colors.error,
-        textAlign: 'center',
-        marginBottom: Spacing.lg,
-        padding: Spacing.md,
-        backgroundColor: '#FEE2E2',
+    errorDetails: {
+        maxHeight: 150,
+        backgroundColor: Colors.dark.surface,
         borderRadius: BorderRadius.md,
+        padding: Spacing.md,
+        marginBottom: Spacing.xl,
         width: '100%',
     },
-    button: {
+    errorText: {
+        fontSize: FontSize.sm,
+        color: Colors.dark.danger,
+        fontFamily: 'monospace',
+    },
+    stackTrace: {
+        fontSize: FontSize.xs,
+        color: '#737373',
+        fontFamily: 'monospace',
+        marginTop: Spacing.sm,
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Colors.dark.primary,
+        paddingHorizontal: Spacing.xxl,
+        paddingVertical: Spacing.lg,
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
-        marginTop: Spacing.md,
+        gap: Spacing.sm,
+        marginBottom: Spacing.lg,
     },
-    buttonGradient: {
-        paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.xl,
-    },
-    buttonText: {
+    retryText: {
+        fontSize: FontSize.lg,
+        fontWeight: '600',
         color: '#fff',
-        fontSize: FontSizes.md,
-        fontWeight: '700',
+    },
+    helpText: {
+        fontSize: FontSize.sm,
+        color: '#737373',
+        textAlign: 'center',
     },
 });
 

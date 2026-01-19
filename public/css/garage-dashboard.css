@@ -4508,3 +4508,148 @@ button.menu-toggle {
     color: var(--text-muted);
     font-size: 14px;
 }
+/* ============================================
+   Supplier Type Selector Styles
+   Qatar Gold Theme
+   ============================================ */
+
+/* Supplier Type Radio Cards */
+.supplier-type-radio {
+    cursor: pointer;
+}
+
+.supplier-type-radio input[type="radio"] {
+    display: none;
+}
+
+.supplier-type-radio .radio-card {
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    text-align: center;
+    min-height: 160px;
+}
+
+.supplier-type-radio .radio-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg-card);
+    transition: all 0.3s;
+}
+
+.supplier-type-radio input[type="radio"]:checked + .radio-card {
+    border-color: #D4AF37;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(168, 32, 80, 0.05));
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.supplier-type-radio input[type="radio"]:checked + .radio-card .radio-indicator {
+    border-color: #D4AF37;
+    background: #D4AF37;
+}
+
+.supplier-type-radio input[type="radio"]:checked + .radio-card .radio-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+}
+
+.supplier-type-radio .radio-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.supplier-type-radio .radio-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.supplier-type-radio .radio-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.supplier-type-radio .radio-card:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Brand Checkboxes Grid */
+.brand-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+.brand-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.brand-checkbox:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.brand-checkbox input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    accent-color: #D4AF37;
+    cursor: pointer;
+}
+
+.brand-checkbox label {
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+    flex: 1;
+}
+
+/* Toggle Switch Gold Theme Override */
+.toggle-switch input[type="checkbox"]:checked ~ .switch-slider {
+    background: linear-gradient(135deg, #D4AF37, #A82050) !important;
+}
+
+.toggle-switch .switch-slider::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input[type="checkbox"]:checked ~ .switch-slider::before {
+    transform: translateX(24px);
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}

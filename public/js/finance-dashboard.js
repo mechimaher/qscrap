@@ -197,10 +197,11 @@ async function loadBadges() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
+        const stats = data.stats || data;
 
-        updateBadge('pendingBadge', data.pending_count || 0);
-        updateBadge('awaitingBadge', data.sent_count || 0);
-        updateBadge('disputedBadge', data.disputed_count || 0);
+        updateBadge('pendingBadge', stats.pending_count || 0);
+        updateBadge('awaitingBadge', stats.awaiting_count || stats.sent_count || 0);
+        updateBadge('disputedBadge', stats.disputed_count || 0);
     } catch (err) {
         console.error('Failed to load badges:', err);
     }
@@ -224,12 +225,13 @@ async function loadOverview() {
         const statsRes = await fetch(`${API_URL}/finance/stats`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const stats = await statsRes.json();
+        const data = await statsRes.json();
+        const stats = data.stats || data;
 
         document.getElementById('statTotalRevenue').textContent = formatCurrency(stats.total_revenue || 0);
-        document.getElementById('statPendingPayouts').textContent = formatCurrency(stats.total_pending || 0);
-        document.getElementById('statAwaitingConfirm').textContent = formatCurrency(stats.total_sent || 0);
-        document.getElementById('statCompletedPayouts').textContent = formatCurrency(stats.total_confirmed || 0);
+        document.getElementById('statPendingPayouts').textContent = formatCurrency(stats.pending_payouts || stats.total_pending || 0);
+        document.getElementById('statAwaitingConfirm').textContent = formatCurrency(stats.processing_payouts || stats.total_sent || 0);
+        document.getElementById('statCompletedPayouts').textContent = formatCurrency(stats.total_paid || stats.total_confirmed || 0);
 
         // Load recent payouts
         const payoutsRes = await fetch(`${API_URL}/finance/payouts?limit=5`, {
@@ -250,7 +252,7 @@ async function loadOverview() {
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
                 <td>#${escapeHTML(p.order_number)}</td>
                 <td>${formatCurrency(p.net_amount)}</td>
-                <td><span class="status-badge ${p.status}">${p.status}</span></td>
+                <td><span class="status-badge ${p.payout_status || p.status}">${p.payout_status || p.status}</span></td>
                 <td>${formatDate(p.created_at)}</td>
             </tr>
         `).join('');
@@ -286,8 +288,8 @@ async function loadPendingPayouts(page = 1) {
                 <td><input type="checkbox" class="payout-checkbox" data-id="${p.payout_id}"></td>
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
                 <td>#${escapeHTML(p.order_number)}</td>
-                <td>${formatCurrency(p.amount)}</td>
-                <td>${formatCurrency(p.platform_fee)}</td>
+                <td>${formatCurrency(p.gross_amount || p.amount)}</td>
+                <td>${formatCurrency(p.commission_amount || p.platform_fee)}</td>
                 <td style="color: var(--success); font-weight: 600;">${formatCurrency(p.net_amount)}</td>
                 <td>${formatDate(p.created_at)}</td>
                 <td>
@@ -400,7 +402,7 @@ async function holdPayout(payoutId) {
 
 async function loadAwaitingPayouts() {
     try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=sent`, {
+        const res = await fetch(`${API_URL}/finance/payouts?status=awaiting_confirmation`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -537,8 +539,8 @@ async function loadCompletedPayouts(page = 1) {
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
                 <td>#${escapeHTML(p.order_number)}</td>
                 <td style="color: var(--success);">${formatCurrency(p.net_amount)}</td>
-                <td>${escapeHTML(p.payment_method || 'Bank Transfer')}</td>
-                <td>${escapeHTML(p.reference_number || '-')}</td>
+                <td>${escapeHTML(p.payout_method || p.payment_method || 'Bank Transfer')}</td>
+                <td>${escapeHTML(p.payout_reference || p.reference_number || '-')}</td>
                 <td>${formatDate(p.confirmed_at)}</td>
             </tr>
         `).join('');

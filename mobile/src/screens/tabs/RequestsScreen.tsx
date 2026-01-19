@@ -11,7 +11,6 @@ import {
     Alert,
     Animated,
     Easing,
-    TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -268,10 +267,27 @@ const ActiveRequestCard = ({
                                         </Text>
                                     </View>
                                 </View>
-                                <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                                    <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                                        {statusConfig.icon} {statusConfig.label}
-                                    </Text>
+                                <View style={styles.badgeRow}>
+                                    {/* Bid Count Badge - Premium Gradient */}
+                                    {item.bid_count > 0 && (
+                                        <LinearGradient
+                                            colors={['#8D1B3D', '#C9A227']}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 0 }}
+                                            style={styles.bidCountBadge}
+                                        >
+                                            <Text style={styles.bidCountNumber}>{item.bid_count}</Text>
+                                            <Text style={styles.bidCountLabel}>
+                                                {item.bid_count === 1 ? 'bid' : 'bids'}
+                                            </Text>
+                                        </LinearGradient>
+                                    )}
+                                    {/* Status Badge */}
+                                    <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                                        <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                                            {statusConfig.icon} {statusConfig.label}
+                                        </Text>
+                                    </View>
                                 </View>
                             </View>
 
@@ -282,6 +298,14 @@ const ActiveRequestCard = ({
                             >
                                 {item.part_description || 'No description'}
                             </Text>
+
+                            {/* Bid Preview - Show best price when 2+ bids */}
+                            {item.bid_count >= 2 && item.lowest_bid_price && (
+                                <View style={styles.bidPreviewContainer}>
+                                    <Text style={styles.bidPreviewLabel}>💰 Best Price:</Text>
+                                    <Text style={styles.bidPreviewPrice}>{item.lowest_bid_price} QAR</Text>
+                                </View>
+                            )}
 
                             {/* Active Card: Time Remaining & New Bids */}
                             {isActive && (
@@ -377,19 +401,6 @@ export default function RequestsScreen() {
     const [requests, setRequests] = useState<Request[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    // Filter requests by search query
-    const filteredRequests = requests.filter(r => {
-        if (!searchQuery.trim()) return true;
-        const query = searchQuery.toLowerCase();
-        return (
-            (r.car_make?.toLowerCase() || '').includes(query) ||
-            (r.car_model?.toLowerCase() || '').includes(query) ||
-            (r.part_description?.toLowerCase() || '').includes(query) ||
-            String(r.car_year || '').includes(query)
-        );
-    });
 
     const loadRequests = useCallback(async () => {
         try {
@@ -453,7 +464,7 @@ export default function RequestsScreen() {
             colors={colors}
             onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate('RequestDetails', { requestId: item.request_id });
+                navigation.navigate('RequestDetail', { requestId: item.request_id });
             }}
             onDelete={(close) => handleDeleteRequest(item, close)}
         />
@@ -512,35 +523,13 @@ export default function RequestsScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Search Bar */}
-            {requests.length > 0 && (
-                <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-                    <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
-                        <Text style={styles.searchIcon}>🔍</Text>
-                        <TextInput
-                            style={[styles.searchInput, { color: colors.text }]}
-                            placeholder="Search by car, part, or year..."
-                            placeholderTextColor={colors.textMuted}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                            returnKeyType="search"
-                        />
-                        {searchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSearchQuery('')}>
-                                <Text style={styles.clearIcon}>✕</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </View>
-            )}
-
             {isLoading ? (
                 <View style={styles.loadingContainer}>
                     <LoadingList count={4} />
                 </View>
             ) : (
                 <FlatList
-                    data={filteredRequests}
+                    data={requests}
                     keyExtractor={(item, index) => `${item.request_id}-${item.status}-${index}`}
                     renderItem={renderRequest}
                     contentContainerStyle={styles.listContent}
@@ -652,20 +641,30 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
+        marginRight: Spacing.md, // Space for badges
+        paddingRight: Spacing.sm,
     },
     carEmoji: {
         fontSize: 32,
         marginRight: Spacing.md,
+        flexShrink: 0, // Prevent emoji from shrinking
     },
     carName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         // color set dynamically via colors.text
+        marginBottom: 2,
     },
     carYear: {
         fontSize: FontSizes.sm,
         // color set dynamically via colors.textSecondary
         marginTop: 2,
+    },
+    badgeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
+        flexShrink: 0, // Prevent badges from shrinking
     },
     statusBadge: {
         paddingHorizontal: Spacing.md,
@@ -676,11 +675,54 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         fontWeight: '600',
     },
+    badgeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
+    },
+    bidCountBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+        gap: 4,
+    },
+    bidCountNumber: {
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+        color: '#ffffff',
+    },
+    bidCountLabel: {
+        fontSize: FontSizes.xs,
+        fontWeight: '600',
+        color: '#ffffff',
+        opacity: 0.9,
+    },
     partDescription: {
         fontSize: FontSizes.md,
         // color set dynamically via colors.textSecondary
         lineHeight: 22,
         marginBottom: Spacing.sm,
+    },
+    bidPreviewContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: Spacing.xs,
+        paddingTop: Spacing.xs,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(141, 27, 61, 0.1)',
+        gap: Spacing.xs,
+    },
+    bidPreviewLabel: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        color: '#22C55E',
+    },
+    bidPreviewPrice: {
+        fontSize: FontSizes.md,
+        fontWeight: '800',
+        color: '#22C55E',
     },
     // Active indicators row
     activeIndicators: {
@@ -864,32 +906,5 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         opacity: 0.8,
     },
-    // Search bar styles
-    searchContainer: {
-        paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        borderRadius: BorderRadius.lg,
-    },
-    searchIcon: {
-        fontSize: 16,
-        marginRight: Spacing.sm,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: FontSizes.md,
-        paddingVertical: Spacing.xs,
-    },
-    clearIcon: {
-        fontSize: 14,
-        color: '#9CA3AF',
-        paddingHorizontal: Spacing.sm,
-    },
 });
+

@@ -15,12 +15,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { api } from '../services/api';
-import { API_V1_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useSocketContext } from '../hooks/useSocket';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../contexts/ThemeContext';
-import { extractErrorMessage } from '../utils/errorHandler';
 
 interface CounterOffer {
     counter_offer_id: string;
@@ -84,6 +83,7 @@ export default function CounterOfferScreen() {
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 toast.success('Offer Accepted!', 'The garage has accepted your counter-offer.');
             }
         };
@@ -111,7 +111,7 @@ export default function CounterOfferScreen() {
         setIsLoading(true);
         try {
             const token = await api.getToken();
-            const response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.NEGOTIATION_HISTORY(bidId)}`, {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NEGOTIATION_HISTORY(bidId)}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -168,7 +168,7 @@ export default function CounterOfferScreen() {
             if (respondingToOfferId) {
                 // We're responding to a garage counter-offer
                 response = await fetch(
-                    `${API_V1_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`,
+                    `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`,
                     {
                         method: 'POST',
                         headers: {
@@ -184,7 +184,7 @@ export default function CounterOfferScreen() {
                 );
             } else {
                 // Initial counter-offer (no pending garage offer)
-                response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
+                response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -210,8 +210,13 @@ export default function CounterOfferScreen() {
                     duration: 4000
                 });
             } else {
-                const data = await response.json();
-                const errorMsg = extractErrorMessage(data) || `Server error ${response.status}`;
+                let errorMsg = 'Failed to send counter-offer';
+                try {
+                    const data = await response.json();
+                    errorMsg = data.error || data.message || `Server error ${response.status}`;
+                } catch {
+                    errorMsg = `Server error ${response.status}`;
+                }
                 toast.error('Error', errorMsg);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             }
@@ -245,7 +250,7 @@ export default function CounterOfferScreen() {
         try {
             const token = await api.getToken();
             const response = await fetch(
-                `${API_V1_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(pendingOffer.counter_offer_id)}`,
+                `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(pendingOffer.counter_offer_id)}`,
                 {
                     method: 'POST',
                     headers: {
@@ -275,12 +280,10 @@ export default function CounterOfferScreen() {
                 }
             } else {
                 const data = await response.json();
-                const errorMsg = extractErrorMessage(data) || 'Failed to respond';
-                throw new Error(errorMsg);
+                throw new Error(data.error || 'Failed to respond');
             }
         } catch (error: any) {
-            const errorMsg = extractErrorMessage(error) || 'Failed to respond';
-            toast.error('Error', errorMsg);
+            toast.error('Error', error.message || 'Failed to respond');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSending(false);

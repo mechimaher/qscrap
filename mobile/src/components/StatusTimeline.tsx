@@ -39,12 +39,11 @@ const STATUS_MAP: Record<string, number> = {
     'preparing': 1,
     'ready_for_pickup': 2,
     'ready_for_collection': 2,
-    'picked_up': 3,
     'collected': 3,
+    'picked_up': 3,
     'qc_in_progress': 3,
     'qc_passed': 3,
     'in_transit': 4,
-    'out_for_delivery': 4, // Maps to In Transit phase
     'arriving': 5,
     'delivered': 6,
     'completed': 7,

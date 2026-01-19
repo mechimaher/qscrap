@@ -32,7 +32,80 @@ export class VehicleService {
     }
 
     async deleteVehicle(customerId: string, vehicleId: string) {
-        const result = await this.pool.query(`DELETE FROM customer_vehicles WHERE vehicle_id = $1 AND customer_id = $2 RETURNING vehicle_id`, [vehicleId, customerId]);
+        console.log('[DELETE-VEHICLE] Starting deletion check', { customerId, vehicleId });
+
+        // Get vehicle details first
+        const vehicleResult = await this.pool.query(
+            `SELECT car_make, car_model, car_year FROM customer_vehicles WHERE vehicle_id = $1 AND customer_id = $2`,
+            [vehicleId, customerId]
+        );
+
+        if (vehicleResult.rows.length === 0) {
+            console.log('[DELETE-VEHICLE] Vehicle not found');
+            throw new Error('Vehicle not found');
+        }
+
+        const vehicle = vehicleResult.rows[0];
+        console.log('[DELETE-VEHICLE] Vehicle details:', vehicle);
+
+        // Check for active part requests
+        const activeRequestsResult = await this.pool.query(
+            `SELECT COUNT(*) as count FROM part_requests 
+             WHERE customer_id = $1 
+             AND car_make = $2 AND car_model = $3 AND car_year = $4
+             AND status IN ('active', 'accepted')`,
+            [customerId, vehicle.car_make, vehicle.car_model, vehicle.car_year]
+        );
+
+        const activeRequestsCount = parseInt(activeRequestsResult.rows[0].count);
+        console.log('[DELETE-VEHICLE] Active requests count:', activeRequestsCount);
+
+        // Check for active orders
+        const activeOrdersResult = await this.pool.query(
+            `SELECT COUNT(*) as count FROM orders o
+             INNER JOIN part_requests pr ON o.request_id = pr.request_id
+             WHERE pr.customer_id = $1
+             AND pr.car_make = $2 AND pr.car_model = $3 AND pr.car_year = $4
+             AND o.order_status NOT IN ('completed', 'cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops')`,
+            [customerId, vehicle.car_make, vehicle.car_model, vehicle.car_year]
+        );
+
+        const activeOrdersCount = parseInt(activeOrdersResult.rows[0].count);
+        console.log('[DELETE-VEHICLE] Active orders count:', activeOrdersCount);
+
+        // Check for active quick service bookings
+        const activeBookingsResult = await this.pool.query(
+            `SELECT COUNT(*) as count FROM quick_service_bookings
+             WHERE customer_id = $1
+             AND car_make = $2 AND car_model = $3 AND car_year = $4
+             AND status IN ('requested', 'confirmed', 'in_progress')`,
+            [customerId, vehicle.car_make, vehicle.car_model, vehicle.car_year]
+        );
+
+        const activeBookingsCount = parseInt(activeBookingsResult.rows[0].count);
+        console.log('[DELETE-VEHICLE] Active bookings count:', activeBookingsCount);
+
+        // Block deletion if any active items exist
+        if (activeRequestsCount > 0 || activeOrdersCount > 0 || activeBookingsCount > 0) {
+            const errors = [];
+            if (activeRequestsCount > 0) errors.push(`${activeRequestsCount} active request${activeRequestsCount > 1 ? 's' : ''}`);
+            if (activeOrdersCount > 0) errors.push(`${activeOrdersCount} active order${activeOrdersCount > 1 ? 's' : ''}`);
+            if (activeBookingsCount > 0) errors.push(`${activeBookingsCount} active service booking${activeBookingsCount > 1 ? 's' : ''}`);
+
+            const errorMessage = `Cannot delete vehicle. This vehicle has ${errors.join(', ')}. Please complete or cancel them first.`;
+            console.log('[DELETE-VEHICLE] BLOCKED:', errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        console.log('[DELETE-VEHICLE] All checks passed, proceeding with deletion');
+
+        // Safe to delete
+        const result = await this.pool.query(
+            `DELETE FROM customer_vehicles WHERE vehicle_id = $1 AND customer_id = $2 RETURNING vehicle_id`,
+            [vehicleId, customerId]
+        );
+
+        console.log('[DELETE-VEHICLE] Deletion successful');
         return result.rowCount! > 0;
     }
 

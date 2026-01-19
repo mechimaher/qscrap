@@ -15,12 +15,13 @@ export { default as RequestDetailScreen } from './RequestDetailScreen';
 export { default as OrderDetailScreen } from './OrderDetailScreen';
 
 // Functional screens (root level)
-export { default as RegisterScreen } from './auth/RegisterScreen';
+export { default as RegisterScreen } from './RegisterScreen';
 export { default as NewRequestScreen } from './NewRequestScreen';
 export { default as ChatScreen } from './ChatScreen';
 export { default as CounterOfferScreen } from './CounterOfferScreen';
 export { default as DisputeScreen } from './DisputeScreen';
 export { default as DeliveryTrackingScreen } from './DeliveryTrackingScreen';
+export { default as TrackingScreen } from './TrackingScreen';
 export { default as CancellationPreviewScreen } from './CancellationPreviewScreen';
 export { default as SupportScreen } from './SupportScreen';
 export { default as NotificationsScreen } from './NotificationsScreen';
@@ -32,3 +33,11 @@ export { default as SettingsScreen } from './SettingsScreen';
 export { default as PrivacyPolicyScreen } from './PrivacyPolicyScreen';
 export { default as TermsScreen } from './TermsScreen';
 export { default as OnboardingScreen } from './OnboardingScreen';
+
+// VIN Scanner
+export { default as VINScannerScreen } from './VINScannerScreen';
+export { default as ManualVINEntryScreen } from './ManualVINEntryScreen';
+
+// Payment & Escrow
+export { default as PaymentScreen } from './PaymentScreen';
+export { default as DeliveryConfirmationScreen } from './DeliveryConfirmationScreen';
