@@ -48,12 +48,14 @@ export class VehicleService {
         const vehicle = vehicleResult.rows[0];
         console.log('[DELETE-VEHICLE] Vehicle details:', vehicle);
 
-        // Check for active part requests
+
+        // Check for active part requests (still waiting for bids)
+        // Note: 'accepted' requests have orders which are checked separately below
         const activeRequestsResult = await this.pool.query(
             `SELECT COUNT(*) as count FROM part_requests 
              WHERE customer_id = $1 
              AND car_make = $2 AND car_model = $3 AND car_year = $4
-             AND status IN ('active', 'accepted')`,
+             AND status = 'active'`,
             [customerId, vehicle.car_make, vehicle.car_model, vehicle.car_year]
         );
 
