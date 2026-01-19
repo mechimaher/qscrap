@@ -58,21 +58,9 @@ export class DashboardUrgentService {
             });
         });
 
-        // 4. Arriving technicians (Quick Services)
-        const arrivingTechnicians = await this.pool.query(`
-            SELECT request_id, service_type, location_address, assigned_garage_id, dispatched_at,
-                   vehicle_make, vehicle_model, vehicle_year
-            FROM quick_service_requests WHERE customer_id = $1 AND status IN ('dispatched', 'arrived')
-            AND dispatched_at > NOW() - INTERVAL '2 hours' ORDER BY dispatched_at DESC LIMIT 3`, [customerId]);
+        // Note: Quick Services technician tracking removed (Jan 19 purge - "Simplicity is Beauty")
+        // Parts Marketplace only - no technician dispatch functionality
 
-        arrivingTechnicians.rows.forEach(service => {
-            urgentActions.push({
-                type: 'technician_arriving', priority: 1, request_id: service.request_id,
-                service_type: service.service_type, location: service.location_address,
-                vehicle: `${service.vehicle_year} ${service.vehicle_make} ${service.vehicle_model}`,
-                dispatched_at: service.dispatched_at, action: 'Technician is on the way'
-            });
-        });
 
         // 5. Pending counter-offers
         const pendingCounterOffers = await this.pool.query(`
@@ -97,9 +85,10 @@ export class DashboardUrgentService {
     }
 
     async getCustomerContextualData(customerId: string) {
-        const [unreadBids, activeServices, moneySaved, loyaltyPoints] = await Promise.all([
+        // Quick Services removed Jan 19 - Parts Marketplace only
+        const [unreadBids, activeOrders, moneySaved, loyaltyPoints] = await Promise.all([
             this.pool.query(`SELECT COUNT(DISTINCT b.bid_id) as count FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE pr.customer_id = $1 AND b.status = 'pending' AND pr.status = 'active'`, [customerId]),
-            this.pool.query(`SELECT COUNT(*) as count FROM quick_service_requests WHERE customer_id = $1 AND status IN ('pending', 'assigned', 'accepted', 'dispatched', 'arrived', 'in_progress')`, [customerId]),
+            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')`, [customerId]),
             this.pool.query(`SELECT COALESCE(SUM(total_amount), 0) as total_spent, COUNT(*) as order_count FROM orders WHERE customer_id = $1 AND order_status = 'completed' AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [customerId]),
             this.pool.query(`SELECT COALESCE(points_balance, 0) as balance FROM customer_rewards WHERE customer_id = $1`, [customerId])
         ]);
@@ -111,7 +100,7 @@ export class DashboardUrgentService {
 
         return {
             unread_bids: parseInt(unreadBids.rows[0].count),
-            active_services: parseInt(activeServices.rows[0].count),
+            active_orders: parseInt(activeOrders.rows[0].count),
             money_saved_this_month: Math.round(moneySavedAmount),
             loyalty_points: loyaltyPoints.rows[0] ? parseInt(loyaltyPoints.rows[0].balance) : 0,
             orders_this_month: orderCount
