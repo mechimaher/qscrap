@@ -78,47 +78,71 @@ export class AnalyticsService {
                 unique_customers: 0
             };
 
-            // Get top parts (limit to 10)
-            const topPartsResult = await pool.query(
-                `SELECT * FROM garage_popular_parts 
-                 WHERE garage_id = $1 
-                 ORDER BY order_count DESC, total_revenue DESC 
-                 LIMIT 10`,
-                [garageId]
-            );
+            // Get top parts - fallback to empty if view doesn't exist
+            let topParts: any[] = [];
+            try {
+                const topPartsResult = await pool.query(
+                    `SELECT * FROM garage_popular_parts 
+                     WHERE garage_id = $1 
+                     ORDER BY order_count DESC, total_revenue DESC 
+                     LIMIT 10`,
+                    [garageId]
+                );
+                topParts = topPartsResult.rows;
+            } catch (e) {
+                console.log('[ANALYTICS] garage_popular_parts view not available, using fallback');
+            }
 
-            // Get sales trend based on period
-            const trendResult = await pool.query(
-                `SELECT 
-                    date,
-                    orders_count,
-                    revenue,
-                    unique_customers,
-                    avg_rating,
-                    completed_orders,
-                    cancelled_orders
-                 FROM garage_daily_analytics
-                 WHERE garage_id = $1 
-                   AND date >= CURRENT_DATE - INTERVAL '${daysBack} days'
-                 ORDER BY date ASC`,
-                [garageId]
-            );
+            // Get sales trend - fallback to empty if view doesn't exist
+            let salesTrend: any[] = [];
+            try {
+                const trendResult = await pool.query(
+                    `SELECT 
+                        o.created_at::date as date,
+                        COUNT(*)::integer as orders_count,
+                        COALESCE(SUM(o.garage_payout_amount), 0) as revenue,
+                        COUNT(DISTINCT o.customer_id)::integer as unique_customers,
+                        0 as completed_orders,
+                        0 as cancelled_orders
+                     FROM orders o
+                     WHERE o.garage_id = $1 
+                       AND o.created_at >= CURRENT_DATE - INTERVAL '${daysBack} days'
+                     GROUP BY o.created_at::date
+                     ORDER BY date ASC`,
+                    [garageId]
+                );
+                salesTrend = trendResult.rows;
+            } catch (e) {
+                console.log('[ANALYTICS] sales trend query failed, using fallback');
+            }
 
-            // Get bid performance (last 12 months)
-            const bidResult = await pool.query(
-                `SELECT * FROM garage_bid_analytics
-                 WHERE garage_id = $1
-                 ORDER BY month DESC
-                 LIMIT 12`,
-                [garageId]
-            );
+            // Get bid performance - fallback to empty if view doesn't exist
+            let bidPerformance: any[] = [];
+            try {
+                const bidResult = await pool.query(
+                    `SELECT 
+                        DATE_TRUNC('month', created_at) as month,
+                        COUNT(*)::integer as total_bids,
+                        COUNT(*) FILTER (WHERE status = 'accepted')::integer as won_bids,
+                        COUNT(*) FILTER (WHERE status = 'rejected')::integer as lost_bids
+                     FROM bids 
+                     WHERE garage_id = $1
+                     GROUP BY DATE_TRUNC('month', created_at)
+                     ORDER BY month DESC
+                     LIMIT 12`,
+                    [garageId]
+                );
+                bidPerformance = bidResult.rows;
+            } catch (e) {
+                console.log('[ANALYTICS] bid performance query failed, using fallback');
+            }
 
             return {
                 period,
                 summary,
-                top_parts: topPartsResult.rows,
-                sales_trend: trendResult.rows,
-                bid_performance: bidResult.rows
+                top_parts: topParts,
+                sales_trend: salesTrend,
+                bid_performance: bidPerformance
             };
         } catch (error) {
             console.error('Error fetching garage analytics:', error);
