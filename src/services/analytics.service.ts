@@ -57,11 +57,17 @@ export class AnalyticsService {
         period: 'today' | 'week' | 'month' | 'year' = 'month'
     ): Promise<PerformanceMetrics> {
         try {
-            // Get summary statistics
-            const summaryResult = await pool.query(
-                'SELECT * FROM calculate_garage_summary($1, $2)',
-                [garageId, period]
-            );
+            // Get summary statistics using direct SQL (avoids stored function dependency)
+            const daysBack = this.getPeriodDays(period);
+            const summaryResult = await pool.query(`
+                SELECT 
+                    COALESCE((SELECT COUNT(*) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as total_orders,
+                    COALESCE((SELECT SUM(garage_payout_amount) FROM orders WHERE garage_id = $1 AND order_status = 'completed' AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as total_revenue,
+                    COALESCE((SELECT COUNT(*) FROM bids WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as total_bids,
+                    COALESCE((SELECT ROUND(COUNT(*) FILTER (WHERE status = 'accepted')::numeric * 100 / NULLIF(COUNT(*), 0), 1) FROM bids WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as win_rate,
+                    COALESCE((SELECT ROUND(AVG(overall_rating)::numeric, 1) FROM order_reviews WHERE garage_id = $1), 0) as avg_rating,
+                    COALESCE((SELECT COUNT(DISTINCT customer_id) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as unique_customers
+            `, [garageId]);
 
             const summary: AnalyticsSummary = summaryResult.rows[0] || {
                 total_orders: 0,
@@ -82,7 +88,6 @@ export class AnalyticsService {
             );
 
             // Get sales trend based on period
-            const daysBack = this.getPeriodDays(period);
             const trendResult = await pool.query(
                 `SELECT 
                     date,
