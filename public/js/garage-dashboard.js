@@ -1933,7 +1933,7 @@ async function loadProfile() {
                 </div>
                 
                 <div style="margin-top: 16px;">
-                    <button type="button" class="btn btn-outline" onclick="showSection('settings'); setTimeout(() => document.getElementById('supplierSettings')?.scrollIntoView({behavior: 'smooth'}), 100);">
+                    <button type="button" class="btn btn-outline" onclick="showSection('settings'); setTimeout(() => document.getElementById('supplierSettingsForm')?.scrollIntoView({behavior: 'smooth'}), 100);">
                         <i class="bi bi-gear"></i> Edit Specialization
                     </button>
                 </div>
