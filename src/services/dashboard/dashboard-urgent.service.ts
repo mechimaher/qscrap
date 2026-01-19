@@ -41,7 +41,7 @@ export class DashboardUrgentService {
 
         // 3. Expiring bids (<24 hours)
         const expiringBids = await this.pool.query(`
-            SELECT b.bid_id, b.request_id, b.amount, b.delivery_time_days, b.created_at, g.garage_name,
+            SELECT b.bid_id, b.request_id, b.bid_amount, b.created_at, g.garage_name,
                    pr.part_description, pr.car_make, pr.car_model, pr.car_year,
                    EXTRACT(EPOCH FROM (pr.expires_at - NOW())) as seconds_until_expiry
             FROM bids b JOIN garages g ON b.garage_id = g.garage_id JOIN part_requests pr ON b.request_id = pr.request_id
@@ -52,7 +52,7 @@ export class DashboardUrgentService {
         expiringBids.rows.forEach(bid => {
             urgentActions.push({
                 type: 'bid_expiring', priority: 2, bid_id: bid.bid_id, request_id: bid.request_id,
-                garage_name: bid.garage_name, amount: bid.amount, delivery_time_days: bid.delivery_time_days,
+                garage_name: bid.garage_name, amount: bid.bid_amount,
                 part_description: bid.part_description, vehicle: `${bid.car_year} ${bid.car_make} ${bid.car_model}`,
                 expires_in_seconds: Math.floor(bid.seconds_until_expiry), action: 'Review bid before it expires'
             });
@@ -76,7 +76,7 @@ export class DashboardUrgentService {
 
         // 5. Pending counter-offers
         const pendingCounterOffers = await this.pool.query(`
-            SELECT co.counter_offer_id, co.bid_id, co.new_amount, co.created_at, co.expires_at, g.garage_name,
+            SELECT co.counter_offer_id, co.bid_id, co.proposed_amount, co.created_at, co.expires_at, g.garage_name,
                    pr.part_description, EXTRACT(EPOCH FROM (co.expires_at - NOW())) as seconds_until_expiry
             FROM counter_offers co JOIN bids b ON co.bid_id = b.bid_id
             JOIN garages g ON b.garage_id = g.garage_id JOIN part_requests pr ON b.request_id = pr.request_id
@@ -86,7 +86,7 @@ export class DashboardUrgentService {
         pendingCounterOffers.rows.forEach(offer => {
             urgentActions.push({
                 type: 'counter_offer_pending', priority: 2, counter_offer_id: offer.counter_offer_id,
-                bid_id: offer.bid_id, garage_name: offer.garage_name, new_amount: offer.new_amount,
+                bid_id: offer.bid_id, garage_name: offer.garage_name, new_amount: offer.proposed_amount,
                 part_description: offer.part_description, expires_in_seconds: Math.floor(offer.seconds_until_expiry),
                 action: 'Respond to garage counter-offer'
             });
@@ -101,7 +101,7 @@ export class DashboardUrgentService {
             this.pool.query(`SELECT COUNT(DISTINCT b.bid_id) as count FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE pr.customer_id = $1 AND b.status = 'pending' AND pr.status = 'active'`, [customerId]),
             this.pool.query(`SELECT COUNT(*) as count FROM quick_service_requests WHERE customer_id = $1 AND status IN ('pending', 'assigned', 'accepted', 'dispatched', 'arrived', 'in_progress')`, [customerId]),
             this.pool.query(`SELECT COALESCE(SUM(total_amount), 0) as total_spent, COUNT(*) as order_count FROM orders WHERE customer_id = $1 AND order_status = 'completed' AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [customerId]),
-            this.pool.query(`SELECT COALESCE(SUM(points_earned - points_redeemed), 0) as balance FROM customer_rewards WHERE customer_id = $1`, [customerId])
+            this.pool.query(`SELECT COALESCE(points_balance, 0) as balance FROM customer_rewards WHERE customer_id = $1`, [customerId])
         ]);
 
         const totalSpent = parseFloat(moneySaved.rows[0].total_spent);
@@ -113,7 +113,7 @@ export class DashboardUrgentService {
             unread_bids: parseInt(unreadBids.rows[0].count),
             active_services: parseInt(activeServices.rows[0].count),
             money_saved_this_month: Math.round(moneySavedAmount),
-            loyalty_points: parseInt(loyaltyPoints.rows[0].balance),
+            loyalty_points: loyaltyPoints.rows[0] ? parseInt(loyaltyPoints.rows[0].balance) : 0,
             orders_this_month: orderCount
         };
     }

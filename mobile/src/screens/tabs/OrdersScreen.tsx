@@ -243,13 +243,18 @@ const PremiumOrderCard = ({
                         {/* Divider */}
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                        {/* Footer: Price + Date */}
+                        {/* Footer: Price + Date + Escrow */}
                         <View style={styles.cardFooter}>
                             <View>
                                 <Text style={styles.priceLabel}>Total</Text>
                                 <Text style={[styles.priceAmount, { color: statusConfig.color }]}>
                                     {item.total_amount} QAR
                                 </Text>
+                            </View>
+                            {/* Escrow Protection Badge */}
+                            <View style={styles.escrowBadge}>
+                                <Text style={styles.escrowIcon}>🛡️</Text>
+                                <Text style={styles.escrowText}>Protected</Text>
                             </View>
                             <View style={styles.dateSection}>
                                 <Text style={styles.dateLabel}>Ordered</Text>
@@ -380,55 +385,33 @@ export default function OrdersScreen() {
 
     const handleOrderPress = (order: Order) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.navigate('OrderDetails', { orderId: order.order_id });
+        navigation.navigate('OrderDetail', { orderId: order.order_id });
     };
 
     const handleTrack = (order: Order) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        navigation.navigate('DeliveryTracking', { orderId: order.order_id });
+        navigation.navigate('Tracking', {
+            orderId: order.order_id,
+            orderNumber: order.order_number,
+            deliveryAddress: order.delivery_address,
+        });
     };
 
-    const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-
-    const filteredOrders = orders.filter(o => {
-        if (filter === 'active') return !['completed', 'cancelled', 'refunded'].includes(o.order_status);
-        if (filter === 'completed') return ['completed', 'delivered'].includes(o.order_status);
-        return true;
-    });
+    const activeOrders = orders.filter(o =>
+        !['completed', 'cancelled', 'refunded'].includes(o.order_status)
+    );
 
     const EmptyState = () => (
         <View style={styles.emptyState}>
             <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>📦</Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {filter === 'all' ? 'No Orders Yet' : `No ${filter} orders`}
-            </Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Orders Yet</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                {filter === 'all'
-                    ? 'Your orders will appear here once you accept a bid'
-                    : `You don't have any ${filter} orders at the moment`}
+                Your orders will appear here once you accept a bid
             </Text>
-            {filter === 'all' && (
-                <TouchableOpacity
-                    style={styles.emptyCTA}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        navigation.navigate('NewRequest' as never);
-                    }}
-                >
-                    <LinearGradient
-                        colors={[Colors.primary, '#B31D4A']}
-                        style={styles.emptyCTAGradient}
-                    >
-                        <Text style={styles.emptyCTAText}>+ Create Part Request</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            )}
         </View>
     );
-
-    const activeOrders = orders.filter(o => !['completed', 'cancelled', 'refunded'].includes(o.order_status));
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -448,31 +431,13 @@ export default function OrdersScreen() {
                 )}
             </View>
 
-            {/* Filter Tabs */}
-            <View style={[styles.filterTabs, { backgroundColor: colors.surface }]}>
-                {(['all', 'active', 'completed'] as const).map(tab => (
-                    <TouchableOpacity
-                        key={tab}
-                        style={[styles.filterTab, filter === tab && styles.filterTabActive]}
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setFilter(tab);
-                        }}
-                    >
-                        <Text style={[styles.filterTabText, filter === tab && styles.filterTabTextActive]}>
-                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
             {isLoading ? (
                 <View style={styles.skeletonContainer}>
                     {[0, 1, 2, 3].map(i => <SkeletonCard key={i} index={i} />)}
                 </View>
             ) : (
                 <FlatList
-                    data={filteredOrders}
+                    data={orders}
                     keyExtractor={(item) => item.order_id}
                     renderItem={({ item, index }) => (
                         <PremiumOrderCard
@@ -590,7 +555,13 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginBottom: Spacing.md,
     },
-    orderInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    orderInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: Spacing.md,
+        paddingRight: Spacing.sm,
+    },
     orderIconBg: {
         width: 44,
         height: 44,
@@ -598,6 +569,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: Spacing.md,
+        flexShrink: 0,
     },
     orderIcon: { fontSize: 22 },
     orderNumber: { fontSize: FontSizes.lg, fontWeight: '700' },
@@ -606,6 +578,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
+        flexShrink: 0,
     },
     statusText: { fontSize: FontSizes.xs, fontWeight: '700' },
     carChip: {
@@ -629,6 +602,18 @@ const styles = StyleSheet.create({
     dateLabel: { fontSize: FontSizes.xs, opacity: 0.6 },
     dateText: { fontSize: FontSizes.sm, fontWeight: '600' },
 
+    // Escrow Badge
+    escrowBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#E8F5E9',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.sm,
+        gap: 4,
+    },
+    escrowIcon: { fontSize: 12 },
+    escrowText: { fontSize: FontSizes.xs, color: '#2E7D32', fontWeight: '600' },
     // Banners
     trackBanner: { marginTop: Spacing.md, borderRadius: BorderRadius.md, overflow: 'hidden' },
     trackGradient: {
@@ -676,44 +661,5 @@ const styles = StyleSheet.create({
         // color set dynamically
         textAlign: 'center',
         lineHeight: 22,
-    },
-    emptyCTA: {
-        marginTop: Spacing.lg,
-        borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
-    },
-    emptyCTAGradient: {
-        paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.xl,
-    },
-    emptyCTAText: {
-        color: '#fff',
-        fontSize: FontSizes.md,
-        fontWeight: '700',
-    },
-    filterTabs: {
-        flexDirection: 'row',
-        paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm,
-        gap: Spacing.sm,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    filterTab: {
-        paddingVertical: Spacing.xs,
-        paddingHorizontal: Spacing.md,
-        borderRadius: BorderRadius.full,
-        backgroundColor: '#F5F5F5',
-    },
-    filterTabActive: {
-        backgroundColor: Colors.primary,
-    },
-    filterTabText: {
-        fontSize: FontSizes.sm,
-        fontWeight: '600',
-        color: '#6B7280',
-    },
-    filterTabTextActive: {
-        color: '#fff',
     },
 });

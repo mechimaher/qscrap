@@ -15,8 +15,6 @@ import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
 import { ToastProvider } from './src/components/Toast';
 import { Address } from './src/services/api';
-import OfflineIndicator from './src/components/OfflineIndicator';
-import ErrorBoundary from './src/components/ErrorBoundary';
 
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -32,7 +30,7 @@ import ProfileScreen from './src/screens/tabs/ProfileScreen';
 import NewRequestScreen from './src/screens/NewRequestScreen';
 import RequestDetailScreen from './src/screens/RequestDetailScreen';
 import OrderDetailScreen from './src/screens/OrderDetailScreen';
-import DeliveryTrackingScreen from './src/screens/DeliveryTrackingScreen';
+import TrackingScreen from './src/screens/TrackingScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import AddressesScreen from './src/screens/AddressesScreen';
@@ -40,20 +38,34 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import CounterOfferScreen from './src/screens/CounterOfferScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import SupportScreen from './src/screens/SupportScreen';
-
-// Quick Services Screens
-import QuickServicesScreen from './src/screens/QuickServicesScreen';
-import QuickServiceBookingScreen from './src/screens/QuickServiceBookingScreen';
-import QuickServiceTrackingScreen from './src/screens/QuickServiceTrackingScreen';
+import VINScannerScreen from './src/screens/VINScannerScreen';
+import ManualVINEntryScreen from './src/screens/ManualVINEntryScreen';
+import PaymentScreen from './src/screens/PaymentScreen';
+import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
+import MyVehiclesScreen from './src/screens/MyVehiclesScreen';
 
 // Navigation Types
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
-  NewRequest: undefined;
-  RequestDetails: { requestId: string };
-  OrderDetails: { orderId: string };
-  DeliveryTracking: { orderId: string; orderNumber?: string; deliveryAddress?: string };
+  NewRequest: {
+    prefill?: {
+      carMake?: string;
+      carModel?: string;
+      carYear?: number;
+      partDescription?: string;
+      partCategory?: string;
+      partSubCategory?: string;
+    };
+    deliveryLocation?: {
+      lat: number;
+      lng: number;
+      address: string;
+    };
+  } | undefined;
+  RequestDetail: { requestId: string };
+  OrderDetail: { orderId: string };
+  Tracking: { orderId: string; orderNumber: string; deliveryAddress?: string };
   Chat: { orderId: string; orderNumber: string; recipientName: string; recipientType: 'driver' | 'garage' };
   EditProfile: undefined;
   Addresses: { onSelect?: (address: Address) => void } | undefined;
@@ -61,9 +73,14 @@ export type RootStackParamList = {
   CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string; garageCounterId?: string | null };
   Notifications: undefined;
   Support: undefined;
-  QuickServices: undefined;
-  QuickServiceBooking: { service: any };
-  QuickServiceTracking: { requestId: string };
+  // VIN Scanner
+  VINScanner: undefined;
+  ManualVINEntry: { onVINScanned?: (vin: string) => void };
+  // Payment & Escrow
+  Payment: { order?: any; amount: number };
+  DeliveryConfirmation: { order?: any; escrow?: any };
+  // Vehicles
+  MyVehicles: undefined;
 };
 
 export type AuthStackParamList = {
@@ -181,7 +198,7 @@ function RootNavigator() {
               options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
             />
             <RootStack.Screen
-              name="RequestDetails"
+              name="RequestDetail"
               component={RequestDetailScreen}
               options={{ animation: 'slide_from_right' }}
             />
@@ -193,13 +210,13 @@ function RootNavigator() {
 
             {/* Order Flow */}
             <RootStack.Screen
-              name="OrderDetails"
+              name="OrderDetail"
               component={OrderDetailScreen}
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
-              name="DeliveryTracking"
-              component={DeliveryTrackingScreen}
+              name="Tracking"
+              component={TrackingScreen}
               options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
             />
             <RootStack.Screen
@@ -235,21 +252,38 @@ function RootNavigator() {
               options={{ animation: 'slide_from_right' }}
             />
 
-            {/* Quick Services */}
+            {/* VIN Scanner Flow */}
             <RootStack.Screen
-              name="QuickServices"
-              component={QuickServicesScreen}
+              name="VINScanner"
+              component={VINScannerScreen}
+              options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+            />
+            <RootStack.Screen
+              name="ManualVINEntry"
+              component={ManualVINEntryScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+
+            {/* Payment & Escrow Flow */}
+            <RootStack.Screen
+              name="Payment"
+              component={PaymentScreen}
               options={{ animation: 'slide_from_right' }}
             />
             <RootStack.Screen
-              name="QuickServiceBooking"
-              component={QuickServiceBookingScreen}
+              name="DeliveryConfirmation"
+              component={DeliveryConfirmationScreen}
               options={{ animation: 'slide_from_right' }}
             />
+
+            {/* Vehicles */}
             <RootStack.Screen
-              name="QuickServiceTracking"
-              component={QuickServiceTrackingScreen}
-              options={{ animation: 'slide_from_right' }}
+              name="MyVehicles"
+              component={MyVehiclesScreen}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right'
+              }}
             />
           </>
         )}
@@ -272,9 +306,7 @@ export default function App() {
               <SocketProvider>
                 <ToastProvider>
                   <NavigationContainer>
-                    <ErrorBoundary>
-                      <ThemedApp />
-                    </ErrorBoundary>
+                    <ThemedApp />
                   </NavigationContainer>
                 </ToastProvider>
               </SocketProvider>
@@ -305,7 +337,6 @@ function ThemedApp() {
     <>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <RootNavigator />
-      <OfflineIndicator />
     </>
   );
 }

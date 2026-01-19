@@ -60,12 +60,6 @@
                 "buildConfiguration": "Release",
                 "autoIncrement": "buildNumber"
             }
-        },
-        "production_apk": {
-            "extends": "production",
-            "android": {
-                "buildType": "apk"
-            }
         }
     },
     "submit": {

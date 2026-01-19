@@ -19,6 +19,8 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Request, Bid } from '../services/api';
+import { BidComparisonModal } from '../components/BidComparisonModal';
+import { SocialProofBadges } from '../components/SocialProofBadges';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { API_BASE_URL } from '../config/api';
@@ -26,6 +28,7 @@ import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
 import { useSocketContext } from '../hooks/useSocket';
 import { useToast } from '../components/Toast';
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -233,9 +236,80 @@ const HeroRequestCard = ({
                     })}
                 </ScrollView>
             )}
+
+            {/* Vehicle ID Photos */}
+            {((request as any).car_front_image_url || (request as any).car_rear_image_url) && (
+                <>
+                    <Text style={[styles.heroLabel, !isActive && { color: '#525252' }]}>
+                        🚗 VEHICLE ID PHOTOS
+                    </Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heroImages}>
+                        {(request as any).car_front_image_url && (
+                            <View style={{ marginRight: 12 }}>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        const url = (request as any).car_front_image_url;
+                                        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                        onImagePress([fullUrl], 0);
+                                    }}
+                                    activeOpacity={0.85}
+                                >
+                                    <Image
+                                        source={{
+                                            uri: ((request as any).car_front_image_url as string).startsWith('http')
+                                                ? (request as any).car_front_image_url
+                                                : `${API_BASE_URL.replace('/api', '')}${(request as any).car_front_image_url}`
+                                        }}
+                                        style={styles.heroImage}
+                                    />
+                                    <Text style={styles.vehiclePhotoLabel}>Front</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                        {(request as any).car_rear_image_url && (
+                            <View>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        const url = (request as any).car_rear_image_url;
+                                        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                        onImagePress([fullUrl], 0);
+                                    }}
+                                    activeOpacity={0.85}
+                                >
+                                    <Image
+                                        source={{
+                                            uri: ((request as any).car_rear_image_url as string).startsWith('http')
+                                                ? (request as any).car_rear_image_url
+                                                : `${API_BASE_URL.replace('/api', '')}${(request as any).car_rear_image_url}`
+                                        }}
+                                        style={styles.heroImage}
+                                    />
+                                    <Text style={styles.vehiclePhotoLabel}>Rear</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </ScrollView>
+                </>
+            )}
         </LinearGradient>
     );
 };
+
+// Assuming 'styles' is defined elsewhere in the file,
+// the following style would be added to it:
+// heroImage: { width: 120, height: 120, borderRadius: 12, marginRight: 12 },
+// vehiclePhotoLabel: {
+//     position: 'absolute',
+//     bottom: 4,
+//     left: 4,
+//     backgroundColor: 'rgba(0,0,0,0.6)',
+//     paddingHorizontal: 8,
+//     paddingVertical: 4,
+//     borderRadius: 6,
+//     fontSize: 10,
+//     color: '#fff',
+//     fontWeight: '600'
+// },
 
 // ============================================
 // BID COMPARISON BAR - Visual Price Range
@@ -369,10 +443,10 @@ const PremiumBidCard = ({
             isNegotiationAgreed && !isAccepted && styles.agreedCard,
             hasGarageCounterOffer && !isNegotiationAgreed && styles.counterOfferCard,
         ]}>
-            {/* Best Deal Badge */}
+            {/* Best Price Badge - Enhanced */}
             {isBestDeal && !isAccepted && (
                 <View style={styles.bestDealBadge}>
-                    <Text style={styles.bestDealText}>🏆 BEST DEAL</Text>
+                    <Text style={styles.bestDealText}>🏆 BEST PRICE</Text>
                 </View>
             )}
 
@@ -396,6 +470,37 @@ const PremiumBidCard = ({
                     <Text style={styles.counterBadgeText}>🔄 COUNTER-OFFER</Text>
                 </View>
             )}
+
+            {/* Garage Profile Header */}
+            <View style={styles.garageProfileHeader}>
+                <View style={styles.garagePhotoContainer}>
+                    {bid.garage_photo_url ? (
+                        <Image
+                            source={{ uri: bid.garage_photo_url }}
+                            style={styles.garagePhoto}
+                        />
+                    ) : (
+                        <View style={[styles.garagePhoto, styles.garagePhotoFallback]}>
+                            <Text style={styles.garagePhotoEmoji}>🏪</Text>
+                        </View>
+                    )}
+                </View>
+                <View style={styles.garageInfoSection}>
+                    <Text style={[styles.garageName, { color: colors.text }]}>{bid.garage_name}</Text>
+                    {bid.rating_average && (
+                        <View style={styles.garageRatingRow}>
+                            <Text style={styles.ratingStarSmall}>⭐</Text>
+                            <Text style={styles.ratingValueSmall}>{bid.rating_average.toFixed(1)}</Text>
+                        </View>
+                    )}
+                    {/* Social Proof Badges */}
+                    <SocialProofBadges
+                        avgResponseTime={(bid as any).avg_response_time_minutes}
+                        ratingAverage={bid.rating_average}
+                        totalTransactions={(bid as any).total_transactions}
+                    />
+                </View>
+            </View>
 
             {/* Header: Garage Info + Price */}
             <View style={styles.bidHeader}>
@@ -473,9 +578,17 @@ const PremiumBidCard = ({
                     </Text>
                 </View>
                 {bid.warranty_days > 0 && (
-                    <View style={styles.detailChip}>
-                        <Text style={styles.detailChipText}>🛡️ {bid.warranty_days} days</Text>
-                    </View>
+                    <LinearGradient
+                        colors={['#3B82F6', '#2563EB']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.warrantyBadgeGradient}
+                    >
+                        <Text style={styles.warrantyIcon}>🛡️</Text>
+                        <Text style={styles.warrantyBadgeText}>
+                            {bid.warranty_days} Day{bid.warranty_days > 1 ? 's' : ''} Warranty
+                        </Text>
+                    </LinearGradient>
                 )}
             </View>
 
@@ -503,6 +616,44 @@ const PremiumBidCard = ({
                                     activeOpacity={0.85}
                                 >
                                     <Image source={{ uri: fullUrl }} style={styles.bidImage} />
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+            )}
+
+            {/* Part Condition Photos */}
+            {bid.condition_photos && bid.condition_photos.length > 0 && (
+                <View style={styles.conditionSection}>
+                    <View style={styles.conditionHeader}>
+                        <Text style={[styles.conditionTitle, { color: colors.text }]}>
+                            📸 Part Condition Photos
+                        </Text>
+                        <Text style={styles.conditionCount}>
+                            {bid.condition_photos.length} {bid.condition_photos.length === 1 ? 'photo' : 'photos'}
+                        </Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {bid.condition_photos.map((url, idx) => {
+                            const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                            return (
+                                <TouchableOpacity
+                                    key={idx}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        const images = bid.condition_photos!.map(u =>
+                                            u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
+                                        );
+                                        onImagePress(images, idx);
+                                    }}
+                                    activeOpacity={0.85}
+                                    style={styles.conditionPhotoWrapper}
+                                >
+                                    <Image source={{ uri: fullUrl }} style={styles.conditionPhoto} />
+                                    <View style={styles.photoOverlay}>
+                                        <Text style={styles.photoOverlayIcon}>🔍</Text>
+                                    </View>
                                 </TouchableOpacity>
                             );
                         })}
@@ -627,6 +778,8 @@ export default function RequestDetailScreen() {
     const [isViewerVisible, setIsViewerVisible] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
+    const [isComparisonVisible, setIsComparisonVisible] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
 
     useEffect(() => {
         loadRequestDetails();
@@ -682,21 +835,29 @@ export default function RequestDetailScreen() {
                     onPress: async () => {
                         setAcceptingBid(bid.bid_id);
                         try {
-                            const result = await api.acceptBid(bid.bid_id);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            toast.success('🎉 Order Created!', 'Taking you to your orders...');
+                            await api.acceptBid(bid.bid_id);
 
-                            // Premium UX: Auto-navigate to Order Details after acceptance
-                            setTimeout(() => {
-                                // Navigate to Order Details for the newly created order
-                                navigation.reset({
-                                    index: 1,
-                                    routes: [
-                                        { name: 'MainTabs' },
-                                        { name: 'OrderDetails', params: { orderId: result.order_id } },
-                                    ],
-                                });
-                            }, 1200);
+                            // Check if this is first order for confetti
+                            try {
+                                const orderCount = await api.getOrderCount();
+                                if (orderCount.total === 1) {
+                                    setShowConfetti(true);
+                                    setTimeout(() => setShowConfetti(false), 4000);
+                                }
+                            } catch (e) {
+                                // Silent fail for confetti check
+                            }
+
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            toast.show({
+                                type: 'success',
+                                title: '🎉 Order Created!',
+                                message: 'Your order has been created.',
+                                action: {
+                                    label: 'View Orders',
+                                    onPress: () => navigation.goBack()
+                                }
+                            });
                         } catch (error: any) {
                             toast.error('Error', error.message || 'Failed to accept bid');
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -775,6 +936,19 @@ export default function RequestDetailScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+            {/* Confetti Celebration for First Order */}
+            {showConfetti && (
+                <ConfettiCannon
+                    count={200}
+                    origin={{ x: width / 2, y: 0 }}
+                    autoStart={true}
+                    fadeOut={true}
+                    colors={['#8D1B3D', '#C9A227', '#FFD700', '#FFFFFF']}
+                    explosionSpeed={350}
+                    fallSpeed={2500}
+                />
+            )}
+
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
@@ -797,9 +971,29 @@ export default function RequestDetailScreen() {
 
                 {/* Bids Section */}
                 <View style={styles.bidsSection}>
-                    <Text style={[styles.bidsTitle, { color: colors.text }]}>
-                        {bids.length === 0 ? '⏳ Waiting for Bids' : `📬 ${bids.length} Bid${bids.length > 1 ? 's' : ''}`}
-                    </Text>
+                    <View style={styles.bidsHeader}>
+                        <Text style={[styles.bidsTitle, { color: colors.text }]}>
+                            {bids.length === 0 ? '⏳ Waiting for Bids' : `📬 ${bids.length} Bid${bids.length > 1 ? 's' : ''}`}
+                        </Text>
+                        {bids.length >= 2 && (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setIsComparisonVisible(true);
+                                }}
+                                style={styles.compareButton}
+                            >
+                                <LinearGradient
+                                    colors={['#8D1B3D', '#C9A227']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.compareGradient}
+                                >
+                                    <Text style={styles.compareButtonText}>⚖️ Compare</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                     {bids.length === 0 ? (
                         <View style={[styles.noBidsCard, { backgroundColor: colors.surface }]}>
@@ -843,6 +1037,14 @@ export default function RequestDetailScreen() {
                     onClose={() => setIsViewerVisible(false)}
                 />
             )}
+
+            {/* Bid Comparison Modal */}
+            <BidComparisonModal
+                visible={isComparisonVisible}
+                bids={bids}
+                onAccept={handleAcceptBid}
+                onClose={() => setIsComparisonVisible(false)}
+            />
         </SafeAreaView>
     );
 }
@@ -923,7 +1125,18 @@ const styles = StyleSheet.create({
     heroMetaValue: { fontSize: FontSizes.md, color: '#fff', fontFamily: 'monospace' },
     heroImages: { marginTop: Spacing.lg },
     heroImage: { width: 80, height: 80, borderRadius: BorderRadius.md, marginRight: Spacing.sm },
-
+    vehiclePhotoLabel: {
+        position: 'absolute',
+        bottom: 4,
+        left: 4,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        fontSize: 10,
+        color: '#fff',
+        fontWeight: '600'
+    },
     // Comparison Bar
     comparisonContainer: {
         marginHorizontal: Spacing.lg,
@@ -962,7 +1175,27 @@ const styles = StyleSheet.create({
 
     // Bids Section
     bidsSection: { paddingHorizontal: Spacing.lg },
-    bidsTitle: { fontSize: FontSizes.xl, fontWeight: '800', marginBottom: Spacing.lg },
+    bidsHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    bidsTitle: { fontSize: FontSizes.xl, fontWeight: '800' },
+    compareButton: {
+        borderRadius: BorderRadius.full,
+        overflow: 'hidden',
+        ...Shadows.md,
+    },
+    compareGradient: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+    },
+    compareButtonText: {
+        color: '#FFFFFF',
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+    },
     noBidsCard: {
         padding: Spacing.xl,
         borderRadius: BorderRadius.xl,
@@ -1070,8 +1303,121 @@ const styles = StyleSheet.create({
 
     bidImagesSection: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
     bidImagesLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: Spacing.sm },
-    bidImage: { width: 80, height: 80, borderRadius: BorderRadius.md, marginRight: Spacing.sm },
+    bidImage: { width: 120, height: 120, borderRadius: BorderRadius.lg, marginRight: Spacing.sm },
 
+    // Garage Profile Header
+    garageProfileHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+        gap: Spacing.md,
+    },
+    garagePhotoContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    garagePhoto: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#F5F5F5',
+    },
+    garagePhotoFallback: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    garagePhotoEmoji: {
+        fontSize: 28,
+    },
+    garageInfoSection: {
+        flex: 1,
+    },
+    garageRatingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 4,
+    },
+    ratingStarSmall: {
+        fontSize: 14,
+    },
+    ratingValueSmall: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+        color: '#F59E0B',
+    },
+
+    // Condition Photos Section
+    conditionSection: {
+        marginTop: Spacing.lg,
+        paddingTop: Spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+    },
+    conditionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    conditionTitle: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
+    conditionCount: {
+        fontSize: FontSizes.sm,
+        color: Colors.theme.textSecondary,
+        fontWeight: '600',
+    },
+    conditionPhotoWrapper: {
+        width: 120,
+        height: 120,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        marginRight: Spacing.sm,
+        position: 'relative',
+    },
+    conditionPhoto: {
+        width: '100%',
+        height: '100%',
+    },
+    photoOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        opacity: 0.6,
+    },
+    photoOverlayIcon: {
+        fontSize: 20,
+    },
+
+    // Premium Warranty Badge
+    warrantyBadgeGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 6,
+        borderRadius: BorderRadius.full,
+        gap: 4,
+        ...Shadows.sm,
+    },
+    warrantyIcon: {
+        fontSize: 14,
+    },
+    warrantyBadgeText: {
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+
+    // Actions
     bidActions: { flexDirection: 'row', marginTop: Spacing.lg, gap: Spacing.sm },
     acceptBtn: { flex: 1, borderRadius: BorderRadius.lg, overflow: 'hidden', ...Shadows.sm },
     acceptGradient: { paddingVertical: Spacing.md, alignItems: 'center' },

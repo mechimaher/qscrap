@@ -1030,6 +1030,104 @@
                     <h1 class="page-title">My Profile</h1>
                 </div>
                 <div id="profileContent"></div>
+
+                <!-- Supplier Type & Brand Specialization Settings -->
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header"
+                        style="background: linear-gradient(135deg, rgba(168, 32, 80, 0.1), rgba(212, 175, 55, 0.05)); border-bottom: 2px solid #D4AF37;">
+                        <h3><i class="bi bi-shop"></i> Business Configuration</h3>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 0; font-weight: 400;">
+                            Define what types of parts you supply and which car brands you specialize in
+                        </p>
+                    </div>
+                    <div class="card-body">
+                        <form id="supplierSettingsForm">
+                            <!-- Supplier Type Selector -->
+                            <div style="margin-bottom: 32px;">
+                                <label
+                                    style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">
+                                    <i class="bi bi-boxes" style="color: #D4AF37;"></i> Parts You Supply
+                                </label>
+                                <div class="supplier-type-options" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                                    <label class="supplier-type-radio" style="flex: 1; min-width: 200px;">
+                                        <input type="radio" name="supplier_type" value="used" id="typeUsed">
+                                        <div class="radio-card">
+                                            <div class="radio-indicator"></div>
+                                            <div class="radio-icon">♻️</div>
+                                            <div class="radio-title">Used Parts</div>
+                                            <div class="radio-desc">Scrap yard / Salvaged parts</div>
+                                        </div>
+                                    </label>
+                                    <label class="supplier-type-radio" style="flex: 1; min-width: 200px;">
+                                        <input type="radio" name="supplier_type" value="new" id="typeNew">
+                                        <div class="radio-card">
+                                            <div class="radio-indicator"></div>
+                                            <div class="radio-icon">✨</div>
+                                            <div class="radio-title">New Parts</div>
+                                            <div class="radio-desc">Commercial / OEM Genuine</div>
+                                        </div>
+                                    </label>
+                                    <label class="supplier-type-radio" style="flex: 1; min-width: 200px;">
+                                        <input type="radio" name="supplier_type" value="both" id="typeBoth">
+                                        <div class="radio-card">
+                                            <div class="radio-indicator"></div>
+                                            <div class="radio-icon">🔄</div>
+                                            <div class="radio-title">Both New & Used</div>
+                                            <div class="radio-desc">Hybrid inventory</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Brand Specialization -->
+                            <div style="margin-bottom: 24px;">
+                                <label
+                                    style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">
+                                    <i class="bi bi-car-front-fill" style="color: #D4AF37;"></i> Brand Specialization
+                                </label>
+
+                                <label class="toggle-switch"
+                                    style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer; margin-bottom: 16px;">
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 4px;">Accept All Brands</div>
+                                        <div style="font-size: 13px; color: var(--text-secondary);">Receive requests for
+                                            any car make</div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <span id="allBrandsLabel"
+                                            style="font-size: 14px; font-weight: 600; color: var(--accent);">All
+                                            Brands</span>
+                                        <input type="checkbox" id="allBrandsToggle" onchange="toggleBrandsList()">
+                                        <span class="switch-slider"
+                                            style="width: 50px; height: 26px; background: var(--border); border-radius: 13px; position: relative; transition: 0.3s;"></span>
+                                    </div>
+                                </label>
+
+                                <div id="brandSelectionContainer" style="display: none;">
+                                    <div style="position: relative; margin-bottom: 12px;">
+                                        <input type="text" id="brandSearch" placeholder="🔍 Search car makes..."
+                                            style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; background: var(--input-bg); font-size: 14px;"
+                                            oninput="filterBrands()">
+                                    </div>
+
+                                    <div id="brandCheckboxes" class="brand-checkboxes"
+                                        style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; padding: 12px;">
+                                    </div>
+
+                                    <div id="selectedBrandsCount"
+                                        style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                        0 brands selected
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary"
+                                style="width: 100%; background: linear-gradient(135deg, #A82050, #D4AF37); border: none; font-size: 16px; font-weight: 700; padding: 16px;">
+                                <i class="bi bi-check-lg"></i> Save Business Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </section>
         </main>
     </div>

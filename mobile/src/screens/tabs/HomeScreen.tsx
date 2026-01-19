@@ -1,461 +1,1279 @@
-// QScrap Home Screen - Smart Priority-Based Dashboard (2026)
-import React, { useState, useCallback, useEffect } from 'react';
+// QScrap Home Screen - Premium 2026 Brand Experience
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
-    RefreshControl,
-    ActivityIndicator,
     TouchableOpacity,
+    RefreshControl,
+    Dimensions,
+    Linking,
+    Image,
+    Animated,
+    Easing,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { api } from '../../services/api';
-import { Colors, Spacing } from '../../constants/theme';
+import { api, Stats } from '../../services/api';
+import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
 import { useToast } from '../../components/Toast';
-
-// Import new smart components
-import UrgentActionCard from '../../components/UrgentActionCard';
-import InsightsCard from '../../components/InsightsCard';
-import LiveTrackingCard from '../../components/LiveTrackingCard';
-import BidReviewCard from '../../components/BidReviewCard';
+import FeaturedProductsSection from '../../components/FeaturedProductsSection';
+import HowItWorksCarousel from '../../components/HowItWorksCarousel';
+import { DeliveryLocationWidget } from '../../components/DeliveryLocationWidget';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const { width } = Dimensions.get('window');
+const cardWidth = (width - Spacing.lg * 3) / 2;
+const SUPPORT_PHONE = '97412345678'; // Should be in constants
 
-const HomeScreen = () => {
+// ============================================
+// ANIMATED COUNT-UP COMPONENT
+// ============================================
+const AnimatedNumber = ({ value, delay = 0 }: { value: number; delay?: number }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+    const animRef = useRef<any>(null);
+    const { colors } = useTheme();
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            let start = 0;
+            const duration = 1000;
+            const step = (timestamp: number) => {
+                if (!animRef.current) animRef.current = timestamp;
+                const progress = Math.min((timestamp - animRef.current) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                setDisplayValue(Math.floor(eased * value));
+                if (progress < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        }, delay);
+        return () => clearTimeout(timeout);
+    }, [value, delay]);
+
+    return <Text style={[styles.statValue, { color: colors.text }]}>{displayValue}</Text>;
+};
+
+// ============================================
+// HERO WELCOME SECTION
+// ============================================
+const HeroWelcome = ({
+    user,
+    colors,
+    onNotificationPress,
+    unreadCount = 0,
+    onLocationPress,
+    deliveryAddress = 'Select delivery address'
+}: {
+    user: any;
+    colors: any;
+    onNotificationPress: () => void;
+    unreadCount?: number;
+    onLocationPress?: () => void;
+    deliveryAddress?: string;
+}) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(-20)).current;
+    const pulseAnim = useRef(new Animated.Value(0)).current;
+
+    const greeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good Morning';
+        if (hour < 17) return 'Good Afternoon';
+        return 'Good Evening';
+    };
+
+    const getTimeEmoji = () => {
+        const hour = new Date().getHours();
+        if (hour < 6) return '🌙';
+        if (hour < 12) return '☀️';
+        if (hour < 17) return '🌤️';
+        if (hour < 20) return '🌅';
+        return '🌙';
+    };
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 600,
+                easing: Easing.out(Easing.back(1.2)),
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Pulse for notification badge
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
+            ])
+        ).start();
+    }, []);
+
+    const badgeScale = pulseAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.2],
+    });
+
+    return (
+        <Animated.View style={[
+            styles.heroSection,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+        ]}>
+            <LinearGradient
+                colors={ThemeColors.gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.heroGradient}
+            >
+                <View style={styles.heroContent}>
+                    <View style={styles.heroLeft}>
+                        <View style={styles.logoContainer}>
+                            <Image
+                                source={require('../../../assets/logo.png')}
+                                style={styles.logo}
+                                resizeMode="cover"
+                            />
+                        </View>
+                        <View style={styles.heroTextContainer}>
+                            <Text style={styles.heroGreeting}>
+                                {getTimeEmoji()} {greeting()}
+                            </Text>
+                            <Text style={styles.heroName}>
+                                {user?.full_name || 'Customer'}
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.notificationBtn}
+                        onPress={onNotificationPress}
+                    >
+                        <Text style={styles.notificationIcon}>🔔</Text>
+                        {unreadCount > 0 && (
+                            <Animated.View style={[
+                                styles.notificationBadge,
+                                { transform: [{ scale: badgeScale }], backgroundColor: colors.secondary, borderColor: colors.primary }
+                            ]}>
+                                {unreadCount > 9 ? (
+                                    <Text style={styles.notificationCount}>9+</Text>
+                                ) : (
+                                    <Text style={styles.notificationCount}>{unreadCount}</Text>
+                                )}
+                            </Animated.View>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                {/* Refined Gold Divider */}
+                <View style={[styles.goldDivider, { backgroundColor: colors.secondary }]} />
+
+                {/* Premium Location Section - Integrated */}
+                <TouchableOpacity
+                    style={styles.locationSection}
+                    onPress={onLocationPress}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.locationContent}>
+                        <View style={styles.locationIconContainer}>
+                            <Text style={styles.locationIcon}>📍</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.locationLabel}>Delivering to</Text>
+                            <Text style={styles.locationText} numberOfLines={1}>
+                                {deliveryAddress}
+                            </Text>
+                        </View>
+                        <View style={[styles.changeButton, { backgroundColor: colors.secondary }]}>
+                            <Text style={styles.changeButtonText}>Change</Text>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+
+                {/* Gold accent line */}
+                <View style={[styles.goldAccent, { backgroundColor: colors.secondary }]} />
+            </LinearGradient>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// SIGNATURE CTA CARD
+// ============================================
+const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const glowAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const plusIconAnim = useRef(new Animated.Value(0)).current;
+    const { colors } = useTheme();
+
+    useEffect(() => {
+        // Entrance animation
+        Animated.parallel([
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                delay: 200,
+                easing: Easing.out(Easing.back(1.1)),
+                useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                delay: 200,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Subtle glow pulse
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(glowAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+                Animated.timing(glowAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+            ])
+        ).start();
+
+        // Persistent + icon breathing animation
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(plusIconAnim, {
+                    toValue: 1,
+                    duration: 1500,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(plusIconAnim, {
+                    toValue: 0,
+                    duration: 1500,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+    }, []);
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+    };
+
+    const glowOpacity = glowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.3, 0.6],
+    });
+
+    const plusScale = plusIconAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.2],
+    });
+
+    const plusRotate = plusIconAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '90deg'],
+    });
+
+    return (
+        <Animated.View style={[
+            styles.ctaWrapper,
+            {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }, { scale: scaleAnim }]
+            }
+        ]}>
+            <TouchableOpacity
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={1}
+            >
+                <View style={[styles.ctaCard, { backgroundColor: colors.surface }]}>
+                    {/* Glow effect */}
+                    <Animated.View style={[styles.ctaGlow, { opacity: glowOpacity, backgroundColor: colors.primary }]} />
+
+                    <LinearGradient
+                        colors={ThemeColors.gradients.primaryDark}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.ctaGradient}
+                    >
+                        <View style={styles.ctaContent}>
+                            <View style={styles.ctaTextContainer}>
+                                <Text style={styles.ctaTitle}>Find Your Part</Text>
+                                <Text style={styles.ctaSubtitle}>
+                                    Used • Commercial • Genuine OEM
+                                </Text>
+                            </View>
+                            <View style={styles.ctaIconContainer}>
+                                <Animated.Text
+                                    style={[
+                                        styles.ctaIcon,
+                                        {
+                                            transform: [
+                                                { scale: plusScale },
+                                                { rotate: plusRotate },
+                                            ],
+                                        },
+                                    ]}
+                                >
+                                    +
+                                </Animated.Text>
+                            </View>
+                        </View>
+
+                        {/* 3-Tier Supplier Badges */}
+                        <View style={styles.supplierBadges}>
+                            <View style={[styles.supplierBadge, { backgroundColor: 'rgba(34, 197, 94, 0.25)' }]}>
+                                <Text style={styles.badgeIcon}>♻️</Text>
+                                <Text style={styles.badgeText}>Used</Text>
+                            </View>
+                            <View style={[styles.supplierBadge, { backgroundColor: 'rgba(59, 130, 246, 0.25)' }]}>
+                                <Text style={styles.badgeIcon}>🔩</Text>
+                                <Text style={styles.badgeText}>Commercial</Text>
+                            </View>
+                            <View style={[styles.supplierBadge, { backgroundColor: 'rgba(245, 158, 11, 0.25)' }]}>
+                                <Text style={styles.badgeIcon}>⭐</Text>
+                                <Text style={styles.badgeText}>Genuine</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.ctaFooter}>
+                            <View style={styles.ctaFooterDot} />
+                            <Text style={styles.ctaFooterText}>
+                                100+ verified suppliers in Qatar
+                            </Text>
+                        </View>
+                    </LinearGradient>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// ANIMATED STATS DASHBOARD
+// ============================================
+const AnimatedStats = ({
+    stats,
+    onRequestsPress,
+    onOrdersPress
+}: {
+    stats: Stats | null;
+    onRequestsPress: () => void;
+    onOrdersPress: () => void;
+}) => {
+    const slideAnims = useRef([
+        new Animated.Value(40),
+        new Animated.Value(40),
+        new Animated.Value(40),
+    ]).current;
+    const fadeAnims = useRef([
+        new Animated.Value(0),
+        new Animated.Value(0),
+        new Animated.Value(0),
+    ]).current;
+    const { colors } = useTheme();
+
+    useEffect(() => {
+        slideAnims.forEach((anim, index) => {
+            Animated.timing(anim, {
+                toValue: 0,
+                duration: 500,
+                delay: 400 + index * 100,
+                easing: Easing.out(Easing.back(1.1)),
+                useNativeDriver: true,
+            }).start();
+        });
+
+        fadeAnims.forEach((anim, index) => {
+            Animated.timing(anim, {
+                toValue: 1,
+                duration: 400,
+                delay: 400 + index * 100,
+                useNativeDriver: true,
+            }).start();
+        });
+    }, []);
+
+    const StatCard = ({
+        index,
+        emoji,
+        value,
+        label,
+        colors: cardColors,
+        onPress
+    }: {
+        index: number;
+        emoji: string;
+        value: number;
+        label: string;
+        colors: readonly [string, string];
+        onPress: () => void;
+    }) => {
+        const scaleAnim = useRef(new Animated.Value(1)).current;
+
+        const handlePressIn = () => {
+            Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
+        };
+        const handlePressOut = () => {
+            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+        };
+
+        return (
+            <Animated.View style={[
+                styles.statCardWrapper,
+                {
+                    opacity: fadeAnims[index],
+                    transform: [{ translateY: slideAnims[index] }, { scale: scaleAnim }],
+                }
+            ]}>
+                <TouchableOpacity
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    activeOpacity={1}
+                >
+                    <LinearGradient colors={cardColors} style={styles.statCardInner}>
+                        <Text style={styles.statEmoji}>{emoji}</Text>
+                        <AnimatedNumber value={value} delay={500 + index * 150} />
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        );
+    };
+
+    return (
+        <View style={styles.statsSection}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>📊 Your Activity</Text>
+            <View style={styles.statsRow}>
+                <StatCard
+                    index={0}
+                    emoji="🔍"
+                    value={stats?.active_requests || 0}
+                    label="Active Requests"
+                    colors={['#FFF9E6', '#FFF3CC']}
+                    onPress={onRequestsPress}
+                />
+                <StatCard
+                    index={1}
+                    emoji="🚚"
+                    value={stats?.pending_deliveries || 0}
+                    label="In Progress"
+                    colors={['#E6F7FF', '#CCF0FF']}
+                    onPress={onOrdersPress}
+                />
+            </View>
+            <Animated.View style={[
+                styles.statCardWide,
+                {
+                    opacity: fadeAnims[2],
+                    transform: [{ translateY: slideAnims[2] }],
+                }
+            ]}>
+                <TouchableOpacity onPress={onOrdersPress} activeOpacity={0.9}>
+                    <LinearGradient
+                        colors={['rgba(138,21,56,0.08)', 'rgba(138,21,56,0.15)']}
+                        style={styles.statCardWideInner}
+                    >
+                        <View style={styles.wideCardLeft}>
+                            <Text style={styles.wideCardEmoji}>📦</Text>
+                            <View>
+                                <AnimatedNumber value={stats?.total_orders || 0} delay={700} />
+                                <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>Total Orders Completed</Text>
+                            </View>
+                        </View>
+                        <View style={[styles.wideCardBadge, { backgroundColor: colors.primary + '20' }]}>
+                            <Text style={[styles.wideCardBadgeText, { color: colors.primary }]}>View All →</Text>
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        </View>
+    );
+};
+
+// ============================================
+// PREMIUM QUICK ACTIONS
+// ============================================
+const QuickActions = ({ navigation }: { navigation: any }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const { colors } = useTheme();
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                delay: 700,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                delay: 700,
+                easing: Easing.out(Easing.back(1.1)),
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
+    const ActionButton = ({
+        emoji,
+        label,
+        bgColor,
+        onPress
+    }: {
+        emoji: string;
+        label: string;
+        bgColor: string;
+        onPress: () => void;
+    }) => {
+        const scaleAnim = useRef(new Animated.Value(1)).current;
+
+        return (
+            <TouchableOpacity
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+                onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.9, useNativeDriver: true }).start()}
+                onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
+                activeOpacity={1}
+            >
+                <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }], backgroundColor: colors.surface }]}>
+                    <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
+                        <Text style={styles.actionEmoji}>{emoji}</Text>
+                    </View>
+                    <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>{label}</Text>
+                </Animated.View>
+            </TouchableOpacity>
+        );
+    };
+
+    return (
+        <Animated.View style={[
+            styles.actionsSection,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+        ]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>⚡ Quick Actions</Text>
+            <View style={styles.actionsGrid}>
+                <ActionButton
+                    emoji="📋"
+                    label="New Request"
+                    bgColor="#E8F5E9"
+                    onPress={() => navigation.navigate('NewRequest')}
+                />
+                <ActionButton
+                    emoji="🚗"
+                    label="My Vehicles"
+                    bgColor="#E3F2FD"
+                    onPress={() => navigation.navigate('MyVehicles')}
+                />
+                <ActionButton
+                    emoji="💬"
+                    label="Support"
+                    bgColor="#FFF3E0"
+                    onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}?text=Hi%20QScrap%20Support`)}
+                />
+                <ActionButton
+                    emoji="⚙️"
+                    label="Settings"
+                    bgColor="#F3E5F5"
+                    onPress={() => navigation.navigate('Settings')}
+                />
+            </View>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// PRO TIP CARD - TAPPABLE
+// ============================================
+const ProTipCard = ({ navigation }: { navigation: any }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const { colors } = useTheme();
+
+    useEffect(() => {
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 400,
+            delay: 900,
+            useNativeDriver: true,
+        }).start();
+    }, []);
+
+    const handlePress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        navigation.navigate('NewRequest');
+    };
+
+    return (
+        <TouchableOpacity
+            onPress={handlePress}
+            onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start()}
+            onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
+            activeOpacity={1}
+        >
+            <Animated.View style={[
+                styles.proTipCard,
+                { opacity: fadeAnim, backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }
+            ]}>
+                <Text style={styles.proTipIcon}>💡</Text>
+                <View style={styles.proTipContent}>
+                    <Text style={[styles.proTipTitle, { color: colors.text }]}>Pro Tip</Text>
+                    <Text style={[styles.proTipText, { color: colors.textSecondary }]}>
+                        Add photos for faster & more accurate quotes →
+                    </Text>
+                </View>
+            </Animated.View>
+        </TouchableOpacity>
+    );
+};
+
+// ============================================
+// LOYALTY POINTS BANNER (MVP)
+// ============================================
+const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const shimmerAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const { colors } = useTheme();
+    const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
+
+    useEffect(() => {
+        // Load loyalty balance
+        api.getLoyaltyBalance().then(data => {
+            setLoyalty({ points: data.points, tier: data.tier });
+        }).catch(() => {
+            // Fail silently - show default values
+            setLoyalty({ points: 0, tier: 'bronze' });
+        });
+
+        // Entrance animation
+        Animated.parallel([
+            Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: 600, useNativeDriver: true }),
+            Animated.timing(slideAnim, { toValue: 0, duration: 500, delay: 600, easing: Easing.out(Easing.back(1.1)), useNativeDriver: true }),
+        ]).start();
+
+        // Shimmer animation
+        Animated.loop(
+            Animated.timing(shimmerAnim, { toValue: 1, duration: 2500, useNativeDriver: true })
+        ).start();
+    }, []);
+
+    const handlePress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        // Could navigate to loyalty screen
+    };
+
+    const shimmerTranslate = shimmerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-200, 200],
+    });
+
+    const getTierConfig = (tier: string) => {
+        switch (tier) {
+            case 'silver': return { emoji: '🥈', color: '#94A3B8', bg: ['#E2E8F0', '#F1F5F9'] };
+            case 'gold': return { emoji: '🥇', color: '#D4AF37', bg: ['#FEF3C7', '#FFFBEB'] };
+            case 'platinum': return { emoji: '💎', color: '#8B5CF6', bg: ['#EDE9FE', '#F5F3FF'] };
+            default: return { emoji: '🏅', color: '#CD7F32', bg: ['#FFEDD5', '#FFF7ED'] };
+        }
+    };
+
+    const tierConfig = getTierConfig(loyalty?.tier || 'bronze');
+
+    return (
+        <Animated.View style={[
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] },
+            { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md }
+        ]}>
+            <TouchableOpacity
+                onPress={handlePress}
+                onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start()}
+                onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
+                activeOpacity={1}
+            >
+                <LinearGradient
+                    colors={tierConfig.bg as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: Spacing.md,
+                        borderRadius: BorderRadius.lg,
+                        overflow: 'hidden',
+                    }}
+                >
+                    {/* Shimmer effect */}
+                    <Animated.View style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: 100,
+                        height: '100%',
+                        backgroundColor: 'rgba(255,255,255,0.4)',
+                        transform: [{ translateX: shimmerTranslate }, { skewX: '-20deg' }],
+                    }} />
+
+                    <View style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: Spacing.md,
+                    }}>
+                        <Text style={{ fontSize: 22 }}>{tierConfig.emoji}</Text>
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: FontSizes.sm, color: tierConfig.color, fontWeight: '600', textTransform: 'uppercase' }}>
+                            {loyalty?.tier || 'Bronze'} Member
+                        </Text>
+                        <Text style={{ fontSize: FontSizes.xl, fontWeight: '800', color: Colors.primary }}>
+                            {loyalty?.points?.toLocaleString() || '0'} Points
+                        </Text>
+                    </View>
+
+                    <View style={{
+                        backgroundColor: Colors.primary,
+                        paddingHorizontal: Spacing.md,
+                        paddingVertical: Spacing.xs,
+                        borderRadius: BorderRadius.full,
+                    }}>
+                        <Text style={{ color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' }}>🎁 Rewards</Text>
+                    </View>
+                </LinearGradient>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// SKELETON LOADING
+// ============================================
+const SkeletonLoading = () => {
+    const shimmerAnim = useRef(new Animated.Value(0)).current;
+    const { colors } = useTheme();
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, useNativeDriver: true })
+        ).start();
+    }, []);
+
+    const shimmerTranslate = shimmerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-width, width],
+    });
+
+    const SkeletonBox = ({ style }: { style: any }) => (
+        <View style={[styles.skeletonBox, style, { backgroundColor: colors.surfaceSecondary }]}>
+            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }], backgroundColor: colors.surface }]} />
+        </View>
+    );
+
+    return (
+        <View style={styles.skeletonContainer}>
+            <SkeletonBox style={styles.skeletonHero} />
+            <SkeletonBox style={styles.skeletonCTA} />
+            <View style={styles.skeletonStatsRow}>
+                <SkeletonBox style={styles.skeletonStatCard} />
+                <SkeletonBox style={styles.skeletonStatCard} />
+            </View>
+        </View>
+    );
+};
+
+// ============================================
+// MAIN HOME SCREEN
+// ============================================
+export default function HomeScreen() {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const { user } = useAuth();
     const { colors } = useTheme();
     const { newBids, orderUpdates } = useSocketContext();
     const toast = useToast();
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const [showLocationPicker, setShowLocationPicker] = useState(false);
+    const [deliveryAddress, setDeliveryAddress] = useState('Tap to select address');
+    // Store full location for NewRequest submission
+    const [deliveryLocationData, setDeliveryLocationData] = useState<{
+        lat: number | null;
+        lng: number | null;
+        address: string;
+    }>({ lat: null, lng: null, address: '' });
 
-    // State
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [urgentActions, setUrgentActions] = useState<any[]>([]);
-    const [contextualData, setContextualData] = useState<any>(null);
-    const [activeTracking, setActiveTracking] = useState<any[]>([]);
-    const [unreadBids, setUnreadBids] = useState<any[]>([]);
-    const [recentActivity, setRecentActivity] = useState<any[]>([]);
-
-    // Load all data in parallel
-    const loadData = useCallback(async (showLoader = true) => {
+    const loadData = useCallback(async () => {
         try {
-            if (showLoader) setIsLoading(true);
-
-            const [urgentRes, contextualRes, activityRes] = await Promise.all([
-                api.getUrgentActions().catch(() => ({ urgent_actions: [] })),
-                api.getContextualData().catch(() => ({ contextual_data: {} })),
-                api.getCustomerActivity(3, 0).catch(() => ({ activities: [] })),
+            const [statsData, notifData] = await Promise.all([
+                api.getStats(),
+                api.request('/notifications/unread-count').catch(() => ({ count: 0 }))
             ]);
-
-            setUrgentActions(urgentRes.urgent_actions || []);
-            setContextualData(contextualRes.contextual_data || {});
-            setRecentActivity(activityRes.activities || []);
-
-            // TODO: Fetch active tracking and unread bids
-            // For now, using empty arrays
-            setActiveTracking([]);
-            setUnreadBids([]);
-
+            setStats(statsData.stats);
+            setUnreadNotifications(notifData.count || 0);
         } catch (error) {
-            console.error('[HomeScreen] Load data error:', error);
-            toast.error('Error', 'Failed to load dashboard');
+            console.log('Failed to load data:', error);
+            toast.error('Error', 'Failed to load data');
         } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
+            setLoading(false);
+            setRefreshing(false);
         }
     }, [toast]);
 
-    // Load on mount and focus
     useFocusEffect(useCallback(() => {
+        setLoading(true); // Ensure loading state is true on focus
         loadData();
     }, [loadData]));
 
-    // Refresh on socket events
     useEffect(() => {
         if (newBids.length > 0 || orderUpdates.length > 0) {
-            loadData(false);
+            loadData();
         }
     }, [newBids, orderUpdates, loadData]);
 
-    // Pull to refresh
     const onRefresh = useCallback(() => {
-        setIsRefreshing(true);
+        setRefreshing(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        loadData(false);
+        loadData();
     }, [loadData]);
 
-    // Get time-based greeting
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return { text: 'Good Morning', emoji: '🌅' };
-        if (hour < 17) return { text: 'Good Afternoon', emoji: '☀️' };
-        return { text: 'Good Evening', emoji: '🌙' };
+    const handleNewRequest = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        // Pass delivery location to NewRequest for database storage
+        if (deliveryLocationData.lat && deliveryLocationData.lng) {
+            navigation.navigate('NewRequest', {
+                deliveryLocation: {
+                    lat: deliveryLocationData.lat,
+                    lng: deliveryLocationData.lng,
+                    address: deliveryLocationData.address,
+                }
+            });
+        } else {
+            navigation.navigate('NewRequest');
+        }
     };
 
-    const greeting = getGreeting();
-    const firstName = user?.name?.split(' ')[0] || 'there';
-
-    // Loading state
-    if (isLoading) {
+    if (loading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={[styles.loadingText, { color: colors.text }]}>
-                        Loading your dashboard...
-                    </Text>
-                </View>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+                <SkeletonLoading />
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
-                        refreshing={isRefreshing}
+                        refreshing={refreshing}
                         onRefresh={onRefresh}
                         tintColor={Colors.primary}
-                        colors={[Colors.primary]}
                     />
                 }
-                showsVerticalScrollIndicator={false}
             >
-                {/* Hero Section - Personalized Greeting */}
-                <View style={styles.heroSection}>
-                    <Text style={[styles.greeting, { color: colors.text }]}>
-                        {greeting.emoji} {greeting.text}
-                    </Text>
-                    <Text style={[styles.userName, { color: Colors.primary }]}>
-                        {firstName}
-                    </Text>
+                {/* Hero Welcome */}
+                <HeroWelcome
+                    user={user}
+                    colors={colors}
+                    unreadCount={unreadNotifications}
+                    onNotificationPress={() => navigation.navigate('Notifications')}
+                    onLocationPress={() => setShowLocationPicker(true)}
+                    deliveryAddress={deliveryAddress}
+                />
+
+                {/* Signature CTA */}
+                <SignatureCTA onPress={handleNewRequest} />
+
+                {/* Featured Products */}
+                <FeaturedProductsSection
+                    onProductPress={(product) => {
+                        console.log('Product pressed:', product.title);
+                    }}
+                />
+
+                {/* Animated Stats */}
+                <AnimatedStats
+                    stats={stats}
+                    onRequestsPress={() => navigation.navigate('Requests')}
+                    onOrdersPress={() => navigation.navigate('Orders')}
+                />
+
+                {/* Loyalty Points Banner */}
+                <LoyaltyBanner navigation={navigation} />
+
+                {/* Quick Actions */}
+                <QuickActions navigation={navigation} />
+
+                {/* Pro Tip - Tappable */}
+                <ProTipCard navigation={navigation} />
+
+                {/* How It Works Carousel */}
+                <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.lg }}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: Spacing.md, paddingHorizontal: Spacing.lg }]}>How It Works</Text>
+                    <HowItWorksCarousel onGetStarted={handleNewRequest} autoPlay={true} />
                 </View>
 
-                {/* Section 1: Urgent Actions (Priority 1 & 2) */}
-                {urgentActions.length > 0 && (
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                🔥 Needs Your Attention
-                            </Text>
-                            {urgentActions.length > 1 && (
-                                <View style={styles.countBadge}>
-                                    <Text style={styles.countText}>{urgentActions.length}</Text>
-                                </View>
-                            )}
-                        </View>
-                        {urgentActions.map((action, index) => (
-                            <UrgentActionCard
-                                key={`urgent-${action.type}-${index}`}
-                                type={action.type}
-                                data={action}
-                                onPress={() => {
-                                    // Navigate based on action type
-                                    if (action.type === 'payment_pending') {
-                                        navigation.navigate('OrderDetails', { orderId: action.order_id });
-                                    } else if (action.type === 'delivery_confirmation') {
-                                        navigation.navigate('OrderDetails', { orderId: action.order_id });
-                                    } else if (action.type === 'bid_expiring') {
-                                        navigation.navigate('RequestDetails', { requestId: action.request_id });
-                                    } else if (action.type === 'technician_arriving') {
-                                        navigation.navigate('QuickServiceTracking', { requestId: action.request_id });
-                                    } else if (action.type === 'counter_offer_pending') {
-                                        navigation.navigate('RequestDetails', { requestId: action.request_id });
-                                    }
-                                }}
-                            />
-                        ))}
-                    </View>
-                )}
-
-                {/* Section 2: Active Tracking (Orders & Services) */}
-                {activeTracking.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                            📍 Active Tracking
-                        </Text>
-                        {activeTracking.map((item, index) => (
-                            <LiveTrackingCard
-                                key={`tracking-${item.type}-${item.id}-${index}`}
-                                type={item.type}
-                                data={item}
-                                onPress={() => {
-                                    if (item.type === 'quick_service') {
-                                        navigation.navigate('QuickServiceTracking', { requestId: item.id });
-                                    } else {
-                                        navigation.navigate('OrderDetails', { orderId: item.id });
-                                    }
-                                }}
-                            />
-                        ))}
-                    </View>
-                )}
-
-                {/* Section 3: Insights Card (Always show if data available) */}
-                {contextualData && (
-                    <InsightsCard
-                        moneySaved={contextualData.money_saved_this_month || 0}
-                        loyaltyPoints={contextualData.loyalty_points || 0}
-                        ordersCompleted={contextualData.orders_this_month || 0}
-                    />
-                )}
-
-                {/* Section 4: Unread Bids (Only if > 0) */}
-                {unreadBids.length > 0 && (
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                💰 New Bids
-                            </Text>
-                            <View style={styles.countBadge}>
-                                <Text style={styles.countText}>{unreadBids.length}</Text>
-                            </View>
-                        </View>
-                        {unreadBids.map((bid, index) => (
-                            <BidReviewCard
-                                key={`bid-${bid.bid_id}-${index}`}
-                                bid={bid}
-                                isLowestBid={index === 0} // Assuming sorted by price
-                                onAccept={() => {
-                                    // TODO: Accept bid logic
-                                    toast.success('Success', 'Bid accepted!');
-                                }}
-                                onCounter={() => {
-                                    // TODO: Counter offer logic
-                                    navigation.navigate('CounterOffer', {
-                                        bidId: bid.bid_id,
-                                        garageName: bid.garage_name,
-                                        currentAmount: bid.amount,
-                                        partDescription: '',
-                                    });
-                                }}
-                                onReject={() => {
-                                    // TODO: Reject bid logic
-                                    toast.success('Success', 'Bid rejected');
-                                }}
-                            />
-                        ))}
-                    </View>
-                )}
-
-                {/* Section 5: Quick Actions */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                        ⚡ Quick Actions
-                    </Text>
-                    <View style={styles.quickActionsGrid}>
-                        <QuickActionButton
-                            icon="🔋"
-                            label="Battery"
-                            onPress={() => navigation.navigate('QuickServices')}
-                        />
-                        <QuickActionButton
-                            icon="🛢️"
-                            label="Oil Change"
-                            onPress={() => navigation.navigate('QuickServices')}
-                        />
-                        <QuickActionButton
-                            icon="🔧"
-                            label="Workshop Repair"
-                            onPress={() => navigation.navigate('RepairRequest')}
-                        />
-                        <QuickActionButton
-                            icon="📦"
-                            label="Find Parts"
-                            onPress={() => navigation.navigate('NewRequest')}
-                        />
-                    </View>
-                </View>
-
-                {/* Section 6: Recent Activity (Compact, max 3) */}
-                {recentActivity.length > 0 && (
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                📋 Recent Activity
-                            </Text>
-                        </View>
-                        {recentActivity.map((item, index) => (
-                            <View key={`activity-${item.id}-${index}`} style={styles.activityItem}>
-                                <View style={styles.activityDot} />
-                                <View style={styles.activityContent}>
-                                    <Text style={[styles.activityTitle, { color: colors.text }]}>
-                                        {item.title}
-                                    </Text>
-                                    <Text style={[styles.activitySubtitle, { color: colors.textSecondary }]}>
-                                        {item.subtitle}
-                                    </Text>
-                                </View>
-                            </View>
-                        ))}
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
-                            style={styles.viewAllButton}
-                        >
-                            <Text style={styles.viewAllText}>View All Activity →</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                {/* Bottom Padding */}
-                <View style={{ height: 40 }} />
+                <View style={{ height: 80 }} />
             </ScrollView>
+
+
+            {/* Location Picker Modal - Premium Integration */}
+            {showLocationPicker && (
+                <DeliveryLocationWidget
+                    onLocationChange={(address) => {
+                        if (address) {
+                            // Extract concise format for display
+                            const parts = address.address_text.split(',').map(p => p.trim());
+                            const concise = parts.length >= 2
+                                ? `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`
+                                : address.address_text;
+                            setDeliveryAddress(concise);
+                            // Store full coordinates for driver navigation
+                            setDeliveryLocationData({
+                                lat: address.latitude || null,
+                                lng: address.longitude || null,
+                                address: address.address_text,
+                            });
+                        }
+                        setShowLocationPicker(false);
+                    }}
+                />
+            )}
         </SafeAreaView>
     );
-};
+}
 
-// Quick Action Button Component
-const QuickActionButton = ({ icon, label, onPress }: any) => {
-    const { colors } = useTheme();
-
-    return (
-        <TouchableOpacity
-            onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onPress();
-            }}
-            style={[styles.quickActionButton, { backgroundColor: colors.surface }]}
-            activeOpacity={0.7}
-        >
-            <Text style={styles.quickActionIcon}>{icon}</Text>
-            <Text style={[styles.quickActionLabel, { color: colors.text }]}>{label}</Text>
-        </TouchableOpacity>
-    );
-};
-
+// ============================================
+// STYLES
+// ============================================
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
+    container: { flex: 1 },
+    scrollView: { flex: 1 },
+
+    // Hero Section - SLIM VERSION
+    heroSection: { marginBottom: Spacing.md },
+    heroGradient: {
+        paddingHorizontal: Spacing.md,
+        paddingTop: Spacing.sm,
+        paddingBottom: Spacing.md,
+        borderBottomLeftRadius: BorderRadius.lg,
+        borderBottomRightRadius: BorderRadius.lg,
     },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingBottom: 20,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: Spacing.md,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    heroSection: {
-        paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.xl,
-        paddingBottom: Spacing.lg,
-    },
-    greeting: {
-        fontSize: 28,
-        fontWeight: '800',
-        letterSpacing: -0.5,
-    },
-    userName: {
-        fontSize: 32,
-        fontWeight: '800',
-        letterSpacing: -1,
-        marginTop: 4,
-    },
-    section: {
-        paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.lg,
-    },
-    sectionHeader: {
+    heroContent: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: Spacing.md,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-    },
-    countBadge: {
-        backgroundColor: Colors.primary,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    countText: {
-        fontSize: 12,
-        fontWeight: '800',
-        color: '#FFFFFF',
-    },
-    quickActionsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: Spacing.sm,
-    },
-    quickActionButton: {
-        width: '48%',
-        aspectRatio: 1.5,
-        borderRadius: 16,
-        padding: Spacing.md,
         alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 2,
     },
-    quickActionIcon: {
-        fontSize: 36,
-        marginBottom: 8,
-    },
-    quickActionLabel: {
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    activityItem: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: Spacing.md,
-    },
-    activityDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: Colors.primary,
-        marginTop: 6,
+    heroLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    logoContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        overflow: 'hidden',
         marginRight: Spacing.sm,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
-    activityContent: {
-        flex: 1,
-    },
-    activityTitle: {
-        fontSize: 15,
-        fontWeight: '600',
+    logo: { width: 40, height: 40 },
+    heroTextContainer: { flex: 1 },
+    heroGreeting: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255,255,255,0.85)',
         marginBottom: 2,
     },
-    activitySubtitle: {
-        fontSize: 13,
-        fontWeight: '500',
+    heroName: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
+        color: '#fff',
+        letterSpacing: -0.3,
     },
-    viewAllButton: {
-        paddingVertical: Spacing.sm,
+    notificationBtn: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    viewAllText: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: Colors.primary,
+    notificationIcon: { fontSize: 18 },
+    notificationBadge: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
     },
-});
+    notificationCount: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    goldAccent: {
+        height: 2,
+        marginHorizontal: Spacing.md,
+        borderRadius: 1,
+    },
+    goldDivider: {
+        height: 1,
+        marginHorizontal: Spacing.lg,
+        marginVertical: Spacing.md,
+        opacity: 0.3,
+        borderRadius: 0.5,
+    },
+    // Premium Location Section (Integrated in Hero)
+    locationSection: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+    },
+    locationContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    locationIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(201, 162, 39, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    locationIcon: {
+        fontSize: 18,
+    },
+    locationLabel: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255,255,255,0.7)',
+        marginBottom: 2,
+    },
+    locationText: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        letterSpacing: -0.2,
+    },
+    changeButton: {
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 6,
+        borderRadius: BorderRadius.full,
+    },
+    changeButtonText: {
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+        color: '#8D1B3D',
+    },
+    heroSubtitle: {
+        marginTop: Spacing.sm,
+        width: 40,
+        alignSelf: 'center',
+    },
 
-export default HomeScreen;
+    // CTA Card - COMPACT 2026
+    ctaWrapper: { paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
+    ctaCard: {
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        ...Shadows.md,
+    },
+    ctaGlow: {
+        position: 'absolute',
+        top: -15,
+        left: -15,
+        right: -15,
+        bottom: -15,
+        borderRadius: BorderRadius.lg + 15,
+    },
+    ctaGradient: { padding: Spacing.md },
+    ctaContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    ctaTextContainer: { flex: 1 },
+    ctaTitle: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 2,
+    },
+    ctaSubtitle: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255,255,255,0.85)',
+    },
+    ctaIconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    ctaIcon: { fontSize: 24, color: '#fff', fontWeight: '300' },
+    ctaFooter: {
+        marginTop: Spacing.sm,
+        paddingTop: Spacing.xs,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.15)',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    ctaFooterDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#22C55E',
+        marginRight: Spacing.xs,
+    },
+    ctaFooterText: { fontSize: 10, color: 'rgba(255,255,255,0.8)' },
+    // 3-Tier Supplier Badges
+    supplierBadges: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: Spacing.md,
+        marginBottom: Spacing.md,
+        gap: Spacing.sm,
+    },
+    supplierBadge: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 6,
+        borderRadius: BorderRadius.lg,
+        gap: 4,
+    },
+    badgeIcon: {
+        fontSize: 12,
+    },
+    badgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '700',
+    },
+
+    // Stats Section - COMPACT 2026
+    statsSection: { paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
+    sectionTitle: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+        marginBottom: Spacing.sm,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.sm,
+    },
+    statCardWrapper: { width: cardWidth },
+    statCardInner: {
+        padding: Spacing.sm,
+        alignItems: 'center',
+        minHeight: 95,
+        justifyContent: 'center',
+        borderRadius: BorderRadius.md,
+    },
+    statEmoji: { fontSize: 24, marginBottom: 4 },
+    statValue: { fontSize: 28, fontWeight: '700' },
+    statLabel: { fontSize: FontSizes.xs, marginTop: 2 },
+    statCardWide: {
+        borderRadius: BorderRadius.md,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: Colors.primary,
+    },
+    statCardWideInner: {
+        padding: Spacing.sm,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    wideCardLeft: { flexDirection: 'row', alignItems: 'center' },
+    wideCardEmoji: { fontSize: 28, marginRight: Spacing.sm },
+    wideCardLabel: { fontSize: FontSizes.xs },
+    wideCardBadge: {
+        backgroundColor: Colors.primary + '15',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 3,
+        borderRadius: BorderRadius.full,
+    },
+    wideCardBadgeText: { fontSize: 10, color: Colors.primary, fontWeight: '600' },
+
+    // Quick Actions - COMPACT 2026
+    actionsSection: { paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
+    actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+    actionCard: {
+        width: cardWidth,
+        backgroundColor: '#fff',
+        borderRadius: BorderRadius.md,
+        padding: Spacing.sm,
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
+    },
+    actionIconBg: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    actionEmoji: { fontSize: 22 },
+    actionLabel: { fontSize: FontSizes.xs, fontWeight: '600' },
+
+    // Pro Tip - COMPACT 2026
+    proTipCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF8E1',
+        marginHorizontal: Spacing.md,
+        padding: Spacing.sm,
+        borderRadius: BorderRadius.md,
+        borderWidth: 1,
+        borderColor: Colors.secondary + '50',
+    },
+    proTipIcon: { fontSize: 18, marginRight: Spacing.sm },
+    proTipContent: { flex: 1 },
+    proTipTitle: { fontSize: FontSizes.xs, fontWeight: '600', color: Colors.secondary, marginBottom: 1 },
+    proTipText: { fontSize: 11, lineHeight: 14 },
+
+    // Skeleton
+    skeletonContainer: { padding: Spacing.lg },
+    skeletonBox: { backgroundColor: '#E8E8E8', borderRadius: BorderRadius.xl, overflow: 'hidden' },
+    skeletonShimmer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.4)' },
+    skeletonHero: { height: 140, marginBottom: Spacing.lg, borderRadius: 0, borderBottomLeftRadius: BorderRadius.xl * 1.5, borderBottomRightRadius: BorderRadius.xl * 1.5 },
+    skeletonCTA: { height: 120, marginBottom: Spacing.lg },
+    skeletonStatsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    skeletonStatCard: { width: cardWidth, height: 130 },
+});

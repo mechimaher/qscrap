@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../services/api';
-import { API_V1_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
@@ -69,7 +69,7 @@ export default function EditProfileScreen() {
         try {
             const token = await api.getToken();
             // Use correct endpoint: /api/dashboard/profile
-            const response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}`, {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ export default function EditProfileScreen() {
 
         try {
             const token = await api.getToken();
-            const response = await fetch(`${API_V1_BASE_URL}${API_ENDPOINTS.CHANGE_PASSWORD}`, {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CHANGE_PASSWORD}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -9,17 +9,34 @@ import {
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
-import { api, SavedVehicle } from '../services/api';
+import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 
+// Define SavedVehicle interface locally (matches backend response)
+export interface SavedVehicle {
+    vehicle_id: string;
+    car_make: string;
+    car_model: string;
+    car_year: number;
+    vin_number?: string;
+    nickname?: string;
+    is_primary?: boolean;
+    front_image_url?: string;
+    rear_image_url?: string;
+    request_count: number;
+    last_used_at?: string;
+    created_at: string;
+}
+
 interface Props {
     onSelect: (vehicle: SavedVehicle) => void;
     selectedVehicleId?: string | null;
+    onVehiclesLoaded?: (vehicles: SavedVehicle[]) => void; // Optional callback for auto-selection
 }
 
-export default function MyVehiclesSelector({ onSelect, selectedVehicleId }: Props) {
+export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }: Props) {
     const { colors } = useTheme();
     const [vehicles, setVehicles] = useState<SavedVehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -32,12 +49,18 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId }: Prop
     const loadVehicles = async () => {
         try {
             const result = await api.getMyVehicles();
-            if (result.success) {
-                setVehicles(result.vehicles);
-                // Auto-expand if user has saved vehicles
-                if (result.vehicles.length > 0) {
-                    setIsExpanded(true);
-                }
+            // API returns { vehicles: [...] }
+            const loadedVehicles = result.vehicles || [];
+            setVehicles(loadedVehicles);
+
+            // Auto-expand if user has saved vehicles
+            if (loadedVehicles.length > 0) {
+                setIsExpanded(true);
+            }
+
+            // Notify parent component that vehicles are loaded (for auto-selection)
+            if (onVehiclesLoaded) {
+                onVehiclesLoaded(loadedVehicles);
             }
         } catch (error) {
             console.log('[MyVehicles] Error loading:', error);

@@ -5925,3 +5925,151 @@ async function markCompleted(requestId, quotedPrice) {
         showToast('Failed to complete service', 'error');
     }
 }
+
+// ============================================
+// Supplier Type & Brand Specialization
+// ============================================
+
+const ALL_CAR_MAKES = ['Toyota', 'Lexus', 'Nissan', 'Infiniti', 'Honda', 'Mazda', 'Mitsubishi', 'Suzuki', 'Subaru', 'Isuzu', 'Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Volkswagen', 'MINI', 'Ford', 'Chevrolet', 'GMC', 'Cadillac', 'Jeep', 'Dodge', 'Lincoln', 'Tesla', 'Hyundai', 'Kia', 'Genesis', 'Land Rover', 'Jaguar', 'Bentley', 'Rolls-Royce', 'Aston Martin', 'McLaren', 'Ferrari', 'Lamborghini', 'Maserati', 'Alfa Romeo', 'MG', 'Chery', 'Haval', 'Geely', 'BYD', 'GAC', 'Peugeot', 'Renault', 'Volvo', 'Skoda', 'Hino', 'Other'];
+
+async function loadSupplierSettings() {
+    try {
+        const response = await fetch('/api/v1/dashboard/profile', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await response.json();
+        
+        const supplierType = data.supplier_type || 'used';
+        const typeRadio = document.querySelector(`input[name="supplier_type"][value="${supplierType}"]`);
+        if (typeRadio) typeRadio.checked = true;
+        
+        const allBrands = data.all_brands !== false;
+        const allBrandsToggle = document.getElementById('allBrandsToggle');
+        if (allBrandsToggle) {
+            allBrandsToggle.checked = allBrands;
+            toggleBrandsList();
+        }
+        
+        if (!allBrands && data.specialized_brands && Array.isArray(data.specialized_brands)) {
+            data.specialized_brands.forEach(brand => {
+                const checkbox = document.getElementById(`brand_${brand}`);
+                if (checkbox) checkbox.checked = true;
+            });
+            updateSelectedBrandsCount();
+        }
+    } catch (error) {
+        console.error('[SUPPLIER-SETTINGS] Load failed:', error);
+    }
+}
+
+function renderBrandCheckboxes() {
+    const container = document.getElementById('brandCheckboxes');
+    if (!container) return;
+    
+    container.innerHTML = ALL_CAR_MAKES.map(brand => `
+        <div class="brand-checkbox">
+            <input type="checkbox" id="brand_${brand}" value="${brand}" onchange="updateSelectedBrandsCount()">
+            <label for="brand_${brand}">${brand}</label>
+        </div>
+    `).join('');
+}
+
+function filterBrands() {
+    const searchInput = document.getElementById('brandSearch');
+    if (!searchInput) return;
+    
+    const search = searchInput.value.toLowerCase();
+    document.querySelectorAll('.brand-checkbox').forEach(el => {
+        const label = el.querySelector('label');
+        if (!label) return;
+        const brand = label.textContent.toLowerCase();
+        el.style.display = brand.includes(search) ? 'flex' : 'none';
+    });
+}
+
+function toggleBrandsList() {
+    const allBrandsToggle = document.getElementById('allBrandsToggle');
+    const brandsContainer = document.getElementById('brandSelectionContainer');
+    const label = document.getElementById('allBrandsLabel');
+    
+    if (!allBrandsToggle || !brandsContainer || !label) return;
+    
+    const allBrandsChecked = allBrandsToggle.checked;
+    brandsContainer.style.display = allBrandsChecked ? 'none' : 'block';
+    label.textContent = allBrandsChecked ? 'All Brands' : 'Specific Brands';
+}
+
+function updateSelectedBrandsCount() {
+    const countEl = document.getElementById('selectedBrandsCount');
+    if (!countEl) return;
+    
+    const selected = document.querySelectorAll('#brandCheckboxes input[type="checkbox"]:checked').length;
+    countEl.textContent = `${selected} brand${selected !== 1 ? 's' : ''} selected`;
+}
+
+function initSupplierSettingsUI() {
+    renderBrandCheckboxes();
+    loadSupplierSettings();
+    
+    const form = document.getElementById('supplierSettingsForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const typeRadio = document.querySelector('input[name="supplier_type"]:checked');
+            if (!typeRadio) {
+                showToast('Please select a supplier type', 'error');
+                return;
+            }
+            
+            const supplierType = typeRadio.value;
+            const allBrandsToggle = document.getElementById('allBrandsToggle');
+            const allBrands = allBrandsToggle ? allBrandsToggle.checked : true;
+            
+            const specializedBrands = allBrands ? [] : 
+                Array.from(document.querySelectorAll('#brandCheckboxes input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+            
+            try {
+                const response = await fetch('/api/v1/dashboard/specialization', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        supplier_type: supplierType,
+                        specialized_brands: specializedBrands,
+                        all_brands: allBrands
+                    })
+                });
+                
+                if (response.ok) {
+                    showToast('✅ Business settings updated successfully!', 'success');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to update');
+                }
+            } catch (error) {
+                console.error('[SUPPLIER-SETTINGS] Save failed:', error);
+                showToast('❌ Failed to update settings. Please try again.', 'error');
+            }
+        });
+    }
+}
+
+// Initialize when switching to Profile section
+const originalSwitchSection = window.switchSection;
+window.switchSection = function(sectionName) {
+    if (typeof originalSwitchSection === 'function') {
+        originalSwitchSection(sectionName);
+    }
+    
+    if (sectionName === 'profile') {
+        setTimeout(() => {
+            initSupplierSettingsUI();
+        }, 100);
+    }
+};
+
+console.log('[SUPPLIER-SETTINGS] Module initialized');

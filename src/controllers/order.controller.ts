@@ -240,3 +240,24 @@ export const getGarageReviews = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+// ============================================
+// ORDER COUNT (for P2 confetti trigger)
+// ============================================
+
+/**
+ * Get total order count for customer
+ */
+export const getOrderCount = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user!.userId;
+        const result = await pool.query(
+            'SELECT COUNT(*) as total FROM orders WHERE customer_id = $1',
+            [userId]
+        );
+        res.json({ total: parseInt(result.rows[0].total, 10) });
+    } catch (err) {
+        console.error('[ORDER] getOrderCount error:', err);
+        res.status(500).json({ error: 'Failed to get order count' });
+    }
+};

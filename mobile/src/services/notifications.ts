@@ -32,28 +32,11 @@ export interface NotificationData {
         ticketId?: string;
     };
 }
-import Constants from 'expo-constants';
-
-/**
- * Check if running in Expo Go (development client)
- * SDK 53+ removed remote notifications from Expo Go
- */
-const isExpoGo = (): boolean => {
-    return Constants.appOwnership === 'expo';
-};
 
 /**
  * Register for push notifications and return the token
- * Note: Remote notifications not available in Expo Go since SDK 53
  */
 export const registerForPushNotifications = async (): Promise<string | null> => {
-    // Skip in Expo Go - remote notifications removed in SDK 53
-    if (isExpoGo()) {
-        console.log('[Notifications] Skipping push registration - Expo Go does not support remote notifications (SDK 53+)');
-        console.log('[Notifications] Build a development build or production APK to enable push notifications');
-        return null;
-    }
-
     if (!Device.isDevice) {
         console.log('[Notifications] Push notifications not available in simulator');
         return null;
@@ -206,22 +189,12 @@ export const registerTokenWithBackend = async (token: string): Promise<boolean> 
 
 /**
  * Initialize push notifications (call on app startup)
- * This function is designed to be non-blocking and should never throw
  */
 export const initializePushNotifications = async (): Promise<void> => {
-    try {
-        const token = await registerForPushNotifications();
+    const token = await registerForPushNotifications();
 
-        if (token) {
-            // Don't await - run in background so it doesn't block app
-            registerTokenWithBackend(token).catch(err => {
-                console.log('[Notifications] Background token registration failed:', err);
-                // Silently fail - app should continue working
-            });
-        }
-    } catch (error) {
-        // Never let push notification init crash the app
-        console.log('[Notifications] Init error (non-blocking):', error);
+    if (token) {
+        await registerTokenWithBackend(token);
     }
 };
 

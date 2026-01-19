@@ -1,13 +1,15 @@
 
+
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import { getNotifications, markRead } from '../controllers/notification.controller';
+import { getNotifications, markRead, getUnreadNotificationCount } from '../controllers/notification.controller';
 import { pushService } from '../services/push.service';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 const router = Router();
 
 router.get('/', authenticate, getNotifications);
+router.get('/unread-count', authenticate, getUnreadNotificationCount);
 router.post('/mark-read', authenticate, markRead);
 
 // Push Notification Registration (Moved from deprecated push.routes.ts)

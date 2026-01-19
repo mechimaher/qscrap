@@ -1,5 +1,4 @@
 // QScrap Navigation Exports
-
-export { default as AppNavigator } from './AppNavigator';
-export type { RootStackParamList, MainTabParamList } from './AppNavigator';
+// Types now exported from App.tsx (primary navigator)
+export type { RootStackParamList, MainTabParamList } from '../../App';
 export { linking, handleDeepLink, subscribeToLinks, getInitialURL, createDeepLink } from './linking';

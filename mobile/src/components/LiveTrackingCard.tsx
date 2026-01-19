@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     typeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
     },
     statusBadge: {
         flexDirection: 'row',
@@ -166,13 +166,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 17,
         fontWeight: '700',
-        color: Colors.text,
+        color: Colors.theme.text,
         marginBottom: 4,
     },
     subtitle: {
         fontSize: 14,
         fontWeight: '500',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
         marginBottom: Spacing.sm,
     },
     progressContainer: {
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     progressText: {
         fontSize: 12,
         fontWeight: '700',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
         minWidth: 40,
         textAlign: 'right',
     },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 13,
         fontWeight: '500',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
         flex: 1,
     },
     footer: {

@@ -215,10 +215,25 @@ export class NegotiationService {
     private async createGarageCounter(offer: any, garageId: string, counterPrice: number, notes: string | undefined, client: PoolClient): Promise<void> {
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['countered', offer.counter_offer_id]);
         const round = offer.round_number + 1;
-        await client.query(`
+        const result = await client.query(`
             INSERT INTO counter_offers (bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
             VALUES ($1, $2, 'garage', $3, $4, $5, $6)
+            RETURNING counter_offer_id
         `, [offer.bid_id, offer.request_id, garageId, counterPrice, notes, round]);
+
+        // 🔥 NEW: Notify customer if garage lowered price (price drop alert!)
+        const bid = await client.query('SELECT b.bid_amount, pr.customer_id FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE b.bid_id = $1', [offer.bid_id]);
+        if (bid.rows.length > 0 && counterPrice < offer.proposed_amount) {
+            const priceDrop = offer.proposed_amount - counterPrice;
+            await createNotification({
+                userId: bid.rows[0].customer_id,
+                type: 'price_dropped',
+                title: '🎉 Price Dropped!',
+                message: `Garage lowered price by ${priceDrop} QAR! Now ${counterPrice} QAR`,
+                data: { bid_id: offer.bid_id, counter_offer_id: result.rows[0].counter_offer_id, old_price: offer.proposed_amount, new_price: counterPrice, savings: priceDrop },
+                target_role: 'customer'
+            });
+        }
     }
 
     private async createCustomerCounter(offer: any, customerId: string, counterPrice: number, notes: string | undefined, client: PoolClient): Promise<void> {

@@ -38,3 +38,19 @@ export const markRead = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+/**
+ * Get unread notification count only
+ * Used for badge display in mobile app
+ */
+export const getUnreadNotificationCount = async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+
+    try {
+        const count = await getUnreadCount(userId);
+        res.json({ count });
+    } catch (err) {
+        console.error('[Notification] Failed to get unread count:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};

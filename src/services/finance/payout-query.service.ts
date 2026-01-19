@@ -28,6 +28,7 @@ export class PayoutQueryService {
             params.push(garageId);
         }
 
+
         const statsResult = await this.pool.query(`
             SELECT 
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'completed'), 0) as completed_payouts,
@@ -36,6 +37,8 @@ export class PayoutQueryService {
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'pending'), 0) as pending_payouts,
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('processing', 'awaiting_confirmation')), 0) as processing_payouts,
                 COUNT(*) FILTER (WHERE payout_status = 'pending') as pending_count,
+                COUNT(*) FILTER (WHERE payout_status = 'awaiting_confirmation') as awaiting_count,
+                COUNT(*) FILTER (WHERE payout_status = 'disputed') as disputed_count,
                 COALESCE(SUM(net_amount) FILTER (
                     WHERE payout_status IN ('completed', 'confirmed') 
                     AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)

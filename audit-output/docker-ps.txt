@@ -1,0 +1,2 @@
+qscrap-backend	Up 23 minutes	0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+qscrap-postgres	Up 23 minutes	0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp

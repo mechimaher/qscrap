@@ -25,9 +25,9 @@ const handleMulterError = (fn: any) => (req: Request, res: Response, next: NextF
 // Accept: images[] (up to 5), car_front_image (1), car_rear_image (1)
 // Note: Body validation is handled inside RequestService (complex multipart form)
 router.post('/', authenticate, requireRole('customer'), requestWriteLimiter, handleMulterError(upload.fields([
-    { name: 'images', maxCount: 5 },
-    { name: 'car_front_image', maxCount: 1 },
-    { name: 'car_rear_image', maxCount: 1 }
+    { name: 'images', maxCount: 5 },             // Part damage photos
+    { name: 'car_front_image', maxCount: 1 },    // Vehicle front view
+    { name: 'car_rear_image', maxCount: 1 }      // Vehicle rear view
 ])), optimizeFiles, createRequest);
 
 // Customer views their requests
