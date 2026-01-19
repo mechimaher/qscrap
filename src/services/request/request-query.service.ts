@@ -160,6 +160,7 @@ export class RequestQueryService {
         }
 
         // Get Bids with latest counter-offer info
+        // NOTE: bid images are stored directly in bids.image_urls (no separate bid_images table)
         const bidsResult = await this.pool.query(
             `WITH LatestCounters AS (
                 SELECT *, 
@@ -176,17 +177,8 @@ export class RequestQueryService {
                     COALESCE(sp.plan_code, 'starter') as plan_code,
                     b.bid_amount as original_bid_amount,
                     
-                    -- Aggregate bid images
-                    COALESCE(
-                        ARRAY_AGG(DISTINCT bi.image_url ORDER BY bi.image_url) FILTER (WHERE bi.image_type = 'bid'),
-                        ARRAY[]::text[]
-                    ) as image_urls,
-                    
-                    -- Aggregate condition photos
-                    COALESCE(
-                        ARRAY_AGG(DISTINCT bic.image_url ORDER BY bic.image_url) FILTER (WHERE bic.image_type = 'condition'),
-                        ARRAY[]::text[]
-                    ) as condition_photos,
+                    -- Bid images stored directly in bids table
+                    COALESCE(b.image_urls, ARRAY[]::text[]) as image_urls,
                     
                     -- Garage Last Offer (Pending)
                     lc_gp.proposed_amount as garage_counter_amount,
@@ -209,8 +201,6 @@ export class RequestQueryService {
              JOIN garages g ON b.garage_id = g.garage_id
              LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
              LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
-             LEFT JOIN bid_images bi ON b.bid_id = bi.bid_id
-             LEFT JOIN bid_images bic ON b.bid_id = bic.bid_id
              
              -- Join for Garage Pending Offer
              LEFT JOIN LatestCounters lc_gp ON b.bid_id = lc_gp.bid_id 
@@ -229,9 +219,6 @@ export class RequestQueryService {
                                           AND lc_c.rn = 1
 
              WHERE b.request_id = $1 AND b.status IN ('pending', 'accepted')
-             GROUP BY b.bid_id, g.garage_name, g.logo_url, g.rating_average, g.rating_count, g.total_transactions,
-                      sp.plan_code, lc_gp.proposed_amount, lc_gp.message, lc_gp.counter_offer_id,
-                      lc_g.proposed_amount, lc_g.counter_offer_id, lc_c.proposed_amount, lc_c.status
              ORDER BY 
                  CASE WHEN b.status = 'accepted' THEN 0 ELSE 1 END,
                  CASE sp.plan_code WHEN 'enterprise' THEN 0 WHEN 'professional' THEN 1 ELSE 2 END,
