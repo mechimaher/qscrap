@@ -46,9 +46,9 @@ export class AuthService {
             const userId = userResult.rows[0].user_id;
 
             if (data.user_type === 'garage' && data.garage_name) {
-                const demoExpiresAt = new Date();
-                demoExpiresAt.setDate(demoExpiresAt.getDate() + TRIAL_DAYS);
-                await client.query(`INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, approval_status, demo_expires_at, supplier_type, specialized_brands, all_brands) VALUES ($1, $2, $3, $4, $5, 'demo', $6, $7, $8, $9)`, [userId, data.garage_name, data.address, data.location_lat || null, data.location_lng || null, demoExpiresAt, data.supplier_type || 'used', data.specialized_brands || [], data.all_brands !== false]);
+                // NEW GARAGES MUST BE APPROVED BY ADMIN BEFORE ACCESS
+                // Status starts as 'pending' - admin can approve, reject, or grant demo
+                await client.query(`INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, approval_status, supplier_type, specialized_brands, all_brands) VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8)`, [userId, data.garage_name, data.address, data.location_lat || null, data.location_lng || null, data.supplier_type || 'used', data.specialized_brands || [], data.all_brands !== false]);
             }
 
             await client.query('COMMIT');
