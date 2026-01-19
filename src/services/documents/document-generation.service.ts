@@ -351,11 +351,20 @@ export class DocumentGenerationService {
      */
     getLogoBase64(): string {
         try {
-            const logoPath = path.join(__dirname, '../../public/assets/images/qscrap-logo.png');
-            if (fs.existsSync(logoPath)) {
-                const logoBuffer = fs.readFileSync(logoPath);
-                return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+            // Try multiple possible paths (local dev and Docker)
+            const possiblePaths = [
+                path.join(process.cwd(), 'public/assets/images/qscrap-logo.png'),
+                path.join(__dirname, '../../../public/assets/images/qscrap-logo.png'),
+                '/app/public/assets/images/qscrap-logo.png'
+            ];
+
+            for (const logoPath of possiblePaths) {
+                if (fs.existsSync(logoPath)) {
+                    const logoBuffer = fs.readFileSync(logoPath);
+                    return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+                }
             }
+            console.warn('[DOCUMENTS] Logo not found at any expected path');
         } catch (err) {
             console.error('Error reading logo file:', err);
         }
