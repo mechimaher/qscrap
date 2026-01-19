@@ -1937,6 +1937,28 @@ body {
     object-fit: cover;
 }
 
+.request-thumbnails .thumb.car-image {
+    border-color: var(--accent);
+    position: relative;
+}
+
+.request-thumbnails .thumb .car-badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(168, 32, 80, 0.9);
+    color: white;
+    font-size: 9px;
+    padding: 2px 4px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.request-thumbnails .thumb .car-badge i {
+    margin-right: 2px;
+}
+
 /* Technical Specs */
 .tech-specs {
     display: flex;
@@ -4508,6 +4530,7 @@ button.menu-toggle {
     color: var(--text-muted);
     font-size: 14px;
 }
+
 /* ============================================
    Supplier Type Selector Styles
    Qatar Gold Theme
@@ -4545,18 +4568,18 @@ button.menu-toggle {
     transition: all 0.3s;
 }
 
-.supplier-type-radio input[type="radio"]:checked + .radio-card {
+.supplier-type-radio input[type="radio"]:checked+.radio-card {
     border-color: #D4AF37;
     background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(168, 32, 80, 0.05));
     box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
-.supplier-type-radio input[type="radio"]:checked + .radio-card .radio-indicator {
+.supplier-type-radio input[type="radio"]:checked+.radio-card .radio-indicator {
     border-color: #D4AF37;
     background: #D4AF37;
 }
 
-.supplier-type-radio input[type="radio"]:checked + .radio-card .radio-indicator::after {
+.supplier-type-radio input[type="radio"]:checked+.radio-card .radio-indicator::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -4629,7 +4652,7 @@ button.menu-toggle {
 }
 
 /* Toggle Switch Gold Theme Override */
-.toggle-switch input[type="checkbox"]:checked ~ .switch-slider {
+.toggle-switch input[type="checkbox"]:checked~.switch-slider {
     background: linear-gradient(135deg, #D4AF37, #A82050) !important;
 }
 
@@ -4646,7 +4669,7 @@ button.menu-toggle {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.toggle-switch input[type="checkbox"]:checked ~ .switch-slider::before {
+.toggle-switch input[type="checkbox"]:checked~.switch-slider::before {
     transform: translateX(24px);
 }
 
