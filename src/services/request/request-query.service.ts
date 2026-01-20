@@ -170,7 +170,7 @@ export class RequestQueryService {
              )
              SELECT b.*, 
                     g.garage_name, 
-                    g.logo_url as garage_photo_url,
+                    NULL as garage_photo_url,
                     g.rating_average as garage_rating, 
                     g.rating_count as garage_review_count, 
                     g.total_transactions,
