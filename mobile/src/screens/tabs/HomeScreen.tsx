@@ -12,6 +12,7 @@ import {
     Image,
     Animated,
     Easing,
+    Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -871,14 +872,30 @@ export default function HomeScreen() {
 
     const loadData = useCallback(async () => {
         try {
-            const [statsData, notifData, loyaltyData] = await Promise.all([
+            const [statsData, notifData, loyaltyData, addressesData] = await Promise.all([
                 api.getStats(),
                 api.request('/notifications/unread-count').catch(() => ({ count: 0 })),
-                api.request('/loyalty/summary').catch(() => ({ points: 0, tier: 'Bronze' }))
+                api.request('/loyalty/summary').catch(() => ({ points: 0, tier: 'Bronze' })),
+                api.getAddresses().catch(() => ({ addresses: [] }))
             ]);
             setStats(statsData.stats);
             setUnreadNotifications(notifData.count || 0);
             setLoyalty(loyaltyData);
+
+            // Auto-load default address
+            if (addressesData.addresses && addressesData.addresses.length > 0) {
+                const defaultAddr = addressesData.addresses.find((a: any) => a.is_default) || addressesData.addresses[0];
+                setDeliveryAddress(defaultAddr.address_text || defaultAddr.address_line1);
+                setDeliveryLocationData({
+                    lat: defaultAddr.latitude,
+                    lng: defaultAddr.longitude,
+                    address: defaultAddr.address_text || defaultAddr.address_line1
+                });
+            } else {
+                // No addresses - user needs to add one
+                setDeliveryAddress('No delivery address');
+                setDeliveryLocationData({ lat: null, lng: null, address: '' });
+            }
         } catch (error) {
             console.log('Failed to load data:', error);
             toast.error('Error', 'Failed to load data');
@@ -906,19 +923,35 @@ export default function HomeScreen() {
     }, [loadData]);
 
     const handleNewRequest = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        // Pass delivery location to NewRequest for database storage
-        if (deliveryLocationData.lat && deliveryLocationData.lng) {
-            navigation.navigate('NewRequest', {
-                deliveryLocation: {
-                    lat: deliveryLocationData.lat,
-                    lng: deliveryLocationData.lng,
-                    address: deliveryLocationData.address,
-                }
-            });
-        } else {
-            navigation.navigate('NewRequest');
+        // Block if no address
+        if (!deliveryLocationData.lat || !deliveryLocationData.lng) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Alert.alert(
+                '📍 Delivery Address Required',
+                'Please add a delivery address before creating a request. Tap "Delivering to" to add your address.',
+                [
+                    {
+                        text: 'Add Address',
+                        onPress: () => setShowLocationPicker(true),
+                        style: 'default'
+                    },
+                    {
+                        text: 'Cancel',
+                        style: 'cancel'
+                    }
+                ]
+            );
+            return;
         }
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        navigation.navigate('NewRequest', {
+            deliveryLocation: {
+                lat: deliveryLocationData.lat,
+                lng: deliveryLocationData.lng,
+                address: deliveryLocationData.address,
+            }
+        });
     };
 
     if (loading) {
