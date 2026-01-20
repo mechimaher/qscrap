@@ -574,6 +574,28 @@ export default function OrderDetailScreen() {
                             {order.car_make} {order.car_model} ({order.car_year})
                         </Text>
                     </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Part</Text>
+                        <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
+                            {order.part_category || 'Part'}
+                        </Text>
+                    </View>
+                    {order.part_subcategory && (
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Type</Text>
+                            <Text style={[styles.detailValue, { color: colors.text }]}>
+                                {order.part_subcategory}
+                            </Text>
+                        </View>
+                    )}
+                    {order.part_description && (
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Notes</Text>
+                            <Text style={[styles.detailValue, { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 }]} numberOfLines={2}>
+                                {order.part_description}
+                            </Text>
+                        </View>
+                    )}
 
                     <View style={styles.divider} />
 
