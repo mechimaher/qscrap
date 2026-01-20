@@ -442,17 +442,22 @@ async function submitSendPayment() {
 // ==========================================
 
 function openSendPaymentModal(payoutId, garageName, amount) {
+    console.log('openSendPaymentModal called', payoutId, garageName, amount);
     document.getElementById('spPayoutId').value = payoutId;
     document.getElementById('spGarageName').textContent = garageName;
     document.getElementById('spAmount').textContent = formatCurrency(amount);
     document.getElementById('spPaymentMethod').value = '';
     document.getElementById('spReference').value = '';
     document.getElementById('spNotes').value = '';
-    document.getElementById('sendPaymentModal').style.display = 'flex';
+    const modal = document.getElementById('sendPaymentModal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
 }
 
 function closeSendPaymentModal() {
-    document.getElementById('sendPaymentModal').style.display = 'none';
+    const modal = document.getElementById('sendPaymentModal');
+    modal.style.display = 'none';
+    modal.classList.remove('active');
 }
 
 
