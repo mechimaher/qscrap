@@ -293,15 +293,32 @@ async function loadPendingPayouts(page = 1) {
                 <td style="color: var(--success); font-weight: 600;">${formatCurrency(p.net_amount)}</td>
                 <td>${formatDate(p.created_at)}</td>
                 <td>
-                    <button class="btn btn-success btn-sm" onclick="openSendPaymentModal('${p.payout_id}', '${escapeHTML(p.garage_name)}', ${p.net_amount})">
+                    <button class="btn btn-success btn-sm send-payout-btn" 
+                            data-payout-id="${p.payout_id}" 
+                            data-garage-name="${escapeHTML(p.garage_name).replace(/"/g, '&quot;')}" 
+                            data-amount="${p.net_amount}">
                         <i class="bi bi-send-check"></i> Send
                     </button>
-                    <button class="btn btn-ghost btn-sm" onclick="holdPayout('${p.payout_id}')">
+                    <button class="btn btn-ghost btn-sm hold-payout-btn" data-payout-id="${p.payout_id}">
                         <i class="bi bi-pause-circle"></i>
                     </button>
                 </td>
             </tr>
         `).join('');
+
+        // Add event listeners for send buttons
+        tbody.querySelectorAll('.send-payout-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openSendPaymentModal(btn.dataset.payoutId, btn.dataset.garageName, parseFloat(btn.dataset.amount));
+            });
+        });
+
+        // Add event listeners for hold buttons
+        tbody.querySelectorAll('.hold-payout-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                holdPayout(btn.dataset.payoutId);
+            });
+        });
     } catch (err) {
         console.error('Failed to load pending payouts:', err);
     }
