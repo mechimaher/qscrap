@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     RefreshControl,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -96,6 +97,30 @@ export default function NotificationsScreen() {
         }
     };
 
+    const handleClearAll = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Alert.alert(
+            'Clear All Notifications',
+            'Are you sure you want to permanently delete all notifications? This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Clear All',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await api.clearAllNotifications();
+                            setNotifications([]);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        } catch (error) {
+                            console.log('Failed to clear notifications:', error);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const getNotificationIcon = (type: string) => {
         switch (type) {
             case 'bid': return '💰';
@@ -147,13 +172,18 @@ export default function NotificationsScreen() {
                     <Text style={styles.backText}>← Back</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
-                {unreadCount > 0 ? (
-                    <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
-                        <Text style={styles.markAllText}>Read All</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <View style={{ width: 60 }} />
-                )}
+                <View style={styles.headerActions}>
+                    {unreadCount > 0 && (
+                        <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
+                            <Text style={styles.markAllText}>Read All</Text>
+                        </TouchableOpacity>
+                    )}
+                    {notifications.length > 0 && (
+                        <TouchableOpacity onPress={handleClearAll} style={styles.clearAllButton}>
+                            <Text style={styles.clearAllText}>Clear All</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             {isLoading ? (
@@ -206,8 +236,19 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
         backgroundColor: Colors.primary + '15',
         borderRadius: BorderRadius.md,
+        marginRight: Spacing.xs,
     },
     markAllText: { color: Colors.primary, fontSize: FontSizes.sm, fontWeight: '600' },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    clearAllButton: {
+        padding: Spacing.sm,
+        backgroundColor: '#FEE2E2',
+        borderRadius: BorderRadius.md,
+    },
+    clearAllText: { color: '#DC2626', fontSize: FontSizes.sm, fontWeight: '600' },
     list: { padding: Spacing.lg, paddingTop: Spacing.md },
     notificationCard: {
         flexDirection: 'row',

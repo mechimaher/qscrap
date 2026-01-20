@@ -10,7 +10,9 @@ import {
     updateCustomerProfile,
     getNotifications,
     markNotificationRead,
-    markAllNotificationsRead
+    markAllNotificationsRead,
+    deleteNotification,
+    clearAllNotifications
 } from '../controllers/dashboard.controller';
 import {
     getCustomerUrgentActions,
@@ -104,6 +106,8 @@ router.put('/profile', authenticate, updateCustomerProfile);
 router.get('/notifications', authenticate, getNotifications);
 router.post('/notifications/:notificationId/read', authenticate, markNotificationRead);
 router.post('/notifications/read-all', authenticate, markAllNotificationsRead);
+router.delete('/notifications/:notificationId', authenticate, deleteNotification);
+router.delete('/notifications', authenticate, clearAllNotifications);
 
 // Shorthand routes (IMPORTANT: These match what frontend dashboards expect)
 router.get('/garage', authenticate, requireRole('garage'), getGarageStats);
