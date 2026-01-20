@@ -14,6 +14,7 @@ const router = Router();
 
 // Customer endpoints (require customer authentication)
 router.get('/summary', authenticate, requireRole('customer'), getRewardsSummary);
+router.get('/balance', authenticate, requireRole('customer'), getRewardsSummary); // Alias for mobile app compatibility
 router.get('/transactions', authenticate, requireRole('customer'), getTransactionHistory);
 router.post('/redeem', authenticate, requireRole('customer'), redeemPoints);
 router.get('/tiers', authenticate, getTierBenefits); // Available to all authenticated users
