@@ -166,7 +166,12 @@ export class NegotiationService {
     }
 
     private async getBidById(bidId: string, client: PoolClient): Promise<any> {
-        const result = await client.query('SELECT * FROM bids WHERE bid_id = $1', [bidId]);
+        const result = await client.query(`
+            SELECT b.*, pr.customer_id 
+            FROM bids b 
+            JOIN part_requests pr ON b.request_id = pr.request_id 
+            WHERE b.bid_id = $1
+        `, [bidId]);
         if (result.rows.length === 0) throw new Error('Bid not found');
         return result.rows[0];
     }
