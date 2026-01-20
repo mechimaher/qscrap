@@ -133,7 +133,7 @@ export class DashboardService {
 
     // ============= NOTIFICATIONS =============
     async getNotifications(userId: string) {
-        const result = await this.pool.query(`SELECT notification_id, title, body as message, notification_type as type, is_read, created_at, related_id FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, [userId]);
+        const result = await this.pool.query(`SELECT notification_id, title, body as message, notification_type as type, is_read, created_at, data->'related_id' as related_id, data FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, [userId]);
         return result.rows;
     }
 
