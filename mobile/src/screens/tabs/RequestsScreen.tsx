@@ -291,7 +291,15 @@ const ActiveRequestCard = ({
                                 </View>
                             </View>
 
-                            {/* Part Description */}
+                            {/* Part Category & Description */}
+                            {item.part_category && (
+                                <Text
+                                    style={[styles.partCategory, { color: colors.text }]}
+                                    numberOfLines={1}
+                                >
+                                    {item.part_category}
+                                </Text>
+                            )}
                             <Text
                                 style={[styles.partDescription, { color: colors.textSecondary }]}
                                 numberOfLines={2}
@@ -698,6 +706,12 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#ffffff',
         opacity: 0.9,
+    },
+    partCategory: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        // color set dynamically via colors.text
+        marginBottom: 4,
     },
     partDescription: {
         fontSize: FontSizes.md,
