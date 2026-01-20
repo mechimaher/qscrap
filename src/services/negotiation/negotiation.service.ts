@@ -225,8 +225,14 @@ export class NegotiationService {
         // 1. Update counter-offer status
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['accepted', offer.counter_offer_id]);
 
-        // 2. Update bid with negotiated price
-        await client.query('UPDATE bids SET bid_amount = $1, status = $2 WHERE bid_id = $3', [offer.proposed_amount, 'accepted', offer.bid_id]);
+        // 2. Update bid - preserve original price in original_bid_amount, update bid_amount to negotiated price
+        await client.query(`
+            UPDATE bids 
+            SET original_bid_amount = COALESCE(original_bid_amount, bid_amount),
+                bid_amount = $1, 
+                status = $2 
+            WHERE bid_id = $3
+        `, [offer.proposed_amount, 'accepted', offer.bid_id]);
 
         // 3. Get request details for order creation
         const reqResult = await client.query('SELECT * FROM part_requests WHERE request_id = $1', [bid.request_id]);
