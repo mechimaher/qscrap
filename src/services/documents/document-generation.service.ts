@@ -54,7 +54,8 @@ export class DocumentGenerationService {
                     r.car_make,
                     r.car_model,
                     r.car_year,
-                    r.part_description as part_name,
+                    r.part_description,
+                    r.part_category,
                     r.part_number
                 FROM orders o
                 JOIN users u ON o.customer_id = u.user_id
@@ -151,21 +152,15 @@ export class DocumentGenerationService {
         const commissionRate = parseFloat(order.commission_rate || 0.15);
         const netPayout = parseFloat(order.garage_payout_amount || (partPrice - platformFee));
 
-        // Parse category/subcategory from part name - format: [Category - Subcategory] Description
-        // IMPORTANT: Always use generic text if no category - description could be long paragraph with errors
-        let displayPartName = 'Car Spare Part';  // Generic fallback (NOT customer description)
+        // Use part_category from database, fallback to generic text
+        // IMPORTANT: Never show customer's raw part_description in invoice (could be long/messy)
+        let displayPartName = 'Car Spare Part';  // Generic fallback
         let category = 'Car Spare Part';
         let subcategory = '';
 
-        if (order.part_name) {
-            // Try to match [Category - Subcategory] pattern
-            const catMatch = order.part_name.match(/^\[(.*?)\s*-\s*(.*?)\]/);
-            if (catMatch) {
-                category = catMatch[1].trim();
-                subcategory = catMatch[2].trim();
-                displayPartName = `${category} > ${subcategory}`;
-            }
-            // If no match, keep using generic "Car Spare Part" - do NOT use customer description
+        if (order.part_category) {
+            category = order.part_category;
+            displayPartName = order.part_category;
         }
 
         if (invoiceType === 'garage') {
