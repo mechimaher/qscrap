@@ -182,14 +182,27 @@ const HeroRequestCard = ({
             {/* Divider */}
             <View style={[styles.heroDivider, !isActive && { backgroundColor: '#dee2e6' }]} />
 
-            {/* Part Description */}
+            {/* Part Category & Description */}
             <View style={styles.heroSection}>
                 <Text style={[styles.heroLabel, !isActive && { color: '#525252' }]}>
                     PART NEEDED
                 </Text>
-                <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }]}>
-                    {request.part_description}
-                </Text>
+                {request.part_category ? (
+                    <>
+                        <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }]}>
+                            {request.part_category}
+                        </Text>
+                        {request.part_description && request.part_description !== request.part_category && (
+                            <Text style={[styles.heroPartNotes, !isActive && { color: '#525252' }]}>
+                                {request.part_description}
+                            </Text>
+                        )}
+                    </>
+                ) : (
+                    <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }]}>
+                        {request.part_description}
+                    </Text>
+                )}
             </View>
 
             {/* Part Number & VIN */}
@@ -1119,6 +1132,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.xs,
     },
     heroPartDescription: { fontSize: FontSizes.lg, color: '#fff', lineHeight: 24 },
+    heroPartNotes: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.7)', marginTop: Spacing.xs, lineHeight: 20 },
     heroMetaRow: { flexDirection: 'row', gap: Spacing.xl, marginTop: Spacing.md },
     heroMetaItem: {},
     heroMetaLabel: { fontSize: FontSizes.xs, color: 'rgba(255,255,255,0.5)', marginBottom: 2 },
