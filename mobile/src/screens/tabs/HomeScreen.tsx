@@ -70,7 +70,9 @@ const HeroWelcome = ({
     onNotificationPress,
     unreadCount = 0,
     onLocationPress,
-    deliveryAddress = 'Select delivery address'
+    deliveryAddress = 'Select delivery address',
+    loyalty,
+    onLoyaltyPress
 }: {
     user: any;
     colors: any;
@@ -78,10 +80,13 @@ const HeroWelcome = ({
     unreadCount?: number;
     onLocationPress?: () => void;
     deliveryAddress?: string;
+    loyalty?: { points: number; tier: string } | null;
+    onLoyaltyPress?: () => void;
 }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(-20)).current;
     const pulseAnim = useRef(new Animated.Value(0)).current;
+    const loyaltyGlow = useRef(new Animated.Value(0.8)).current;
 
     const greeting = () => {
         const hour = new Date().getHours();
@@ -97,6 +102,15 @@ const HeroWelcome = ({
         if (hour < 17) return '🌤️';
         if (hour < 20) return '🌅';
         return '🌙';
+    };
+
+    const getTierEmoji = (tier: string) => {
+        switch (tier?.toLowerCase()) {
+            case 'platinum': return '💎';
+            case 'gold': return '🏆';
+            case 'silver': return '🥈';
+            default: return '🏅';
+        }
     };
 
     useEffect(() => {
@@ -119,6 +133,14 @@ const HeroWelcome = ({
             Animated.sequence([
                 Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
                 Animated.timing(pulseAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
+            ])
+        ).start();
+
+        // Subtle glow for loyalty badge
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(loyaltyGlow, { toValue: 1, duration: 1500, useNativeDriver: true }),
+                Animated.timing(loyaltyGlow, { toValue: 0.8, duration: 1500, useNativeDriver: true }),
             ])
         ).start();
     }, []);
@@ -176,6 +198,18 @@ const HeroWelcome = ({
                         )}
                     </TouchableOpacity>
                 </View>
+
+                {/* Compact Loyalty Badge - VIP Status Display */}
+                {loyalty && (
+                    <TouchableOpacity onPress={onLoyaltyPress} activeOpacity={0.7}>
+                        <Animated.View style={[styles.heroLoyaltyBadge, { opacity: loyaltyGlow }]}>
+                            <Text style={styles.heroLoyaltyEmoji}>{getTierEmoji(loyalty.tier)}</Text>
+                            <Text style={styles.heroLoyaltyTier}>{loyalty.tier} Member</Text>
+                            <View style={styles.heroLoyaltyDot} />
+                            <Text style={styles.heroLoyaltyPoints}>{loyalty.points.toLocaleString()} pts</Text>
+                        </Animated.View>
+                    </TouchableOpacity>
+                )}
 
                 {/* Refined Gold Divider */}
                 <View style={[styles.goldDivider, { backgroundColor: colors.secondary }]} />
@@ -830,6 +864,7 @@ export default function HomeScreen() {
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const [deliveryAddress, setDeliveryAddress] = useState('Tap to select address');
+    const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
     // Store full location for NewRequest submission
     const [deliveryLocationData, setDeliveryLocationData] = useState<{
         lat: number | null;
@@ -839,12 +874,14 @@ export default function HomeScreen() {
 
     const loadData = useCallback(async () => {
         try {
-            const [statsData, notifData] = await Promise.all([
+            const [statsData, notifData, loyaltyData] = await Promise.all([
                 api.getStats(),
-                api.request('/notifications/unread-count').catch(() => ({ count: 0 }))
+                api.request('/notifications/unread-count').catch(() => ({ count: 0 })),
+                api.request('/loyalty/summary').catch(() => ({ points: 0, tier: 'Bronze' }))
             ]);
             setStats(statsData.stats);
             setUnreadNotifications(notifData.count || 0);
+            setLoyalty(loyaltyData);
         } catch (error) {
             console.log('Failed to load data:', error);
             toast.error('Error', 'Failed to load data');
@@ -908,7 +945,7 @@ export default function HomeScreen() {
                     />
                 }
             >
-                {/* Hero Welcome */}
+                {/* Hero Welcome with Integrated Loyalty */}
                 <HeroWelcome
                     user={user}
                     colors={colors}
@@ -916,6 +953,8 @@ export default function HomeScreen() {
                     onNotificationPress={() => navigation.navigate('Notifications')}
                     onLocationPress={() => setShowLocationPicker(true)}
                     deliveryAddress={deliveryAddress}
+                    loyalty={loyalty}
+                    onLoyaltyPress={() => navigation.navigate('Rewards')}
                 />
 
                 {/* Signature CTA */}
@@ -937,9 +976,6 @@ export default function HomeScreen() {
 
                 {/* Pro Tip - Strategic position after stats */}
                 <ProTipCard navigation={navigation} />
-
-                {/* Loyalty Points Banner */}
-                <LoyaltyBanner navigation={navigation} />
 
                 {/* Quick Actions */}
                 <QuickActions navigation={navigation} />
@@ -1061,6 +1097,38 @@ const styles = StyleSheet.create({
         marginVertical: Spacing.md,
         opacity: 0.3,
         borderRadius: 0.5,
+    },
+    // Hero Loyalty Badge - Compact VIP Status
+    heroLoyaltyBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        marginLeft: Spacing.lg,
+        marginTop: Spacing.xs,
+        backgroundColor: 'rgba(201, 162, 39, 0.25)',
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+        gap: 6,
+    },
+    heroLoyaltyEmoji: {
+        fontSize: 14,
+    },
+    heroLoyaltyTier: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    heroLoyaltyDot: {
+        width: 3,
+        height: 3,
+        borderRadius: 1.5,
+        backgroundColor: 'rgba(255,255,255,0.5)',
+    },
+    heroLoyaltyPoints: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.9)',
     },
     // Premium Location Section (Integrated in Hero)
     locationSection: {
