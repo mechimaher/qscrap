@@ -148,7 +148,11 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                 <Text style={[styles.vehicleYear, { color: colors.textMuted }]}>
                                     {vehicle.car_year}
                                 </Text>
-                                {vehicle.request_count > 0 && (
+                                {vehicle.vin_number ? (
+                                    <View style={styles.vinBadge}>
+                                        <Text style={styles.vinBadgeText}>🔑 VIN ✓</Text>
+                                    </View>
+                                ) : vehicle.request_count > 0 && (
                                     <Text style={[styles.vehicleRequests, { color: colors.textSecondary }]}>
                                         {vehicle.request_count} request{vehicle.request_count > 1 ? 's' : ''}
                                     </Text>
@@ -239,6 +243,18 @@ const styles = StyleSheet.create({
     vehicleRequests: {
         fontSize: 10,
         marginTop: 4,
+    },
+    vinBadge: {
+        backgroundColor: 'rgba(34, 197, 94, 0.15)',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 8,
+        marginTop: 4,
+    },
+    vinBadgeText: {
+        fontSize: 9,
+        color: '#22C55E',
+        fontWeight: '600',
     },
     addHint: {
         width: 100,
