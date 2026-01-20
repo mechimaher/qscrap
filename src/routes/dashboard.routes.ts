@@ -113,4 +113,22 @@ router.delete('/notifications', authenticate, clearAllNotifications);
 router.get('/garage', authenticate, requireRole('garage'), getGarageStats);
 router.get('/customer', authenticate, requireRole('customer'), getCustomerStats);
 
+// Garage Badge Counts - For dashboard notification badges
+router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (req, res) => {
+    try {
+        const garageId = (req as any).garage?.garageId;
+        if (!garageId) return res.status(403).json({ error: 'Garage not found' });
+
+        const pool = (await import('../config/db')).default;
+        const { BadgeCountService } = await import('../services/notification/badge.service');
+        const badgeService = new BadgeCountService(pool);
+
+        const counts = await badgeService.getGarageBadgeCounts(garageId);
+        res.json({ success: true, ...counts });
+    } catch (err) {
+        console.error('[Dashboard] Garage badge counts error:', err);
+        res.status(500).json({ error: 'Failed to get badge counts' });
+    }
+});
+
 export default router;

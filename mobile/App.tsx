@@ -99,10 +99,13 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Tab Navigator with premium styling
+// Tab Navigator with premium styling and badge counts
 function MainTabs() {
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { useBadgeCounts } = require('./src/hooks/useBadgeCounts');
+  const { requestsBadge, ordersBadge, profileBadge } = useBadgeCounts();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -121,6 +124,15 @@ function MainTabs() {
           fontSize: 12,
           fontWeight: '600',
         },
+        tabBarBadgeStyle: {
+          backgroundColor: Colors.primary,
+          color: '#fff',
+          fontSize: 10,
+          fontWeight: '700',
+          minWidth: 18,
+          height: 18,
+          borderRadius: 9,
+        },
       }}
     >
       <Tab.Screen
@@ -137,6 +149,7 @@ function MainTabs() {
         options={{
           tabBarLabel: t('nav.requests'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🔍</Text>,
+          tabBarBadge: requestsBadge,
         }}
       />
       <Tab.Screen
@@ -145,6 +158,7 @@ function MainTabs() {
         options={{
           tabBarLabel: t('nav.orders'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>📦</Text>,
+          tabBarBadge: ordersBadge,
         }}
       />
       <Tab.Screen
@@ -153,6 +167,7 @@ function MainTabs() {
         options={{
           tabBarLabel: t('nav.profile'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
+          tabBarBadge: profileBadge,
         }}
       />
     </Tab.Navigator>
