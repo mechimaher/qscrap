@@ -319,21 +319,12 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                                     Used • Commercial • Genuine OEM
                                 </Text>
                             </View>
-                            <View style={styles.ctaIconContainer}>
-                                <Animated.Text
-                                    style={[
-                                        styles.ctaIcon,
-                                        {
-                                            transform: [
-                                                { scale: plusScale },
-                                                { rotate: plusRotate },
-                                            ],
-                                        },
-                                    ]}
-                                >
-                                    +
-                                </Animated.Text>
-                            </View>
+                            <Animated.View style={[
+                                styles.ctaButton,
+                                { transform: [{ scale: plusScale }] }
+                            ]}>
+                                <Text style={styles.ctaButtonText}>Request a Part</Text>
+                            </Animated.View>
                         </View>
 
                         {/* 3-Tier Supplier Badges */}
@@ -1141,6 +1132,17 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.3)',
     },
     ctaIcon: { fontSize: 24, color: '#fff', fontWeight: '300' },
+    ctaButton: {
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.lg,
+    },
+    ctaButtonText: {
+        color: '#8D1B3D',
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+    },
     ctaFooter: {
         marginTop: Spacing.sm,
         paddingTop: Spacing.xs,
@@ -1198,15 +1200,15 @@ const styles = StyleSheet.create({
     },
     statCardWrapper: { width: cardWidth },
     statCardInner: {
-        padding: Spacing.sm,
+        padding: Spacing.xs,
         alignItems: 'center',
-        minHeight: 95,
+        minHeight: 72,
         justifyContent: 'center',
         borderRadius: BorderRadius.md,
     },
-    statEmoji: { fontSize: 24, marginBottom: 4 },
-    statValue: { fontSize: 28, fontWeight: '700' },
-    statLabel: { fontSize: FontSizes.xs, marginTop: 2 },
+    statEmoji: { fontSize: 20, marginBottom: 2 },
+    statValue: { fontSize: 24, fontWeight: '700' },
+    statLabel: { fontSize: FontSizes.xs, marginTop: 1 },
     statCardWide: {
         borderRadius: BorderRadius.md,
         overflow: 'hidden',
