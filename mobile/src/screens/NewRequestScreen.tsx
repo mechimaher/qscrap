@@ -461,9 +461,20 @@ export default function NewRequestScreen() {
                             {selectedVehicle && (
                                 <View style={[styles.selectedVehicleBadge, { backgroundColor: Colors.primary + '10' }]}>
                                     <Text style={styles.checkIcon}>✓</Text>
-                                    <Text style={[styles.selectedText, { color: Colors.primary }]}>
-                                        {selectedVehicle.car_make} {selectedVehicle.car_model} ({selectedVehicle.car_year})
-                                    </Text>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.selectedText, { color: Colors.primary }]}>
+                                            {selectedVehicle.car_make} {selectedVehicle.car_model} ({selectedVehicle.car_year})
+                                        </Text>
+                                        {selectedVehicle.vin_number ? (
+                                            <Text style={styles.vinStatusGreen}>
+                                                🔑 VIN: ...{selectedVehicle.vin_number.slice(-6)} ✓
+                                            </Text>
+                                        ) : (
+                                            <Text style={styles.vinStatusAmber}>
+                                                💡 Add VIN for better quotes
+                                            </Text>
+                                        )}
+                                    </View>
                                 </View>
                             )}
 
@@ -864,6 +875,16 @@ const styles = StyleSheet.create({
     },
     checkIcon: { fontSize: 18 },
     selectedText: { fontSize: FontSizes.md, fontWeight: '600' },
+    vinStatusGreen: {
+        fontSize: FontSizes.xs,
+        color: '#22C55E',
+        marginTop: 2,
+    },
+    vinStatusAmber: {
+        fontSize: FontSizes.xs,
+        color: '#F59E0B',
+        marginTop: 2,
+    },
     addVehicleButton: {
         padding: Spacing.md,
         alignItems: 'center',
