@@ -220,7 +220,7 @@ const HeroRequestCard = ({
                         <View style={styles.heroMetaItem}>
                             <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }]}>VIN</Text>
                             <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }]}>
-                                {request.vin_number.slice(-8)}
+                                {request.vin_number}
                             </Text>
                         </View>
                     )}
