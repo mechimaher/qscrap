@@ -592,20 +592,39 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
 };
 
 // ============================================
-// PRO TIP CARD - TAPPABLE
+// PRO TIP CARD - TAPPABLE WITH ANIMATED LIGHTBULB
 // ============================================
 const ProTipCard = ({ navigation }: { navigation: any }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
+    const glowAnim = useRef(new Animated.Value(0.6)).current;
     const { colors } = useTheme();
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 400,
-            delay: 900,
+            delay: 600,
             useNativeDriver: true,
         }).start();
+
+        // Subtle lightbulb glow pulse
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(glowAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(glowAnim, {
+                    toValue: 0.6,
+                    duration: 1000,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
     }, []);
 
     const handlePress = () => {
@@ -624,7 +643,9 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
                 styles.proTipCard,
                 { opacity: fadeAnim, backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }
             ]}>
-                <Text style={styles.proTipIcon}>💡</Text>
+                <View style={styles.proTipIconWrapper}>
+                    <Animated.Text style={[styles.proTipIcon, { opacity: glowAnim }]}>💡</Animated.Text>
+                </View>
                 <View style={styles.proTipContent}>
                     <Text style={[styles.proTipTitle, { color: colors.text }]}>Pro Tip</Text>
                     <Text style={[styles.proTipText, { color: colors.textSecondary }]}>
@@ -914,14 +935,14 @@ export default function HomeScreen() {
                     onOrdersPress={() => navigation.navigate('Orders')}
                 />
 
+                {/* Pro Tip - Strategic position after stats */}
+                <ProTipCard navigation={navigation} />
+
                 {/* Loyalty Points Banner */}
                 <LoyaltyBanner navigation={navigation} />
 
                 {/* Quick Actions */}
                 <QuickActions navigation={navigation} />
-
-                {/* Pro Tip - Tappable */}
-                <ProTipCard navigation={navigation} />
 
                 {/* How It Works Carousel */}
                 <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.lg }}>
@@ -1265,7 +1286,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.secondary + '50',
     },
-    proTipIcon: { fontSize: 18, marginRight: Spacing.sm },
+    proTipIconWrapper: {
+        marginRight: Spacing.sm,
+    },
+    proTipIcon: { fontSize: 22 },
     proTipContent: { flex: 1 },
     proTipTitle: { fontSize: FontSizes.xs, fontWeight: '600', color: Colors.secondary, marginBottom: 1 },
     proTipText: { fontSize: 11, lineHeight: 14 },
