@@ -53,11 +53,17 @@ export const getNegotiationHistory = async (req: AuthRequest, res: Response) => 
     try {
         const { bid_id } = req.params;
         const history = await negotiationService.getNegotiationHistory(bid_id);
-        res.json({ negotiations: history });
+        // Calculate current round from history
+        const currentRound = history.length > 0
+            ? Math.max(...history.map((h: any) => h.round_number || 0))
+            : 0;
+        // Return both 'negotiations' (legacy) and 'history' + 'current_round' (mobile app)
+        res.json({ negotiations: history, history: history, current_round: currentRound });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
 
 export const getPendingCounterOffers = async (req: AuthRequest, res: Response) => {
     try {
