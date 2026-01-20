@@ -427,6 +427,17 @@ export default function NewRequestScreen() {
                             transform: [{ translateY: slideAnim }],
                         }}
                     >
+                        {/* Pro Tip Header Banner - Just-in-time guidance */}
+                        <Animated.View style={[styles.proTipBanner, { backgroundColor: '#FFF8E1' }]}>
+                            <Text style={styles.proTipIcon}>💡</Text>
+                            <View style={styles.proTipContent}>
+                                <Text style={styles.proTipTitle}>Pro Tip</Text>
+                                <Text style={styles.proTipText}>
+                                    Add clear photos to help garages find exact parts 3x faster!
+                                </Text>
+                            </View>
+                        </Animated.View>
+
                         {/* 1. Select Vehicle */}
                         <View style={[styles.section, { backgroundColor: colors.surface }]}>
                             <View style={styles.sectionHeader}>
@@ -806,6 +817,22 @@ const styles = StyleSheet.create({
     headerSubtitle: { fontSize: FontSizes.xs, marginTop: 2 },
     scrollView: { flex: 1 },
     scrollContent: { padding: Spacing.md, paddingBottom: Spacing.xxl },
+    // Pro Tip Banner
+    proTipBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF8E1',
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        marginBottom: Spacing.md,
+        borderWidth: 1,
+        borderColor: 'rgba(201, 162, 39, 0.3)',
+        gap: Spacing.sm,
+    },
+    proTipIcon: { fontSize: 22 },
+    proTipContent: { flex: 1 },
+    proTipTitle: { fontSize: FontSizes.sm, fontWeight: '700', color: '#92400E', marginBottom: 2 },
+    proTipText: { fontSize: FontSizes.sm, color: '#78350F', lineHeight: 18 },
     section: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
