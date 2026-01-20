@@ -143,7 +143,6 @@ export function generateBilingualCustomerInvoiceHTML(
                 <div class="info-header"><span>${L.buyer?.en || 'Buyer'}</span><span class="arabic">${L.buyer?.ar || 'المشتري'}</span></div>
                 <div class="info-name">${data.buyer?.name || 'N/A'}</div>
                 <div class="info-detail"><strong>Mobile:</strong> ${data.buyer?.phone || 'N/A'}</div>
-                <div class="info-detail">${data.buyer?.address || 'N/A'}</div>
             </div>
         </div>
         
