@@ -38,8 +38,10 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
 export const customerRespondToCounter = async (req: AuthRequest, res: Response) => {
     try {
         const { counter_offer_id } = req.params;
-        const { action, proposed_amount, notes } = req.body;
-        await negotiationService.customerRespondToCounter(req.user!.userId, counter_offer_id, { action, counter_price: proposed_amount, notes });
+        // Accept both proposed_amount and counter_amount for frontend compatibility
+        const { action, proposed_amount, counter_amount, notes } = req.body;
+        const counterPrice = proposed_amount || counter_amount;
+        await negotiationService.customerRespondToCounter(req.user!.userId, counter_offer_id, { action, counter_price: counterPrice, notes });
         res.json({ message: `Counter-offer ${action}ed` });
     } catch (err) {
         if (isNegotiationError(err)) return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });
