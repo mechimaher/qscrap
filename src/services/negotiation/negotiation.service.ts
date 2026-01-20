@@ -113,7 +113,10 @@ export class NegotiationService {
 
     async getPendingCounterOffers(garageId: string): Promise<any[]> {
         const result = await this.pool.query(`
-            SELECT co.*, b.bid_amount, pr.part_description
+            SELECT co.*, 
+                   b.bid_amount as original_amount,
+                   pr.part_description,
+                   pr.car_make || ' ' || pr.car_model || ' ' || pr.car_year as car_summary
             FROM counter_offers co
             JOIN bids b ON co.bid_id = b.bid_id
             JOIN part_requests pr ON b.request_id = pr.request_id
