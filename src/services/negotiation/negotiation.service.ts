@@ -135,6 +135,7 @@ export class NegotiationService {
         try {
             await client.query('BEGIN');
 
+            // Get the last garage offer
             const lastOffer = await client.query(`
                 SELECT co.*, b.garage_id
                 FROM counter_offers co
@@ -147,9 +148,15 @@ export class NegotiationService {
                 throw new Error('No garage offer found');
             }
 
-            await this.acceptOffer(lastOffer.rows[0], client);
+            // Get the bid with customer_id
+            const bid = await this.getBidById(bidId, client);
+
+            // Verify customer ownership
+            this.verifyCustomerOwnership(bid, customerId);
+
+            const order = await this.acceptOffer(lastOffer.rows[0], bid, customerId, client);
             await client.query('COMMIT');
-            return { message: 'Offer accepted' };
+            return { message: 'Offer accepted', order };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
