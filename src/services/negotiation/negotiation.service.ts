@@ -55,10 +55,13 @@ export class NegotiationService {
             await client.query('BEGIN');
 
             const offer = await this.getCounterOfferForUpdate(counterOfferId, client);
+            const bid = await this.getBidById(offer.bid_id, client);
             this.verifyGarageOwnership(offer, garageId);
 
+            let order = null;
             if (response.action === 'accept') {
-                await this.acceptOffer(offer, client);
+                // Garage accepts customer's counter-offer - get customer_id from bid
+                order = await this.acceptOffer(offer, bid, bid.customer_id, client);
             } else if (response.action === 'decline') {
                 await this.declineOffer(offer, client);
             } else if (response.action === 'counter' && response.counter_price) {
@@ -66,7 +69,7 @@ export class NegotiationService {
             }
 
             await client.query('COMMIT');
-            return { action: response.action };
+            return { action: response.action, order };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -84,8 +87,9 @@ export class NegotiationService {
             const bid = await this.getBidById(offer.bid_id, client);
             this.verifyCustomerOwnership(bid, customerId);
 
+            let order = null;
             if (response.action === 'accept') {
-                await this.acceptOffer(offer, client);
+                order = await this.acceptOffer(offer, bid, customerId, client);
             } else if (response.action === 'decline') {
                 await this.declineOffer(offer, client);
             } else if (response.action === 'counter' && response.counter_price) {
@@ -93,7 +97,7 @@ export class NegotiationService {
             }
 
             await client.query('COMMIT');
-            return { action: response.action };
+            return { action: response.action, order };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -210,9 +214,73 @@ export class NegotiationService {
         return result.rows[0];
     }
 
-    private async acceptOffer(offer: any, client: PoolClient): Promise<void> {
+    private async acceptOffer(offer: any, bid: any, customerId: string, client: PoolClient): Promise<any> {
+        // 1. Update counter-offer status
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['accepted', offer.counter_offer_id]);
+
+        // 2. Update bid with negotiated price
         await client.query('UPDATE bids SET bid_amount = $1, status = $2 WHERE bid_id = $3', [offer.proposed_amount, 'accepted', offer.bid_id]);
+
+        // 3. Get request details for order creation
+        const reqResult = await client.query('SELECT * FROM part_requests WHERE request_id = $1', [bid.request_id]);
+        if (reqResult.rows.length === 0) throw new Error('Request not found');
+        const request = reqResult.rows[0];
+
+        // 4. Calculate commission
+        const garageRateResult = await client.query(`
+            SELECT g.approval_status, sp.commission_rate
+            FROM garages g
+            LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN ('active', 'trial')
+            LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
+            WHERE g.garage_id = $1
+            ORDER BY gs.created_at DESC LIMIT 1
+        `, [bid.garage_id]);
+
+        let commissionRate = 0.15;
+        if (garageRateResult.rows[0]?.approval_status === 'demo') {
+            commissionRate = 0;
+        } else if (garageRateResult.rows[0]?.commission_rate) {
+            commissionRate = parseFloat(garageRateResult.rows[0].commission_rate);
+        }
+
+        // 5. Calculate prices
+        const partPrice = parseFloat(offer.proposed_amount);
+        const deliveryFee = 25; // Default delivery fee
+        const platformFee = Math.round(partPrice * commissionRate * 100) / 100;
+        const totalAmount = partPrice + deliveryFee;
+        const garagePayout = partPrice - platformFee;
+
+        // 6. Create order
+        const orderResult = await client.query(`
+            INSERT INTO orders 
+            (request_id, bid_id, customer_id, garage_id, part_price, commission_rate, 
+             platform_fee, delivery_fee, total_amount, garage_payout_amount, 
+             payment_method, delivery_address)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING order_id, order_number
+        `, [bid.request_id, offer.bid_id, customerId, bid.garage_id, partPrice, commissionRate,
+            platformFee, deliveryFee, totalAmount, garagePayout, 'cash',
+        request.delivery_address_text || 'To be confirmed']);
+
+        const order = orderResult.rows[0];
+
+        // 7. Update request status
+        await client.query("UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1", [bid.request_id]);
+
+        // 8. Reject other bids
+        await client.query(
+            "UPDATE bids SET status = 'rejected', updated_at = NOW() WHERE request_id = $1 AND bid_id != $2 AND status = 'pending'",
+            [bid.request_id, offer.bid_id]
+        );
+
+        // 9. Log order history
+        await client.query(`
+            INSERT INTO order_status_history 
+            (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+            VALUES ($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted counter-offer')
+        `, [order.order_id, customerId]);
+
+        return order;
     }
 
     private async declineOffer(offer: any, client: PoolClient): Promise<void> {
