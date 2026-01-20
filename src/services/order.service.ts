@@ -170,7 +170,25 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
 }
 
 async function notifyOrderCreation(order: any, garageId: string, customerId: string, requestId: string, partDesc: string, totalAmount: number) {
-    // Notify winning garage
+    // Send push notification to garage
+    try {
+        const { pushService } = await import('./push.service');
+        await pushService.sendToUser(
+            garageId,
+            '🎉 Bid Accepted!',
+            'Congratulations! Customer accepted your bid. Start preparing the part.',
+            {
+                type: 'bid_accepted',
+                orderId: order.order_id,
+                orderNumber: order.order_number,
+            },
+            { channelId: 'orders', sound: true }
+        );
+    } catch (pushErr) {
+        console.error('[ORDER] Push notification to garage failed:', pushErr);
+    }
+
+    // Notify winning garage (in-app)
     await import('../services/notification.service').then(ns => ns.createNotification({
         userId: garageId,
         type: 'bid_accepted',

@@ -270,6 +270,26 @@ async function notifyRelevantGarages(
             }
 
             if (matchesBrand) {
+                // Send push notification to garage
+                try {
+                    const { pushService } = await import('./push.service');
+                    await pushService.sendToUser(
+                        garage.garage_id,
+                        '🚗 New Request Available!',
+                        `${carYear} ${carMake} ${carModel} - ${partDescription.substring(0, 40)}`,
+                        {
+                            type: 'new_request',
+                            requestId: request.request_id,
+                            carMake,
+                            carModel,
+                            carYear,
+                        },
+                        { channelId: 'default', sound: true }
+                    );
+                } catch (pushErr) {
+                    console.error('[REQUEST] Push notification failed:', pushErr);
+                }
+
                 // Emit Live Request
                 if (io) {
                     io.to(`garage_${garage.garage_id}`).emit('new_request', {
