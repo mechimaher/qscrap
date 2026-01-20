@@ -5,6 +5,7 @@ import { getErrorMessage } from '../types';
 
 /**
  * GET /api/customer/loyalty/summary
+ * GET /api/loyalty/balance (alias for mobile)
  * Get customer's rewards summary
  */
 export const getRewardsSummary = async (req: AuthRequest, res: Response) => {
@@ -17,9 +18,15 @@ export const getRewardsSummary = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Rewards account not found' });
         }
 
+        // Return both original field names AND mobile-compatible aliases
         res.json({
             success: true,
-            data: summary
+            data: summary,
+            // Mobile app compatibility - direct fields
+            points: summary.points_balance,
+            tier: summary.current_tier,
+            lifetime_points: summary.lifetime_points,
+            points_to_next_tier: summary.points_to_next_tier
         });
     } catch (err) {
         console.error('getRewardsSummary error:', err);
