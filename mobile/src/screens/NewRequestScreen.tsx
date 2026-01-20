@@ -304,6 +304,23 @@ export default function NewRequestScreen() {
             return;
         }
 
+        // VIN is now REQUIRED for Qatar spare parts matching
+        if (!selectedVehicle.vin_number) {
+            Alert.alert(
+                'VIN Required',
+                'Qatar garages require VIN/Chassis number from your Istimara for accurate part matching.\n\nWould you like to add VIN to this vehicle now?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Add VIN',
+                        onPress: () => navigation.navigate('MyVehicles'),
+                        style: 'default'
+                    }
+                ]
+            );
+            return;
+        }
+
         if (!partDescription.trim()) {
             toast.error('Missing Description', 'Please describe the part you need');
             return;
@@ -385,7 +402,9 @@ export default function NewRequestScreen() {
         }
     };
 
-    const canSubmit = selectedVehicle && partDescription.trim().length > 10;
+    // VIN is now required for submission
+    const hasVIN = selectedVehicle?.vin_number && selectedVehicle.vin_number.length === 17;
+    const canSubmit = selectedVehicle && hasVIN && partDescription.trim().length > 10;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -470,9 +489,14 @@ export default function NewRequestScreen() {
                                                 🔑 VIN: {selectedVehicle.vin_number} ✓
                                             </Text>
                                         ) : (
-                                            <Text style={styles.vinStatusAmber}>
-                                                💡 Add VIN for better quotes
-                                            </Text>
+                                            <TouchableOpacity
+                                                onPress={() => navigation.navigate('MyVehicles')}
+                                                style={styles.vinWarningBtn}
+                                            >
+                                                <Text style={styles.vinStatusRed}>
+                                                    ⚠️ VIN Required - Tap to add
+                                                </Text>
+                                            </TouchableOpacity>
                                         )}
                                     </View>
                                 </View>
@@ -797,7 +821,9 @@ export default function NewRequestScreen() {
                         <Text style={[styles.footerHint, { color: colors.textMuted }]}>
                             {!selectedVehicle
                                 ? 'Select a vehicle to continue'
-                                : 'Add a part description (min 10 characters)'}
+                                : !hasVIN
+                                    ? '🔑 VIN required - Tap vehicle to add'
+                                    : 'Add a part description (min 10 characters)'}
                         </Text>
                     )}
                 </View>
@@ -884,6 +910,18 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         color: '#F59E0B',
         marginTop: 2,
+    },
+    vinStatusRed: {
+        fontSize: FontSizes.xs,
+        color: '#EF4444',
+        fontWeight: '600',
+    },
+    vinWarningBtn: {
+        marginTop: 4,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        backgroundColor: '#FEE2E2',
+        borderRadius: BorderRadius.sm,
     },
     addVehicleButton: {
         padding: Spacing.md,

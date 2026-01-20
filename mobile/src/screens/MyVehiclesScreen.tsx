@@ -15,6 +15,7 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
+    ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -25,6 +26,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { getAllMakes, getModelsForMake, YEARS } from '../constants/carData';
+import VINCapture from '../components/VINCapture';
 
 interface Vehicle {
     vehicle_id: string;
@@ -55,6 +57,7 @@ export default function MyVehiclesScreen() {
     const [newYear, setNewYear] = useState('');
     const [newNickname, setNewNickname] = useState('');
     const [newVIN, setNewVIN] = useState('');
+    const [vinImageUri, setVinImageUri] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
 
     // Premium cascading selectors
@@ -90,6 +93,7 @@ export default function MyVehiclesScreen() {
         setNewYear(new Date().getFullYear().toString());
         setNewNickname('');
         setNewVIN('');
+        setVinImageUri(null);
         setShowAddModal(true);
     };
 
@@ -105,6 +109,19 @@ export default function MyVehiclesScreen() {
             return;
         }
 
+        // VIN is now REQUIRED
+        const trimmedVIN = newVIN.trim().toUpperCase();
+        if (!trimmedVIN || trimmedVIN.length !== 17) {
+            Alert.alert('VIN Required', 'Please enter a valid 17-character VIN from your Istimara (Registration Card)');
+            return;
+        }
+        // VIN format validation (no I, O, Q per ISO 3779)
+        const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
+        if (!vinRegex.test(trimmedVIN)) {
+            Alert.alert('Invalid VIN', 'VIN can only contain letters (except I, O, Q) and numbers');
+            return;
+        }
+
         setIsAdding(true);
         try {
             await api.addVehicle({
@@ -112,7 +129,7 @@ export default function MyVehiclesScreen() {
                 car_model: newModel.trim(),
                 car_year: year,
                 nickname: newNickname.trim() || undefined,
-                vin_number: newVIN.trim() || undefined,
+                vin_number: trimmedVIN, // Now required
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowAddModal(false);
@@ -167,17 +184,30 @@ export default function MyVehiclesScreen() {
         setNewYear(vehicle.car_year.toString());
         setNewNickname(vehicle.nickname || '');
         setNewVIN(vehicle.vin_number || '');
+        setVinImageUri(null); // Reset image for fresh capture
         setShowAddModal(true);
     };
 
     const handleSaveEdit = async () => {
         if (!editingVehicle) return;
 
+        // VIN validation for edit too
+        const trimmedVIN = newVIN.trim().toUpperCase();
+        if (trimmedVIN && trimmedVIN.length !== 17) {
+            Alert.alert('Invalid VIN', 'VIN must be exactly 17 characters');
+            return;
+        }
+        const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
+        if (trimmedVIN && !vinRegex.test(trimmedVIN)) {
+            Alert.alert('Invalid VIN', 'VIN can only contain letters (except I, O, Q) and numbers');
+            return;
+        }
+
         setIsAdding(true);
         try {
             await api.updateVehicle(editingVehicle.vehicle_id, {
                 nickname: newNickname.trim() || undefined,
-                vin_number: newVIN.trim() || undefined,
+                vin_number: trimmedVIN || undefined,
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowAddModal(false);
@@ -341,102 +371,97 @@ export default function MyVehiclesScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🚗 Make {editingVehicle ? '' : '*'}</Text>
-                        {editingVehicle ? (
-                            <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                <Text style={[styles.inputText, { color: colors.text }]}>{newMake}</Text>
-                            </View>
-                        ) : (
-                            <TouchableOpacity
-                                style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newMake ? Colors.primary : colors.border }]}
-                                onPress={() => setShowMakePicker(true)}
-                            >
-                                <Text style={[styles.selectorText, { color: newMake ? colors.text : colors.textMuted }]}>
-                                    {newMake || 'Select car make...'}
-                                </Text>
-                                <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
-                            </TouchableOpacity>
-                        )}
-
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📋 Model {editingVehicle ? '' : '*'}</Text>
-                        {editingVehicle ? (
-                            <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                <Text style={[styles.inputText, { color: colors.text }]}>{newModel}</Text>
-                            </View>
-                        ) : (
-                            <TouchableOpacity
-                                style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newModel ? Colors.primary : colors.border, opacity: newMake ? 1 : 0.5 }]}
-                                onPress={() => newMake && setShowModelPicker(true)}
-                                disabled={!newMake}
-                            >
-                                <Text style={[styles.selectorText, { color: newModel ? colors.text : colors.textMuted }]}>
-                                    {newModel || (newMake ? 'Select model...' : 'Select make first')}
-                                </Text>
-                                <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
-                            </TouchableOpacity>
-                        )}
-
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📅 Year {editingVehicle ? '' : '*'}</Text>
-                        {editingVehicle ? (
-                            <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                <Text style={[styles.inputText, { color: colors.text }]}>{newYear}</Text>
-                            </View>
-                        ) : (
-                            <TouchableOpacity
-                                style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newYear ? Colors.primary : colors.border }]}
-                                onPress={() => setShowYearPicker(true)}
-                            >
-                                <Text style={[styles.selectorText, { color: newYear ? colors.text : colors.textMuted }]}>
-                                    {newYear || 'Select year (1980-2027)'}
-                                </Text>
-                                <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
-                            </TouchableOpacity>
-                        )}
-
-                        {/* VIN Input - For both new and edit */}
-                        <>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🔑 VIN / Chassis Number (optional)</Text>
-                            <TextInput
-                                style={[styles.input, styles.vinInput, {
-                                    backgroundColor: colors.background,
-                                    color: colors.text,
-                                    borderColor: newVIN.length === 17 ? '#22C55E' : colors.border
-                                }]}
-                                value={newVIN}
-                                onChangeText={(text) => setNewVIN(text.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17))}
-                                placeholder="17 characters from Istimara"
-                                placeholderTextColor={colors.textMuted}
-                                autoCapitalize="characters"
-                                maxLength={17}
-                            />
-                            <Text style={[styles.vinHelp, { color: newVIN.length === 17 ? '#22C55E' : colors.textMuted }]}>
-                                {newVIN.length}/17 characters {newVIN.length === 17 ? '✓' : ''}
-                            </Text>
-                        </>
-
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>💬 Nickname (optional)</Text>
-                        <TextInput
-                            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            value={newNickname}
-                            onChangeText={setNewNickname}
-                            placeholder="e.g. My Daily, Wife's Car"
-                            placeholderTextColor={colors.textMuted}
-                        />
-
-                        <TouchableOpacity
-                            onPress={editingVehicle ? handleSaveEdit : handleSaveVehicle}
-                            disabled={isAdding}
-                            style={styles.saveButton}
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
+                            contentContainerStyle={{ paddingBottom: 20 }}
                         >
-                            <LinearGradient
-                                colors={isAdding ? ['#999', '#777'] : [Colors.primary, '#6b1029']}
-                                style={styles.saveGradient}
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🚗 Make {editingVehicle ? '' : '*'}</Text>
+                            {editingVehicle ? (
+                                <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+                                    <Text style={[styles.inputText, { color: colors.text }]}>{newMake}</Text>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newMake ? Colors.primary : colors.border }]}
+                                    onPress={() => setShowMakePicker(true)}
+                                >
+                                    <Text style={[styles.selectorText, { color: newMake ? colors.text : colors.textMuted }]}>
+                                        {newMake || 'Select car make...'}
+                                    </Text>
+                                    <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            )}
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📋 Model {editingVehicle ? '' : '*'}</Text>
+                            {editingVehicle ? (
+                                <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+                                    <Text style={[styles.inputText, { color: colors.text }]}>{newModel}</Text>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newModel ? Colors.primary : colors.border, opacity: newMake ? 1 : 0.5 }]}
+                                    onPress={() => newMake && setShowModelPicker(true)}
+                                    disabled={!newMake}
+                                >
+                                    <Text style={[styles.selectorText, { color: newModel ? colors.text : colors.textMuted }]}>
+                                        {newModel || (newMake ? 'Select model...' : 'Select make first')}
+                                    </Text>
+                                    <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            )}
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📅 Year {editingVehicle ? '' : '*'}</Text>
+                            {editingVehicle ? (
+                                <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+                                    <Text style={[styles.inputText, { color: colors.text }]}>{newYear}</Text>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newYear ? Colors.primary : colors.border }]}
+                                    onPress={() => setShowYearPicker(true)}
+                                >
+                                    <Text style={[styles.selectorText, { color: newYear ? colors.text : colors.textMuted }]}>
+                                        {newYear || 'Select year (1980-2027)'}
+                                    </Text>
+                                    <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            )}
+
+                            {/* VIN Capture - REQUIRED with Photo Support */}
+                            <VINCapture
+                                value={newVIN}
+                                imageUri={vinImageUri || undefined}
+                                onVINChange={setNewVIN}
+                                onImageChange={setVinImageUri}
+                                disabled={isAdding}
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>💬 Nickname (optional)</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                                value={newNickname}
+                                onChangeText={setNewNickname}
+                                placeholder="e.g. My Daily, Wife's Car"
+                                placeholderTextColor={colors.textMuted}
+                            />
+
+                            <TouchableOpacity
+                                onPress={editingVehicle ? handleSaveEdit : handleSaveVehicle}
+                                disabled={isAdding}
+                                style={styles.saveButton}
                             >
-                                <Text style={styles.saveButtonText}>
-                                    {isAdding ? 'Saving...' : (editingVehicle ? 'Update Vehicle' : 'Save Vehicle')}
-                                </Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
+                                <LinearGradient
+                                    colors={isAdding ? ['#999', '#777'] : [Colors.primary, '#6b1029']}
+                                    style={styles.saveGradient}
+                                >
+                                    <Text style={styles.saveButtonText}>
+                                        {isAdding ? 'Saving...' : (editingVehicle ? 'Update Vehicle' : 'Save Vehicle')}
+                                    </Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>

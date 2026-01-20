@@ -623,18 +623,28 @@ async function loadReviews() {
 
 async function moderateReview(reviewId, decision) {
     try {
+        // Backend expects 'action' not 'status', and 'approve'/'reject' not 'approved'/'rejected'
+        const action = decision === 'approved' ? 'approve' : 'reject';
+
+        let rejection_reason = null;
+        if (action === 'reject') {
+            rejection_reason = prompt('Enter rejection reason:');
+            if (!rejection_reason) return; // User cancelled
+        }
+
         const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: decision })
+            body: JSON.stringify({ action, rejection_reason })
         });
 
         if (res.ok) {
-            showToast(`Review ${decision}`, 'success');
+            showToast(`Review ${action}d successfully`, 'success');
             loadReviews();
             loadBadges();
         } else {
-            showToast('Failed to moderate review', 'error');
+            const data = await res.json();
+            showToast(data.error || 'Failed to moderate review', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');
