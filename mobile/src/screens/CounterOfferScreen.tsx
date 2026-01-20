@@ -38,7 +38,8 @@ interface NegotiationParams {
     garageName: string;
     currentAmount: number;
     partDescription: string;
-    garageCounterId?: string | null; // Passed when responding to a garage counter-offer
+    garageCounterId?: string | null;
+    requestId: string; // Added to navigate back to RequestDetail
 }
 
 const MAX_ROUNDS = 3;
@@ -46,7 +47,7 @@ const MAX_ROUNDS = 3;
 export default function CounterOfferScreen() {
     const navigation = useNavigation();
     const route = useRoute();
-    const { bidId, garageName, currentAmount, partDescription, garageCounterId } = route.params as NegotiationParams;
+    const { bidId, garageName, currentAmount, partDescription, garageCounterId, requestId } = route.params as NegotiationParams;
     const { socket } = useSocketContext();
     const { colors } = useTheme();
     const toast = useToast();
@@ -204,11 +205,15 @@ export default function CounterOfferScreen() {
                     title: 'Counter-Offer Sent!',
                     message: `Your offer of ${amount} QAR has been sent to ${garageName}.`,
                     action: {
-                        label: 'OK',
-                        onPress: () => navigation.goBack()
+                        label: 'View Request',
+                        onPress: () => (navigation as any).navigate('RequestDetail', { requestId })
                     },
-                    duration: 4000
+                    duration: 3000
                 });
+                // Auto-navigate to RequestDetail after short delay
+                setTimeout(() => {
+                    (navigation as any).navigate('RequestDetail', { requestId });
+                }, 1500);
             } else {
                 let errorMsg = 'Failed to send counter-offer';
                 try {

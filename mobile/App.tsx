@@ -70,7 +70,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   Addresses: { onSelect?: (address: Address) => void } | undefined;
   Settings: undefined;
-  CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string; garageCounterId?: string | null };
+  CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string; garageCounterId?: string | null; requestId: string };
   Notifications: undefined;
   Support: undefined;
   // VIN Scanner
