@@ -3,6 +3,10 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { getUserNotifications, getUnreadCount, markNotificationsRead } from '../services/notification.service';
 import { getErrorMessage } from '../types';
+import pool from '../config/db';
+import { BadgeCountService } from '../services/notification/badge.service';
+
+const badgeService = new BadgeCountService(pool);
 
 /**
  * Get user's notifications
@@ -51,6 +55,43 @@ export const getUnreadNotificationCount = async (req: AuthRequest, res: Response
         res.json({ count });
     } catch (err) {
         console.error('[Notification] Failed to get unread count:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Get comprehensive badge counts for customer mobile app
+ * Used for tab bar badges (Requests, Orders, Profile tabs)
+ * Similar to Talabat/Keeta notification badges
+ */
+export const getBadgeCounts = async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.userId;
+
+    try {
+        const counts = await badgeService.getCustomerBadgeCounts(userId);
+        res.json({ success: true, ...counts });
+    } catch (err) {
+        console.error('[Notification] Failed to get badge counts:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Get badge counts for garage dashboard
+ * Used for sidebar badges and header notifications
+ */
+export const getGarageBadgeCounts = async (req: AuthRequest, res: Response) => {
+    const garageId = (req as any).garage?.garageId;
+
+    if (!garageId) {
+        return res.status(403).json({ error: 'Garage authentication required' });
+    }
+
+    try {
+        const counts = await badgeService.getGarageBadgeCounts(garageId);
+        res.json({ success: true, ...counts });
+    } catch (err) {
+        console.error('[Notification] Failed to get garage badge counts:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
