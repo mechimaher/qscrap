@@ -396,7 +396,7 @@ function notifyOrderStatusChange(
 export async function getOrderWithDetails(orderId: string): Promise<unknown | null> {
     const result = await pool.query(`
         SELECT o.*, 
-               pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.vin_number,
+               pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.part_category, pr.part_subcategory, pr.vin_number,
                u.full_name as customer_name, u.phone_number as customer_phone,
                g.garage_name, gu.phone_number as garage_phone,
                b.bid_amount, b.part_condition, b.warranty_days
