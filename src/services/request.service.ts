@@ -254,7 +254,8 @@ async function notifyRelevantGarages(
         const notificationsToCreate: any[] = [];
         const io = (global as any).io;
 
-        targetGaragesResult.rows.forEach(garage => {
+        // Use for...of to support async/await
+        for (const garage of targetGaragesResult.rows) {
             let matchesBrand = false;
             const hasSpecialization = garage.specialized_brands && Array.isArray(garage.specialized_brands) && garage.specialized_brands.length > 0;
 
@@ -320,7 +321,7 @@ async function notifyRelevantGarages(
                     target_role: 'garage'
                 });
             }
-        });
+        }
 
         if (notificationsToCreate.length > 0) {
             await createBatchNotifications(notificationsToCreate);
