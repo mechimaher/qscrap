@@ -347,30 +347,30 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                         style={styles.ctaGradient}
                     >
                         <View style={styles.ctaContent}>
-                            <View style={styles.ctaTextContainer}>
-                                <Text style={styles.ctaTitle}>Find Your Part</Text>
-                            </View>
+                            <Text style={styles.ctaTitle}>Find Your Part</Text>
+
+                            {/* Request Button - Center */}
                             <Animated.View style={[
                                 styles.ctaButton,
-                                { transform: [{ scale: plusScale }] }
+                                { transform: [{ scale: plusScale }], marginTop: Spacing.md, alignSelf: 'center' }
                             ]}>
                                 <Text style={styles.ctaButtonText}>Request a Part</Text>
                             </Animated.View>
-                        </View>
 
-                        {/* 3-Tier Supplier Badges */}
-                        <View style={styles.supplierBadges}>
-                            <View style={[styles.supplierBadge, { backgroundColor: 'rgba(34, 197, 94, 0.25)' }]}>
-                                <Text style={styles.badgeIcon}>♻️</Text>
-                                <Text style={styles.badgeText}>Used</Text>
-                            </View>
-                            <View style={[styles.supplierBadge, { backgroundColor: 'rgba(59, 130, 246, 0.25)' }]}>
-                                <Text style={styles.badgeIcon}>🔩</Text>
-                                <Text style={styles.badgeText}>Commercial</Text>
-                            </View>
-                            <View style={[styles.supplierBadge, { backgroundColor: 'rgba(245, 158, 11, 0.25)' }]}>
-                                <Text style={styles.badgeIcon}>⭐</Text>
-                                <Text style={styles.badgeText}>Genuine</Text>
+                            {/* 3-Tier Supplier Badges */}
+                            <View style={[styles.supplierBadges, { marginTop: Spacing.md }]}>
+                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(34, 197, 94, 0.25)' }]}>
+                                    <Text style={styles.badgeIcon}>♻️</Text>
+                                    <Text style={styles.badgeText}>Used</Text>
+                                </View>
+                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(59, 130, 246, 0.25)' }]}>
+                                    <Text style={styles.badgeIcon}>🔩</Text>
+                                    <Text style={styles.badgeText}>Commercial</Text>
+                                </View>
+                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(245, 158, 11, 0.25)' }]}>
+                                    <Text style={styles.badgeIcon}>⭐</Text>
+                                    <Text style={styles.badgeText}>Genuine</Text>
+                                </View>
                             </View>
                         </View>
 
@@ -1189,8 +1189,7 @@ const styles = StyleSheet.create({
     },
     ctaGradient: { padding: Spacing.md },
     ctaContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
         alignItems: 'center',
     },
     ctaTextContainer: { flex: 1 },
