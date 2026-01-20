@@ -915,6 +915,7 @@ export default function RequestDetailScreen() {
             currentAmount: (bid as any).garage_counter_amount || (bid as any).last_garage_offer_amount || bid.bid_amount,
             partDescription: request?.part_description || '',
             garageCounterId: (bid as any).garage_counter_id || null,
+            requestId: request?.request_id,
         });
     };
 
