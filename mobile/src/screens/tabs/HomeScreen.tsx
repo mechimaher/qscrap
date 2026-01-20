@@ -349,9 +349,6 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                         <View style={styles.ctaContent}>
                             <View style={styles.ctaTextContainer}>
                                 <Text style={styles.ctaTitle}>Find Your Part</Text>
-                                <Text style={styles.ctaSubtitle}>
-                                    Used • Commercial • Genuine OEM
-                                </Text>
                             </View>
                             <Animated.View style={[
                                 styles.ctaButton,
