@@ -613,7 +613,7 @@ const PremiumBidCard = ({
             {/* Bid Images */}
             {bid.image_urls && bid.image_urls.length > 0 && (
                 <View style={styles.bidImagesSection}>
-                    <Text style={styles.bidImagesLabel}>📸 Part Photos</Text>
+                    <Text style={styles.bidImagesLabel}>📸 Part Photos from Garage</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         {bid.image_urls.map((url, idx) => {
                             const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;

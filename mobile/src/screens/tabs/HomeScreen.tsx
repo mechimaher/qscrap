@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { api, Stats } from '../../services/api';
@@ -861,7 +862,8 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
-    const [deliveryAddress, setDeliveryAddress] = useState('Tap to select address');
+    const [deliveryAddress, setDeliveryAddress] = useState('Detecting location...');
+    const [isDetectingLocation, setIsDetectingLocation] = useState(false);
     const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
     // Store full location for NewRequest submission
     const [deliveryLocationData, setDeliveryLocationData] = useState<{
@@ -869,6 +871,70 @@ export default function HomeScreen() {
         lng: number | null;
         address: string;
     }>({ lat: null, lng: null, address: '' });
+
+    // GPS Fallback Detection (lightweight, with timeout)
+    const detectLocationFallback = useCallback(async () => {
+        try {
+            setIsDetectingLocation(true);
+            setDeliveryAddress('📍 Detecting...');
+
+            // Check permissions silently
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                // Permission denied - prompt manual entry
+                setDeliveryAddress('Set delivery location');
+                setDeliveryLocationData({ lat: null, lng: null, address: '' });
+                return;
+            }
+
+            // Get position with 5-second timeout (Balanced accuracy for speed)
+            const locationPromise = Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+            });
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('GPS Timeout')), 5000)
+            );
+
+            const location = await Promise.race([locationPromise, timeoutPromise]);
+
+            // Reverse geocode to get area name
+            const [geocoded] = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            });
+
+            if (geocoded) {
+                const area = geocoded.district || geocoded.subregion || geocoded.name || '';
+                const city = geocoded.city || 'Doha';
+                const concise = area ? `${area}, ${city}` : city;
+                const fullAddress = `${geocoded.street || ''}, ${area}, ${city}`.replace(/^, /, '').trim();
+
+                setDeliveryAddress(concise);
+                setDeliveryLocationData({
+                    lat: location.coords.latitude,
+                    lng: location.coords.longitude,
+                    address: fullAddress,
+                });
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } else {
+                // Geocoding failed but we have coordinates
+                setDeliveryAddress('Current Location');
+                setDeliveryLocationData({
+                    lat: location.coords.latitude,
+                    lng: location.coords.longitude,
+                    address: 'Current Location',
+                });
+            }
+        } catch (error) {
+            console.log('[GPS Fallback] Detection failed:', error);
+            // Graceful fallback - prompt user to set manually
+            setDeliveryAddress('Set delivery location');
+            setDeliveryLocationData({ lat: null, lng: null, address: '' });
+        } finally {
+            setIsDetectingLocation(false);
+        }
+    }, []);
+
 
     const loadData = useCallback(async () => {
         try {
@@ -882,19 +948,23 @@ export default function HomeScreen() {
             setUnreadNotifications(notifData.count || 0);
             setLoyalty(loyaltyData);
 
-            // Auto-load default address
+            // WATERFALL PATTERN: Saved addresses first, GPS fallback if none
             if (addressesData.addresses && addressesData.addresses.length > 0) {
+                // Priority 1: Use saved default address (instant)
                 const defaultAddr = addressesData.addresses.find((a: any) => a.is_default) || addressesData.addresses[0];
-                setDeliveryAddress(defaultAddr.address_text || defaultAddr.address_line1);
+                const displayText = defaultAddr.address_text || defaultAddr.address_line1;
+                // Format concise for display
+                const parts = displayText.split(',').map((p: string) => p.trim());
+                const concise = parts.length >= 2 ? `${parts[parts.length - 2]}, ${parts[parts.length - 1]}` : displayText;
+                setDeliveryAddress(concise);
                 setDeliveryLocationData({
                     lat: defaultAddr.latitude,
                     lng: defaultAddr.longitude,
-                    address: defaultAddr.address_text || defaultAddr.address_line1
+                    address: displayText
                 });
             } else {
-                // No addresses - user needs to add one
-                setDeliveryAddress('No delivery address');
-                setDeliveryLocationData({ lat: null, lng: null, address: '' });
+                // Priority 2: Auto-detect GPS location (non-blocking fallback)
+                detectLocationFallback();
             }
         } catch (error) {
             console.log('Failed to load data:', error);
