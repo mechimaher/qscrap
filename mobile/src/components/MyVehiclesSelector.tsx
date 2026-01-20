@@ -1,6 +1,6 @@
 // QScrap - My Vehicles Selector (Family Fleet)
 // Allows customers to quickly select from previously used vehicles
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -9,6 +9,7 @@ import {
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -38,13 +39,17 @@ interface Props {
 
 export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }: Props) {
     const { colors } = useTheme();
+    const navigation = useNavigation<any>();
     const [vehicles, setVehicles] = useState<SavedVehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isExpanded, setIsExpanded] = useState(false);
 
-    useEffect(() => {
-        loadVehicles();
-    }, []);
+    // Reload vehicles when screen comes into focus (detect new vehicles)
+    useFocusEffect(
+        useCallback(() => {
+            loadVehicles();
+        }, [])
+    );
 
     const loadVehicles = async () => {
         try {
@@ -161,12 +166,19 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                         );
                     })}
 
-                    {/* Add New Vehicle hint */}
-                    <View style={[styles.addHint, { borderColor: colors.border }]}>
-                        <Text style={[styles.addHintText, { color: colors.textMuted }]}>
-                            ↓ Enter new vehicle below
+                    {/* Add New Vehicle - Tappable */}
+                    <TouchableOpacity
+                        style={[styles.addHint, { borderColor: Colors.primary }]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.navigate('MyVehicles');
+                        }}
+                    >
+                        <Text style={styles.addHintIcon}>➕</Text>
+                        <Text style={[styles.addHintText, { color: Colors.primary }]}>
+                            Add Vehicle
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                 </ScrollView>
             )}
         </View>
@@ -260,13 +272,18 @@ const styles = StyleSheet.create({
         width: 100,
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
-        borderWidth: 1,
+        borderWidth: 2,
         borderStyle: 'dashed',
         alignItems: 'center',
         justifyContent: 'center',
     },
+    addHintIcon: {
+        fontSize: 20,
+        marginBottom: 4,
+    },
     addHintText: {
         fontSize: FontSizes.xs,
+        fontWeight: '700',
         textAlign: 'center',
     },
 });

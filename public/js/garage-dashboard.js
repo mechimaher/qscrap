@@ -4736,11 +4736,28 @@ function toggleNotifications() {
 /**
  * Mark all notifications as read
  */
-function markAllRead() {
-    notifications = [];
-    renderNotifications();
-    const dot = document.getElementById('notificationDot');
-    if (dot) dot.style.display = 'none';
+async function markAllRead() {
+    try {
+        // Call backend to mark all notifications as read
+        await fetch(`${API_URL}/notifications/mark-read`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notification_ids: ['all'] })
+        });
+
+        // Clear local notifications array
+        notifications = [];
+        renderNotifications();
+        const dot = document.getElementById('notificationDot');
+        if (dot) dot.style.display = 'none';
+        showToast('All notifications marked as read', 'success');
+    } catch (err) {
+        console.error('Failed to mark all read:', err);
+        showToast('Failed to mark notifications as read', 'error');
+    }
 }
 
 /**

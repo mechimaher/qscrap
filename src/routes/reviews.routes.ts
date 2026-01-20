@@ -24,6 +24,7 @@ router.get('/my', authenticate, requireRole('garage'), getMyReviews);
 // ============================================
 // OPERATIONS: Review Moderation
 // ============================================
+router.get('/moderation', authenticate, authorizeOperations, getAllReviews);  // Support dashboard uses this
 router.get('/pending', authenticate, authorizeOperations, getPendingReviews);
 router.get('/all', authenticate, authorizeOperations, getAllReviews);
 router.post('/:review_id/moderate', authenticate, authorizeOperations, moderateReview);

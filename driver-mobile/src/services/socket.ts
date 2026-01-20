@@ -200,12 +200,15 @@ export const onNewMessage = (callback: (data: any) => void) => {
 };
 
 export const joinChatRoom = (orderId: string) => {
-    socket?.emit('join_order_chat', orderId);
+    // Join via both methods to ensure we receive messages
+    socket?.emit('join_order_chat', { order_id: orderId });  // Match customer app format
+    socket?.emit('join_room', `order_${orderId}`);           // Direct room join
     console.log('[Socket] Joined chat room:', orderId);
 };
 
 export const leaveChatRoom = (orderId: string) => {
-    socket?.emit('leave_order_chat', orderId);
+    socket?.emit('leave_order_chat', { order_id: orderId });
+    // Note: Socket.IO auto-leaves rooms on disconnect, no need to explicitly leave
 };
 
 // sendChatMessage removed (use REST API)
