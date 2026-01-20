@@ -300,6 +300,7 @@ async function showDashboard() {
         prependRequest(data);
         showToast('New part request!', 'success');
         updateBadge();
+        loadBadgeCounts(); // Real-time badge update
     });
 
     // GENERIC NOTIFICATION LISTENER (Persistent)
@@ -332,6 +333,7 @@ async function showDashboard() {
             requests = requests.filter(r => r.request_id !== data.request_id);
             renderRequests();
             updateBadge(); // Updates the Requests badge immediately
+            loadBadgeCounts(); // Update enterprise badges
         }
     });
 
@@ -495,7 +497,8 @@ async function showDashboard() {
         loadBids(),
         loadOrders(),
         loadProfile(),
-        loadSubscription()  // Load subscription to update Analytics badge
+        loadSubscription(),  // Load subscription to update Analytics badge
+        loadBadgeCounts()    // Enterprise badge counts
     ]);
 
     // Check for pending counter-offers (after bids are loaded)
@@ -549,6 +552,50 @@ async function loadStats() {
         }
     } catch (err) {
         console.error('Failed to load stats:', err);
+    }
+}
+
+// Enterprise Badge Counts - Like Talabat/Keeta
+async function loadBadgeCounts() {
+    try {
+        const res = await fetch(`${API_URL}/dashboard/garage/badge-counts`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Update Request Badge
+            const requestBadge = document.getElementById('requestBadge');
+            if (requestBadge) {
+                requestBadge.textContent = data.new_requests || 0;
+                requestBadge.style.display = data.new_requests > 0 ? 'inline-block' : 'none';
+            }
+
+            // Update Bids Badge  
+            const bidsBadge = document.getElementById('bidsBadge');
+            if (bidsBadge) {
+                bidsBadge.textContent = data.my_active_bids || 0;
+                bidsBadge.style.display = data.my_active_bids > 0 ? 'inline-block' : 'none';
+            }
+
+            // Update Counter Offers Badge (Pending Actions)
+            const pendingActionsBadge = document.getElementById('pendingActionsBadge');
+            if (pendingActionsBadge) {
+                pendingActionsBadge.textContent = data.counter_offers_pending || 0;
+                pendingActionsBadge.style.display = data.counter_offers_pending > 0 ? 'inline-block' : 'none';
+            }
+
+            // Update Orders Badge
+            const activeOrdersBadge = document.getElementById('activeOrdersBadge');
+            if (activeOrdersBadge) {
+                activeOrdersBadge.textContent = data.pending_orders || 0;
+                activeOrdersBadge.style.display = data.pending_orders > 0 ? 'inline-block' : 'none';
+            }
+
+            console.log('[BadgeCounts] Updated:', data);
+        }
+    } catch (err) {
+        console.error('[BadgeCounts] Failed to load:', err);
     }
 }
 
