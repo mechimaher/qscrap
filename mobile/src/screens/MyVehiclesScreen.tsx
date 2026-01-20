@@ -53,6 +53,7 @@ export default function MyVehiclesScreen() {
     const [newModel, setNewModel] = useState('');
     const [newYear, setNewYear] = useState('');
     const [newNickname, setNewNickname] = useState('');
+    const [newVIN, setNewVIN] = useState('');
     const [isAdding, setIsAdding] = useState(false);
 
     // Premium cascading selectors
@@ -87,6 +88,7 @@ export default function MyVehiclesScreen() {
         setNewModel('');
         setNewYear(new Date().getFullYear().toString());
         setNewNickname('');
+        setNewVIN('');
         setShowAddModal(true);
     };
 
@@ -109,6 +111,7 @@ export default function MyVehiclesScreen() {
                 car_model: newModel.trim(),
                 car_year: year,
                 nickname: newNickname.trim() || undefined,
+                vin_number: newVIN.trim() || undefined,
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowAddModal(false);
@@ -387,6 +390,29 @@ export default function MyVehiclesScreen() {
                             </TouchableOpacity>
                         )}
 
+                        {/* VIN Input - Only for new vehicles */}
+                        {!editingVehicle && (
+                            <>
+                                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🔑 VIN / Chassis Number (optional)</Text>
+                                <TextInput
+                                    style={[styles.input, styles.vinInput, {
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                        borderColor: newVIN.length === 17 ? '#22C55E' : colors.border
+                                    }]}
+                                    value={newVIN}
+                                    onChangeText={(text) => setNewVIN(text.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17))}
+                                    placeholder="17 characters from Istimara"
+                                    placeholderTextColor={colors.textMuted}
+                                    autoCapitalize="characters"
+                                    maxLength={17}
+                                />
+                                <Text style={[styles.vinHelp, { color: newVIN.length === 17 ? '#22C55E' : colors.textMuted }]}>
+                                    {newVIN.length}/17 characters {newVIN.length === 17 ? '✓' : ''}
+                                </Text>
+                            </>
+                        )}
+
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>💬 Nickname (optional)</Text>
                         <TextInput
                             style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
@@ -662,6 +688,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         fontSize: FontSizes.md,
+    },
+    vinInput: {
+        fontFamily: 'monospace',
+        letterSpacing: 2,
+        textAlign: 'center',
+        borderWidth: 2,
+    },
+    vinHelp: {
+        fontSize: FontSizes.xs,
+        textAlign: 'center',
+        marginTop: 4,
     },
     saveButton: { marginTop: Spacing.lg },
     saveGradient: {
