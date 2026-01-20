@@ -605,8 +605,8 @@ async function loadReviews() {
             <tr>
                 <td>${escapeHTML(r.customer_name)}</td>
                 <td>${escapeHTML(r.garage_name)}</td>
-                <td style="color: #f59e0b;">${renderStars(r.rating)}</td>
-                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(r.comment || 'No comment')}</td>
+                <td style="color: #f59e0b;">${renderStars(r.overall_rating || 0)}</td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(r.review_text || 'No comment')}</td>
                 <td>${formatDate(r.created_at)}</td>
                 <td>
                     ${reviewStatus === 'pending' ? `
