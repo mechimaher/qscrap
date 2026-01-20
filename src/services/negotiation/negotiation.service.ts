@@ -212,7 +212,7 @@ export class NegotiationService {
 
     private async acceptOffer(offer: any, client: PoolClient): Promise<void> {
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['accepted', offer.counter_offer_id]);
-        await client.query('UPDATE bids SET price = $1, status = $2 WHERE bid_id = $3', [offer.proposed_amount, 'accepted', offer.bid_id]);
+        await client.query('UPDATE bids SET bid_amount = $1, status = $2 WHERE bid_id = $3', [offer.proposed_amount, 'accepted', offer.bid_id]);
     }
 
     private async declineOffer(offer: any, client: PoolClient): Promise<void> {
