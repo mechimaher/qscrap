@@ -29,6 +29,7 @@ export interface Request {
     car_year: number;
     vin_number?: string;
     part_description: string;
+    part_category?: string;
     part_number?: string;
     condition_required: string;
     status: string;
