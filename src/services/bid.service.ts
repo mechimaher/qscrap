@@ -171,6 +171,22 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
 
 async function notifyBidSubmission(customerId: string, requestId: string, bidId: string, bidNumber: number, amount: number, condition: string, warranty: number, createdAt: Date) {
     try {
+        // Send push notification
+        const { pushService } = await import('./push.service');
+        await pushService.sendToUser(
+            customerId,
+            '🔔 New Bid Received!',
+            `Garage #${bidNumber} bid ${amount} QAR for your part`,
+            {
+                type: 'new_bid',
+                requestId,
+                bidId,
+                bidAmount: amount,
+            },
+            { channelId: 'bids', sound: true }
+        );
+
+        // Send in-app notification
         await import('../services/notification.service').then(ns => ns.createNotification({
             userId: customerId,
             type: 'new_bid',
@@ -188,6 +204,7 @@ async function notifyBidSubmission(customerId: string, requestId: string, bidId:
             target_role: 'customer'
         }));
 
+        // Send WebSocket notification
         emitToUser(customerId, 'new_bid', {
             bid_id: bidId,
             request_id: requestId,
