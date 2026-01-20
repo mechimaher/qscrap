@@ -225,6 +225,20 @@ export class OrderManagementService {
 
             await client.query('COMMIT');
 
+            // Send push notification for status change
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendOrderStatusNotification(
+                    order.customer_id,
+                    order.order_number,
+                    newStatus,
+                    orderId,
+                    { garageName: order.garage_name }
+                );
+            } catch (pushErr) {
+                console.error('[OrderManagement] Push notification failed:', pushErr);
+            }
+
             return {
                 old_status: oldStatus,
                 new_status: newStatus,
