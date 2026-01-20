@@ -367,7 +367,7 @@ async function submitSendPayment() {
             const res = await fetch(`${API_URL}/finance/payouts/${payoutIds[0]}/send`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ payment_method: method, reference_number: reference, notes })
+                body: JSON.stringify({ payout_method: method, payout_reference: reference, notes })
             });
 
             const data = await res.json();
@@ -394,7 +394,7 @@ async function submitSendPayment() {
                 const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payment_method: method, reference_number: reference, notes })
+                    body: JSON.stringify({ payout_method: method, payout_reference: reference, notes })
                 });
 
                 if (res.ok) {
