@@ -917,7 +917,8 @@ async function loadBids(page = 1) {
                                 <span class="bid-status-badge ${b.status}">${statusLabels[b.status] || b.status}</span>
                             </div>
                             ${b.order_number ? `<div class="order-number-badge"><i class="bi bi-hash"></i> ${b.order_number}</div>` : ''}
-                            <div class="bid-car">${escapeHTML(b.car_summary || 'Vehicle')} - ${escapeHTML(b.part_description?.slice(0, 35) || 'Part')}</div>
+                            <div class="bid-car">${escapeHTML(b.car_summary || 'Vehicle')} - ${escapeHTML(b.part_category || b.part_description?.slice(0, 35) || 'Part')}</div>
+                            ${b.part_description && b.part_category ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHTML(b.part_description.slice(0, 40))}</div>` : ''}
                             <div class="bid-meta">
                                 <span><i class="bi bi-calendar3"></i> ${getTimeAgo(b.created_at)}</span>
                                 <span><i class="bi bi-shield-check"></i> ${b.warranty_days}d warranty</span>
@@ -1478,9 +1479,10 @@ async function loadOrders() {
                             <div style="display: flex; gap: 12px; margin-top: 10px;">
                                 ${thumbnail ? `<img src="${thumbnail}" alt="Part" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="bi bi-image" style="color: var(--text-muted);"></i></div>'}
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="color: var(--text-secondary); font-size: 14px;">
-                                        ${o.car_make} ${o.car_model} - ${o.part_description?.slice(0, 30) || 'Part'}
+                                    <div style="color: var(--text-secondary); font-size: 14px; font-weight: 600;">
+                                        ${o.car_make} ${o.car_model} - ${o.part_category || o.part_description?.slice(0, 30) || 'Part'}
                                     </div>
+                                    ${o.part_description && o.part_category ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHTML(o.part_description.slice(0, 35))}</div>` : ''}
                                     <div style="font-weight: 600; margin-top: 4px;">${o.part_price} QAR</div>
                                 </div>
                             </div>
