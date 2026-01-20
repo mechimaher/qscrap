@@ -385,6 +385,18 @@ class ApiService {
         });
     }
 
+    async clearAllNotifications(): Promise<any> {
+        return this.request('/dashboard/notifications', {
+            method: 'DELETE'
+        });
+    }
+
+    async deleteNotification(notificationId: string): Promise<any> {
+        return this.request(`/dashboard/notifications/${notificationId}`, {
+            method: 'DELETE'
+        });
+    }
+
     // Profile Updates
     async updateProfile(data: { full_name?: string; email?: string; phone_number?: string }): Promise<any> {
         return this.request(API_ENDPOINTS.UPDATE_PROFILE, {

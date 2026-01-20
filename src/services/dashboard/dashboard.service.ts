@@ -144,4 +144,14 @@ export class DashboardService {
     async markAllNotificationsRead(userId: string) {
         await this.pool.query(`UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false`, [userId]);
     }
+
+    async deleteNotification(userId: string, notificationId: string) {
+        const result = await this.pool.query(`DELETE FROM notifications WHERE notification_id = $1 AND user_id = $2`, [notificationId, userId]);
+        return result.rowCount! > 0;
+    }
+
+    async clearAllNotifications(userId: string) {
+        const result = await this.pool.query(`DELETE FROM notifications WHERE user_id = $1`, [userId]);
+        return result.rowCount || 0;
+    }
 }

@@ -169,3 +169,22 @@ export const markAllNotificationsRead = async (req: AuthRequest, res: Response) 
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+export const deleteNotification = async (req: AuthRequest, res: Response) => {
+    try {
+        const deleted = await dashboardService.deleteNotification(req.user!.userId, req.params.notificationId);
+        if (!deleted) return res.status(404).json({ error: 'Notification not found' });
+        res.json({ message: 'Notification deleted' });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const clearAllNotifications = async (req: AuthRequest, res: Response) => {
+    try {
+        const count = await dashboardService.clearAllNotifications(req.user!.userId);
+        res.json({ message: 'All notifications cleared', deleted_count: count });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
