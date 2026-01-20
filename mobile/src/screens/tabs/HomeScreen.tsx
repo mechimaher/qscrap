@@ -974,9 +974,6 @@ export default function HomeScreen() {
                     onOrdersPress={() => navigation.navigate('Orders')}
                 />
 
-                {/* Pro Tip - Strategic position after stats */}
-                <ProTipCard navigation={navigation} />
-
                 {/* Quick Actions */}
                 <QuickActions navigation={navigation} />
 
