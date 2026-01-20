@@ -674,7 +674,7 @@ class ApiService {
         });
     }
 
-    async updateVehicle(vehicleId: string, data: { nickname?: string; is_primary?: boolean }): Promise<any> {
+    async updateVehicle(vehicleId: string, data: { nickname?: string; is_primary?: boolean; vin_number?: string }): Promise<any> {
         return this.request(`/vehicles/${vehicleId}`, {
             method: 'PATCH',
             body: JSON.stringify(data)

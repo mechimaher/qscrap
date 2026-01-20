@@ -25,9 +25,9 @@ export class VehicleService {
         return { vehicle: result.rows[0], updated: false };
     }
 
-    async updateVehicle(customerId: string, vehicleId: string, data: { nickname?: string; is_primary?: boolean }) {
+    async updateVehicle(customerId: string, vehicleId: string, data: { nickname?: string; is_primary?: boolean; vin_number?: string }) {
         if (data.is_primary) { await this.pool.query(`UPDATE customer_vehicles SET is_primary = false, updated_at = NOW() WHERE customer_id = $1 AND vehicle_id != $2`, [customerId, vehicleId]); }
-        const result = await this.pool.query(`UPDATE customer_vehicles SET nickname = COALESCE($3, nickname), is_primary = COALESCE($4, is_primary), updated_at = NOW() WHERE vehicle_id = $1 AND customer_id = $2 RETURNING *`, [vehicleId, customerId, data.nickname, data.is_primary]);
+        const result = await this.pool.query(`UPDATE customer_vehicles SET nickname = COALESCE($3, nickname), is_primary = COALESCE($4, is_primary), vin_number = COALESCE($5, vin_number), updated_at = NOW() WHERE vehicle_id = $1 AND customer_id = $2 RETURNING *`, [vehicleId, customerId, data.nickname, data.is_primary, data.vin_number]);
         return result.rows[0] || null;
     }
 

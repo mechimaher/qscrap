@@ -31,6 +31,7 @@ interface Vehicle {
     car_make: string;
     car_model: string;
     car_year: number;
+    vin_number?: string;
     nickname?: string;
     is_primary?: boolean;
     request_count?: number;
@@ -165,6 +166,7 @@ export default function MyVehiclesScreen() {
         setNewModel(vehicle.car_model);
         setNewYear(vehicle.car_year.toString());
         setNewNickname(vehicle.nickname || '');
+        setNewVIN(vehicle.vin_number || '');
         setShowAddModal(true);
     };
 
@@ -175,6 +177,7 @@ export default function MyVehiclesScreen() {
         try {
             await api.updateVehicle(editingVehicle.vehicle_id, {
                 nickname: newNickname.trim() || undefined,
+                vin_number: newVIN.trim() || undefined,
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowAddModal(false);
@@ -390,28 +393,26 @@ export default function MyVehiclesScreen() {
                             </TouchableOpacity>
                         )}
 
-                        {/* VIN Input - Only for new vehicles */}
-                        {!editingVehicle && (
-                            <>
-                                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🔑 VIN / Chassis Number (optional)</Text>
-                                <TextInput
-                                    style={[styles.input, styles.vinInput, {
-                                        backgroundColor: colors.background,
-                                        color: colors.text,
-                                        borderColor: newVIN.length === 17 ? '#22C55E' : colors.border
-                                    }]}
-                                    value={newVIN}
-                                    onChangeText={(text) => setNewVIN(text.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17))}
-                                    placeholder="17 characters from Istimara"
-                                    placeholderTextColor={colors.textMuted}
-                                    autoCapitalize="characters"
-                                    maxLength={17}
-                                />
-                                <Text style={[styles.vinHelp, { color: newVIN.length === 17 ? '#22C55E' : colors.textMuted }]}>
-                                    {newVIN.length}/17 characters {newVIN.length === 17 ? '✓' : ''}
-                                </Text>
-                            </>
-                        )}
+                        {/* VIN Input - For both new and edit */}
+                        <>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🔑 VIN / Chassis Number (optional)</Text>
+                            <TextInput
+                                style={[styles.input, styles.vinInput, {
+                                    backgroundColor: colors.background,
+                                    color: colors.text,
+                                    borderColor: newVIN.length === 17 ? '#22C55E' : colors.border
+                                }]}
+                                value={newVIN}
+                                onChangeText={(text) => setNewVIN(text.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17))}
+                                placeholder="17 characters from Istimara"
+                                placeholderTextColor={colors.textMuted}
+                                autoCapitalize="characters"
+                                maxLength={17}
+                            />
+                            <Text style={[styles.vinHelp, { color: newVIN.length === 17 ? '#22C55E' : colors.textMuted }]}>
+                                {newVIN.length}/17 characters {newVIN.length === 17 ? '✓' : ''}
+                            </Text>
+                        </>
 
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>💬 Nickname (optional)</Text>
                         <TextInput
