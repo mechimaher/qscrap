@@ -133,4 +133,8 @@ v1Router.use('/history', historyRoutes);
 import paymentRoutes from './payments.routes';
 v1Router.use('/payments', paymentRoutes);
 
+// Loyalty Routes (Customer Rewards)
+import loyaltyRoutes from './loyalty.routes';
+v1Router.use('/loyalty', loyaltyRoutes);
+
 export default v1Router;
