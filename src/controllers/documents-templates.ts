@@ -22,6 +22,7 @@ const BILINGUAL_LABELS = {
     statement_date: { en: 'Statement Date', ar: 'تاريخ الكشف' },
     item_details: { en: 'Item Details', ar: 'تفاصيل القطعة' },
     item: { en: 'Item', ar: 'القطعة' },
+    vehicle: { en: 'Vehicle', ar: 'المركبة' },
     condition: { en: 'Condition', ar: 'الحالة' },
     warranty: { en: 'Warranty', ar: 'الضمان' },
     amount: { en: 'Amount', ar: 'المبلغ' },
@@ -154,18 +155,24 @@ export function generateBilingualCustomerInvoiceHTML(
         <div class="section">
             <div class="section-header"><span>${L.item_details?.en || 'Item Details'}</span><span class="arabic">${L.item_details?.ar || 'تفاصيل القطعة'}</span></div>
             <table class="item-table">
-                <thead><tr><th style="width:35%">${L.item?.en || 'Item'}</th><th>Vehicle</th><th>${L.condition?.en || 'Condition'}</th><th>${L.warranty?.en || 'Warranty'}</th><th style="text-align:right">${L.amount?.en || 'Amount'}</th></tr></thead>
+                <thead><tr>
+                    <th style="width:30%">${L.item?.en || 'Item'}<br><span class="arabic" style="font-weight:400;font-size:7px">${L.item?.ar || 'القطعة'}</span></th>
+                    <th>${L.vehicle?.en || 'Vehicle'}<br><span class="arabic" style="font-weight:400;font-size:7px">${L.vehicle?.ar || 'المركبة'}</span></th>
+                    <th>${L.condition?.en || 'Condition'}<br><span class="arabic" style="font-weight:400;font-size:7px">${L.condition?.ar || 'الحالة'}</span></th>
+                    <th>${L.warranty?.en || 'Warranty'}<br><span class="arabic" style="font-weight:400;font-size:7px">${L.warranty?.ar || 'الضمان'}</span></th>
+                    <th style="text-align:right">${L.amount?.en || 'Amount'}<br><span class="arabic" style="font-weight:400;font-size:7px">${L.amount?.ar || 'المبلغ'}</span></th>
+                </tr></thead>
                 <tbody><tr>
                     <td><div class="item-name">${data.item?.part_name || 'Spare Part'}</div></td>
                     <td><div class="item-meta">${data.item?.vehicle || 'N/A'}</div></td>
                     <td>${cond.en} <span class="arabic" style="color:#666">(${cond.ar})</span></td>
-                    <td>${data.item?.warranty_days || 30} ${L.days?.en || 'Days'}</td>
+                    <td>${data.item?.warranty_days || 30} ${L.days?.en || 'Days'} <span class="arabic" style="color:#666">${L.days?.ar || 'يوم'}</span></td>
                     <td style="text-align:right;font-weight:700">${formatMoney(data.pricing?.part_price || 0)} QAR</td>
                 </tr></tbody>
             </table>
             <div class="totals">
-                <div class="total-row"><span>${L.part_price?.en || 'Part Price'}</span><span>${formatMoney(data.pricing?.part_price || 0)} QAR</span></div>
-                ${(data.pricing?.delivery_fee || 0) > 0 ? `<div class="total-row"><span>${L.delivery_fee?.en || 'Delivery'}</span><span>${formatMoney(data.pricing?.delivery_fee || 0)} QAR</span></div>` : ''}
+                <div class="total-row"><span>${L.part_price?.en || 'Part Price'} <span class="arabic" style="font-size:8px;color:#666">${L.part_price?.ar || 'سعر القطعة'}</span></span><span>${formatMoney(data.pricing?.part_price || 0)} QAR</span></div>
+                ${(data.pricing?.delivery_fee || 0) > 0 ? `<div class="total-row"><span>${L.delivery_fee?.en || 'Delivery'} <span class="arabic" style="font-size:8px;color:#666">${L.delivery_fee?.ar || 'التوصيل'}</span></span><span>${formatMoney(data.pricing?.delivery_fee || 0)} QAR</span></div>` : ''}
                 <div class="total-row grand"><span>${L.total_paid?.en || 'Total'} <span class="arabic">${L.total_paid?.ar || 'المجموع'}</span></span><span>${formatMoney(data.pricing?.total || 0)} QAR</span></div>
             </div>
         </div>
