@@ -258,8 +258,8 @@ const ActiveRequestCard = ({
                             <View style={styles.cardHeader}>
                                 <View style={styles.carInfo}>
                                     <Text style={styles.carEmoji}>🚗</Text>
-                                    <View>
-                                        <Text style={[styles.carName, { color: colors.text }]}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.carName, { color: colors.text }]} numberOfLines={1}>
                                             {item.car_make || 'Unknown'} {item.car_model || ''}
                                         </Text>
                                         <Text style={[styles.carYear, { color: colors.textSecondary }]}>
