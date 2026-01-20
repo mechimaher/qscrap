@@ -1,7 +1,18 @@
-// Premium Map Location Picker - VVIP Qatar Style
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+// Premium Map Location Picker - VVIP Qatar Style with Google Places Autocomplete
+import React, { useState, useRef, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
+    Platform,
+    TextInput,
+    FlatList,
+    Keyboard,
+    Animated,
+} from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -14,25 +25,39 @@ interface MapLocationPickerProps {
     initialLocation?: { latitude: number; longitude: number };
 }
 
-const DOHA_COORDINATES = {
+const GOOGLE_MAPS_API_KEY = 'AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs';
+
+const DOHA_COORDINATES: Region = {
     latitude: 25.2854,
     longitude: 51.5310,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
 };
 
-const QATAR_MAP_STYLE = [
-    {
-        featureType: 'poi',
-        elementType: 'labels',
-        stylers: [{ visibility: 'off' }],
-    },
-    {
-        featureType: 'transit',
-        elementType: 'labels',
-        stylers: [{ visibility: 'off' }],
-    },
+// Premium Qatar Map Style - Clean, Elegant, VVIP
+const QATAR_PREMIUM_MAP_STYLE = [
+    // Hide POI labels for cleaner look
+    { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    // Premium color adjustments
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e9e9e9' }] },
+    { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#e5e5e5' }] },
+    { featureType: 'road.arterial', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'road.local', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+    // Subtle maroon accents for QScrap branding
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
 ];
+
+interface PlacePrediction {
+    place_id: string;
+    description: string;
+    structured_formatting: {
+        main_text: string;
+        secondary_text: string;
+    };
+}
 
 export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     onLocationSelect,
@@ -41,18 +66,109 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 }) => {
     const { colors } = useTheme();
     const mapRef = useRef<MapView>(null);
-    const [selectedLocation, setSelectedLocation] = useState(
-        initialLocation || DOHA_COORDINATES
+    const searchInputRef = useRef<TextInput>(null);
+    const slideAnim = useRef(new Animated.Value(0)).current;
+
+    const [selectedLocation, setSelectedLocation] = useState<Region>(
+        initialLocation
+            ? { ...initialLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 }
+            : DOHA_COORDINATES
     );
     const [address, setAddress] = useState('Drag pin to select location');
     const [isLoading, setIsLoading] = useState(false);
     const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('standard');
 
+    // Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showPredictions, setShowPredictions] = useState(false);
+
+    // Animate search results in
+    useEffect(() => {
+        Animated.timing(slideAnim, {
+            toValue: showPredictions ? 1 : 0,
+            duration: 200,
+            useNativeDriver: true,
+        }).start();
+    }, [showPredictions]);
+
+    // Google Places Autocomplete API
+    const searchPlaces = async (query: string) => {
+        if (query.length < 2) {
+            setPredictions([]);
+            setShowPredictions(false);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}&components=country:qa&language=en&types=geocode|establishment`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.predictions) {
+                setPredictions(data.predictions.slice(0, 5)); // Limit to 5 results
+                setShowPredictions(true);
+            }
+        } catch (error) {
+            console.log('[Places] Search failed:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // Get Place Details (coordinates from place_id)
+    const getPlaceDetails = async (placeId: string) => {
+        try {
+            setIsLoading(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+            const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address,name&key=${GOOGLE_MAPS_API_KEY}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.result?.geometry?.location) {
+                const { lat, lng } = data.result.geometry.location;
+                const newRegion: Region = {
+                    latitude: lat,
+                    longitude: lng,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                };
+
+                setSelectedLocation(newRegion);
+                setAddress(data.result.formatted_address || data.result.name);
+                setSearchQuery('');
+                setPredictions([]);
+                setShowPredictions(false);
+                Keyboard.dismiss();
+
+                // Animate map to new location
+                mapRef.current?.animateToRegion(newRegion, 500);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+        } catch (error) {
+            console.log('[Places] Details failed:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleMapPress = async (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
         Haptics.selectionAsync();
-        setSelectedLocation({ latitude, longitude, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
+        setSelectedLocation({
+            latitude,
+            longitude,
+            latitudeDelta: selectedLocation.latitudeDelta,
+            longitudeDelta: selectedLocation.longitudeDelta
+        });
         await reverseGeocode(latitude, longitude);
+        setShowPredictions(false);
+        Keyboard.dismiss();
     };
 
     const reverseGeocode = async (lat: number, lng: number) => {
@@ -61,7 +177,10 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
             if (results[0]) {
                 const geocoded = results[0];
-                const fullAddress = `${geocoded.street || ''}, ${geocoded.district || geocoded.subregion || ''}, ${geocoded.city || 'Doha'}`.trim();
+                const area = geocoded.district || geocoded.subregion || geocoded.name || '';
+                const city = geocoded.city || 'Doha';
+                const street = geocoded.street || '';
+                const fullAddress = `${street}, ${area}, ${city}`.replace(/^, /, '').trim();
                 setAddress(fullAddress);
             }
         } catch (error) {
@@ -75,33 +194,36 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     const handleCurrentLocation = async () => {
         try {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            Keyboard.dismiss();
+            setShowPredictions(false);
+
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 alert('Location permission required');
                 return;
             }
 
-            // Use Balanced accuracy for faster response (still accurate for delivery)
+            setIsLoading(true);
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Balanced,
-                timeInterval: 5000,  // Max 5 seconds
-                distanceInterval: 0,
             });
 
-            const newLocation = {
+            const newRegion: Region = {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
-                latitudeDelta: 0.01,  // Zoom in more
-                longitudeDelta: 0.01,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
             };
 
-            setSelectedLocation(newLocation);
-            mapRef.current?.animateToRegion(newLocation, 300); // Faster animation
-            reverseGeocode(location.coords.latitude, location.coords.longitude); // Non-blocking
+            setSelectedLocation(newRegion);
+            mapRef.current?.animateToRegion(newRegion, 300);
+            await reverseGeocode(location.coords.latitude, location.coords.longitude);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
             console.error('[Map] Location error:', error);
             alert('Could not get current location');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -114,6 +236,24 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
         });
     };
 
+    const renderPrediction = ({ item }: { item: PlacePrediction }) => (
+        <TouchableOpacity
+            style={[styles.predictionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => getPlaceDetails(item.place_id)}
+            activeOpacity={0.7}
+        >
+            <Text style={styles.predictionIcon}>📍</Text>
+            <View style={{ flex: 1 }}>
+                <Text style={[styles.predictionMain, { color: colors.text }]} numberOfLines={1}>
+                    {item.structured_formatting.main_text}
+                </Text>
+                <Text style={[styles.predictionSecondary, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {item.structured_formatting.secondary_text}
+                </Text>
+            </View>
+        </TouchableOpacity>
+    );
+
     return (
         <View style={styles.container}>
             {/* Map */}
@@ -121,7 +261,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 ref={mapRef}
                 style={styles.map}
                 provider={PROVIDER_GOOGLE}
-                customMapStyle={QATAR_MAP_STYLE}
+                customMapStyle={QATAR_PREMIUM_MAP_STYLE}
                 initialRegion={selectedLocation}
                 onPress={handleMapPress}
                 showsUserLocation
@@ -130,7 +270,6 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 rotateEnabled={false}
                 mapType={mapType}
             >
-                {/* Standard Google-style Marker for smooth dragging */}
                 <Marker
                     coordinate={{
                         latitude: selectedLocation.latitude,
@@ -144,11 +283,70 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     onDragEnd={async (e) => {
                         const { latitude, longitude } = e.nativeEvent.coordinate;
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setSelectedLocation({ latitude, longitude, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
+                        setSelectedLocation({
+                            latitude,
+                            longitude,
+                            latitudeDelta: selectedLocation.latitudeDelta,
+                            longitudeDelta: selectedLocation.longitudeDelta
+                        });
                         await reverseGeocode(latitude, longitude);
                     }}
                 />
             </MapView>
+
+            {/* Search Bar - Google Places Autocomplete */}
+            <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
+                <View style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={styles.searchIcon}>🔍</Text>
+                    <TextInput
+                        ref={searchInputRef}
+                        style={[styles.searchInput, { color: colors.text }]}
+                        placeholder="Search for a place..."
+                        placeholderTextColor={colors.textMuted}
+                        value={searchQuery}
+                        onChangeText={(text) => {
+                            setSearchQuery(text);
+                            searchPlaces(text);
+                        }}
+                        onFocus={() => searchQuery.length >= 2 && setShowPredictions(true)}
+                        returnKeyType="search"
+                    />
+                    {isSearching && <ActivityIndicator size="small" color={Colors.primary} />}
+                    {searchQuery.length > 0 && !isSearching && (
+                        <TouchableOpacity
+                            onPress={() => {
+                                setSearchQuery('');
+                                setPredictions([]);
+                                setShowPredictions(false);
+                            }}
+                        >
+                            <Text style={styles.clearIcon}>✕</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Search Predictions */}
+                {showPredictions && predictions.length > 0 && (
+                    <Animated.View
+                        style={[
+                            styles.predictionsContainer,
+                            {
+                                backgroundColor: colors.background,
+                                opacity: slideAnim,
+                                transform: [{ translateY: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }]
+                            }
+                        ]}
+                    >
+                        <FlatList
+                            data={predictions}
+                            renderItem={renderPrediction}
+                            keyExtractor={(item) => item.place_id}
+                            keyboardShouldPersistTaps="handled"
+                            scrollEnabled={false}
+                        />
+                    </Animated.View>
+                )}
+            </View>
 
             {/* Address Preview Card */}
             <View style={[styles.addressCard, { backgroundColor: colors.background }]}>
@@ -183,7 +381,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 </LinearGradient>
             </TouchableOpacity>
 
-            {/* Map Type Toggle - Standard/Satellite */}
+            {/* Map Type Toggle */}
             <TouchableOpacity
                 style={styles.mapTypeBtn}
                 onPress={() => {
@@ -196,7 +394,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     {mapType === 'standard' ? '🛰️' : '🗺️'}
                 </Text>
                 <Text style={styles.mapTypeLabel}>
-                    {mapType === 'standard' ? 'Satellite' : 'Standard'}
+                    {mapType === 'standard' ? 'Satellite' : 'Map'}
                 </Text>
             </TouchableOpacity>
 
@@ -219,7 +417,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                         colors={[Colors.primary, '#B31D4A']}
                         style={styles.confirmGradient}
                     >
-                        <Text style={styles.confirmText}>Confirm Location</Text>
+                        <Text style={styles.confirmText}>✓ Confirm Location</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
@@ -234,40 +432,76 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
     },
-    // Custom Marker
-    markerContainer: {
-        alignItems: 'center',
+    // Search Bar
+    searchContainer: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 60 : 40,
+        left: Spacing.lg,
+        right: Spacing.lg,
+        zIndex: 10,
     },
-    markerGradient: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        justifyContent: 'center',
+    searchInputWrapper: {
+        flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#fff',
+        borderRadius: BorderRadius.xl,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
+        borderWidth: 1,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
         elevation: 8,
+        gap: Spacing.sm,
     },
-    markerIcon: {
-        fontSize: 24,
+    searchIcon: {
+        fontSize: 18,
     },
-    markerShadow: {
-        width: 20,
-        height: 8,
-        borderRadius: 10,
-        backgroundColor: 'rgba(0,0,0,0.2)',
+    searchInput: {
+        flex: 1,
+        fontSize: FontSizes.md,
+        fontWeight: '500',
+    },
+    clearIcon: {
+        fontSize: 16,
+        color: '#9CA3AF',
+        padding: 4,
+    },
+    // Predictions
+    predictionsContainer: {
+        marginTop: Spacing.xs,
+        borderRadius: BorderRadius.lg,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 6,
+        overflow: 'hidden',
+    },
+    predictionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        borderBottomWidth: 1,
+        gap: Spacing.sm,
+    },
+    predictionIcon: {
+        fontSize: 18,
+    },
+    predictionMain: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+    },
+    predictionSecondary: {
+        fontSize: FontSizes.sm,
         marginTop: 2,
     },
     // Address Card
     addressCard: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? 60 : 40,
+        bottom: 140,
         left: Spacing.lg,
-        right: Spacing.lg,
+        right: Spacing.lg + 70,
         borderRadius: BorderRadius.xl,
         padding: Spacing.md,
         shadowColor: '#000',
@@ -318,14 +552,14 @@ const styles = StyleSheet.create({
     // Map Type Toggle
     mapTypeBtn: {
         position: 'absolute',
-        bottom: 140,
-        left: Spacing.lg,
+        bottom: 210,
+        right: Spacing.lg,
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 14,
         borderRadius: BorderRadius.lg,
-        backgroundColor: '#2D2D2D', // Dark gray
+        backgroundColor: '#2D2D2D',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
@@ -339,7 +573,7 @@ const styles = StyleSheet.create({
     mapTypeLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#FFFFFF', // White text
+        color: '#FFFFFF',
     },
     // Actions
     actionsContainer: {
@@ -349,6 +583,7 @@ const styles = StyleSheet.create({
         right: 0,
         flexDirection: 'row',
         padding: Spacing.lg,
+        paddingBottom: Platform.OS === 'ios' ? Spacing.xl + 10 : Spacing.lg,
         gap: Spacing.md,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },

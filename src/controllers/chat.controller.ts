@@ -77,8 +77,15 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
         if (io) {
             if (assignment.assignment_id) io.to(`chat_${assignment.assignment_id}`).emit('chat_message', { assignment_id: assignment.assignment_id, order_id, ...newMessage });
             io.to(`order_${order_id}`).emit('new_message', { ...newMessage, order_id, sender_name: senderType === 'customer' ? 'You' : assignment.driver_name, is_read: false });
-            if (senderType === 'customer' && assignment.assignment_id) {
-                try { await pushService.sendChatNotification(recipientId, 'Customer', message.trim(), order_id, assignment.order_number); } catch (e) { console.error('[Chat] Push failed:', e); }
+
+            // Send push notification to recipient (BOTH directions - customer↔driver)
+            if (recipientId) {
+                try {
+                    const senderName = senderType === 'customer' ? 'Customer' : (assignment.driver_name || 'Driver');
+                    await pushService.sendChatNotification(recipientId, senderName, message.trim(), order_id, assignment.order_number);
+                } catch (e) {
+                    console.error('[Chat] Push notification failed:', e);
+                }
             }
         }
         res.status(201).json({ message: { ...newMessage, order_id, sender_name: 'You', is_read: false } });
