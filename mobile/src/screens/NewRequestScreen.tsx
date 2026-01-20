@@ -467,7 +467,7 @@ export default function NewRequestScreen() {
                                         </Text>
                                         {selectedVehicle.vin_number ? (
                                             <Text style={styles.vinStatusGreen}>
-                                                🔑 VIN: ...{selectedVehicle.vin_number.slice(-6)} ✓
+                                                🔑 VIN: {selectedVehicle.vin_number} ✓
                                             </Text>
                                         ) : (
                                             <Text style={styles.vinStatusAmber}>
