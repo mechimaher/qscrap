@@ -28,9 +28,9 @@ export class BadgeCountService {
                 COUNT(*) FILTER (WHERE status = 'active' AND 
                     EXISTS (
                         SELECT 1 FROM bids b 
-                        LEFT JOIN negotiations n ON n.bid_id = b.bid_id
+                        LEFT JOIN counter_offers co ON co.bid_id = b.bid_id
                         WHERE b.request_id = part_requests.request_id 
-                        AND (n.garage_counter_amount IS NOT NULL AND n.customer_counter_amount IS NULL)
+                        AND co.offered_by_type = 'garage' AND co.status = 'pending'
                     )
                 ) as pending_action
             FROM part_requests
@@ -147,15 +147,14 @@ export class BadgeCountService {
             AND o.order_status IN ('pending', 'confirmed', 'preparing', 'ready')
         `, [garageId]);
 
-        // Count counter offers waiting for garage response
+        // Count counter offers waiting for garage response (made by customer, pending)
         const counterOffersResult = await this.pool.query(`
             SELECT COUNT(*) as count
-            FROM negotiations n
-            JOIN bids b ON n.bid_id = b.bid_id
+            FROM counter_offers co
+            JOIN bids b ON co.bid_id = b.bid_id
             WHERE b.garage_id = $1 
-            AND n.customer_counter_amount IS NOT NULL 
-            AND n.garage_counter_amount IS NULL
-            AND n.status = 'pending'
+            AND co.offered_by_type = 'customer'
+            AND co.status = 'pending'
         `, [garageId]);
 
         const newRequests = parseInt(newRequestsResult.rows[0]?.count) || 0;
