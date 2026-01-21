@@ -5042,14 +5042,13 @@ async function markAllRead() {
  */
 async function clearAllNotifications() {
     try {
-        // First mark all as read in backend
-        await fetch(`${API_URL}/notifications/mark-read`, {
-            method: 'POST',
+        // DELETE all notifications permanently from database
+        await fetch(`${API_URL}/dashboard/notifications`, {
+            method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ notification_ids: ['all'] })
+            }
         });
 
         // Clear local notifications array completely
