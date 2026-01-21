@@ -2150,8 +2150,182 @@ async function loadProfile() {
 
         // Initialize Leaflet map after DOM is updated
         setTimeout(() => initLocationMap(profile.location_lat, profile.location_lng), 100);
+        // Initialize Supplier Settings (Brands)
+        setTimeout(() => initSupplierSettings(profile), 100);
     } catch (err) {
         console.error('Failed to load profile:', err);
+    }
+}
+
+// ===== BRAND SPECIALIZATION LOGIC =====
+const CAR_BRANDS = [
+    "Toyota", "Nissan", "Honda", "Mitsubishi", "Lexus", "Hyundai", "Kia", "Ford",
+    "Chevrolet", "GMC", "Jeep", "Dodge", "BMW", "Mercedes-Benz", "Audi", "Volkswagen",
+    "Land Rover", "Range Rover", "Porsche", "Mazda", "Subaru", "Suzuki", "Isuzu",
+    "Infiniti", "Cadillac", "Lincoln", "Chrysler", "Jaguar", "Volvo", "Peugeot",
+    "Renault", "Citroen", "Fiat", "Mini", "Tesla", "Genesis", "Geely", "MG",
+    "Chery", "Changan", "Haval", "Jetour", "BYD", "Great Wall", "Dongfeng",
+    "Bentley", "Rolls Royce", "Ferrari", "Lamborghini", "Maserati", "Aston Martin"
+];
+
+let selectedBrands = new Set();
+
+function initSupplierSettings(profile) {
+    // 1. Set Supplier Type Logic
+    if (profile.supplier_type) {
+        const radio = document.querySelector(`input[name="supplier_type"][value="${profile.supplier_type}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    // 2. Set All Brands Toggle
+    const allBrandsToggle = document.getElementById('allBrandsToggle');
+    const container = document.getElementById('brandSelectionContainer');
+    const label = document.getElementById('allBrandsLabel');
+
+    if (profile.all_brands === true || profile.all_brands === undefined) {
+        allBrandsToggle.checked = true;
+        container.style.display = 'none';
+        label.textContent = 'All Brands';
+        label.style.color = 'var(--accent)';
+    } else {
+        allBrandsToggle.checked = false;
+        container.style.display = 'block';
+        label.textContent = 'Specific Brands';
+        label.style.color = '#f59e0b';
+
+        // Populate selected brands
+        if (profile.specialized_brands && Array.isArray(profile.specialized_brands)) {
+            profile.specialized_brands.forEach(b => selectedBrands.add(b));
+        }
+    }
+
+    renderBrandCheckboxes();
+}
+
+function toggleBrandsList() {
+    const toggle = document.getElementById('allBrandsToggle');
+    const container = document.getElementById('brandSelectionContainer');
+    const label = document.getElementById('allBrandsLabel');
+
+    if (toggle.checked) {
+        container.style.display = 'none'; // Hide list
+        label.textContent = 'All Brands';
+        label.style.color = 'var(--accent)';
+    } else {
+        container.style.display = 'block'; // Show list
+        label.textContent = 'Specific Brands';
+        label.style.color = '#f59e0b';
+        renderBrandCheckboxes(); // Ensure rendered
+    }
+}
+
+function renderBrandCheckboxes(filterText = '') {
+    const container = document.getElementById('brandCheckboxes');
+    if (!container) return;
+
+    container.innerHTML = ''; // Clear current
+
+    // Grid layout styling
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+    container.style.gap = '8px';
+
+    const filtered = CAR_BRANDS.filter(b => b.toLowerCase().includes(filterText.toLowerCase()));
+
+    filtered.forEach(brand => {
+        const isChecked = selectedBrands.has(brand);
+        const div = document.createElement('div');
+        div.className = `brand-checkbox-item ${isChecked ? 'active' : ''}`;
+        div.style.cssText = `
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px; border-radius: 8px;
+            background: ${isChecked ? 'rgba(74, 222, 128, 0.1)' : 'var(--bg-primary)'};
+            border: 1px solid ${isChecked ? 'var(--success)' : 'var(--border)'};
+            cursor: pointer; transition: 0.2s;
+        `;
+        div.onclick = () => toggleBrand(brand);
+
+        div.innerHTML = `
+            <div style="
+                width: 18px; height: 18px; border-radius: 4px; border: 2px solid ${isChecked ? 'var(--success)' : 'var(--text-muted)'};
+                display: flex; align-items: center; justify-content: center;
+                background: ${isChecked ? 'var(--success)' : 'transparent'};
+            ">
+                ${isChecked ? '<i class="bi bi-check" style="color: white; font-size: 14px;"></i>' : ''}
+            </div>
+            <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">${brand}</span>
+        `;
+        container.appendChild(div);
+    });
+
+    updateSelectedCount();
+}
+
+function toggleBrand(brand) {
+    if (selectedBrands.has(brand)) {
+        selectedBrands.delete(brand);
+    } else {
+        selectedBrands.add(brand);
+    }
+    renderBrandCheckboxes(document.getElementById('brandSearch').value);
+}
+
+function filterBrands() {
+    const text = document.getElementById('brandSearch').value;
+    renderBrandCheckboxes(text);
+}
+
+function updateSelectedCount() {
+    const count = selectedBrands.size;
+    const el = document.getElementById('selectedBrandsCount');
+    if (el) el.textContent = `${count} brands selected`;
+}
+
+async function saveSupplierSettings(event) {
+    event.preventDefault();
+
+    // Get Supplier Type
+    const typeNew = document.getElementById('typeNew').checked;
+    const typeUsed = document.getElementById('typeUsed').checked;
+    const typeBoth = document.getElementById('typeBoth').checked;
+
+    let supplierType = 'both';
+    if (typeNew) supplierType = 'new';
+    if (typeUsed) supplierType = 'used';
+
+    // Get Brands
+    const allBrands = document.getElementById('allBrandsToggle').checked;
+    const specializedBrands = Array.from(selectedBrands);
+
+    if (!allBrands && specializedBrands.length === 0) {
+        showToast('Please select at least one brand or enable All Brands', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/dashboard/garage/specialization`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                supplier_type: supplierType,
+                all_brands: allBrands,
+                specialized_brands: specializedBrands
+            })
+        });
+
+        if (!res.ok) throw new Error('Failed to update specialization');
+
+        showToast('Business settings saved successfully!', 'success');
+
+        // Refresh profile data to update UI
+        loadProfile();
+
+    } catch (err) {
+        console.error('Save settings error:', err);
+        showToast('Failed to save settings', 'error');
     }
 }
 
