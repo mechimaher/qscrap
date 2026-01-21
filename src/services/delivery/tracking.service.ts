@@ -109,13 +109,10 @@ export class TrackingService {
                 d.vehicle_plate,
                 d.current_lat as driver_lat,
                 d.current_lng as driver_lng,
-                d.last_location_update,
-                COALESCE(c.full_name, 'N/A') as customer_name,
-                COALESCE(c.phone, 'N/A') as customer_phone
+                d.last_location_update
             FROM delivery_assignments da
             JOIN orders o ON da.order_id = o.order_id
             LEFT JOIN drivers d ON da.driver_id = d.driver_id
-            LEFT JOIN customers c ON o.customer_id = c.customer_id
             WHERE da.status IN ('assigned', 'picked_up', 'in_transit')
             ORDER BY da.created_at DESC
         `);
