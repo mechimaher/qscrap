@@ -4739,7 +4739,7 @@ function toggleNotifications() {
 async function markAllRead() {
     try {
         // Call backend to mark all notifications as read
-        await fetch(`${API_URL}/notifications/mark-read`, {
+        const res = await fetch(`${API_URL}/notifications/mark-read`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -4748,11 +4748,22 @@ async function markAllRead() {
             body: JSON.stringify({ notification_ids: ['all'] })
         });
 
-        // Clear local notifications array
-        notifications = [];
-        renderNotifications();
+        if (!res.ok) {
+            throw new Error('API request failed');
+        }
+
+        // Mark all local notifications as read
+        notifications.forEach(n => n.is_read = true);
+        unreadNotificationCount = 0;
+
+        // Update UI
+        renderNotificationsList();
+        updateNotificationBadge();
+
+        // Also hide the dot if it exists
         const dot = document.getElementById('notificationDot');
         if (dot) dot.style.display = 'none';
+
         showToast('All notifications marked as read', 'success');
     } catch (err) {
         console.error('Failed to mark all read:', err);
