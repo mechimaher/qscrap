@@ -297,10 +297,61 @@ export class NegotiationService {
 
         // 9. Log order history
         await client.query(`
-            INSERT INTO order_status_history 
+            INSERT INTO order_status_history
             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
             VALUES ($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted counter-offer')
         `, [order.order_id, customerId]);
+
+        // 10. Notify both parties about accepted counter-offer
+        const { emitToUser } = await import('../../utils/socketIO');
+
+        // Notify CUSTOMER (their counter-offer was accepted!)
+        await createNotification({
+            userId: customerId,
+            type: 'counter_offer_accepted',
+            title: '🎉 Counter-Offer Accepted!',
+            message: `Your counter-offer of ${offer.proposed_amount} QAR was accepted! Order #${order.order_number} created.`,
+            data: {
+                order_id: order.order_id,
+                order_number: order.order_number,
+                bid_id: offer.bid_id,
+                counter_offer_id: offer.counter_offer_id,
+                final_price: offer.proposed_amount
+            },
+            target_role: 'customer'
+        });
+
+        // Emit WebSocket to customer
+        emitToUser(customerId, 'counter_offer_accepted', {
+            order_id: order.order_id,
+            order_number: order.order_number,
+            bid_id: offer.bid_id,
+            final_price: offer.proposed_amount,
+            notification: `Counter-offer accepted! Order #${order.order_number} created.`
+        });
+
+        // Notify GARAGE (confirmation they accepted the counter)
+        await createNotification({
+            userId: bid.garage_id,
+            type: 'counter_offer_accepted',
+            title: '✅ Counter-Offer Accepted',
+            message: `Order #${order.order_number} created at ${offer.proposed_amount} QAR`,
+            data: {
+                order_id: order.order_id,
+                order_number: order.order_number,
+                bid_id: offer.bid_id,
+                counter_offer_id: offer.counter_offer_id
+            },
+            target_role: 'garage'
+        });
+
+        // Emit WebSocket to garage
+        emitToUser(bid.garage_id, 'counter_offer_accepted', {
+            order_id: order.order_id,
+            order_number: order.order_number,
+            bid_id: offer.bid_id,
+            notification: `Order #${order.order_number} created`
+        });
 
         return order;
     }
