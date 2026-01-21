@@ -9,8 +9,9 @@ import { initializeJobQueues, closeJobQueues, createJobWorker, scheduleRecurring
 import { performStartupSecurityChecks } from './config/security';
 import { initializeSocketIO } from './utils/socketIO';
 import logger from './utils/logger';
-import { startAutoCompleteJob } from './jobs/auto-complete-orders';
-import { startDeliveryReminderJob } from './jobs/delivery-reminders';
+// TEMP DISABLED: Investigating node-cron installation issue
+// import { startAutoCompleteJob } from './jobs/auto-complete-orders';
+// import { startDeliveryReminderJob } from './jobs/delivery-reminders';
 
 const PORT = process.env.PORT || 3000;
 const NODE_ID = process.env.NODE_ID || `node-${process.pid}`;
@@ -251,13 +252,14 @@ server.listen(PORT, async () => {
     console.log('═══════════════════════════════════════════════════');
     console.log('');
 
+    // TEMP DISABLED: Cron jobs commented out while fixing node-cron installation
     // Start auto-complete cron job
-    startAutoCompleteJob();
-    console.log('✅ Auto-complete job scheduled (daily 2:00 AM)');
+    // startAutoCompleteJob();
+    // console.log('✅ Auto-complete job scheduled (daily 2:00 AM)');
 
-    // Start delivery reminder job
-    startDeliveryReminderJob();
-    console.log('✅ Delivery reminders scheduled (hourly)');
+    // Start delivery reminder job  
+    // startDeliveryReminderJob();
+    // console.log('✅ Delivery reminders scheduled (hourly)');
 
     // Run initial job sweep (after 10 second delay)
     setTimeout(async () => {
