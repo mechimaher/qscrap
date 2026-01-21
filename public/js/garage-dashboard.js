@@ -1059,7 +1059,8 @@ async function loadPendingCounterOffers() {
                 counter_offer_id: co.counter_offer_id,
                 bid_id: co.bid_id,
                 proposed_amount: co.proposed_amount,
-                original_amount: co.original_amount,
+                original_amount: co.original_bid_amount || co.original_amount, // Backend renamed to original_bid_amount
+                garage_last_offer: co.garage_last_offer, // Garage's last counter-offer
                 message: co.message,
                 car_summary: co.car_summary,
                 part_description: co.part_description,
