@@ -101,7 +101,7 @@ export class TrackingService {
                 da.delivery_lat as destination_lat,
                 da.delivery_lng as destination_lng,
                 o.order_number,
-                o.status as order_status,
+                o.order_status,
                 d.driver_id,
                 d.full_name as driver_name,
                 d.phone as driver_phone,
