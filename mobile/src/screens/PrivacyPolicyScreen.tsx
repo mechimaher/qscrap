@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { Spacing, BorderRadius, FontSize } from '../constants';
 
 /**
@@ -19,15 +21,16 @@ import { Spacing, BorderRadius, FontSize } from '../constants';
 const PrivacyPolicyScreen: React.FC = () => {
     const { colors } = useTheme();
     const navigation = useNavigation();
+    const { t, isRTL } = useTranslation();
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Privacy Policy</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('privacy.title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -35,127 +38,119 @@ const PrivacyPolicyScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={[styles.lastUpdated, { color: colors.textMuted }]}>
-                    Last updated: December 2024
+                <Text style={[styles.lastUpdated, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('privacy.lastUpdated', { date: 'December 2024' })}
                 </Text>
 
-                <Section title="1. Introduction" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Welcome to QScrap ("we," "our," or "us"). This Privacy Policy explains how we collect,
-                        use, disclose, and safeguard your information when you use our mobile application.
+                <Section title={t('privacy.section1Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section1Content1')}
                     </Text>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Please read this privacy policy carefully. If you do not agree with the terms of this
-                        privacy policy, please do not access the application.
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section1Content2')}
                     </Text>
                 </Section>
 
-                <Section title="2. Information We Collect" colors={colors}>
-                    <Text style={[styles.subheading, { color: colors.text }]}>Personal Information</Text>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We may collect personally identifiable information that you voluntarily provide, including:
+                <Section title={t('privacy.section2Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.subheading, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('privacy.personalInfo')}</Text>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section2Content1')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Name and contact information',
-                        'Phone number',
-                        'Delivery address',
-                        'Vehicle information (make, model, year, VIN)',
-                        'Payment information',
-                        'Photos of auto parts you upload',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('privacy.section2Item1'),
+                        t('privacy.section2Item2'),
+                        t('privacy.section2Item3'),
+                        t('privacy.section2Item4'),
+                        t('privacy.section2Item5'),
+                        t('privacy.section2Item6'),
                     ]} />
 
-                    <Text style={[styles.subheading, { color: colors.text }]}>Automatically Collected Information</Text>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        When you use our app, we automatically collect:
+                    <Text style={[styles.subheading, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('privacy.autoCollectedInfo')}</Text>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section2Content2')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Device type and operating system',
-                        'IP address',
-                        'App usage data and analytics',
-                        'Location data (with your permission)',
-                        'Push notification tokens',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('privacy.section2Item7'),
+                        t('privacy.section2Item8'),
+                        t('privacy.section2Item9'),
+                        t('privacy.section2Item10'),
+                        t('privacy.section2Item11'),
                     ]} />
                 </Section>
 
-                <Section title="3. How We Use Your Information" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We use the information we collect to:
+                <Section title={t('privacy.section3Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section3Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Process and fulfill your part requests',
-                        'Connect you with verified auto parts garages',
-                        'Facilitate delivery of purchased parts',
-                        'Send order updates and notifications',
-                        'Provide customer support',
-                        'Improve our services and user experience',
-                        'Detect and prevent fraud',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('privacy.section3Item1'),
+                        t('privacy.section3Item2'),
+                        t('privacy.section3Item3'),
+                        t('privacy.section3Item4'),
+                        t('privacy.section3Item5'),
+                        t('privacy.section3Item6'),
+                        t('privacy.section3Item7'),
                     ]} />
                 </Section>
 
-                <Section title="4. Sharing Your Information" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We may share your information with:
+                <Section title={t('privacy.section4Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section4Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Auto parts garages to fulfill your requests',
-                        'Delivery partners for order delivery',
-                        'Payment processors for transaction processing',
-                        'Service providers who assist our operations',
-                        'Law enforcement when required by law',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('privacy.section4Item1'),
+                        t('privacy.section4Item2'),
+                        t('privacy.section4Item3'),
+                        t('privacy.section4Item4'),
+                        t('privacy.section4Item5'),
                     ]} />
                 </Section>
 
-                <Section title="5. Data Security" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We implement appropriate technical and organizational security measures to protect your
-                        personal information. However, no electronic transmission over the internet can be
-                        guaranteed to be 100% secure.
+                <Section title={t('privacy.section5Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section5Content')}
                     </Text>
                 </Section>
 
-                <Section title="6. Your Rights" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        You have the right to:
+                <Section title={t('privacy.section6Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section6Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Access your personal data',
-                        'Correct inaccurate data',
-                        'Request deletion of your data',
-                        'Opt out of marketing communications',
-                        'Withdraw consent at any time',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('privacy.section6Item1'),
+                        t('privacy.section6Item2'),
+                        t('privacy.section6Item3'),
+                        t('privacy.section6Item4'),
+                        t('privacy.section6Item5'),
                     ]} />
                 </Section>
 
-                <Section title="7. Data Retention" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We retain your personal information for as long as necessary to provide our services
-                        and fulfill the purposes outlined in this policy, unless a longer retention period is
-                        required by law.
+                <Section title={t('privacy.section7Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section7Content')}
                     </Text>
                 </Section>
 
-                <Section title="8. Children's Privacy" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Our service is not intended for individuals under 18 years of age. We do not knowingly
-                        collect personal information from children.
+                <Section title={t('privacy.section8Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section8Content')}
                     </Text>
                 </Section>
 
-                <Section title="9. Changes to This Policy" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We may update this privacy policy from time to time. We will notify you of any changes
-                        by posting the new policy on this page and updating the "Last updated" date.
+                <Section title={t('privacy.section9Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section9Content')}
                     </Text>
                 </Section>
 
-                <Section title="10. Contact Us" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        If you have questions about this Privacy Policy, please contact us at:
+                <Section title={t('privacy.section10Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.section10Content')}
                     </Text>
-                    <Text style={[styles.contactInfo, { color: colors.primary }]}>
-                        Email: privacy@qscrap.qa{'\n'}
-                        Phone: +974 XXXX XXXX{'\n'}
-                        Address: Doha, Qatar
+                    <Text style={[styles.contactInfo, { color: colors.primary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('privacy.email')}: privacy@qscrap.qa{'\n'}
+                        {t('privacy.phone')}: +974 XXXX XXXX{'\n'}
+                        {t('privacy.address')}: {t('privacy.dohaQatar')}
                     </Text>
                 </Section>
 
@@ -170,11 +165,12 @@ interface SectionProps {
     title: string;
     children: React.ReactNode;
     colors: any;
+    isRTL: boolean;
 }
 
-const Section: React.FC<SectionProps> = ({ title, children, colors }) => (
+const Section: React.FC<SectionProps> = ({ title, children, colors, isRTL }) => (
     <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
         {children}
     </View>
 );
@@ -182,14 +178,15 @@ const Section: React.FC<SectionProps> = ({ title, children, colors }) => (
 interface BulletListProps {
     items: string[];
     colors: any;
+    isRTL: boolean;
 }
 
-const BulletList: React.FC<BulletListProps> = ({ items, colors }) => (
-    <View style={styles.bulletList}>
+const BulletList: React.FC<BulletListProps> = ({ items, colors, isRTL }) => (
+    <View style={[styles.bulletList, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm, marginRight: 0 }]}>
         {items.map((item, index) => (
-            <View key={index} style={styles.bulletItem}>
-                <Text style={[styles.bullet, { color: colors.primary }]}>•</Text>
-                <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{item}</Text>
+            <View key={index} style={[styles.bulletItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <Text style={[styles.bullet, { color: colors.primary }, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>•</Text>
+                <Text style={[styles.bulletText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{item}</Text>
             </View>
         ))}
     </View>

@@ -21,10 +21,13 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../components/Toast';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 export default function ManualVINEntryScreen({ route }: any) {
     const navigation = useNavigation<any>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const toast = useToast();
 
     const { onVINScanned } = route.params || {};
@@ -42,7 +45,7 @@ export default function ManualVINEntryScreen({ route }: any) {
         const trimmedVIN = vin.trim().toUpperCase();
 
         if (!validateVIN(trimmedVIN)) {
-            toast.error('Invalid VIN', 'VIN must be 17 characters (letters and numbers, no I/O/Q)');
+            toast.error(t('vin.invalidFormat'), t('vin.invalidVin'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -52,14 +55,14 @@ export default function ManualVINEntryScreen({ route }: any) {
 
         try {
             // Decode VIN via existing API
-            const result = await api.request('/ocr/vin/decode', {
+            const result = await api.request<any>('/ocr/vin/decode', {
                 method: 'POST',
                 body: JSON.stringify({ vin: trimmedVIN })
             });
 
             if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                toast.success('VIN Decoded', `${result.make} ${result.model} ${result.year}`);
+                toast.success(t('vin.decoded'), `${result.make} ${result.model} ${result.year}`);
 
                 const vehicleData = {
                     vin: trimmedVIN,
@@ -80,7 +83,7 @@ export default function ManualVINEntryScreen({ route }: any) {
             }
         } catch (error: any) {
             console.error('[Manual VIN] Error:', error);
-            toast.error('Decode Failed', error.message || 'Please check VIN and try again');
+            toast.error(t('vin.decodeFailed'), error.message || t('common.tryAgain'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsLoading(false);
@@ -96,43 +99,44 @@ export default function ManualVINEntryScreen({ route }: any) {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 {/* Header */}
-                <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
                         style={styles.backButton}
                     >
-                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        Enter VIN
+                        {t('vin.enterVinTitle')}
                     </Text>
                     <View style={{ width: 40 }} />
                 </View>
 
                 <View style={styles.content}>
                     {/* Info Card */}
-                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
+                    <View style={[styles.infoCard, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Ionicons name="information-circle" size={24} color={Colors.primary} />
                         <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                            VIN (Vehicle Identification Number) is a unique 17-character code found on your vehicle
+                            {t('vin.infoText')}
                         </Text>
                     </View>
 
                     {/* VIN Input */}
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { color: colors.text }]}>VIN Number</Text>
+                        <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('vin.vinNumber')}</Text>
                         <View style={[
                             styles.inputContainer,
                             {
                                 backgroundColor: colors.surface,
-                                borderColor: !isValidFormat ? Colors.error : vin.length === 17 ? Colors.success : colors.border
+                                borderColor: !isValidFormat ? Colors.error : vin.length === 17 ? Colors.success : colors.border,
+                                flexDirection: rtlFlexDirection(isRTL)
                             }
                         ]}>
                             <TextInput
-                                style={[styles.input, { color: colors.text }]}
+                                style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                                 value={vin}
                                 onChangeText={(text) => setVin(text.toUpperCase())}
-                                placeholder="Enter 17-character VIN"
+                                placeholder={t('vin.enter17Char')}
                                 placeholderTextColor={colors.textMuted}
                                 autoCapitalize="characters"
                                 autoCorrect={false}
@@ -143,33 +147,33 @@ export default function ManualVINEntryScreen({ route }: any) {
                             </Text>
                         </View>
                         {!isValidFormat && (
-                            <Text style={[styles.errorText, { color: Colors.error }]}>
-                                VIN must be 17 characters (no I, O, or Q)
+                            <Text style={[styles.errorText, { color: Colors.error, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('vin.invalidVin')}
                             </Text>
                         )}
                     </View>
 
                     {/* VIN Location Tips */}
                     <View style={[styles.tipsCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.tipsTitle, { color: colors.text }]}>
-                            Where to find VIN:
+                        <Text style={[styles.tipsTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('vin.whereToFind')}:
                         </Text>
-                        <View style={styles.tipRow}>
+                        <View style={[styles.tipRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="car-outline" size={20} color={colors.textSecondary} />
-                            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                                Dashboard near windshield
+                            <Text style={[styles.tipText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('vin.locationDashboard')}
                             </Text>
                         </View>
-                        <View style={styles.tipRow}>
+                        <View style={[styles.tipRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="document-text-outline" size={20} color={colors.textSecondary} />
-                            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                                Vehicle registration card
+                            <Text style={[styles.tipText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('vin.locationRegCard')}
                             </Text>
                         </View>
-                        <View style={styles.tipRow}>
+                        <View style={[styles.tipRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="reader-outline" size={20} color={colors.textSecondary} />
-                            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                                Driver door jamb sticker
+                            <Text style={[styles.tipText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('vin.locationDoorJamb')}
                             </Text>
                         </View>
                     </View>
@@ -194,9 +198,9 @@ export default function ManualVINEntryScreen({ route }: any) {
                             {isLoading ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <View style={styles.buttonContent}>
-                                    <Text style={styles.buttonText}>Decode VIN</Text>
-                                    <Ionicons name="arrow-forward" size={20} color="#fff" />
+                                <View style={[styles.buttonContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <Text style={styles.buttonText}>{t('vin.decodeVin')}</Text>
+                                    <Ionicons name={isRTL ? "arrow-back" : "arrow-forward"} size={20} color="#fff" />
                                 </View>
                             )}
                         </LinearGradient>

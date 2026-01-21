@@ -21,11 +21,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 export default function PaymentScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     const { order, amount } = route.params || { amount: 0 };
 
@@ -65,7 +68,7 @@ export default function PaymentScreen() {
     const handlePayment = async () => {
         if (!isValidCard()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            setError('Invalid card number');
+            setError(t('payment.invalidCard'));
             return;
         }
 
@@ -89,7 +92,7 @@ export default function PaymentScreen() {
             setStep('success');
         } catch (err: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            setError(err.message || 'Payment failed');
+            setError(err.message || t('payment.failed'));
             setStep('error');
         } finally {
             setIsLoading(false);
@@ -110,16 +113,16 @@ export default function PaymentScreen() {
                         </LinearGradient>
                     </View>
                     <Text style={[styles.successTitle, { color: colors.text }]}>
-                        Payment Successful!
+                        {t('payment.successTitle')}
                     </Text>
                     <Text style={[styles.successAmount, { color: Colors.primary }]}>
-                        {amount} QAR
+                        {amount} {t('common.currency')}
                     </Text>
                     <Text style={[styles.transactionId, { color: colors.textSecondary }]}>
-                        Transaction: {transactionId}
+                        {t('payment.transaction')}: {transactionId}
                     </Text>
                     <Text style={[styles.escrowNote, { color: colors.textSecondary }]}>
-                        🔒 Funds held in escrow until you confirm delivery
+                        {t('payment.escrowNote')}
                     </Text>
                     <TouchableOpacity
                         style={styles.doneButton}
@@ -129,7 +132,7 @@ export default function PaymentScreen() {
                             colors={[Colors.primary, '#6b1029']}
                             style={styles.doneGradient}
                         >
-                            <Text style={styles.doneButtonText}>Back to Home</Text>
+                            <Text style={styles.doneButtonText}>{t('common.backToHome')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -144,10 +147,10 @@ export default function PaymentScreen() {
                 <View style={styles.processingContainer}>
                     <ActivityIndicator size="large" color={Colors.primary} />
                     <Text style={[styles.processingText, { color: colors.text }]}>
-                        Processing payment...
+                        {t('payment.processing')}
                     </Text>
                     <Text style={[styles.processingSubtext, { color: colors.textSecondary }]}>
-                        Please wait, do not close the app
+                        {t('payment.doNotClose')}
                     </Text>
                 </View>
             </SafeAreaView>
@@ -161,22 +164,22 @@ export default function PaymentScreen() {
                 style={{ flex: 1 }}
             >
                 {/* Header */}
-                <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Payment</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{t('payment.title')}</Text>
                     <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                     {/* Amount Card */}
                     <View style={[styles.amountCard, { backgroundColor: Colors.primary }]}>
-                        <Text style={styles.amountLabel}>Total Amount</Text>
-                        <Text style={styles.amountValue}>{amount} QAR</Text>
+                        <Text style={styles.amountLabel}>{t('payment.totalAmount')}</Text>
+                        <Text style={styles.amountValue}>{amount} {t('common.currency')}</Text>
                         <View style={styles.escrowBadge}>
                             <Ionicons name="shield-checkmark" size={16} color="#fff" />
-                            <Text style={styles.escrowBadgeText}>Protected by Escrow</Text>
+                            <Text style={styles.escrowBadgeText}>{t('payment.escrowProtected')}</Text>
                         </View>
                     </View>
 
@@ -190,15 +193,15 @@ export default function PaymentScreen() {
 
                     {/* Card Form */}
                     <View style={styles.form}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                            💳 Card Details
+                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            💳 {t('payment.cardDetails')}
                         </Text>
 
-                        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="card" size={20} color={colors.textSecondary} />
                             <TextInput
-                                style={[styles.input, { color: colors.text }]}
-                                placeholder="Card Number"
+                                style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder={t('payment.cardNumber')}
                                 placeholderTextColor={colors.textSecondary}
                                 value={formatCardNumber(cardNumber)}
                                 onChangeText={(text) => setCardNumber(text.replace(/\s/g, ''))}
@@ -207,11 +210,11 @@ export default function PaymentScreen() {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <View style={[styles.row, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <TextInput
-                                    style={[styles.input, { color: colors.text }]}
-                                    placeholder="MM"
+                                    style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                    placeholder={t('payment.mm')}
                                     placeholderTextColor={colors.textSecondary}
                                     value={expiryMonth}
                                     onChangeText={setExpiryMonth}
@@ -220,8 +223,8 @@ export default function PaymentScreen() {
                                 />
                                 <Text style={{ color: colors.textSecondary }}>/</Text>
                                 <TextInput
-                                    style={[styles.input, { color: colors.text }]}
-                                    placeholder="YY"
+                                    style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                    placeholder={t('payment.yy')}
                                     placeholderTextColor={colors.textSecondary}
                                     value={expiryYear}
                                     onChangeText={setExpiryYear}
@@ -229,11 +232,11 @@ export default function PaymentScreen() {
                                     maxLength={2}
                                 />
                             </View>
-                            <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                            <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Ionicons name="lock-closed" size={20} color={colors.textSecondary} />
                                 <TextInput
-                                    style={[styles.input, { color: colors.text }]}
-                                    placeholder="CVV"
+                                    style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                    placeholder={t('payment.cvv')}
                                     placeholderTextColor={colors.textSecondary}
                                     value={cvv}
                                     onChangeText={setCvv}
@@ -244,11 +247,11 @@ export default function PaymentScreen() {
                             </View>
                         </View>
 
-                        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="person" size={20} color={colors.textSecondary} />
                             <TextInput
-                                style={[styles.input, { color: colors.text }]}
-                                placeholder="Cardholder Name"
+                                style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder={t('payment.cardholderName')}
                                 placeholderTextColor={colors.textSecondary}
                                 value={cardholderName}
                                 onChangeText={setCardholderName}
@@ -257,10 +260,10 @@ export default function PaymentScreen() {
                         </View>
 
                         {/* Test Card Hint */}
-                        <View style={[styles.hintCard, { backgroundColor: colors.surface }]}>
+                        <View style={[styles.hintCard, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="information-circle" size={20} color={Colors.info} />
-                            <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                                Test Card: 4111 1111 1111 1111 | Any future date | Any CVV
+                            <Text style={[styles.hintText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('payment.testCardHint')}
                             </Text>
                         </View>
                     </View>
@@ -284,7 +287,7 @@ export default function PaymentScreen() {
                             ) : (
                                 <>
                                     <Ionicons name="lock-closed" size={20} color="#fff" />
-                                    <Text style={styles.payButtonText}>Pay {amount} QAR</Text>
+                                    <Text style={styles.payButtonText}>{t('payment.pay')} {amount} {t('common.currency')}</Text>
                                 </>
                             )}
                         </LinearGradient>

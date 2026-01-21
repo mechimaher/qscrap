@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { Spacing, BorderRadius, FontSize } from '../constants';
 
 /**
@@ -19,15 +21,16 @@ import { Spacing, BorderRadius, FontSize } from '../constants';
 const TermsScreen: React.FC = () => {
     const { colors } = useTheme();
     const navigation = useNavigation();
+    const { t, isRTL } = useTranslation();
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Terms of Service</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('terms.title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -35,153 +38,138 @@ const TermsScreen: React.FC = () => {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={[styles.lastUpdated, { color: colors.textMuted }]}>
-                    Last updated: December 2024
+                <Text style={[styles.lastUpdated, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('terms.lastUpdated', { date: 'December 2024' })}
                 </Text>
 
-                <Section title="1. Acceptance of Terms" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        By accessing and using the QScrap mobile application ("App"), you agree to be bound
-                        by these Terms of Service ("Terms"). If you do not agree to these Terms, please do
-                        not use the App.
+                <Section title={t('terms.section1Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section1Content')}
                     </Text>
                 </Section>
 
-                <Section title="2. Description of Service" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        QScrap is a marketplace platform that connects customers seeking auto parts with
-                        verified garages and suppliers in Qatar. We facilitate the search, bidding, purchase,
-                        and delivery of both new and used auto parts.
+                <Section title={t('terms.section2Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section2Content')}
                     </Text>
                 </Section>
 
-                <Section title="3. User Accounts" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        To use our services, you must:
+                <Section title={t('terms.section3Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section3Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Be at least 18 years of age',
-                        'Provide accurate and complete registration information',
-                        'Maintain the security of your account credentials',
-                        'Notify us immediately of any unauthorized access',
-                        'Accept responsibility for all activities under your account',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('terms.section3Item1'),
+                        t('terms.section3Item2'),
+                        t('terms.section3Item3'),
+                        t('terms.section3Item4'),
+                        t('terms.section3Item5'),
                     ]} />
                 </Section>
 
-                <Section title="4. Part Requests & Bids" colors={colors}>
-                    <Text style={[styles.subheading, { color: colors.text }]}>Submitting Requests</Text>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        When you submit a part request, you agree to provide accurate vehicle and part
-                        information. Inaccurate information may result in unsuitable bids or order issues.
+                <Section title={t('terms.section4Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.subheading, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('terms.subheading1')}</Text>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section4Content1')}
                     </Text>
 
-                    <Text style={[styles.subheading, { color: colors.text }]}>Accepting Bids</Text>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Accepting a bid creates a binding agreement between you and the garage. You commit
-                        to purchasing the part at the agreed price plus applicable delivery fees.
+                    <Text style={[styles.subheading, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('terms.subheading2')}</Text>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section4Content2')}
                     </Text>
                 </Section>
 
-                <Section title="5. Payments" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Payment terms:
+                <Section title={t('terms.section5Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section5Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'All prices are in Qatari Riyals (QAR)',
-                        'Payment is due upon order confirmation',
-                        'We accept cash on delivery and card payments',
-                        'Prices include VAT where applicable',
-                        'Delivery fees are calculated based on distance',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('terms.section5Item1'),
+                        t('terms.section5Item2'),
+                        t('terms.section5Item3'),
+                        t('terms.section5Item4'),
+                        t('terms.section5Item5'),
                     ]} />
                 </Section>
 
-                <Section title="6. Delivery" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Delivery is provided through our logistics partners. Delivery times are estimates
-                        and not guaranteed. You must be available to receive the delivery at the specified
-                        address. Failed delivery attempts may incur additional charges.
+                <Section title={t('terms.section6Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section6Content')}
                     </Text>
                 </Section>
 
-                <Section title="7. Returns & Refunds" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        Return policies vary by garage. Generally:
+                <Section title={t('terms.section7Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section7Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Parts must be unused and in original condition',
-                        'Returns must be initiated within 7 days of delivery',
-                        'Warranty claims are handled by the respective garage',
-                        'Refunds are processed within 5-10 business days',
-                        'Delivery fees are non-refundable for buyer remorse returns',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('terms.section7Item1'),
+                        t('terms.section7Item2'),
+                        t('terms.section7Item3'),
+                        t('terms.section7Item4'),
+                        t('terms.section7Item5'),
                     ]} />
                 </Section>
 
-                <Section title="8. Prohibited Activities" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        You agree not to:
+                <Section title={t('terms.section8Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section8Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'Provide false or misleading information',
-                        'Circumvent the platform for direct transactions',
-                        'Harass or abuse garages, drivers, or staff',
-                        'Use the app for any illegal purposes',
-                        'Attempt to manipulate reviews or ratings',
-                        'Violate any applicable laws or regulations',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('terms.section8Item1'),
+                        t('terms.section8Item2'),
+                        t('terms.section8Item3'),
+                        t('terms.section8Item4'),
+                        t('terms.section8Item5'),
+                        t('terms.section8Item6'),
                     ]} />
                 </Section>
 
-                <Section title="9. Limitation of Liability" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        QScrap acts as a marketplace facilitator. We are not responsible for:
+                <Section title={t('terms.section9Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section9Content')}
                     </Text>
-                    <BulletList colors={colors} items={[
-                        'The quality or condition of parts sold by garages',
-                        'Accuracy of part descriptions provided by garages',
-                        'Disputes between users and garages',
-                        'Delays or issues with third-party delivery',
-                        'Indirect or consequential damages',
+                    <BulletList colors={colors} isRTL={isRTL} items={[
+                        t('terms.section9Item1'),
+                        t('terms.section9Item2'),
+                        t('terms.section9Item3'),
+                        t('terms.section9Item4'),
+                        t('terms.section9Item5'),
                     ]} />
                 </Section>
 
-                <Section title="10. Dispute Resolution" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        If you have a dispute regarding an order, you may file a dispute through the app.
-                        We will mediate between parties in good faith. Unresolved disputes may be subject
-                        to the laws of the State of Qatar.
+                <Section title={t('terms.section10Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section10Content')}
                     </Text>
                 </Section>
 
-                <Section title="11. Intellectual Property" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        All content, trademarks, and intellectual property in the App are owned by QScrap
-                        or its licensors. You may not copy, modify, or distribute any content without
-                        prior written permission.
+                <Section title={t('terms.section11Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section11Content')}
                     </Text>
                 </Section>
 
-                <Section title="12. Termination" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We reserve the right to suspend or terminate your account at our discretion for
-                        violations of these Terms or for any other reason. You may delete your account
-                        at any time through the app settings.
+                <Section title={t('terms.section12Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section12Content')}
                     </Text>
                 </Section>
 
-                <Section title="13. Changes to Terms" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        We may modify these Terms at any time. Continued use of the App after changes
-                        constitutes acceptance of the new Terms. We will notify users of significant changes.
+                <Section title={t('terms.section13Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section13Content')}
                     </Text>
                 </Section>
 
-                <Section title="14. Contact" colors={colors}>
-                    <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-                        For questions about these Terms, contact us at:
+                <Section title={t('terms.section14Title')} colors={colors} isRTL={isRTL}>
+                    <Text style={[styles.paragraph, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.section14Content')}
                     </Text>
-                    <Text style={[styles.contactInfo, { color: colors.primary }]}>
-                        Email: legal@qscrap.qa{'\n'}
-                        Phone: +974 XXXX XXXX{'\n'}
-                        Address: Doha, Qatar
+                    <Text style={[styles.contactInfo, { color: colors.primary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('terms.email')}: legal@qscrap.qa{'\n'}
+                        {t('terms.phone')}: +974 XXXX XXXX{'\n'}
+                        {t('terms.address')}: {t('terms.dohaQatar')}
                     </Text>
                 </Section>
 
@@ -196,11 +184,12 @@ interface SectionProps {
     title: string;
     children: React.ReactNode;
     colors: any;
+    isRTL: boolean;
 }
 
-const Section: React.FC<SectionProps> = ({ title, children, colors }) => (
+const Section: React.FC<SectionProps> = ({ title, children, colors, isRTL }) => (
     <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
         {children}
     </View>
 );
@@ -208,14 +197,15 @@ const Section: React.FC<SectionProps> = ({ title, children, colors }) => (
 interface BulletListProps {
     items: string[];
     colors: any;
+    isRTL: boolean;
 }
 
-const BulletList: React.FC<BulletListProps> = ({ items, colors }) => (
-    <View style={styles.bulletList}>
+const BulletList: React.FC<BulletListProps> = ({ items, colors, isRTL }) => (
+    <View style={[styles.bulletList, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm, marginRight: 0 }]}>
         {items.map((item, index) => (
-            <View key={index} style={styles.bulletItem}>
-                <Text style={[styles.bullet, { color: colors.primary }]}>•</Text>
-                <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{item}</Text>
+            <View key={index} style={[styles.bulletItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <Text style={[styles.bullet, { color: colors.primary }, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>•</Text>
+                <Text style={[styles.bulletText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{item}</Text>
             </View>
         ))}
     </View>

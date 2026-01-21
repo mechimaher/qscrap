@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     garageName: {
         fontSize: 17,
         fontWeight: '700',
-        color: Colors.text,
+        color: Colors.theme.text,
         flex: 1,
     },
     conditionBadge: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     conditionText: {
         fontSize: 12,
         fontWeight: '600',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
     },
     priceContainer: {
         backgroundColor: '#F9FAFB',
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     priceLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
         marginBottom: 4,
     },
     priceValue: {
@@ -215,13 +215,13 @@ const styles = StyleSheet.create({
     detailLabel: {
         fontSize: 11,
         fontWeight: '600',
-        color: Colors.textSecondary,
+        color: Colors.theme.textSecondary,
         marginBottom: 2,
     },
     detailValue: {
         fontSize: 13,
         fontWeight: '700',
-        color: Colors.text,
+        color: Colors.theme.text,
     },
     actions: {
         flexDirection: 'row',

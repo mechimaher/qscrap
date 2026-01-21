@@ -59,6 +59,8 @@ export const Colors = {
         card: ['#FFFFFF', '#F8F8F8'] as const,
         premium: ['#8D1B3D', '#C9A227'] as const,
         gold: ['#C9A227', '#A68520'] as const,
+        champagne: ['#FFFFFF', '#FFF9E6'] as const, // Warm premium light
+        pearl: ['#FFFFFF', '#F5F5F7'] as const, // Cool premium light
     }
 };
 
@@ -77,6 +79,7 @@ export const BorderRadius = {
     md: 12,
     lg: 16,
     xl: 24,
+    xxl: 48,
     full: 9999,
 };
 
@@ -123,6 +126,20 @@ export const Shadows = {
         shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 8,
+    },
+    xl: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 16,
+        elevation: 12,
+    },
+    xxl: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 16 },
+        shadowOpacity: 0.3,
+        shadowRadius: 24,
+        elevation: 16,
     },
     glow: {
         shadowColor: '#8D1B3D',

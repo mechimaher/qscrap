@@ -21,6 +21,8 @@ import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 interface Ticket {
     ticket_id: string;
@@ -35,6 +37,7 @@ interface Ticket {
 export default function SupportScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -67,7 +70,7 @@ export default function SupportScreen() {
 
     const handleCreateTicket = async () => {
         if (!subject.trim() || !message.trim()) {
-            Alert.alert('Error', 'Please fill in all fields');
+            Alert.alert(t('common.error'), t('common.fillAllFields'));
             return;
         }
 
@@ -76,13 +79,12 @@ export default function SupportScreen() {
 
         try {
             await api.createTicket(subject.trim(), message.trim());
-            setShowNewTicket(false);
             setSubject('');
             setMessage('');
-            Alert.alert('Success', 'Your support ticket has been submitted. We\'ll respond shortly.');
+            Alert.alert(t('common.success'), t('support.ticketSubmitted'));
             loadTickets();
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to create ticket');
+            Alert.alert(t('common.error'), error.message || t('support.createFailed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -99,9 +101,9 @@ export default function SupportScreen() {
 
     const getStatusLabel = (status: string) => {
         switch (status) {
-            case 'open': return 'Open';
-            case 'in_progress': return 'In Progress';
-            case 'closed': return 'Closed';
+            case 'open': return t('status.open');
+            case 'in_progress': return t('status.inProgress');
+            case 'closed': return t('status.closed');
             default: return status;
         }
     };
@@ -117,27 +119,27 @@ export default function SupportScreen() {
             onPress={() => Alert.alert(item.subject, item.message)}
             activeOpacity={0.7}
         >
-            <View style={styles.ticketHeader}>
-                <Text style={[styles.ticketSubject, { color: colors.text }]} numberOfLines={1}>{item.subject}</Text>
+            <View style={[styles.ticketHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <Text style={[styles.ticketSubject, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>{item.subject}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
                     <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
                         {getStatusLabel(item.status)}
                     </Text>
                 </View>
             </View>
-            <Text style={[styles.ticketMessage, { color: colors.textSecondary }]} numberOfLines={2}>{item.message}</Text>
-            <Text style={[styles.ticketDate, { color: colors.textMuted }]}>{formatDate(item.created_at)}</Text>
+            <Text style={[styles.ticketMessage, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.message}</Text>
+            <Text style={[styles.ticketDate, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>{formatDate(item.created_at)}</Text>
         </TouchableOpacity>
     );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Support</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('support.title')}</Text>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -151,10 +153,10 @@ export default function SupportScreen() {
                     colors={Colors.gradients.primary}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.newTicketGradient}
+                    style={[styles.newTicketGradient, { flexDirection: rtlFlexDirection(isRTL) }]}
                 >
-                    <Text style={styles.newTicketIcon}>+</Text>
-                    <Text style={styles.newTicketText}>Create New Ticket</Text>
+                    <Text style={[styles.newTicketIcon, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>+</Text>
+                    <Text style={styles.newTicketText}>{t('support.createNew')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
 
@@ -163,8 +165,8 @@ export default function SupportScreen() {
             ) : tickets.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyIcon}>💬</Text>
-                    <Text style={styles.emptyTitle}>No Support Tickets</Text>
-                    <Text style={styles.emptySubtitle}>Create a ticket if you need help</Text>
+                    <Text style={styles.emptyTitle}>{t('support.noTickets')}</Text>
+                    <Text style={styles.emptySubtitle}>{t('support.createTicketHint')}</Text>
                 </View>
             ) : (
                 <FlatList
@@ -190,16 +192,16 @@ export default function SupportScreen() {
                     style={styles.modalOverlay}
                 >
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: colors.text }]}>New Support Ticket</Text>
+                        <View style={[styles.modalHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('support.newTicketTitle')}</Text>
                             <TouchableOpacity onPress={() => setShowNewTicket(false)}>
                                 <Text style={[styles.closeButton, { color: colors.textMuted }]}>✕</Text>
                             </TouchableOpacity>
                         </View>
 
                         <TextInput
-                            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                            placeholder="Subject"
+                            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                            placeholder={t('support.subjectPlaceholder')}
                             placeholderTextColor={colors.textMuted}
                             value={subject}
                             onChangeText={setSubject}
@@ -207,8 +209,8 @@ export default function SupportScreen() {
                         />
 
                         <TextInput
-                            style={[styles.input, styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                            placeholder="Describe your issue..."
+                            style={[styles.input, styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                            placeholder={t('support.messagePlaceholder')}
                             placeholderTextColor={colors.textMuted}
                             value={message}
                             onChangeText={setMessage}
@@ -230,7 +232,7 @@ export default function SupportScreen() {
                                 {isSubmitting ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.submitText}>Submit Ticket</Text>
+                                    <Text style={styles.submitText}>{t('support.submitTicket')}</Text>
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>

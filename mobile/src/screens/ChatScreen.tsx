@@ -1,4 +1,4 @@
-// QScrap Chat Screen - Real-time messaging with Driver/Garage
+// QScrap Chat Screen - Real-time messaging with Driver/Garage - Full i18n Support
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
@@ -22,6 +22,8 @@ import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import QuickReplies from '../components/QuickReplies';
 
@@ -48,6 +50,7 @@ export default function ChatScreen() {
     const route = useRoute();
     const { orderId, orderNumber, recipientName, recipientType } = route.params as ChatParams;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const toast = useToast();
 
     const flatListRef = useRef<FlatList>(null);
@@ -100,7 +103,7 @@ export default function ChatScreen() {
             }
         } catch (error) {
             console.log('Failed to load messages:', error);
-            toast.error('Error', 'Failed to load messages');
+            toast.error(t('common.error'), t('errors.loadFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -185,7 +188,7 @@ export default function ChatScreen() {
             }
         } catch (error) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            toast.error('Error', 'Failed to send message');
+            toast.error(t('common.error'), t('chat.sendFailed'));
         } finally {
             setIsSending(false);
         }
@@ -200,11 +203,16 @@ export default function ChatScreen() {
         const isMe = item.sender_id === userId;
 
         return (
-            <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.theirMessage]}>
+            <View style={[
+                styles.messageBubble,
+                isMe ? styles.myMessage : styles.theirMessage,
+                isMe ? (isRTL ? { alignSelf: 'flex-start' } : { alignSelf: 'flex-end' }) :
+                    (isRTL ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' })
+            ]}>
                 {!isMe && (
-                    <Text style={styles.senderName}>{item.sender_name}</Text>
+                    <Text style={[styles.senderName, { textAlign: rtlTextAlign(isRTL) }]}>{item.sender_name}</Text>
                 )}
-                <Text style={[styles.messageText, isMe && styles.myMessageText]}>
+                <Text style={[styles.messageText, isMe && styles.myMessageText, { textAlign: rtlTextAlign(isRTL) }]}>
                     {item.message.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
                         if (part.match(/https?:\/\/[^\s]+/)) {
                             return (
@@ -223,7 +231,7 @@ export default function ChatScreen() {
                         return <Text key={index}>{part}</Text>;
                     })}
                 </Text>
-                <Text style={[styles.messageTime, isMe && styles.myMessageTime]}>
+                <Text style={[styles.messageTime, isMe && styles.myMessageTime, { textAlign: rtlTextAlign(isRTL) }]}>
                     {formatTime(item.created_at)}
                     {isMe && item.is_read && ' ✓✓'}
                 </Text>
@@ -238,14 +246,14 @@ export default function ChatScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backText}>←</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
                 </TouchableOpacity>
-                <View style={styles.headerInfo}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>{recipientName}</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                        Order #{orderNumber} • {isConnected ? '🟢 Online' : '⚪ Connecting...'}
+                <View style={[styles.headerInfo, isRTL && { marginLeft: 0, marginRight: Spacing.md }]}>
+                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{recipientName}</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('orders.orderNumber')} {orderNumber} • {isConnected ? `🟢 ${t('chat.online')}` : `⚪ ${t('chat.connecting')}`}
                     </Text>
                 </View>
                 <View style={styles.headerIcon}>
@@ -277,9 +285,9 @@ export default function ChatScreen() {
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyIcon}>💬</Text>
-                                <Text style={styles.emptyText}>No messages yet</Text>
-                                <Text style={styles.emptyHint}>
-                                    Send a message to {recipientName}
+                                <Text style={[styles.emptyText, { color: colors.text }]}>{t('chat.noMessages')}</Text>
+                                <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
+                                    {t('chat.sendMessageTo', { name: recipientName })}
                                 </Text>
                             </View>
                         }
@@ -293,10 +301,10 @@ export default function ChatScreen() {
                 />
 
                 {/* Input Area */}
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TextInput
-                        style={styles.textInput}
-                        placeholder="Type a message..."
+                        style={[styles.textInput, { textAlign: rtlTextAlign(isRTL) }, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}
+                        placeholder={t('chat.typeMessage')}
                         placeholderTextColor="#999"
                         value={newMessage}
                         onChangeText={setNewMessage}
@@ -318,7 +326,7 @@ export default function ChatScreen() {
                             {isSending ? (
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
-                                <Text style={styles.sendIcon}>➤</Text>
+                                <Text style={[styles.sendIcon, isRTL && { transform: [{ scaleX: -1 }] }]}>➤</Text>
                             )}
                         </LinearGradient>
                     </TouchableOpacity>

@@ -25,6 +25,8 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { MapLocationPicker } from '../components/MapLocationPicker';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 type AddressScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -47,6 +49,7 @@ export default function AddressBookScreen() {
     const params = route.params as { onSelect?: (address: Address) => void } | undefined;
     const isSelectionMode = !!params?.onSelect;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +82,7 @@ export default function AddressBookScreen() {
             const data = await api.getAddresses();
             setAddresses(data.addresses || []);
         } catch (error) {
-            Alert.alert('Error', 'Failed to load addresses');
+            Alert.alert(t('common.error'), t('profile.failedToLoadAddresses'));
         } finally {
             setIsLoading(false);
         }
@@ -128,7 +131,7 @@ export default function AddressBookScreen() {
 
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'Please enable location access in settings.');
+                Alert.alert(t('common.permissionRequired'), t('profile.enableLocationPermission'));
                 return;
             }
 
@@ -162,7 +165,7 @@ export default function AddressBookScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
             console.log('[GPS] Detection failed:', error);
-            Alert.alert('GPS Failed', 'Could not detect location. Please select on map.');
+            Alert.alert(t('common.error'), t('profile.gpsFailed'));
         } finally {
             setIsDetectingGPS(false);
         }
@@ -183,15 +186,15 @@ export default function AddressBookScreen() {
     // Save Address
     const handleSaveAddress = async () => {
         if (!label.trim()) {
-            Alert.alert('Missing Label', 'Please add a label (e.g., Home, Office)');
+            Alert.alert(t('common.missingInfo'), t('profile.addLabelPrompt'));
             return;
         }
         if (!addressText.trim()) {
-            Alert.alert('Missing Address', 'Please enter an address');
+            Alert.alert(t('common.missingInfo'), t('profile.enterAddressPrompt'));
             return;
         }
         if (!selectedLocation) {
-            Alert.alert('No Location', 'Please select a location on the map');
+            Alert.alert(t('common.missingInfo'), t('profile.selectLocationPrompt'));
             return;
         }
 
@@ -215,7 +218,7 @@ export default function AddressBookScreen() {
             loadAddresses();
         } catch (error: any) {
             console.log('Save address error:', error);
-            Alert.alert('Error', error?.message || 'Failed to save address');
+            Alert.alert(t('common.error'), error?.message || t('profile.failedToSaveAddress'));
         } finally {
             setIsSaving(false);
         }
@@ -231,10 +234,10 @@ export default function AddressBookScreen() {
     };
 
     const handleDelete = async (id: string) => {
-        Alert.alert('Delete Address', 'Are you sure?', [
-            { text: 'Cancel', style: 'cancel' },
+        Alert.alert(t('profile.deleteAddress'), t('common.areYouSure'), [
+            { text: t('common.cancel'), style: 'cancel' },
             {
-                text: 'Delete',
+                text: t('common.delete'),
                 style: 'destructive',
                 onPress: async () => {
                     try {
@@ -242,7 +245,7 @@ export default function AddressBookScreen() {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         loadAddresses();
                     } catch (error) {
-                        Alert.alert('Error', 'Failed to delete');
+                        Alert.alert(t('common.error'), t('profile.deleteAddressFailed'));
                     }
                 }
             }
@@ -276,15 +279,15 @@ export default function AddressBookScreen() {
                 </Text>
             </View>
             <View style={{ flex: 1 }}>
-                <View style={styles.cardHeader}>
-                    <Text style={[styles.label, { color: colors.text }]}>{item.label}</Text>
-                    {item.is_default && <Text style={styles.defaultBadge}>Default</Text>}
+                <View style={[styles.cardHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL), marginRight: isRTL ? 0 : Spacing.sm, marginLeft: isRTL ? Spacing.sm : 0 }]}>{item.label}</Text>
+                    {item.is_default && <Text style={styles.defaultBadge}>{t('profile.default')}</Text>}
                 </View>
-                <Text style={[styles.addressText, { color: colors.textSecondary }]} numberOfLines={2}>
+                <Text style={[styles.addressText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>
                     {item.address_text}
                 </Text>
                 {item.latitude && item.longitude && (
-                    <Text style={styles.coordsText}>
+                    <Text style={[styles.coordsText, { textAlign: rtlTextAlign(isRTL) }]}>
                         📍 {parseFloat(String(item.latitude)).toFixed(4)}, {parseFloat(String(item.longitude)).toFixed(4)}
                     </Text>
                 )}
@@ -309,12 +312,12 @@ export default function AddressBookScreen() {
     const renderMapStep = () => (
         <View style={styles.mapStepContainer}>
             {/* Header */}
-            <View style={[styles.flowHeader, { backgroundColor: colors.surface }]}>
+            <View style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={handleCloseFlow} style={styles.flowBackBtn}>
                     <Text style={styles.flowBackText}>✕</Text>
                 </TouchableOpacity>
                 <Text style={[styles.flowTitle, { color: colors.text }]}>
-                    {editingAddress ? 'Edit Location' : 'Select Location'}
+                    {editingAddress ? t('profile.editLocation') : t('profile.selectLocation')}
                 </Text>
                 <View style={{ width: 40 }} />
             </View>
@@ -329,18 +332,18 @@ export default function AddressBookScreen() {
                     {isDetectingGPS ? (
                         <ActivityIndicator color="#22C55E" size="small" />
                     ) : (
-                        <>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Text style={styles.quickActionIcon}>📍</Text>
-                            <Text style={[styles.quickActionText, { color: '#22C55E' }]}>Use GPS</Text>
-                        </>
+                            <Text style={[styles.quickActionText, { color: '#22C55E' }]}>{t('profile.useGPS')}</Text>
+                        </View>
                     )}
                 </TouchableOpacity>
             </View>
 
             {/* Quick-Pick Zones */}
             <View style={[styles.zonesContainer, { backgroundColor: colors.background }]}>
-                <Text style={[styles.zonesTitle, { color: colors.textSecondary }]}>
-                    🏙️ Popular Areas
+                <Text style={[styles.zonesTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    🏙️ {t('profile.popularAreas')}
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {QATAR_ZONES.map((zone) => (
@@ -379,11 +382,11 @@ export default function AddressBookScreen() {
         >
             <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                 {/* Header */}
-                <View style={[styles.flowHeader, { backgroundColor: colors.surface }]}>
+                <View style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => setFlowStep('map')} style={styles.flowBackBtn}>
-                        <Text style={styles.flowBackText}>←</Text>
+                        <Text style={styles.flowBackText}>{isRTL ? '→' : '←'}</Text>
                     </TouchableOpacity>
-                    <Text style={[styles.flowTitle, { color: colors.text }]}>Confirm Address</Text>
+                    <Text style={[styles.flowTitle, { color: colors.text }]}>{t('profile.confirmAddress')}</Text>
                     <View style={{ width: 40 }} />
                 </View>
 
@@ -394,10 +397,10 @@ export default function AddressBookScreen() {
                         style={styles.previewGradient}
                     >
                         <Text style={styles.previewIcon}>📍</Text>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.previewLabel}>Selected Location</Text>
-                            <Text style={styles.previewAddress} numberOfLines={2}>
-                                {addressText || 'No address'}
+                        <View style={{ flex: 1, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
+                            <Text style={styles.previewLabel}>{t('profile.selectedLocation')}</Text>
+                            <Text style={[styles.previewAddress, { textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>
+                                {addressText || t('profile.noAddress')}
                             </Text>
                             {selectedLocation && (
                                 <Text style={styles.previewCoords}>
@@ -410,16 +413,16 @@ export default function AddressBookScreen() {
                         style={styles.changeLocationBtn}
                         onPress={() => setFlowStep('map')}
                     >
-                        <Text style={styles.changeLocationText}>Change Location</Text>
+                        <Text style={styles.changeLocationText}>{t('profile.changeLocation')}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Form */}
                 <View style={[styles.formContainer, { backgroundColor: colors.surface }]}>
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                        Label *
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('profile.label')} *
                     </Text>
-                    <View style={styles.labelChips}>
+                    <View style={[styles.labelChips, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         {['Home', 'Office', 'Work', 'Other'].map((preset) => (
                             <TouchableOpacity
                                 key={preset}
@@ -443,21 +446,21 @@ export default function AddressBookScreen() {
                         ))}
                     </View>
                     <TextInput
-                        style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                        style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                         value={label}
                         onChangeText={setLabel}
-                        placeholder="Or type custom label..."
+                        placeholder={t('profile.customLabelPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                     />
 
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: Spacing.lg }]}>
-                        Full Address
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: Spacing.lg, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('profile.fullAddress')}
                     </Text>
                     <TextInput
-                        style={[styles.input, styles.addressInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                        style={[styles.input, styles.addressInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                         value={addressText}
                         onChangeText={setAddressText}
-                        placeholder="Street, Building, Zone..."
+                        placeholder={t('profile.addressPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         multiline
                         numberOfLines={3}
@@ -479,7 +482,7 @@ export default function AddressBookScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.saveText}>
-                                    {editingAddress ? '✓ Update Address' : '✓ Save Address'}
+                                    {editingAddress ? `✓ ${t('profile.updateAddress')}` : `✓ ${t('profile.saveAddress')}`}
                                 </Text>
                             )}
                         </LinearGradient>
@@ -492,12 +495,12 @@ export default function AddressBookScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.title, { color: colors.text }]}>
-                    {isSelectionMode ? 'Select Address' : 'Address Book'}
+                    {isSelectionMode ? t('profile.selectAddress') : t('profile.addressBook')}
                 </Text>
                 <TouchableOpacity onPress={handleStartAdd} style={styles.addButton}>
                     <LinearGradient colors={Colors.gradients.primary as [string, string]} style={styles.addGradient}>
@@ -518,9 +521,9 @@ export default function AddressBookScreen() {
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Text style={styles.emptyEmoji}>📍</Text>
-                            <Text style={styles.emptyText}>No addresses saved yet</Text>
+                            <Text style={styles.emptyText}>{t('profile.noAddressesSaved')}</Text>
                             <TouchableOpacity onPress={handleStartAdd} style={styles.emptyButton}>
-                                <Text style={styles.emptyButtonText}>+ Add Your First Address</Text>
+                                <Text style={styles.emptyButtonText}>+ {t('profile.addFirstAddress')}</Text>
                             </TouchableOpacity>
                         </View>
                     }

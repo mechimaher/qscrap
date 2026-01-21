@@ -30,8 +30,12 @@ interface FeaturedProductsSectionProps {
     onProductPress?: (product: Product) => void;
 }
 
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+
 export default function FeaturedProductsSection({ onProductPress }: FeaturedProductsSectionProps) {
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -89,29 +93,29 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
             {item.is_featured && (
                 <LinearGradient
                     colors={['#eab308', '#f59e0b']}
-                    style={styles.featuredBadge}
+                    style={[styles.featuredBadge, isRTL ? { left: 'auto', right: 0, borderTopLeftRadius: 0, borderBottomRightRadius: 0, borderTopRightRadius: BorderRadius.lg, borderBottomLeftRadius: BorderRadius.lg } : {}]}
                 >
-                    <Text style={styles.featuredBadgeText}>⭐ FEATURED</Text>
+                    <Text style={styles.featuredBadgeText}>⭐ {t('home.featured')}</Text>
                 </LinearGradient>
             )}
 
             {/* Enterprise Badge */}
             {item.plan_code === 'enterprise' && (
-                <View style={styles.enterpriseBadge}>
-                    <Text style={styles.enterpriseBadgeText}>ENTERPRISE</Text>
+                <View style={[styles.enterpriseBadge, isRTL ? { right: 'auto', left: Spacing.sm } : {}]}>
+                    <Text style={styles.enterpriseBadgeText}>{t('home.enterprise')}</Text>
                 </View>
             )}
 
             {/* Product Info */}
             <View style={styles.info}>
-                <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                <Text style={[styles.garage, { color: colors.textSecondary }]} numberOfLines={1}>{item.garage_name}</Text>
+                <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.title}</Text>
+                <Text style={[styles.garage, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>{item.garage_name}</Text>
 
-                <View style={styles.footer}>
-                    <Text style={styles.price}>{item.price} QAR</Text>
+                <View style={[styles.footer, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={styles.price}>{item.price} {t('common.qar')}</Text>
                     <View style={[styles.conditionBadge, { backgroundColor: colors.border }, item.condition === 'new' && styles.conditionNew]}>
                         <Text style={[styles.conditionText, { color: colors.textSecondary }, item.condition === 'new' && styles.conditionTextNew]}>
-                            {item.condition?.toUpperCase()}
+                            {t(`common.condition.${item.condition}`)}
                         </Text>
                     </View>
                 </View>
@@ -121,9 +125,9 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Featured Parts</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>From Premium Enterprise Garages</Text>
+            <View style={[styles.header, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>🏆 {t('home.featuredParts')}</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('home.premiumGarages')}</Text>
             </View>
 
             <FlatList

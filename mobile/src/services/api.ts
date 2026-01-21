@@ -92,6 +92,9 @@ export interface Order {
     driver_lat?: number;
     driver_lng?: number;
     vehicle_info?: string;
+    part_description?: string;
+    part_category?: string;
+    part_subcategory?: string;
 }
 
 export interface Stats {
@@ -163,7 +166,7 @@ class ApiService {
         }
     }
 
-    private async request<T>(
+    public async request<T>(
         endpoint: string,
         options: RequestInit = {}
     ): Promise<T> {
@@ -490,12 +493,12 @@ class ApiService {
     }
 
     async getOrders() {
-        const response = await this.request('/orders');
+        const response = await this.request<any>('/orders');
         return response.data;
     }
 
     async getOrderCount(): Promise<{ total: number }> {
-        const response = await this.request('/orders/count');
+        const response = await this.request<any>('/orders/count');
         return response.data;
     }
 

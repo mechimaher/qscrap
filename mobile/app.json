@@ -121,7 +121,8 @@
             "useFrameworks": "static"
           }
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "privacyPolicyUrl": "https://qscrap.qa/privacy",

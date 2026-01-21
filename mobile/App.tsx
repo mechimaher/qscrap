@@ -63,6 +63,8 @@ export type RootStackParamList = {
       address: string;
     };
   } | undefined;
+  PrivacyPolicy: undefined;
+  Terms: undefined;
   RequestDetail: { requestId: string };
   OrderDetail: { orderId: string };
   Tracking: { orderId: string; orderNumber: string; deliveryAddress?: string };
@@ -81,6 +83,10 @@ export type RootStackParamList = {
   DeliveryConfirmation: { order?: any; escrow?: any };
   // Vehicles
   MyVehicles: undefined;
+  // Temporary / Mixed
+  Rewards: undefined;
+  Requests: undefined;
+  Orders: undefined;
 };
 
 export type AuthStackParamList = {

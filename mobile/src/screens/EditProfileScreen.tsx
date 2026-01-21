@@ -20,12 +20,15 @@ import { api } from '../services/api';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
     const { user, refreshUser } = useAuth();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -59,7 +62,7 @@ export default function EditProfileScreen() {
 
     const handleSaveProfile = async () => {
         if (!fullName.trim()) {
-            Alert.alert('Error', 'Please enter your full name');
+            Alert.alert(t('common.error'), t('profile.enterFullName'));
             return;
         }
 
@@ -87,8 +90,8 @@ export default function EditProfileScreen() {
                 // Refresh user data in AuthContext so ProfileScreen shows updated name
                 await refreshUser();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert('Success', 'Profile updated successfully', [
-                    { text: 'OK', onPress: () => navigation.goBack() }
+                Alert.alert(t('common.success'), t('profile.profileUpdated'), [
+                    { text: t('common.ok'), onPress: () => navigation.goBack() }
                 ]);
             } else {
                 throw new Error(data.error || data.message || 'Failed to update profile');
@@ -107,15 +110,15 @@ export default function EditProfileScreen() {
     const handleChangePhoto = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Alert.alert(
-            'Change Photo',
-            'Choose an option',
+            t('profile.changePhoto'),
+            t('profile.chooseOption'),
             [
                 {
-                    text: '📷 Take Photo',
+                    text: `📷 ${t('profile.takePhoto')}`,
                     onPress: async () => {
                         const { status } = await ImagePicker.requestCameraPermissionsAsync();
                         if (status !== 'granted') {
-                            Alert.alert('Permission Required', 'Camera access is needed to take photos.');
+                            Alert.alert(t('common.permissionRequired'), t('profile.cameraAccessNeeded'));
                             return;
                         }
                         const result = await ImagePicker.launchCameraAsync({
@@ -131,11 +134,11 @@ export default function EditProfileScreen() {
                     },
                 },
                 {
-                    text: '🖼️ Choose from Gallery',
+                    text: `🖼️ ${t('profile.chooseFromGallery')}`,
                     onPress: async () => {
                         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
                         if (status !== 'granted') {
-                            Alert.alert('Permission Required', 'Gallery access is needed to select photos.');
+                            Alert.alert(t('common.permissionRequired'), t('profile.galleryAccessNeeded'));
                             return;
                         }
                         const result = await ImagePicker.launchImageLibraryAsync({
@@ -150,24 +153,24 @@ export default function EditProfileScreen() {
                         }
                     },
                 },
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
             ]
         );
     };
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
-            Alert.alert('Error', 'Please fill in all password fields');
+            Alert.alert(t('common.error'), t('profile.fillAllPasswordFields'));
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            Alert.alert('Error', 'New passwords do not match');
+            Alert.alert(t('common.error'), t('profile.passwordsDontMatch'));
             return;
         }
 
         if (newPassword.length < 6) {
-            Alert.alert('Error', 'Password must be at least 6 characters');
+            Alert.alert(t('common.error'), t('profile.passwordMinLength'));
             return;
         }
 
@@ -190,7 +193,7 @@ export default function EditProfileScreen() {
 
             if (response.ok) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert('Success', 'Password changed successfully');
+                Alert.alert(t('common.success'), t('profile.passwordChanged'));
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
@@ -217,11 +220,11 @@ export default function EditProfileScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.editProfile')}</Text>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -238,44 +241,44 @@ export default function EditProfileScreen() {
                         )}
                     </View>
                     <TouchableOpacity style={styles.changePhotoButton} onPress={handleChangePhoto}>
-                        <Text style={styles.changePhotoText}>📷 Change Photo</Text>
+                        <Text style={styles.changePhotoText}>📷 {t('profile.changePhoto')}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Personal Info Section */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Personal Information</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.personalInfo')}</Text>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Full Name</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.fullName')}</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={fullName}
                             onChangeText={setFullName}
-                            placeholder="Enter your full name"
+                            placeholder={t('profile.enterFullName')}
                             placeholderTextColor="#999"
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Phone Number</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.phoneNumber')}</Text>
                         <TextInput
-                            style={[styles.input, styles.inputDisabled]}
+                            style={[styles.input, styles.inputDisabled, { textAlign: rtlTextAlign(isRTL) }]}
                             value={phoneNumber}
                             editable={false}
-                            placeholder="Phone number"
+                            placeholder={t('profile.phoneNumber')}
                             placeholderTextColor="#999"
                         />
-                        <Text style={styles.inputHint}>Contact support to change phone number</Text>
+                        <Text style={[styles.inputHint, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.contactSupport')}</Text>
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email (Optional)</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.emailOptional')}</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={email}
                             onChangeText={setEmail}
-                            placeholder="Enter your email"
+                            placeholder={t('profile.enterEmail')}
                             placeholderTextColor="#999"
                             keyboardType="email-address"
                             autoCapitalize="none"
@@ -294,7 +297,7 @@ export default function EditProfileScreen() {
                             {isSaving ? (
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
-                                <Text style={styles.saveText}>Save Changes</Text>
+                                <Text style={styles.saveText}>{t('common.saveChanges')}</Text>
                             )}
                         </LinearGradient>
                     </TouchableOpacity>
@@ -302,39 +305,39 @@ export default function EditProfileScreen() {
 
                 {/* Change Password Section */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Change Password</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.changePassword')}</Text>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Current Password</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.currentPassword')}</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={currentPassword}
                             onChangeText={setCurrentPassword}
-                            placeholder="Enter current password"
+                            placeholder={t('profile.enterCurrentPassword')}
                             placeholderTextColor="#999"
                             secureTextEntry
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>New Password</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.newPassword')}</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={newPassword}
                             onChangeText={setNewPassword}
-                            placeholder="Enter new password"
+                            placeholder={t('profile.enterNewPassword')}
                             placeholderTextColor="#999"
                             secureTextEntry
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Confirm New Password</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.confirmNewPassword')}</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
-                            placeholder="Confirm new password"
+                            placeholder={t('profile.confirmNewPassword')}
                             placeholderTextColor="#999"
                             secureTextEntry
                         />
@@ -345,19 +348,19 @@ export default function EditProfileScreen() {
                         onPress={handleChangePassword}
                         disabled={isSaving}
                     >
-                        <Text style={styles.changePasswordText}>Update Password</Text>
+                        <Text style={styles.changePasswordText}>{t('profile.updatePassword')}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Danger Zone */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: Colors.error }]}>Danger Zone</Text>
+                    <Text style={[styles.sectionTitle, { color: Colors.error, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.dangerZone')}</Text>
 
                     <TouchableOpacity style={styles.deleteAccountButton}>
-                        <Text style={styles.deleteAccountText}>Delete Account</Text>
+                        <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
                     </TouchableOpacity>
-                    <Text style={styles.deleteHint}>
-                        This will permanently delete your account and all associated data.
+                    <Text style={[styles.deleteHint, { textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('profile.deleteAccountWarning')}
                     </Text>
                 </View>
 

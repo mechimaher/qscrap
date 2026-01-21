@@ -1,4 +1,4 @@
-// QScrap Register Screen - Premium VIP Design
+// QScrap Register Screen - Premium VIP Design with Full i18n Support
 import React, { useState } from 'react';
 import {
     View,
@@ -16,6 +16,8 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
 
@@ -24,6 +26,7 @@ type RegisterScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList
 export default function RegisterScreen() {
     const navigation = useNavigation<RegisterScreenNavigationProp>();
     const { register, login } = useAuth();
+    const { t, isRTL } = useTranslation();
 
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
@@ -34,19 +37,19 @@ export default function RegisterScreen() {
 
     const handleRegister = async () => {
         if (!name || !phone || !password || !confirmPassword) {
-            setError('Please fill all fields');
+            setError(t('auth.fillAllFields'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
 
         if (password !== confirmPassword) {
-            setError('Passwords do not match');
+            setError(t('auth.passwordsDontMatch'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
 
         if (password.length < 6) {
-            setError('Password must be at least 6 characters');
+            setError(t('auth.passwordMinLength'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -58,7 +61,7 @@ export default function RegisterScreen() {
 
         if (!result.success) {
             setIsLoading(false);
-            setError(result.error || 'Registration failed');
+            setError(result.error || t('auth.registrationFailed'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
             // Auto login after registration
@@ -91,33 +94,33 @@ export default function RegisterScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Header */}
-                    <View style={styles.header}>
+                    <View style={[styles.header, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                            <Text style={styles.backText}>← Back</Text>
+                            <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Title Section */}
                     <View style={styles.titleSection}>
                         <Text style={styles.titleEmoji}>🚀</Text>
-                        <Text style={styles.titleText}>Join QScrap</Text>
-                        <Text style={styles.subtitleText}>Create your account in seconds</Text>
+                        <Text style={[styles.titleText, { textAlign: 'center' }]}>{t('auth.joinQScrap')}</Text>
+                        <Text style={[styles.subtitleText, { textAlign: 'center' }]}>{t('auth.createAccountInSeconds')}</Text>
                     </View>
 
                     {/* Form Card */}
                     <View style={styles.formCard}>
                         {error ? (
-                            <View style={styles.errorContainer}>
-                                <Text style={styles.errorIcon}>⚠️</Text>
-                                <Text style={styles.errorText}>{error}</Text>
+                            <View style={[styles.errorContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <Text style={[styles.errorIcon, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}>⚠️</Text>
+                                <Text style={[styles.errorText, { textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>👤 Full Name</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>👤 {t('auth.fullName')}</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Enter your full name"
+                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder={t('auth.enterFullName')}
                                 placeholderTextColor="#999"
                                 value={name}
                                 onChangeText={setName}
@@ -125,9 +128,9 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>📱 Phone Number</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📱 {t('auth.phoneNumber')}</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder="+974 XXXX XXXX"
                                 placeholderTextColor="#999"
                                 value={phone}
@@ -137,10 +140,10 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>🔒 Password</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>🔒 {t('auth.password')}</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Min 6 characters"
+                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder={t('auth.minCharacters')}
                                 placeholderTextColor="#999"
                                 value={password}
                                 onChangeText={setPassword}
@@ -149,10 +152,10 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>🔒 Confirm Password</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>🔒 {t('auth.confirmPassword')}</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Repeat password"
+                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder={t('auth.repeatPassword')}
                                 placeholderTextColor="#999"
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
@@ -175,33 +178,33 @@ export default function RegisterScreen() {
                                 {isLoading ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.registerButtonText}>Create Account</Text>
+                                    <Text style={styles.registerButtonText}>{t('auth.createAccount')}</Text>
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
 
                         {/* Benefits */}
-                        <View style={styles.benefits}>
+                        <View style={[styles.benefits, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View style={styles.benefitItem}>
                                 <Text style={styles.benefitIcon}>✓</Text>
-                                <Text style={styles.benefitText}>Free to join</Text>
+                                <Text style={styles.benefitText}>{t('auth.freeToJoin')}</Text>
                             </View>
                             <View style={styles.benefitItem}>
                                 <Text style={styles.benefitIcon}>✓</Text>
-                                <Text style={styles.benefitText}>No hidden fees</Text>
+                                <Text style={styles.benefitText}>{t('auth.noHiddenFees')}</Text>
                             </View>
                             <View style={styles.benefitItem}>
                                 <Text style={styles.benefitIcon}>✓</Text>
-                                <Text style={styles.benefitText}>Verified sellers</Text>
+                                <Text style={styles.benefitText}>{t('auth.verifiedSellers')}</Text>
                             </View>
                         </View>
                     </View>
 
                     {/* Login Section */}
-                    <View style={styles.loginSection}>
-                        <Text style={styles.loginText}>Already have an account?</Text>
+                    <View style={[styles.loginSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={styles.loginText}>{t('auth.alreadyHaveAccount')}</Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text style={styles.loginLink}>Sign In</Text>
+                            <Text style={[styles.loginLink, isRTL && { marginLeft: 0, marginRight: Spacing.xs }]}>{t('auth.signIn')}</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#525252', // Always dark on white card
+        color: '#525252',
         marginBottom: Spacing.xs,
     },
     input: {
@@ -295,7 +298,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.md,
-        color: '#1a1a1a', // Always dark input text on light background
+        color: '#1a1a1a',
         borderWidth: 1.5,
         borderColor: '#E8E8E8',
     },
@@ -334,7 +337,7 @@ const styles = StyleSheet.create({
     },
     benefitText: {
         fontSize: FontSizes.xs,
-        color: '#525252', // Always dark on white card
+        color: '#525252',
     },
     loginSection: {
         flexDirection: 'row',

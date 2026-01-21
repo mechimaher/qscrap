@@ -332,6 +332,11 @@ class DriverApiService {
         });
     }
 
+    // ========== ORDERS ==========
+    async getOrderDetails(orderId: string): Promise<{ order: { total_amount: number; payment_method: string } }> {
+        return this.request(`/orders/${orderId}`)
+    }
+
     // ========== LOCATION ==========
     async updateLocation(
         lat: number,

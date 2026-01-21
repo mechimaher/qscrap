@@ -13,6 +13,8 @@ import {
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlTextAlign, rtlFlexDirection } from '../utils/rtl';
 
 interface SearchableDropdownProps {
     items: string[];
@@ -31,6 +33,7 @@ export default function SearchableDropdown({
     label,
     disabled = false,
 }: SearchableDropdownProps) {
+    const { t, isRTL } = useTranslation();
     const [visible, setVisible] = useState(false);
     const [search, setSearch] = useState('');
     const [filteredItems, setFilteredItems] = useState(items);
@@ -44,7 +47,7 @@ export default function SearchableDropdown({
     }, [search, items]);
 
     const handleSelect = (item: string) => {
-        if (item === 'Other') {
+        if (item === 'Other' || item === t('common.other')) {
             setIsCustom(true);
             setCustomValue('');
         } else {
@@ -71,15 +74,15 @@ export default function SearchableDropdown({
             {label && <Text style={styles.label}>{label}</Text>}
 
             <TouchableOpacity
-                style={[styles.selector, disabled && styles.disabled]}
+                style={[styles.selector, disabled && styles.disabled, { flexDirection: rtlFlexDirection(isRTL) }]}
                 onPress={() => !disabled && setVisible(true)}
                 activeOpacity={0.7}
                 disabled={disabled}
             >
-                <Text style={[styles.valueText, !value && styles.placeholderText]}>
+                <Text style={[styles.valueText, !value && styles.placeholderText, { textAlign: rtlTextAlign(isRTL) }]}>
                     {value || placeholder}
                 </Text>
-                <Text style={styles.arrowIcon}>▼</Text>
+                <Text style={[styles.arrowIcon, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>▼</Text>
             </TouchableOpacity>
 
             <Modal
@@ -93,7 +96,7 @@ export default function SearchableDropdown({
                     style={styles.modalOverlay}
                 >
                     <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
+                        <View style={[styles.modalHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.modalTitle}>{placeholder}</Text>
                             <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeButton}>
                                 <Text style={styles.closeIcon}>✕</Text>
@@ -102,11 +105,11 @@ export default function SearchableDropdown({
 
                         {!isCustom ? (
                             <>
-                                <View style={styles.searchContainer}>
-                                    <Text style={styles.searchIcon}>🔍</Text>
+                                <View style={[styles.searchContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <Text style={[styles.searchIcon, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm }]}>🔍</Text>
                                     <TextInput
-                                        style={styles.searchInput}
-                                        placeholder="Search..."
+                                        style={[styles.searchInput, { textAlign: rtlTextAlign(isRTL) }]}
+                                        placeholder={t('common.searchPlaceholder')}
                                         placeholderTextColor="#999"
                                         value={search}
                                         onChangeText={setSearch}
@@ -120,13 +123,13 @@ export default function SearchableDropdown({
                                     style={styles.list}
                                     renderItem={({ item }) => (
                                         <TouchableOpacity
-                                            style={styles.item}
+                                            style={[styles.item, { flexDirection: rtlFlexDirection(isRTL) }]}
                                             onPress={() => handleSelect(item)}
                                         >
                                             <Text style={[
                                                 styles.itemText,
                                                 item === value && styles.selectedItemText,
-                                                item === 'Other' && styles.otherItemText
+                                                item === t('common.other') && styles.otherItemText
                                             ]}>
                                                 {item}
                                             </Text>
@@ -134,16 +137,16 @@ export default function SearchableDropdown({
                                         </TouchableOpacity>
                                     )}
                                     ListEmptyComponent={
-                                        <Text style={styles.emptyText}>No matches found</Text>
+                                        <Text style={styles.emptyText}>{t('common.noMatches')}</Text>
                                     }
                                 />
                             </>
                         ) : (
                             <View style={styles.customContainer}>
-                                <Text style={styles.customLabel}>Enter manually:</Text>
+                                <Text style={[styles.customLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.enterManually')}</Text>
                                 <TextInput
-                                    style={styles.customInput}
-                                    placeholder={`Type ${label || 'value'}...`}
+                                    style={[styles.customInput, { textAlign: rtlTextAlign(isRTL) }]}
+                                    placeholder={t('common.typeValue', { label: label || 'value' })}
                                     placeholderTextColor="#999"
                                     value={customValue}
                                     onChangeText={setCustomValue}
@@ -154,14 +157,14 @@ export default function SearchableDropdown({
                                         colors={Colors.gradients.primary}
                                         style={styles.submitButton}
                                     >
-                                        <Text style={styles.submitButtonText}>Confirm</Text>
+                                        <Text style={styles.submitButtonText}>{t('common.confirm')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.backButton}
                                     onPress={() => setIsCustom(false)}
                                 >
-                                    <Text style={styles.backButtonText}>Back to List</Text>
+                                    <Text style={styles.backButtonText}>{t('common.backToList')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}

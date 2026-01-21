@@ -18,6 +18,7 @@ import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface MapLocationPickerProps {
     onLocationSelect: (location: { latitude: number; longitude: number; address: string }) => void;
@@ -65,6 +66,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     initialLocation,
 }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
     const mapRef = useRef<MapView>(null);
     const searchInputRef = useRef<TextInput>(null);
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -74,7 +76,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             ? { ...initialLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 }
             : DOHA_COORDINATES
     );
-    const [address, setAddress] = useState('Drag pin to select location');
+    const [address, setAddress] = useState(t('home.mapPicker.dragPin'));
     const [isLoading, setIsLoading] = useState(false);
     const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('standard');
 
@@ -185,7 +187,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             }
         } catch (error) {
             console.error('[Map] Reverse geocode failed:', error);
-            setAddress('Location selected');
+            setAddress(t('home.mapPicker.locationSelected'));
         } finally {
             setIsLoading(false);
         }
@@ -199,7 +201,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                alert('Location permission required');
+                alert(t('home.mapPicker.permissionRequired'));
                 return;
             }
 
@@ -221,7 +223,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
             console.error('[Map] Location error:', error);
-            alert('Could not get current location');
+            alert(t('home.mapPicker.locationError'));
         } finally {
             setIsLoading(false);
         }
@@ -301,7 +303,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     <TextInput
                         ref={searchInputRef}
                         style={[styles.searchInput, { color: colors.text }]}
-                        placeholder="Search for a place..."
+                        placeholder={t('home.mapPicker.searchPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         value={searchQuery}
                         onChangeText={(text) => {
@@ -354,7 +356,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     <Text style={styles.addressIcon}>📍</Text>
                     <View style={{ flex: 1 }}>
                         <Text style={[styles.addressLabel, { color: colors.textSecondary }]}>
-                            Selected Location
+                            {t('home.mapPicker.selectedLocation')}
                         </Text>
                         {isLoading ? (
                             <ActivityIndicator size="small" color={Colors.primary} />
@@ -394,7 +396,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     {mapType === 'standard' ? '🛰️' : '🗺️'}
                 </Text>
                 <Text style={styles.mapTypeLabel}>
-                    {mapType === 'standard' ? 'Satellite' : 'Map'}
+                    {mapType === 'standard' ? t('home.mapPicker.satellite') : t('home.mapPicker.map')}
                 </Text>
             </TouchableOpacity>
 
@@ -405,7 +407,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     onPress={onCancel}
                     activeOpacity={0.8}
                 >
-                    <Text style={[styles.cancelText, { color: colors.text }]}>Cancel</Text>
+                    <Text style={[styles.cancelText, { color: colors.text }]}>{t('home.mapPicker.cancel')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -417,7 +419,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                         colors={[Colors.primary, '#B31D4A']}
                         style={styles.confirmGradient}
                     >
-                        <Text style={styles.confirmText}>✓ Confirm Location</Text>
+                        <Text style={styles.confirmText}>{t('home.mapPicker.confirmLocation')}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>

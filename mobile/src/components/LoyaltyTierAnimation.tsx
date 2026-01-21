@@ -103,7 +103,7 @@ export const LoyaltyTierAnimation: React.FC<LoyaltyTierAnimationProps> = ({
                 />
                 <Animated.View style={animatedStyle}>
                     <LinearGradient
-                        colors={config.colors}
+                        colors={config.colors as any}
                         style={styles.badge}
                     >
                         <Text style={styles.icon}>{config.icon}</Text>
