@@ -53,7 +53,7 @@ export class BadgeCountService {
         const notificationsResult = await this.pool.query(`
             SELECT COUNT(*) as unread
             FROM notifications
-            WHERE user_id = $1 AND read_at IS NULL
+            WHERE user_id = $1 AND is_read = false
         `, [customerId]);
 
         const requests = requestsResult.rows[0] || { active: 0, with_bids: 0, pending_action: 0 };
