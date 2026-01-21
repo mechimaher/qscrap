@@ -94,25 +94,28 @@ export class TrackingService {
             SELECT 
                 da.assignment_id,
                 da.order_id,
+                da.driver_id,
                 da.assignment_type,
-                da.status,
-                da.pickup_address,
-                da.delivery_address,
-                da.delivery_lat as destination_lat,
-                da.delivery_lng as destination_lng,
+                da.status as assignment_status,
+                da.assigned_at,
+                da.current_lat,
+                da.current_lng,
+                da.last_location_update,
                 o.order_number,
-                d.driver_id,
+                o.status as order_status,
                 d.full_name as driver_name,
-                d.current_lat as driver_lat,
-                d.current_lng as driver_lng,
-                d.last_location_update
-            FROM delivery_assignments da
-            JOIN orders o ON da.order_id = o.order_id
-            JOIN drivers d ON da.driver_id = d.driver_id
-            WHERE da.status IN ('assigned', 'picked_up', 'in_transit')
-            ORDER BY da.created_at DESC
+                d.phone as driver_phone,
+                d.vehicle_type,
+                d.vehicle_plate,
+                c.full_name as customer_name,
+                c.phone as customer_phone
+            FROM driver_assignments da
+            INNER JOIN orders o ON da.order_id = o.order_id
+            LEFT JOIN drivers d ON da.driver_id = d.driver_id
+            LEFT JOIN customers c ON o.customer_id = c.customer_id  
+            WHERE da.status IN ('assigned', 'in_transit', 'arrived')
+            ORDER BY da.assigned_at DESC
         `);
-
         return result.rows;
     }
 
