@@ -271,7 +271,12 @@
                     <div class="notifications-dropdown" id="notificationsDropdown">
                         <div class="notifications-header">
                             <h4>Notifications</h4>
-                            <button onclick="markNotificationRead('all')" class="mark-read-btn">Mark all read</button>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="markAllRead()" class="mark-read-btn" title="Mark all as read">✓
+                                    Read</button>
+                                <button onclick="clearAllNotifications()" class="mark-read-btn" style="color: #ef4444;"
+                                    title="Clear all notifications">🗑️ Clear</button>
+                            </div>
                         </div>
                         <div class="notifications-list" id="notificationsList">
                             <div class="loading-spinner"></div>
