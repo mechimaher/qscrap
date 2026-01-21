@@ -367,6 +367,7 @@ async function showDashboard() {
         playNotificationSound('success');
         showToast(data.notification, 'success');
         loadBids();
+        loadOrders(); // Refresh orders list - new order created
         loadStats();
         loadBadgeCounts(); // Update badges
     });
