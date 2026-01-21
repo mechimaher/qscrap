@@ -4772,6 +4772,41 @@ async function markAllRead() {
 }
 
 /**
+ * Clear all notifications from the list (removes from UI)
+ * Marks them as read in backend first, then clears locally
+ */
+async function clearAllNotifications() {
+    try {
+        // First mark all as read in backend
+        await fetch(`${API_URL}/notifications/mark-read`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notification_ids: ['all'] })
+        });
+
+        // Clear local notifications array completely
+        notifications = [];
+        unreadNotificationCount = 0;
+
+        // Update UI
+        renderNotificationsList();
+        updateNotificationBadge();
+
+        // Hide badge and dot
+        const dot = document.getElementById('notificationDot');
+        if (dot) dot.style.display = 'none';
+
+        showToast('Notifications cleared', 'success');
+    } catch (err) {
+        console.error('Failed to clear notifications:', err);
+        showToast('Failed to clear notifications', 'error');
+    }
+}
+
+/**
  * Add a notification
  */
 function addNotification(title, type = 'info', section = null) {
