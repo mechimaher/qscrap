@@ -35,7 +35,7 @@ router.get('/disputes/:dispute_id', getDisputeDetails);
 router.post('/disputes/:dispute_id/resolve', resolveDispute);
 
 // Return Assignments
-// router.get('/returns', getPendingReturns); // TODO: Implement getPendingReturns
+router.get('/returns', (req, res) => res.json({ returns: [] })); // Stub endpoint - returns empty array
 // router.get('/returns/stats', getReturnStats); // TODO: Implement getReturnStats
 // router.post('/returns/:assignment_id/assign-driver', assignDriverToReturn); // TODO: Implement assignDriverToReturn
 
