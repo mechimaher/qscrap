@@ -16,6 +16,7 @@ import {
     updateDeliveryStatus,
     getDeliveryStats,
     updateDriverLocation,
+    completeWithPOD,
     getActiveDeliveries,
     calculateDeliveryFee,
     getDeliveryZones,
@@ -63,6 +64,9 @@ router.post('/assign/:order_id', assignDriver);
 router.post('/reassign/:assignment_id', reassignDriver);  // Emergency driver reassignment
 router.patch('/assignment/:assignment_id/status', updateDeliveryStatus);
 router.post('/assignment/:assignment_id/location', updateDriverLocation);
+
+// Driver POD - Complete delivery with proof of delivery
+router.post('/complete-with-pod', completeWithPOD);
 
 export default router;
 
