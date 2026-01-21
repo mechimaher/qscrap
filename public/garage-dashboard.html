@@ -12,8 +12,7 @@
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/garage-dashboard.css?v=20260110b">
-    <!-- Leaflet CSS for GPS Location Picker -->
-    <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
+    <!-- Google Maps for GPS Location Picker (Enterprise Grade) -->
     <script>
         // Critical UI Interaction - Inlined for robustness
         window.toggleSidebar = function () {
@@ -1414,8 +1413,16 @@
     </div>
 
     <script src="/lib/socket.io/socket.io.min.js"></script>
-    <!-- Leaflet JS for GPS Location Picker -->
-    <script src="/lib/leaflet/leaflet.js"></script>
+    <!-- Google Maps JavaScript API with Places Library -->
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs&libraries=places&callback=initGoogleMapsCallback"></script>
+    <script>
+        // Global callback for Google Maps async load
+        window.googleMapsReady = false;
+        window.initGoogleMapsCallback = function () {
+            window.googleMapsReady = true;
+        };
+    </script>
     <!-- Shared JS utilities (must come before module JS) -->
     <script src="js/shared/utils.js"></script>
     <script src="js/shared/toast.js"></script>

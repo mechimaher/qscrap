@@ -2193,62 +2193,184 @@ async function saveBusinessDetails(event) {
     }
 }
 
-// ===== GPS LOCATION PICKER =====
+// ===== GOOGLE MAPS LOCATION PICKER (Enterprise Grade) =====
 let locationMap = null;
 let locationMarker = null;
+let placesAutocomplete = null;
+let geocoder = null;
+
+// Qatar Premium Dark Map Style (Matches Mobile App)
+const QATAR_MAP_STYLE = [
+    { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a9a' }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#4a4a5a' }] },
+    { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
+    { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#6a6a7a' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#263238' }] },
+    { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2c3c' }] },
+    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9a9aaa' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#A82050' }] },
+    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#3a3a4a' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4a4a5a' }] }
+];
 
 function initLocationMap(lat, lng) {
     const container = document.getElementById('locationMapContainer');
     if (!container) return;
 
+    // Wait for Google Maps to be ready
+    if (typeof google === 'undefined' || !google.maps) {
+        console.log('Waiting for Google Maps to load...');
+        setTimeout(() => initLocationMap(lat, lng), 200);
+        return;
+    }
+
     // Default to Doha, Qatar if no coordinates
     const defaultLat = lat ? parseFloat(lat) : 25.2854;
     const defaultLng = lng ? parseFloat(lng) : 51.5310;
+    const center = { lat: defaultLat, lng: defaultLng };
 
-    // Destroy existing map if any
-    if (locationMap) {
-        locationMap.remove();
-        locationMap = null;
-    }
+    // Create map with Qatar premium styling
+    locationMap = new google.maps.Map(container, {
+        center: center,
+        zoom: lat && lng ? 16 : 12,
+        styles: QATAR_MAP_STYLE,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        zoomControl: true,
+        zoomControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_CENTER
+        },
+        gestureHandling: 'greedy'
+    });
 
-    // Create map
-    locationMap = L.map('locationMapContainer').setView([defaultLat, defaultLng], lat && lng ? 16 : 12);
-
-    // Add tile layer (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(locationMap);
+    // Initialize Geocoder for reverse geocoding
+    geocoder = new google.maps.Geocoder();
 
     // Add marker if coordinates exist
     if (lat && lng) {
-        locationMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(locationMap);
-        locationMarker.on('dragend', onMarkerDragEnd);
+        createMarker(center);
     }
 
     // Click to place marker
-    locationMap.on('click', (e) => {
-        const { lat, lng } = e.latlng;
+    locationMap.addListener('click', (e) => {
+        const pos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
 
         if (locationMarker) {
-            locationMarker.setLatLng(e.latlng);
+            locationMarker.setPosition(pos);
         } else {
-            locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
-            locationMarker.on('dragend', onMarkerDragEnd);
+            createMarker(pos);
         }
 
-        updateLocationInputs(lat, lng);
+        updateLocationInputs(pos.lat, pos.lng);
+        reverseGeocode(pos);
+    });
+
+    // Initialize Places Autocomplete
+    initPlacesAutocomplete();
+}
+
+function createMarker(position) {
+    // Custom SVG marker icon (Qatar Maroon)
+    const markerIcon = {
+        path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+        fillColor: '#A82050',
+        fillOpacity: 1,
+        strokeColor: '#D4AF37',
+        strokeWeight: 2,
+        scale: 2,
+        anchor: new google.maps.Point(12, 24)
+    };
+
+    locationMarker = new google.maps.Marker({
+        position: position,
+        map: locationMap,
+        draggable: true,
+        icon: markerIcon,
+        animation: google.maps.Animation.DROP,
+        title: 'Drag to adjust location'
+    });
+
+    // Listen for drag end
+    locationMarker.addListener('dragend', () => {
+        const pos = locationMarker.getPosition();
+        updateLocationInputs(pos.lat(), pos.lng());
+        reverseGeocode({ lat: pos.lat(), lng: pos.lng() });
     });
 }
 
-function onMarkerDragEnd(e) {
-    const pos = e.target.getLatLng();
-    updateLocationInputs(pos.lat, pos.lng);
+function initPlacesAutocomplete() {
+    const input = document.getElementById('locationAddressInput');
+    if (!input || !google.maps.places) return;
+
+    // Configure autocomplete for Qatar
+    placesAutocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: 'qa' },
+        fields: ['geometry', 'formatted_address', 'name'],
+        types: ['geocode', 'establishment']
+    });
+
+    // When a place is selected
+    placesAutocomplete.addListener('place_changed', () => {
+        const place = placesAutocomplete.getPlace();
+
+        if (!place.geometry || !place.geometry.location) {
+            showToast('Please select a valid address from the suggestions', 'error');
+            return;
+        }
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const pos = { lat, lng };
+
+        // Update map view
+        locationMap.setCenter(pos);
+        locationMap.setZoom(17);
+
+        // Update or create marker
+        if (locationMarker) {
+            locationMarker.setPosition(pos);
+        } else {
+            createMarker(pos);
+        }
+
+        // Update inputs
+        updateLocationInputs(lat, lng);
+
+        showToast('📍 Location selected! Click Save to confirm.', 'success');
+    });
+}
+
+function reverseGeocode(position) {
+    if (!geocoder) return;
+
+    geocoder.geocode({ location: position }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            const addressInput = document.getElementById('locationAddressInput');
+            if (addressInput) {
+                // Use formatted address but keep it concise
+                const address = results[0].formatted_address
+                    .replace(', Qatar', '')
+                    .replace('Qatar', '')
+                    .trim();
+                addressInput.value = address;
+            }
+        }
+    });
 }
 
 function updateLocationInputs(lat, lng) {
-    document.getElementById('locationLatInput').value = lat.toFixed(8);
-    document.getElementById('locationLngInput').value = lng.toFixed(8);
+    const latInput = document.getElementById('locationLatInput');
+    const lngInput = document.getElementById('locationLngInput');
+    if (latInput) latInput.value = lat.toFixed(8);
+    if (lngInput) lngInput.value = lng.toFixed(8);
 }
 
 function useMyLocation() {
@@ -2257,35 +2379,43 @@ function useMyLocation() {
         return;
     }
 
-    showToast('Getting your location...', 'info');
+    showToast('📍 Getting your location...', 'info');
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
+            const pos = { lat, lng };
 
             // Update inputs
             updateLocationInputs(lat, lng);
 
             // Update map
             if (locationMap) {
-                locationMap.setView([lat, lng], 16);
+                locationMap.setCenter(pos);
+                locationMap.setZoom(17);
 
                 if (locationMarker) {
-                    locationMarker.setLatLng([lat, lng]);
+                    locationMarker.setPosition(pos);
                 } else {
-                    locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
-                    locationMarker.on('dragend', onMarkerDragEnd);
+                    createMarker(pos);
                 }
             }
 
-            showToast('Location detected! Click Save Location to confirm.', 'success');
+            // Reverse geocode to get address
+            reverseGeocode(pos);
+
+            showToast('✓ Location detected! Click Save Location to confirm.', 'success');
         },
         (error) => {
             console.error('Geolocation error:', error);
-            showToast('Could not get your location. Please place marker manually.', 'error');
+            let message = 'Could not get your location.';
+            if (error.code === 1) message = 'Location access denied. Please enable location permissions.';
+            else if (error.code === 2) message = 'Location unavailable. Please place marker manually.';
+            else if (error.code === 3) message = 'Location timeout. Please try again.';
+            showToast(message, 'error');
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 }
 
