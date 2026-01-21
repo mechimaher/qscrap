@@ -94,7 +94,7 @@ export class SupportService {
     async getStats() {
         const [statsResult, paymentDisputeResult, reviewResult] = await Promise.all([
             this.pool.query(`SELECT COUNT(*) FILTER (WHERE status = 'open') as open_tickets, COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_tickets, COUNT(*) FILTER (WHERE status = 'resolved' AND DATE(updated_at) = CURRENT_DATE) as resolved_today FROM support_tickets`),
-            this.pool.query(`SELECT COUNT(*) as payment_disputes FROM garage_payouts WHERE status = 'disputed'`),
+            this.pool.query(`SELECT COUNT(*) as payment_disputes FROM garage_payouts WHERE payout_status = 'disputed'`),
             this.pool.query(`SELECT COUNT(*) as pending_reviews FROM order_reviews WHERE moderation_status = 'pending'`)
         ]);
         const stats = statsResult.rows[0];
