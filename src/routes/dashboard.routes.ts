@@ -116,7 +116,8 @@ router.get('/customer', authenticate, requireRole('customer'), getCustomerStats)
 // Garage Badge Counts - For dashboard notification badges
 router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (req, res) => {
     try {
-        const garageId = (req as any).garage?.garageId;
+        // For garage users, userId IS garageId (they're the same)
+        const garageId = (req as any).user?.userId;
         if (!garageId) return res.status(403).json({ error: 'Garage not found' });
 
         const pool = (await import('../config/db')).default;

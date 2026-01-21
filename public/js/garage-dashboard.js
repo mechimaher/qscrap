@@ -2214,8 +2214,8 @@ function initLocationMap(lat, lng) {
     // Create map
     locationMap = L.map('locationMapContainer').setView([defaultLat, defaultLng], lat && lng ? 16 : 12);
 
-    // Add premium dark tile layer (CartoDB Dark Matter - free)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Add premium light tile layer (CartoDB Voyager - clean, modern, readable)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
         maxZoom: 19
     }).addTo(locationMap);
