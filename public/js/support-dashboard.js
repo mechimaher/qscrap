@@ -192,6 +192,13 @@ function setupSocket() {
         showToast(`New dispute on order #${data.order_number}`, 'error');
         loadBadges();
     });
+
+    socket.on('review_submitted', (data) => {
+        showToast('New review pending moderation!', 'info');
+        loadBadges();
+        if (currentSection === 'overview') loadOverview();
+        if (currentSection === 'reviews') loadReviews();
+    });
 }
 
 // ==========================================
@@ -328,27 +335,53 @@ async function loadTickets(status) {
         });
         const data = await res.json();
 
-        const container = document.getElementById('openTicketList');
+        // Target the correct container based on status
+        const containerMap = {
+            'open': 'openTicketList',
+            'in_progress': 'inProgressTicketList',
+            'resolved': 'resolvedTicketList'
+        };
+        const containerId = containerMap[status] || 'openTicketList';
+        const container = document.getElementById(containerId);
         const tickets = data.tickets || [];
 
         if (tickets.length === 0) {
-            container.innerHTML = '<div class="empty-state" style="padding: 40px;">No tickets</div>';
+            // For table-based views (in_progress, resolved)
+            if (status === 'in_progress' || status === 'resolved') {
+                container.innerHTML = '<tr><td colspan="5" class="empty-state">No tickets</td></tr>';
+            } else {
+                container.innerHTML = '<div class="empty-state" style="padding: 40px;">No tickets</div>';
+            }
             return;
         }
 
-        container.innerHTML = tickets.map(t => `
-            <div class="ticket-item" data-id="${t.ticket_id}" onclick="selectTicket('${t.ticket_id}')" 
-                 style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
-                 onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <strong style="font-size: 14px;">${escapeHTML(t.subject)}</strong>
-                    <span style="font-size: 11px; color: var(--text-muted);">${timeAgo(t.created_at)}</span>
+        // Render as table rows for in_progress and resolved
+        if (status === 'in_progress' || status === 'resolved') {
+            container.innerHTML = tickets.map(t => `
+                <tr style="cursor: pointer;" onclick="selectTicket('${t.ticket_id}')" onmouseover="this.style.backgroundColor='var(--bg-secondary)'" onmouseout="this.style.backgroundColor='transparent'">
+                    <td><strong>${escapeHTML(t.subject)}</strong></td>
+                    <td>${escapeHTML(t.customer_name)}</td>
+                    <td>#${t.order_number || 'N/A'}</td>
+                    <td>${timeAgo(t.updated_at || t.created_at)}</td>
+                    <td><button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); selectTicket('${t.ticket_id}')">View</button></td>
+                </tr>
+            `).join('');
+        } else {
+            // Render as cards for open tickets
+            container.innerHTML = tickets.map(t => `
+                <div class="ticket-item" data-id="${t.ticket_id}" onclick="selectTicket('${t.ticket_id}')" 
+                     style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
+                     onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <strong style="font-size: 14px;">${escapeHTML(t.subject)}</strong>
+                        <span style="font-size: 11px; color: var(--text-muted);">${timeAgo(t.created_at)}</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        ${escapeHTML(t.customer_name)} • Order #${t.order_number || 'N/A'}
+                    </div>
                 </div>
-                <div style="font-size: 12px; color: var(--text-secondary);">
-                    ${escapeHTML(t.customer_name)} • Order #${t.order_number || 'N/A'}
-                </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
     } catch (err) {
         console.error('Failed to load tickets:', err);
     }
