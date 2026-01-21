@@ -346,8 +346,8 @@ export class NegotiationService {
         });
 
         // Emit real-time WebSocket event to garage dashboard
-        const { SocketService } = await import('../socket.service');
-        SocketService.emitToUser(garageId, 'counter_offer_received', {
+        const { emitToUser } = await import('../../utils/socketIO');
+        emitToUser(garageId, 'counter_offer_received', {
             counter_offer_id: counterOfferId,
             bid_id: bidId,
             proposed_amount: proposed,
