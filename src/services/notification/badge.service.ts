@@ -19,11 +19,13 @@ export class BadgeCountService {
         total_badge: number;
     }> {
         // Get request counts
+        // Note: Valid part_requests.status values are: active, accepted, expired, cancelled_by_customer
+        // 'accepted' means bid was accepted and order created - no longer needs customer attention
         const requestsResult = await this.pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE status = 'active') as active,
                 COUNT(*) FILTER (WHERE status = 'active' AND 
-                    (SELECT COUNT(*) FROM bids WHERE bids.request_id = part_requests.request_id) > 0
+                    (SELECT COUNT(*) FROM bids WHERE bids.request_id = part_requests.request_id AND bids.status = 'active') > 0
                 ) as with_bids,
                 COUNT(*) FILTER (WHERE status = 'active' AND 
                     EXISTS (
@@ -34,7 +36,7 @@ export class BadgeCountService {
                     )
                 ) as pending_action
             FROM part_requests
-            WHERE customer_id = $1 AND status IN ('active', 'accepted')
+            WHERE customer_id = $1 AND status = 'active' AND deleted_at IS NULL
         `, [customerId]);
 
         // Get order counts
