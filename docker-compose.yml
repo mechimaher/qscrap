@@ -28,12 +28,9 @@ services:
       - DB_NAME=${DB_NAME:-qscrap_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - OCR_SPACE_API_KEY=${OCR_SPACE_API_KEY:-}
-    volumes:
-      - .:/app:cached
-      - node_modules:/app/node_modules
     depends_on:
       - postgres
-    command: npm run dev
+    command: npm run start
 
 volumes:
   postgres_data:
