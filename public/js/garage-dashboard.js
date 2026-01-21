@@ -1119,8 +1119,6 @@ function renderPendingActions() {
 // Create premium counter-offer card
 function createCounterOfferCard(co) {
     const bidRef = `BID-${String(co.bid_id).padStart(4, '0')}`;
-    const priceDiff = ((co.proposed_amount - co.original_amount) / co.original_amount * 100).toFixed(0);
-    const isLower = co.proposed_amount < co.original_amount;
 
     // Calculate time remaining (24 hours from creation)
     const createdAt = new Date(co.created_at || Date.now());
@@ -1142,7 +1140,7 @@ function createCounterOfferCard(co) {
         : `${Math.floor(hoursRemaining * 60)}m`;
 
     // Calculate price difference based on garage's LAST counter-offer (not original bid)
-    const garageAmount = co.garage_last_offer || co.original_amount; // Use original_amount if garage_last_offer is null
+    const garageAmount = co.garage_last_offer || co.original_amount;
     const priceDiff = (((co.proposed_amount - garageAmount) / garageAmount) * 100).toFixed(0);
     const isLower = co.proposed_amount < garageAmount;
 
