@@ -174,6 +174,166 @@ export class OrderLifecycleService {
     }
 
     /**
+     * Complete order by driver (with POD)
+     * Driver confirms delivery with proof of delivery photo
+     * Auto-completes order and triggers payout immediately
+     */
+    async completeOrderByDriver(orderId: string, driverId: string, podPhotoUrl: string): Promise<void> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Verify driver assignment and order status
+            const result = await client.query(`
+                UPDATE orders 
+                SET order_status = 'completed', 
+                    completed_at = NOW(),
+                    payment_status = 'paid',
+                    pod_photo_url = $3,
+                    completed_by_driver = TRUE,
+                    updated_at = NOW()
+                WHERE order_id = $1 
+                  AND driver_id = $2 
+                  AND order_status = 'delivered'
+                RETURNING garage_id, customer_id, order_number, garage_payout_amount
+            `, [orderId, driverId, podPhotoUrl]);
+
+            if (result.rows.length === 0) {
+                throw new Error('Order not found, not delivered, or driver mismatch');
+            }
+
+            const order = result.rows[0];
+
+            // Log status change
+            await client.query(`
+                INSERT INTO order_status_history 
+                (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                VALUES ($1, 'delivered', 'completed', $2, 'driver', 'Driver confirmed delivery with POD')
+            `, [orderId, driverId]);
+
+            // Create payout record
+            await this.createPayoutForOrder(orderId, client);
+
+            // Release driver
+            await this.releaseDriver(orderId, client);
+
+            await client.query('COMMIT');
+
+            // Notify customer and garage
+            await createNotification({
+                userId: order.customer_id,
+                type: 'order_completed',
+                title: 'Delivery Confirmed ✅',
+                message: `Order #${order.order_number} has been delivered! Driver confirmed with photo proof.`,
+                data: { order_id: orderId, order_number: order.order_number, pod_photo_url: podPhotoUrl },
+                target_role: 'customer'
+            });
+
+            await this.notifyOrderCompleted(order, orderId);
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Auto-complete stale delivered orders (cron job)
+     * Finds orders delivered 48+ hours ago with no disputes
+     * Automatically marks as completed and creates payouts
+     */
+    async autoCompleteStaleOrders(): Promise<{ completed_count: number; order_numbers: string[] }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Find orders eligible for auto-completion
+            const eligibleOrders = await client.query(`
+                SELECT o.order_id, o.order_number, o.garage_id, o.customer_id, o.garage_payout_amount
+                FROM orders o
+                WHERE o.order_status = 'delivered'
+                  AND o.delivered_at < NOW() - INTERVAL '48 hours'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM disputes d 
+                      WHERE d.order_id = o.order_id 
+                      AND d.status = 'open'
+                  )
+                FOR UPDATE
+            `);
+
+            const completedOrders: string[] = [];
+
+            for (const order of eligibleOrders.rows) {
+                // Mark as completed
+                await client.query(`
+                    UPDATE orders 
+                    SET order_status = 'completed',
+                        completed_at = NOW(),
+                        payment_status = 'paid',
+                        auto_completed = TRUE,
+                        updated_at = NOW()
+                    WHERE order_id = $1
+                `, [order.order_id]);
+
+                // Log status change
+                await client.query(`
+                    INSERT INTO order_status_history 
+                    (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                    VALUES ($1, 'delivered', 'completed', 'system', 'system', 'Auto-completed after 48h timeout')
+                `, [order.order_id]);
+
+                // Create payout
+                await this.createPayoutForOrder(order.order_id, client);
+
+                // Release driver
+                await this.releaseDriver(order.order_id, client);
+
+                completedOrders.push(order.order_number);
+
+                // Notify customer
+                await createNotification({
+                    userId: order.customer_id,
+                    type: 'order_completed',
+                    title: 'Order Auto-Completed ✅',
+                    message: `Order #${order.order_number} has been automatically marked as complete.`,
+                    data: { order_id: order.order_id, order_number: order.order_number, auto_completed: true },
+                    target_role: 'customer'
+                });
+
+                // Notify garage
+                await createNotification({
+                    userId: order.garage_id,
+                    type: 'order_completed',
+                    title: 'Order Completed ✅',
+                    message: `Order #${order.order_number} auto-completed. Payment of ${order.garage_payout_amount} QAR will be processed soon.`,
+                    data: { order_id: order.order_id, order_number: order.order_number, payout_amount: order.garage_payout_amount },
+                    target_role: 'garage'
+                });
+            }
+
+            await client.query('COMMIT');
+
+            // Log to console for monitoring
+            console.log(`[AUTO-COMPLETE] Completed ${completedOrders.length} orders: ${completedOrders.join(', ')}`);
+
+            return {
+                completed_count: completedOrders.length,
+                order_numbers: completedOrders
+            };
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            console.error('[AUTO-COMPLETE] Error:', err);
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+
+    /**
      * Create payout record for garage (7-day schedule)
      */
     private async createPayoutForOrder(orderId: string, client: PoolClient): Promise<void> {

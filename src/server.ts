@@ -9,6 +9,7 @@ import { initializeJobQueues, closeJobQueues, createJobWorker, scheduleRecurring
 import { performStartupSecurityChecks } from './config/security';
 import { initializeSocketIO } from './utils/socketIO';
 import logger from './utils/logger';
+import { startAutoCompleteJob } from './jobs/auto-complete-orders';
 
 const PORT = process.env.PORT || 3000;
 const NODE_ID = process.env.NODE_ID || `node-${process.pid}`;
@@ -248,6 +249,10 @@ server.listen(PORT, async () => {
     console.log('');
     console.log('═══════════════════════════════════════════════════');
     console.log('');
+
+    // Start auto-complete cron job
+    startAutoCompleteJob();
+    console.log('✅ Auto-complete job scheduled (daily 2:00 AM)');
 
     // Run initial job sweep (after 10 second delay)
     setTimeout(async () => {

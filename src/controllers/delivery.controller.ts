@@ -386,6 +386,37 @@ export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
     }
 };
 
+/**
+ * Complete delivery with Proof of Delivery (POD)
+ * Driver uploads photo and confirms delivery
+ */
+export const completeWithPOD = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id, pod_photo_url } = req.body;
+        const driverId = req.user!.userId;
+
+        if (!order_id || !pod_photo_url) {
+            return res.status(400).json({ error: 'Order ID and POD photo URL are required' });
+        }
+
+        const { OrderLifecycleService } = await import('../services/order/lifecycle.service');
+        const { getWritePool } = await import('../config/db');
+        const lifecycleService = new OrderLifecycleService(getWritePool());
+
+        await lifecycleService.completeOrderByDriver(order_id, driverId, pod_photo_url);
+
+        res.json({
+            success: true,
+            message: 'Order completed successfully with POD',
+            order_id,
+            pod_photo_url
+        });
+    } catch (err) {
+        console.error('completeWithPOD Error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
 export const getActiveDeliveries = async (req: AuthRequest, res: Response) => {
     try {
         const deliveries = await trackingService.getActiveDeliveries();
