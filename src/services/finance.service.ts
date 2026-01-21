@@ -312,7 +312,7 @@ export class FinanceService {
                 COALESCE(SUM(platform_fee), 0) as platform_fees,
                 COALESCE(SUM(delivery_fee), 0) as delivery_fees
             FROM orders
-            WHERE order_status = 'completed'
+            WHERE order_status IN ('delivered', 'completed')
             AND created_at >= NOW() - INTERVAL '${days} days'
         `);
 
