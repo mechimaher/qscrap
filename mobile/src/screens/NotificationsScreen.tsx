@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useBadgeCounts } from '../hooks/useBadgeCounts';
 
 interface Notification {
     notification_id: string;
@@ -34,6 +35,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function NotificationsScreen() {
     const navigation = useNavigation<NavigationProp>();
     const { colors } = useTheme();
+    const { refresh: refreshBadges } = useBadgeCounts();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -92,6 +94,8 @@ export default function NotificationsScreen() {
         try {
             await api.markAllNotificationsRead();
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            // Refresh badge counts to update Profile tab badge
+            refreshBadges();
         } catch (error) {
             console.log('Failed to mark all as read:', error);
         }
@@ -111,6 +115,8 @@ export default function NotificationsScreen() {
                         try {
                             await api.clearAllNotifications();
                             setNotifications([]);
+                            // Refresh badge counts to update Profile tab badge
+                            refreshBadges();
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         } catch (error) {
                             console.log('Failed to clear notifications:', error);
