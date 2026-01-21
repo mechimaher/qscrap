@@ -126,9 +126,9 @@ router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (r
 
         const counts = await badgeService.getGarageBadgeCounts(garageId);
         res.json({ success: true, ...counts });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[Dashboard] Garage badge counts error:', err);
-        res.status(500).json({ error: `Failed to get badge counts: ${err.message}` });
+        res.status(500).json({ error: 'Failed to get badge counts' });
     }
 });
 
