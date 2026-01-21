@@ -655,10 +655,14 @@ async function loadRevenue() {
         });
         const data = await res.json();
 
-        document.getElementById('revTotalOrders').textContent = data.total_orders || 0;
-        document.getElementById('revTotalRevenue').textContent = formatCurrency(data.total_revenue);
-        document.getElementById('revPlatformFees').textContent = formatCurrency(data.platform_fees);
-        document.getElementById('revNetRevenue').textContent = formatCurrency(data.net_revenue);
+        // Access nested metrics object
+        const metrics = data.metrics || {};
+        document.getElementById('revTotalOrders').textContent = metrics.orders_completed || 0;
+        document.getElementById('revTotalRevenue').textContent = formatCurrency(metrics.total_revenue);
+        document.getElementById('revPlatformFees').textContent = formatCurrency(metrics.platform_fees);
+        // Net revenue = total_revenue - platform_fees (since total_revenue includes both platform + delivery fees)
+        const netRevenue = (metrics.total_revenue || 0) - (metrics.platform_fees || 0);
+        document.getElementById('revNetRevenue').textContent = formatCurrency(netRevenue);
     } catch (err) {
         console.error('Failed to load revenue:', err);
     }
