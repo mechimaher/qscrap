@@ -341,6 +341,7 @@ async function showDashboard() {
         playNotificationSound('warning');
         showToast(data.message || 'Your bid was not selected', 'warning');
         loadBids();
+        loadBadgeCounts(); // Update badges
     });
 
     socket.on('request_cancelled', (data) => {
@@ -359,6 +360,7 @@ async function showDashboard() {
         showToast(data.notification || 'New counter-offer received!', 'info');
         loadPendingCounterOffers(); // Auto-fetch and open modal
         loadBids(); // Update list
+        loadBadgeCounts(); // Update pending actions badge
     });
 
     socket.on('counter_offer_accepted', (data) => {
@@ -366,16 +368,19 @@ async function showDashboard() {
         showToast(data.notification, 'success');
         loadBids();
         loadStats();
+        loadBadgeCounts(); // Update badges
     });
 
     socket.on('counter_offer_rejected', (data) => {
         playNotificationSound('warning');
         showToast(data.notification, 'warning');
         loadBids();
+        loadBadgeCounts(); // Update badges
     });
 
     // Request expired notification
     socket.on('request_expired', (data) => {
+        playNotificationSound('warning'); // Add warning sound
         showToast(data.notification, 'warning');
         // Remove expired request from local list
         requests = requests.filter(r => r.request_id !== data.request_id);
@@ -386,8 +391,10 @@ async function showDashboard() {
 
     // Counter offer expired notification
     socket.on('counter_offer_expired', (data) => {
+        playNotificationSound('warning'); // Add warning sound
         showToast(data.notification, 'warning');
         loadBids();
+        loadBadgeCounts(); // Update badges
     });
 
     socket.on('order_cancelled', (data) => {
@@ -395,6 +402,7 @@ async function showDashboard() {
         showToast('Order has been cancelled', 'warning');
         loadOrders();
         loadStats();
+        loadBadgeCounts(); // Update orders badge
     });
 
     // Order completed - Customer confirmed delivery
@@ -403,15 +411,18 @@ async function showDashboard() {
         showToast(data.notification, 'success');
         loadOrders();
         loadStats();
+        loadBadgeCounts(); // Update orders badge
     });
 
     // Order status updates (from driver, operations, etc.)
     socket.on('order_status_updated', (data) => {
         if (data.new_status === 'delivered') {
+            playNotificationSound('info'); // Add sound for important status
             showToast(`📦 Order #${data.order_number} has been delivered to customer!`, 'success');
         }
         loadOrders();
         loadStats();
+        loadBadgeCounts(); // Update badges
     });
 
     // Dispute handlers - Professional queue approach (no modal spam)
@@ -447,6 +458,7 @@ async function showDashboard() {
     });
 
     socket.on('payment_confirmed', (data) => {
+        playNotificationSound('success'); // Add success sound
         showToast(data.notification || 'Payment confirmed successfully!', 'success');
         updateEarningsBadge();
         const activeSection = document.querySelector('.section.active');
@@ -467,6 +479,7 @@ async function showDashboard() {
     });
 
     socket.on('payout_released', (data) => {
+        playNotificationSound('info'); // Add info sound
         showToast(data.notification || 'Payout released!', 'info');
     });
 
@@ -5289,35 +5302,9 @@ window.addEventListener('online', () => updateConnectionStatus(true));
 window.addEventListener('offline', () => updateConnectionStatus(false));
 
 // ============================================
-// PREMIUM UPGRADE - Socket Notifications
+// END OF SOCKET EVENT HANDLERS
 // ============================================
 
-// Add notification when bid is accepted
-if (typeof socket !== 'undefined' && socket) {
-    socket.on('bid_accepted', (data) => {
-        addNotification(`Bid accepted for ${data.part_description || 'order'}!`, 'success', 'orders');
-    });
-
-    socket.on('bid_rejected', (data) => {
-        addNotification(`Bid rejected for ${data.part_description || 'request'}`, 'warning', 'bids');
-    });
-
-    socket.on('counter_offer', (data) => {
-        addNotification(`New counter-offer: ${data.counter_amount} QAR`, 'info', 'bids');
-    });
-
-    socket.on('dispute_created', (data) => {
-        addNotification(`New dispute for Order #${data.order_number}`, 'danger', 'orders');
-    });
-
-    socket.on('order_status_changed', (data) => {
-        addNotification(`Order #${data.order_number} status: ${data.status}`, 'info', 'orders');
-    });
-
-    socket.on('payout_completed', (data) => {
-        addNotification(`Payout received: ${data.amount} QAR`, 'success', 'earnings');
-    });
-}
 
 // ===== NEGOTIATION HISTORY =====
 async function viewNegotiationHistory(bidId) {
