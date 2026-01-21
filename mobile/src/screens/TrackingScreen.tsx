@@ -200,7 +200,9 @@ export default function TrackingScreen() {
             });
 
             socket.current.on('order_status_update', (data: any) => {
+                console.log('[TrackingScreen] Socket order_status_update:', data);
                 if (data.order_id === orderId) {
+                    console.log('[TrackingScreen] Updating order status to:', data.status);
                     // Update order status
                     setOrderDetails(prev => prev ? { ...prev, order_status: data.status } : null);
 
@@ -277,6 +279,7 @@ export default function TrackingScreen() {
                 }
 
                 // Set order details for display
+                console.log('[TrackingScreen] Loading order details, status:', order.order_status);
                 setOrderDetails({
                     garage_name: order.garage_name || 'Unknown Garage',
                     part_description: order.part_description || order.part_name || 'Part',
