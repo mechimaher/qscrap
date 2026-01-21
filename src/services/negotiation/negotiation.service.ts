@@ -335,6 +335,7 @@ export class NegotiationService {
     }
 
     private async notifyCounterOffer(garageId: string, bidId: string, counterOfferId: string, proposed: number, original: number, round: number): Promise<void> {
+        // Create database notification
         await createNotification({
             userId: garageId,
             type: 'counter_offer_received',
@@ -342,6 +343,17 @@ export class NegotiationService {
             message: `Customer counter-offered ${proposed} QAR (was ${original} QAR)`,
             data: { counter_offer_id: counterOfferId, bid_id: bidId, proposed_amount: proposed, round },
             target_role: 'garage'
+        });
+
+        // Emit real-time WebSocket event to garage dashboard
+        const { SocketService } = await import('../socket.service');
+        SocketService.emitToUser(garageId, 'counter_offer_received', {
+            counter_offer_id: counterOfferId,
+            bid_id: bidId,
+            proposed_amount: proposed,
+            original_amount: original,
+            round,
+            notification: `Customer counter-offered ${proposed} QAR (was ${original} QAR)`
         });
     }
 }
