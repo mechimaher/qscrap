@@ -3,7 +3,7 @@
  * Runs daily at 2:00 AM to auto-complete orders delivered 48+ hours ago
  */
 
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { getWritePool } from '../config/db';
 import { OrderLifecycleService } from '../services/order/lifecycle.service';
 import logger from '../utils/logger';
