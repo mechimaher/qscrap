@@ -51,7 +51,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
             {badges.map((badge, index) => (
                 <LinearGradient
                     key={index}
-                    colors={badge.gradient}
+                    colors={badge.gradient as any}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.badge}

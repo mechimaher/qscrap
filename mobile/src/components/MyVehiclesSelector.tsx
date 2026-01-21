@@ -14,6 +14,7 @@ import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '../contexts/LanguageContext';
 
 // Define SavedVehicle interface locally (matches backend response)
 export interface SavedVehicle {
@@ -39,6 +40,7 @@ interface Props {
 
 export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }: Props) {
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const navigation = useNavigation<any>();
     const [vehicles, setVehicles] = useState<SavedVehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -95,18 +97,18 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
             <TouchableOpacity
-                style={styles.header}
+                style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 onPress={() => {
                     Haptics.selectionAsync();
                     setIsExpanded(!isExpanded);
                 }}
             >
-                <View style={styles.headerLeft}>
-                    <Text style={styles.headerIcon}>🚗</Text>
+                <View style={[styles.headerLeft, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <Text style={[styles.headerIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]}>🚗</Text>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        My Vehicles
+                        {t('home.myVehicles')}
                     </Text>
-                    <View style={[styles.countBadge, { backgroundColor: Colors.primary }]}>
+                    <View style={[styles.countBadge, { backgroundColor: Colors.primary, marginLeft: isRTL ? 0 : Spacing.sm, marginRight: isRTL ? Spacing.sm : 0 }]}>
                         <Text style={styles.countText}>{vehicles.length}</Text>
                     </View>
                 </View>
@@ -133,7 +135,9 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                     styles.vehicleCard,
                                     {
                                         backgroundColor: isSelected ? Colors.primary + '15' : colors.background,
-                                        borderColor: isSelected ? Colors.primary : colors.border
+                                        borderColor: isSelected ? Colors.primary : colors.border,
+                                        marginRight: isRTL ? 0 : Spacing.sm,
+                                        marginLeft: isRTL ? Spacing.sm : 0
                                     }
                                 ]}
                                 onPress={() => handleSelect(vehicle)}
@@ -155,18 +159,17 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                 </Text>
                                 {vehicle.vin_number ? (
                                     <View style={styles.vinBadge}>
-                                        <Text style={styles.vinBadgeText}>🔑 VIN ✓</Text>
+                                        <Text style={styles.vinBadgeText}>{t('common.vinVerifiedShort')}</Text>
                                     </View>
                                 ) : vehicle.request_count > 0 && (
                                     <Text style={[styles.vehicleRequests, { color: colors.textSecondary }]}>
-                                        {vehicle.request_count} request{vehicle.request_count > 1 ? 's' : ''}
+                                        {t('common.requestsCount', { count: vehicle.request_count })}
                                     </Text>
                                 )}
                             </TouchableOpacity>
                         );
                     })}
 
-                    {/* Add New Vehicle - Tappable */}
                     <TouchableOpacity
                         style={[styles.addHint, { borderColor: Colors.primary }]}
                         onPress={() => {
@@ -176,7 +179,7 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                     >
                         <Text style={styles.addHintIcon}>➕</Text>
                         <Text style={[styles.addHintText, { color: Colors.primary }]}>
-                            Add Vehicle
+                            {t('common.addVehicle')}
                         </Text>
                     </TouchableOpacity>
                 </ScrollView>

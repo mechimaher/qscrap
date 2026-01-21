@@ -1,4 +1,4 @@
-// QScrap Login Screen - Premium VIP Design
+// QScrap Login Screen - Premium VIP Design with Full i18n Support
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
@@ -19,8 +19,10 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth, useTheme } from '../../contexts';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
+import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 const { width } = Dimensions.get('window');
@@ -29,6 +31,7 @@ export default function LoginScreen() {
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const { login } = useAuth();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -76,7 +79,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!phone || !password) {
-            setError('Please enter phone number and password');
+            setError(t('auth.enterPhonePassword'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -89,7 +92,7 @@ export default function LoginScreen() {
         setIsLoading(false);
 
         if (!result.success) {
-            setError(result.error || 'Login failed');
+            setError(result.error || t('auth.loginFailed'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -134,13 +137,13 @@ export default function LoginScreen() {
                                 resizeMode="cover"
                             />
                         </Animated.View>
-                        <Text style={styles.logoText}>QScrap</Text>
-                        <View style={styles.taglineContainer}>
+                        <Text style={styles.logoText}>{t('common.appName')}</Text>
+                        <View style={[styles.taglineContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View style={styles.goldLine} />
-                            <Text style={styles.tagline}>Qatar's Premier Auto Parts</Text>
+                            <Text style={styles.tagline}>{t('auth.tagline')}</Text>
                             <View style={styles.goldLine} />
                         </View>
-                        <Text style={styles.taglineSubtext}>Used • Commercial • Genuine OEM</Text>
+                        <Text style={styles.taglineSubtext}>{t('auth.taglineSubtext')}</Text>
                     </Animated.View>
 
                     {/* Form Card with Gold Accent */}
@@ -152,25 +155,35 @@ export default function LoginScreen() {
                             end={{ x: 1, y: 0 }}
                             style={styles.goldTopAccent}
                         />
-                        <Text style={[styles.welcomeText, { color: colors.text }]}>Welcome Back</Text>
-                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>Sign in to continue</Text>
+                        <Text style={[styles.welcomeText, { color: colors.text }]}>{t('auth.welcomeBack')}</Text>
+                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>{t('auth.signInContinue')}</Text>
 
                         {error ? (
-                            <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
-                                <Text style={styles.errorIcon}>⚠️</Text>
-                                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+                            <View style={[
+                                styles.errorContainer,
+                                {
+                                    backgroundColor: colors.error + '15',
+                                    borderColor: colors.error,
+                                    flexDirection: rtlFlexDirection(isRTL)
+                                }
+                            ]}>
+                                <Text style={[styles.errorIcon, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}>⚠️</Text>
+                                <Text style={[styles.errorText, { color: colors.error, textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📱 Phone Number</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                📱 {t('auth.phone')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, {
                                     backgroundColor: colors.surfaceSecondary,
                                     color: colors.text,
-                                    borderColor: colors.border
+                                    borderColor: colors.border,
+                                    textAlign: rtlTextAlign(isRTL)
                                 }]}
-                                placeholder="+974 XXXX XXXX"
+                                placeholder={t('auth.phonePlaceholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={phone}
                                 onChangeText={setPhone}
@@ -180,14 +193,17 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🔒 Password</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                🔒 {t('auth.password')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, {
                                     backgroundColor: colors.surfaceSecondary,
                                     color: colors.text,
-                                    borderColor: colors.border
+                                    borderColor: colors.border,
+                                    textAlign: rtlTextAlign(isRTL)
                                 }]}
-                                placeholder="Enter your password"
+                                placeholder={t('auth.passwordPlaceholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={password}
                                 onChangeText={setPassword}
@@ -195,8 +211,8 @@ export default function LoginScreen() {
                             />
                         </View>
 
-                        <TouchableOpacity style={styles.forgotPassword}>
-                            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
+                        <TouchableOpacity style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]}>
+                            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>{t('auth.forgotPassword')}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -214,26 +230,28 @@ export default function LoginScreen() {
                                 {isLoading ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.loginButtonText}>Sign In</Text>
+                                    <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
 
                     {/* Register Section */}
-                    <View style={styles.registerSection}>
-                        <Text style={styles.registerText}>Don't have an account?</Text>
+                    <View style={[styles.registerSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={styles.registerText}>{t('auth.noAccount')}</Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                            <Text style={styles.registerLink}>Create Account</Text>
+                            <Text style={[styles.registerLink, isRTL ? { marginRight: Spacing.xs, marginLeft: 0 } : {}]}>
+                                {t('auth.createAccount')}
+                            </Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Footer */}
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>
-                            By signing in, you agree to our{' '}
-                            <Text style={styles.footerLink}>Terms</Text> &{' '}
-                            <Text style={styles.footerLink}>Privacy Policy</Text>
+                            {t('auth.agreeTerms')}{' '}
+                            <Text style={styles.footerLink}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
+                            <Text style={styles.footerLink}>{t('auth.privacyPolicy')}</Text>
                         </Text>
                     </View>
                 </ScrollView>

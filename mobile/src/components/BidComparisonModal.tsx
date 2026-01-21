@@ -41,7 +41,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
     const sortedBids = [...bids].sort((a, b) => {
         switch (sortBy) {
             case 'price':
-                return a.bid_amount - b.bid_amount;
+                return Number(a.bid_amount) - Number(b.bid_amount);
             case 'rating':
                 return (b.rating_average || 0) - (a.rating_average || 0);
             case 'warranty':
@@ -51,7 +51,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
         }
     });
 
-    const lowestPrice = Math.min(...bids.map(b => b.bid_amount));
+    const lowestPrice = Math.min(...bids.map(b => Number(b.bid_amount)));
     const highestRating = Math.max(...bids.map(b => b.rating_average || 0));
     const longestWarranty = Math.max(...bids.map(b => b.warranty_days || 0));
 
@@ -71,7 +71,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                 <View style={styles.modalContainer}>
                     {/* Header */}
                     <LinearGradient
-                        colors={['#8D1B3D', '#C9A227']}
+                        colors={['#8D1B3D', '#C9A227'] as any}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={styles.header}
@@ -177,7 +177,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                         style={styles.acceptButton}
                                     >
                                         <LinearGradient
-                                            colors={['#22C55E', '#16A34A']}
+                                            colors={['#22C55E', '#16A34A'] as any}
                                             style={styles.acceptGradient}
                                         >
                                             <Text style={styles.acceptText}>Accept</Text>

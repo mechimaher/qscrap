@@ -31,6 +31,7 @@ export const ar = {
         bids: 'عروض',
         noBids: 'لا توجد عروض بعد',
         expires: 'ينتهي في',
+        total: 'إجمالي',
     },
 
     // Orders Screen

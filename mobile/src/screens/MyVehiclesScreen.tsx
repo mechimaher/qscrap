@@ -26,7 +26,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { getAllMakes, getModelsForMake, YEARS } from '../constants/carData';
-import VINCapture from '../components/VINCapture';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 interface Vehicle {
     vehicle_id: string;
@@ -46,6 +47,7 @@ const CAR_MAKES = getAllMakes();
 export default function MyVehiclesScreen() {
     const navigation = useNavigation<any>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -57,7 +59,6 @@ export default function MyVehiclesScreen() {
     const [newYear, setNewYear] = useState('');
     const [newNickname, setNewNickname] = useState('');
     const [newVIN, setNewVIN] = useState('');
-    const [vinImageUri, setVinImageUri] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
 
     // Premium cascading selectors
@@ -93,32 +94,31 @@ export default function MyVehiclesScreen() {
         setNewYear(new Date().getFullYear().toString());
         setNewNickname('');
         setNewVIN('');
-        setVinImageUri(null);
         setShowAddModal(true);
     };
 
     const handleSaveVehicle = async () => {
         if (!newMake.trim() || !newModel.trim() || !newYear.trim()) {
-            Alert.alert('Missing Info', 'Please enter Make, Model, and Year');
+            Alert.alert(t('common.missingInfo'), t('vehicles.fillMakeModelYear'));
             return;
         }
 
         const year = parseInt(newYear);
         if (year < 1990 || year > new Date().getFullYear() + 1) {
-            Alert.alert('Invalid Year', 'Please enter a valid year (1990-present)');
+            Alert.alert(t('common.invalidYear'), t('vehicles.validYearRange'));
             return;
         }
 
         // VIN is now REQUIRED
         const trimmedVIN = newVIN.trim().toUpperCase();
         if (!trimmedVIN || trimmedVIN.length !== 17) {
-            Alert.alert('VIN Required', 'Please enter a valid 17-character VIN from your Istimara (Registration Card)');
+            Alert.alert(t('vehicles.vinRequired'), t('vehicles.vinLengthError'));
             return;
         }
         // VIN format validation (no I, O, Q per ISO 3779)
         const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
         if (!vinRegex.test(trimmedVIN)) {
-            Alert.alert('Invalid VIN', 'VIN can only contain letters (except I, O, Q) and numbers');
+            Alert.alert(t('vehicles.vinInvalid'), t('vehicles.vinFormatError'));
             return;
         }
 
@@ -136,7 +136,7 @@ export default function MyVehiclesScreen() {
             loadVehicles();
         } catch (error) {
             console.log('[MyVehicles] Add error:', error);
-            Alert.alert('Error', 'Could not add vehicle. Please try again.');
+            Alert.alert(t('common.error'), t('profile.addVehicleFailed'));
         } finally {
             setIsAdding(false);
         }
@@ -144,12 +144,12 @@ export default function MyVehiclesScreen() {
 
     const handleDeleteVehicle = (vehicle: Vehicle) => {
         Alert.alert(
-            'Remove Vehicle',
-            `Remove ${vehicle.car_make} ${vehicle.car_model} from your saved vehicles?`,
+            t('vehicles.removeVehicle'),
+            t('vehicles.confirmRemoveVehicle', { make: vehicle.car_make, model: vehicle.car_model }),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Remove',
+                    text: t('common.remove'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
@@ -159,11 +159,11 @@ export default function MyVehiclesScreen() {
                         } catch (error: any) {
                             console.log('[MyVehicles] Delete error:', error);
                             // Show user-friendly error message
-                            const errorMessage = error?.response?.data?.error || error?.message || 'Failed to delete vehicle';
+                            const errorMessage = error?.response?.data?.error || error?.message || t('vehicles.deleteVehicleFailed');
                             Alert.alert(
-                                'Cannot Delete Vehicle',
+                                t('common.error'),
                                 errorMessage,
-                                [{ text: 'OK' }]
+                                [{ text: t('common.ok') }]
                             );
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                         }
@@ -184,7 +184,6 @@ export default function MyVehiclesScreen() {
         setNewYear(vehicle.car_year.toString());
         setNewNickname(vehicle.nickname || '');
         setNewVIN(vehicle.vin_number || '');
-        setVinImageUri(null); // Reset image for fresh capture
         setShowAddModal(true);
     };
 
@@ -194,12 +193,12 @@ export default function MyVehiclesScreen() {
         // VIN validation for edit too
         const trimmedVIN = newVIN.trim().toUpperCase();
         if (trimmedVIN && trimmedVIN.length !== 17) {
-            Alert.alert('Invalid VIN', 'VIN must be exactly 17 characters');
+            Alert.alert(t('vehicles.vinInvalid'), t('vehicles.vinLengthError'));
             return;
         }
         const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
         if (trimmedVIN && !vinRegex.test(trimmedVIN)) {
-            Alert.alert('Invalid VIN', 'VIN can only contain letters (except I, O, Q) and numbers');
+            Alert.alert(t('vehicles.vinInvalid'), t('vehicles.vinFormatError'));
             return;
         }
 
@@ -239,13 +238,13 @@ export default function MyVehiclesScreen() {
                     onPress={() => handleEditVehicle(item)}
                     activeOpacity={0.8}
                 >
-                    <View style={styles.cardLeft}>
-                        <View style={[styles.iconBg, item.is_primary && styles.iconBgPrimary]}>
+                    <View style={[styles.cardLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <View style={[styles.iconBg, item.is_primary && styles.iconBgPrimary, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }]}>
                             <Text style={styles.carEmoji}>🚗</Text>
                         </View>
-                        <View style={styles.cardInfo}>
-                            <View style={styles.nameRow}>
-                                <Text style={[styles.vehicleName, { color: colors.text }]}>
+                        <View style={[styles.cardInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+                            <View style={[styles.nameRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <Text style={[styles.vehicleName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                                     {item.car_make} {item.car_model}
                                 </Text>
                                 {item.is_primary && (
@@ -254,12 +253,12 @@ export default function MyVehiclesScreen() {
                                     </View>
                                 )}
                             </View>
-                            <Text style={[styles.vehicleYear, { color: colors.textSecondary }]}>
+                            <Text style={[styles.vehicleYear, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {item.car_year}{item.nickname ? ` • ${item.nickname}` : ''}
                             </Text>
                             {item.request_count && item.request_count > 0 && (
-                                <Text style={[styles.statsText, { color: Colors.primary }]}>
-                                    {item.request_count} request{item.request_count > 1 ? 's' : ''}
+                                <Text style={[styles.statsText, { color: Colors.primary, textAlign: rtlTextAlign(isRTL) }]}>
+                                    {item.request_count} {t('common.requestsCount_plural', { count: item.request_count })}
                                 </Text>
                             )}
                         </View>
@@ -288,17 +287,17 @@ export default function MyVehiclesScreen() {
             <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>🚗</Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Saved Vehicles</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('vehicles.noVehicles')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Add your vehicles for faster part requests
+                {t('vehicles.noVehiclesMsg')}
             </Text>
             <TouchableOpacity onPress={handleAddVehicle} style={styles.addButton}>
                 <LinearGradient
                     colors={[Colors.primary, '#6b1029']}
-                    style={styles.addGradient}
+                    style={[styles.addGradient]}
                 >
                     <Ionicons name="add" size={20} color="#fff" />
-                    <Text style={styles.addButtonText}>Add Vehicle</Text>
+                    <Text style={styles.addButtonText}>{t('vehicles.addNew')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
         </View>
@@ -306,12 +305,12 @@ export default function MyVehiclesScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            {/* Header - RTL aware */}
+            <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>My Vehicles</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('vehicles.title')}</Text>
                 <TouchableOpacity onPress={handleAddVehicle} style={styles.addIconBtn}>
                     <Ionicons name="add-circle" size={28} color={Colors.primary} />
                 </TouchableOpacity>
@@ -319,9 +318,9 @@ export default function MyVehiclesScreen() {
 
             {/* Vehicle Count */}
             {vehicles.length > 0 && (
-                <View style={styles.countBar}>
-                    <Text style={[styles.countText, { color: colors.textSecondary }]}>
-                        {vehicles.length} vehicle{vehicles.length > 1 ? 's' : ''} saved
+                <View style={[styles.countBar, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={[styles.countText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {vehicles.length} {t('vehicles.vehiclesSaved')}
                     </Text>
                 </View>
             )}
@@ -362,9 +361,9 @@ export default function MyVehiclesScreen() {
                     style={styles.modalOverlay}
                 >
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                        <View style={styles.modalHeader}>
+                        <View style={[styles.modalHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>
-                                {editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}
+                                {editingVehicle ? t('vehicles.edit') : t('vehicles.addNew')}
                             </Text>
                             <TouchableOpacity onPress={() => { setShowAddModal(false); setEditingVehicle(null); }}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
@@ -377,73 +376,92 @@ export default function MyVehiclesScreen() {
                             contentContainerStyle={{ paddingBottom: 20 }}
                         >
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>🚗 Make {editingVehicle ? '' : '*'}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>🚗 {t('profile.carMake')} {editingVehicle ? '' : '*'}</Text>
                             {editingVehicle ? (
                                 <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                    <Text style={[styles.inputText, { color: colors.text }]}>{newMake}</Text>
+                                    <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newMake}</Text>
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newMake ? Colors.primary : colors.border }]}
+                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newMake ? Colors.primary : colors.border, flexDirection: rtlFlexDirection(isRTL) }]}
                                     onPress={() => setShowMakePicker(true)}
                                 >
-                                    <Text style={[styles.selectorText, { color: newMake ? colors.text : colors.textMuted }]}>
-                                        {newMake || 'Select car make...'}
+                                    <Text style={[styles.selectorText, { color: newMake ? colors.text : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {newMake || t('profile.selectMake')}
                                     </Text>
                                     <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                                 </TouchableOpacity>
                             )}
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📋 Model {editingVehicle ? '' : '*'}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>📋 {t('profile.carModel')} {editingVehicle ? '' : '*'}</Text>
                             {editingVehicle ? (
                                 <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                    <Text style={[styles.inputText, { color: colors.text }]}>{newModel}</Text>
+                                    <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newModel}</Text>
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newModel ? Colors.primary : colors.border, opacity: newMake ? 1 : 0.5 }]}
+                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newModel ? Colors.primary : colors.border, opacity: newMake ? 1 : 0.5, flexDirection: rtlFlexDirection(isRTL) }]}
                                     onPress={() => newMake && setShowModelPicker(true)}
                                     disabled={!newMake}
                                 >
-                                    <Text style={[styles.selectorText, { color: newModel ? colors.text : colors.textMuted }]}>
-                                        {newModel || (newMake ? 'Select model...' : 'Select make first')}
+                                    <Text style={[styles.selectorText, { color: newModel ? colors.text : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {newModel || (newMake ? t('profile.selectModel') : t('profile.selectMakeFirst'))}
                                     </Text>
                                     <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                                 </TouchableOpacity>
                             )}
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>📅 Year {editingVehicle ? '' : '*'}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>📅 {t('profile.carYear')} {editingVehicle ? '' : '*'}</Text>
                             {editingVehicle ? (
                                 <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                    <Text style={[styles.inputText, { color: colors.text }]}>{newYear}</Text>
+                                    <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newYear}</Text>
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newYear ? Colors.primary : colors.border }]}
+                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newYear ? Colors.primary : colors.border, flexDirection: rtlFlexDirection(isRTL) }]}
                                     onPress={() => setShowYearPicker(true)}
                                 >
-                                    <Text style={[styles.selectorText, { color: newYear ? colors.text : colors.textMuted }]}>
-                                        {newYear || 'Select year (1980-2027)'}
+                                    <Text style={[styles.selectorText, { color: newYear ? colors.text : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {newYear || t('profile.selectYear')}
                                     </Text>
                                     <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                                 </TouchableOpacity>
                             )}
 
-                            {/* VIN Capture - REQUIRED with Photo Support */}
-                            <VINCapture
-                                value={newVIN}
-                                imageUri={vinImageUri || undefined}
-                                onVINChange={setNewVIN}
-                                onImageChange={setVinImageUri}
-                                disabled={isAdding}
-                            />
+                            {/* VIN Entry - Manual or Scan */}
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>🔑 {t('vehicles.vinTitle')} *</Text>
+                            <View style={{ gap: Spacing.sm }}>
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        {
+                                            backgroundColor: colors.background,
+                                            color: colors.text,
+                                            borderColor: newVIN.length === 17 ? Colors.primary : colors.border,
+                                            fontFamily: 'monospace',
+                                            letterSpacing: 1,
+                                            textAlign: rtlTextAlign(isRTL)
+                                        }
+                                    ]}
+                                    value={newVIN}
+                                    onChangeText={(text) => setNewVIN(text.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17))}
+                                    placeholder="WVWZZZ3CZWE123456"
+                                    placeholderTextColor={colors.textMuted}
+                                    maxLength={17}
+                                    autoCapitalize="characters"
+                                    editable={!editingVehicle && !isAdding}
+                                />
+                                <Text style={[styles.inputLabel, { color: colors.textSecondary, fontSize: 11, textAlign: rtlTextAlign(isRTL) }]}>
+                                    💡 {t('vehicles.vinHelp')}
+                                </Text>
+                            </View>
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>💬 Nickname (optional)</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>💬 {t('profile.nicknameOptional')}</Text>
                             <TextInput
-                                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
                                 value={newNickname}
                                 onChangeText={setNewNickname}
-                                placeholder="e.g. My Daily, Wife's Car"
+                                placeholder={t('profile.nicknamePlaceholder')}
                                 placeholderTextColor={colors.textMuted}
                             />
 
@@ -457,7 +475,7 @@ export default function MyVehiclesScreen() {
                                     style={styles.saveGradient}
                                 >
                                     <Text style={styles.saveButtonText}>
-                                        {isAdding ? 'Saving...' : (editingVehicle ? 'Update Vehicle' : 'Save Vehicle')}
+                                        {isAdding ? t('common.saving') : (editingVehicle ? t('profile.updateVehicle') : t('profile.saveVehicle'))}
                                     </Text>
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -470,15 +488,15 @@ export default function MyVehiclesScreen() {
             <Modal visible={showMakePicker} animationType="slide" transparent>
                 <View style={styles.pickerOverlay}>
                     <View style={[styles.pickerContent, { backgroundColor: colors.surface }]}>
-                        <View style={styles.pickerHeader}>
-                            <Text style={[styles.pickerTitle, { color: colors.text }]}>🚗 Select Make</Text>
+                        <View style={[styles.pickerHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.pickerTitle, { color: colors.text }]}>🚗 {t('profile.selectMake')}</Text>
                             <TouchableOpacity onPress={() => setShowMakePicker(false)}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
                         <TextInput
-                            style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            placeholder="Search makes..."
+                            style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                            placeholder={t('profile.searchMakes')}
                             placeholderTextColor={colors.textMuted}
                             value={newMake}
                             onChangeText={setNewMake}
@@ -490,7 +508,7 @@ export default function MyVehiclesScreen() {
                             style={styles.pickerList}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.pickerItem, newMake === item && { backgroundColor: Colors.primary + '20' }]}
+                                    style={[styles.pickerItem, newMake === item && { backgroundColor: Colors.primary + '20' }, { flexDirection: rtlFlexDirection(isRTL) }]}
                                     onPress={() => {
                                         Haptics.selectionAsync();
                                         setNewMake(item);
@@ -512,15 +530,15 @@ export default function MyVehiclesScreen() {
             <Modal visible={showModelPicker} animationType="slide" transparent>
                 <View style={styles.pickerOverlay}>
                     <View style={[styles.pickerContent, { backgroundColor: colors.surface }]}>
-                        <View style={styles.pickerHeader}>
-                            <Text style={[styles.pickerTitle, { color: colors.text }]}>📋 Select Model</Text>
+                        <View style={[styles.pickerHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.pickerTitle, { color: colors.text }]}>📋 {t('profile.selectModel')}</Text>
                             <TouchableOpacity onPress={() => setShowModelPicker(false)}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
                         <TextInput
-                            style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            placeholder="Search models..."
+                            style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                            placeholder={t('profile.searchModels')}
                             placeholderTextColor={colors.textMuted}
                             value={newModel}
                             onChangeText={setNewModel}
@@ -532,7 +550,7 @@ export default function MyVehiclesScreen() {
                             style={styles.pickerList}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.pickerItem, newModel === item && { backgroundColor: Colors.primary + '20' }]}
+                                    style={[styles.pickerItem, newModel === item && { backgroundColor: Colors.primary + '20' }, { flexDirection: rtlFlexDirection(isRTL) }]}
                                     onPress={() => {
                                         Haptics.selectionAsync();
                                         setNewModel(item);
@@ -545,7 +563,7 @@ export default function MyVehiclesScreen() {
                             )}
                             ListEmptyComponent={
                                 <Text style={[styles.emptyPickerText, { color: colors.textMuted }]}>
-                                    No models found. Try typing to search.
+                                    {t('profile.noModelsFound')}
                                 </Text>
                             }
                         />
@@ -557,8 +575,8 @@ export default function MyVehiclesScreen() {
             <Modal visible={showYearPicker} animationType="slide" transparent>
                 <View style={styles.pickerOverlay}>
                     <View style={[styles.pickerContent, { backgroundColor: colors.surface }]}>
-                        <View style={styles.pickerHeader}>
-                            <Text style={[styles.pickerTitle, { color: colors.text }]}>📅 Select Year</Text>
+                        <View style={[styles.pickerHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.pickerTitle, { color: colors.text }]}>📅 {t('profile.selectYear')}</Text>
                             <TouchableOpacity onPress={() => setShowYearPicker(false)}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
@@ -572,7 +590,7 @@ export default function MyVehiclesScreen() {
                             getItemLayout={(_, index) => ({ length: 50, offset: 50 * index, index })}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.yearItem, newYear === item.toString() && { backgroundColor: Colors.primary + '20' }]}
+                                    style={[styles.yearItem, newYear === item.toString() && { backgroundColor: Colors.primary + '20' }, { flexDirection: rtlFlexDirection(isRTL), justifyContent: 'space-between' }]}
                                     onPress={() => {
                                         Haptics.selectionAsync();
                                         setNewYear(item.toString());

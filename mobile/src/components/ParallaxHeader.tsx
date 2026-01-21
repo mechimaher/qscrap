@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
     useAnimatedScrollHandler,
     useAnimatedStyle,
+    useSharedValue,
     interpolate,
     Extrapolate,
 } from 'react-native-reanimated';
@@ -22,7 +23,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     imageUrl,
     children,
 }) => {
-    const scrollY = Animated.useSharedValue(0);
+    const scrollY = useSharedValue(0);
 
     const scrollHandler = useAnimatedScrollHandler({
         onScroll: (event) => {

@@ -15,6 +15,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 const { width } = Dimensions.get('window');
 const SLIDE_WIDTH = width - (Spacing.lg * 2);
@@ -28,36 +30,7 @@ interface Step {
     gradient: string[];
 }
 
-const STEPS: Step[] = [
-    {
-        icon: '📋',
-        title: 'Request Your Part',
-        subtitle: 'Tell us what you need and we\'ll find it',
-        color: '#3B82F6',
-        gradient: ['#3B82F6', '#2563EB'],
-    },
-    {
-        icon: '💰',
-        title: 'Review Bids',
-        subtitle: 'Garages compete for your business',
-        color: '#F59E0B',
-        gradient: ['#F59E0B', '#D97706'],
-    },
-    {
-        icon: '✅',
-        title: 'Confirm & Pay',
-        subtitle: 'Secure escrow protection',
-        color: '#22C55E',
-        gradient: ['#22C55E', '#16A34A'],
-    },
-    {
-        icon: '🚗',
-        title: 'Delivered to You',
-        subtitle: 'Fast delivery to your door',
-        color: Colors.primary,
-        gradient: [Colors.primary, '#B31D4A'],
-    },
-];
+
 
 interface Props {
     onGetStarted?: () => void;
@@ -66,24 +39,62 @@ interface Props {
 
 export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Props) {
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(0)).current;
     const autoPlayTimer = useRef<NodeJS.Timeout | null>(null);
     const [isPaused, setIsPaused] = useState(false);
 
+    const STEPS: Step[] = [
+        {
+            icon: '📋',
+            title: t('home.howItWorksSteps.step1.title'),
+            subtitle: t('home.howItWorksSteps.step1.subtitle'),
+            color: '#3B82F6',
+            gradient: ['#3B82F6', '#2563EB'],
+        },
+        {
+            icon: '💰',
+            title: t('home.howItWorksSteps.step2.title'),
+            subtitle: t('home.howItWorksSteps.step2.subtitle'),
+            color: '#F59E0B',
+            gradient: ['#F59E0B', '#D97706'],
+        },
+        {
+            icon: '✅',
+            title: t('home.howItWorksSteps.step3.title'),
+            subtitle: t('home.howItWorksSteps.step3.subtitle'),
+            color: '#22C55E',
+            gradient: ['#22C55E', '#16A34A'],
+        },
+        {
+            icon: '🚗',
+            title: t('home.howItWorksSteps.step4.title'),
+            subtitle: t('home.howItWorksSteps.step4.subtitle'),
+            color: Colors.primary,
+            gradient: [Colors.primary, '#B31D4A'],
+        },
+    ];
+
     // Pan responder for swipe gestures
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
+            // Smoothness Fix: Only capture horizontal swipes
             onMoveShouldSetPanResponder: (_, gestureState) => {
-                return Math.abs(gestureState.dx) > 10;
+                return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
             },
+            // Smoothness Fix: Don't let parent ScrollView steal gesture
+            onPanResponderTerminationRequest: () => false,
             onPanResponderGrant: () => {
                 setIsPaused(true);
                 Haptics.selectionAsync();
             },
             onPanResponderMove: (_, gestureState) => {
+                // RTL Fix: Invert visual feedback for RTL if needed, 
+                // but usually direct mapping feels most natural (finger follows content).
+                // If we want "pulling" feel, simple dx mapping works.
                 Animated.spring(slideAnim, {
                     toValue: -gestureState.dx / SLIDE_WIDTH,
                     useNativeDriver: true,
@@ -92,11 +103,18 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
             },
             onPanResponderRelease: (_, gestureState) => {
                 const threshold = SLIDE_WIDTH / 4;
+                const dx = gestureState.dx;
 
-                if (gestureState.dx > threshold && currentIndex > 0) {
-                    goToSlide(currentIndex - 1);
-                } else if (gestureState.dx < -threshold && currentIndex < STEPS.length - 1) {
+                // RTL Logic:
+                // LTR: Swipe Left (dx < 0) -> Next | Swipe Right (dx > 0) -> Prev
+                // RTL: Swipe Right (dx > 0) -> Next | Swipe Left (dx < 0) -> Prev
+                const isNext = isRTL ? dx > threshold : dx < -threshold;
+                const isPrev = isRTL ? dx < -threshold : dx > threshold;
+
+                if (isNext && currentIndex < STEPS.length - 1) {
                     goToSlide(currentIndex + 1);
+                } else if (isPrev && currentIndex > 0) {
+                    goToSlide(currentIndex - 1);
                 } else {
                     // Snap back
                     Animated.spring(slideAnim, {
@@ -160,7 +178,9 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
             {/* Animated background gradient */}
             <Animated.View style={[styles.backgroundGradient, { opacity: 0.1 }]}>
                 <LinearGradient
-                    colors={currentStep.gradient}
+                    colors={currentStep.gradient as any}
+                    start={isRTL ? { x: 1, y: 0 } : { x: 0, y: 0 }}
+                    end={isRTL ? { x: 0, y: 0 } : { x: 1, y: 0 }}
                     style={StyleSheet.absoluteFill}
                 />
             </Animated.View>
@@ -220,12 +240,12 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                 </View>
 
                 {/* Step number */}
-                <Text style={[styles.stepNumber, { color: currentStep.color }]}>
-                    STEP {currentIndex + 1} OF {STEPS.length}
+                <Text style={[styles.stepNumber, { color: currentStep.color, letterSpacing: isRTL ? 0 : 1.5 }]}>
+                    {t('home.step')} {currentIndex + 1} {t('home.of')} {STEPS.length}
                 </Text>
 
                 {/* Title */}
-                <Text style={[styles.title, { color: colors.text }]}>
+                <Text style={[styles.title, { color: colors.text, letterSpacing: isRTL ? 0 : -0.5 }]}>
                     {currentStep.title}
                 </Text>
 
@@ -235,7 +255,7 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                 </Text>
 
                 {/* Progress bar */}
-                <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+                <View style={[styles.progressBar, { backgroundColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <Animated.View
                         style={[
                             styles.progressFill,
@@ -258,10 +278,12 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                         activeOpacity={0.9}
                     >
                         <LinearGradient
-                            colors={currentStep.gradient}
+                            colors={currentStep.gradient as any}
+                            start={isRTL ? { x: 1, y: 0 } : { x: 0, y: 0 }}
+                            end={isRTL ? { x: 0, y: 0 } : { x: 1, y: 0 }}
                             style={styles.ctaGradient}
                         >
-                            <Text style={styles.ctaText}>Get Started</Text>
+                            <Text style={styles.ctaText}>{t('common.getStarted')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 )}
@@ -269,7 +291,7 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                 {/* Swipe hint */}
                 {currentIndex < STEPS.length - 1 && (
                     <Text style={[styles.swipeHint, { color: colors.textMuted }]}>
-                        ← Swipe to see next step →
+                        {isRTL ? '→' : '←'} {t('home.swipeNext')} {isRTL ? '←' : '→'}
                     </Text>
                 )}
             </Animated.View>
@@ -322,6 +344,7 @@ const styles = StyleSheet.create({
     stepNumber: {
         fontSize: FontSizes.xs,
         fontWeight: '800',
+        // RTL Fix: Remove letter spacing for Arabic
         letterSpacing: 1.5,
         marginBottom: Spacing.sm,
     },
@@ -330,6 +353,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         textAlign: 'center',
         marginBottom: Spacing.sm,
+        // RTL Fix: Remove letter spacing for Arabic to keep letters connected
         letterSpacing: -0.5,
     },
     subtitle: {

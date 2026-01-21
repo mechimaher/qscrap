@@ -115,7 +115,7 @@ const UrgentActionCard: React.FC<UrgentActionCardProps> = ({ type, data, onPress
             style={styles.container}
         >
             <LinearGradient
-                colors={config.gradientColors}
+                colors={config.gradientColors as any}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradient}

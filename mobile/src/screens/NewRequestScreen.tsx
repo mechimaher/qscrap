@@ -26,6 +26,8 @@ import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import MyVehiclesSelector, { SavedVehicle } from '../components/MyVehiclesSelector';
 import SearchableDropdown from '../components/SearchableDropdown';
@@ -45,17 +47,20 @@ interface PrefillData {
     imageUrls?: string[]; // Previous order images to reference
 }
 
-const CONDITION_OPTIONS = [
-    { value: 'any', label: 'Any Condition', icon: '🔄', color: '#6B7280' },
-    { value: 'new', label: 'New Only', icon: '✨', color: '#22C55E' },
-    { value: 'used', label: 'Used Only', icon: '♻️', color: '#F59E0B' },
-];
 
 export default function NewRequestScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<NewRequestRouteProp>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const toast = useToast();
+
+    // Condition options with translations
+    const CONDITION_OPTIONS = [
+        { value: 'any', label: t('newRequest.anyCondition'), icon: '🔄', color: '#6B7280' },
+        { value: 'new', label: t('newRequest.newOnly'), icon: '✨', color: '#22C55E' },
+        { value: 'used', label: t('newRequest.usedOnly'), icon: '♻️', color: '#F59E0B' },
+    ];
 
     // Extract prefill data from route params (for Order Again)
     const prefillData: PrefillData | undefined = route.params?.prefill;
@@ -133,7 +138,7 @@ export default function NewRequestScreen() {
         // Show success toast to indicate pre-fill
         if (prefillData.partDescription || prefillData.partCategory) {
             setTimeout(() => {
-                toast.info('Order Again', 'Form pre-filled with your previous order details');
+                toast.info(t('newRequest.orderAgain'), t('newRequest.prefilledMsg'));
             }, 500);
         }
     }, [prefillData]);
@@ -190,7 +195,7 @@ export default function NewRequestScreen() {
     const handlePickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera roll access is required');
+            toast.error(t('common.permissionDenied'), t('common.galleryPermission'));
             return;
         }
 
@@ -211,7 +216,7 @@ export default function NewRequestScreen() {
     const handleTakePhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera access is required');
+            toast.error(t('common.permissionDenied'), t('common.cameraPermission'));
             return;
         }
 
@@ -235,7 +240,7 @@ export default function NewRequestScreen() {
     const handlePickCarFrontImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera roll access required');
+            toast.error(t('common.permissionDenied'), t('common.galleryPermission'));
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -252,7 +257,7 @@ export default function NewRequestScreen() {
     const handlePickCarRearImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera roll access required');
+            toast.error(t('common.permissionDenied'), t('common.galleryPermission'));
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -269,7 +274,7 @@ export default function NewRequestScreen() {
     const handleTakeCarFrontPhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera access required');
+            toast.error(t('common.permissionDenied'), t('common.cameraPermission'));
             return;
         }
         const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
@@ -282,7 +287,7 @@ export default function NewRequestScreen() {
     const handleTakeCarRearPhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            toast.error('Permission Denied', 'Camera access required');
+            toast.error(t('common.permissionDenied'), t('common.cameraPermission'));
             return;
         }
         const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
@@ -300,19 +305,19 @@ export default function NewRequestScreen() {
 
         // Validation
         if (!selectedVehicle) {
-            toast.error('Missing Vehicle', 'Please select a vehicle');
+            toast.error(t('newRequest.missingVehicle'), t('newRequest.pleaseSelectVehicle'));
             return;
         }
 
         // VIN is now REQUIRED for Qatar spare parts matching
         if (!selectedVehicle.vin_number) {
             Alert.alert(
-                'VIN Required',
-                'Qatar garages require VIN/Chassis number from your Istimara for accurate part matching.\n\nWould you like to add VIN to this vehicle now?',
+                t('newRequest.vinRequired'),
+                t('newRequest.vinRequiredMessage'),
                 [
-                    { text: 'Cancel', style: 'cancel' },
+                    { text: t('common.cancel'), style: 'cancel' },
                     {
-                        text: 'Add VIN',
+                        text: t('newRequest.addVin'),
                         onPress: () => navigation.navigate('MyVehicles'),
                         style: 'default'
                     }
@@ -322,7 +327,7 @@ export default function NewRequestScreen() {
         }
 
         if (!partDescription.trim()) {
-            toast.error('Missing Description', 'Please describe the part you need');
+            toast.error(t('newRequest.missingDescription'), t('newRequest.pleaseDescribePart'));
             return;
         }
 
@@ -389,14 +394,14 @@ export default function NewRequestScreen() {
             const response = await api.createRequest(formData);
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            toast.success('Request Created!', 'Garages are reviewing your request');
+            toast.success(t('newRequest.requestCreated'), t('newRequest.garagesReviewing'));
 
             // Navigate to request details
             navigation.replace('RequestDetail', { requestId: response.request_id });
 
         } catch (error: any) {
             console.error('[NewRequest] Submit error:', error);
-            toast.error('Error', error.message || 'Failed to create request');
+            toast.error(t('common.error'), error.message || t('common.unknown'));
         } finally {
             setIsSubmitting(false);
         }
@@ -416,7 +421,7 @@ export default function NewRequestScreen() {
                 <Animated.View
                     style={[
                         styles.header,
-                        { backgroundColor: colors.surface, borderBottomColor: colors.border },
+                        { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) },
                         { opacity: fadeAnim },
                     ]}
                 >
@@ -424,12 +429,12 @@ export default function NewRequestScreen() {
                         onPress={() => navigation.goBack()}
                         style={styles.closeButton}
                     >
-                        <Text style={[styles.closeIcon, { color: colors.text }]}>←</Text>
+                        <Text style={[styles.closeIcon, { color: colors.text }]}>{isRTL ? '→' : '←'}</Text>
                     </TouchableOpacity>
                     <View style={styles.headerCenter}>
-                        <Text style={[styles.headerTitle, { color: colors.text }]}>New Request</Text>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('newRequest.title')}</Text>
                         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                            Find your part instantly
+                            {t('newRequest.subtitle')}
                         </Text>
                     </View>
                     <View style={{ width: 40 }} />
@@ -447,26 +452,26 @@ export default function NewRequestScreen() {
                         }}
                     >
                         {/* Pro Tip Header Banner - Just-in-time guidance */}
-                        <Animated.View style={[styles.proTipBanner, { backgroundColor: '#FFF8E1' }]}>
-                            <Text style={styles.proTipIcon}>💡</Text>
+                        <Animated.View style={[styles.proTipBanner, { backgroundColor: '#FFF8E1', flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>💡</Text>
                             <View style={styles.proTipContent}>
-                                <Text style={styles.proTipTitle}>Pro Tip</Text>
-                                <Text style={styles.proTipText}>
-                                    Add clear photos to help garages find exact parts 3x faster!
+                                <Text style={[styles.proTipTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.proTipTitle')}</Text>
+                                <Text style={[styles.proTipText, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('newRequest.proTipText')}
                                 </Text>
                             </View>
                         </Animated.View>
 
                         {/* 1. Select Vehicle */}
                         <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                            <View style={styles.sectionHeader}>
-                                <View style={[styles.stepBadge, { backgroundColor: Colors.primary + '15' }]}>
+                            <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <View style={[styles.stepBadge, { backgroundColor: Colors.primary + '15' }, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
                                     <Text style={[styles.stepNumber, { color: Colors.primary }]}>1</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Vehicle</Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-                                        Choose from your saved cars
+                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.selectVehicle')}</Text>
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.chooseFromCars')}
                                     </Text>
                                 </View>
                             </View>
@@ -486,7 +491,7 @@ export default function NewRequestScreen() {
                                         </Text>
                                         {selectedVehicle.vin_number ? (
                                             <Text style={styles.vinStatusGreen}>
-                                                🔑 VIN: {selectedVehicle.vin_number} ✓
+                                                {t('newRequest.vinVerified', { vin: selectedVehicle.vin_number })}
                                             </Text>
                                         ) : (
                                             <TouchableOpacity
@@ -494,7 +499,7 @@ export default function NewRequestScreen() {
                                                 style={styles.vinWarningBtn}
                                             >
                                                 <Text style={styles.vinStatusRed}>
-                                                    ⚠️ VIN Required - Tap to add
+                                                    {t('newRequest.tapToAddVin')}
                                                 </Text>
                                             </TouchableOpacity>
                                         )}
@@ -508,7 +513,7 @@ export default function NewRequestScreen() {
                                     style={styles.addVehicleButton}
                                 >
                                     <Text style={[styles.addVehicleText, { color: Colors.primary }]}>
-                                        + Add New Vehicle
+                                        {t('newRequest.addNewVehicle')}
                                     </Text>
                                 </TouchableOpacity>
                             )}
@@ -516,22 +521,22 @@ export default function NewRequestScreen() {
 
                         {/* 2. Part Details */}
                         <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                            <View style={styles.sectionHeader}>
-                                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }]}>
+                            <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
                                     <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>2</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Part Details</Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-                                        What do you need?
+                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.partDetails')}</Text>
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.whatDoYouNeed')}
                                     </Text>
                                 </View>
                             </View>
 
                             {/* Category (Optional) */}
                             <SearchableDropdown
-                                label="Category (Optional)"
-                                placeholder="e.g. Engine, Body, Interior"
+                                label={t('newRequest.categoryOptional')}
+                                placeholder={t('newRequest.categoryPlaceholder')}
                                 items={PART_CATEGORIES}
                                 value={partCategory}
                                 onSelect={setPartCategory}
@@ -540,8 +545,8 @@ export default function NewRequestScreen() {
                             {/* Subcategory (Optional) */}
                             {partCategory && availableSubCategories.length > 0 && (
                                 <SearchableDropdown
-                                    label="Subcategory (Optional)"
-                                    placeholder="Select subcategory"
+                                    label={t('newRequest.subcategoryOptional')}
+                                    placeholder={t('newRequest.selectSubcategory')}
                                     items={availableSubCategories}
                                     value={partSubCategory}
                                     onSelect={setPartSubCategory}
@@ -550,8 +555,8 @@ export default function NewRequestScreen() {
 
                             {/* Part Description */}
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: colors.text }]}>
-                                    Description *
+                                <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('newRequest.description')} *
                                 </Text>
                                 <TextInput
                                     style={[
@@ -560,9 +565,10 @@ export default function NewRequestScreen() {
                                             backgroundColor: colors.background,
                                             color: colors.text,
                                             borderColor: colors.border,
+                                            textAlign: rtlTextAlign(isRTL)
                                         },
                                     ]}
-                                    placeholder="E.g. Front bumper for 2020 Camry, black color preferred"
+                                    placeholder={t('newRequest.descriptionPlaceholder')}
                                     placeholderTextColor={colors.textMuted}
                                     value={partDescription}
                                     onChangeText={setPartDescription}
@@ -577,8 +583,8 @@ export default function NewRequestScreen() {
 
                             {/* Part Number (Optional) */}
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: colors.text }]}>
-                                    Part Number (Optional)
+                                <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('newRequest.partNumberOptional')}
                                 </Text>
                                 <TextInput
                                     style={[
@@ -587,9 +593,10 @@ export default function NewRequestScreen() {
                                             backgroundColor: colors.background,
                                             color: colors.text,
                                             borderColor: colors.border,
+                                            textAlign: rtlTextAlign(isRTL)
                                         },
                                     ]}
-                                    placeholder="OEM or aftermarket part number"
+                                    placeholder={t('newRequest.partNumberPlaceholder')}
                                     placeholderTextColor={colors.textMuted}
                                     value={partNumber}
                                     onChangeText={setPartNumber}
@@ -598,8 +605,8 @@ export default function NewRequestScreen() {
                             </View>
 
                             {/* Condition */}
-                            <Text style={[styles.label, { color: colors.text }]}>Condition Preference</Text>
-                            <View style={styles.conditionGrid}>
+                            <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.conditionPreference')}</Text>
+                            <View style={[styles.conditionGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 {CONDITION_OPTIONS.map((opt) => (
                                     <TouchableOpacity
                                         key={opt.value}
@@ -648,17 +655,17 @@ export default function NewRequestScreen() {
                                     <Text style={[styles.stepNumber, { color: '#22C55E' }]}>3</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                        Photos (Optional)
+                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.photosOptional')}
                                     </Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-                                        Add up to 5 photos
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.addUpTo5')}
                                     </Text>
                                 </View>
                             </View>
 
                             {/* Photo Grid */}
-                            <View style={styles.photoGrid}>
+                            <View style={[styles.photoGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 {images.map((uri, index) => (
                                     <View key={index} style={styles.photoWrapper}>
                                         <Image source={{ uri }} style={styles.photo} />
@@ -681,7 +688,7 @@ export default function NewRequestScreen() {
                                     >
                                         <Text style={styles.addPhotoIcon}>📁</Text>
                                         <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                                            Gallery
+                                            {t('common.gallery')}
                                         </Text>
                                     </TouchableOpacity>
                                 )}
@@ -696,7 +703,7 @@ export default function NewRequestScreen() {
                                     >
                                         <Text style={styles.addPhotoIcon}>📸</Text>
                                         <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                                            Camera
+                                            {t('common.camera')}
                                         </Text>
                                     </TouchableOpacity>
                                 )}
@@ -710,17 +717,17 @@ export default function NewRequestScreen() {
                                     <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>4</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                        Vehicle ID Photos
+                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.vehicleIdPhotos')}
                                     </Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-                                        Help garages identify your car
+                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.helpGaragesIdentify')}
                                     </Text>
                                 </View>
                             </View>
 
-                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8 }]}>
-                                🚗 Front View (License Plate)
+                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
+                                🚗 {t('newRequest.frontView')}
                             </Text>
                             {carFrontImage ? (
                                 <View style={{ marginBottom: 16 }}>
@@ -739,20 +746,20 @@ export default function NewRequestScreen() {
                                         style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                                     >
                                         <Text style={styles.addPhotoIcon}>📁</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Gallery</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={handleTakeCarFrontPhoto}
                                         style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                                     >
                                         <Text style={styles.addPhotoIcon}>📸</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Camera</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
                                     </TouchableOpacity>
                                 </View>
                             )}
 
-                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8 }]}>
-                                🚙 Rear View (Model ID)
+                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
+                                🚙 {t('newRequest.rearView')}
                             </Text>
                             {carRearImage ? (
                                 <View>
@@ -771,14 +778,14 @@ export default function NewRequestScreen() {
                                         style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                                     >
                                         <Text style={styles.addPhotoIcon}>📁</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Gallery</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={handleTakeCarRearPhoto}
                                         style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                                     >
                                         <Text style={styles.addPhotoIcon}>📸</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Camera</Text>
+                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
                                     </TouchableOpacity>
                                 </View>
                             )}
@@ -811,8 +818,8 @@ export default function NewRequestScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text style={styles.submitText}>Submit Request</Text>
-                                    <Text style={styles.submitIcon}>→</Text>
+                                    <Text style={styles.submitText}>{t('newRequest.submitRequest')}</Text>
+                                    <Text style={styles.submitIcon}>{isRTL ? '←' : '→'}</Text>
                                 </>
                             )}
                         </LinearGradient>
@@ -820,10 +827,10 @@ export default function NewRequestScreen() {
                     {!canSubmit && (
                         <Text style={[styles.footerHint, { color: colors.textMuted }]}>
                             {!selectedVehicle
-                                ? 'Select a vehicle to continue'
+                                ? t('newRequest.footerHint.selectVehicle')
                                 : !hasVIN
-                                    ? '🔑 VIN required - Tap vehicle to add'
-                                    : 'Add a part description (min 10 characters)'}
+                                    ? t('newRequest.footerHint.vinRequired')
+                                    : t('newRequest.footerHint.description')}
                         </Text>
                     )}
                 </View>
@@ -868,8 +875,8 @@ const styles = StyleSheet.create({
     },
     proTipIcon: { fontSize: 22 },
     proTipContent: { flex: 1 },
-    proTipTitle: { fontSize: FontSizes.sm, fontWeight: '700', color: '#92400E', marginBottom: 2 },
-    proTipText: { fontSize: FontSizes.sm, color: '#78350F', lineHeight: 18 },
+    proTipTitle: { fontSize: FontSizes.sm, fontWeight: '700', color: '#92400E', marginBottom: 2, textAlign: 'left' }, // rtlTextAlign applied inline
+    proTipText: { fontSize: FontSizes.sm, color: '#78350F', lineHeight: 18, textAlign: 'left' }, // rtlTextAlign applied inline
     section: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,

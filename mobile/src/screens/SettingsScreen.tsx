@@ -1,4 +1,4 @@
-// QScrap Settings Screen - App Preferences and Notifications
+// QScrap Settings Screen - App Preferences and Notifications with Full i18n Support
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -17,6 +17,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign, rtlChevron, rtlMarginHorizontal } from '../utils/rtl';
+import { APP_VERSION, TERMS_URL, PRIVACY_URL } from '../config/api';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -43,12 +45,17 @@ const defaultSettings: SettingsState = {
 export default function SettingsScreen() {
     const navigation = useNavigation();
     const { isDarkMode, toggleTheme, colors } = useTheme();
-    const languageContext = useLanguage();
-    const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode });
+    const { t, language, setLanguage, isRTL } = useLanguage();
+    const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode, language });
 
     useEffect(() => {
         loadSettings();
     }, []);
+
+    // Sync settings with current language from context
+    useEffect(() => {
+        setSettings(prev => ({ ...prev, language }));
+    }, [language]);
 
     const loadSettings = async () => {
         try {
@@ -75,13 +82,12 @@ export default function SettingsScreen() {
     };
 
     const handleLanguageChange = () => {
-        const { t } = languageContext;
         Alert.alert(
             t('alerts.selectLanguage'),
             t('alerts.chooseLanguage'),
             [
-                { text: 'English', onPress: () => languageContext.setLanguage('en') },
-                { text: 'العربية', onPress: () => languageContext.setLanguage('ar') },
+                { text: 'English', onPress: () => setLanguage('en') },
+                { text: 'العربية', onPress: () => setLanguage('ar') },
                 { text: t('common.cancel'), style: 'cancel' },
             ]
         );
@@ -89,16 +95,16 @@ export default function SettingsScreen() {
 
     const handleClearCache = () => {
         Alert.alert(
-            'Clear Cache',
-            'This will clear temporary data. You will remain logged in.',
+            t('settings.clearCacheTitle'),
+            t('settings.clearCacheMessage'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Clear',
+                    text: t('common.clear'),
                     onPress: async () => {
                         await AsyncStorage.removeItem('qscrap_cache');
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        Alert.alert('Success', 'Cache cleared successfully');
+                        Alert.alert(t('common.success'), t('settings.cacheCleared'));
                     },
                 },
             ]
@@ -118,11 +124,11 @@ export default function SettingsScreen() {
         value: boolean;
         onToggle: () => void;
     }) => (
-        <View style={styles.settingRow}>
-            <Text style={styles.settingIcon}>{icon}</Text>
+        <View style={[styles.settingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+            <Text style={[styles.settingIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.md } : {}]}>{icon}</Text>
             <View style={styles.settingInfo}>
-                <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
-                {subtitle && <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
+                <Text style={[styles.settingTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
+                {subtitle && <Text style={[styles.settingSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{subtitle}</Text>}
             </View>
             <Switch
                 value={value}
@@ -144,14 +150,14 @@ export default function SettingsScreen() {
         value?: string;
         onPress: () => void;
     }) => (
-        <TouchableOpacity style={styles.settingRow} onPress={onPress}>
-            <Text style={styles.settingIcon}>{icon}</Text>
+        <TouchableOpacity style={[styles.settingRow, { flexDirection: rtlFlexDirection(isRTL) }]} onPress={onPress}>
+            <Text style={[styles.settingIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.md } : {}]}>{icon}</Text>
             <View style={styles.settingInfo}>
-                <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
+                <Text style={[styles.settingTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
             </View>
-            <View style={styles.actionValue}>
-                {value && <Text style={styles.valueText}>{value}</Text>}
-                <Text style={styles.chevron}>›</Text>
+            <View style={[styles.actionValue, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                {value && <Text style={[styles.valueText, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : {}]}>{value}</Text>}
+                <Text style={styles.chevron}>{rtlChevron(isRTL)}</Text>
             </View>
         </TouchableOpacity>
     );
@@ -159,47 +165,47 @@ export default function SettingsScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('settings.title')}</Text>
                 <View style={{ width: 60 }} />
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Notifications Section */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notifications</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.notifications')}</Text>
 
                     <SettingRow
                         icon="🔔"
-                        title="Push Notifications"
-                        subtitle="Receive notifications on your device"
+                        title={t('settings.pushNotifications')}
+                        subtitle={t('settings.receiveNotifications')}
                         value={settings.pushNotifications}
                         onToggle={() => updateSetting('pushNotifications', !settings.pushNotifications)}
                     />
 
                     <SettingRow
                         icon="💰"
-                        title="Bid Alerts"
-                        subtitle="Get notified when garages submit bids"
+                        title={t('settings.bidAlerts')}
+                        subtitle={t('settings.bidAlertsDesc')}
                         value={settings.bidNotifications}
                         onToggle={() => updateSetting('bidNotifications', !settings.bidNotifications)}
                     />
 
                     <SettingRow
                         icon="📦"
-                        title="Order Updates"
-                        subtitle="Status changes and confirmations"
+                        title={t('settings.orderUpdates')}
+                        subtitle={t('settings.orderUpdatesDesc')}
                         value={settings.orderNotifications}
                         onToggle={() => updateSetting('orderNotifications', !settings.orderNotifications)}
                     />
 
                     <SettingRow
                         icon="🚗"
-                        title="Delivery Tracking"
-                        subtitle="Driver location and ETA updates"
+                        title={t('settings.deliveryTracking')}
+                        subtitle={t('settings.deliveryTrackingDesc')}
                         value={settings.deliveryNotifications}
                         onToggle={() => updateSetting('deliveryNotifications', !settings.deliveryNotifications)}
                     />
@@ -207,20 +213,20 @@ export default function SettingsScreen() {
 
                 {/* Sound & Haptics */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Sound & Haptics</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.soundHaptics')}</Text>
 
                     <SettingRow
                         icon="🔊"
-                        title="Sound Effects"
-                        subtitle="Play sounds for notifications"
+                        title={t('settings.soundEffects')}
+                        subtitle={t('settings.soundEffectsDesc')}
                         value={settings.soundEnabled}
                         onToggle={() => updateSetting('soundEnabled', !settings.soundEnabled)}
                     />
 
                     <SettingRow
                         icon="📳"
-                        title="Vibration"
-                        subtitle="Haptic feedback for actions"
+                        title={t('settings.vibration')}
+                        subtitle={t('settings.vibrationDesc')}
                         value={settings.vibrationEnabled}
                         onToggle={() => updateSetting('vibrationEnabled', !settings.vibrationEnabled)}
                     />
@@ -228,12 +234,12 @@ export default function SettingsScreen() {
 
                 {/* Appearance */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Appearance</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.appearance')}</Text>
 
                     <SettingRow
                         icon="🌙"
-                        title="Dark Mode"
-                        subtitle="Use dark theme"
+                        title={t('settings.darkMode')}
+                        subtitle={t('settings.darkModeDesc')}
                         value={isDarkMode}
                         onToggle={() => {
                             toggleTheme();
@@ -243,50 +249,50 @@ export default function SettingsScreen() {
 
                     <ActionRow
                         icon="🌐"
-                        title="Language"
-                        value={settings.language === 'en' ? 'English' : 'العربية'}
+                        title={t('settings.language')}
+                        value={language === 'en' ? 'English' : 'العربية'}
                         onPress={handleLanguageChange}
                     />
                 </View>
 
                 {/* Storage */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Storage</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.storage')}</Text>
 
                     <ActionRow
                         icon="🗑️"
-                        title="Clear Cache"
+                        title={t('settings.clearCache')}
                         onPress={handleClearCache}
                     />
                 </View>
 
                 {/* About */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>About</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.about')}</Text>
 
                     <ActionRow
                         icon="ℹ️"
-                        title="App Version"
-                        value="1.0.0"
-                        onPress={() => Alert.alert('QScrap', 'Version 1.0.0\nBuild: 2024.12.25\n\n🇶🇦 Made in Qatar with ❤️')}
+                        title={t('settings.appVersion')}
+                        value={APP_VERSION || '1.0.0'}
+                        onPress={() => Alert.alert('QScrap', `${t('settings.appVersion')}: ${APP_VERSION}\n\n🇶🇦 ${t('profile.madeInQatar')}`)}
                     />
 
                     <ActionRow
                         icon="📄"
-                        title="Terms of Service"
-                        onPress={() => Linking.openURL('https://qscrap.qa/terms')}
+                        title={t('settings.termsOfService')}
+                        onPress={() => Linking.openURL(TERMS_URL)}
                     />
 
                     <ActionRow
                         icon="🔒"
-                        title="Privacy Policy"
-                        onPress={() => Linking.openURL('https://qscrap.qa/privacy')}
+                        title={t('settings.privacyPolicy')}
+                        onPress={() => Linking.openURL(PRIVACY_URL)}
                     />
 
                     <ActionRow
                         icon="📧"
-                        title="Contact Support"
-                        onPress={() => Alert.alert('Support', 'Email: support@qscrap.qa\nPhone: +974 1234 5678')}
+                        title={t('settings.contactSupport')}
+                        onPress={() => Alert.alert(t('settings.contactSupport'), t('profile.contactInfo'))}
                     />
                 </View>
 
@@ -313,7 +319,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 }, // color set dynamically
+    headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 },
     scrollView: { flex: 1, padding: Spacing.lg },
     section: {
         backgroundColor: '#fff',
@@ -327,7 +333,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.sm,
         fontWeight: '700',
-        // color set dynamically via colors.textSecondary
         marginBottom: Spacing.md,
         marginLeft: Spacing.sm,
         textTransform: 'uppercase',
@@ -341,10 +346,9 @@ const styles = StyleSheet.create({
     },
     settingIcon: { fontSize: 22, marginRight: Spacing.md },
     settingInfo: { flex: 1 },
-    settingTitle: { fontSize: FontSizes.md, fontWeight: '600' }, // color set dynamically
+    settingTitle: { fontSize: FontSizes.md, fontWeight: '600' },
     settingSubtitle: {
         fontSize: FontSizes.sm,
-        // color set dynamically via colors.textSecondary
         marginTop: 2,
     },
     actionValue: { flexDirection: 'row', alignItems: 'center' },

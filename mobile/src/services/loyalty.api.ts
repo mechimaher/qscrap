@@ -1,4 +1,9 @@
-import { apiClient } from './api';
+import { api } from './api';
+
+const apiClient = {
+    get: async (url: string, config?: any) => ({ data: await api.request<any>(url, { ...config, method: 'GET' }) }),
+    post: async (url: string, data?: any, config?: any) => ({ data: await api.request<any>(url, { ...config, method: 'POST', body: JSON.stringify(data) }) }),
+};
 
 /**
  * Loyalty Program API Service

@@ -18,6 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { api, Order } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from '../../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
@@ -26,10 +28,9 @@ import { useToast } from '../../components/Toast';
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 
-// ============================================
 // STATUS CONFIGURATION
 // ============================================
-const getStatusConfig = (status: string) => {
+const getStatusConfig = (status: string, t: any) => {
     switch (status) {
         case 'confirmed': return {
             color: '#3B82F6',
@@ -80,7 +81,7 @@ const getStatusConfig = (status: string) => {
             color: '#22C55E',
             bg: '#DCFCE7',
             icon: '✅',
-            label: 'Completed',
+            label: t('status.completed'),
             gradient: ['#22C55E', '#16A34A'] as const
         };
         default: return {
@@ -113,8 +114,9 @@ const PremiumOrderCard = ({
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const pulseAnim = useRef(new Animated.Value(0)).current;
+    const { t, isRTL } = useTranslation();
 
-    const statusConfig = getStatusConfig(item.order_status);
+    const statusConfig = getStatusConfig(item.order_status, t);
     const isInTransit = ['in_transit', 'collected', 'qc_in_progress', 'qc_passed'].includes(item.order_status);
     const needsConfirmation = item.order_status === 'delivered';
 
@@ -207,7 +209,7 @@ const PremiumOrderCard = ({
 
                     <View style={styles.cardContent}>
                         {/* Header: Order Number + Status */}
-                        <View style={styles.cardHeader}>
+                        <View style={[styles.cardHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View style={styles.orderInfo}>
                                 <Animated.View style={[
                                     styles.orderIconBg,
@@ -216,11 +218,11 @@ const PremiumOrderCard = ({
                                 ]}>
                                     <Text style={styles.orderIcon}>{statusConfig.icon}</Text>
                                 </Animated.View>
-                                <View>
-                                    <Text style={[styles.orderNumber, { color: colors.text }]}>
-                                        Order #{item.order_number}
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.orderNumber, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('common.order')} #{item.order_number}
                                     </Text>
-                                    <Text style={[styles.garageName, { color: statusConfig.color }]}>
+                                    <Text style={[styles.garageName, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>
                                         {item.garage_name}
                                     </Text>
                                 </View>
@@ -235,7 +237,7 @@ const PremiumOrderCard = ({
                         {/* Car Info Chip */}
                         <View style={[styles.carChip, { backgroundColor: colors.background }]}>
                             <Text style={styles.carEmoji}>🚗</Text>
-                            <Text style={[styles.carText, { color: colors.textSecondary }]}>
+                            <Text style={[styles.carText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {item.car_make} {item.car_model} ({item.car_year})
                             </Text>
                         </View>
@@ -244,9 +246,9 @@ const PremiumOrderCard = ({
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                         {/* Footer: Price + Date + Escrow */}
-                        <View style={styles.cardFooter}>
+                        <View style={[styles.cardFooter, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View>
-                                <Text style={styles.priceLabel}>Total</Text>
+                                <Text style={[styles.priceLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.total')}</Text>
                                 <Text style={[styles.priceAmount, { color: statusConfig.color }]}>
                                     {item.total_amount} QAR
                                 </Text>
@@ -254,10 +256,10 @@ const PremiumOrderCard = ({
                             {/* Escrow Protection Badge */}
                             <View style={styles.escrowBadge}>
                                 <Text style={styles.escrowIcon}>🛡️</Text>
-                                <Text style={styles.escrowText}>Protected</Text>
+                                <Text style={styles.escrowText}>{t('common.protected')}</Text>
                             </View>
                             <View style={styles.dateSection}>
-                                <Text style={styles.dateLabel}>Ordered</Text>
+                                <Text style={[styles.dateLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.ordered')}</Text>
                                 <Text style={[styles.dateText, { color: colors.text }]}>
                                     {new Date(item.created_at).toLocaleDateString('en-US', {
                                         month: 'short',
@@ -346,6 +348,7 @@ const SkeletonCard = ({ index }: { index: number }) => {
 export default function OrdersScreen() {
     const navigation = useNavigation<OrdersScreenNavigationProp>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const { orderUpdates } = useSocketContext();
     const toast = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
@@ -406,9 +409,9 @@ export default function OrdersScreen() {
             <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>📦</Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Orders Yet</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('orders.noOrders')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Your orders will appear here once you accept a bid
+                {t('orders.noOrdersMsg')}
             </Text>
         </View>
     );
@@ -416,17 +419,17 @@ export default function OrdersScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>My Orders</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                        {orders.length} total orders
+                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('orders.title')}</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {orders.length} {t('orders.totalOrders')}
                     </Text>
                 </View>
                 {activeOrders.length > 0 && (
                     <View style={styles.activeBadge}>
                         <View style={styles.activeDot} />
-                        <Text style={styles.activeBadgeText}>{activeOrders.length} active</Text>
+                        <Text style={styles.activeBadgeText}>{activeOrders.length} {t('orders.active')}</Text>
                     </View>
                 )}
             </View>
@@ -560,7 +563,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flex: 1,
         marginRight: Spacing.md,
-        paddingRight: Spacing.sm,
     },
     orderIconBg: {
         width: 44,

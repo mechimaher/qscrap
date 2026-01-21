@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface VINCaptureProps {
     value?: string;
@@ -47,6 +48,7 @@ export default function VINCapture({
     disabled = false,
 }: VINCaptureProps) {
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [localVIN, setLocalVIN] = useState(value);
     const [isValid, setIsValid] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
@@ -86,7 +88,7 @@ export default function VINCapture({
     const handleCameraCapture = async () => {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert('Permission Required', 'Camera access is needed to capture VIN photo');
+            Alert.alert(t('vehicles.permissionRequired'), t('vehicles.cameraPermission'));
             return;
         }
 
@@ -106,7 +108,7 @@ export default function VINCapture({
     const handleGalleryPick = async () => {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert('Permission Required', 'Gallery access is needed');
+            Alert.alert(t('vehicles.permissionRequired'), t('vehicles.galleryPermission'));
             return;
         }
 
@@ -131,14 +133,14 @@ export default function VINCapture({
     return (
         <View style={styles.container}>
             {/* Section Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Text style={styles.headerEmoji}>🔑</Text>
-                <View style={styles.headerText}>
+                <View style={[styles.headerText, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                     <Text style={[styles.title, { color: colors.text }]}>
-                        VIN / Chassis Number
+                        {t('vehicles.vinTitle')}
                     </Text>
                     <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                        Found on your Istimara (Registration Card)
+                        {t('vehicles.vinSubtitle')}
                     </Text>
                 </View>
             </View>
@@ -168,7 +170,7 @@ export default function VINCapture({
                     autoCorrect={false}
                     editable={!disabled}
                 />
-                <View style={styles.inputStatus}>
+                <View style={[styles.inputStatus, isRTL ? { left: Spacing.md, right: undefined } : { right: Spacing.md, left: undefined }]}>
                     {localVIN.length === 17 && isValid && (
                         <Text style={styles.validIcon}>✓</Text>
                     )}
@@ -179,9 +181,9 @@ export default function VINCapture({
             </Animated.View>
 
             {/* Divider */}
-            <View style={styles.dividerContainer}>
+            <View style={[styles.dividerContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-                <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR</Text>
+                <Text style={[styles.dividerText, { color: colors.textSecondary }]}>{t('common.or')}</Text>
                 <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
@@ -196,7 +198,7 @@ export default function VINCapture({
                         <Text style={styles.removeIcon}>×</Text>
                     </TouchableOpacity>
                     <View style={styles.imageLabel}>
-                        <Text style={styles.imageLabelText}>📷 VIN Photo Captured</Text>
+                        <Text style={styles.imageLabelText}>{t('vehicles.vinPhotoCaptured')}</Text>
                     </View>
                 </View>
             ) : (
@@ -208,7 +210,7 @@ export default function VINCapture({
                     >
                         <Text style={styles.captureBtnIcon}>📷</Text>
                         <Text style={[styles.captureBtnText, { color: Colors.primary }]}>
-                            Take Photo of Istimara
+                            {t('vehicles.takePhoto')}
                         </Text>
                     </TouchableOpacity>
 
@@ -219,15 +221,15 @@ export default function VINCapture({
                     >
                         <Text style={styles.captureBtnIcon}>🖼️</Text>
                         <Text style={[styles.captureBtnText, { color: colors.textSecondary }]}>
-                            Choose from Gallery
+                            {t('vehicles.chooseGallery')}
                         </Text>
                     </TouchableOpacity>
                 </View>
             )}
 
             {/* Help Text */}
-            <Text style={[styles.helpText, { color: colors.textSecondary }]}>
-                💡 VIN helps garages find the exact part for your vehicle
+            <Text style={[styles.helpText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'center' }]}>
+                💡 {t('vehicles.vinHelp')}
             </Text>
         </View>
     );

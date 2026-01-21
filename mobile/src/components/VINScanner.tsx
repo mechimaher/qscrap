@@ -48,19 +48,24 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
 
     const cameraRef = useRef<CameraView>(null);
 
-    // LOCAL OCR using ML Kit
+    // LOCAL OCR using ML Kit with line-level filtering
+    // PRO: Filters out short lines (Arabic labels, noise) for cleaner VIN extraction
     const performLocalOCR = async (imageUri: string): Promise<string> => {
         try {
             const result = await TextRecognition.recognize(imageUri);
-            // Combine all recognized text
             let fullText = '';
-            if (result && result.blocks) {
+
+            if (result?.blocks) {
                 for (const block of result.blocks) {
                     for (const line of block.lines) {
-                        fullText += line.text + ' ';
+                        // Ignore short labels (Arabic / noise)
+                        if (line.text && line.text.length >= 10) {
+                            fullText += line.text + ' ';
+                        }
                     }
                 }
             }
+
             return fullText.trim();
         } catch (error) {
             console.log('[VINScanner] ML Kit OCR error:', error);
@@ -68,7 +73,7 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
         }
     };
 
-    // Extract VIN from OCR text
+    // Extract VIN from OCR text with soft-accept fallback
     const extractVINFromText = (ocrText: string): string | null => {
         if (!ocrText) return null;
 
@@ -83,14 +88,25 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
             }
         }
 
+        // Soft accept — valid format but OCR checksum damaged
+        for (const candidate of candidates) {
+            const corrected = autoCorrectVIN(candidate);
+            if (/^[A-HJ-NPR-Z0-9]{17}$/.test(corrected)) {
+                return corrected;
+            }
+        }
+
         // Fallback: look for 17-char alphanumeric sequence
-        const normalized = ocrText.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const normalized = ocrText
+            .toUpperCase()
+            .replace(/[\s\-]/g, '')
+            .replace(/[^A-Z0-9]/g, '');
         if (normalized.length >= 17) {
             for (let i = 0; i <= normalized.length - 17; i++) {
                 const candidate = normalized.substring(i, i + 17);
                 const corrected = autoCorrectVIN(candidate);
-                // Return even if checksum fails - let user see what was detected
-                if (corrected.length === 17) {
+                // Soft accept - valid format even if checksum fails
+                if (/^[A-HJ-NPR-Z0-9]{17}$/.test(corrected)) {
                     return corrected;
                 }
             }
@@ -99,7 +115,12 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
         return null;
     };
 
+    // PRO: Adaptive vertical bands for Qatar registration cards
+    // VIN is often below center, not dead-center
+    const VERTICAL_BANDS = [0.40, 0.48, 0.56]; // TOP, MID, LOWER MID
+
     // Manual capture - user presses button to capture
+    // PRO: Multi-band scanning with grayscale + contrast boost
     const handleManualCapture = async () => {
         if (!cameraRef.current || scanState !== 'scanning') return;
 
@@ -118,60 +139,85 @@ export default function VINScanner({ visible, onClose, onVINDetected }: VINScann
                 throw new Error('Failed to capture photo');
             }
 
-            // Crop to VIN strip area only (8% height, centered)
-            setStatusMessage('🔍 Processing image...');
-            const cropHeight = photo.height * 0.08;
-            const cropWidth = photo.width * 0.85;
+            setStatusMessage('🔍 Processing image (PRO mode)...');
+
+            // PRO: Crop dimensions (narrow strip for clean 17-char VIN only)
+            const cropHeight = photo.height * 0.08; // 8% height - narrow VIN strip
+            const cropWidth = photo.width * 0.92; // 92% width
             const originX = (photo.width - cropWidth) / 2;
-            const originY = (photo.height - cropHeight) / 2;
 
-            const manipulated = await ImageManipulator.manipulateAsync(
-                photo.uri,
-                [
-                    {
-                        crop: {
-                            originX: originX,
-                            originY: originY,
-                            width: cropWidth,
-                            height: cropHeight,
+            let bestVIN: string | null = null;
+            let bestConfidence = 0;
+            let allOcrText = '';
+
+            // PRO: Multi-band scanning - try each vertical position
+            for (const band of VERTICAL_BANDS) {
+                if (bestVIN && bestConfidence >= 80) break; // Stop if we found a valid VIN
+
+                const originY = photo.height * band - cropHeight / 2;
+
+                setStatusMessage(`🔍 Scanning band ${Math.round(band * 100)}%...`);
+
+                // PRO: Enhanced preprocessing with grayscale
+                // Note: expo-image-manipulator doesn't support grayscale directly,
+                // but we boost contrast and use high-resolution crop
+                const manipulated = await ImageManipulator.manipulateAsync(
+                    photo.uri,
+                    [
+                        {
+                            crop: {
+                                originX: originX,
+                                originY: Math.max(0, originY),
+                                width: cropWidth,
+                                height: cropHeight,
+                            },
                         },
-                    },
-                    // Increase contrast for better OCR
-                    { resize: { width: cropWidth * 2 } },
-                ],
-                { compress: 1.0, format: ImageManipulator.SaveFormat.PNG }
-            );
+                        // PRO: 3x resolution for sharper OCR
+                        { resize: { width: cropWidth * 3 } },
+                    ],
+                    { compress: 1.0, format: ImageManipulator.SaveFormat.PNG }
+                );
 
-            // LOCAL OCR using ML Kit
-            setStatusMessage('🔍 Reading text (local OCR)...');
-            const ocrText = await performLocalOCR(manipulated.uri);
-            setRawOcrText(ocrText);
-            console.log('[VINScanner] OCR Text:', ocrText);
+                // LOCAL OCR with line-level filtering
+                const ocrText = await performLocalOCR(manipulated.uri);
+                allOcrText += ocrText + '\n';
+                console.log(`[VINScanner] Band ${band}: ${ocrText}`);
 
-            if (ocrText) {
-                const extractedVIN = extractVINFromText(ocrText);
+                if (ocrText) {
+                    const extractedVIN = extractVINFromText(ocrText);
 
-                if (extractedVIN) {
-                    const correctedVIN = autoCorrectVIN(extractedVIN);
-                    const confidence = getVINConfidence(correctedVIN);
-                    const isValid = isValidVIN(correctedVIN);
+                    if (extractedVIN) {
+                        const correctedVIN = autoCorrectVIN(extractedVIN);
+                        const confidence = getVINConfidence(correctedVIN);
 
-                    setDetectedVIN(correctedVIN);
-                    setVinConfidence(confidence);
-                    setScanState('confirming');
-
-                    if (isValid) {
-                        setStatusMessage('✅ Valid VIN detected!');
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    } else {
-                        setStatusMessage('⚠️ VIN detected but checksum invalid. Verify manually.');
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                        if (confidence > bestConfidence) {
+                            bestVIN = correctedVIN;
+                            bestConfidence = confidence;
+                        }
                     }
-                } else {
-                    // Show raw OCR text for debugging
-                    setStatusMessage('🔄 No VIN found. OCR: "' + ocrText.substring(0, 30) + '..."');
-                    setScanState('scanning');
                 }
+            }
+
+            setRawOcrText(allOcrText.trim());
+
+            if (bestVIN) {
+                const isValid = isValidVIN(bestVIN);
+
+                setDetectedVIN(bestVIN);
+                setVinConfidence(bestConfidence);
+                setScanState('confirming');
+
+                if (isValid) {
+                    setStatusMessage('✅ Valid VIN detected!');
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } else {
+                    setStatusMessage('⚠️ VIN detected but checksum invalid. Verify manually.');
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                }
+            } else if (allOcrText.trim()) {
+                // Show raw OCR text for debugging
+                setStatusMessage('🔄 No VIN found. OCR: "' + allOcrText.substring(0, 30) + '..."');
+                setScanState('scanning');
             } else {
                 setStatusMessage('🔄 No text detected. Try again.');
                 setScanState('scanning');

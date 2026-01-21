@@ -30,6 +30,7 @@ export const en = {
         bids: 'bids',
         noBids: 'No bids yet',
         expires: 'Expires',
+        total: 'Total',
     },
 
     // Orders Screen

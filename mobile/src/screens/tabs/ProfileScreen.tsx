@@ -1,4 +1,4 @@
-// QScrap Profile Screen - Premium VIP Design
+// QScrap Profile Screen - Premium VIP Design with Full i18n Support
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -15,17 +15,20 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { useToast } from '../../components/Toast';
 import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../App';
+import { rtlFlexDirection, rtlChevron, rtlMarginHorizontal } from '../../utils/rtl';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { user, logout, refreshUser } = useAuth();
     const { colors } = useTheme();
+    const { t, isRTL, language } = useTranslation();
     const toast = useToast();
     const [profile, setProfile] = useState<any>(null);
     const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
@@ -46,7 +49,7 @@ export default function ProfileScreen() {
             setProfile(data);
         } catch (error) {
             console.log('Failed to load profile:', error);
-            toast.error('Error', 'Failed to load profile');
+            toast.error(t('common.error'), t('errors.loadFailed'));
         }
     };
 
@@ -62,12 +65,12 @@ export default function ProfileScreen() {
 
     const handleLogout = () => {
         Alert.alert(
-            'Sign Out',
-            'Are you sure you want to sign out?',
+            t('profile.signOut'),
+            t('profile.confirmSignOut'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Sign Out',
+                    text: t('profile.signOut'),
                     style: 'destructive',
                     onPress: async () => {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -80,21 +83,21 @@ export default function ProfileScreen() {
 
     const handleDeleteAccount = () => {
         Alert.alert(
-            'Delete Account',
-            'Are you sure you want to delete your account? This action is permanent and cannot be undone.',
+            t('profile.deleteAccount'),
+            t('profile.confirmDelete'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: t('common.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             await api.deleteAccount();
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             await logout();
-                            toast.success('Account Deleted', 'Your account has been successfully deleted.');
+                            toast.success(t('profile.accountDeleted'), t('profile.accountDeletedMsg'));
                         } catch (error: any) {
-                            toast.error('Error', error.message || 'Failed to delete account');
+                            toast.error(t('common.error'), error.message || t('errors.unknown'));
                         }
                     },
                 },
@@ -118,24 +121,24 @@ export default function ProfileScreen() {
         badge?: string;
     }) => (
         <TouchableOpacity
-            style={styles.menuItem}
+            style={[styles.menuItem, { flexDirection: rtlFlexDirection(isRTL) }]}
             onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onPress();
             }}
             activeOpacity={0.7}
         >
-            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger]}
+            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger, rtlMarginHorizontal(isRTL, 0, Spacing.md)]}
             >
                 <Text style={styles.menuIcon}>{icon}</Text>
             </View>
             <Text style={[styles.menuLabel, { color: danger ? '#EF4444' : colors.text }]}>{label}</Text>
             {badge ? (
-                <View style={styles.menuBadge}>
+                <View style={[styles.menuBadge, rtlMarginHorizontal(isRTL, 0, Spacing.sm)]}>
                     <Text style={styles.menuBadgeText}>{badge}</Text>
                 </View>
             ) : null}
-            {showArrow && <Text style={styles.menuArrow}>›</Text>}
+            {showArrow && <Text style={styles.menuArrow}>{rtlChevron(isRTL)}</Text>}
         </TouchableOpacity>
     );
 
@@ -143,8 +146,15 @@ export default function ProfileScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Premium Header */}
-                <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
+                <View style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.title')}</Text>
                     <TouchableOpacity
                         style={styles.editButton}
                         onPress={() => {
@@ -152,7 +162,7 @@ export default function ProfileScreen() {
                             navigation.navigate('EditProfile');
                         }}
                     >
-                        <Text style={styles.editButtonText}>Edit</Text>
+                        <Text style={styles.editButtonText}>{t('profile.edit')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -169,28 +179,28 @@ export default function ProfileScreen() {
                                 {(profile?.user?.full_name || user?.full_name)?.charAt(0)?.toUpperCase() || '👤'}
                             </Text>
                         </View>
-                        <Text style={styles.userName}>{profile?.user?.full_name || user?.full_name || 'Customer'}</Text>
+                        <Text style={styles.userName}>{profile?.user?.full_name || user?.full_name || t('common.customer')}</Text>
                         <Text style={styles.userPhone}>{profile?.user?.phone_number || user?.phone_number}</Text>
 
                         {/* Stats Row */}
-                        <View style={styles.profileStats}>
+                        <View style={[styles.profileStats, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View style={styles.profileStat}>
                                 <Text style={styles.profileStatNumber}>
                                     {profile?.stats?.total_requests || 0}
                                 </Text>
-                                <Text style={styles.profileStatLabel}>Requests</Text>
+                                <Text style={styles.profileStatLabel}>{t('profile.requestsCount')}</Text>
                             </View>
                             <View style={styles.profileStatDivider} />
                             <View style={styles.profileStat}>
                                 <Text style={styles.profileStatNumber}>
                                     {profile?.stats?.total_orders || 0}
                                 </Text>
-                                <Text style={styles.profileStatLabel}>Orders</Text>
+                                <Text style={styles.profileStatLabel}>{t('profile.ordersCount')}</Text>
                             </View>
                             <View style={styles.profileStatDivider} />
                             <View style={styles.profileStat}>
                                 <Text style={styles.profileStatNumber}>⭐</Text>
-                                <Text style={styles.profileStatLabel}>VIP</Text>
+                                <Text style={styles.profileStatLabel}>{t('profile.vip')}</Text>
                             </View>
                         </View>
                     </LinearGradient>
@@ -198,36 +208,36 @@ export default function ProfileScreen() {
 
                 {/* Account Section */}
                 <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Account</Text>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.account')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="📋" label="My Addresses" onPress={() => navigation.navigate('Addresses')} />
-                        <MenuItem icon="🔔" label="Notifications" onPress={() => navigation.navigate('Notifications')} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
-                        <MenuItem icon="🎨" label="Appearance" onPress={() => navigation.navigate('Settings')} />
+                        <MenuItem icon="📋" label={t('profile.myAddresses')} onPress={() => navigation.navigate('Addresses')} />
+                        <MenuItem icon="🔔" label={t('profile.notifications')} onPress={() => navigation.navigate('Notifications')} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
+                        <MenuItem icon="🎨" label={t('profile.appearance')} onPress={() => navigation.navigate('Settings')} />
                     </View>
                 </View>
 
                 {/* Support Section */}
                 <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Support</Text>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.support')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="🎫" label="Support Tickets" onPress={() => navigation.navigate('Support')} />
-                        <MenuItem icon="💬" label="Help Center" onPress={() => Alert.alert(
-                            'Help Center',
-                            'How can we help you today?',
+                        <MenuItem icon="🎫" label={t('profile.supportTickets')} onPress={() => navigation.navigate('Support')} />
+                        <MenuItem icon="💬" label={t('profile.helpCenter')} onPress={() => Alert.alert(
+                            t('profile.helpCenter'),
+                            t('profile.howCanWeHelp'),
                             [
-                                { text: 'FAQs', onPress: () => Alert.alert('FAQs', '• How to request a part?\nGo to Home > New Part Request\n\n• How long for delivery?\nTypically 1-3 business days\n\n• Payment methods?\nCash on delivery or card') },
-                                { text: 'Contact Support', onPress: () => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support') },
-                                { text: 'Cancel', style: 'cancel' }
+                                { text: t('alerts.faqs'), onPress: () => Alert.alert(t('alerts.faqs'), t('profile.faqs')) },
+                                { text: t('alerts.contactSupport'), onPress: () => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support') },
+                                { text: t('common.cancel'), style: 'cancel' }
                             ]
                         )} />
-                        <MenuItem icon="📞" label="Contact Us" onPress={() => Alert.alert(
-                            'Contact QScrap',
-                            'Choose how to reach us:',
+                        <MenuItem icon="📞" label={t('profile.contactUs')} onPress={() => Alert.alert(
+                            t('profile.contactUs'),
+                            t('profile.chooseContact'),
                             [
-                                { text: '📱 WhatsApp', onPress: () => Linking.openURL('https://wa.me/97412345678') },
-                                { text: '📞 Call Us', onPress: () => Linking.openURL('tel:+97412345678') },
-                                { text: '✉️ Email', onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
-                                { text: 'Cancel', style: 'cancel' }
+                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL('https://wa.me/97412345678') },
+                                { text: t('alerts.callUs'), onPress: () => Linking.openURL('tel:+97412345678') },
+                                { text: t('alerts.emailUs'), onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
+                                { text: t('common.cancel'), style: 'cancel' }
                             ]
                         )} />
                     </View>
@@ -235,10 +245,10 @@ export default function ProfileScreen() {
 
                 {/* Legal Section */}
                 <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>Legal</Text>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.legal')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="🔒" label="Privacy Policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
-                        <MenuItem icon="📄" label="Terms of Service" onPress={() => Linking.openURL(TERMS_URL)} />
+                        <MenuItem icon="🔒" label={t('settings.privacyPolicy')} onPress={() => Linking.openURL(PRIVACY_URL)} />
+                        <MenuItem icon="📄" label={t('settings.termsOfService')} onPress={() => Linking.openURL(TERMS_URL)} />
                     </View>
                 </View>
 
@@ -247,7 +257,7 @@ export default function ProfileScreen() {
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
                             icon="🚪"
-                            label="Sign Out"
+                            label={t('profile.signOut')}
                             onPress={handleLogout}
                             showArrow={false}
                             danger
@@ -255,7 +265,7 @@ export default function ProfileScreen() {
                         <View style={{ height: 1, backgroundColor: colors.border }} />
                         <MenuItem
                             icon="🗑️"
-                            label="Delete Account"
+                            label={t('profile.deleteAccount')}
                             onPress={handleDeleteAccount}
                             showArrow={false}
                             danger
@@ -266,10 +276,10 @@ export default function ProfileScreen() {
                 {/* Version Footer */}
                 <View style={styles.versionContainer}>
                     <View style={styles.versionBadge}>
-                        <Text style={styles.versionText}>QScrap v{APP_VERSION}</Text>
+                        <Text style={styles.versionText}>{t('profile.version', { version: APP_VERSION })}</Text>
                     </View>
-                    <Text style={styles.copyrightText}>© 2024 QScrap. All rights reserved.</Text>
-                    <Text style={styles.madeWithText}>Made with ❤️ in Qatar</Text>
+                    <Text style={styles.copyrightText}>{t('profile.allRightsReserved', { year: new Date().getFullYear() })}</Text>
+                    <Text style={styles.madeWithText}>{t('profile.madeInQatar')}</Text>
                 </View>
 
                 <View style={{ height: 100 }} />
@@ -299,7 +309,6 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        // color set dynamically via colors.text
         letterSpacing: -0.5,
     },
     editButton: {
@@ -384,7 +393,6 @@ const styles = StyleSheet.create({
     menuTitle: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        // color set dynamically via colors.textSecondary
         marginBottom: Spacing.sm,
         textTransform: 'uppercase',
         letterSpacing: 1,
@@ -421,7 +429,6 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: FontSizes.md,
         fontWeight: '500',
-        // color set dynamically via colors.text or danger color
     },
     menuLabelDanger: {
         color: '#EF4444',

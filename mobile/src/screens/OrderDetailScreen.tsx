@@ -24,6 +24,8 @@ import { api, Order } from '../services/api';
 import { SOCKET_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { RootStackParamList } from '../../App';
 import { useSocketContext } from '../hooks/useSocket';
 
@@ -33,7 +35,7 @@ const { width } = Dimensions.get('window');
 // ============================================
 // STATUS CONFIGURATION
 // ============================================
-const getStatusConfig = (status: string) => {
+const getStatusConfig = (status: string, t: any) => {
     const configs: Record<string, {
         color: string;
         icon: string;
@@ -42,78 +44,78 @@ const getStatusConfig = (status: string) => {
         gradient: readonly [string, string];
     }> = {
         'confirmed': {
-            color: '#3B82F6', icon: '✓', label: 'Confirmed',
-            description: 'Garage has confirmed your order',
+            color: '#3B82F6', icon: '✓', label: t('status.confirmed'),
+            description: t('status.confirmedDesc'),
             gradient: ['#3B82F6', '#2563EB'] as const
         },
         'preparing': {
-            color: '#F59E0B', icon: '🔧', label: 'Preparing',
-            description: 'Garage is preparing your part',
+            color: '#F59E0B', icon: '🔧', label: t('status.preparing'),
+            description: t('status.preparingDesc'),
             gradient: ['#F59E0B', '#D97706'] as const
         },
         'ready_for_pickup': {
-            color: '#8B5CF6', icon: '📦', label: 'Ready',
-            description: 'Waiting for driver pickup',
+            color: '#8B5CF6', icon: '📦', label: t('status.readyForPickup'),
+            description: t('status.readyDesc'),
             gradient: ['#8B5CF6', '#7C3AED'] as const
         },
         'collected': {
-            color: '#22C55E', icon: '🚚', label: 'In Transit',
-            description: 'Your part is being processed',
+            color: '#22C55E', icon: '🚚', label: t('status.inTransit'),
+            description: t('status.processingDesc'),
             gradient: ['#22C55E', '#16A34A'] as const
         },
         'qc_in_progress': {
-            color: '#22C55E', icon: '🚚', label: 'In Transit',
-            description: 'Quality check in progress',
+            color: '#22C55E', icon: '🚚', label: t('status.inTransit'),
+            description: t('status.qcDesc'),
             gradient: ['#22C55E', '#16A34A'] as const
         },
         'qc_passed': {
-            color: '#22C55E', icon: '🚚', label: 'In Transit',
-            description: 'Quality verified - shipping soon',
+            color: '#22C55E', icon: '🚚', label: t('status.inTransit'),
+            description: t('status.qcPassedDesc'),
             gradient: ['#22C55E', '#16A34A'] as const
         },
         'qc_failed': {
-            color: '#F59E0B', icon: '⏳', label: 'Processing',
-            description: 'Resolving an issue with your order',
+            color: '#F59E0B', icon: '⏳', label: t('status.processing'),
+            description: t('status.issueDesc'),
             gradient: ['#F59E0B', '#D97706'] as const
         },
         'in_transit': {
-            color: '#22C55E', icon: '🚗', label: 'On The Way',
-            description: 'Driver is heading to you!',
+            color: '#22C55E', icon: '🚗', label: t('status.onTheWay'),
+            description: t('status.onTheWayDesc'),
             gradient: ['#22C55E', '#16A34A'] as const
         },
         'delivered': {
-            color: '#06B6D4', icon: '📍', label: 'Delivered',
-            description: 'Please confirm you received it',
+            color: '#06B6D4', icon: '📍', label: t('status.delivered'),
+            description: t('status.deliveredDesc'),
             gradient: ['#06B6D4', '#0891B2'] as const
         },
         'completed': {
-            color: '#22C55E', icon: '🎉', label: 'Completed',
-            description: 'Order completed successfully',
+            color: '#22C55E', icon: '🎉', label: t('status.completed'),
+            description: t('status.completedDesc'),
             gradient: ['#22C55E', '#16A34A'] as const
         },
         'cancelled_by_customer': {
-            color: '#EF4444', icon: '✕', label: 'Cancelled',
-            description: 'You cancelled this order',
+            color: '#EF4444', icon: '✕', label: t('status.cancelled'),
+            description: t('status.cancelledUserDesc'),
             gradient: ['#EF4444', '#DC2626'] as const
         },
         'cancelled_by_garage': {
-            color: '#EF4444', icon: '✕', label: 'Cancelled',
-            description: 'Garage cancelled this order',
+            color: '#EF4444', icon: '✕', label: t('status.cancelled'),
+            description: t('status.cancelledGarageDesc'),
             gradient: ['#EF4444', '#DC2626'] as const
         },
         'cancelled_by_ops': {
-            color: '#EF4444', icon: '✕', label: 'Cancelled',
-            description: 'Support cancelled this order',
+            color: '#EF4444', icon: '✕', label: t('status.cancelled'),
+            description: t('status.cancelledSupportDesc'),
             gradient: ['#EF4444', '#DC2626'] as const
         },
         'disputed': {
-            color: '#F59E0B', icon: '⚠️', label: 'Disputed',
-            description: 'Order is under dispute review',
+            color: '#F59E0B', icon: '⚠️', label: t('status.disputed'),
+            description: t('status.disputedDesc'),
             gradient: ['#F59E0B', '#D97706'] as const
         },
         'refunded': {
-            color: '#6B7280', icon: '💸', label: 'Refunded',
-            description: 'Payment has been refunded',
+            color: '#6B7280', icon: '💸', label: t('status.refunded'),
+            description: t('status.refundedDesc'),
             gradient: ['#6B7280', '#4B5563'] as const
         },
     };
@@ -123,13 +125,13 @@ const getStatusConfig = (status: string) => {
     };
 };
 
-const getTimelineSteps = (status: string) => {
+const getTimelineSteps = (status: string, t: any) => {
     const allSteps = [
-        { key: 'confirmed', label: 'Confirmed', icon: '✓' },
-        { key: 'preparing', label: 'Preparing', icon: '🔧' },
-        { key: 'ready_for_pickup', label: 'Ready', icon: '📦' },
-        { key: 'in_transit', label: 'In Transit', icon: '🚚' },
-        { key: 'delivered', label: 'Delivered', icon: '📍' },
+        { key: 'confirmed', label: t('status.confirmed'), icon: '✓' },
+        { key: 'preparing', label: t('status.preparing'), icon: '🔧' },
+        { key: 'ready_for_pickup', label: t('status.ready'), icon: '📦' },
+        { key: 'in_transit', label: t('status.inTransit'), icon: '🚚' },
+        { key: 'delivered', label: t('status.delivered'), icon: '📍' },
     ];
 
     const statusToStep: Record<string, number> = {
@@ -145,6 +147,7 @@ const getTimelineSteps = (status: string) => {
 // HERO STATUS HEADER
 // ============================================
 const HeroStatusCard = ({ order, statusConfig }: { order: Order; statusConfig: any }) => {
+    const { t } = useTranslation();
     const pulseAnim = useRef(new Animated.Value(0)).current;
     const isActive = !['completed', 'cancelled'].includes(order.order_status);
 
@@ -188,7 +191,7 @@ const HeroStatusCard = ({ order, statusConfig }: { order: Order; statusConfig: a
             <Text style={styles.heroLabel}>{statusConfig.label}</Text>
             <Text style={styles.heroDescription}>{statusConfig.description}</Text>
             <View style={styles.heroOrderNumber}>
-                <Text style={styles.heroOrderText}>Order #{order.order_number}</Text>
+                <Text style={styles.heroOrderText}>{t('common.order')} #{order.order_number}</Text>
             </View>
         </LinearGradient>
     );
@@ -197,8 +200,8 @@ const HeroStatusCard = ({ order, statusConfig }: { order: Order; statusConfig: a
 // ============================================
 // VISUAL TIMELINE
 // ============================================
-const VisualTimeline = ({ status, colors }: { status: string; colors: any }) => {
-    const { steps, currentStep } = getTimelineSteps(status);
+const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t: any }) => {
+    const { steps, currentStep } = getTimelineSteps(status, t);
     const lineAnims = useRef(steps.map(() => new Animated.Value(0))).current;
 
     useEffect(() => {
@@ -216,7 +219,7 @@ const VisualTimeline = ({ status, colors }: { status: string; colors: any }) => 
 
     return (
         <View style={[styles.timelineContainer, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Progress</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('order.progress')}</Text>
 
             {steps.map((step, index) => {
                 const isCompleted = index < currentStep;
@@ -263,7 +266,7 @@ const VisualTimeline = ({ status, colors }: { status: string; colors: any }) => 
                             </Text>
                             {isCurrent && (
                                 <View style={styles.currentBadge}>
-                                    <Text style={styles.currentBadgeText}>Current</Text>
+                                    <Text style={styles.currentBadgeText}>{t('common.current')}</Text>
                                 </View>
                             )}
                         </View>
@@ -277,7 +280,7 @@ const VisualTimeline = ({ status, colors }: { status: string; colors: any }) => 
 // ============================================
 // DRIVER CARD
 // ============================================
-const DriverCard = ({ order, onCall }: { order: Order; onCall: () => void }) => {
+const DriverCard = ({ order, onCall, t, isRTL }: { order: Order; onCall: () => void; t: any; isRTL: boolean }) => {
     const pulseAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -303,19 +306,21 @@ const DriverCard = ({ order, onCall }: { order: Order; onCall: () => void }) => 
                             { opacity: pulseAnim }
                         ]} />
                     </View>
-                    <View>
-                        <Text style={styles.driverLabel}>Your Driver</Text>
-                        <Text style={styles.driverName}>{order.driver_name}</Text>
+                    <View style={isRTL ? { marginRight: Spacing.md } : { marginLeft: Spacing.md }}>
+                        <Text style={[styles.driverLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.yourDriver')}</Text>
+                        <Text style={[styles.driverName, { textAlign: rtlTextAlign(isRTL) }]}>{order.driver_name}</Text>
                     </View>
+                    {
+                        order.driver_phone && (
+                            <TouchableOpacity style={[styles.callButton, { marginLeft: isRTL ? 0 : 'auto', marginRight: isRTL ? 'auto' : 0 }]} onPress={onCall}>
+                                <Text style={styles.callIcon}>📞</Text>
+                                <Text style={styles.callText}>{t('common.call')}</Text>
+                            </TouchableOpacity>
+                        )
+                    }
                 </View>
-                {order.driver_phone && (
-                    <TouchableOpacity style={styles.callButton} onPress={onCall}>
-                        <Text style={styles.callIcon}>📞</Text>
-                        <Text style={styles.callText}>Call</Text>
-                    </TouchableOpacity>
-                )}
-            </LinearGradient>
-        </View>
+            </LinearGradient >
+        </View >
     );
 };
 
@@ -358,6 +363,7 @@ export default function OrderDetailScreen() {
     const route = useRoute();
     const { orderId } = route.params as { orderId: string };
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const { orderUpdates } = useSocketContext();
 
     const [order, setOrder] = useState<Order | null>(null);
@@ -380,7 +386,7 @@ export default function OrderDetailScreen() {
             const foundOrder = data.orders?.find((o: Order) => o.order_id === orderId);
             setOrder(foundOrder || null);
         } catch (error) {
-            Alert.alert('Error', 'Failed to load order details');
+            Alert.alert(t('common.error'), t('order.loadFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -394,10 +400,10 @@ export default function OrderDetailScreen() {
     }, [orderUpdates, orderId, loadOrderDetails]);
 
     const handleConfirmDelivery = async () => {
-        Alert.alert('Confirm Delivery', 'Have you received your part?', [
-            { text: 'Cancel', style: 'cancel' },
+        Alert.alert(t('order.confirmDelivery'), t('order.haveYouReceived'), [
+            { text: t('common.cancel'), style: 'cancel' },
             {
-                text: 'Confirm Receipt',
+                text: t('order.confirmReceipt'),
                 onPress: async () => {
                     setIsConfirming(true);
                     try {
@@ -406,7 +412,7 @@ export default function OrderDetailScreen() {
                         loadOrderDetails();
                         setShowReviewModal(true);
                     } catch (error: any) {
-                        Alert.alert('Error', error.message || 'Failed to confirm delivery');
+                        Alert.alert(t('common.error'), error.message || t('order.confirmFailed'));
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                     } finally {
                         setIsConfirming(false);
@@ -428,11 +434,11 @@ export default function OrderDetailScreen() {
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowReviewModal(false);
-            Alert.alert('Thank You! 🌟', 'Your review has been submitted.', [
-                { text: 'OK', onPress: () => navigation.goBack() }
+            Alert.alert(t('review.thankYou'), t('review.submittedMsg'), [
+                { text: t('common.ok'), onPress: () => navigation.goBack() }
             ]);
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to submit review');
+            Alert.alert(t('common.error'), error.message || t('review.failed'));
         } finally {
             setIsSubmittingReview(false);
         }
@@ -449,7 +455,7 @@ export default function OrderDetailScreen() {
         try {
             const token = await api.getToken();
             if (!token) {
-                Alert.alert('Session Expired', 'Please log in again to download the invoice.');
+                Alert.alert(t('auth.sessionExpired'), t('auth.loginAgainInvoice'));
                 return;
             }
             const generateResponse = await fetch(`${SOCKET_URL}/api/documents/invoice/${order.order_id}`, {
@@ -471,7 +477,7 @@ export default function OrderDetailScreen() {
             await Linking.openURL(`${SOCKET_URL}/api/documents/public/${documentId}/download?token=${token}`);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to download invoice');
+            Alert.alert(t('common.error'), error.message || t('order.invoiceFailed'));
         } finally {
             setIsDownloadingInvoice(false);
         }
@@ -504,11 +510,11 @@ export default function OrderDetailScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <View style={[styles.header, { backgroundColor: colors.surface }]}>
+                <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backText}>← Back</Text>
+                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Order Details</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                     <View style={{ width: 60 }} />
                 </View>
                 <SkeletonLoading />
@@ -519,22 +525,22 @@ export default function OrderDetailScreen() {
     if (!order) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <Text style={styles.errorText}>Order not found</Text>
+                <Text style={styles.errorText}>{t('order.notFound')}</Text>
             </SafeAreaView>
         );
     }
 
-    const statusConfig = getStatusConfig(order.order_status);
+    const statusConfig = getStatusConfig(order.order_status, t);
     const isInTransit = ['in_transit', 'collected', 'qc_in_progress', 'qc_passed'].includes(order.order_status);
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Order Details</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -547,72 +553,77 @@ export default function OrderDetailScreen() {
                     <TouchableOpacity style={styles.trackButton} onPress={handleTrackLive}>
                         <LinearGradient colors={['#3B82F6', '#1D4ED8']} style={styles.trackGradient}>
                             <Text style={styles.trackIcon}>🗺️</Text>
-                            <Text style={styles.trackText}>Open Live Map</Text>
+                            <Text style={styles.trackText}>{t('order.openLiveMap')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 )}
 
                 {/* Driver Card */}
                 {order.driver_name && isInTransit && (
-                    <DriverCard order={order} onCall={handleCallDriver} />
+                    <DriverCard order={order} onCall={handleCallDriver} t={t} isRTL={isRTL} />
                 )}
 
                 {/* Timeline */}
-                <VisualTimeline status={order.order_status} colors={colors} />
+                <VisualTimeline status={order.order_status} colors={colors} t={t} />
 
                 {/* Order Details */}
                 <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Summary</Text>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Garage</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>{order.garage_name}</Text>
+                    {/* Premium Order Summary Header */}
+                    <View style={[styles.summaryHeader, { justifyContent: isRTL ? 'flex-end' : 'flex-start' }]}>
+                        {!isRTL && <Text style={[styles.summaryIcon, { marginRight: Spacing.sm }]}>📋</Text>}
+                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL), marginBottom: 0 }]}>{t('common.orderSummary')}</Text>
+                        {isRTL && <Text style={[styles.summaryIcon, { marginLeft: Spacing.sm }]}>📋</Text>}
                     </View>
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Vehicle</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>
-                            {order.car_make} {order.car_model} ({order.car_year})
+                    <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('common.garage')}  <Text style={{ fontWeight: '700' }}>{order.garage_name}</Text>
                         </Text>
                     </View>
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Part</Text>
-                        <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
-                            {order.part_category || 'Part'}
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('common.vehicle')}  <Text style={{ fontWeight: '700' }}>{order.car_make} {order.car_model} ({order.car_year})</Text>
+                        </Text>
+                    </View>
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('common.part')}  <Text style={{ fontWeight: '700' }}>{order.part_category || t('common.part')}</Text>
                         </Text>
                     </View>
                     {order.part_subcategory && (
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Type</Text>
-                            <Text style={[styles.detailValue, { color: colors.text }]}>
-                                {order.part_subcategory}
+                        <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('common.type')}  <Text style={{ fontWeight: '700' }}>{order.part_subcategory}</Text>
                             </Text>
                         </View>
                     )}
                     {order.part_description && (
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Notes</Text>
-                            <Text style={[styles.detailValue, { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 }]} numberOfLines={2}>
-                                {order.part_description}
+                        <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.detailValue, { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={3}>
+                                {t('common.notes')}  <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
                             </Text>
                         </View>
                     )}
 
                     <View style={styles.divider} />
 
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Part Price</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>{order.part_price} QAR</Text>
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('order.partPrice')}  <Text style={{ fontWeight: '700' }}>{order.part_price} {t('common.currency')}</Text>
+                        </Text>
                     </View>
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Delivery</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>{order.delivery_fee} QAR</Text>
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('order.deliveryFee')}  <Text style={{ fontWeight: '700' }}>{order.delivery_fee} {t('common.currency')}</Text>
+                        </Text>
                     </View>
 
                     <View style={styles.divider} />
 
-                    <View style={styles.detailRow}>
-                        <Text style={styles.totalLabel}>Total</Text>
-                        <Text style={[styles.totalValue, { color: statusConfig.color }]}>{order.total_amount} QAR</Text>
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.total')}</Text>
+                        <Text style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>{order.total_amount} {t('common.currency')}</Text>
                     </View>
 
                     {order.order_status === 'completed' && (
@@ -628,7 +639,7 @@ export default function OrderDetailScreen() {
                                     ) : (
                                         <>
                                             <Text style={styles.invoiceIcon}>📄</Text>
-                                            <Text style={styles.invoiceText}>Download Invoice</Text>
+                                            <Text style={styles.invoiceText}>{t('order.downloadInvoice')}</Text>
                                         </>
                                     )}
                                 </LinearGradient>
@@ -657,7 +668,7 @@ export default function OrderDetailScreen() {
                                     style={styles.reorderGradient}
                                 >
                                     <Text style={styles.reorderIcon}>🔄</Text>
-                                    <Text style={styles.reorderText}>Order Again</Text>
+                                    <Text style={styles.reorderText}>{t('order.orderAgain')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
                         </>
@@ -667,10 +678,10 @@ export default function OrderDetailScreen() {
                 {/* Delivery Address */}
                 {order.delivery_address && (
                     <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Address</Text>
-                        <View style={styles.addressRow}>
+                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.deliveryAddress')}</Text>
+                        <View style={[styles.addressRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.addressIcon}>📍</Text>
-                            <Text style={[styles.addressText, { color: colors.text }]}>{order.delivery_address}</Text>
+                            <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
                         </View>
                     </View>
                 )}
@@ -688,7 +699,7 @@ export default function OrderDetailScreen() {
                             ) : (
                                 <>
                                     <Text style={styles.confirmIcon}>✅</Text>
-                                    <Text style={styles.confirmText}>Confirm I Received the Part</Text>
+                                    <Text style={styles.confirmText}>{t('order.confirmReceived')}</Text>
                                 </>
                             )}
                         </LinearGradient>
@@ -698,8 +709,7 @@ export default function OrderDetailScreen() {
                 {/* Order Date */}
                 <View style={styles.metaInfo}>
                     <Text style={styles.metaText}>
-                        Ordered {new Date(order.created_at).toLocaleDateString()} at{' '}
-                        {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {t('order.orderedAt', { date: new Date(order.created_at).toLocaleDateString(), time: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
                     </Text>
                 </View>
 
@@ -710,21 +720,21 @@ export default function OrderDetailScreen() {
             <Modal visible={showReviewModal} transparent animationType="slide" onRequestClose={() => setShowReviewModal(false)}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>⭐ Rate Your Experience</Text>
-                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                            How was your experience with {order?.garage_name}?
+                        <Text style={[styles.modalTitle, { color: colors.text, textAlign: 'center' }]}>⭐ {t('review.title')}</Text>
+                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
+                            {t('review.howWasExp', { garage: order?.garage_name })}
                         </Text>
 
                         <ScrollView style={styles.ratingsScroll} showsVerticalScrollIndicator={false}>
-                            <StarRating rating={overallRating} onRatingChange={setOverallRating} label="Overall" />
-                            <StarRating rating={partQualityRating} onRatingChange={setPartQualityRating} label="Part Quality" />
-                            <StarRating rating={communicationRating} onRatingChange={setCommunicationRating} label="Communication" />
-                            <StarRating rating={deliveryRating} onRatingChange={setDeliveryRating} label="Delivery" />
+                            <StarRating rating={overallRating} onRatingChange={setOverallRating} label={t('review.overall')} />
+                            <StarRating rating={partQualityRating} onRatingChange={setPartQualityRating} label={t('review.quality')} />
+                            <StarRating rating={communicationRating} onRatingChange={setCommunicationRating} label={t('review.communication')} />
+                            <StarRating rating={deliveryRating} onRatingChange={setDeliveryRating} label={t('review.delivery')} />
 
-                            <Text style={[styles.reviewInputLabel, { color: colors.textSecondary }]}>Write a review (optional)</Text>
+                            <Text style={[styles.reviewInputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('review.writeReview')}</Text>
                             <TextInput
-                                style={[styles.reviewInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                placeholder="Share your experience..."
+                                style={[styles.reviewInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder={t('review.placeholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={reviewText}
                                 onChangeText={setReviewText}
@@ -734,9 +744,9 @@ export default function OrderDetailScreen() {
                             />
                         </ScrollView>
 
-                        <View style={styles.modalButtons}>
+                        <View style={[styles.modalButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <TouchableOpacity style={[styles.skipButton, { borderColor: colors.border }]} onPress={() => setShowReviewModal(false)}>
-                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.submitButton, isSubmittingReview && { opacity: 0.7 }]}
@@ -747,7 +757,7 @@ export default function OrderDetailScreen() {
                                     {isSubmittingReview ? (
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (
-                                        <Text style={styles.submitButtonText}>Submit</Text>
+                                        <Text style={styles.submitButtonText}>{t('common.submit')}</Text>
                                     )}
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -829,11 +839,33 @@ const styles = StyleSheet.create({
     currentBadge: { marginLeft: Spacing.sm, backgroundColor: Colors.primary + '20', paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.md },
     currentBadgeText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600' },
 
-    // Details
-    detailsCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, padding: Spacing.lg, ...Shadows.sm },
-    detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm },
-    detailLabel: { fontSize: FontSizes.md, color: '#525252' },
-    detailValue: { fontSize: FontSizes.md, fontWeight: '500', textAlign: 'right', flex: 1 },
+    // Details - Enhanced Order Summary Card
+    detailsCard: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
+        ...Shadows.md
+    },
+    summaryHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    summaryIcon: {
+        fontSize: 24,
+    },
+    summaryDivider: {
+        height: 1,
+        backgroundColor: '#E8E8E8',
+        marginBottom: Spacing.lg,
+    },
+    detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.md, paddingVertical: Spacing.sm },
+    detailLabel: { fontSize: FontSizes.md, color: '#737373', fontWeight: '400' },
+    detailValue: { fontSize: FontSizes.md, fontWeight: '400', color: '#737373', flex: 1 },
     divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: Spacing.md },
     totalLabel: { fontSize: FontSizes.lg, fontWeight: '700' },
     totalValue: { fontSize: FontSizes.xl, fontWeight: '800' },

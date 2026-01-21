@@ -44,7 +44,7 @@ export function useBadgeCounts() {
 
     const fetchBadgeCounts = useCallback(async () => {
         try {
-            const response = await api.request('/notifications/badge-counts');
+            const response = await api.request<any>('/notifications/badge-counts');
             if (response.success) {
                 setCounts({
                     requests: response.requests || DEFAULT_COUNTS.requests,

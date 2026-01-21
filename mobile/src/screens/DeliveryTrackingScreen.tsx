@@ -18,6 +18,8 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import { api, getSocket } from '../services';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
@@ -51,6 +53,7 @@ interface RouteCoordinate {
 
 const DeliveryTrackingScreen: React.FC = () => {
     const { colors, isDark } = useTheme();
+    const { t, isRTL } = useTranslation();
     const toast = useToast();
     const navigation = useNavigation<any>();
     const route = useRoute();
@@ -143,7 +146,7 @@ const DeliveryTrackingScreen: React.FC = () => {
             }
         } catch (error) {
             console.error('Failed to load order:', error);
-            toast.error('Error', 'Failed to load tracking data');
+            toast.error(t('common.error'), t('tracking.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -249,7 +252,7 @@ const DeliveryTrackingScreen: React.FC = () => {
             <View style={[styles.center, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                    Loading tracking...
+                    {t('tracking.loading')}
                 </Text>
             </View>
         );
@@ -345,7 +348,7 @@ const DeliveryTrackingScreen: React.FC = () => {
                 {/* ETA Badge */}
                 {eta && (
                     <View style={[styles.etaBadge, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.etaLabel, { color: colors.textSecondary }]}>ETA</Text>
+                        <Text style={[styles.etaLabel, { color: colors.textSecondary }]}>{t('tracking.eta')}</Text>
                         <Text style={[styles.etaValue, { color: Colors.primary }]}>{eta}</Text>
                     </View>
                 )}
@@ -362,31 +365,31 @@ const DeliveryTrackingScreen: React.FC = () => {
             {/* Bottom Card */}
             <View style={[styles.bottomCard, { backgroundColor: colors.surface }, Shadows.lg]}>
                 {/* Status Row */}
-                <View style={[styles.statusRow, { borderBottomColor: colors.border }]}>
-                    <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+                <View style={[styles.statusRow, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: statusColor + '20', flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Ionicons name={statusInfo.icon as any} size={18} color={statusColor} />
-                        <Text style={[styles.statusText, { color: statusColor }]}>
+                        <Text style={[styles.statusText, { color: statusColor, textAlign: rtlTextAlign(isRTL) }]}>
                             {statusInfo.label}
                         </Text>
                     </View>
                     {distance && (
                         <Text style={[styles.distanceText, { color: colors.textSecondary }]}>
-                            📏 {distance} away
+                            📏 {distance} {t('tracking.away')}
                         </Text>
                     )}
                 </View>
 
                 {/* Driver Info */}
                 {order?.driver_id ? (
-                    <View style={styles.driverSection}>
+                    <View style={[styles.driverSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <View style={[styles.driverAvatar, { backgroundColor: Colors.primary + '20' }]}>
                             <Text style={styles.driverEmoji}>🚗</Text>
                         </View>
-                        <View style={styles.driverInfo}>
-                            <Text style={[styles.driverName, { color: colors.text }]}>
+                        <View style={[styles.driverInfo, isRTL ? { marginRight: Spacing.md } : { marginLeft: Spacing.md }]}>
+                            <Text style={[styles.driverName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                                 {order.driver_name}
                             </Text>
-                            <Text style={[styles.vehicleInfo, { color: colors.textSecondary }]}>
+                            <Text style={[styles.vehicleInfo, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {order.vehicle_type} • {order.vehicle_plate}
                             </Text>
                         </View>
@@ -419,17 +422,17 @@ const DeliveryTrackingScreen: React.FC = () => {
                     <View style={styles.noDriverSection}>
                         <Ionicons name="time-outline" size={24} color={colors.textMuted} />
                         <Text style={[styles.noDriverText, { color: colors.textMuted }]}>
-                            Waiting for driver assignment...
+                            {t('tracking.waitingForDriver')}
                         </Text>
                     </View>
                 )}
 
                 {/* Order Summary */}
-                <View style={[styles.orderSummary, { backgroundColor: colors.surfaceSecondary || colors.background }]}>
+                <View style={[styles.orderSummary, { backgroundColor: colors.surfaceSecondary || colors.background, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <Text style={[styles.orderNumber, { color: Colors.primary }]}>
                         #{order?.order_number}
                     </Text>
-                    <Text style={[styles.partDesc, { color: colors.text }]} numberOfLines={1}>
+                    <Text style={[styles.partDesc, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
                         {order?.part_description}
                     </Text>
                 </View>

@@ -83,6 +83,34 @@ export function normalizeOCRText(text: string): string {
 }
 
 /**
+ * PRO OCR Correction Map - Extended for thermal/dot-matrix fonts
+ * Covers common OCR confusions seen on Qatar registration cards
+ */
+const OCR_CORRECTIONS: Record<string, string> = {
+    'O': '0', // O always becomes 0 in VIN
+    'Q': '0', // Q always becomes 0 in VIN
+    'I': '1', // I always becomes 1 in VIN
+    'Z': '2', // Z ↔ 2 confusion on dot-matrix
+    'S': '5', // S ↔ 5 confusion
+    'B': '8', // B ↔ 8 confusion
+    'G': '6', // G ↔ 6 confusion
+};
+
+/**
+ * VIN Keywords found on Qatar registration cards (Arabic + English)
+ * Used for keyword-anchored extraction to improve accuracy
+ */
+const VIN_KEYWORDS = [
+    'VIN',
+    'CHASSIS',
+    'CHASSIS NO',
+    'CHASSIS NUMBER',
+    'رقم الهيكل',
+    'رقم الشاسيه',
+    'الهيكل',
+];
+
+/**
  * Safe OCR character corrections based on VIN rules
  * Only applies corrections that are unambiguous in VIN context
  * 
@@ -90,55 +118,154 @@ export function normalizeOCRText(text: string): string {
  * @returns Corrected character
  */
 export function autoCorrectOCRChar(char: string): string {
-    const corrections: Record<string, string> = {
-        'O': '0', // O always becomes 0 in VIN
-        'I': '1', // I always becomes 1 in VIN
-        'Q': '0', // Q always becomes 0 in VIN (rare)
-    };
-    return corrections[char] || char;
+    return OCR_CORRECTIONS[char] || char;
+}
+
+/**
+ * Aggressive OCR correction for low-confidence scans
+ * Applies more aggressive corrections when standard fails
+ * 
+ * @param char - Character from OCR
+ * @param aggressive - If true, apply extended corrections
+ * @returns Corrected character
+ */
+export function autoCorrectOCRCharAggressive(char: string, aggressive: boolean = false): string {
+    if (aggressive) {
+        // Additional aggressive corrections for very noisy OCR
+        const aggressiveCorrections: Record<string, string> = {
+            ...OCR_CORRECTIONS,
+            'L': '1', // L ↔ 1
+            'T': '7', // T ↔ 7
+        };
+        return aggressiveCorrections[char] || char;
+    }
+    return OCR_CORRECTIONS[char] || char;
 }
 
 /**
  * Applies safe auto-corrections to entire VIN string
  * 
  * @param vin - Raw VIN from OCR
+ * @param aggressive - If true, apply extended corrections
  * @returns Corrected VIN
  */
-export function autoCorrectVIN(vin: string): string {
+export function autoCorrectVIN(vin: string, aggressive: boolean = false): string {
     if (!vin) return '';
     return vin
         .toUpperCase()
         .split('')
-        .map(autoCorrectOCRChar)
+        .map(char => autoCorrectOCRCharAggressive(char, aggressive))
         .join('');
 }
 
 /**
- * Extracts VIN candidates from OCR text
- * Looks for 17-character alphanumeric sequences
+ * Checks if text contains VIN-related keywords (Arabic or English)
+ * Used for keyword-anchored extraction
+ * 
+ * @param text - Text to check
+ * @returns true if contains VIN keyword
+ */
+export function containsVINKeyword(text: string): boolean {
+    const upperText = text.toUpperCase();
+    return VIN_KEYWORDS.some(keyword => upperText.includes(keyword.toUpperCase()));
+}
+
+/**
+ * Normalizes OCR text preserving spaces for split VINs
+ * Qatar cards often have spaced VINs like "WVW ZZZ 3C ZWE..."
+ * 
+ * @param text - Raw OCR text
+ * @returns Normalized text with spaces collapsed (not removed)
+ */
+export function normalizeOCRTextPreservingSpaces(text: string): string {
+    if (!text) return '';
+    return text
+        .toUpperCase()
+        .replace(/[\-\.]/g, '') // Remove hyphens and periods
+        .replace(/\s+/g, '') // Collapse spaces
+        .replace(/[^A-Z0-9]/g, ''); // Keep only alphanumeric
+}
+
+/**
+ * Extracts VIN candidates from OCR text with keyword anchoring
+ * Prioritizes sequences near VIN/CHASSIS keywords
  * 
  * @param ocrText - Full OCR text from image
- * @returns Array of potential VIN candidates
+ * @returns Array of potential VIN candidates (prioritized)
  */
 export function extractVINCandidates(ocrText: string): string[] {
-    const normalized = normalizeOCRText(ocrText);
-    const candidates: string[] = [];
+    if (!ocrText) return [];
 
-    // Look for exactly 17-character sequences
-    if (normalized.length >= 17) {
-        // Slide window to find all possible 17-char sequences
-        for (let i = 0; i <= normalized.length - 17; i++) {
-            const candidate = normalized.substring(i, i + 17);
-            // Apply auto-correction
-            const corrected = autoCorrectVIN(candidate);
-            // Check if it looks like a VIN (no forbidden chars after correction)
-            if (!FORBIDDEN_CHARS.test(corrected)) {
-                candidates.push(corrected);
+    const candidates: string[] = [];
+    const priorityCandidates: string[] = [];
+
+    // Split into lines for keyword-anchored search
+    const lines = ocrText.split(/\n/);
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const nextLine = lines[i + 1] || '';
+        const hasKeyword = containsVINKeyword(line);
+
+        // If line contains keyword, prioritize this line and the next
+        const searchText = hasKeyword ? (line + ' ' + nextLine) : line;
+        const normalized = normalizeOCRTextPreservingSpaces(searchText);
+
+        if (normalized.length >= 17) {
+            // Slide window to find all possible 17-char sequences
+            for (let j = 0; j <= normalized.length - 17; j++) {
+                const candidate = normalized.substring(j, j + 17);
+                // Apply auto-correction (standard first)
+                const corrected = autoCorrectVIN(candidate, false);
+
+                // Check if it looks like a VIN (no forbidden chars after correction)
+                if (!FORBIDDEN_CHARS.test(corrected)) {
+                    if (hasKeyword) {
+                        priorityCandidates.push(corrected);
+                    } else {
+                        candidates.push(corrected);
+                    }
+                }
             }
         }
     }
 
-    return candidates;
+    // Also try aggressive correction on priority candidates
+    for (const candidate of priorityCandidates) {
+        const aggressiveCorrected = autoCorrectVIN(candidate, true);
+        if (!FORBIDDEN_CHARS.test(aggressiveCorrected) && !priorityCandidates.includes(aggressiveCorrected)) {
+            priorityCandidates.push(aggressiveCorrected);
+        }
+    }
+
+    // Qatar-specific: sort by proximity to anchor keywords
+    const anchorRegex = /(VIN|CHASSIS|رقم\s*الهيكل)/i;
+    if (anchorRegex.test(ocrText)) {
+        // Prioritize VINs close to label
+        priorityCandidates.sort((a, b) => ocrText.indexOf(a) - ocrText.indexOf(b));
+    }
+
+    // Return priority candidates first
+    return [...priorityCandidates, ...candidates];
+}
+
+/**
+ * Soft VIN validation - returns true for pattern match even if checksum fails
+ * Use this as fallback when strict validation fails
+ * 
+ * @param vin - VIN to validate
+ * @returns Object with isStrict (checksum valid) and isPattern (format valid)
+ */
+export function softValidateVIN(vin: string): { isStrict: boolean; isPattern: boolean; vin: string } {
+    if (!vin) return { isStrict: false, isPattern: false, vin: '' };
+
+    const normalized = vin.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const corrected = autoCorrectVIN(normalized);
+
+    const isStrict = isValidVIN(corrected);
+    const isPattern = corrected.length === 17 && VALID_VIN_PATTERN.test(corrected);
+
+    return { isStrict, isPattern, vin: corrected };
 }
 
 /**
@@ -243,8 +370,12 @@ export function validateUserEdit(originalVIN: string, editedVIN: string): { vali
 export default {
     isValidVIN,
     normalizeOCRText,
+    normalizeOCRTextPreservingSpaces,
     autoCorrectVIN,
+    autoCorrectOCRCharAggressive,
     extractVINCandidates,
+    containsVINKeyword,
+    softValidateVIN,
     getVINConfidence,
     findConsensusVIN,
     validateUserEdit,

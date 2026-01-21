@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
 import { api, Address } from '../services/api';
 import { MapLocationPicker } from './MapLocationPicker';
 
@@ -15,6 +16,7 @@ interface DeliveryLocationWidgetProps {
 
 export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ onLocationChange }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
     const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,11 +35,12 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
             const addresses = result.addresses || [];
             setSavedAddresses(addresses);
 
-            // Set default address
+            // Set default address for display (but DON'T trigger onLocationChange)
+            // Let user explicitly select - triggering callback here closes the modal!
             const defaultAddr = addresses.find(a => a.is_default) || addresses[0];
             if (defaultAddr) {
                 setCurrentAddress(defaultAddr);
-                onLocationChange?.(defaultAddr);
+                // REMOVED: onLocationChange?.(defaultAddr); - this was closing modal prematurely
             }
         } catch (error) {
             console.log('[Location] Failed to load addresses:', error);
@@ -54,7 +57,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
             // Request permissions
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                alert('Location permission denied. Please enable in settings.');
+                alert(t('home.deliveryWidget.permissionDenied'));
                 return;
             }
 
@@ -73,7 +76,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                 // Create temporary address object
                 const detectedAddress: Address = {
                     address_id: 'current',
-                    label: 'Current Location',
+                    label: t('home.deliveryWidget.currentLocation'),
                     address_text: `${geocoded.street || ''}, ${geocoded.district || geocoded.subregion || ''}, ${geocoded.city || 'Doha'}`.trim(),
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
@@ -86,7 +89,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
             }
         } catch (error) {
             console.error('[Location] Detection failed:', error);
-            alert('Could not detect location. Please select from saved addresses.');
+            alert(t('home.deliveryWidget.detectionFailed'));
         } finally {
             setIsDetecting(false);
         }
@@ -100,7 +103,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
     };
 
     const getDisplayText = () => {
-        if (!currentAddress) return 'Select delivery address';
+        if (!currentAddress) return t('home.deliveryWidget.selectAddress');
 
         // Extract area and city for concise display (KEETA/TALABAT style)
         const parts = currentAddress.address_text.split(',').map(p => p.trim());
@@ -110,13 +113,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
         return currentAddress.label || currentAddress.address_text;
     };
 
-    if (isLoading) {
-        return (
-            <View style={[styles.container, { backgroundColor: colors.surface }]}>
-                <ActivityIndicator size="small" color={Colors.primary} />
-            </View>
-        );
-    }
+    // Loading state is now handled inline in the picker modal content
 
     return (
         <>
@@ -133,7 +130,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                         <Text style={styles.locationIcon}>📍</Text>
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.label, { color: colors.textSecondary }]}>
-                                Delivering to
+                                {t('home.deliveryWidget.deliveringTo')}
                             </Text>
                             <Text style={[styles.address, { color: colors.text }]} numberOfLines={1}>
                                 {getDisplayText()}
@@ -155,7 +152,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                     <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>
-                                Select Delivery Location
+                                {t('home.deliveryWidget.selectLocation')}
                             </Text>
                             <TouchableOpacity onPress={() => setShowPicker(false)}>
                                 <Text style={styles.closeIcon}>✕</Text>
@@ -181,10 +178,10 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.addressLabel, { color: colors.text }]}>
-                                        Use Current Location
+                                        {t('home.deliveryWidget.useCurrentLocation')}
                                     </Text>
                                     <Text style={[styles.addressHint, { color: colors.textSecondary }]}>
-                                        Auto-detect using GPS
+                                        {t('home.deliveryWidget.autoDetect')}
                                     </Text>
                                 </View>
                             </TouchableOpacity>
@@ -206,10 +203,10 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.addressLabel, { color: colors.text }]}>
-                                        Pin on Map
+                                        {t('home.deliveryWidget.pinOnMap')}
                                     </Text>
                                     <Text style={[styles.addressHint, { color: colors.textSecondary }]}>
-                                        Choose exact location on map
+                                        {t('home.deliveryWidget.chooseExact')}
                                     </Text>
                                 </View>
                             </TouchableOpacity>
@@ -232,10 +229,10 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.addressLabel, { color: colors.text }]}>
-                                        Deliver to My Mechanic
+                                        {t('home.deliveryWidget.deliverToMechanic')}
                                     </Text>
                                     <Text style={[styles.addressHint, { color: colors.textSecondary }]}>
-                                        Send directly to your repair workshop
+                                        {t('home.deliveryWidget.mechanicHint')}
                                     </Text>
                                 </View>
                             </TouchableOpacity>
@@ -259,7 +256,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.addressLabel, { color: colors.text }]}>
                                             {addr.label}
-                                            {addr.is_default && ' (Default)'}
+                                            {addr.is_default && t('home.deliveryWidget.default')}
                                         </Text>
                                         <Text style={[styles.addressText, { color: colors.textSecondary }]} numberOfLines={2}>
                                             {addr.address_text}
@@ -285,7 +282,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                     onLocationSelect={(location) => {
                         const mapAddress: Address = {
                             address_id: 'map_selected',
-                            label: 'Map Location',
+                            label: t('home.deliveryWidget.mapLocation'),
                             address_text: location.address,
                             latitude: location.latitude,
                             longitude: location.longitude,
@@ -311,6 +308,9 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
+        borderWidth: 1,
+        borderColor: '#E5E7EB', // Light gray border for visibility
+        backgroundColor: '#E5E7EB', // Darker gray - more visible
         ...Shadows.sm,
     },
     content: {},

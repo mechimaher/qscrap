@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
 import * as storage from '../utils/storage';
 
@@ -25,36 +27,13 @@ interface OnboardingSlide {
     color: string;
 }
 
-const SLIDES: OnboardingSlide[] = [
-    {
-        id: '1',
-        icon: 'search-outline',
-        title: 'Find Any Auto Part',
-        description: 'Search for new or used parts for any car make and model. Our network of verified garages has you covered.',
-        color: '#6366f1',
-    },
-    {
-        id: '2',
-        icon: 'pricetags-outline',
-        title: 'Get Competitive Bids',
-        description: 'Post your request and receive multiple bids from trusted suppliers. Compare prices, warranties, and ratings.',
-        color: '#8b5cf6',
-    },
-    {
-        id: '3',
-        icon: 'shield-checkmark-outline',
-        title: 'Quality Guaranteed',
-        description: 'All garages are verified. Parts go through quality checks before delivery. Warranty protection included.',
-        color: '#10b981',
-    },
-    {
-        id: '4',
-        icon: 'bicycle-outline',
-        title: 'Fast Delivery',
-        description: 'Track your order in real-time. Same-day delivery available across Qatar. Hassle-free returns.',
-        color: '#f59e0b',
-    },
-];
+interface OnboardingSlide {
+    id: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    description: string;
+    color: string;
+}
 
 interface OnboardingScreenProps {
     onComplete: () => void;
@@ -66,7 +45,39 @@ interface OnboardingScreenProps {
  */
 const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    const SLIDES: OnboardingSlide[] = [
+        {
+            id: '1',
+            icon: 'search-outline',
+            title: t('onboarding.slide1Title'),
+            description: t('onboarding.slide1Desc'),
+            color: '#6366f1',
+        },
+        {
+            id: '2',
+            icon: 'pricetags-outline',
+            title: t('onboarding.slide2Title'),
+            description: t('onboarding.slide2Desc'),
+            color: '#8b5cf6',
+        },
+        {
+            id: '3',
+            icon: 'shield-checkmark-outline',
+            title: t('onboarding.slide3Title'),
+            description: t('onboarding.slide3Desc'),
+            color: '#10b981',
+        },
+        {
+            id: '4',
+            icon: 'bicycle-outline',
+            title: t('onboarding.slide4Title'),
+            description: t('onboarding.slide4Desc'),
+            color: '#f59e0b',
+        },
+    ];
     const flatListRef = useRef<FlatList>(null);
     const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -178,8 +189,8 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Skip Button */}
             {!isLastSlide && (
-                <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-                    <Text style={[styles.skipText, { color: colors.textSecondary }]}>Skip</Text>
+                <TouchableOpacity style={[styles.skipButton, isRTL ? { left: Spacing.xl, right: undefined } : { right: Spacing.xl, left: undefined }]} onPress={handleSkip}>
+                    <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
                 </TouchableOpacity>
             )}
 
@@ -192,6 +203,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
+                inverted={isRTL}
                 onScroll={Animated.event(
                     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
                     { useNativeDriver: true }
@@ -213,13 +225,13 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
                 >
                     {isLastSlide ? (
                         <>
-                            <Text style={styles.nextButtonText}>Get Started</Text>
-                            <Ionicons name="arrow-forward" size={20} color="#fff" />
+                            <Text style={styles.nextButtonText}>{t('onboarding.getStarted')}</Text>
+                            <Ionicons name={isRTL ? "arrow-back" : "arrow-forward"} size={20} color="#fff" />
                         </>
                     ) : (
                         <>
-                            <Text style={styles.nextButtonText}>Next</Text>
-                            <Ionicons name="arrow-forward" size={20} color="#fff" />
+                            <Text style={styles.nextButtonText}>{t('common.next')}</Text>
+                            <Ionicons name={isRTL ? "arrow-back" : "arrow-forward"} size={20} color="#fff" />
                         </>
                     )}
                 </TouchableOpacity>
@@ -228,6 +240,8 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     );
 };
 
+
+// ... existing styles ...
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -235,7 +249,6 @@ const styles = StyleSheet.create({
     skipButton: {
         position: 'absolute',
         top: 60,
-        right: Spacing.xl,
         zIndex: 10,
         padding: Spacing.sm,
     },

@@ -22,6 +22,8 @@ import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from '../../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign, rtlChevron } from '../../utils/rtl';
 import { api, Stats } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
@@ -72,9 +74,11 @@ const HeroWelcome = ({
     onNotificationPress,
     unreadCount = 0,
     onLocationPress,
-    deliveryAddress = 'Select delivery address',
+    deliveryAddress,
     loyalty,
-    onLoyaltyPress
+    onLoyaltyPress,
+    greeting,
+    customerLabel
 }: {
     user: any;
     colors: any;
@@ -84,18 +88,16 @@ const HeroWelcome = ({
     deliveryAddress?: string;
     loyalty?: { points: number; tier: string } | null;
     onLoyaltyPress?: () => void;
+    greeting: string;
+    customerLabel?: string;
 }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(-20)).current;
     const pulseAnim = useRef(new Animated.Value(0)).current;
     const loyaltyGlow = useRef(new Animated.Value(0.8)).current;
+    const { t, isRTL } = useTranslation();
 
-    const greeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return 'Good Morning';
-        if (hour < 17) return 'Good Afternoon';
-        return 'Good Evening';
-    };
+    // Greeting is now passed from parent with translations
 
     const getTimeEmoji = () => {
         const hour = new Date().getHours();
@@ -163,9 +165,9 @@ const HeroWelcome = ({
                 end={{ x: 1, y: 1 }}
                 style={styles.heroGradient}
             >
-                <View style={styles.heroContent}>
-                    <View style={styles.heroLeft}>
-                        <View style={styles.logoContainer}>
+                <View style={[styles.heroContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <View style={[styles.heroLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <View style={[styles.logoContainer, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>
                             <Image
                                 source={require('../../../assets/logo.png')}
                                 style={styles.logo}
@@ -173,11 +175,11 @@ const HeroWelcome = ({
                             />
                         </View>
                         <View style={styles.heroTextContainer}>
-                            <Text style={styles.heroGreeting}>
-                                {getTimeEmoji()} {greeting()}
+                            <Text style={[styles.heroGreeting, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {getTimeEmoji()} {greeting}
                             </Text>
-                            <Text style={styles.heroName}>
-                                {user?.full_name || 'Customer'}
+                            <Text style={[styles.heroName, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {user?.full_name || customerLabel || t('common.customer')}
                             </Text>
                         </View>
                     </View>
@@ -204,11 +206,11 @@ const HeroWelcome = ({
                 {/* Compact Loyalty Badge - VIP Status Display */}
                 {loyalty && (
                     <TouchableOpacity onPress={onLoyaltyPress} activeOpacity={0.7}>
-                        <Animated.View style={[styles.heroLoyaltyBadge, { opacity: loyaltyGlow }]}>
+                        <Animated.View style={[styles.heroLoyaltyBadge, { opacity: loyaltyGlow, alignSelf: isRTL ? 'flex-end' : 'flex-start', marginLeft: isRTL ? 0 : Spacing.lg, marginRight: isRTL ? Spacing.lg : 0, flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.heroLoyaltyEmoji}>{getTierEmoji(loyalty.tier)}</Text>
-                            <Text style={styles.heroLoyaltyTier}>{loyalty.tier} Member</Text>
+                            <Text style={styles.heroLoyaltyTier}>{t('loyalty.tierLabel', { tier: t(`loyalty.${loyalty.tier.toLowerCase()}`) })}</Text>
                             <View style={styles.heroLoyaltyDot} />
-                            <Text style={styles.heroLoyaltyPoints}>{loyalty.points.toLocaleString()} pts</Text>
+                            <Text style={styles.heroLoyaltyPoints}>{loyalty.points.toLocaleString()} {t('home.pts')}</Text>
                         </Animated.View>
                     </TouchableOpacity>
                 )}
@@ -222,18 +224,18 @@ const HeroWelcome = ({
                     onPress={onLocationPress}
                     activeOpacity={0.7}
                 >
-                    <View style={styles.locationContent}>
+                    <View style={[styles.locationContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <View style={styles.locationIconContainer}>
                             <Text style={styles.locationIcon}>📍</Text>
                         </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.locationLabel}>Delivering to</Text>
+                        <View style={{ flex: 1, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
+                            <Text style={styles.locationLabel}>{t('home.deliveringTo')}</Text>
                             <Text style={styles.locationText} numberOfLines={1}>
-                                {deliveryAddress}
+                                {deliveryAddress || t('home.selectAddress')}
                             </Text>
                         </View>
                         <View style={[styles.changeButton, { backgroundColor: colors.secondary }]}>
-                            <Text style={styles.changeButtonText}>Change</Text>
+                            <Text style={styles.changeButtonText}>{t('common.change')}</Text>
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -255,6 +257,7 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const plusIconAnim = useRef(new Animated.Value(0)).current;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     useEffect(() => {
         // Entrance animation
@@ -319,11 +322,6 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
         outputRange: [1, 1.2],
     });
 
-    const plusRotate = plusIconAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0deg', '90deg'],
-    });
-
     return (
         <Animated.View style={[
             styles.ctaWrapper,
@@ -343,43 +341,43 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                     <Animated.View style={[styles.ctaGlow, { opacity: glowOpacity, backgroundColor: colors.primary }]} />
 
                     <LinearGradient
-                        colors={ThemeColors.gradients.primaryDark}
+                        colors={ThemeColors.gradients.champagne}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.ctaGradient}
                     >
                         <View style={styles.ctaContent}>
-                            <Text style={styles.ctaTitle}>Find Your Part</Text>
+                            <Text style={[styles.ctaTitle, { color: colors.primary }]}>{t('home.findYourPart')}</Text>
 
                             {/* Request Button - Center */}
                             <Animated.View style={[
                                 styles.ctaButton,
-                                { transform: [{ scale: plusScale }], marginTop: Spacing.md, alignSelf: 'center' }
+                                { transform: [{ scale: plusScale }], marginTop: Spacing.md, alignSelf: 'center', backgroundColor: colors.primary }
                             ]}>
-                                <Text style={styles.ctaButtonText}>Request a Part</Text>
+                                <Text style={[styles.ctaButtonText, { color: '#FFFFFF' }]}>{t('home.requestPart')}</Text>
                             </Animated.View>
 
                             {/* 3-Tier Supplier Badges */}
-                            <View style={[styles.supplierBadges, { marginTop: Spacing.md }]}>
-                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(34, 197, 94, 0.25)' }]}>
+                            <View style={[styles.supplierBadges, { marginTop: Spacing.md, flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
                                     <Text style={styles.badgeIcon}>♻️</Text>
-                                    <Text style={styles.badgeText}>Used</Text>
+                                    <Text style={[styles.badgeText, { color: '#15803d' }]}>{t('condition.used')}</Text>
                                 </View>
-                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(59, 130, 246, 0.25)' }]}>
+                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
                                     <Text style={styles.badgeIcon}>🔩</Text>
-                                    <Text style={styles.badgeText}>Commercial</Text>
+                                    <Text style={[styles.badgeText, { color: '#1d4ed8' }]}>{t('condition.commercial')}</Text>
                                 </View>
-                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(245, 158, 11, 0.25)' }]}>
+                                <View style={[styles.supplierBadge, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
                                     <Text style={styles.badgeIcon}>⭐</Text>
-                                    <Text style={styles.badgeText}>Genuine</Text>
+                                    <Text style={[styles.badgeText, { color: '#b45309' }]}>{t('condition.genuine')}</Text>
                                 </View>
                             </View>
                         </View>
 
-                        <View style={styles.ctaFooter}>
+                        <View style={[styles.ctaFooter, { flexDirection: rtlFlexDirection(isRTL), borderTopColor: 'rgba(0,0,0,0.05)' }]}>
                             <View style={styles.ctaFooterDot} />
-                            <Text style={styles.ctaFooterText}>
-                                100+ verified suppliers in Qatar
+                            <Text style={[styles.ctaFooterText, { color: colors.textSecondary }]}>
+                                {t('home.verifiedSuppliers')}
                             </Text>
                         </View>
                     </LinearGradient>
@@ -412,6 +410,7 @@ const AnimatedStats = ({
         new Animated.Value(0),
     ]).current;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     useEffect(() => {
         slideAnims.forEach((anim, index) => {
@@ -484,13 +483,13 @@ const AnimatedStats = ({
 
     return (
         <View style={styles.statsSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>📊 Your Activity</Text>
-            <View style={styles.statsRow}>
+            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>📊 {t('home.yourActivity')}</Text>
+            <View style={[styles.statsRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <StatCard
                     index={0}
                     emoji="🔍"
                     value={stats?.active_requests || 0}
-                    label="Active Requests"
+                    label={t('home.activeRequests')}
                     colors={['#FFF9E6', '#FFF3CC']}
                     onPress={onRequestsPress}
                 />
@@ -498,7 +497,7 @@ const AnimatedStats = ({
                     index={1}
                     emoji="🚚"
                     value={stats?.pending_deliveries || 0}
-                    label="In Progress"
+                    label={t('home.inProgress')}
                     colors={['#E6F7FF', '#CCF0FF']}
                     onPress={onOrdersPress}
                 />
@@ -513,17 +512,17 @@ const AnimatedStats = ({
                 <TouchableOpacity onPress={onOrdersPress} activeOpacity={0.9}>
                     <LinearGradient
                         colors={['rgba(138,21,56,0.08)', 'rgba(138,21,56,0.15)']}
-                        style={styles.statCardWideInner}
+                        style={[styles.statCardWideInner, { flexDirection: rtlFlexDirection(isRTL) }]}
                     >
-                        <View style={styles.wideCardLeft}>
-                            <Text style={styles.wideCardEmoji}>📦</Text>
-                            <View>
+                        <View style={[styles.wideCardLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.wideCardEmoji, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>📦</Text>
+                            <View style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                                 <AnimatedNumber value={stats?.total_orders || 0} delay={700} />
-                                <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>Total Orders Completed</Text>
+                                <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>{t('home.totalOrders')}</Text>
                             </View>
                         </View>
                         <View style={[styles.wideCardBadge, { backgroundColor: colors.primary + '20' }]}>
-                            <Text style={[styles.wideCardBadgeText, { color: colors.primary }]}>View All →</Text>
+                            <Text style={[styles.wideCardBadgeText, { color: colors.primary }]}>{t('common.viewAll')} {isRTL ? '←' : '→'}</Text>
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -539,6 +538,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     useEffect(() => {
         Animated.parallel([
@@ -582,7 +582,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                     <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
                         <Text style={styles.actionEmoji}>{emoji}</Text>
                     </View>
-                    <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>{label}</Text>
+                    <Text style={[styles.actionLabel, { color: colors.textSecondary, textAlign: 'center' }]}>{label}</Text>
                 </Animated.View>
             </TouchableOpacity>
         );
@@ -593,29 +593,29 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
             styles.actionsSection,
             { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
         ]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>⚡ Quick Actions</Text>
-            <View style={styles.actionsGrid}>
+            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>⚡ {t('home.quickActions')}</Text>
+            <View style={[styles.actionsGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <ActionButton
                     emoji="📋"
-                    label="New Request"
+                    label={t('nav.newRequest')}
                     bgColor="#E8F5E9"
                     onPress={() => navigation.navigate('NewRequest')}
                 />
                 <ActionButton
                     emoji="🚗"
-                    label="My Vehicles"
+                    label={t('nav.myVehicles')}
                     bgColor="#E3F2FD"
                     onPress={() => navigation.navigate('MyVehicles')}
                 />
                 <ActionButton
                     emoji="💬"
-                    label="Support"
+                    label={t('nav.support')}
                     bgColor="#FFF3E0"
                     onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}?text=Hi%20QScrap%20Support`)}
                 />
                 <ActionButton
                     emoji="⚙️"
-                    label="Settings"
+                    label={t('nav.settings')}
                     bgColor="#F3E5F5"
                     onPress={() => navigation.navigate('Settings')}
                 />
@@ -632,6 +632,7 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const glowAnim = useRef(new Animated.Value(0.6)).current;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -674,15 +675,15 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
         >
             <Animated.View style={[
                 styles.proTipCard,
-                { opacity: fadeAnim, backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }
+                { opacity: fadeAnim, backgroundColor: colors.surface, transform: [{ scale: scaleAnim }], flexDirection: rtlFlexDirection(isRTL) }
             ]}>
-                <View style={styles.proTipIconWrapper}>
+                <View style={[styles.proTipIconWrapper, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>
                     <Animated.Text style={[styles.proTipIcon, { opacity: glowAnim }]}>💡</Animated.Text>
                 </View>
                 <View style={styles.proTipContent}>
-                    <Text style={[styles.proTipTitle, { color: colors.text }]}>Pro Tip</Text>
-                    <Text style={[styles.proTipText, { color: colors.textSecondary }]}>
-                        Add photos for faster & more accurate quotes →
+                    <Text style={[styles.proTipTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.proTip')}</Text>
+                    <Text style={[styles.proTipText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('home.proTipMessage')} {isRTL ? '←' : '→'}
                     </Text>
                 </View>
             </Animated.View>
@@ -699,6 +700,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
     const shimmerAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
 
     useEffect(() => {
@@ -790,11 +792,11 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                     </View>
 
                     <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: FontSizes.sm, color: tierConfig.color, fontWeight: '600', textTransform: 'uppercase' }}>
-                            {loyalty?.tier || 'Bronze'} Member
+                        <Text style={{ fontSize: FontSizes.sm, color: tierConfig.color, fontWeight: '600', textTransform: 'uppercase', textAlign: rtlTextAlign(isRTL) }}>
+                            {t('loyalty.tierLabel', { tier: t(`loyalty.${(loyalty?.tier || 'bronze').toLowerCase()}`) })}
                         </Text>
-                        <Text style={{ fontSize: FontSizes.xl, fontWeight: '800', color: Colors.primary }}>
-                            {loyalty?.points?.toLocaleString() || '0'} Points
+                        <Text style={{ fontSize: FontSizes.xl, fontWeight: '800', color: Colors.primary, textAlign: rtlTextAlign(isRTL) }}>
+                            {loyalty?.points?.toLocaleString() || '0'} {t('home.pts')}
                         </Text>
                     </View>
 
@@ -804,7 +806,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                         paddingVertical: Spacing.xs,
                         borderRadius: BorderRadius.full,
                     }}>
-                        <Text style={{ color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' }}>🎁 Rewards</Text>
+                        <Text style={{ color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' }}>🎁 {t('home.rewards')}</Text>
                     </View>
                 </LinearGradient>
             </TouchableOpacity>
@@ -855,6 +857,7 @@ export default function HomeScreen() {
     const navigation = useNavigation<HomeScreenNavigationProp>();
     const { user } = useAuth();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const { newBids, orderUpdates } = useSocketContext();
     const toast = useToast();
     const [stats, setStats] = useState<Stats | null>(null);
@@ -862,7 +865,7 @@ export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
-    const [deliveryAddress, setDeliveryAddress] = useState('Detecting location...');
+    const [deliveryAddress, setDeliveryAddress] = useState(t('common.loading'));
     const [isDetectingLocation, setIsDetectingLocation] = useState(false);
     const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
     // Store full location for NewRequest submission
@@ -872,17 +875,25 @@ export default function HomeScreen() {
         address: string;
     }>({ lat: null, lng: null, address: '' });
 
+    // Get localized greeting based on time of day
+    const getGreeting = useCallback(() => {
+        const hour = new Date().getHours();
+        if (hour < 12) return t('greetings.morning');
+        if (hour < 17) return t('greetings.afternoon');
+        return t('greetings.evening');
+    }, [t]);
+
     // GPS Fallback Detection (lightweight, with timeout)
     const detectLocationFallback = useCallback(async () => {
         try {
             setIsDetectingLocation(true);
-            setDeliveryAddress('📍 Detecting...');
+            setDeliveryAddress(`📍 ${t('common.detecting')}...`);
 
             // Check permissions silently
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 // Permission denied - prompt manual entry
-                setDeliveryAddress('Set delivery location');
+                setDeliveryAddress(t('home.selectAddress'));
                 setDeliveryLocationData({ lat: null, lng: null, address: '' });
                 return;
             }
@@ -918,22 +929,22 @@ export default function HomeScreen() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } else {
                 // Geocoding failed but we have coordinates
-                setDeliveryAddress('Current Location');
+                setDeliveryAddress(t('home.currentLocation'));
                 setDeliveryLocationData({
                     lat: location.coords.latitude,
                     lng: location.coords.longitude,
-                    address: 'Current Location',
+                    address: t('home.currentLocation'),
                 });
             }
         } catch (error) {
             console.log('[GPS Fallback] Detection failed:', error);
             // Graceful fallback - prompt user to set manually
-            setDeliveryAddress('Set delivery location');
+            setDeliveryAddress(t('home.selectAddress'));
             setDeliveryLocationData({ lat: null, lng: null, address: '' });
         } finally {
             setIsDetectingLocation(false);
         }
-    }, []);
+    }, [t]);
 
 
     const loadData = useCallback(async () => {
@@ -945,21 +956,21 @@ export default function HomeScreen() {
                 api.getAddresses().catch(() => ({ addresses: [] }))
             ]);
             setStats(statsData.stats);
-            setUnreadNotifications(notifData.count || 0);
-            setLoyalty(loyaltyData);
+            setUnreadNotifications((notifData as any).count || 0);
+            setLoyalty(loyaltyData as any);
 
             // WATERFALL PATTERN: Saved addresses first, GPS fallback if none
             if (addressesData.addresses && addressesData.addresses.length > 0) {
                 // Priority 1: Use saved default address (instant)
                 const defaultAddr = addressesData.addresses.find((a: any) => a.is_default) || addressesData.addresses[0];
-                const displayText = defaultAddr.address_text || defaultAddr.address_line1;
+                const displayText = defaultAddr.address_text;
                 // Format concise for display
                 const parts = displayText.split(',').map((p: string) => p.trim());
                 const concise = parts.length >= 2 ? `${parts[parts.length - 2]}, ${parts[parts.length - 1]}` : displayText;
                 setDeliveryAddress(concise);
                 setDeliveryLocationData({
-                    lat: defaultAddr.latitude,
-                    lng: defaultAddr.longitude,
+                    lat: defaultAddr.latitude || 0,
+                    lng: defaultAddr.longitude || 0,
                     address: displayText
                 });
             } else {
@@ -997,16 +1008,16 @@ export default function HomeScreen() {
         if (!deliveryLocationData.lat || !deliveryLocationData.lng) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             Alert.alert(
-                '📍 Delivery Address Required',
-                'Please add a delivery address before creating a request. Tap "Delivering to" to add your address.',
+                t('home.alertAddressTitle'),
+                t('home.alertAddressMessage'),
                 [
                     {
-                        text: 'Add Address',
+                        text: t('home.addAddress'),
                         onPress: () => setShowLocationPicker(true),
                         style: 'default'
                     },
                     {
-                        text: 'Cancel',
+                        text: t('common.cancel'),
                         style: 'cancel'
                     }
                 ]
@@ -1055,6 +1066,8 @@ export default function HomeScreen() {
                     deliveryAddress={deliveryAddress}
                     loyalty={loyalty}
                     onLoyaltyPress={() => navigation.navigate('Rewards')}
+                    greeting={getGreeting()}
+                    customerLabel={t('common.customer')}
                 />
 
                 {/* Signature CTA */}
@@ -1079,7 +1092,7 @@ export default function HomeScreen() {
 
                 {/* How It Works Carousel */}
                 <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.lg }}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: Spacing.md, paddingHorizontal: Spacing.lg }]}>How It Works</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: Spacing.md, paddingHorizontal: Spacing.lg, textAlign: rtlTextAlign(isRTL) }]}>{t('home.howItWorks')}</Text>
                     <HowItWorksCarousel onGetStarted={handleNewRequest} autoPlay={true} />
                 </View>
 
@@ -1301,6 +1314,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#fff',
         marginBottom: 2,
+        textAlign: 'center',
     },
     ctaSubtitle: {
         fontSize: FontSizes.xs,

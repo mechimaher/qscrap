@@ -21,6 +21,8 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { api, Request } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { useTranslation } from '../../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
 import { useToast } from '../../components/Toast';
@@ -44,6 +46,7 @@ const ActiveRequestCard = ({
     showSwipeHint?: boolean;
     onSwipeHintDismiss?: () => void;
 }) => {
+    const { t, isRTL } = useTranslation();
     const glowAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const swipeHintAnim = useRef(new Animated.Value(0)).current;
@@ -134,18 +137,18 @@ const ActiveRequestCard = ({
         outputRange: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.8)'],
     });
 
-    const getStatusConfig = (status: string) => {
+    const getStatusConfig = (status: string, t: any) => {
         switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Accepted' };
-            case 'completed': return { color: '#8B5CF6', bg: '#EDE9FE', icon: '🎉', label: 'Completed' };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: 'Expired' };
-            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: 'Cancelled' };
+            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: t('status.active') };
+            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: t('status.accepted') };
+            case 'completed': return { color: '#8B5CF6', bg: '#EDE9FE', icon: '🎉', label: t('status.completed') };
+            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: t('status.expired') };
+            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: t('status.cancelled') };
             default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
         }
     };
 
-    const statusConfig = getStatusConfig(item.status);
+    const statusConfig = getStatusConfig(item.status, t);
 
     const getUrgencyColor = (urgency: string) => {
         switch (urgency) {
@@ -167,7 +170,7 @@ const ActiveRequestCard = ({
                     style={styles.deleteGradient}
                 >
                     <Text style={styles.deleteIcon}>🗑️</Text>
-                    <Text style={styles.deleteText}>Delete</Text>
+                    <Text style={styles.deleteText}>{t('common.delete')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
         );
@@ -259,10 +262,10 @@ const ActiveRequestCard = ({
                                 <View style={styles.carInfo}>
                                     <Text style={styles.carEmoji}>🚗</Text>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={[styles.carName, { color: colors.text }]} numberOfLines={1}>
+                                        <Text style={[styles.carName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
                                             {item.car_make || 'Unknown'} {item.car_model || ''}
                                         </Text>
-                                        <Text style={[styles.carYear, { color: colors.textSecondary }]}>
+                                        <Text style={[styles.carYear, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                             {item.car_year || 'N/A'}
                                         </Text>
                                     </View>
@@ -278,7 +281,7 @@ const ActiveRequestCard = ({
                                         >
                                             <Text style={styles.bidCountNumber}>{item.bid_count}</Text>
                                             <Text style={styles.bidCountLabel}>
-                                                {item.bid_count === 1 ? 'bid' : 'bids'}
+                                                {t('requests.bids', { count: item.bid_count })}
                                             </Text>
                                         </LinearGradient>
                                     )}
@@ -294,14 +297,14 @@ const ActiveRequestCard = ({
                             {/* Part Category & Description */}
                             {item.part_category && (
                                 <Text
-                                    style={[styles.partCategory, { color: colors.text }]}
+                                    style={[styles.partCategory, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                                     numberOfLines={1}
                                 >
                                     {item.part_category}
                                 </Text>
                             )}
                             <Text
-                                style={[styles.partDescription, { color: colors.textSecondary }]}
+                                style={[styles.partDescription, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
                                 numberOfLines={2}
                             >
                                 {item.part_description || 'No description'}
@@ -310,7 +313,7 @@ const ActiveRequestCard = ({
                             {/* Bid Preview - Show best price when 2+ bids */}
                             {item.bid_count >= 2 && item.lowest_bid_price && (
                                 <View style={styles.bidPreviewContainer}>
-                                    <Text style={styles.bidPreviewLabel}>💰 Best Price:</Text>
+                                    <Text style={[styles.bidPreviewLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.bestPrice')}:</Text>
                                     <Text style={styles.bidPreviewPrice}>{item.lowest_bid_price} QAR</Text>
                                 </View>
                             )}
@@ -339,7 +342,7 @@ const ActiveRequestCard = ({
                                         <View style={styles.newBidsBadge}>
                                             <Text style={styles.fireIcon}>🔥</Text>
                                             <Text style={styles.newBidsText}>
-                                                {item.bid_count} {item.bid_count === 1 ? 'bid' : 'bids'}
+                                                {t('requests.bidsCount', { count: item.bid_count })}
                                             </Text>
                                         </View>
                                     )}
@@ -353,7 +356,7 @@ const ActiveRequestCard = ({
                                 <View style={styles.bidInfo}>
                                     {item.lowest_bid_price ? (
                                         <View style={styles.bestBid}>
-                                            <Text style={styles.bestBidLabel}>Best offer</Text>
+                                            <Text style={styles.bestBidLabel}>{t('requests.bestOffer')}</Text>
                                             <Text style={styles.bestBidPrice}>
                                                 QAR {item.lowest_bid_price.toLocaleString()}
                                             </Text>
@@ -364,7 +367,7 @@ const ActiveRequestCard = ({
                                                 <Text style={styles.bidIcon}>💬</Text>
                                             </View>
                                             <Text style={styles.bidCountText}>
-                                                {item.bid_count} bids received
+                                                {t('requests.bidsReceived', { count: item.bid_count })}
                                             </Text>
                                         </View>
                                     )}
@@ -391,7 +394,7 @@ const ActiveRequestCard = ({
                                             }],
                                         }
                                     ]}>←</Animated.Text>
-                                    <Text style={styles.swipeHintText}>Swipe to cancel</Text>
+                                    <Text style={styles.swipeHintText}>{t('requests.swipeToCancel')}</Text>
                                 </View>
                             )}
                         </View>
@@ -405,6 +408,7 @@ const ActiveRequestCard = ({
 export default function RequestsScreen() {
     const navigation = useNavigation<RequestsScreenNavigationProp>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const toast = useToast();
     const [requests, setRequests] = useState<Request[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -483,9 +487,9 @@ export default function RequestsScreen() {
             <View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceElevated }]}>
                 <Text style={styles.emptyIcon}>📋</Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Requests Yet</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('requests.noRequests')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Create your first part request and get quotes from verified garages
+                {t('requests.noRequestsDesc')}
             </Text>
             <TouchableOpacity
                 style={styles.emptyButton}
@@ -497,7 +501,7 @@ export default function RequestsScreen() {
                     end={{ x: 1, y: 0 }}
                     style={styles.emptyButtonGradient}
                 >
-                    <Text style={styles.emptyButtonText}>+ Create Request</Text>
+                    <Text style={styles.emptyButtonText}>{t('requests.createRequest')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
         </View>
@@ -509,13 +513,13 @@ export default function RequestsScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Premium Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>My Requests</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                        {activeCount > 0 ? `${activeCount} active` : ''}
+                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('requests.title')}</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {activeCount > 0 ? `${activeCount} ${t('requests.active')}` : ''}
                         {activeCount > 0 && requests.length > activeCount ? ' • ' : ''}
-                        {requests.length} total
+                        {requests.length} {t('requests.total')}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -682,11 +686,6 @@ const styles = StyleSheet.create({
     statusText: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
-    },
-    badgeRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs,
     },
     bidCountBadge: {
         flexDirection: 'row',

@@ -25,6 +25,8 @@ import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import LiveETACard from '../components/LiveETACard';
 import StatusTimeline from '../components/StatusTimeline';
 import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
@@ -47,6 +49,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function TrackingScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute();
+    const { t, isRTL } = useTranslation();
     const { orderId, orderNumber, deliveryAddress } = route.params as any;
 
     const mapRef = useRef<any>(null);
@@ -526,13 +529,13 @@ export default function TrackingScreen() {
 
             {/* Header */}
             <SafeAreaView style={styles.header} edges={['top']}>
-                <View style={styles.headerContent}>
+                <View style={[styles.headerContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backIcon}>←</Text>
+                        <Text style={styles.backIcon}>{isRTL ? '→' : '←'}</Text>
                     </TouchableOpacity>
                     <View style={styles.headerInfo}>
-                        <Text style={styles.headerTitle}>Live Tracking</Text>
-                        <Text style={styles.orderNumber}>Order #{orderNumber}</Text>
+                        <Text style={[styles.headerTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.liveTracking')}</Text>
+                        <Text style={[styles.orderNumber, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.orderNumber')} {orderNumber}</Text>
                     </View>
                     <View style={styles.headerActions}>
                         <View style={[styles.connectionDot, isConnected && styles.connectionDotActive]} />
@@ -580,15 +583,15 @@ export default function TrackingScreen() {
                     style={styles.etaCard}
                 >
                     <View style={styles.etaContent}>
-                        <Text style={styles.etaLabel}>Estimated Arrival</Text>
-                        <View style={styles.etaRow}>
+                        <Text style={[styles.etaLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.estimatedArrival')}</Text>
+                        <View style={[styles.etaRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             {eta ? (
                                 <>
                                     <Text style={styles.etaTime}>{eta}</Text>
-                                    {distance && <Text style={styles.etaDistance}>• {distance} away</Text>}
+                                    {distance && <Text style={styles.etaDistance}>• {distance} {t('tracking.away')}</Text>}
                                 </>
                             ) : (
-                                <Text style={styles.etaCalculating}>Calculating...</Text>
+                                <Text style={styles.etaCalculating}>{t('common.loading')}</Text>
                             )}
                         </View>
                     </View>
@@ -909,24 +912,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     shareLocIcon: { fontSize: 22 },
-    driverMarker: {
-        width: 50,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    driverMarkerInner: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#fff',
-        ...Shadows.lg,
-    },
-    driverMarkerIcon: { fontSize: 24 },
     destinationMarker: { alignItems: 'center' },
     destinationMarkerIcon: { fontSize: 40 },
     destinationPulse: {
@@ -967,8 +952,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     etaContent: { flex: 1 },
-    shareLocationSubtitle: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.85)' },
-    shareLocationArrow: { fontSize: 24, color: '#fff' },
+
 
     etaLabel: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.7)' },
     etaRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: Spacing.xs },

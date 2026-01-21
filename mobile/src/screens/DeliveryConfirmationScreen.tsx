@@ -21,11 +21,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 export default function DeliveryConfirmationScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
 
     const { order, escrow } = route.params || {};
 
@@ -60,7 +63,7 @@ export default function DeliveryConfirmationScreen() {
     const handleConfirm = async () => {
         if (photos.length < 2) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            Alert.alert('Photos Required', 'Please take at least 2 photos of the part');
+            Alert.alert(t('delivery.photosRequired'), t('delivery.takePhotos'));
             return;
         }
 
@@ -73,7 +76,7 @@ export default function DeliveryConfirmationScreen() {
             setStep('success');
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', error.message || 'Failed to confirm');
+            Alert.alert(t('common.error'), error.message || t('common.failedToConfirm'));
         } finally {
             setIsLoading(false);
         }
@@ -81,13 +84,13 @@ export default function DeliveryConfirmationScreen() {
 
     const handleReportIssue = () => {
         Alert.alert(
-            'Report Issue',
-            'What problem did you find?',
+            t('delivery.reportIssue'),
+            t('delivery.reportIssuePrompt'),
             [
-                { text: 'Wrong Part', onPress: () => navigateDispute('Wrong part received') },
-                { text: 'Damaged', onPress: () => navigateDispute('Part arrived damaged') },
-                { text: 'Not As Described', onPress: () => navigateDispute('Condition not as described') },
-                { text: 'Cancel', style: 'cancel' }
+                { text: t('delivery.wrongPart'), onPress: () => navigateDispute('Wrong part received') },
+                { text: t('delivery.damaged'), onPress: () => navigateDispute('Part arrived damaged') },
+                { text: t('delivery.notAsDescribed'), onPress: () => navigateDispute('Condition not as described') },
+                { text: t('common.cancel'), style: 'cancel' }
             ]
         );
     };
@@ -108,10 +111,10 @@ export default function DeliveryConfirmationScreen() {
                         <Ionicons name="checkmark" size={60} color="#fff" />
                     </LinearGradient>
                     <Text style={[styles.successTitle, { color: colors.text }]}>
-                        Delivery Confirmed!
+                        {t('delivery.confirmed')}
                     </Text>
                     <Text style={[styles.successSubtitle, { color: colors.textSecondary }]}>
-                        Payment released to seller.{'\n'}Thank you for your purchase!
+                        {t('delivery.paymentReleased')}{'\n'}{t('delivery.thankYou')}
                     </Text>
                     <TouchableOpacity
                         onPress={() => navigation.navigate('HomeTab')}
@@ -121,7 +124,7 @@ export default function DeliveryConfirmationScreen() {
                             colors={[Colors.primary, '#6b1029']}
                             style={styles.doneGradient}
                         >
-                            <Text style={styles.doneButtonText}>Back to Home</Text>
+                            <Text style={styles.doneButtonText}>{t('common.backToHome')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -132,48 +135,48 @@ export default function DeliveryConfirmationScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Confirm Delivery</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('delivery.confirmTitle')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Order Summary */}
                 <View style={[styles.orderCard, { backgroundColor: colors.surface }]}>
-                    <Text style={[styles.orderNumber, { color: colors.textSecondary }]}>
-                        Order #{order?.order_number || 'N/A'}
+                    <Text style={[styles.orderNumber, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('common.order')} #{order?.order_number || 'N/A'}
                     </Text>
-                    <Text style={[styles.partName, { color: colors.text }]}>
-                        {order?.part_name || 'Auto Part'}
+                    <Text style={[styles.partName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {order?.part_name || t('delivery.autoPart')}
                     </Text>
-                    <Text style={[styles.seller, { color: colors.textSecondary }]}>
-                        from {order?.garage_name || 'Seller'}
+                    <Text style={[styles.seller, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('common.from')} {order?.garage_name || t('common.seller')}
                     </Text>
                 </View>
 
                 {/* Inspection Timer */}
-                <View style={[styles.timerCard, { backgroundColor: Colors.warning + '20' }]}>
+                <View style={[styles.timerCard, { backgroundColor: Colors.warning + '20', flexDirection: rtlFlexDirection(isRTL) }]}>
                     <Ionicons name="time-outline" size={24} color={Colors.warning} />
                     <View style={styles.timerContent}>
-                        <Text style={[styles.timerTitle, { color: Colors.warning }]}>
-                            Inspection: {hoursRemaining}h remaining
+                        <Text style={[styles.timerTitle, { color: Colors.warning, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('delivery.inspection')}: {hoursRemaining}h {t('delivery.remaining')}
                         </Text>
-                        <Text style={[styles.timerSubtitle, { color: colors.textSecondary }]}>
-                            Confirm or report issue within this window
+                        <Text style={[styles.timerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('delivery.confirmWindow')}
                         </Text>
                     </View>
                 </View>
 
                 {/* Photo Capture */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                        📸 Capture Part Condition
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        📸 {t('delivery.captureCondition')}
                     </Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-                        Take 2+ photos of the received part
+                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('delivery.takePhotosPrompt')}
                     </Text>
 
                     <View style={styles.photoGrid}>
@@ -195,7 +198,7 @@ export default function DeliveryConfirmationScreen() {
                             >
                                 <Ionicons name="camera" size={32} color={Colors.primary} />
                                 <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                                    Add Photo
+                                    {t('delivery.addPhoto')}
                                 </Text>
                             </TouchableOpacity>
                         )}
@@ -204,14 +207,14 @@ export default function DeliveryConfirmationScreen() {
 
                 {/* Checklist */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                        ✅ Before Confirming
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        ✅ {t('delivery.beforeConfirming')}
                     </Text>
                     <View style={[styles.checklist, { backgroundColor: colors.surface }]}>
-                        {['Part matches description', 'No damage during delivery', 'Correct part number', 'All accessories included'].map((item, i) => (
-                            <View key={i} style={styles.checkItem}>
+                        {[t('delivery.check1'), t('delivery.check2'), t('delivery.check3'), t('delivery.check4')].map((item, i) => (
+                            <View key={i} style={[styles.checkItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Ionicons name="checkmark-circle-outline" size={20} color={Colors.success} />
-                                <Text style={[styles.checkText, { color: colors.text }]}>{item}</Text>
+                                <Text style={[styles.checkText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{item}</Text>
                             </View>
                         ))}
                     </View>
@@ -221,11 +224,11 @@ export default function DeliveryConfirmationScreen() {
             {/* Footer */}
             <View style={[styles.footer, { borderTopColor: colors.border }]}>
                 <TouchableOpacity
-                    style={[styles.issueButton, { borderColor: Colors.error }]}
+                    style={[styles.issueButton, { borderColor: Colors.error, flexDirection: rtlFlexDirection(isRTL) }]}
                     onPress={handleReportIssue}
                 >
                     <Ionicons name="warning-outline" size={20} color={Colors.error} />
-                    <Text style={[styles.issueButtonText, { color: Colors.error }]}>Report Issue</Text>
+                    <Text style={[styles.issueButtonText, { color: Colors.error }]}>{t('delivery.reportIssue')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -242,7 +245,7 @@ export default function DeliveryConfirmationScreen() {
                         ) : (
                             <>
                                 <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                                <Text style={styles.confirmButtonText}>Confirm & Release</Text>
+                                <Text style={styles.confirmButtonText}>{t('delivery.confirmRelease')}</Text>
                             </>
                         )}
                     </LinearGradient>

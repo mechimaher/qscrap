@@ -27,8 +27,11 @@ import { API_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
 import { useSocketContext } from '../hooks/useSocket';
+
 import { useToast } from '../components/Toast';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -49,6 +52,8 @@ const HeroRequestCard = ({
     const countdownRef = useRef<NodeJS.Timeout | null>(null);
     const [timeRemaining, setTimeRemaining] = useState<{ text: string; urgency: string } | null>(null);
 
+    const { t, isRTL } = useTranslation();
+
     // Calculate time remaining
     const calculateTimeRemaining = useCallback(() => {
         if (!request.expires_at) return null;
@@ -56,7 +61,7 @@ const HeroRequestCard = ({
         const expires = new Date(request.expires_at);
         const diff = expires.getTime() - now.getTime();
 
-        if (diff <= 0) return { text: 'Expired', urgency: 'expired' };
+        if (diff <= 0) return { text: t('common.expired'), urgency: 'expired' };
 
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -108,9 +113,9 @@ const HeroRequestCard = ({
 
     const getStatusConfig = (status: string) => {
         switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: 'Active' };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: 'Accepted' };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: 'Expired' };
+            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: t('status.active') };
+            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: t('status.accepted') };
+            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: t('status.expired') };
             default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
         }
     };
@@ -137,7 +142,7 @@ const HeroRequestCard = ({
             style={styles.heroCard}
         >
             {/* Status Badge */}
-            <View style={styles.heroHeader}>
+            <View style={[styles.heroHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <Animated.View style={[
                     styles.heroStatusBadge,
                     { backgroundColor: statusConfig.bg },
@@ -167,13 +172,13 @@ const HeroRequestCard = ({
             </View>
 
             {/* Car Info */}
-            <View style={styles.heroCarInfo}>
-                <Text style={styles.heroCarEmoji}>🚗</Text>
+            <View style={[styles.heroCarInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <Text style={[styles.heroCarEmoji, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }]}>🚗</Text>
                 <View style={styles.heroCarDetails}>
-                    <Text style={[styles.heroCarName, !isActive && { color: '#1a1a1a' }]}>
+                    <Text style={[styles.heroCarName, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {request.car_make} {request.car_model}
                     </Text>
-                    <Text style={[styles.heroCarYear, !isActive && { color: Colors.primary }]}>
+                    <Text style={[styles.heroCarYear, !isActive && { color: Colors.primary }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {request.car_year}
                     </Text>
                 </View>
@@ -184,22 +189,22 @@ const HeroRequestCard = ({
 
             {/* Part Category & Description */}
             <View style={styles.heroSection}>
-                <Text style={[styles.heroLabel, !isActive && { color: '#525252' }]}>
-                    PART NEEDED
+                <Text style={[styles.heroLabel, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('requestDetail.partNeeded')}
                 </Text>
                 {request.part_category ? (
                     <>
-                        <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }]}>
+                        <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
                             {request.part_category}
                         </Text>
                         {request.part_description && request.part_description !== request.part_category && (
-                            <Text style={[styles.heroPartNotes, !isActive && { color: '#525252' }]}>
+                            <Text style={[styles.heroPartNotes, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {request.part_description}
                             </Text>
                         )}
                     </>
                 ) : (
-                    <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }]}>
+                    <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {request.part_description}
                     </Text>
                 )}
@@ -207,19 +212,19 @@ const HeroRequestCard = ({
 
             {/* Part Number & VIN */}
             {(request.part_number || request.vin_number) && (
-                <View style={styles.heroMetaRow}>
+                <View style={[styles.heroMetaRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     {request.part_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }]}>Part #</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }]}>
+                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }, { textAlign: rtlTextAlign(isRTL) }]}>{t('requestDetail.partNumber')}</Text>
+                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {request.part_number}
                             </Text>
                         </View>
                     )}
                     {request.vin_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }]}>VIN</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }]}>
+                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.vin')}</Text>
+                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {request.vin_number}
                             </Text>
                         </View>
@@ -253,8 +258,8 @@ const HeroRequestCard = ({
             {/* Vehicle ID Photos */}
             {((request as any).car_front_image_url || (request as any).car_rear_image_url) && (
                 <>
-                    <Text style={[styles.heroLabel, !isActive && { color: '#525252' }]}>
-                        🚗 VEHICLE ID PHOTOS
+                    <Text style={[styles.heroLabel, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                        🚗 {t('newRequest.vehicleIdPhotos')}
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heroImages}>
                         {(request as any).car_front_image_url && (
@@ -275,7 +280,7 @@ const HeroRequestCard = ({
                                         }}
                                         style={styles.heroImage}
                                     />
-                                    <Text style={styles.vehiclePhotoLabel}>Front</Text>
+                                    <Text style={styles.vehiclePhotoLabel}>{t('newRequest.frontView')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -297,7 +302,7 @@ const HeroRequestCard = ({
                                         }}
                                         style={styles.heroImage}
                                     />
-                                    <Text style={styles.vehiclePhotoLabel}>Rear</Text>
+                                    <Text style={styles.vehiclePhotoLabel}>{t('newRequest.rearView')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -327,10 +332,12 @@ const HeroRequestCard = ({
 // ============================================
 // BID COMPARISON BAR - Visual Price Range
 // ============================================
+
 const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
+    const { t, isRTL } = useTranslation();
     if (bids.length < 2) return null;
 
-    const prices = bids.map(b => b.bid_amount);
+    const prices = bids.map(b => Number(b.bid_amount));
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const range = maxPrice - minPrice;
@@ -339,7 +346,7 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
 
     return (
         <View style={[styles.comparisonContainer, { backgroundColor: colors.surface }]}>
-            <Text style={styles.comparisonTitle}>💰 Price Range</Text>
+            <Text style={[styles.comparisonTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('requestDetail.priceRange')}</Text>
             <View style={styles.comparisonBar}>
                 <LinearGradient
                     colors={['#22C55E', '#F59E0B', '#EF4444']}
@@ -348,11 +355,11 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
                     style={styles.comparisonGradient}
                 >
                     {bids.map((bid, index) => {
-                        const position = range > 0 ? ((bid.bid_amount - minPrice) / range) * 100 : 50;
+                        const position = range > 0 ? ((Number(bid.bid_amount) - minPrice) / range) * 100 : 50;
                         return (
                             <View
                                 key={bid.bid_id}
-                                style={[styles.comparisonDot, { left: `${position}%` }]}
+                                style={[styles.comparisonDot, { left: isRTL ? undefined : `${position}%`, right: isRTL ? `${position}%` : undefined }]}
                             >
                                 <View style={styles.comparisonDotInner} />
                             </View>
@@ -360,9 +367,9 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
                     })}
                 </LinearGradient>
             </View>
-            <View style={styles.comparisonLabels}>
-                <Text style={styles.comparisonMin}>{minPrice} QAR</Text>
-                <Text style={styles.comparisonMax}>{maxPrice} QAR</Text>
+            <View style={[styles.comparisonLabels, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <Text style={styles.comparisonMin}>{minPrice} {t('common.qar')}</Text>
+                <Text style={styles.comparisonMax}>{maxPrice} {t('common.qar')}</Text>
             </View>
         </View>
     );
@@ -396,6 +403,7 @@ const PremiumBidCard = ({
     isAccepting: boolean;
     requestPartDescription: string;
 }) => {
+    const { t, isRTL } = useTranslation();
     const slideAnim = useRef(new Animated.Value(50)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -418,8 +426,8 @@ const PremiumBidCard = ({
         ]).start();
     }, [index]);
 
-    const conditionInfo = getConditionLabel(bid.part_condition);
-    const isAccepted = bid.status === 'accepted';
+    const conditionInfo = getConditionLabel(bid.part_condition, t);
+    const isAccepted = bid.bid_status === 'accepted';
 
     // Negotiation state
     const hasGarageCounterOffer = !!(bid as any).garage_counter_amount;
@@ -458,34 +466,34 @@ const PremiumBidCard = ({
         ]}>
             {/* Best Price Badge - Enhanced */}
             {isBestDeal && !isAccepted && (
-                <View style={styles.bestDealBadge}>
-                    <Text style={styles.bestDealText}>🏆 BEST PRICE</Text>
+                <View style={[styles.bestDealBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={styles.bestDealText}>{t('bidCard.bestPrice')}</Text>
                 </View>
             )}
 
             {/* Accepted Badge */}
             {isAccepted && (
-                <View style={styles.acceptedBadge}>
-                    <Text style={styles.acceptedBadgeText}>✓ ORDER CREATED</Text>
+                <View style={[styles.acceptedBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={styles.acceptedBadgeText}>{t('bidCard.orderCreated')}</Text>
                 </View>
             )}
 
             {/* Price Agreed Badge */}
             {isNegotiationAgreed && !isAccepted && (
-                <View style={styles.agreedBadge}>
-                    <Text style={styles.agreedBadgeText}>✓ PRICE AGREED</Text>
+                <View style={[styles.agreedBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={styles.agreedBadgeText}>{t('bidCard.priceAgreed')}</Text>
                 </View>
             )}
 
             {/* Counter-Offer Badge */}
             {hasGarageCounterOffer && !isAccepted && !isNegotiationAgreed && (
-                <View style={styles.counterBadge}>
-                    <Text style={styles.counterBadgeText}>🔄 COUNTER-OFFER</Text>
+                <View style={[styles.counterBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={styles.counterBadgeText}>{t('bidCard.counterOffer')}</Text>
                 </View>
             )}
 
             {/* Garage Profile Header */}
-            <View style={styles.garageProfileHeader}>
+            <View style={[styles.garageProfileHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.garagePhotoContainer}>
                     {bid.garage_photo_url ? (
                         <Image
@@ -499,9 +507,9 @@ const PremiumBidCard = ({
                     )}
                 </View>
                 <View style={styles.garageInfoSection}>
-                    <Text style={[styles.garageName, { color: colors.text }]}>{bid.garage_name}</Text>
+                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
                     {bid.rating_average && (
-                        <View style={styles.garageRatingRow}>
+                        <View style={[styles.garageRatingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.ratingStarSmall}>⭐</Text>
                             <Text style={styles.ratingValueSmall}>{bid.rating_average.toFixed(1)}</Text>
                         </View>
@@ -516,11 +524,11 @@ const PremiumBidCard = ({
             </View>
 
             {/* Header: Garage Info + Price */}
-            <View style={styles.bidHeader}>
+            <View style={[styles.bidHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.garageInfo}>
-                    <Text style={[styles.garageName, { color: colors.text }]}>{bid.garage_name}</Text>
+                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
                     {bid.rating_average && (
-                        <View style={styles.ratingRow}>
+                        <View style={[styles.ratingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.ratingStar}>⭐</Text>
                             <Text style={styles.ratingText}>
                                 {bid.rating_average.toFixed(1)} ({bid.rating_count})
@@ -528,28 +536,30 @@ const PremiumBidCard = ({
                         </View>
                     )}
                     {negotiationRounds > 0 && (
-                        <Text style={styles.roundsText}>Round {negotiationRounds}/3</Text>
+                        <Text style={[styles.roundsText, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('bidCard.negotiationRound', { current: negotiationRounds, total: 3 })}
+                        </Text>
                     )}
                 </View>
-                <View style={styles.priceSection}>
+                <View style={[styles.priceSection, { alignItems: isRTL ? 'flex-start' : 'flex-end' }]}>
                     {hasNegotiatedPrice ? (
                         <>
-                            <Text style={styles.originalPrice}>{originalBidAmount} QAR</Text>
+                            <Text style={styles.originalPrice}>{originalBidAmount} {t('common.qar')}</Text>
                             <Text style={styles.currentPriceLabel}>
-                                {isNegotiationAgreed ? 'Agreed' : 'Offered'}
+                                {isNegotiationAgreed ? t('bidCard.agreed') : t('bidCard.offered')}
                             </Text>
                             <Text style={[
                                 styles.currentPrice,
                                 isNegotiationAgreed && { color: '#22C55E' }
                             ]}>
-                                {displayPrice} QAR
+                                {displayPrice} {t('common.qar')}
                             </Text>
                         </>
                     ) : (
                         <>
-                            <Text style={styles.priceLabel}>{isAccepted ? 'Final' : 'Price'}</Text>
+                            <Text style={styles.priceLabel}>{isAccepted ? t('bidCard.final') : t('bidCard.price')}</Text>
                             <Text style={[styles.priceAmount, isBestDeal && { color: '#22C55E' }]}>
-                                {bid.bid_amount} QAR
+                                {bid.bid_amount} {t('common.qar')}
                             </Text>
                         </>
                     )}
@@ -558,25 +568,25 @@ const PremiumBidCard = ({
 
             {/* Negotiation Summary */}
             {negotiationRounds > 0 && (
-                <View style={styles.negotiationBox}>
+                <View style={[styles.negotiationBox, { borderLeftWidth: isRTL ? 0 : 3, borderRightWidth: isRTL ? 3 : 0, borderRightColor: Colors.primary }]}>
                     {customerCounterAmount && (
-                        <View style={styles.negotiationRow}>
-                            <Text style={styles.negotiationLabel}>👤 You offered:</Text>
+                        <View style={[styles.negotiationRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={styles.negotiationLabel}>{t('bidCard.youOffered')}</Text>
                             <Text style={[
                                 styles.negotiationValue,
                                 customerCounterStatus === 'accepted' && { color: '#22C55E' },
                                 customerCounterStatus === 'countered' && { color: '#F59E0B' },
                             ]}>
-                                {customerCounterAmount} QAR
-                                {customerCounterStatus === 'countered' && ' (countered)'}
+                                {customerCounterAmount} {t('common.qar')}
+                                {customerCounterStatus === 'countered' && ` ${t('bidCard.counteredStatus')}`}
                             </Text>
                         </View>
                     )}
                     {hasGarageCounterOffer && (
-                        <View style={styles.negotiationRow}>
-                            <Text style={styles.negotiationLabel}>🏭 Garage offers:</Text>
+                        <View style={[styles.negotiationRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={styles.negotiationLabel}>{t('bidCard.garageOffers')}</Text>
                             <Text style={[styles.negotiationValue, { color: '#F59E0B' }]}>
-                                {garageCounterAmount} QAR
+                                {garageCounterAmount} {t('common.qar')}
                             </Text>
                         </View>
                     )}
@@ -584,7 +594,7 @@ const PremiumBidCard = ({
             )}
 
             {/* Details */}
-            <View style={styles.bidDetails}>
+            <View style={[styles.bidDetails, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.detailChip}>
                     <Text style={[styles.detailChipText, { color: conditionInfo.color }]}>
                         {conditionInfo.label}
@@ -595,11 +605,11 @@ const PremiumBidCard = ({
                         colors={['#3B82F6', '#2563EB']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={styles.warrantyBadgeGradient}
+                        style={[styles.warrantyBadgeGradient, { flexDirection: rtlFlexDirection(isRTL) }]}
                     >
                         <Text style={styles.warrantyIcon}>🛡️</Text>
                         <Text style={styles.warrantyBadgeText}>
-                            {bid.warranty_days} Day{bid.warranty_days > 1 ? 's' : ''} Warranty
+                            {t('bidCard.warrantyDays', { count: bid.warranty_days })}
                         </Text>
                     </LinearGradient>
                 )}
@@ -607,31 +617,33 @@ const PremiumBidCard = ({
 
             {/* Notes */}
             {bid.notes && (
-                <Text style={styles.bidNotes}>"{bid.notes}"</Text>
+                <Text style={[styles.bidNotes, { textAlign: rtlTextAlign(isRTL) }]}>"{bid.notes}"</Text>
             )}
 
             {/* Bid Images */}
             {bid.image_urls && bid.image_urls.length > 0 && (
                 <View style={styles.bidImagesSection}>
-                    <Text style={styles.bidImagesLabel}>📸 Part Photos from Garage</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        {bid.image_urls.map((url, idx) => {
-                            const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
-                            return (
-                                <TouchableOpacity
-                                    key={idx}
-                                    onPress={() => {
-                                        const images = bid.image_urls!.map(u =>
-                                            u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
-                                        );
-                                        onImagePress(images, idx);
-                                    }}
-                                    activeOpacity={0.85}
-                                >
-                                    <Image source={{ uri: fullUrl }} style={styles.bidImage} />
-                                </TouchableOpacity>
-                            );
-                        })}
+                    <Text style={[styles.bidImagesLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('bidCard.garagePartPhotos')}</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
+                        <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
+                            {bid.image_urls.map((url, idx) => {
+                                const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                return (
+                                    <TouchableOpacity
+                                        key={idx}
+                                        onPress={() => {
+                                            const images = bid.image_urls!.map(u =>
+                                                u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
+                                            );
+                                            onImagePress(images, idx);
+                                        }}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Image source={{ uri: fullUrl }} style={[styles.bidImage, isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]} />
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
                     </ScrollView>
                 </View>
             )}
@@ -639,44 +651,46 @@ const PremiumBidCard = ({
             {/* Part Condition Photos */}
             {bid.condition_photos && bid.condition_photos.length > 0 && (
                 <View style={styles.conditionSection}>
-                    <View style={styles.conditionHeader}>
+                    <View style={[styles.conditionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.conditionTitle, { color: colors.text }]}>
-                            📸 Part Condition Photos
+                            📸 {t('bidCard.conditionPhotos')}
                         </Text>
                         <Text style={styles.conditionCount}>
-                            {bid.condition_photos.length} {bid.condition_photos.length === 1 ? 'photo' : 'photos'}
+                            {t('bidCard.photoCount', { count: bid.condition_photos.length })}
                         </Text>
                     </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        {bid.condition_photos.map((url, idx) => {
-                            const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
-                            return (
-                                <TouchableOpacity
-                                    key={idx}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        const images = bid.condition_photos!.map(u =>
-                                            u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
-                                        );
-                                        onImagePress(images, idx);
-                                    }}
-                                    activeOpacity={0.85}
-                                    style={styles.conditionPhotoWrapper}
-                                >
-                                    <Image source={{ uri: fullUrl }} style={styles.conditionPhoto} />
-                                    <View style={styles.photoOverlay}>
-                                        <Text style={styles.photoOverlayIcon}>🔍</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            );
-                        })}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
+                        <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
+                            {bid.condition_photos.map((url, idx) => {
+                                const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                return (
+                                    <TouchableOpacity
+                                        key={idx}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            const images = bid.condition_photos!.map(u =>
+                                                u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
+                                            );
+                                            onImagePress(images, idx);
+                                        }}
+                                        activeOpacity={0.85}
+                                        style={[styles.conditionPhotoWrapper, isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]}
+                                    >
+                                        <Image source={{ uri: fullUrl }} style={styles.conditionPhoto} />
+                                        <View style={styles.photoOverlay}>
+                                            <Text style={styles.photoOverlayIcon}>🔍</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
                     </ScrollView>
                 </View>
             )}
 
             {/* Actions */}
             {isActive && !isAccepted && (
-                <View style={styles.bidActions}>
+                <View style={[styles.bidActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity
                         style={[styles.acceptBtn, isAccepting && { opacity: 0.7 }]}
                         onPress={() => onAccept(bid, displayPrice)}
@@ -692,7 +706,7 @@ const PremiumBidCard = ({
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
                                 <Text style={styles.acceptBtnText}>
-                                    ✓ Accept {hasNegotiatedPrice ? `${displayPrice}` : ''}
+                                    ✓ {t('common.accept')} {hasNegotiatedPrice ? `${displayPrice}` : ''}
                                 </Text>
                             )}
                         </LinearGradient>
@@ -703,7 +717,7 @@ const PremiumBidCard = ({
                             style={styles.counterBtn}
                             onPress={() => onCounter(bid)}
                         >
-                            <Text style={styles.counterBtnText}>↩ Counter</Text>
+                            <Text style={styles.counterBtnText}>↩ {t('common.counter')}</Text>
                         </TouchableOpacity>
                     )}
 
@@ -720,13 +734,13 @@ const PremiumBidCard = ({
 };
 
 // Helper function
-const getConditionLabel = (condition: string) => {
+const getConditionLabel = (condition: string, t: any) => {
     switch (condition) {
-        case 'new': return { label: '✨ New', color: '#22C55E' };
-        case 'used_excellent': return { label: 'Excellent', color: '#3B82F6' };
-        case 'used_good': return { label: 'Good', color: '#3B82F6' };
-        case 'used_fair': return { label: 'Fair', color: '#F59E0B' };
-        case 'refurbished': return { label: 'Refurbished', color: Colors.primary };
+        case 'new': return { label: t('condition.new'), color: '#22C55E' };
+        case 'used_excellent': return { label: t('condition.used_excellent'), color: '#3B82F6' };
+        case 'used_good': return { label: t('condition.used_good'), color: '#3B82F6' };
+        case 'used_fair': return { label: t('condition.used_fair'), color: '#F59E0B' };
+        case 'refurbished': return { label: t('condition.refurbished'), color: Colors.primary };
         default: return { label: condition, color: '#6B7280' };
     }
 };
@@ -782,6 +796,7 @@ export default function RequestDetailScreen() {
     const { requestId } = route.params as { requestId: string };
     const { socket, newBids } = useSocketContext();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const toast = useToast();
 
     const [request, setRequest] = useState<Request | null>(null);
@@ -827,10 +842,10 @@ export default function RequestDetailScreen() {
         try {
             const data = await api.getRequestDetails(requestId);
             setRequest(data.request);
-            const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => a.bid_amount - b.bid_amount);
+            const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => Number(a.bid_amount) - Number(b.bid_amount));
             setBids(sortedBids);
         } catch (error) {
-            toast.error('Error', 'Failed to load request details');
+            toast.error(t('common.error'), t('errors.loadFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -839,12 +854,12 @@ export default function RequestDetailScreen() {
     const handleAcceptBid = async (bid: Bid, priceToShow: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Alert.alert(
-            'Accept Bid',
-            `Accept bid from ${bid.garage_name} for ${priceToShow} QAR?`,
+            t('alerts.acceptBidTitle'),
+            t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Accept',
+                    text: t('common.accept'),
                     onPress: async () => {
                         setAcceptingBid(bid.bid_id);
                         try {
@@ -864,15 +879,15 @@ export default function RequestDetailScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             toast.show({
                                 type: 'success',
-                                title: '🎉 Order Created!',
-                                message: 'Your order has been created.',
+                                title: t('alerts.orderCreatedTitle'),
+                                message: t('alerts.orderCreatedMessage'),
                                 action: {
-                                    label: 'View Orders',
+                                    label: t('common.viewOrders'),
                                     onPress: () => navigation.goBack()
                                 }
                             });
                         } catch (error: any) {
-                            toast.error('Error', error.message || 'Failed to accept bid');
+                            toast.error(t('common.error'), error.message || t('errors.acceptBidFailed'));
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                         } finally {
                             setAcceptingBid(null);
@@ -886,12 +901,12 @@ export default function RequestDetailScreen() {
     const handleRejectBid = async (bid: Bid) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Alert.alert(
-            'Reject Bid',
-            `Reject bid from ${bid.garage_name}?`,
+            t('alerts.rejectBidTitle'),
+            t('alerts.rejectBidMessage', { name: bid.garage_name }),
             [
-                { text: 'Keep', style: 'cancel' },
+                { text: t('common.keep'), style: 'cancel' },
                 {
-                    text: 'Reject',
+                    text: t('common.reject'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
@@ -899,7 +914,7 @@ export default function RequestDetailScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             setBids(prev => prev.filter(b => b.bid_id !== bid.bid_id));
                         } catch (error: any) {
-                            toast.error('Error', error.message || 'Failed to reject bid');
+                            toast.error(t('common.error'), error.message || t('errors.rejectBidFailed'));
                         }
                     },
                 },
@@ -915,7 +930,7 @@ export default function RequestDetailScreen() {
             currentAmount: (bid as any).garage_counter_amount || (bid as any).last_garage_offer_amount || bid.bid_amount,
             partDescription: request?.part_description || '',
             garageCounterId: (bid as any).garage_counter_id || null,
-            requestId: request?.request_id,
+            requestId: request?.request_id || '',
         });
     };
 
@@ -929,10 +944,10 @@ export default function RequestDetailScreen() {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backText}>← Back</Text>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
+                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Request Details</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                     <View style={{ width: 60 }} />
                 </View>
                 <SkeletonLoading />
@@ -943,7 +958,7 @@ export default function RequestDetailScreen() {
     if (!request) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <Text style={styles.errorText}>Request not found</Text>
+                <Text style={styles.errorText}>{t('errors.requestNotFound')}</Text>
             </SafeAreaView>
         );
     }
@@ -964,11 +979,11 @@ export default function RequestDetailScreen() {
             )}
 
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Request Details</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -985,9 +1000,9 @@ export default function RequestDetailScreen() {
 
                 {/* Bids Section */}
                 <View style={styles.bidsSection}>
-                    <View style={styles.bidsHeader}>
+                    <View style={[styles.bidsHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.bidsTitle, { color: colors.text }]}>
-                            {bids.length === 0 ? '⏳ Waiting for Bids' : `📬 ${bids.length} Bid${bids.length > 1 ? 's' : ''}`}
+                            {bids.length === 0 ? t('requestDetail.waitingForBids') : `📬 ${t('requestDetail.bidCount', { count: bids.length })}`}
                         </Text>
                         {bids.length >= 2 && (
                             <TouchableOpacity
@@ -1003,7 +1018,7 @@ export default function RequestDetailScreen() {
                                     end={{ x: 1, y: 0 }}
                                     style={styles.compareGradient}
                                 >
-                                    <Text style={styles.compareButtonText}>⚖️ Compare</Text>
+                                    <Text style={styles.compareButtonText}>⚖️ {t('common.compare')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
                         )}
@@ -1013,10 +1028,10 @@ export default function RequestDetailScreen() {
                         <View style={[styles.noBidsCard, { backgroundColor: colors.surface }]}>
                             <Text style={styles.noBidsEmoji}>🔔</Text>
                             <Text style={styles.noBidsText}>
-                                Garages are reviewing your request...
+                                {t('requestDetail.noBidsMessage')}
                             </Text>
                             <Text style={styles.noBidsSubtext}>
-                                You'll be notified when bids arrive
+                                {t('requestDetail.noBidsSubtext')}
                             </Text>
                         </View>
                     ) : (
@@ -1056,7 +1071,7 @@ export default function RequestDetailScreen() {
             <BidComparisonModal
                 visible={isComparisonVisible}
                 bids={bids}
-                onAccept={handleAcceptBid}
+                onAccept={(bid) => handleAcceptBid(bid, Number(bid.bid_amount))}
                 onClose={() => setIsComparisonVisible(false)}
             />
         </SafeAreaView>
@@ -1142,15 +1157,18 @@ const styles = StyleSheet.create({
     heroImage: { width: 80, height: 80, borderRadius: BorderRadius.md, marginRight: Spacing.sm },
     vehiclePhotoLabel: {
         position: 'absolute',
-        bottom: 4,
-        left: 4,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
-        fontSize: 10,
+        bottom: 0,
+        left: 0,
+        width: 80, // Match heroImage width
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        paddingVertical: 3,
+        fontSize: 9,
         color: '#fff',
-        fontWeight: '600'
+        fontWeight: '600',
+        textAlign: 'center',
+        letterSpacing: 0.3,
+        borderBottomLeftRadius: BorderRadius.md,
+        borderBottomRightRadius: BorderRadius.md,
     },
     // Comparison Bar
     comparisonContainer: {

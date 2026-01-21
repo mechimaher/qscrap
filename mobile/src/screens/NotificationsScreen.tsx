@@ -1,4 +1,4 @@
-// QScrap Notifications Screen - Premium Notification Center
+// QScrap Notifications Screen - Premium Notification Center with Full i18n Support
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
@@ -17,6 +17,8 @@ import { RootStackParamList } from '../../App';
 import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign, rtlChevron } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
 
@@ -35,6 +37,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function NotificationsScreen() {
     const navigation = useNavigation<NavigationProp>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const { refresh: refreshBadges } = useBadgeCounts();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -104,12 +107,12 @@ export default function NotificationsScreen() {
     const handleClearAll = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Alert.alert(
-            'Clear All Notifications',
-            'Are you sure you want to permanently delete all notifications? This cannot be undone.',
+            t('common.clear'),
+            t('alerts.confirmAction'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Clear All',
+                    text: t('common.clear'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
@@ -145,24 +148,29 @@ export default function NotificationsScreen() {
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
 
-        if (minutes < 60) return `${minutes}m ago`;
-        if (hours < 24) return `${hours}h ago`;
-        return `${days}d ago`;
+        // Use localized time labels
+        if (minutes < 60) return `${minutes}m`;
+        if (hours < 24) return `${hours}h`;
+        return `${days}d`;
     };
 
     const renderNotification = ({ item }: { item: Notification }) => (
         <TouchableOpacity
-            style={[styles.notificationCard, { backgroundColor: colors.surface, borderColor: colors.border }, !item.is_read && styles.unreadCard]}
+            style={[
+                styles.notificationCard,
+                { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) },
+                !item.is_read && styles.unreadCard
+            ]}
             onPress={() => handleNotificationPress(item)}
             activeOpacity={0.7}
         >
-            <View style={[styles.iconContainer, !item.is_read && styles.unreadIcon]}>
+            <View style={[styles.iconContainer, !item.is_read && styles.unreadIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
                 <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
             </View>
             <View style={styles.content}>
-                <Text style={[styles.title, { color: colors.text }, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
-                <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={2}>{item.message}</Text>
-                <Text style={[styles.time, { color: colors.textMuted }]}>{formatTime(item.created_at)}</Text>
+                <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
+                <Text style={[styles.message, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.message}</Text>
+                <Text style={[styles.time, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>{formatTime(item.created_at)}</Text>
             </View>
             {!item.is_read && <View style={styles.unreadDot} />}
         </TouchableOpacity>
@@ -173,20 +181,20 @@ export default function NotificationsScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>← Back</Text>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
-                <View style={styles.headerActions}>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('notifications.title')}</Text>
+                <View style={[styles.headerActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     {unreadCount > 0 && (
                         <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
-                            <Text style={styles.markAllText}>Read All</Text>
+                            <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
                         </TouchableOpacity>
                     )}
                     {notifications.length > 0 && (
                         <TouchableOpacity onPress={handleClearAll} style={styles.clearAllButton}>
-                            <Text style={styles.clearAllText}>Clear All</Text>
+                            <Text style={styles.clearAllText}>{t('common.clear')}</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -197,8 +205,8 @@ export default function NotificationsScreen() {
             ) : notifications.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyIcon}>🔔</Text>
-                    <Text style={styles.emptyTitle}>No Notifications</Text>
-                    <Text style={styles.emptySubtitle}>You're all caught up!</Text>
+                    <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('notifications.noNotifications')}</Text>
+                    <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('notifications.allCaughtUp')}</Text>
                 </View>
             ) : (
                 <FlatList

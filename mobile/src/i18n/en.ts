@@ -1,11 +1,16 @@
 /**
  * English Translations for QScrap Mobile App
+ * Comprehensive i18n coverage for Qatar VVIP Customer Experience
+ * Last Updated: January 2026
  */
 
 export const en = {
-    // Common
+    // =============================================
+    // COMMON - Universal UI elements
+    // =============================================
     common: {
         loading: 'Loading...',
+        appName: 'QScrap',
         error: 'Error',
         success: 'Success',
         cancel: 'Cancel',
@@ -23,15 +28,106 @@ export const en = {
         optional: 'Optional',
         required: 'Required',
         qar: 'QAR',
+        yes: 'Yes',
+        addVehicle: 'Add Vehicle',
+        requestsCount: '{{count}} request',
+        requestsCount_plural: '{{count}} requests',
+        vinVerifiedShort: '🔑 VIN ✓',
+        searchPlaceholder: 'Search...',
+        noMatches: 'No matches found',
+        other: 'Other',
+        enterManually: 'Enter manually:',
+        typeValue: 'Type {{label}}...',
+        backToList: 'Back to List',
+        change: 'Change',
+
+        ok: 'OK',
+        submit: 'Submit',
+        update: 'Update',
+        add: 'Add',
+        remove: 'Remove',
+        view: 'View',
+        viewAll: 'View All',
+        seeAll: 'See All',
+        more: 'More',
+        less: 'Less',
+        select: 'Select',
+        selected: 'Selected',
+        clear: 'Clear',
+        apply: 'Apply',
+        reset: 'Reset',
+        refresh: 'Refresh',
+        share: 'Share',
+        copy: 'Copy',
+        copied: 'Copied!',
+        send: 'Send',
+        call: 'Call',
+        email: 'Email',
+        whatsapp: 'WhatsApp',
+        continue: 'Continue',
+        skip: 'Skip',
+        getStarted: 'Get Started',
+        learnMore: 'Learn More',
+        customer: 'Customer',
+        detecting: 'Detecting',
+        permissionDenied: 'Permission Denied',
+        galleryPermission: 'We need access to your gallery to upload photos',
+        cameraPermission: 'We need access to your camera to take photos',
+        unknown: 'Unknown error occurred',
+        gallery: 'Gallery',
+        camera: 'Camera',
+        // Order Details common keys
+        order: 'Order',
+        current: 'Current',
+        orderSummary: 'Order Summary',
+        garage: 'Garage',
+        vehicle: 'Vehicle',
+        part: 'Part',
+        notes: 'Notes',
+        partPrice: 'Part Price',
+        total: 'Total',
+        currency: 'QAR',
+        deliveryAddress: 'Delivery Address',
+        vin: 'VIN',
+        accept: 'Accept',
+        counter: 'Counter',
+        expired: 'Expired',
+        protected: 'Protected',
+        or: 'or',
+        missingInfo: 'Missing Information',
+        invalidYear: 'Invalid Year',
+        areYouSure: 'Are you sure?',
+        permissionRequired: 'Permission Required',
+        reject: 'Reject',
+        keep: 'Keep',
+        viewOrders: 'View Orders',
+        compare: 'Compare',
+        networkError: 'Network error. Please check your connection.',
     },
 
-    // Auth
+
+
+    // =============================================
+    // GREETINGS - Time-based greetings
+    // =============================================
+    greetings: {
+        morning: 'Good Morning',
+        afternoon: 'Good Afternoon',
+        evening: 'Good Evening',
+        night: 'Good Night',
+    },
+
+    // =============================================
+    // AUTH - Login, Register, Password
+    // =============================================
     auth: {
         login: 'Sign In',
-        register: 'Register',
+        register: 'Create Account',
         logout: 'Sign Out',
         phone: 'Phone Number',
+        phonePlaceholder: '+974 XXXX XXXX',
         password: 'Password',
+        passwordPlaceholder: 'Enter your password',
         confirmPassword: 'Confirm Password',
         fullName: 'Full Name',
         welcomeBack: 'Welcome Back',
@@ -43,43 +139,186 @@ export const en = {
         termsOfService: 'Terms of Service',
         and: 'and',
         privacyPolicy: 'Privacy Policy',
-        logoutConfirm: 'Are you sure you want to sign out?',
         loginFailed: 'Login Failed',
         registerFailed: 'Registration Failed',
+        enterPhonePassword: 'Please enter phone number and password',
+        tagline: "Qatar's Premier Auto Parts",
+        taglineSubtext: 'Used • Commercial • Genuine OEM',
+        terms: 'Terms',
+        createAccount: 'Create Account',
     },
 
-    // Navigation
+    // =============================================
+    // NAVIGATION - Tab bar and nav elements
+    // =============================================
     nav: {
-        home: 'New Request',
+        home: 'Home',
         requests: 'Requests',
         orders: 'Orders',
         profile: 'Profile',
         support: 'Support',
+        myVehicles: 'My Vehicles',
+        settings: 'Settings',
+        newRequest: 'New Request',
     },
 
-    // Home / Create Request
+    // =============================================
+    // HOME SCREEN - Main dashboard
+    // =============================================
     home: {
-        title: 'Find Auto Parts',
-        subtitle: 'Search parts from verified garages in Qatar',
-        carMake: 'Car Make',
-        carModel: 'Car Model',
-        carYear: 'Car Year',
-        vinOptional: 'VIN / Chassis Number (Optional)',
-        partCategory: 'Part Category',
-        partDescription: 'Part Description',
-        partDescriptionPlaceholder: 'Describe the part you need...',
-        partNumber: 'Part Number (Optional)',
-        deliveryAddress: 'Delivery Address',
-        deliveryAddressPlaceholder: 'Enter delivery address...',
-        addPhotos: 'Add Photos',
-        photosHelp: 'Add photos of the part or your car for better matching',
-        submitRequest: 'Submit Request',
-        submitting: 'Submitting...',
-        requestSubmitted: 'Request Submitted!',
-        requestSubmittedMsg: 'You will receive bids from garages shortly',
+        findYourPart: 'Find Your Part',
+        requestPart: 'Request Part',
+        requestAPart: 'Request a Part',
+        deliveringTo: 'Delivering to',
+        selectAddress: 'Select delivery address',
+        change: 'Change',
+        yourActivity: 'Your Activity',
+        activeRequests: 'Active Requests',
+        inProgress: 'In Progress',
+        totalOrdersCompleted: 'Total Orders Completed',
+        quickActions: 'Quick Actions',
+        newRequest: 'New Request',
+        myVehicles: 'My Vehicles',
+        support: 'Support',
+        settings: 'Settings',
+        proTip: 'Pro Tip',
+        proTipPhotos: 'Add photos for faster & more accurate quotes →',
+        supplierBadges: {
+            used: 'Used',
+            commercial: 'Commercial',
+            genuine: 'Genuine',
+        },
+        verifiedSuppliers: '100+ verified suppliers in Qatar',
+        member: 'Member',
+        points: 'pts',
+        pts: 'pts',
+        totalOrders: 'Total Orders',
+        howItWorks: 'How It Works',
+        featuredProducts: 'Featured Products',
+        recentActivity: 'Recent Activity',
+        noActivity: 'No recent activity',
+        welcomeMessage: 'Welcome to QScrap',
+        rewards: 'Rewards',
+        currentLocation: 'Current Location',
+        alertAddressTitle: 'Delivery Address Required',
+        alertAddressMessage: 'Please add a delivery address before creating a request. Tap "Delivering to" to add your address.',
+        addAddress: 'Add Address',
+        featured: 'FEATURED',
+        enterprise: 'ENTERPRISE',
+        featuredParts: 'Featured Parts',
+        premiumGarages: 'From Premium Enterprise Garages',
+        step: 'STEP',
+        of: 'OF',
+        swipeNext: 'Swipe to see next step',
+        makeYourChoice: 'Make your choice',
+        howItWorksSteps: {
+            step1: {
+                title: 'Request Your Part',
+                subtitle: 'Tell us what you need and we\'ll find it'
+            },
+            step2: {
+                title: 'Review Bids',
+                subtitle: 'Garages compete for your business'
+            },
+            step3: {
+                title: 'Confirm & Pay',
+                subtitle: 'Secure escrow protection'
+            },
+            step4: {
+                title: 'Delivered to You',
+                subtitle: 'Fast delivery to your door'
+            }
+        },
+        deliveryWidget: {
+            deliveringTo: 'Delivering to',
+            selectAddress: 'Select delivery address',
+            selectLocation: 'Select Delivery Location',
+            currentLocation: 'Current Location',
+            useCurrentLocation: 'Use Current Location',
+            autoDetect: 'Auto-detect using GPS',
+            pinOnMap: 'Pin on Map',
+            chooseExact: 'Choose exact location on map',
+            deliverToMechanic: 'Deliver to My Mechanic',
+            mechanicHint: 'Send directly to your repair workshop',
+            default: '(Default)',
+            mapLocation: 'Map Location',
+            permissionDenied: 'Location permission denied. Please enable in settings.',
+            detectionFailed: 'Could not detect location. Please select from saved addresses.',
+        },
+        mapPicker: {
+            searchPlaceholder: 'Search for a place...',
+            dragPin: 'Drag pin to select location',
+            selectedLocation: 'Selected Location',
+            locationSelected: 'Location selected',
+            permissionRequired: 'Location permission required',
+            locationError: 'Could not get current location',
+            confirmLocation: '✓ Confirm Location',
+            cancel: 'Cancel',
+            satellite: 'Satellite',
+            map: 'Map',
+        },
     },
 
-    // Requests
+    // =============================================
+    // NEW REQUEST SCREEN - Part request wizard
+    // =============================================
+    newRequest: {
+        title: 'New Request',
+        subtitle: 'Find your part instantly',
+        proTipTitle: 'Pro Tip',
+        proTipText: 'Add clear photos to help garages find exact parts 3x faster!',
+        selectVehicle: 'Select Vehicle',
+        chooseFromCars: 'Choose from your saved cars',
+        addNewVehicle: '+ Add New Vehicle',
+        vinRequired: 'VIN Required',
+        vinRequiredMessage: 'Qatar garages require VIN/Chassis number from your Istimara for accurate part matching.\n\nWould you like to add VIN to this vehicle now?',
+        addVin: 'Add VIN',
+        tapToAddVin: '⚠️ VIN Required - Tap to add',
+        vinVerified: '🔑 VIN: {{vin}} ✓',
+        bidRange: 'Bid Range',
+        submitRequest: 'Submit Request',
+        footerHint: {
+            selectVehicle: 'Select a vehicle to continue',
+            vinRequired: '🔑 VIN required - Tap vehicle to add',
+            description: 'Add a part description (min 10 characters)'
+        },
+        partDetails: 'Part Details',
+        whatDoYouNeed: 'What do you need?',
+        categoryOptional: 'Category (Optional)',
+        categoryPlaceholder: 'e.g. Engine, Body, Interior',
+        subcategoryOptional: 'Subcategory (Optional)',
+        selectSubcategory: 'Select subcategory',
+        description: 'Description',
+        descriptionRequired: 'Description *',
+        descriptionPlaceholder: 'E.g. Front bumper for 2020 Camry, black color preferred',
+        partNumberOptional: 'Part Number (Optional)',
+        partNumberPlaceholder: 'OEM or aftermarket part number',
+        conditionPreference: 'Condition Preference',
+        anyCondition: 'Any Condition',
+        newOnly: 'New Only',
+        usedOnly: 'Used Only',
+        photosOptional: 'Photos (Optional)',
+        addUpTo5: 'Add up to 5 photos',
+        gallery: 'Gallery',
+        camera: 'Camera',
+        vehicleIdPhotos: 'Vehicle ID Photos',
+        helpGaragesIdentify: 'Help garages identify your car',
+        frontView: '🚗 Front View (License Plate)',
+        rearView: '🚙 Rear View (Model ID)',
+
+        submitting: 'Submitting...',
+        missingVehicle: 'Missing Vehicle',
+        pleaseSelectVehicle: 'Please select a vehicle',
+        missingDescription: 'Missing Description',
+        pleaseDescribePart: 'Please describe the part you need',
+        requestCreated: 'Request Created!',
+        garagesReviewing: 'Garages are reviewing your request',
+        orderAgainPrefilled: 'Form pre-filled with your previous order details',
+    },
+
+    // =============================================
+    // REQUESTS SCREEN - Request list
+    // =============================================
     requests: {
         title: 'My Requests',
         count: '{{count}} requests',
@@ -95,15 +334,32 @@ export const en = {
             withBids: 'With Bids',
             expired: 'Expired',
         },
-        bids: '{{count}} bids',
+        bids: 'bid',
+        bids_plural: 'bids',
+        bidsCount: '{{count}} bid',
+        bidsCount_plural: '{{count}} bids',
+        bidsReceived: '{{count}} bid received',
+        bidsReceived_plural: '{{count}} bids received',
+        bestOffer: 'Best offer',
+        swipeToCancel: 'Swipe to cancel',
+        noBids: 'No bids yet',
+        expires: 'Expires',
+        expired: 'Expired',
+        active: 'Active',
+        total: 'Total',
+        viewRequest: 'View Request',
     },
 
-    // Orders
+    // =============================================
+    // ORDERS SCREEN - Order list and details
+    // =============================================
     orders: {
         title: 'My Orders',
         count: '{{count}} orders',
         noOrders: 'No Orders Yet',
         noOrdersMsg: 'When you accept a bid, your order will appear here',
+        active: 'Active',
+        totalOrders: 'Total Orders',
         browseRequests: 'Browse Requests',
         noMatching: 'No Matching Orders',
         noMatchingMsg: 'Try adjusting your filters to see more results',
@@ -119,56 +375,437 @@ export const en = {
         writeReview: 'Write Review',
         cancelOrder: 'Cancel Order',
         openDispute: 'Open Dispute',
+        orderNumber: 'Order #{{number}}',
+        placedOn: 'Placed on {{date}}',
+        estimatedDelivery: 'Estimated Delivery',
+        deliveryAddress: 'Delivery Address',
+        paymentMethod: 'Payment Method',
+        orderSummary: 'Order Summary',
+        subtotal: 'Subtotal',
+        deliveryFee: 'Delivery Fee',
+        platformFee: 'Platform Fee',
+        total: 'Total',
+        garage: 'Garage',
+        driver: 'Driver',
+        contactGarage: 'Contact Garage',
+        contactDriver: 'Contact Driver',
+        viewInvoice: 'View Invoice',
+        reorder: 'Order Again',
+        ordered: 'Ordered',
     },
 
-    // Profile
+    // =============================================
+    // ORDER - Single Order Details
+    // =============================================
+    order: {
+        details: 'Order Details',
+        downloadInvoice: 'Download Invoice',
+        orderAgain: 'Order Again',
+        orderedAt: 'Ordered on {{date}} at {{time}}',
+        deliveryFee: 'Delivery Fee',
+        partPrice: 'Part Price',
+        haveYouReceived: 'Have you received this order?',
+        confirmReceived: 'Confirm Received',
+        confirmDelivery: 'Confirm Delivery',
+        confirmReceipt: 'Yes, I Received It',
+        confirmFailed: 'Failed to confirm delivery',
+        loadFailed: 'Failed to load order',
+        notFound: 'Order not found',
+        invoiceFailed: 'Failed to download invoice',
+        openLiveMap: 'Open Live Map',
+        progress: 'Order Progress',
+    },
+
+    // =============================================
+    // TRACKING SCREEN - Delivery tracking
+    // =============================================
+    tracking: {
+        title: 'Track Delivery',
+        orderNumber: 'Order #{{number}}',
+        driverOnTheWay: 'Driver is on the way',
+        estimatedArrival: 'Estimated Arrival',
+        minutes: 'min',
+        driverInfo: 'Driver Info',
+        vehicleInfo: 'Vehicle Info',
+        callDriver: 'Call Driver',
+        messageDriver: 'Message Driver',
+        deliveryTimeline: 'Delivery Timeline',
+        orderConfirmed: 'Order Confirmed',
+        preparing: 'Preparing',
+        pickedUp: 'Picked Up',
+        onTheWay: 'On The Way',
+        delivered: 'Delivered',
+        liveLocation: 'Live Location',
+        refreshLocation: 'Refresh Location',
+        driverAssigned: 'Driver Assigned',
+        awaitingPickup: 'Awaiting Pickup',
+        // Additional tracking keys used in screens
+        away: 'away',
+        eta: 'ETA',
+        liveTracking: 'Live Tracking',
+        loading: 'Loading tracking data...',
+        loadFailed: 'Failed to load tracking data',
+        waitingForDriver: 'Waiting for driver assignment',
+    },
+
+    // =============================================
+    // PROFILE SCREEN - User profile and settings
+    // =============================================
     profile: {
         title: 'Profile',
         editProfile: 'Edit Profile',
-        savedAddresses: 'Saved Addresses',
-        addresses: '{{count}} addresses',
-        darkMode: 'Dark Mode',
-        notifications: 'Notifications',
-        enabled: 'Enabled',
-        disabled: 'Disabled',
-        helpFaq: 'Help & FAQ',
-        termsPrivacy: 'Terms of Service',
-        privacyPolicy: 'Privacy Policy',
-        version: 'Version {{version}}',
+        edit: 'Edit',
         account: 'ACCOUNT',
-        preferences: 'PREFERENCES',
-        about: 'ABOUT',
+        myAddresses: 'My Addresses',
+        notifications: 'Notifications',
+        appearance: 'Appearance',
+        supportTickets: 'Support Tickets',
+        helpCenter: 'Help Center',
+        contactUs: 'Contact Us',
+        legal: 'LEGAL',
+        support: 'SUPPORT',
+        signOut: 'Sign Out',
+        deleteAccount: 'Delete Account',
+        confirmSignOut: 'Are you sure you want to sign out?',
+        confirmDelete: 'Are you sure you want to delete your account? This action is permanent and cannot be undone.',
+        vip: 'VIP',
+        requestsCount: 'Requests',
+        ordersCount: 'Orders',
+        madeInQatar: 'Made with ❤️ in Qatar',
+        allRightsReserved: '© {{year}} QScrap. All rights reserved.',
+        version: 'QScrap v{{version}}',
+        accountDeleted: 'Account Deleted',
+        accountDeletedMsg: 'Your account has been successfully deleted.',
+        faqs: '• How to request a part?\nGo to Home > New Part Request\n\n• How long for delivery?\nTypically 1-3 business days\n\n• Payment methods?\nCash on delivery or card',
+        contactInfo: 'Email: support@qscrap.qa\nPhone: +974 1234 5678',
+        chooseContact: 'Choose how to reach us:',
+        howCanWeHelp: 'How can we help you today?',
+        carMake: 'Car Make',
+        selectMake: 'Select Make',
+        carModel: 'Car Model',
+        selectMakeFirst: 'Select Make First',
+        carYear: 'Year',
+        nicknameOptional: 'Nickname (Optional)',
+        nicknamePlaceholder: 'e.g., My Car, Family Car',
+        saveVehicle: 'Save Vehicle',
+        searchMakes: 'Search makes...',
+        searchModels: 'Search models...',
+        selectYear: 'Select Year',
+        selectModel: 'Select Model',
+        updateVehicle: 'Update Vehicle',
+        noModelsFound: 'No models found',
     },
 
-    // Support
+    // =============================================
+    // SETTINGS SCREEN - App settings
+    // =============================================
+    settings: {
+        title: 'Settings',
+        notifications: 'Notifications',
+        pushNotifications: 'Push Notifications',
+        receiveNotifications: 'Receive notifications on your device',
+        bidAlerts: 'Bid Alerts',
+        bidAlertsDesc: 'Get notified when garages submit bids',
+        orderUpdates: 'Order Updates',
+        orderUpdatesDesc: 'Status changes and confirmations',
+        deliveryTracking: 'Delivery Tracking',
+        deliveryTrackingDesc: 'Driver location and ETA updates',
+        soundHaptics: 'Sound & Haptics',
+        soundEffects: 'Sound Effects',
+        soundEffectsDesc: 'Play sounds for notifications',
+        vibration: 'Vibration',
+        vibrationDesc: 'Haptic feedback for actions',
+        appearance: 'Appearance',
+        darkMode: 'Dark Mode',
+        darkModeDesc: 'Use dark theme',
+        language: 'Language',
+        storage: 'Storage',
+        clearCache: 'Clear Cache',
+        clearCacheTitle: 'Clear Cache',
+        clearCacheMessage: 'This will clear temporary data. You will remain logged in.',
+        cacheCleared: 'Cache cleared successfully',
+        about: 'About',
+        appVersion: 'App Version',
+        termsOfService: 'Terms of Service',
+        contactSupport: 'Contact Support',
+        privacyPolicy: 'Privacy Policy',
+    },
+
+    // =============================================
+    // ADDRESSES SCREEN - Address management
+    // =============================================
+    addresses: {
+        title: 'My Addresses',
+        addNew: 'Add New Address',
+        edit: 'Edit Address',
+        delete: 'Delete Address',
+        setDefault: 'Set as Default',
+        default: 'Default',
+        home: 'Home',
+        work: 'Work',
+        other: 'Other',
+        label: 'Label',
+        labelPlaceholder: 'e.g. Home, Office, etc.',
+        address: 'Address',
+        addressPlaceholder: 'Enter full address',
+        building: 'Building/Villa',
+        buildingPlaceholder: 'Building name or villa number',
+        floor: 'Floor',
+        apartment: 'Apartment',
+        landmark: 'Landmark',
+        landmarkPlaceholder: 'Nearby landmark (optional)',
+        noAddresses: 'No addresses saved',
+        noAddressesMsg: 'Add your first delivery address',
+        confirmDelete: 'Are you sure you want to delete this address?',
+        selectAddress: 'Select Address',
+        useCurrentLocation: 'Use Current Location',
+        searchLocation: 'Search for a location',
+        confirmLocation: 'Confirm Location',
+        deliveryInstructions: 'Delivery Instructions',
+        deliveryInstructionsPlaceholder: 'e.g. Ring doorbell, leave at reception',
+    },
+
+    // =============================================
+    // MY VEHICLES SCREEN - Vehicle management
+    // =============================================
+    vehicles: {
+        title: 'My Vehicles',
+        addNew: 'Add New Vehicle',
+        edit: 'Edit Vehicle',
+        delete: 'Delete Vehicle',
+        setDefault: 'Set as Primary',
+        primary: 'Primary',
+        make: 'Make',
+        makePlaceholder: 'e.g. Toyota, BMW, Mercedes',
+        model: 'Model',
+        modelPlaceholder: 'e.g. Camry, X5, C-Class',
+        year: 'Year',
+        yearPlaceholder: 'e.g. 2020',
+        vin: 'VIN / Chassis Number',
+        vinPlaceholder: '17-character VIN from Istimara',
+        vinHelp: 'Required for accurate part matching',
+        scanVIN: 'Scan VIN from Istimara',
+        color: 'Color',
+        colorPlaceholder: 'e.g. White, Black, Silver',
+        plateNumber: 'Plate Number',
+        plateNumberPlaceholder: 'Qatar plate number',
+        noVehicles: 'No vehicles saved',
+        noVehiclesMsg: 'Add your first vehicle to get started',
+        confirmDelete: 'Are you sure you want to delete this vehicle?',
+        scanVin: 'Scan VIN',
+        enterManually: 'Enter Manually',
+        vinScanned: 'VIN Scanned Successfully',
+        vinInvalid: 'Invalid VIN format',
+        lastUsed: 'Last used',
+        fillMakeModelYear: 'Please fill in Make, Model, and Year',
+        validYearRange: 'Year must be between 1990 and current year',
+        vinRequired: 'VIN Required',
+        vinLengthError: 'VIN must be exactly 17 characters',
+        vinFormatError: 'VIN contains invalid characters (no I, O, Q)',
+        addVehicleFailed: 'Failed to add vehicle',
+        deleteVehicleFailed: 'Failed to delete vehicle',
+        confirmRemoveVehicle: 'Remove {{make}} {{model}}?',
+        removeVehicle: 'Remove Vehicle',
+        vehiclesSaved: 'vehicles saved',
+        permissionRequired: 'Permission Required',
+        cameraPermission: 'Camera access is needed to capture VIN photo',
+        galleryPermission: 'Gallery access is needed',
+        vinTitle: 'VIN / Chassis Number',
+        vinSubtitle: 'Found on your Istimara (Registration Card)',
+        vinPhotoCaptured: '📷 VIN Photo Captured',
+        takePhoto: 'Take Photo of Istimara',
+        chooseGallery: 'Choose from Gallery',
+    },
+
+    // =============================================
+    // SUPPORT SCREEN - Support tickets
+    // =============================================
     support: {
         title: 'Support',
-        newTicket: 'New Ticket',
+        newTicket: 'Create New Ticket',
         openTickets: 'Open Tickets',
         closedTickets: 'Closed Tickets',
         noTickets: 'No Support Tickets',
-        noTicketsMsg: 'Need help? Create a support ticket',
+        noTicketsMsg: 'Create a ticket if you need help',
         createTicket: 'Create Ticket',
         subject: 'Subject',
+        subjectPlaceholder: 'Brief description of your issue',
         message: 'Message',
-        typeMessage: 'Type your message...',
-        send: 'Send',
+        messagePlaceholder: 'Describe your issue in detail...',
+        submitTicket: 'Submit Ticket',
+        ticketSubmitted: 'Ticket Submitted',
+        ticketSubmittedMsg: 'We\'ll respond within 24 hours',
+        open: 'Open',
+        inProgress: 'In Progress',
+        resolved: 'Resolved',
+        closed: 'Closed',
+        lastUpdated: 'Last updated',
+        addReply: 'Add Reply',
+        replyPlaceholder: 'Type your reply...',
+        sendReply: 'Send',
     },
 
-    // Status
+    // =============================================
+    // CHAT SCREEN - Messaging
+    // =============================================
+    chat: {
+        title: 'Chat',
+        typeMessage: 'Type a message...',
+        send: 'Send',
+        today: 'Today',
+        yesterday: 'Yesterday',
+        online: 'Online',
+        offline: 'Offline',
+        typing: 'Typing...',
+        delivered: 'Delivered',
+        read: 'Read',
+        attachPhoto: 'Attach Photo',
+        attachLocation: 'Share Location',
+        quickReplies: 'Quick Replies',
+    },
+
+    // =============================================
+    // PAYMENT SCREEN - Payment and checkout
+    // =============================================
+    payment: {
+        title: 'Payment',
+        payNow: 'Pay Now',
+        paymentMethod: 'Payment Method',
+        cashOnDelivery: 'Cash on Delivery',
+        creditCard: 'Credit/Debit Card',
+        applePay: 'Apple Pay',
+        googlePay: 'Google Pay',
+        cardNumber: 'Card Number',
+        cardNumberPlaceholder: '1234 5678 9012 3456',
+        expiryDate: 'Expiry Date',
+        expiryPlaceholder: 'MM/YY',
+        cvv: 'CVV',
+        cvvPlaceholder: '123',
+        cardholderName: 'Cardholder Name',
+        saveCard: 'Save card for future purchases',
+        orderTotal: 'Order Total',
+        processing: 'Processing payment...',
+        paymentSuccess: 'Payment Successful',
+        paymentFailed: 'Payment Failed',
+        tryAgain: 'Try Again',
+        securePayment: 'Secure payment powered by Stripe',
+    },
+
+    // =============================================
+    // NOTIFICATIONS SCREEN
+    // =============================================
+    notifications: {
+        title: 'Notifications',
+        noNotifications: 'No Notifications',
+        allCaughtUp: "You're all caught up!",
+        markAllRead: 'Mark All as Read',
+        today: 'Today',
+        earlier: 'Earlier',
+        thisWeek: 'This Week',
+        older: 'Older',
+    },
+
+    // =============================================
+    // STATUS LABELS
+    // =============================================
     status: {
         pending: 'Pending',
+        accepted: 'Accepted',
         processing: 'Processing',
         active: 'Active',
+        confirmed: 'Confirmed',
+        preparing: 'Preparing',
+        readyForPickup: 'Ready for Pickup',
+        pickedUp: 'Picked Up',
+        inTransit: 'On The Way',
+        outForDelivery: 'Out for Delivery',
+        delivered: 'Delivered',
         completed: 'Completed',
         cancelled: 'Cancelled',
-        delivered: 'Delivered',
-        outForDelivery: 'On the Way',
-        disputed: 'Disputed',
         expired: 'Expired',
+        disputed: 'Disputed',
+        refunded: 'Refunded',
+        paid: 'Paid',
+        unpaid: 'Unpaid',
+        awaitingPayment: 'Awaiting Payment',
+        // Additional status keys used in screens
+        open: 'Open',
+        closed: 'Closed',
+        inProgress: 'In Progress',
+        onTheWay: 'On The Way',
+        ready: 'Ready',
+        // Status descriptions for order timeline
+        confirmedDesc: 'Your order has been confirmed',
+        preparingDesc: 'Garage is preparing your part',
+        readyDesc: 'Part is ready for pickup by driver',
+        onTheWayDesc: 'Driver is on the way to you',
+        deliveredDesc: 'Part has been delivered',
+        completedDesc: 'Order completed successfully',
+        cancelledUserDesc: 'Cancelled by you',
+        cancelledGarageDesc: 'Cancelled by garage',
+        cancelledSupportDesc: 'Cancelled by support',
+        disputedDesc: 'Under review by support team',
+        refundedDesc: 'Payment has been refunded',
+        processingDesc: 'Processing your order',
+        issueDesc: 'Issue reported',
+        qcDesc: 'Quality check in progress',
+        qcPassedDesc: 'Quality check passed',
     },
 
-    // Onboarding
+    // =============================================
+    // ERRORS
+    // =============================================
+
+    errors: {
+        network: 'No internet connection',
+        networkRetry: 'Please check your connection and try again',
+        server: 'Server error. Please try again.',
+        unknown: 'Something went wrong',
+        required: '{{field}} is required',
+        invalidPhone: 'Please enter a valid phone number',
+        invalidEmail: 'Please enter a valid email address',
+        invalidVin: 'Please enter a valid 17-character VIN',
+        passwordShort: 'Password must be at least 6 characters',
+        passwordMismatch: 'Passwords do not match',
+        permissionDenied: 'Permission Denied',
+        cameraRequired: 'Camera access is required',
+        galleryRequired: 'Photo library access is required',
+        locationRequired: 'Location access is required',
+        sessionExpired: 'Session expired. Please login again.',
+        notFound: 'Not found',
+        timeout: 'Request timed out',
+        loadFailed: 'Failed to load data',
+    },
+
+    // =============================================
+    // ALERTS & DIALOGS
+    // =============================================
+    alerts: {
+        selectLanguage: 'Select Language',
+        chooseLanguage: 'Choose your preferred language',
+        languageChanged: 'Language Changed',
+        restartRequired: 'Please restart the app to apply layout changes',
+        faqs: 'FAQs',
+        contactSupport: 'Contact Support',
+        whatsapp: '📱 WhatsApp',
+        callUs: '📞 Call Us',
+        emailUs: '✉️ Email',
+        confirmAction: 'This action cannot be undone.',
+        success: 'Success!',
+        warning: 'Warning',
+        info: 'Information',
+        // Bid acceptance/rejection alerts
+        acceptBidTitle: 'Accept Bid',
+        acceptBidMessage: 'Accept bid from {{name}} for {{price}} QAR?',
+        orderCreatedTitle: 'Order Created!',
+        orderCreatedMessage: 'Your order has been created successfully',
+        rejectBidTitle: 'Reject Bid',
+        rejectBidMessage: 'Reject bid from {{name}}?',
+    },
+
+    // =============================================
+    // ONBOARDING
+    // =============================================
     onboarding: {
         skip: 'Skip',
         next: 'Next',
@@ -183,16 +820,268 @@ export const en = {
         slide4Desc: 'Track your order in real-time. Same-day delivery available across Qatar. Hassle-free returns.',
     },
 
-    // Errors
-    errors: {
-        network: 'No internet connection',
-        server: 'Server error. Please try again.',
-        unknown: 'Something went wrong',
-        required: '{{field}} is required',
-        invalidEmail: 'Please enter a valid email',
-        invalidPhone: 'Please enter a valid phone number',
-        passwordShort: 'Password must be at least 6 characters',
-        passwordMismatch: 'Passwords do not match',
+    // =============================================
+    // COUNTER OFFER
+    // =============================================
+    counterOffer: {
+        title: 'Counter Offer',
+        currentPrice: 'Current Price',
+        yourOffer: 'Your Offer',
+        offerPlaceholder: 'Enter your offer amount',
+        message: 'Message (Optional)',
+        messagePlaceholder: 'Add a message to the garage...',
+        submitOffer: 'Submit Counter Offer',
+        submitting: 'Submitting...',
+        offerSubmitted: 'Counter Offer Submitted',
+        offerSubmittedMsg: 'The garage will review your offer',
+        garageCounter: 'Garage Counter Offer',
+        accept: 'Accept',
+        decline: 'Decline',
+    },
+
+    // =============================================
+    // OFFERS (Counter Offer Screen)
+    // =============================================
+    offers: {
+        negotiatePrice: 'Negotiate Price',
+        currentBid: 'Current Bid',
+        roundCount: 'Round {{current}}/{{max}}',
+        makeCounter: 'Make a Counter Offer',
+        yourOffer: 'Your Offer',
+        messageOptional: 'Message (Optional)',
+        explainOffer: 'Explain your offer...',
+        sendCounter: 'Send Counter Offer',
+        enterAmount: 'Enter amount',
+        enterValidAmount: 'Please enter a valid amount',
+        mustBeLower: 'Your offer must be lower than the current bid',
+        sentTitle: 'Counter Offer Sent',
+        sentMessage: 'Your offer of {{amount}} QAR was sent to {{garage}}',
+        sendFailed: 'Failed to send counter offer',
+        acceptedTitle: 'Offer Accepted',
+        garageAccepted: 'The garage accepted your offer',
+        youAccepted: 'You accepted {{amount}} QAR',
+        rejectedTitle: 'Offer Rejected',
+        rejectedMessage: 'You rejected the garage offer',
+        responseFailed: 'Failed to respond to offer',
+        garageCounterOffer: 'Garage Counter Offer',
+        counter: 'Counter',
+        round: 'Round',
+        you: 'You',
+        negotiationComplete: 'Negotiation Complete',
+        maxRoundsReached: 'Maximum negotiation rounds have been reached. Accept, reject, or keep the current offer.',
+        historyTitle: 'Negotiation History',
+    },
+
+    // =============================================
+    // BIDS
+    // =============================================
+    bids: {
+        title: 'Bids',
+        noBids: 'No bids yet',
+        waitingForBids: 'Waiting for garages to submit bids',
+        bidFrom: 'Bid from {{garage}}',
+        price: 'Price',
+        warranty: 'Warranty',
+        deliveryTime: 'Delivery Time',
+        condition: 'Condition',
+        partOrigin: 'Part Origin',
+        acceptBid: 'Accept Bid',
+        counterOffer: 'Counter Offer',
+        viewDetails: 'View Details',
+        bidAccepted: 'Bid Accepted',
+        bidAcceptedMsg: 'Your order has been created',
+        compareBids: 'Compare Bids',
+    },
+
+    // =============================================
+    // REVIEWS
+    // =============================================
+    reviews: {
+        title: 'Reviews',
+        writeReview: 'Write a Review',
+        rating: 'Rating',
+        review: 'Review',
+        reviewPlaceholder: 'Share your experience...',
+        submitReview: 'Submit Review',
+        reviewSubmitted: 'Review Submitted',
+        reviewSubmittedMsg: 'Thank you for your feedback!',
+        noReviews: 'No reviews yet',
+        verified: 'Verified Purchase',
+    },
+
+    // =============================================
+    // DELIVERY CONFIRMATION
+    // =============================================
+    deliveryConfirmation: {
+        title: 'Confirm Delivery',
+        confirmReceived: 'Confirm Part Received',
+        inspectPart: 'Please inspect the part before confirming',
+        partCondition: 'Part Condition',
+        asExpected: 'As Expected',
+        damaged: 'Damaged',
+        wrong: 'Wrong Part',
+        confirmDelivery: 'Confirm Delivery',
+        reportIssue: 'Report Issue',
+        deliveryConfirmed: 'Delivery Confirmed!',
+        releasePayment: 'Payment will be released to the garage',
+    },
+
+    // =============================================
+    // VIN SCANNER
+    // =============================================
+    vinScanner: {
+        title: 'Scan VIN',
+        instructions: 'Position the VIN barcode within the frame',
+        scanning: 'Scanning...',
+        vinDetected: 'VIN Detected',
+        confirm: 'Confirm VIN',
+        rescan: 'Scan Again',
+        enterManually: 'Enter Manually',
+        scanFailed: 'Could not detect VIN',
+        tryAgain: 'Please try again or enter manually',
+    },
+
+    // =============================================
+    // DISPUTE
+    // =============================================
+    dispute: {
+        title: 'Open Dispute',
+        reason: 'Reason for Dispute',
+        selectReason: 'Select a reason',
+        reasons: {
+            wrongPart: 'Wrong part received',
+            damaged: 'Part is damaged',
+            notAsDescribed: 'Not as described',
+            lateDelivery: 'Very late delivery',
+            other: 'Other',
+        },
+        description: 'Description',
+        descriptionPlaceholder: 'Describe the issue in detail...',
+        attachPhotos: 'Attach Photos',
+        submitDispute: 'Submit Dispute',
+        disputeSubmitted: 'Dispute Submitted',
+        disputeSubmittedMsg: 'Our team will review and respond within 24 hours',
+    },
+
+    // =============================================
+    // HOW IT WORKS
+    // =============================================
+    howItWorks: {
+        title: 'How It Works',
+        step1Title: 'Submit Request',
+        step1Desc: 'Tell us what part you need',
+        step2Title: 'Get Bids',
+        step2Desc: 'Receive offers from verified garages',
+        step3Title: 'Choose & Pay',
+        step3Desc: 'Select the best offer and pay securely',
+        step4Title: 'Fast Delivery',
+        step4Desc: 'Get your part delivered to your door',
+    },
+
+    // =============================================
+    // LOYALTY
+    // =============================================
+    loyalty: {
+        silver: 'Silver',
+        gold: 'Gold',
+        platinum: 'Platinum',
+        member: 'Member',
+        tierLabel: '{{tier}} Member',
+    },
+    misc: {},
+    condition: {
+        new: 'New',
+        used: 'Used',
+        used_excellent: 'Used - Excellent',
+        used_good: 'Used - Good',
+        used_fair: 'Used - Fair',
+        refurbished: 'Refurbished',
+        commercial: 'Commercial',
+        genuine: 'Genuine',
+    },
+    requestDetail: {
+        title: 'Request Details',
+        partNeeded: 'PART NEEDED',
+        partNumber: 'Part #',
+        waitingForBids: '⏳ Waiting for Bids',
+        bidCount: '{{count}} Bids',
+        noBidsMessage: 'Garages are reviewing your request...',
+        noBidsSubtext: 'You\'ll be notified when bids arrive',
+        priceRange: '💰 Price Range',
+    },
+
+    // =============================================
+    // BID CARD
+    // =============================================
+    bidCard: {
+        bestPrice: 'Best Price',
+        // Additional bidCard keys
+        viewOffer: 'View Offer',
+        acceptOffer: 'Accept Offer',
+        condition: 'Condition',
+        warranty: 'Warranty',
+        deliveryTime: 'Delivery Time',
+        garageName: 'Garage',
+        price: 'Price',
+        rating: 'Rating',
+        reviews: 'Reviews',
+        // Negotiation and status keys
+        orderCreated: 'Order Created',
+        priceAgreed: 'Price Agreed',
+        counterOffer: 'Counter Offer',
+        negotiationRound: 'Round {{current}}/{{total}}',
+        agreed: 'Agreed',
+        offered: 'Offered',
+        final: 'Final Price',
+        youOffered: 'You Offered',
+        counteredStatus: '(Countered)',
+        garageOffers: 'Garage Offers',
+        warrantyDays: '{{count}} Day Warranty',
+        garagePartPhotos: 'Part Photos from Garage',
+        conditionPhotos: 'Condition Photos',
+        photoCount: '{{count}} photos',
+    },
+
+    // =============================================
+    // VIN - VIN Entry and Decoding
+    // =============================================
+    vin: {
+        title: 'Enter VIN',
+        subtitle: 'Vehicle Identification Number',
+        enterVinTitle: 'Enter Your VIN',
+        enterVin: 'Enter VIN Number',
+        placeholder: 'e.g. 1HGBH41JXMN109186',
+        enter17Char: 'Enter 17-character VIN',
+        vinNumber: 'VIN Number',
+        decodeVin: 'Decode VIN',
+        decoding: 'Decoding VIN...',
+        decoded: 'VIN Decoded Successfully',
+        decodeFailed: 'Failed to decode VIN',
+        invalidVin: 'Invalid VIN',
+        invalidFormat: 'VIN must be exactly 17 characters',
+        whereToFind: 'Where to Find VIN?',
+        whereToFindContent: 'You can find the VIN on your vehicle registration (Istimara) or on the dashboard near the windshield.',
+        infoText: 'The VIN helps us match the exact parts for your vehicle',
+        proTipContent: 'Check your Istimara (registration card) for the VIN number',
+        locationDashboard: 'Dashboard (near windshield)',
+        locationDoorJamb: 'Driver door jamb',
+        locationRegCard: 'Registration card (Istimara)',
+    },
+
+    // =============================================
+    // REVIEW - Order Reviews
+    // =============================================
+    review: {
+        title: 'Leave a Review',
+        writeReview: 'Write a Review',
+        placeholder: 'Share your experience...',
+        overall: 'Overall Experience',
+        quality: 'Part Quality',
+        delivery: 'Delivery Speed',
+        communication: 'Communication',
+        thankYou: 'Thank You!',
+        submittedMsg: 'Your review has been submitted',
+        failed: 'Failed to submit review',
     },
 };
 

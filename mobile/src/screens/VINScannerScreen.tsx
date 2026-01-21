@@ -19,6 +19,8 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 interface VINScannerScreenProps {
     route?: {
@@ -31,6 +33,7 @@ interface VINScannerScreenProps {
 export default function VINScannerScreen({ route }: VINScannerScreenProps) {
     const navigation = useNavigation<any>();
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
     const [vin, setVin] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -60,12 +63,12 @@ export default function VINScannerScreen({ route }: VINScannerScreenProps) {
         const cleanVin = vin.toUpperCase().trim();
 
         if (!cleanVin) {
-            setError('Please enter a VIN number');
+            setError(t('vin.enterVin'));
             return;
         }
 
         if (!validateVIN(cleanVin)) {
-            setError('Invalid VIN. Must be 17 characters (no I, O, Q)');
+            setError(t('vin.invalidVin'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -99,20 +102,20 @@ export default function VINScannerScreen({ route }: VINScannerScreenProps) {
 
     const handleHelp = () => {
         Alert.alert(
-            'Where to Find VIN',
-            '• Dashboard near windshield (driver side)\n• Driver door jamb sticker\n• Vehicle registration/title\n• Insurance card',
-            [{ text: 'Got it!' }]
+            t('vin.whereToFind'),
+            t('vin.whereToFindContent'),
+            [{ text: t('common.gotIt') }]
         );
     };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Ionicons name="close" size={28} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Enter VIN</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('vin.enterVinTitle')}</Text>
                 <TouchableOpacity onPress={handleHelp} style={styles.helpBtn}>
                     <Ionicons name="help-circle-outline" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
@@ -131,22 +134,22 @@ export default function VINScannerScreen({ route }: VINScannerScreenProps) {
 
                 {/* Title */}
                 <Text style={[styles.title, { color: colors.text }]}>
-                    Vehicle Identification Number
+                    {t('vin.title')}
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                    Enter your 17-character VIN to get accurate part quotes
+                    {t('vin.subtitle')}
                 </Text>
 
                 {/* VIN Input */}
-                <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: error ? Colors.error : colors.border }]}>
+                <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: error ? Colors.error : colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TextInput
-                        style={[styles.input, { color: colors.text }]}
+                        style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                         value={vin}
                         onChangeText={(text) => {
                             setVin(text.toUpperCase().replace(/[^A-Z0-9]/g, ''));
                             setError('');
                         }}
-                        placeholder="e.g. WVWZZZ3CZWE123456"
+                        placeholder={t('vin.placeholder')}
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="characters"
                         autoCorrect={false}
@@ -160,7 +163,7 @@ export default function VINScannerScreen({ route }: VINScannerScreenProps) {
                 </View>
 
                 {error ? (
-                    <Text style={styles.errorText}>{error}</Text>
+                    <Text style={[styles.errorText, { textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
                 ) : null}
 
                 {/* Submit Button */}
@@ -171,26 +174,26 @@ export default function VINScannerScreen({ route }: VINScannerScreenProps) {
                 >
                     <LinearGradient
                         colors={isLoading ? ['#999', '#777'] : [Colors.primary, '#6b1029']}
-                        style={styles.submitGradient}
+                        style={[styles.submitGradient, { flexDirection: rtlFlexDirection(isRTL) }]}
                     >
                         {isLoading ? (
-                            <Text style={styles.submitText}>Decoding...</Text>
+                            <Text style={styles.submitText}>{t('vin.decoding')}</Text>
                         ) : (
                             <>
-                                <Text style={styles.submitText}>Decode VIN</Text>
-                                <Ionicons name="arrow-forward" size={20} color="#fff" />
+                                <Text style={styles.submitText}>{t('vin.decodeVin')}</Text>
+                                <Ionicons name={isRTL ? "arrow-back" : "arrow-forward"} size={20} color="#fff" />
                             </>
                         )}
                     </LinearGradient>
                 </TouchableOpacity>
 
                 {/* Tips */}
-                <View style={[styles.tipCard, { backgroundColor: colors.surfaceElevated }]}>
-                    <Text style={styles.tipEmoji}>💡</Text>
+                <View style={[styles.tipCard, { backgroundColor: colors.surfaceElevated, flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={[styles.tipEmoji, isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]}>💡</Text>
                     <View style={styles.tipContent}>
-                        <Text style={[styles.tipTitle, { color: colors.text }]}>Pro Tip</Text>
-                        <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                            VIN is on the dashboard (driver side) or door jamb sticker
+                        <Text style={[styles.tipTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.proTip')}</Text>
+                        <Text style={[styles.tipText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('vin.proTipContent')}
                         </Text>
                     </View>
                 </View>
