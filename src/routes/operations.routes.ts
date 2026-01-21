@@ -21,6 +21,7 @@ router.use(authorizeOperations);
 
 // Dashboard & Analytics
 router.get('/dashboard/stats', getDashboardStats);
+router.get('/stats', getDashboardStats); // Alias for compatibility
 // router.get('/analytics', getAnalytics); // TODO: Implement getAnalytics
 
 // Orders
