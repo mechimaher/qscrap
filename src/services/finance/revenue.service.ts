@@ -41,7 +41,7 @@ export class RevenueService {
         const fromDate = filters?.from_date || new Date(Date.now() - days * 24 * 60 * 60 * 1000);
         const toDate = filters?.to_date || new Date();
 
-        let whereClause = `WHERE o.order_status = 'completed' 
+        let whereClause = `WHERE o.order_status IN ('delivered', 'completed') 
                            AND o.created_at >= $1 
                            AND o.created_at <= $2`;
         const params: unknown[] = [fromDate, toDate];
