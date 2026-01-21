@@ -37,13 +37,16 @@ export const updateGarageBusinessDetails = async (req: AuthRequest, res: Respons
 };
 
 export const updateGarageSpecialization = async (req: AuthRequest, res: Response) => {
-    const { supplier_type, specialized_brands } = req.body;
+    const { supplier_type, specialized_brands, all_brands } = req.body;
 
     if (supplier_type && !['used', 'new', 'both'].includes(supplier_type)) {
         return res.status(400).json({ error: 'supplier_type must be one of: used, new, both' });
     }
     if (specialized_brands && !Array.isArray(specialized_brands)) {
         return res.status(400).json({ error: 'specialized_brands must be an array' });
+    }
+    if (all_brands !== undefined && typeof all_brands !== 'boolean') {
+        return res.status(400).json({ error: 'all_brands must be a boolean' });
     }
 
     try {

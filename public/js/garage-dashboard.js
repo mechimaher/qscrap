@@ -185,10 +185,10 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     }
 });
 
-// Toggle brand selection visibility
+// Toggle brand selection visibility (for registration form)
 function toggleBrandSelection() {
     const allBrandsChecked = document.getElementById('regAllBrands').checked;
-    const container = document.getElementById('brandSelectionContainer');
+    const container = document.getElementById('regBrandSelectionContainer');
     if (container) {
         container.style.display = allBrandsChecked ? 'none' : 'block';
     }
@@ -2182,7 +2182,11 @@ function initSupplierSettings(profile) {
     const container = document.getElementById('brandSelectionContainer');
     const label = document.getElementById('allBrandsLabel');
 
-    if (profile.all_brands === true || profile.all_brands === undefined) {
+    // Improved logic: Default to true only if explicitly true, OR if null/undefined AND no specialized brands exist
+    const hasSpecializedBrands = profile.specialized_brands && Array.isArray(profile.specialized_brands) && profile.specialized_brands.length > 0;
+    const allBrandsEnabled = profile.all_brands === true || (profile.all_brands == null && !hasSpecializedBrands);
+
+    if (allBrandsEnabled) {
         allBrandsToggle.checked = true;
         container.style.display = 'none';
         label.textContent = 'All Brands';
@@ -2194,7 +2198,7 @@ function initSupplierSettings(profile) {
         label.style.color = '#f59e0b';
 
         // Populate selected brands
-        if (profile.specialized_brands && Array.isArray(profile.specialized_brands)) {
+        if (hasSpecializedBrands) {
             profile.specialized_brands.forEach(b => selectedBrands.add(b));
         }
     }
