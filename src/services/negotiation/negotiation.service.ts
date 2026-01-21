@@ -310,17 +310,61 @@ export class NegotiationService {
             RETURNING counter_offer_id
         `, [offer.bid_id, offer.request_id, garageId, counterPrice, notes, round]);
 
-        // 🔥 NEW: Notify customer if garage lowered price (price drop alert!)
+        // ALWAYS notify customer when garage sends counter-offer
         const bid = await client.query('SELECT b.bid_amount, pr.customer_id FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE b.bid_id = $1', [offer.bid_id]);
-        if (bid.rows.length > 0 && counterPrice < offer.proposed_amount) {
-            const priceDrop = offer.proposed_amount - counterPrice;
+
+        if (bid.rows.length > 0) {
+            const customerId = bid.rows[0].customer_id;
+            const priceDifference = Math.abs(offer.proposed_amount - counterPrice);
+            const counterOfferId = result.rows[0].counter_offer_id;
+
+            // Determine notification message based on price change
+            let title: string;
+            let message: string;
+            let notificationType: string;
+
+            if (counterPrice < offer.proposed_amount) {
+                // Price dropped - great news!
+                title = '🎉 Price Dropped!';
+                message = `Garage lowered price by ${priceDifference} QAR! Now ${counterPrice} QAR`;
+                notificationType = 'price_dropped';
+            } else if (counterPrice > offer.proposed_amount) {
+                // Price increased
+                title = '💰 Counter-Offer Received';
+                message = `Garage counter-offered ${counterPrice} QAR (was ${offer.proposed_amount} QAR)`;
+                notificationType = 'counter_offer_received';
+            } else {
+                // Same price with note/message
+                title = '💬 Counter-Offer Received';
+                message = `Garage responded to your offer: ${counterPrice} QAR`;
+                notificationType = 'counter_offer_received';
+            }
+
+            // Create notification (includes push notification)
             await createNotification({
-                userId: bid.rows[0].customer_id,
-                type: 'price_dropped',
-                title: '🎉 Price Dropped!',
-                message: `Garage lowered price by ${priceDrop} QAR! Now ${counterPrice} QAR`,
-                data: { bid_id: offer.bid_id, counter_offer_id: result.rows[0].counter_offer_id, old_price: offer.proposed_amount, new_price: counterPrice, savings: priceDrop },
+                userId: customerId,
+                type: notificationType,
+                title,
+                message,
+                data: {
+                    bid_id: offer.bid_id,
+                    counter_offer_id: counterOfferId,
+                    proposed_amount: counterPrice,
+                    previous_amount: offer.proposed_amount,
+                    round
+                },
                 target_role: 'customer'
+            });
+
+            // Emit real-time WebSocket event
+            const { emitToUser } = await import('../../utils/socketIO');
+            emitToUser(customerId, 'counter_offer_received', {
+                counter_offer_id: counterOfferId,
+                bid_id: offer.bid_id,
+                proposed_amount: counterPrice,
+                previous_amount: offer.proposed_amount,
+                round,
+                notification: message
             });
         }
     }
