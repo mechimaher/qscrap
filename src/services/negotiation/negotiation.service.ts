@@ -118,7 +118,7 @@ export class NegotiationService {
     async getPendingCounterOffers(garageId: string): Promise<any[]> {
         const result = await this.pool.query(`
             SELECT co.*, 
-                   b.bid_amount as original_bid_amount,
+                   COALESCE(b.original_bid_amount, b.bid_amount) as original_bid_amount,
                    (
                        SELECT proposed_amount 
                        FROM counter_offers 
@@ -180,7 +180,7 @@ export class NegotiationService {
             FROM bids b 
             JOIN part_requests pr ON b.request_id = pr.request_id 
             WHERE b.bid_id = $1
-        `, [bidId]);
+            `, [bidId]);
         if (result.rows.length === 0) throw new Error('Bid not found');
         return result.rows[0];
     }
@@ -191,7 +191,7 @@ export class NegotiationService {
             FROM bids b 
             JOIN part_requests pr ON b.request_id = pr.request_id 
             WHERE b.bid_id = $1
-        `, [bidId]);
+            `, [bidId]);
         if (result.rows.length === 0) throw new Error('Bid not found');
         return result.rows[0];
     }
@@ -238,10 +238,10 @@ export class NegotiationService {
         await client.query(`
             UPDATE bids 
             SET original_bid_amount = COALESCE(original_bid_amount, bid_amount),
-                bid_amount = $1, 
-                status = $2 
+            bid_amount = $1,
+            status = $2 
             WHERE bid_id = $3
-        `, [offer.proposed_amount, 'accepted', offer.bid_id]);
+            `, [offer.proposed_amount, 'accepted', offer.bid_id]);
 
         // 3. Get request details for order creation
         const reqResult = await client.query('SELECT * FROM part_requests WHERE request_id = $1', [bid.request_id]);
@@ -252,11 +252,11 @@ export class NegotiationService {
         const garageRateResult = await client.query(`
             SELECT g.approval_status, sp.commission_rate
             FROM garages g
-            LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN ('active', 'trial')
+            LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN('active', 'trial')
             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE g.garage_id = $1
             ORDER BY gs.created_at DESC LIMIT 1
-        `, [bid.garage_id]);
+            `, [bid.garage_id]);
 
         let commissionRate = 0.15;
         if (garageRateResult.rows[0]?.approval_status === 'demo') {
@@ -274,13 +274,13 @@ export class NegotiationService {
 
         // 6. Create order
         const orderResult = await client.query(`
-            INSERT INTO orders 
-            (request_id, bid_id, customer_id, garage_id, part_price, commission_rate, 
-             platform_fee, delivery_fee, total_amount, garage_payout_amount, 
-             payment_method, delivery_address)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            INSERT INTO orders
+            (request_id, bid_id, customer_id, garage_id, part_price, commission_rate,
+                platform_fee, delivery_fee, total_amount, garage_payout_amount,
+                payment_method, delivery_address)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING order_id, order_number
-        `, [bid.request_id, offer.bid_id, customerId, bid.garage_id, partPrice, commissionRate,
+            `, [bid.request_id, offer.bid_id, customerId, bid.garage_id, partPrice, commissionRate,
             platformFee, deliveryFee, totalAmount, garagePayout, 'cash',
         request.delivery_address_text || 'To be confirmed']);
 
@@ -299,7 +299,7 @@ export class NegotiationService {
         await client.query(`
             INSERT INTO order_status_history
             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-            VALUES ($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted counter-offer')
+        VALUES($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted counter-offer')
         `, [order.order_id, customerId]);
 
         // 10. Notify both parties about accepted counter-offer
@@ -310,7 +310,7 @@ export class NegotiationService {
             userId: customerId,
             type: 'counter_offer_accepted',
             title: '🎉 Counter-Offer Accepted!',
-            message: `Your counter-offer of ${offer.proposed_amount} QAR was accepted! Order #${order.order_number} created.`,
+            message: `Your counter - offer of ${offer.proposed_amount} QAR was accepted! Order #${order.order_number} created.`,
             data: {
                 order_id: order.order_id,
                 order_number: order.order_number,
@@ -327,7 +327,7 @@ export class NegotiationService {
             order_number: order.order_number,
             bid_id: offer.bid_id,
             final_price: offer.proposed_amount,
-            notification: `Counter-offer accepted! Order #${order.order_number} created.`
+            notification: `Counter - offer accepted! Order #${order.order_number} created.`
         });
 
         // Notify GARAGE (confirmation they accepted the counter)
@@ -365,8 +365,8 @@ export class NegotiationService {
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['countered', offer.counter_offer_id]);
         const round = offer.round_number + 1;
         const result = await client.query(`
-            INSERT INTO counter_offers (bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
-            VALUES ($1, $2, 'garage', $3, $4, $5, $6)
+            INSERT INTO counter_offers(bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
+        VALUES($1, $2, 'garage', $3, $4, $5, $6)
             RETURNING counter_offer_id
         `, [offer.bid_id, offer.request_id, garageId, counterPrice, notes, round]);
 
@@ -391,7 +391,7 @@ export class NegotiationService {
             } else if (counterPrice > offer.proposed_amount) {
                 // Price increased
                 title = '💰 Counter-Offer Received';
-                message = `Garage counter-offered ${counterPrice} QAR (was ${offer.proposed_amount} QAR)`;
+                message = `Garage counter - offered ${counterPrice} QAR(was ${offer.proposed_amount} QAR)`;
                 notificationType = 'counter_offer_received';
             } else {
                 // Same price with note/message
@@ -433,8 +433,8 @@ export class NegotiationService {
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['countered', offer.counter_offer_id]);
         const round = offer.round_number + 1;
         await client.query(`
-            INSERT INTO counter_offers (bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
-            VALUES ($1, $2, 'customer', $3, $4, $5, $6)
+            INSERT INTO counter_offers(bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
+        VALUES($1, $2, 'customer', $3, $4, $5, $6)
         `, [offer.bid_id, offer.request_id, customerId, counterPrice, notes, round]);
     }
 
@@ -444,7 +444,7 @@ export class NegotiationService {
             userId: garageId,
             type: 'counter_offer_received',
             title: 'Counter-Offer Received 💰',
-            message: `Customer counter-offered ${proposed} QAR (was ${original} QAR)`,
+            message: `Customer counter - offered ${proposed} QAR(was ${original} QAR)`,
             data: { counter_offer_id: counterOfferId, bid_id: bidId, proposed_amount: proposed, round },
             target_role: 'garage'
         });
@@ -457,7 +457,7 @@ export class NegotiationService {
             proposed_amount: proposed,
             original_amount: original,
             round,
-            notification: `Customer counter-offered ${proposed} QAR (was ${original} QAR)`
+            notification: `Customer counter - offered ${proposed} QAR(was ${original} QAR)`
         });
     }
 }
