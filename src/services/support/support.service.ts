@@ -92,29 +92,31 @@ export class SupportService {
     }
 
     async getStats() {
-        const [statsResult, disputeResult, paymentDisputeResult, reviewResult] = await Promise.all([
+        const [statsResult, paymentDisputeResult, reviewResult] = await Promise.all([
             this.pool.query(`SELECT COUNT(*) FILTER (WHERE status = 'open') as open_tickets, COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_tickets, COUNT(*) FILTER (WHERE status = 'resolved' AND DATE(updated_at) = CURRENT_DATE) as resolved_today FROM support_tickets`),
-            this.pool.query(`SELECT COUNT(*) as order_disputes FROM order_disputes WHERE status = 'pending'`),
             this.pool.query(`SELECT COUNT(*) as payment_disputes FROM garage_payouts WHERE status = 'disputed'`),
-            this.pool.query(`SELECT COUNT(*) as pending_reviews FROM reviews WHERE status = 'pending'`)
+            this.pool.query(`SELECT COUNT(*) as pending_reviews FROM order_reviews WHERE moderation_status = 'pending'`)
         ]);
         const stats = statsResult.rows[0];
         return {
             open_tickets: parseInt(stats.open_tickets) || 0,
             in_progress_tickets: parseInt(stats.in_progress_tickets) || 0,
             resolved_today: parseInt(stats.resolved_today) || 0,
-            order_disputes: parseInt(disputeResult.rows[0]?.order_disputes) || 0,
+            order_disputes: 0, // Table doesn't exist yet
             payment_disputes: parseInt(paymentDisputeResult.rows[0]?.payment_disputes) || 0,
             pending_reviews: parseInt(reviewResult.rows[0]?.pending_reviews) || 0
         };
     }
 
     async getUrgentItems() {
-        const [urgentTickets, urgentDisputes] = await Promise.all([
-            this.pool.query(`SELECT ticket_id as id, 'ticket' as type, subject as title, created_at FROM support_tickets WHERE status = 'open' AND created_at < NOW() - INTERVAL '24 hours' ORDER BY created_at ASC LIMIT 5`),
-            this.pool.query(`SELECT dispute_id as id, 'dispute' as type, reason as title, created_at FROM order_disputes WHERE status = 'pending' AND created_at < NOW() - INTERVAL '48 hours' ORDER BY created_at ASC LIMIT 5`)
-        ]);
-        return [...urgentTickets.rows, ...urgentDisputes.rows].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        // Only query tickets for now - order_disputes table doesn't exist yet
+        const urgentTickets = await this.pool.query(
+            `SELECT ticket_id as id, 'ticket' as type, subject as title, created_at 
+             FROM support_tickets 
+             WHERE status = 'open' AND created_at < NOW() - INTERVAL '24 hours' 
+             ORDER BY created_at ASC LIMIT 5`
+        );
+        return urgentTickets.rows;
     }
 
     async getRecentActivity() {
