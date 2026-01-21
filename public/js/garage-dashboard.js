@@ -1141,6 +1141,11 @@ function createCounterOfferCard(co) {
         ? `${Math.floor(hoursRemaining)}h ${Math.floor((hoursRemaining % 1) * 60)}m`
         : `${Math.floor(hoursRemaining * 60)}m`;
 
+    // Calculate price difference based on garage's LAST counter-offer (not original bid)
+    const garageAmount = co.garage_last_offer || co.original_amount; // Use original_amount if garage_last_offer is null
+    const priceDiff = (((co.proposed_amount - garageAmount) / garageAmount) * 100).toFixed(0);
+    const isLower = co.proposed_amount < garageAmount;
+
     return `
         <div class="pending-action-card counter-offer-card ${urgencyClass}" style="
             background: linear-gradient(135deg, var(--bg-card) 0%, rgba(249, 115, 22, 0.05) 100%);
@@ -1151,7 +1156,7 @@ function createCounterOfferCard(co) {
         ">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                 <div>
-                    <span style="background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">${bidRef}</span>
+                    <span style="background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">BID-${String(co.bid_id).padStart(4, '0')}</span>
                     <span style="background: rgba(249, 115, 22, 0.2); color: #f97316; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-left: 8px;">
                         <i class="bi bi-arrow-repeat"></i> Counter-Offer
                     </span>
@@ -1169,8 +1174,8 @@ function createCounterOfferCard(co) {
             
             <div style="display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 16px;">
                 <div style="text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-muted);">Your Bid</div>
-                    <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">${parseFloat(co.original_amount).toFixed(0)} QAR</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">${co.garage_last_offer ? 'Your Counter' : 'Your Bid'}</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">${parseFloat(garageAmount).toFixed(0)} QAR</div>
                 </div>
                 <i class="bi bi-arrow-right" style="font-size: 24px; color: var(--accent);"></i>
                 <div style="text-align: center;">
