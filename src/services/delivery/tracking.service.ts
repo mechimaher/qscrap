@@ -110,8 +110,8 @@ export class TrackingService {
                 d.current_lat as driver_lat,
                 d.current_lng as driver_lng,
                 d.last_location_update,
-                c.full_name as customer_name,
-                c.phone as customer_phone
+                COALESCE(c.full_name, 'N/A') as customer_name,
+                COALESCE(c.phone, 'N/A') as customer_phone
             FROM delivery_assignments da
             JOIN orders o ON da.order_id = o.order_id
             LEFT JOIN drivers d ON da.driver_id = d.driver_id
