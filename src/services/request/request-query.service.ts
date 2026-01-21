@@ -175,7 +175,7 @@ export class RequestQueryService {
                     g.rating_count as garage_review_count, 
                     g.total_transactions,
                     COALESCE(sp.plan_code, 'starter') as plan_code,
-                    b.bid_amount as original_bid_amount,
+                    COALESCE(b.original_bid_amount, b.bid_amount) as original_bid_amount,
                     
                     -- Bid images stored directly in bids table
                     COALESCE(b.image_urls, ARRAY[]::text[]) as image_urls,
