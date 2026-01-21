@@ -14,7 +14,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import LeafletMap from '../components/LeafletMap';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -27,6 +27,7 @@ import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import LiveETACard from '../components/LiveETACard';
 import StatusTimeline from '../components/StatusTimeline';
+import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -435,12 +436,65 @@ export default function TrackingScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Premium Leaflet Map - Driver only visible after QC passed */}
-            <LeafletMap
-                driverLocation={canShowDriver ? driverLocation : null}
-                customerLocation={customerLocation}
-                showRoute={canShowDriver}
-            />
+            {/* Premium Google Maps - VVIP Midnight Chic */}
+            <MapView
+                ref={mapRef}
+                provider={PROVIDER_GOOGLE}
+                style={styles.map}
+                customMapStyle={VVIP_MIDNIGHT_STYLE}
+                showsUserLocation={false}
+                showsMyLocationButton={false}
+                loadingEnabled={true}
+                initialRegion={defaultRegion}
+            >
+                {/* Driver Marker - Only show after QC passed */}
+                {canShowDriver && driverLocation && (
+                    <Marker
+                        coordinate={{
+                            latitude: driverLocation.latitude,
+                            longitude: driverLocation.longitude
+                        }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        tracksViewChanges={false}
+                        zIndex={999}
+                    >
+                        <Animated.View style={[styles.driverMarker, { transform: [{ scale: pulseAnim }] }]}>
+                            <View style={styles.driverMarkerPulse} />
+                            <View style={styles.driverMarkerInner}>
+                                <Text style={styles.driverMarkerIcon}>🚗</Text>
+                            </View>
+                        </Animated.View>
+                    </Marker>
+                )}
+
+                {/* Customer Location Marker */}
+                {customerLocation && (
+                    <Marker
+                        coordinate={{
+                            latitude: customerLocation.latitude,
+                            longitude: customerLocation.longitude
+                        }}
+                    >
+                        <View style={[styles.locationMarker, { backgroundColor: Colors.success }]}>
+                            <Text style={styles.markerIcon}>🏠</Text>
+                        </View>
+                    </Marker>
+                )}
+
+                {/* Route Polyline */}
+                {canShowDriver && driverLocation && customerLocation && (
+                    <Polyline
+                        coordinates={[
+                            { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
+                            { latitude: customerLocation.latitude, longitude: customerLocation.longitude }
+                        ]}
+                        strokeColor={Colors.primary}
+                        strokeWidth={4}
+                        lineCap="round"
+                        lineJoin="round"
+                    />
+                )}
+            </MapView>
 
             {/* Chat Notification Banner */}
             {newChatMessage && (
@@ -477,7 +531,21 @@ export default function TrackingScreen() {
                         <Text style={styles.headerTitle}>Live Tracking</Text>
                         <Text style={styles.orderNumber}>Order #{orderNumber}</Text>
                     </View>
-                    <View style={[styles.connectionDot, isConnected && styles.connectionDotActive]} />
+                    <View style={styles.headerActions}>
+                        <View style={[styles.connectionDot, isConnected && styles.connectionDotActive]} />
+                        <TouchableOpacity
+                            style={styles.supportButton}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                navigation.navigate('SupportChat' as any, {
+                                    order_id: orderId,
+                                    order_number: orderNumber
+                                });
+                            }}
+                        >
+                            <Text style={styles.supportIcon}>💬</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </SafeAreaView>
 
@@ -675,28 +743,6 @@ export default function TrackingScreen() {
                     </LinearGradient>
                 </TouchableOpacity>
             </Animated.View>
-
-            {/* Live Support Chat FAB */}
-            <TouchableOpacity
-                style={styles.supportFab}
-                onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    navigation.navigate('SupportChat' as any, {
-                        order_id: orderId,
-                        order_number: orderNumber
-                    });
-                }}
-            >
-                <LinearGradient
-                    colors={['#8D1B3D', '#C9A227']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.fabGradient}
-                >
-                    <Text style={styles.fabIcon}>💬</Text>
-                    <Text style={styles.fabText}>Support</Text>
-                </LinearGradient>
-            </TouchableOpacity>
         </View>
     );
 }
@@ -767,6 +813,23 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.error,
     },
     connectionDotActive: { backgroundColor: Colors.success },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    supportButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.dark.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...Shadows.md,
+    },
+    supportIcon: {
+        fontSize: 20,
+    },
     mapControls: {
         position: 'absolute',
         right: Spacing.lg,
@@ -783,6 +846,52 @@ const styles = StyleSheet.create({
         ...Shadows.md,
     },
     mapButtonIcon: { fontSize: 20 },
+    // Google Maps Markers
+    driverMarker: {
+        width: 50,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    driverMarkerPulse: {
+        position: 'absolute',
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: Colors.primary,
+        opacity: 0.3,
+    },
+    driverMarkerInner: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    driverMarkerIcon: {
+        fontSize: 20,
+    },
+    locationMarker: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    markerIcon: {
+        fontSize: 18,
+    },
     shareLocButton: {
         width: 48,
         height: 48,
@@ -858,31 +967,6 @@ const styles = StyleSheet.create({
     shareLocationSubtitle: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.85)' },
     shareLocationArrow: { fontSize: 24, color: '#fff' },
 
-    // Live Support FAB
-    supportFab: {
-        position: 'absolute',
-        bottom: 40,
-        right: 20,
-        borderRadius: BorderRadius.full,
-        overflow: 'hidden',
-        ...Shadows.xl,
-        elevation: 8,
-    },
-    fabGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.md,
-        gap: Spacing.xs,
-    },
-    fabIcon: {
-        fontSize: 20,
-    },
-    fabText: {
-        fontSize: FontSizes.md,
-        fontWeight: '700',
-        color: '#FFFFFF',
-    },
     etaLabel: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.7)' },
     etaRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: Spacing.xs },
     etaTime: { fontSize: FontSizes.xxxl, fontWeight: '800', color: '#fff' },
