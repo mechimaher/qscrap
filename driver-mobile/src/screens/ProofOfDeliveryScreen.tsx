@@ -41,6 +41,8 @@ export default function ProofOfDeliveryScreen() {
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
+    const [orderDetails, setOrderDetails] = useState<{ total_amount: number; payment_method: string } | null>(null);
+    const [isLoadingOrder, setIsLoadingOrder] = useState(true);
 
     // Camera
     const cameraRef = useRef<CameraView>(null);
@@ -49,6 +51,28 @@ export default function ProofOfDeliveryScreen() {
 
     // Signature
     const signatureRef = useRef<any>(null);
+
+    // Load order details on mount
+    useEffect(() => {
+        const loadOrderDetails = async () => {
+            try {
+                const response = await api.getOrderDetails(orderId);
+                if (response?.order) {
+                    setOrderDetails({
+                        total_amount: parseFloat(String(response.order.total_amount)) || 0,
+                        payment_method: response.order.payment_method || 'cash'
+                    });
+                    // Pre-select payment method from order
+                    setPaymentMethod(response.order.payment_method === 'card' ? 'online' : 'cash');
+                }
+            } catch (error) {
+                console.error('Failed to load order details:', error);
+            } finally {
+                setIsLoadingOrder(false);
+            }
+        };
+        loadOrderDetails();
+    }, [orderId]);
 
     // --- STEP 1: PHOTO ---
     const takePicture = async () => {
@@ -294,7 +318,9 @@ export default function ProofOfDeliveryScreen() {
     const renderPaymentStep = () => (
         <View style={styles.stepContainer}>
             <Text style={[styles.title, { color: colors.text }]}>Payment Collection</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Collect 150.00 QAR</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                {isLoadingOrder ? 'Loading...' : `Collect ${orderDetails?.total_amount?.toFixed(2) || '0.00'} QAR`}
+            </Text>
 
             <View style={styles.paymentOptions}>
                 <TouchableOpacity
