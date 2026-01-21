@@ -679,7 +679,7 @@ export default function NewRequestScreen() {
                                             { backgroundColor: colors.background, borderColor: colors.border },
                                         ]}
                                     >
-                                        <Text style={styles.addPhotoIcon}>📷</Text>
+                                        <Text style={styles.addPhotoIcon}>📁</Text>
                                         <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
                                             Gallery
                                         </Text>
@@ -738,7 +738,7 @@ export default function NewRequestScreen() {
                                         onPress={handlePickCarFrontImage}
                                         style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                                     >
-                                        <Text style={styles.addPhotoIcon}>📷</Text>
+                                        <Text style={styles.addPhotoIcon}>📁</Text>
                                         <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Gallery</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
@@ -770,7 +770,7 @@ export default function NewRequestScreen() {
                                         onPress={handlePickCarRearImage}
                                         style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                                     >
-                                        <Text style={styles.addPhotoIcon}>📷</Text>
+                                        <Text style={styles.addPhotoIcon}>📁</Text>
                                         <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Gallery</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
