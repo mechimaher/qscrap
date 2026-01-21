@@ -509,7 +509,8 @@ export default function AssignmentDetailScreen() {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                         // Navigate to POD
                                         navigation.navigate('ProofOfDelivery', {
-                                            assignmentId: assignment.assignment_id
+                                            assignmentId: assignment.assignment_id,
+                                            orderId: assignment.order_id
                                         });
                                         setIsUpdating(false);
                                         return;
