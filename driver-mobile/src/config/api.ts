@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     ASSIGNMENT_DETAIL: (id: string) => `/driver/assignments/${id}`,
     UPDATE_ASSIGNMENT_STATUS: (id: string) => `/driver/assignments/${id}/status`,
     UPLOAD_PROOF: (id: string) => `/driver/assignments/${id}/proof`,
+    COMPLETE_WITH_POD: '/delivery/complete-with-pod',  // New: Complete order with POD (creates payout)
 
     // Location
     UPDATE_LOCATION: '/driver/location',

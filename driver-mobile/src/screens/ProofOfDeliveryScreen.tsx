@@ -32,7 +32,7 @@ export default function ProofOfDeliveryScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { assignmentId } = route.params;
+    const { assignmentId, orderId } = route.params;
 
     const [step, setStep] = useState<WizardStep>('photo');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +79,7 @@ export default function ProofOfDeliveryScreen() {
 
     // --- STEP 3: SUBMIT ---
     const handleSubmit = async () => {
-        if (!photoUri || !signatureData) return;
+        if (!photoUri || !signatureData || !orderId) return;
 
         setIsSubmitting(true);
         try {
@@ -88,48 +88,64 @@ export default function ProofOfDeliveryScreen() {
             const permanentUri = ((FileSystem as any).documentDirectory || '') + photoFilename;
             await FileSystem.copyAsync({ from: photoUri, to: permanentUri });
 
-            // 2. Upload Proof (Hybrid Sync)
-            // We use OfflineQueue to ensure this happens even if net drops now
-            const payload = {
-                photoPath: permanentUri, // Service will read this
-                signature: signatureData, // Small enough for MMKV string
-                paymentMethod,
-                completedAt: new Date().toISOString()
-            };
+            // 2. Read photo as base64
+            const base64Photo = await FileSystem.readAsStringAsync(permanentUri, {
+                encoding: 'base64'
+            });
 
-            await executeWithOfflineFallback(
-                async () => {
-                    const base64Photo = await FileSystem.readAsStringAsync(permanentUri, {
-                        encoding: 'base64'
-                    });
-                    await api.uploadProof(
-                        assignmentId,
-                        base64Photo,
-                        signatureData.replace('data:image/png;base64,', ''),
-                        `Payment: ${paymentMethod}`
-                    );
-                },
+            // 3. Upload photo to get URL (backend will store and return URL)
+            const uploadResponse = await executeWithOfflineFallback(
+                async () => api.uploadProof(
+                    assignmentId,
+                    base64Photo,
+                    signatureData.replace('data:image/png;base64,', ''),
+                    `Payment: ${paymentMethod}`
+                ),
                 {
                     endpoint: API_ENDPOINTS.UPLOAD_PROOF(assignmentId),
                     method: 'POST',
-                    body: payload
+                    body: {
+                        photoPath: permanentUri,
+                        signature: signatureData,
+                        paymentMethod,
+                        completedAt: new Date().toISOString()
+                    }
                 },
                 { successMessage: 'Proof uploaded' }
             );
 
-            // 3. Update status (Hybrid Sync)
-            const { useJobStore } = require('../stores/useJobStore');
-            useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
+            // 4. Complete order with POD (creates payout immediately!)
+            // This new endpoint marks order as 'completed' and creates garage payout
+            const podPhotoUrl = uploadResponse?.photo_url || permanentUri;
 
             await executeWithOfflineFallback(
-                async () => api.updateAssignmentStatus(assignmentId, 'delivered', { notes: `Delivered via App. Payment: ${paymentMethod}` }),
-                {
-                    endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignmentId),
-                    method: 'PATCH',
-                    body: { status: 'delivered', notes: `Delivered via App. Payment: ${paymentMethod}` }
+                async () => {
+                    const token = await api.getToken();
+                    const response = await fetch(`${API_ENDPOINTS.COMPLETE_WITH_POD}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            order_id: orderId,
+                            pod_photo_url: podPhotoUrl
+                        })
+                    });
+                    if (!response.ok) throw new Error('Failed to complete delivery');
+                    return response.json();
                 },
-                { successMessage: 'Delivery completed' }
+                {
+                    endpoint: API_ENDPOINTS.COMPLETE_WITH_POD,
+                    method: 'POST',
+                    body: { order_id: orderId, pod_photo_url: podPhotoUrl }
+                },
+                { successMessage: 'Order completed! Payout created.' }
             );
+
+            // 5. Update local store
+            const { useJobStore } = require('../stores/useJobStore');
+            useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
 
             setStep('success');
         } catch (err: any) {
