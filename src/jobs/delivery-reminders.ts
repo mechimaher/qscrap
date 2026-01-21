@@ -3,7 +3,7 @@
  * Sends push notifications to customers at T+24h and T+40h reminding them to confirm delivery
  */
 
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { getWritePool } from '../config/db';
 import { pushService } from '../services/push.service';
 import logger from '../utils/logger';
