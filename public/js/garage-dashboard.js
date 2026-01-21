@@ -2193,177 +2193,86 @@ async function saveBusinessDetails(event) {
     }
 }
 
-// ===== GOOGLE MAPS LOCATION PICKER (Enterprise Grade) =====
+// ===== LEAFLET GPS LOCATION PICKER (Free, No Billing) =====
 let locationMap = null;
 let locationMarker = null;
-let placesAutocomplete = null;
-let geocoder = null;
-
-// Qatar Premium Dark Map Style (Matches Mobile App)
-const QATAR_MAP_STYLE = [
-    { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a9a' }] },
-    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#4a4a5a' }] },
-    { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
-    { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
-    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#6a6a7a' }] },
-    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#263238' }] },
-    { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2c3c' }] },
-    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9a9aaa' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#A82050' }] },
-    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
-    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#3a3a4a' }] },
-    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
-    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4a4a5a' }] }
-];
 
 function initLocationMap(lat, lng) {
     const container = document.getElementById('locationMapContainer');
     if (!container) return;
 
-    // Wait for Google Maps to be ready
-    if (typeof google === 'undefined' || !google.maps) {
-        console.log('Waiting for Google Maps to load...');
-        setTimeout(() => initLocationMap(lat, lng), 200);
-        return;
-    }
-
     // Default to Doha, Qatar if no coordinates
     const defaultLat = lat ? parseFloat(lat) : 25.2854;
     const defaultLng = lng ? parseFloat(lng) : 51.5310;
-    const center = { lat: defaultLat, lng: defaultLng };
 
-    // Create map with Qatar premium styling
-    locationMap = new google.maps.Map(container, {
-        center: center,
-        zoom: lat && lng ? 16 : 12,
-        styles: QATAR_MAP_STYLE,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true,
-        zoomControl: true,
-        zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_CENTER
-        },
-        gestureHandling: 'greedy'
+    // Destroy existing map if any
+    if (locationMap) {
+        locationMap.remove();
+        locationMap = null;
+    }
+
+    // Create map
+    locationMap = L.map('locationMapContainer').setView([defaultLat, defaultLng], lat && lng ? 16 : 12);
+
+    // Add premium dark tile layer (CartoDB Dark Matter - free)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
+        maxZoom: 19
+    }).addTo(locationMap);
+
+    // Custom marker icon (Qatar Maroon/Gold)
+    const maroonIcon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="
+            width: 32px; height: 40px;
+            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
+            border: 3px solid #D4AF37;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        "><div style="
+            width: 12px; height: 12px;
+            background: #D4AF37;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        "></div></div>`,
+        iconSize: [32, 40],
+        iconAnchor: [16, 40],
+        popupAnchor: [0, -40]
     });
-
-    // Initialize Geocoder for reverse geocoding
-    geocoder = new google.maps.Geocoder();
 
     // Add marker if coordinates exist
     if (lat && lng) {
-        createMarker(center);
+        locationMarker = L.marker([defaultLat, defaultLng], {
+            draggable: true,
+            icon: maroonIcon
+        }).addTo(locationMap);
+        locationMarker.on('dragend', onMarkerDragEnd);
     }
 
     // Click to place marker
-    locationMap.addListener('click', (e) => {
-        const pos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+    locationMap.on('click', (e) => {
+        const { lat, lng } = e.latlng;
 
         if (locationMarker) {
-            locationMarker.setPosition(pos);
+            locationMarker.setLatLng(e.latlng);
         } else {
-            createMarker(pos);
+            locationMarker = L.marker([lat, lng], {
+                draggable: true,
+                icon: maroonIcon
+            }).addTo(locationMap);
+            locationMarker.on('dragend', onMarkerDragEnd);
         }
 
-        updateLocationInputs(pos.lat, pos.lng);
-        reverseGeocode(pos);
-    });
-
-    // Initialize Places Autocomplete
-    initPlacesAutocomplete();
-}
-
-function createMarker(position) {
-    // Custom SVG marker icon (Qatar Maroon)
-    const markerIcon = {
-        path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-        fillColor: '#A82050',
-        fillOpacity: 1,
-        strokeColor: '#D4AF37',
-        strokeWeight: 2,
-        scale: 2,
-        anchor: new google.maps.Point(12, 24)
-    };
-
-    locationMarker = new google.maps.Marker({
-        position: position,
-        map: locationMap,
-        draggable: true,
-        icon: markerIcon,
-        animation: google.maps.Animation.DROP,
-        title: 'Drag to adjust location'
-    });
-
-    // Listen for drag end
-    locationMarker.addListener('dragend', () => {
-        const pos = locationMarker.getPosition();
-        updateLocationInputs(pos.lat(), pos.lng());
-        reverseGeocode({ lat: pos.lat(), lng: pos.lng() });
-    });
-}
-
-function initPlacesAutocomplete() {
-    const input = document.getElementById('locationAddressInput');
-    if (!input || !google.maps.places) return;
-
-    // Configure autocomplete for Qatar
-    placesAutocomplete = new google.maps.places.Autocomplete(input, {
-        componentRestrictions: { country: 'qa' },
-        fields: ['geometry', 'formatted_address', 'name'],
-        types: ['geocode', 'establishment']
-    });
-
-    // When a place is selected
-    placesAutocomplete.addListener('place_changed', () => {
-        const place = placesAutocomplete.getPlace();
-
-        if (!place.geometry || !place.geometry.location) {
-            showToast('Please select a valid address from the suggestions', 'error');
-            return;
-        }
-
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const pos = { lat, lng };
-
-        // Update map view
-        locationMap.setCenter(pos);
-        locationMap.setZoom(17);
-
-        // Update or create marker
-        if (locationMarker) {
-            locationMarker.setPosition(pos);
-        } else {
-            createMarker(pos);
-        }
-
-        // Update inputs
         updateLocationInputs(lat, lng);
-
-        showToast('📍 Location selected! Click Save to confirm.', 'success');
     });
 }
 
-function reverseGeocode(position) {
-    if (!geocoder) return;
-
-    geocoder.geocode({ location: position }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-            const addressInput = document.getElementById('locationAddressInput');
-            if (addressInput) {
-                // Use formatted address but keep it concise
-                const address = results[0].formatted_address
-                    .replace(', Qatar', '')
-                    .replace('Qatar', '')
-                    .trim();
-                addressInput.value = address;
-            }
-        }
-    });
+function onMarkerDragEnd(e) {
+    const pos = e.target.getLatLng();
+    updateLocationInputs(pos.lat, pos.lng);
 }
 
 function updateLocationInputs(lat, lng) {
@@ -2381,29 +2290,50 @@ function useMyLocation() {
 
     showToast('📍 Getting your location...', 'info');
 
+    // Custom marker icon
+    const maroonIcon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="
+            width: 32px; height: 40px;
+            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
+            border: 3px solid #D4AF37;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        "><div style="
+            width: 12px; height: 12px;
+            background: #D4AF37;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        "></div></div>`,
+        iconSize: [32, 40],
+        iconAnchor: [16, 40]
+    });
+
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            const pos = { lat, lng };
 
             // Update inputs
             updateLocationInputs(lat, lng);
 
             // Update map
             if (locationMap) {
-                locationMap.setCenter(pos);
-                locationMap.setZoom(17);
+                locationMap.setView([lat, lng], 16);
 
                 if (locationMarker) {
-                    locationMarker.setPosition(pos);
+                    locationMarker.setLatLng([lat, lng]);
                 } else {
-                    createMarker(pos);
+                    locationMarker = L.marker([lat, lng], {
+                        draggable: true,
+                        icon: maroonIcon
+                    }).addTo(locationMap);
+                    locationMarker.on('dragend', onMarkerDragEnd);
                 }
             }
-
-            // Reverse geocode to get address
-            reverseGeocode(pos);
 
             showToast('✓ Location detected! Click Save Location to confirm.', 'success');
         },
