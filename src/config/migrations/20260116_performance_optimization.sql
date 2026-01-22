@@ -55,21 +55,6 @@ ON part_requests(part_category, status, created_at DESC);
 CREATE INDEX  IF NOT EXISTS idx_part_requests_car_make 
 ON part_requests(car_make, car_model, status);
 
--- ==================== Insurance Claims Optimization ====================
-
--- Index for company claims dashboard
-CREATE INDEX  IF NOT EXISTS idx_insurance_claims_company 
-ON insurance_claims(company_id, approval_status, created_at DESC);
-
--- Index for agent workload
-CREATE INDEX  IF NOT EXISTS idx_insurance_claims_agent 
-ON insurance_claims(agent_id, approval_status, created_at DESC);
-
--- Index for pending claims
-CREATE INDEX  IF NOT EXISTS idx_insurance_claims_pending 
-ON insurance_claims(approval_status, created_at DESC) 
-WHERE approval_status = 'pending';
-
 -- ==================== Garage Table Optimization ====================
 
 -- Index for approved garage searches
@@ -106,7 +91,6 @@ ANALYZE orders;
 ANALYZE bids;
 ANALYZE part_requests;
 ANALYZE garages;
-ANALYZE insurance_claims;
 ANALYZE users;
 
 -- ==================== Connection Pool Optimization ====================
