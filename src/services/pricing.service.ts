@@ -1,6 +1,6 @@
 /**
  * Pricing Service - Statistical Analysis & Fraud Detection
- * Provides price benchmarking and outlier detection for insurance claims
+ * Provides price benchmarking and outlier detection for parts marketplace
  */
 
 import { getReadPool, getWritePool } from '../config/db';

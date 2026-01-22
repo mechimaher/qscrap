@@ -1531,7 +1531,6 @@ function selectUserType(type) {
         garage: 'Garage',
         driver: 'Driver',
         staff: 'Staff Member',
-        insurance_agent: 'Insurance Agent',
         admin: 'Administrator'
     };
     document.getElementById('selectedTypeBadge').textContent = typeLabels[type] || type;

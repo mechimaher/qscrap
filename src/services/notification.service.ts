@@ -9,7 +9,7 @@ interface NotificationPayload {
     title: string;
     message: string;
     data?: Record<string, unknown>;
-    target_role?: 'customer' | 'garage' | 'operations' | 'driver' | 'insurance_agent';
+    target_role?: 'customer' | 'garage' | 'operations' | 'driver';
 }
 
 /**
