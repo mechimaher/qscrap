@@ -20,10 +20,10 @@ WHERE o.created_at >= CURRENT_DATE - INTERVAL '365 days'
 GROUP BY o.garage_id, DATE_TRUNC('day', o.created_at);
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_garage_daily_analytics_garage_date 
+CREATE INDEX idx_garage_daily_analytics_garage_date 
 ON garage_daily_analytics(garage_id, date DESC);
 
-CREATE INDEX IF NOT EXISTS idx_garage_daily_analytics_date 
+CREATE INDEX idx_garage_daily_analytics_date 
 ON garage_daily_analytics(date DESC);
 
 -- 2. Create materialized view for popular parts by garage
@@ -45,7 +45,7 @@ WHERE o.created_at >= CURRENT_DATE - INTERVAL '90 days'
 GROUP BY o.garage_id, pr.part_description, pr.car_make, pr.car_model, pr.part_category
 HAVING COUNT(*) >= 2;
 
-CREATE INDEX IF NOT EXISTS idx_garage_popular_parts_garage 
+CREATE INDEX idx_garage_popular_parts_garage 
 ON garage_popular_parts(garage_id, order_count DESC);
 
 -- 3. Create materialized view for bid performance metrics
@@ -69,7 +69,7 @@ FROM bids b
 WHERE b.created_at >= CURRENT_DATE - INTERVAL '365 days'
 GROUP BY b.garage_id, DATE_TRUNC('month', b.created_at);
 
-CREATE INDEX IF NOT EXISTS idx_garage_bid_analytics_garage_month 
+CREATE INDEX idx_garage_bid_analytics_garage_month 
 ON garage_bid_analytics(garage_id, month DESC);
 
 -- 4. Create function to refresh analytics views
@@ -87,7 +87,7 @@ $$ LANGUAGE plpgsql;
 -- SELECT cron.schedule('refresh-garage-analytics', '0 2 * * *', 'SELECT refresh_garage_analytics()');
 
 -- 6. Create analytics summary table for quick overview
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS garage_analytics_summary (
+CREATE TABLE IF NOT EXISTS garage_analytics_summary (
     summary_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     garage_id UUID REFERENCES garages(garage_id) ON DELETE CASCADE,
     period VARCHAR(20) NOT NULL, -- 'today', 'week', 'month', 'year'
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS garage_analytics_summary (
     UNIQUE(garage_id, period)
 );
 
-CREATE INDEX IF NOT EXISTS idx_garage_analytics_summary_garage 
+CREATE INDEX idx_garage_analytics_summary_garage 
 ON garage_analytics_summary(garage_id);
 
 -- 7. Create function to calculate garage summary

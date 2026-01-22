@@ -15,6 +15,6 @@ COMMENT ON COLUMN customer_vehicles.vin_image_url IS 'Photo of registration card
 COMMENT ON COLUMN part_requests.vin_image_url IS 'VIN photo transmitted with request for garage reference';
 
 -- Index for VIN lookups (only non-null VINs)
-CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_customer_vehicles_vin 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_customer_vehicles_vin 
 ON customer_vehicles(vin_number) 
 WHERE vin_number IS NOT NULL AND vin_number != '';

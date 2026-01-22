@@ -202,7 +202,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 -- 4. CREATE REWARD_TIERS TABLE (if not exists)
 -- ============================================
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS reward_tiers (
+CREATE TABLE IF NOT EXISTS reward_tiers (
     tier_id SERIAL PRIMARY KEY,
     tier_name VARCHAR(50) NOT NULL UNIQUE,
     min_points INTEGER NOT NULL DEFAULT 0,
@@ -225,7 +225,7 @@ WHERE NOT EXISTS (SELECT 1 FROM reward_tiers LIMIT 1);
 -- ============================================
 -- 5. CREATE REWARD_TRANSACTIONS TABLE (if not exists)
 -- ============================================
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS reward_transactions (
+CREATE TABLE IF NOT EXISTS reward_transactions (
     transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID NOT NULL,
     points_change INTEGER NOT NULL,
@@ -237,13 +237,13 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS reward_transactions (
 );
 
 -- Create index for faster lookups
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_reward_transactions_customer ON reward_transactions(customer_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_reward_transactions_created ON reward_transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reward_transactions_customer ON reward_transactions(customer_id);
+CREATE INDEX IF NOT EXISTS idx_reward_transactions_created ON reward_transactions(created_at DESC);
 
 -- ============================================
 -- 6. CREATE CUSTOMER_REWARDS TABLE (if not exists)
 -- ============================================
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS customer_rewards (
+CREATE TABLE IF NOT EXISTS customer_rewards (
     customer_id UUID PRIMARY KEY,
     points_balance INTEGER NOT NULL DEFAULT 0,
     lifetime_points INTEGER NOT NULL DEFAULT 0,
