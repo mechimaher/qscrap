@@ -7,7 +7,7 @@ ALTER TABLE public.users ADD CONSTRAINT users_user_type_check
 CHECK (user_type IN ('customer', 'garage', 'driver', 'staff', 'admin', 'insurance_agent'));
 
 -- 2. Insurance Companies
-CREATE TABLE public.insurance_companies (
+CREATE TABLE IF NOT EXISTS public.insurance_companies (
     company_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     name text NOT NULL,
     billing_address text,
@@ -23,7 +23,7 @@ ALTER TABLE public.users
 ADD COLUMN IF NOT EXISTS insurance_company_id uuid REFERENCES public.insurance_companies(company_id);
 
 -- 3. Insurance Claims
-CREATE TABLE public.insurance_claims (
+CREATE TABLE IF NOT EXISTS public.insurance_claims (
     claim_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     company_id uuid REFERENCES public.insurance_companies(company_id),
     agent_id uuid REFERENCES public.users(user_id), -- The surveyor who opened it
@@ -49,7 +49,7 @@ CREATE TABLE public.insurance_claims (
 
 -- 4. Vehicle History (The "Blue Check" Log)
 -- This table is designed to be APPEND ONLY (mostly) for auditability.
-CREATE TABLE public.vehicle_history_events (
+CREATE TABLE IF NOT EXISTS public.vehicle_history_events (
     event_id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     vin_number character varying(17) NOT NULL,
     
@@ -69,5 +69,5 @@ CREATE TABLE public.vehicle_history_events (
     created_at timestamp without time zone DEFAULT now()
 );
 
-CREATE INDEX idx_vehicle_history_vin ON public.vehicle_history_events(vin_number);
-CREATE INDEX idx_insurance_claims_company ON public.insurance_claims(company_id);
+CREATE INDEX IF NOT EXISTS idx_vehicle_history_vin ON public.vehicle_history_events(vin_number);
+CREATE INDEX IF NOT EXISTS idx_insurance_claims_company ON public.insurance_claims(company_id);
