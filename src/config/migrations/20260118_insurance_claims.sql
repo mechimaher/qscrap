@@ -2,7 +2,7 @@
 -- Required by InsuranceClaimService and insurance analytics
 -- Created: 2026-01-18 from full backend audit
 
-CREATE TABLE IF NOT EXISTS insurance_claims (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS insurance_claims (
     claim_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES insurance_companies(company_id),
     agent_id UUID REFERENCES users(user_id),
@@ -52,13 +52,13 @@ CREATE TABLE IF NOT EXISTS insurance_claims (
 );
 
 -- Performance indexes
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_company ON insurance_claims(company_id);
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_agent ON insurance_claims(agent_id);
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_garage ON insurance_claims(submitted_by_garage_id);
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_status ON insurance_claims(status);
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_approval ON insurance_claims(approval_status);
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_created ON insurance_claims(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_insurance_claims_reference ON insurance_claims(claim_reference_number);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_company ON insurance_claims(company_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_agent ON insurance_claims(agent_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_garage ON insurance_claims(submitted_by_garage_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_status ON insurance_claims(status);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_approval ON insurance_claims(approval_status);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_created ON insurance_claims(created_at DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_insurance_claims_reference ON insurance_claims(claim_reference_number);
 
 -- Update timestamp trigger
 CREATE OR REPLACE FUNCTION update_insurance_claims_timestamp()

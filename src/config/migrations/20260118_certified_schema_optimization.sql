@@ -8,7 +8,7 @@ BEGIN;
 -- STEP 1: Create Extension Tables
 -- ==========================================
 
-CREATE TABLE garage_settings (
+CREATE TABLE IF NOT EXISTS garage_settings (
     garage_id UUID PRIMARY KEY REFERENCES garages(garage_id) ON DELETE CASCADE,
     auto_renew BOOLEAN DEFAULT true NOT NULL,
     provides_repairs BOOLEAN DEFAULT false NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE garage_settings (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE garage_stats (
+CREATE TABLE IF NOT EXISTS garage_stats (
     garage_id UUID PRIMARY KEY REFERENCES garages(garage_id) ON DELETE CASCADE,
     total_services_completed INTEGER DEFAULT 0 NOT NULL,
     quick_service_rating NUMERIC(2,1),
@@ -157,27 +157,27 @@ DROP COLUMN IF EXISTS average_response_time_minutes;
 -- ==========================================
 
 -- Audit Logs (Compliance Reports) - B-tree for small-medium tables
-CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC);
 
 -- Notifications ("My Alerts" Feed)
-CREATE INDEX IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC);
 
 -- Orders (Sales Reporting)
-CREATE INDEX IF NOT EXISTS idx_orders_created_at_desc ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_orders_created_at_desc ON orders(created_at DESC);
 
 -- Documents (Missing from previous migration)
-CREATE INDEX IF NOT EXISTS idx_documents_created_at_desc ON documents(created_at DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_documents_created_at_desc ON documents(created_at DESC);
 
 -- Ad Impressions - Use B-tree instead of BRIN (table has 0 rows currently)
 -- Will convert to BRIN when table reaches 10M+ rows
-CREATE INDEX IF NOT EXISTS idx_ad_impressions_timestamp_desc ON ad_impressions("timestamp" DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_ad_impressions_timestamp_desc ON ad_impressions("timestamp" DESC);
 
 -- ==========================================
 -- STEP 6: Add Indexes on New Tables
 -- ==========================================
 
-CREATE INDEX IF NOT EXISTS idx_garage_settings_capabilities ON garage_settings USING GIN(service_capabilities);
-CREATE INDEX IF NOT EXISTS idx_garage_stats_rating ON garage_stats(quick_service_rating DESC) WHERE quick_service_rating IS NOT NULL;
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garage_settings_capabilities ON garage_settings USING GIN(service_capabilities);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garage_stats_rating ON garage_stats(quick_service_rating DESC) WHERE quick_service_rating IS NOT NULL;
 
 -- ==========================================
 -- VERIFICATION QUERIES

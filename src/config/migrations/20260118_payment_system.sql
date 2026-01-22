@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Stores all payment attempts and results
 -- Optimized for high-frequency queries and compliance auditing
 
-CREATE TABLE IF NOT EXISTS payment_transactions (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS payment_transactions (
     transaction_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
     -- Order and User References
@@ -61,14 +61,14 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
 );
 
 -- Performance Indexes
-CREATE INDEX idx_payment_transactions_order_id ON payment_transactions(order_id);
-CREATE INDEX idx_payment_transactions_user_id ON payment_transactions(user_id);
-CREATE INDEX idx_payment_transactions_status ON payment_transactions(status);
-CREATE INDEX idx_payment_transactions_created_at ON payment_transactions(created_at DESC);
-CREATE INDEX idx_payment_transactions_idempotency_key ON payment_transactions(idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_order_id ON payment_transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_id ON payment_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status ON payment_transactions(status);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_created_at ON payment_transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_idempotency_key ON payment_transactions(idempotency_key) WHERE idempotency_key IS NOT NULL;
 
 -- Composite index for common queries
-CREATE INDEX idx_payment_transactions_user_status ON payment_transactions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_status ON payment_transactions(user_id, status);
 
 -- Update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_payment_transactions_updated_at()
@@ -90,7 +90,7 @@ CREATE TRIGGER payment_transactions_updated_at
 -- Complete audit trail for compliance and debugging
 -- Never deleted, append-only for forensic analysis
 
-CREATE TABLE IF NOT EXISTS payment_audit_logs (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS payment_audit_logs (
     log_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
     -- Transaction Reference
@@ -120,10 +120,10 @@ CREATE TABLE IF NOT EXISTS payment_audit_logs (
 );
 
 -- Indexes for audit queries
-CREATE INDEX idx_payment_audit_logs_transaction_id ON payment_audit_logs(transaction_id);
-CREATE INDEX idx_payment_audit_logs_action ON payment_audit_logs(action);
-CREATE INDEX idx_payment_audit_logs_created_at ON payment_audit_logs(created_at DESC);
-CREATE INDEX idx_payment_audit_logs_ip_address ON payment_audit_logs(ip_address);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_transaction_id ON payment_audit_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_action ON payment_audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_created_at ON payment_audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_ip_address ON payment_audit_logs(ip_address);
 
 -- ============================================================================
 -- 3. IDEMPOTENCY KEYS TABLE
@@ -131,7 +131,7 @@ CREATE INDEX idx_payment_audit_logs_ip_address ON payment_audit_logs(ip_address)
 -- Prevent duplicate payment processing
 -- Auto-expires after 24 hours
 
-CREATE TABLE IF NOT EXISTS idempotency_keys (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS idempotency_keys (
     key VARCHAR(255) PRIMARY KEY,
     
     -- Associated Transaction
@@ -150,8 +150,8 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
 );
 
 -- Index for expiry cleanup job
-CREATE INDEX idx_idempotency_keys_expires_at ON idempotency_keys(expires_at);
-CREATE INDEX idx_idempotency_keys_user_id ON idempotency_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_idempotency_keys_expires_at ON idempotency_keys(expires_at);
+CREATE INDEX IF NOT EXISTS idx_idempotency_keys_user_id ON idempotency_keys(user_id);
 
 -- ============================================================================
 -- 4. HELPER FUNCTIONS

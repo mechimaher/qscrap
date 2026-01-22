@@ -4,7 +4,7 @@
 -- ============================================
 
 -- 1. Part Price History Table
-CREATE TABLE IF NOT EXISTS part_price_history (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS part_price_history (
     price_record_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Part Information
@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS part_price_history (
 );
 
 -- Indexes for fast price lookups
-CREATE INDEX idx_part_price_lookup ON part_price_history(part_name, vehicle_make, vehicle_model);
-CREATE INDEX idx_part_price_stats ON part_price_history(part_name, recorded_at);
-CREATE INDEX idx_part_price_category ON part_price_history(part_category, recorded_at);
-CREATE INDEX idx_part_price_vehicle ON part_price_history(vehicle_make, vehicle_model, vehicle_year);
-CREATE INDEX idx_part_price_source ON part_price_history(source, source_id);
+CREATE INDEX IF NOT EXISTS idx_part_price_lookup ON part_price_history(part_name, vehicle_make, vehicle_model);
+CREATE INDEX IF NOT EXISTS idx_part_price_stats ON part_price_history(part_name, recorded_at);
+CREATE INDEX IF NOT EXISTS idx_part_price_category ON part_price_history(part_category, recorded_at);
+CREATE INDEX IF NOT EXISTS idx_part_price_vehicle ON part_price_history(vehicle_make, vehicle_model, vehicle_year);
+CREATE INDEX IF NOT EXISTS idx_part_price_source ON part_price_history(source, source_id);
 
 -- ============================================
 -- 2. Price Statistics Materialized View
@@ -65,7 +65,7 @@ WHERE recorded_at > NOW() - INTERVAL '180 days' -- Last 6 months only
 GROUP BY part_name, vehicle_make, vehicle_model
 HAVING COUNT(*) >= 3; -- Need at least 3 data points
 
-CREATE UNIQUE INDEX idx_benchmark_lookup ON part_price_benchmarks(part_name, vehicle_make, vehicle_model);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_benchmark_lookup ON part_price_benchmarks(part_name, vehicle_make, vehicle_model);
 
 -- ============================================
 -- 3. Function to Refresh Benchmarks
