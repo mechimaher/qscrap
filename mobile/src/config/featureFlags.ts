@@ -16,8 +16,6 @@ export const FeatureFlags = {
     // ========================================
     // HIDDEN FOR MVP (Enable Post-Launch)
     // ========================================
-    QUICK_SERVICES: false,         // 8 service types - Phase 2
-    INSURANCE_PORTAL: false,       // Insurance integration - Phase 3
     NEW_PARTS: false,              // New parts marketplace - Phase 3
     REPAIR_MARKETPLACE: false,     // Repair services - Phase 3
 
@@ -82,8 +80,6 @@ export const FeatureFlagDescriptions: Record<keyof typeof FeatureFlags, string> 
     DELIVERY_TRACKING: 'Real-time delivery and order tracking',
     CHAT: 'In-app messaging between buyers and sellers',
     NOTIFICATIONS: 'Push notifications and in-app alerts',
-    QUICK_SERVICES: 'On-demand services (battery, oil, etc.)',
-    INSURANCE_PORTAL: 'Insurance claims and coverage integration',
     NEW_PARTS: 'New parts from authorized dealers',
     REPAIR_MARKETPLACE: 'Repair service booking and tracking',
     ESCROW_PAYMENTS: 'Hold payments until buyer confirmation',
