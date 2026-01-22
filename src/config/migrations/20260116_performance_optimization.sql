@@ -29,12 +29,12 @@ ON bids(request_id, created_at DESC);
 
 -- Index for garage bid history
 CREATE INDEX  IF NOT EXISTS idx_bids_garage_status 
-ON bids(garage_id, bid_status, created_at DESC);
+ON bids(garage_id, status, created_at DESC);
 
 -- Index for pending bids (high-traffic query)
 CREATE INDEX  IF NOT EXISTS idx_bids_pending_created 
 ON bids(created_at DESC) 
-WHERE bid_status = 'pending';
+WHERE status = 'pending';
 
 -- ==================== Part Requests Table Optimization ====================
 
