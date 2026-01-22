@@ -70,8 +70,8 @@ ON garages USING GIN(specialized_brands);
 
 -- Index for session lookups (if using database sessions)
 CREATE INDEX  IF NOT EXISTS idx_users_email_active 
-ON users(email, account_status) 
-WHERE account_status = 'active';
+ON users(email, is_active) 
+WHERE is_active = true;
 
 -- ==================== Analytics & Reporting ====================
 
