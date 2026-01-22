@@ -105,7 +105,9 @@ export class PayoutQueryService {
     }
 
     async getPayouts(filters: PayoutFilters): Promise<PaginatedPayouts> {
-        let whereClause = 'WHERE 1=1';
+        // Always exclude reversal payouts from the Finance dashboard lists
+        // Reversals are internal accounting records, not actionable items
+        let whereClause = "WHERE (gp.payout_type IS NULL OR gp.payout_type != 'reversal')";
         const params: unknown[] = [];
         let paramIndex = 1;
 
