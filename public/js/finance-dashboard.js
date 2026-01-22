@@ -336,6 +336,11 @@ async function processBulkPayouts() {
         return;
     }
 
+    // Confirmation dialog
+    if (!confirm(`Process ${selected.length} payout(s)?\n\nThis will send payments to the selected garages and notify them.`)) {
+        return;
+    }
+
     // Calculate total amount
     let totalAmount = 0;
     selected.forEach(id => {
@@ -775,16 +780,17 @@ document.getElementById('periodTabs')?.addEventListener('click', e => {
 
 async function loadRefunds() {
     try {
-        const res = await fetch(`${API_URL}/finance/transactions?type=refund`, {
+        // Use dedicated refunds endpoint
+        const res = await fetch(`${API_URL}/finance/refunds`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
 
         const tbody = document.getElementById('refundsTable');
-        const refunds = data.transactions || data.refunds || [];
+        const refunds = data.refunds || [];
 
         if (refunds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i> No refunds processed</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle"></i> No refunds processed</td></tr>';
             return;
         }
 
@@ -792,14 +798,16 @@ async function loadRefunds() {
             <tr>
                 <td>#${escapeHTML(r.order_number || r.order_id?.slice(0, 8))}</td>
                 <td>${escapeHTML(r.customer_name || '-')}</td>
-                <td style="color: var(--danger); font-weight: 600;">-${formatCurrency(r.amount || r.refund_amount)}</td>
-                <td>${escapeHTML(r.reason || r.refund_reason || '-')}</td>
-                <td>${escapeHTML(r.created_by || 'Finance')}</td>
+                <td style="color: var(--danger); font-weight: 600;">-${formatCurrency(r.refund_amount)}</td>
+                <td>${escapeHTML(r.refund_reason || '-')}</td>
+                <td><span class="status-badge status-${r.refund_status || 'pending'}">${r.refund_status || 'pending'}</span></td>
+                <td>${escapeHTML(r.processed_by_name || 'Finance')}</td>
                 <td>${formatDate(r.created_at)}</td>
             </tr>
         `).join('');
     } catch (err) {
         console.error('Failed to load refunds:', err);
+        document.getElementById('refundsTable').innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);"><i class="bi bi-exclamation-triangle"></i> Failed to load refunds</td></tr>';
     }
 }
 
