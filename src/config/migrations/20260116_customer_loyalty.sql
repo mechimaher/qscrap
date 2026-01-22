@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS customer_rewards (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_customer_rewards_customer ON customer_rewards(customer_id);
-CREATE INDEX idx_customer_rewards_tier ON customer_rewards(current_tier);
+CREATE INDEX IF NOT EXISTS idx_customer_rewards_customer ON customer_rewards(customer_id);
+CREATE INDEX IF NOT EXISTS idx_customer_rewards_tier ON customer_rewards(current_tier);
 
 -- 3. Create reward_transactions table (audit log)
 CREATE TABLE IF NOT EXISTS reward_transactions (
@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS reward_transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_reward_transactions_customer ON reward_transactions(customer_id, created_at DESC);
-CREATE INDEX idx_reward_transactions_order ON reward_transactions(order_id);
-CREATE INDEX idx_reward_transactions_type ON reward_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_reward_transactions_customer ON reward_transactions(customer_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reward_transactions_order ON reward_transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_reward_transactions_type ON reward_transactions(transaction_type);
 
 -- 4. Create function to calculate tier from points
 CREATE OR REPLACE FUNCTION calculate_tier(p_points INTEGER)
