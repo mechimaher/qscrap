@@ -2,6 +2,7 @@
 -- Purpose: Provide comprehensive analytics for garage performance tracking
 
 -- 1. Create materialized view for daily garage analytics
+DROP MATERIALIZED VIEW IF EXISTS garage_daily_analytics CASCADE;
 CREATE MATERIALIZED VIEW garage_daily_analytics AS
 SELECT 
     o.garage_id,
@@ -20,13 +21,14 @@ WHERE o.created_at >= CURRENT_DATE - INTERVAL '365 days'
 GROUP BY o.garage_id, DATE_TRUNC('day', o.created_at);
 
 -- Create indexes for performance
-CREATE INDEX idx_garage_daily_analytics_garage_date 
+CREATE INDEX IF NOT EXISTS idx_garage_daily_analytics_garage_date 
 ON garage_daily_analytics(garage_id, date DESC);
 
-CREATE INDEX idx_garage_daily_analytics_date 
+CREATE INDEX IF NOT EXISTS idx_garage_daily_analytics_date 
 ON garage_daily_analytics(date DESC);
 
 -- 2. Create materialized view for popular parts by garage
+DROP MATERIALIZED VIEW IF EXISTS garage_popular_parts CASCADE;
 CREATE MATERIALIZED VIEW garage_popular_parts AS
 SELECT 
     o.garage_id,
@@ -45,10 +47,11 @@ WHERE o.created_at >= CURRENT_DATE - INTERVAL '90 days'
 GROUP BY o.garage_id, pr.part_description, pr.car_make, pr.car_model, pr.part_category
 HAVING COUNT(*) >= 2;
 
-CREATE INDEX idx_garage_popular_parts_garage 
+CREATE INDEX IF NOT EXISTS idx_garage_popular_parts_garage 
 ON garage_popular_parts(garage_id, order_count DESC);
 
 -- 3. Create materialized view for bid performance metrics
+DROP MATERIALIZED VIEW IF EXISTS garage_bid_analytics CASCADE;
 CREATE MATERIALIZED VIEW garage_bid_analytics AS
 SELECT 
     b.garage_id,
@@ -69,7 +72,7 @@ FROM bids b
 WHERE b.created_at >= CURRENT_DATE - INTERVAL '365 days'
 GROUP BY b.garage_id, DATE_TRUNC('month', b.created_at);
 
-CREATE INDEX idx_garage_bid_analytics_garage_month 
+CREATE INDEX IF NOT EXISTS idx_garage_bid_analytics_garage_month 
 ON garage_bid_analytics(garage_id, month DESC);
 
 -- 4. Create function to refresh analytics views
@@ -101,7 +104,7 @@ CREATE TABLE IF NOT EXISTS garage_analytics_summary (
     UNIQUE(garage_id, period)
 );
 
-CREATE INDEX idx_garage_analytics_summary_garage 
+CREATE INDEX IF NOT EXISTS idx_garage_analytics_summary_garage 
 ON garage_analytics_summary(garage_id);
 
 -- 7. Create function to calculate garage summary
