@@ -64,10 +64,11 @@ export class RefundService {
             const refundResult = await client.query(
                 `INSERT INTO refunds (
                     order_id, original_amount, refund_amount, refund_reason, 
-                    initiated_by, refund_status
-                 ) VALUES ($1, $2, $3, $4, $5, 'pending')
+                    refund_method, initiated_by, refund_status
+                 ) VALUES ($1, $2, $3, $4, $5, $6, 'pending')
                  RETURNING *`,
-                [details.order_id, order.total_amount, details.refund_amount, details.refund_reason, details.initiated_by]
+                [details.order_id, order.total_amount, details.refund_amount, details.refund_reason,
+                details.refund_method || 'original_payment', details.initiated_by]
             );
 
             const refund = refundResult.rows[0];
