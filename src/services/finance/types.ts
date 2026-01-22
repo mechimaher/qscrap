@@ -147,11 +147,14 @@ export interface CreateRefundDto {
     refund_reason: string;
     refund_method?: string;
     initiated_by: string;
+    /** Type of refund - affects whether delivery fee is retained */
+    refund_type?: 'cancelled_before_dispatch' | 'customer_refusal' | 'wrong_part' | 'driver_failure';
 }
 
 export interface RefundResult {
     refund_id: string;
     refund_amount: number;
+    delivery_fee_retained: number;
     payout_adjustment?: {
         payout_id: string;
         original_amount: number;
