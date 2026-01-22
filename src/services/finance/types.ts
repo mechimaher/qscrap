@@ -145,6 +145,7 @@ export interface CreateRefundDto {
     order_id: string;
     refund_amount: number;
     refund_reason: string;
+    refund_method?: string;
     initiated_by: string;
 }
 

@@ -275,7 +275,7 @@ export const forceProcessPayout = async (req: AuthRequest, res: Response) => {
 export const createRefund = async (req: AuthRequest, res: Response) => {
     try {
         const { order_id } = req.params;
-        const { refund_amount, refund_reason } = req.body;
+        const { refund_amount, refund_reason, refund_method } = req.body;
 
         if (!refund_amount || !refund_reason) {
             return res.status(400).json({ error: 'Refund amount and reason required' });
@@ -285,6 +285,7 @@ export const createRefund = async (req: AuthRequest, res: Response) => {
             order_id,
             refund_amount: parseFloat(refund_amount),
             refund_reason,
+            refund_method,
             initiated_by: req.user!.userId
         });
 
