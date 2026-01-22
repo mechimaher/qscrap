@@ -31,16 +31,17 @@ export class PayoutQueryService {
 
         const statsResult = await this.pool.query(`
             SELECT 
-                COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'completed'), 0) as completed_payouts,
-                COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'confirmed'), 0) as confirmed_payouts,
-                COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('completed', 'confirmed')), 0) as total_paid,
-                COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'pending'), 0) as pending_payouts,
-                COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('processing', 'awaiting_confirmation')), 0) as processing_payouts,
-                COUNT(*) FILTER (WHERE payout_status = 'pending') as pending_count,
+                COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'completed' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as completed_payouts,
+                COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'confirmed' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as confirmed_payouts,
+                COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('completed', 'confirmed') AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as total_paid,
+                COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'pending' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as pending_payouts,
+                COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('processing', 'awaiting_confirmation') AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as processing_payouts,
+                COUNT(*) FILTER (WHERE payout_status = 'pending' AND (payout_type IS NULL OR payout_type != 'reversal')) as pending_count,
                 COUNT(*) FILTER (WHERE payout_status = 'awaiting_confirmation') as awaiting_count,
                 COUNT(*) FILTER (WHERE payout_status = 'disputed') as disputed_count,
                 COALESCE(SUM(net_amount) FILTER (
                     WHERE payout_status IN ('completed', 'confirmed') 
+                    AND (payout_type IS NULL OR payout_type != 'reversal')
                     AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
                     AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
                 ), 0) as this_month_completed
@@ -72,7 +73,9 @@ export class PayoutQueryService {
             FROM garage_payouts gp
             JOIN garages g ON gp.garage_id = g.garage_id
             LEFT JOIN orders o ON gp.order_id = o.order_id
-            WHERE gp.payout_status = 'pending' ${userType === 'garage' ? 'AND gp.garage_id = $1' : ''}
+            WHERE gp.payout_status = 'pending' 
+            AND (gp.payout_type IS NULL OR gp.payout_type != 'reversal')
+            ${userType === 'garage' ? 'AND gp.garage_id = $1' : ''}
             ORDER BY gp.created_at ASC
             LIMIT 20
         `, userType === 'garage' ? [garageId] : []);
