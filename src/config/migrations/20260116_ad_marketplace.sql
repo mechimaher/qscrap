@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS ad_campaigns (
     CONSTRAINT valid_budget CHECK (daily_limit_qar IS NULL OR daily_limit_qar <= budget_qar)
 );
 
-CREATE INDEX idx_ad_campaigns_garage ON ad_campaigns(garage_id);
-CREATE INDEX idx_ad_campaigns_status ON ad_campaigns(status, start_date);
-CREATE INDEX idx_ad_campaigns_active ON ad_campaigns(status, start_date, end_date) 
+CREATE INDEX IF NOT EXISTS idx_ad_campaigns_garage ON ad_campaigns(garage_id);
+CREATE INDEX IF NOT EXISTS idx_ad_campaigns_status ON ad_campaigns(status, start_date);
+CREATE INDEX IF NOT EXISTS idx_ad_campaigns_active ON ad_campaigns(status, start_date, end_date) 
     WHERE status = 'active';
 
 -- 2. Create ad_placements table (specific ad slots)
@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS ad_placements (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_ad_placements_campaign ON ad_placements(campaign_id);
-CREATE INDEX idx_ad_placements_type ON ad_placements(placement_type, active);
+CREATE INDEX IF NOT EXISTS idx_ad_placements_campaign ON ad_placements(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_ad_placements_type ON ad_placements(placement_type, active);
 
 -- 3. Create ad_impressions table (tracking)
 CREATE TABLE IF NOT EXISTS ad_impressions (
@@ -87,9 +87,9 @@ CREATE TABLE IF NOT EXISTS ad_impressions (
     session_id UUID -- For tracking user sessions
 );
 
-CREATE INDEX idx_ad_impressions_campaign ON ad_impressions(campaign_id, timestamp DESC);
-CREATE INDEX idx_ad_impressions_type ON ad_impressions(impression_type, timestamp DESC);
-CREATE INDEX idx_ad_impressions_date ON ad_impressions(DATE(timestamp));
+CREATE INDEX IF NOT EXISTS idx_ad_impressions_campaign ON ad_impressions(campaign_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_ad_impressions_type ON ad_impressions(impression_type, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_ad_impressions_date ON ad_impressions(DATE(timestamp));
 
 -- 4. Create ad_pricing table (reference data for cost per action)
 CREATE TABLE IF NOT EXISTS ad_pricing (
@@ -295,7 +295,7 @@ SELECT
     DATE_TRUNC('day', c.end_date) as end_date
 FROM ad_campaigns c;
 
-CREATE INDEX idx_ad_campaign_analytics_garage ON ad_campaign_analytics(garage_id);
+CREATE INDEX IF NOT EXISTS idx_ad_campaign_analytics_garage ON ad_campaign_analytics(garage_id);
 
 COMMENT ON TABLE ad_campaigns IS 'Advertising campaigns created by garages for promotion';
 COMMENT ON TABLE ad_placements IS 'Specific ad placement configurations for campaigns';
