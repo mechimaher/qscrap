@@ -101,14 +101,16 @@ export class RefundService {
 
                 const reversalResult = await client.query(
                     `INSERT INTO garage_payouts (
-                        garage_id, order_id, net_amount, payout_status,
-                        payout_type, notes
-                     ) VALUES ($1, $2, $3, 'pending', 'reversal', $4)
+                        garage_id, order_id, gross_amount, commission_amount, net_amount, 
+                        payout_status, payout_type, notes
+                     ) VALUES ($1, $2, $3, $4, $5, 'pending', 'reversal', $6)
                      RETURNING payout_id`,
                     [
                         order.garage_id,
                         order.order_id,
-                        reversalAmount,
+                        reversalAmount,  // gross_amount (negative)
+                        0,               // commission_amount (no commission on reversal)
+                        reversalAmount,  // net_amount (same as gross for reversal)
                         `Payout reversal for refund: ${details.refund_reason}`
                     ]
                 );
