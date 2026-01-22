@@ -298,6 +298,26 @@ export const createRefund = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getRefunds = async (req: AuthRequest, res: Response) => {
+    try {
+        const { status, page, limit } = req.query;
+
+        const result = await refundService.getRefunds({
+            status: status as string,
+            limit: limit ? parseInt(limit as string) : undefined,
+            offset: page ? (parseInt(page as string) - 1) * (parseInt(limit as string) || 50) : undefined
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('getRefunds Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to fetch refunds' });
+    }
+};
+
 // ============================================
 // REVENUE & TRANSACTIONS
 // ============================================

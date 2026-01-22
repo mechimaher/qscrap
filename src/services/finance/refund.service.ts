@@ -175,4 +175,52 @@ export class RefundService {
             throw new RefundNotFoundError(refundId);
         }
     }
+
+    /**
+     * Get list of all refunds with optional filtering
+     */
+    async getRefunds(options: { status?: string; limit?: number; offset?: number } = {}): Promise<{
+        refunds: RefundDetail[];
+        total: number;
+    }> {
+        const { status, limit = 50, offset = 0 } = options;
+
+        let whereClause = '';
+        const params: any[] = [];
+
+        if (status) {
+            params.push(status);
+            whereClause = `WHERE r.refund_status = $${params.length}`;
+        }
+
+        // Get total count
+        const countResult = await this.pool.query(
+            `SELECT COUNT(*) FROM refunds r ${whereClause}`,
+            params
+        );
+
+        // Get refunds with related data
+        params.push(limit, offset);
+        const result = await this.pool.query(
+            `SELECT r.*, 
+                    o.order_number,
+                    u.full_name as customer_name,
+                    g.garage_name,
+                    staff.full_name as processed_by_name
+             FROM refunds r
+             JOIN orders o ON r.order_id = o.order_id
+             LEFT JOIN users u ON o.customer_id = u.user_id
+             LEFT JOIN garages g ON o.garage_id = g.garage_id
+             LEFT JOIN users staff ON r.processed_by = staff.user_id
+             ${whereClause}
+             ORDER BY r.created_at DESC
+             LIMIT $${params.length - 1} OFFSET $${params.length}`,
+            params
+        );
+
+        return {
+            refunds: result.rows,
+            total: parseInt(countResult.rows[0].count)
+        };
+    }
 }
