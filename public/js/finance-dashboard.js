@@ -573,8 +573,8 @@ async function loadDisputedPayouts() {
                 <td style="color: var(--danger);">${escapeHTML(p.dispute_reason || 'Not specified')}</td>
                 <td>${formatDate(p.disputed_at)}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="resolveDispute('${p.payout_id}')">
-                        <i class="bi bi-check-lg"></i> Resolve
+                    <button class="btn btn-warning btn-sm" onclick="resolveDispute('${p.payout_id}', '${escapeHTML(p.garage_name || '')}', ${p.net_amount || 0}, '${escapeHTML(p.dispute_reason || '')}')">
+                        <i class="bi bi-shield-check"></i> Resolve
                     </button>
                 </td>
             </tr>
@@ -584,19 +584,81 @@ async function loadDisputedPayouts() {
     }
 }
 
-async function resolveDispute(payoutId) {
-    const resolution = prompt('Resolution notes:');
-    if (!resolution) return;
+// Store current dispute data for modal
+let currentDisputePayout = null;
+
+function resolveDispute(payoutId, garageName, amount, reason) {
+    // Open modal with payout data
+    currentDisputePayout = { payoutId, garageName, amount, reason };
+
+    document.getElementById('rdPayoutId').value = payoutId;
+    document.getElementById('rdGarageName').textContent = garageName || '-';
+    document.getElementById('rdAmount').textContent = formatCurrency(amount);
+    document.getElementById('rdReason').textContent = reason || 'Not specified';
+
+    // Reset form fields
+    document.getElementById('rdResolutionType').value = '';
+    document.getElementById('rdNewAmount').value = '';
+    document.getElementById('rdPaymentMethod').value = '';
+    document.getElementById('rdNewReference').value = '';
+    document.getElementById('rdNotes').value = '';
+    document.getElementById('rdAmountCorrectionGroup').style.display = 'none';
+
+    document.getElementById('resolveDisputeModal').style.display = 'flex';
+}
+
+function closeResolveDisputeModal() {
+    document.getElementById('resolveDisputeModal').style.display = 'none';
+    currentDisputePayout = null;
+}
+
+function toggleAmountCorrection() {
+    const resType = document.getElementById('rdResolutionType').value;
+    const amountGroup = document.getElementById('rdAmountCorrectionGroup');
+    amountGroup.style.display = (resType === 'corrected') ? 'block' : 'none';
+}
+
+async function submitDisputeResolution() {
+    const payoutId = document.getElementById('rdPayoutId').value;
+    const resolution = document.getElementById('rdResolutionType').value;
+    const notes = document.getElementById('rdNotes').value.trim();
+    const newAmount = document.getElementById('rdNewAmount').value;
+    const newMethod = document.getElementById('rdPaymentMethod').value;
+    const newReference = document.getElementById('rdNewReference').value.trim();
+
+    // Validation
+    if (!resolution) {
+        showToast('Please select a resolution type', 'error');
+        return;
+    }
+    if (!notes) {
+        showToast('Please provide resolution notes', 'error');
+        return;
+    }
 
     try {
+        const body = {
+            resolution,
+            resolution_notes: notes
+        };
+
+        // Optional fields
+        if (newAmount) body.new_amount = parseFloat(newAmount);
+        if (newMethod) body.new_payout_method = newMethod;
+        if (newReference) body.new_payout_reference = newReference;
+
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resolution })
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
         });
 
         if (res.ok) {
-            showToast('Dispute resolved', 'success');
+            showToast(`Dispute resolved: ${resolution}`, 'success');
+            closeResolveDisputeModal();
             loadDisputedPayouts();
             loadBadges();
         } else {
@@ -604,6 +666,7 @@ async function resolveDispute(payoutId) {
             showToast(data.error || 'Failed to resolve dispute', 'error');
         }
     } catch (err) {
+        console.error('Resolve dispute error:', err);
         showToast('Connection error', 'error');
     }
 }
