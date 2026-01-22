@@ -529,8 +529,21 @@ async function loadAwaitingPayouts() {
 }
 
 async function resendNotification(payoutId) {
-    showToast('Reminder sent to garage', 'success');
-    // TODO: Implement actual notification resend
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/remind`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            showToast('Reminder sent to garage', 'success');
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to send reminder', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
 }
 
 // ==========================================
@@ -640,8 +653,23 @@ async function loadCompletedPayouts(page = 1) {
 }
 
 function exportCompletedPayouts() {
-    showToast('Exporting to CSV...', 'info');
-    // TODO: Implement CSV export
+    const fromDate = document.getElementById('completedFromDate')?.value || '';
+    const toDate = document.getElementById('completedToDate')?.value || '';
+
+    let url = `${API_URL}/finance/payouts/export?format=csv&status=confirmed`;
+    if (fromDate) url += `&from_date=${fromDate}`;
+    if (toDate) url += `&to_date=${toDate}`;
+
+    showToast('Downloading CSV export...', 'info');
+
+    // Create temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `payouts_${fromDate || 'all'}_${toDate || 'all'}.csv`);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // ==========================================

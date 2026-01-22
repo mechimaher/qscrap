@@ -115,7 +115,11 @@ export const en = {
         no: 'No',
         ok: 'OK',
         confirm: 'Confirm',
+        required: 'Required',
         qar: 'QAR',
+        refund: 'Refund',
+        camera: 'Camera',
+        gallery: 'Gallery',
     },
 
     // Status labels
@@ -165,6 +169,33 @@ export const en = {
         open: 'Open',
         inProgress: 'In Progress',
         closed: 'Closed',
+    },
+
+    // Disputes
+    dispute: {
+        reportIssue: 'Report an Issue',
+        reasonWrongItem: 'Wrong Part Received',
+        reasonDamaged: 'Part is Damaged',
+        reasonNotAsDescribed: 'Not As Described',
+        reasonDoesntFit: "Part Doesn't Fit",
+        reasonChangedMind: 'Changed My Mind',
+        whatsTheIssue: "What's the Issue?",
+        describeIssue: 'Describe the Issue',
+        describePlaceholder: 'Please provide details about the issue...',
+        evidencePhotos: 'Evidence Photos',
+        addPhotosParam: 'Add up to {{count}} photos',
+        limitReached: 'Photo Limit Reached',
+        limitReachedMsg: 'You can only attach up to 5 photos per dispute',
+        selectReason: 'Please select a reason for the dispute',
+        addPhotoEvidence: 'Please add at least one photo as evidence',
+        submitDispute: 'Submit Dispute',
+        submitted: 'Dispute Submitted',
+        submittedMsg: 'Your dispute has been submitted and will be reviewed within 48 hours',
+        submitFailed: 'Failed to submit dispute',
+        infoBanner: 'You have 48 hours after delivery to report any issues',
+        upTo: 'Up to',
+        expectedResolution: 'Expected Resolution',
+        resolutionMsg: 'You may receive up to {{refund}} refund if approved',
     },
 
     // Alerts
