@@ -162,6 +162,25 @@ export const resolvePaymentDispute = async (req: AuthRequest, res: Response) => 
     }
 };
 
+export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
+    try {
+        const { payout_id } = req.params;
+        const result = await payoutService.sendReminder(payout_id);
+
+        if (!result.success) {
+            return res.status(400).json({ error: result.message });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error('sendPaymentReminder Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to send reminder' });
+    }
+};
+
 export const getAwaitingConfirmation = async (req: AuthRequest, res: Response) => {
     try {
         const garageId = req.user!.userId;

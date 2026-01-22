@@ -78,6 +78,10 @@ export class PayoutService {
         return this.lifecycle.confirmAllPayouts(garageId, password);
     }
 
+    async sendReminder(payoutId: string): Promise<{ success: boolean; message: string }> {
+        return this.lifecycle.sendReminder(payoutId);
+    }
+
     // ============================================
     // QUERY OPERATIONS
     // ============================================
