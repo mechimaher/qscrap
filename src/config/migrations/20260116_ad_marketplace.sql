@@ -89,8 +89,7 @@ CREATE TABLE IF NOT EXISTS ad_impressions (
 
 CREATE INDEX IF NOT EXISTS idx_ad_impressions_campaign ON ad_impressions(campaign_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_ad_impressions_type ON ad_impressions(impression_type, timestamp DESC);
--- Use date_trunc instead of DATE() for index (immutable function)
-CREATE INDEX IF NOT EXISTS idx_ad_impressions_date ON ad_impressions((date_trunc('day', timestamp)));
+-- Removed date-based index due to immutability issues - timestamp index is sufficient for date range queries
 
 -- 4. Create ad_pricing table (reference data for cost per action)
 CREATE TABLE IF NOT EXISTS ad_pricing (
