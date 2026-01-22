@@ -41,7 +41,7 @@ CREATE TABLE public.insurance_claims (
     
     -- Linked Requests
     part_request_id uuid REFERENCES public.part_requests(request_id),
-    service_request_id uuid REFERENCES public.service_requests(request_id),
+    -- service_request_id removed - services feature deprecated
     
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now()
@@ -58,7 +58,7 @@ CREATE TABLE public.vehicle_history_events (
     
     -- Source of truth
     order_id uuid REFERENCES public.orders(order_id), -- If it came from a QScrap part order
-    service_request_id uuid REFERENCES public.service_requests(request_id), -- If it came from a Motar service
+    -- service_request_id removed - services feature deprecated
     garage_id uuid REFERENCES public.garages(garage_id), -- Who did the work
     
     description text NOT NULL, -- e.g., "Oil Change", "Bumper Replaced"
