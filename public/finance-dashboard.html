@@ -591,6 +591,86 @@
         </div>
     </div>
 
+    <!-- Resolve Dispute Modal -->
+    <div class="modal-overlay" id="resolveDisputeModal" style="display: none;">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <h2><i class="bi bi-shield-check"></i> Resolve Payment Dispute</h2>
+                <button class="modal-close" onclick="closeResolveDisputeModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Garage:</span>
+                        <strong id="rdGarageName">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Amount:</span>
+                        <strong id="rdAmount" style="color: var(--accent);">0 QAR</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">Issue:</span>
+                        <span id="rdReason" style="color: var(--danger);">-</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Resolution Type *</label>
+                    <select id="rdResolutionType" class="form-control" required onchange="toggleAmountCorrection()">
+                        <option value="">Select resolution...</option>
+                        <option value="corrected">✅ Corrected - Resend with fix</option>
+                        <option value="resent">🔄 Resent - Payment resent</option>
+                        <option value="cancelled">❌ Cancelled - Cancel payout</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px; display: none;" id="rdAmountCorrectionGroup">
+                    <label>Corrected Amount (if different)</label>
+                    <div style="position: relative;">
+                        <input type="number" id="rdNewAmount" class="form-control" placeholder="Leave blank if same"
+                            min="1" step="0.01">
+                        <span
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">QAR</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Payment Method (for resend)</label>
+                    <select id="rdPaymentMethod" class="form-control">
+                        <option value="">Same as before</option>
+                        <option value="bank_transfer">🏦 Bank Transfer</option>
+                        <option value="cash">💵 Cash</option>
+                        <option value="mobile_transfer">📱 Mobile Transfer</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>New Reference (optional)</label>
+                    <input type="text" id="rdNewReference" class="form-control" placeholder="New payment reference">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Resolution Notes *</label>
+                    <textarea id="rdNotes" class="form-control" rows="3" placeholder="Explain how this was resolved..."
+                        required></textarea>
+                </div>
+
+                <input type="hidden" id="rdPayoutId">
+
+                <div
+                    style="background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; font-size: 13px; color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-info-circle"></i> The garage will be notified of the resolution.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeResolveDisputeModal()">Cancel</button>
+                <button class="btn btn-warning" onclick="submitDisputeResolution()">
+                    <i class="bi bi-shield-check"></i> Resolve Dispute
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
