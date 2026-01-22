@@ -9,6 +9,7 @@ import {
     holdPayout,
     getTransactionDetails,
     createRefund,
+    getRefunds,
     getRevenueReport,
     getTransactions,
     forceProcessPayout,
@@ -80,6 +81,9 @@ router.post('/payouts/:payout_id/release', authorizeOperations, releasePayout);
 // Transactions (Accessible by Admin, Operations, Garage)
 router.get('/transactions', getTransactions);
 router.get('/transaction/:order_id', getTransactionDetails);
+
+// Refunds (Operations Only)
+router.get('/refunds', authorizeOperations, getRefunds);
 router.post('/refund/:order_id', authorizeOperations, createRefund);
 
 export default router;
