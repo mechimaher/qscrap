@@ -5,7 +5,7 @@
 -- ============================================
 -- ESCROW TRANSACTIONS TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS escrow_transactions (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS escrow_transactions (
     escrow_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
     customer_id UUID NOT NULL REFERENCES users(user_id),
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS escrow_transactions (
 -- ============================================
 -- PROOF OF CONDITION CAPTURES
 -- ============================================
-CREATE TABLE IF NOT EXISTS proof_of_condition (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS proof_of_condition (
     proof_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     escrow_id UUID NOT NULL REFERENCES escrow_transactions(escrow_id) ON DELETE CASCADE,
     order_id UUID NOT NULL REFERENCES orders(order_id),
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS proof_of_condition (
 -- ============================================
 -- ESCROW RELEASE RULES
 -- ============================================
-CREATE TABLE IF NOT EXISTS escrow_release_rules (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS escrow_release_rules (
     rule_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rule_name VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
@@ -113,13 +113,13 @@ CREATE TABLE IF NOT EXISTS escrow_release_rules (
 -- ============================================
 -- INDEXES
 -- ============================================
-CREATE INDEX IF NOT EXISTS idx_escrow_order ON escrow_transactions(order_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_customer ON escrow_transactions(customer_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_seller ON escrow_transactions(seller_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_status ON escrow_transactions(status);
-CREATE INDEX IF NOT EXISTS idx_escrow_expires ON escrow_transactions(inspection_expires_at) WHERE status = 'held';
-CREATE INDEX IF NOT EXISTS idx_proof_escrow ON proof_of_condition(escrow_id);
-CREATE INDEX IF NOT EXISTS idx_proof_order ON proof_of_condition(order_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_escrow_order ON escrow_transactions(order_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_escrow_customer ON escrow_transactions(customer_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_escrow_seller ON escrow_transactions(seller_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_escrow_status ON escrow_transactions(status);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_escrow_expires ON escrow_transactions(inspection_expires_at) WHERE status = 'held';
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_proof_escrow ON proof_of_condition(escrow_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_proof_order ON proof_of_condition(order_id);
 
 -- ============================================
 -- AUTO-RELEASE FUNCTION

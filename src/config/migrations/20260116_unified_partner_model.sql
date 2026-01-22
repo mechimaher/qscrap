@@ -47,25 +47,25 @@ WHERE repair_specializations IS NULL;
 -- ============================================
 
 -- Index for finding quick service providers
-CREATE INDEX IF NOT EXISTS idx_garages_quick_services ON garages 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garages_quick_services ON garages 
 WHERE provides_quick_services = true AND is_active = true;
 
 -- Index for finding repair providers
-CREATE INDEX IF NOT EXISTS idx_garages_repairs ON garages 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garages_repairs ON garages 
 WHERE provides_repairs = true AND is_active = true;
 
 -- Spatial index for mobile service providers
-CREATE INDEX IF NOT EXISTS idx_garages_mobile_location ON garages 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garages_mobile_location ON garages 
 USING GIST (location)
 WHERE has_mobile_technicians = true AND is_active = true;
 
 -- Composite index for service discovery with location
-CREATE INDEX IF NOT EXISTS idx_garages_services_location ON garages 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garages_services_location ON garages 
 USING GIST (location)
 WHERE is_active = true;
 
 -- Full-text search index for service offerings
-CREATE INDEX IF NOT EXISTS idx_garages_service_search ON garages 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garages_service_search ON garages 
 USING GIN (
     to_tsvector('english', 
         COALESCE(quick_services_offered::text, '') || ' ' ||
@@ -78,7 +78,7 @@ WHERE provides_quick_services = true OR provides_repairs = true;
 -- 4. CREATE TECHNICIANS TABLE
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS technicians (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS technicians (
     technician_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     garage_id UUID REFERENCES garages(garage_id) ON DELETE CASCADE,
     
@@ -109,10 +109,10 @@ CREATE TABLE IF NOT EXISTS technicians (
 );
 
 -- Indexes for technician management
-CREATE INDEX IF NOT EXISTS idx_technicians_garage ON technicians(garage_id);
-CREATE INDEX IF NOT EXISTS idx_technicians_available ON technicians 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_technicians_garage ON technicians(garage_id);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_technicians_available ON technicians 
 WHERE is_available = true AND is_active = true;
-CREATE INDEX IF NOT EXISTS idx_technicians_location ON technicians 
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_technicians_location ON technicians 
 USING GIST (current_location)
 WHERE is_available = true;
 

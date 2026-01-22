@@ -2,7 +2,7 @@
 -- Purpose: Tiered subscription plans with feature gating
 
 -- 1. Create subscription_plans table (reference data)
-CREATE TABLE IF NOT EXISTS subscription_plans (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS subscription_plans (
     plan_code VARCHAR(20) PRIMARY KEY,
     plan_name VARCHAR(50) NOT NULL,
     monthly_price_qar DECIMAL(10,2) NOT NULL,
@@ -54,10 +54,10 @@ ADD COLUMN IF NOT EXISTS billing_cycle VARCHAR(10) DEFAULT 'monthly' CHECK (bill
 ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN DEFAULT true;
 
 -- Create index for subscription queries
-CREATE INDEX IF NOT EXISTS idx_garages_subscription ON garages(subscription_plan, subscription_end_date);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_garages_subscription ON garages(subscription_plan, subscription_end_date);
 
 -- 3. Create subscription_history table (audit trail)
-CREATE TABLE IF NOT EXISTS subscription_history (
+CREATE TABLE IF NOT EXISTS IF NOT EXISTS subscription_history (
     history_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     garage_id UUID REFERENCES garages(garage_id) ON DELETE CASCADE,
     old_plan VARCHAR(20) REFERENCES subscription_plans(plan_code),
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS subscription_history (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_subscription_history_garage ON subscription_history(garage_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_subscription_history_garage ON subscription_history(garage_id, created_at DESC);
 
 -- 4. Function to check feature access
 CREATE OR REPLACE FUNCTION check_feature_access(

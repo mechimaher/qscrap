@@ -4,99 +4,99 @@
 -- ==================== Orders Table Optimization ====================
 
 -- Composite index for customer order history (most common query)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_customer_created 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_orders_customer_created 
 ON orders(customer_id, created_at DESC);
 
 -- Composite index for garage order management
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_garage_status 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_orders_garage_status 
 ON orders(garage_id, order_status, created_at DESC);
 
 -- Index for active order queries (used in operations dashboard)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_active_status 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_orders_active_status 
 ON orders(order_status, created_at DESC) 
 WHERE order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'in_transit', 'out_for_delivery');
 
 -- Index for completed orders analytics
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_completed_date 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_orders_completed_date 
 ON orders(garage_id, completed_at DESC) 
 WHERE order_status = 'completed';
 
 -- ==================== Bids Table Optimization ====================
 
 -- Composite index for request bid listings (critical for bid browsing)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bids_request_created 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_bids_request_created 
 ON bids(request_id, created_at DESC);
 
 -- Index for garage bid history
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bids_garage_status 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_bids_garage_status 
 ON bids(garage_id, bid_status, created_at DESC);
 
 -- Index for pending bids (high-traffic query)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bids_pending_created 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_bids_pending_created 
 ON bids(created_at DESC) 
 WHERE bid_status = 'pending';
 
 -- ==================== Part Requests Table Optimization ====================
 
 -- Index for active requests browsing (most critical query)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_part_requests_active 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_part_requests_active 
 ON part_requests(status, created_at DESC) 
 WHERE status = 'active';
 
 -- Index for customer request history
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_part_requests_customer 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_part_requests_customer 
 ON part_requests(customer_id, created_at DESC);
 
 -- Composite index for category filtering
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_part_requests_category_status 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_part_requests_category_status 
 ON part_requests(part_category, status, created_at DESC);
 
 -- Index for car make/model searches
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_part_requests_car_make 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_part_requests_car_make 
 ON part_requests(car_make, car_model, status);
 
 -- ==================== Insurance Claims Optimization ====================
 
 -- Index for company claims dashboard
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_insurance_claims_company 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_insurance_claims_company 
 ON insurance_claims(company_id, approval_status, created_at DESC);
 
 -- Index for agent workload
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_insurance_claims_agent 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_insurance_claims_agent 
 ON insurance_claims(agent_id, approval_status, created_at DESC);
 
 -- Index for pending claims
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_insurance_claims_pending 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_insurance_claims_pending 
 ON insurance_claims(approval_status, created_at DESC) 
 WHERE approval_status = 'pending';
 
 -- ==================== Garage Table Optimization ====================
 
 -- Index for approved garage searches
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_garages_approved 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_garages_approved 
 ON garages(approval_status, rating_average DESC) 
 WHERE approval_status = 'approved';
 
 -- Index for specialized brand filtering
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_garages_specialized_brands 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_garages_specialized_brands 
 ON garages USING GIN(specialized_brands);
 
 -- ==================== User Sessions & Authentication ====================
 
 -- Index for session lookups (if using database sessions)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_active 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_users_email_active 
 ON users(email, account_status) 
 WHERE account_status = 'active';
 
 -- ==================== Analytics & Reporting ====================
 
 -- Index for revenue calculations
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_revenue_date 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_orders_revenue_date 
 ON orders(created_at, total_amount) 
 WHERE order_status = 'completed';
 
 -- Index for garage performance tracking
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_garage_performance 
+CREATE INDEX IF NOT EXISTS CONCURRENTLY IF NOT EXISTS idx_orders_garage_performance 
 ON orders(garage_id, order_status, completed_at);
 
 -- ==================== Optimize Existing Indexes ====================
