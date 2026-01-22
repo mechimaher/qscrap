@@ -177,6 +177,47 @@ export class PayoutLifecycleService {
     }
 
     /**
+     * Send reminder notification to garage for pending payment confirmation
+     */
+    async sendReminder(payoutId: string): Promise<{ success: boolean; message: string }> {
+        // Fetch payout with garage details
+        const result = await this.pool.query(
+            `SELECT gp.*, g.garage_name, g.owner_id, o.order_number
+             FROM garage_payouts gp
+             JOIN garages g ON gp.garage_id = g.garage_id
+             LEFT JOIN orders o ON gp.order_id = o.order_id
+             WHERE gp.payout_id = $1`,
+            [payoutId]
+        );
+
+        if (result.rows.length === 0) {
+            return { success: false, message: 'Payout not found' };
+        }
+
+        const payout = result.rows[0];
+
+        if (payout.payout_status !== 'awaiting_confirmation') {
+            return { success: false, message: 'Payout is not awaiting confirmation' };
+        }
+
+        // Send notification to garage
+        await createNotification({
+            userId: payout.garage_id,
+            type: 'payment_reminder',
+            title: 'Payment Confirmation Reminder 🔔',
+            message: `Please confirm receipt of ${parseFloat(payout.net_amount).toFixed(2)} QAR for order ${payout.order_number || 'N/A'}`,
+            data: {
+                payout_id: payoutId,
+                amount: payout.net_amount,
+                order_number: payout.order_number
+            },
+            target_role: 'garage'
+        });
+
+        return { success: true, message: 'Reminder sent to garage' };
+    }
+
+    /**
      * Bulk confirm all awaiting payouts (Garage)
      */
     async confirmAllPayouts(garageId: string, password: string): Promise<BulkConfirmResult> {

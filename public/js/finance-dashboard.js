@@ -699,9 +699,11 @@ async function loadCompletedPayouts(page = 1) {
 
         const tbody = document.getElementById('completedPayoutsTable');
         const payouts = data.payouts || [];
+        const pagination = data.pagination || { page: 1, pages: 1, total: payouts.length };
 
         if (payouts.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No completed payouts for this period</td></tr>';
+            renderPagination('completedPagination', pagination, 'loadCompletedPayouts');
             return;
         }
 
@@ -715,6 +717,9 @@ async function loadCompletedPayouts(page = 1) {
                 <td>${formatDate(p.confirmed_at)}</td>
             </tr>
         `).join('');
+
+        // Render pagination
+        renderPagination('completedPagination', pagination, 'loadCompletedPayouts');
     } catch (err) {
         console.error('Failed to load completed payouts:', err);
     }
@@ -778,19 +783,25 @@ document.getElementById('periodTabs')?.addEventListener('click', e => {
 // REFUNDS
 // ==========================================
 
-async function loadRefunds() {
+let refundsPage = 1;
+
+async function loadRefunds(page = 1) {
+    refundsPage = page;
     try {
-        // Use dedicated refunds endpoint
-        const res = await fetch(`${API_URL}/finance/refunds`, {
+        // Use dedicated refunds endpoint with pagination
+        const res = await fetch(`${API_URL}/finance/refunds?page=${page}&limit=20`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
 
         const tbody = document.getElementById('refundsTable');
         const refunds = data.refunds || [];
+        const total = data.total || refunds.length;
+        const pagination = { page: page, pages: Math.ceil(total / 20) || 1, total: total };
 
         if (refunds.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle"></i> No refunds processed</td></tr>';
+            renderPagination('refundsPagination', pagination, 'loadRefunds');
             return;
         }
 
@@ -805,6 +816,9 @@ async function loadRefunds() {
                 <td>${formatDate(r.created_at)}</td>
             </tr>
         `).join('');
+
+        // Render pagination
+        renderPagination('refundsPagination', pagination, 'loadRefunds');
     } catch (err) {
         console.error('Failed to load refunds:', err);
         document.getElementById('refundsTable').innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);"><i class="bi bi-exclamation-triangle"></i> Failed to load refunds</td></tr>';

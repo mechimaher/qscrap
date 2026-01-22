@@ -22,6 +22,7 @@ import {
     disputePayment,
     getAwaitingConfirmation,
     resolvePaymentDispute,
+    sendPaymentReminder,
     getPaymentStats,
     confirmAllPayouts
 } from '../controllers/finance.controller';
@@ -57,6 +58,9 @@ router.post('/payouts/:payout_id/send', authorizeOperations, sendPayment);
 
 // Operations: Resolve disputed payment
 router.post('/payouts/:payout_id/resolve-dispute', authorizeOperations, resolvePaymentDispute);
+
+// Operations: Send reminder to garage for confirming payment
+router.post('/payouts/:payout_id/remind', authorizeOperations, sendPaymentReminder);
 
 // Garage: Get payouts awaiting confirmation
 router.get('/payouts/awaiting-confirmation', requireRole('garage'), getAwaitingConfirmation);
