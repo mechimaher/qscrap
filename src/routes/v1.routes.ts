@@ -118,12 +118,6 @@ v1Router.use('/ocr', ocrRoutes);
 import vehicleRoutes from './vehicle.routes';
 v1Router.use('/vehicles', vehicleRoutes);
 
-
-
-// Insurance Routes (B2B)
-import insuranceRoutes from './insurance.routes';
-v1Router.use('/insurance', insuranceRoutes);
-
 // History Routes (Public/Data)
 import historyRoutes from './history.routes';
 v1Router.use('/history', historyRoutes);
