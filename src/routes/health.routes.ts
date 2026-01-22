@@ -72,16 +72,14 @@ router.get('/status', async (req: Request, res: Response) => {
         const [
             garagesResult,
             requestsResult,
-            ordersResult,
-            insuranceResult
+            ordersResult
         ] = await Promise.all([
             pool.query('SELECT COUNT(*) as count FROM garages WHERE approval_status = $1', ['approved']),
             pool.query('SELECT COUNT(*) as count FROM part_requests WHERE status = $1', ['active']),
             pool.query(`SELECT 
                 COUNT(*) as total,
                 COUNT(*) FILTER (WHERE order_status IN ('confirmed', 'preparing', 'in_transit')) as active
-                FROM orders WHERE created_at >= NOW() - INTERVAL '24 hours'`),
-            pool.query('SELECT COUNT(*) as count FROM insurance_claims WHERE approval_status = $1', ['pending'])
+                FROM orders WHERE created_at >= NOW() - INTERVAL '24 hours'`)
         ]);
 
         res.json({
@@ -93,16 +91,15 @@ router.get('/status', async (req: Request, res: Response) => {
                 active_garages: parseInt(garagesResult.rows[0].count),
                 active_requests: parseInt(requestsResult.rows[0].count),
                 orders_24h: parseInt(ordersResult.rows[0].total),
-                active_orders: parseInt(ordersResult.rows[0].active),
-                pending_claims: parseInt(insuranceResult.rows[0].count)
+                active_orders: parseInt(ordersResult.rows[0].active)
             },
             features: {
                 analytics: 'enabled',
                 loyalty: 'enabled',
                 ad_marketplace: 'enabled',
                 subscriptions: 'enabled',
-                insurance_b2b: 'enabled',
-                repair_marketplace: 'enabled'
+                escrow_protection: 'enabled',
+                parts_marketplace: 'enabled'
             }
         });
     } catch (error) {

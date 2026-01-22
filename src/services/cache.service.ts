@@ -11,7 +11,6 @@ export class CacheService {
         POPULAR_PARTS: 900,          // 15 minutes
         USER_SESSION: 86400,         // 24 hours
         ANALYTICS: 900,              // 15 minutes
-        INSURANCE_CLAIMS: 1800,      // 30 minutes
         BID_LIST: 180,               // 3 minutes
         SEARCH_RESULTS: 600,         // 10 minutes
     };
