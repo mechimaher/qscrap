@@ -63,11 +63,11 @@ export class RefundService {
             // Create refund record
             const refundResult = await client.query(
                 `INSERT INTO refunds (
-                    order_id, refund_amount, refund_reason, 
+                    order_id, original_amount, refund_amount, refund_reason, 
                     initiated_by, refund_status
-                 ) VALUES ($1, $2, $3, $4, 'pending')
+                 ) VALUES ($1, $2, $3, $4, $5, 'pending')
                  RETURNING *`,
-                [details.order_id, details.refund_amount, details.refund_reason, details.initiated_by]
+                [details.order_id, order.total_amount, details.refund_amount, details.refund_reason, details.initiated_by]
             );
 
             const refund = refundResult.rows[0];
