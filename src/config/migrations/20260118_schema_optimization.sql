@@ -6,7 +6,7 @@ BEGIN;
 -- ==========================================
 -- 1. Table Decomposition: garage_settings
 -- ==========================================
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS garage_settings (
+CREATE TABLE IF NOT EXISTS garage_settings (
     garage_id UUID PRIMARY KEY REFERENCES garages(garage_id) ON DELETE CASCADE,
     auto_renew BOOLEAN DEFAULT true,
     provides_repairs BOOLEAN DEFAULT false,
@@ -32,7 +32,7 @@ ON CONFLICT (garage_id) DO NOTHING;
 -- ==========================================
 -- 2. Table Decomposition: garage_stats
 -- ==========================================
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS garage_stats (
+CREATE TABLE IF NOT EXISTS garage_stats (
     garage_id UUID PRIMARY KEY REFERENCES garages(garage_id) ON DELETE CASCADE,
     total_services_completed INTEGER DEFAULT 0,
     quick_service_rating NUMERIC(2,1),
@@ -73,15 +73,15 @@ LEFT JOIN garage_stats st ON g.garage_id = st.garage_id;
 -- ==========================================
 
 -- Audit Logs (Compliance Reports)
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC);
 
 -- Notifications ("My Alerts" Feed)
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC);
 
 -- Orders (Sales Reporting)
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_orders_created_at_date ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at_date ON orders(created_at DESC);
 
 -- Ad Impressions (High Volume Analytics)
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_ad_impressions_timestamp_brin ON ad_impressions USING BRIN("timestamp");
+CREATE INDEX IF NOT EXISTS idx_ad_impressions_timestamp_brin ON ad_impressions USING BRIN("timestamp");
 
 COMMIT;

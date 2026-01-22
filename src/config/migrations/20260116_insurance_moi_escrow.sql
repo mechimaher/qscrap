@@ -4,7 +4,7 @@
 -- ============================================
 
 -- 1. MOI Accident Reports Table
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS moi_accident_reports (
+CREATE TABLE IF NOT EXISTS moi_accident_reports (
     report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     claim_id UUID NOT NULL,
     
@@ -41,16 +41,16 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS moi_accident_reports (
 );
 
 -- Indexes for MOI reports
-CREATE INDEX IF NOT EXISTS idx_moi_claim ON moi_accident_reports(claim_id);
-CREATE INDEX IF NOT EXISTS idx_moi_verification ON moi_accident_reports(verification_status);
-CREATE INDEX IF NOT EXISTS idx_moi_report_number ON moi_accident_reports(report_number);
-CREATE INDEX IF NOT EXISTS idx_moi_vin ON moi_accident_reports(vehicle_vin);
+CREATE INDEX idx_moi_claim ON moi_accident_reports(claim_id);
+CREATE INDEX idx_moi_verification ON moi_accident_reports(verification_status);
+CREATE INDEX idx_moi_report_number ON moi_accident_reports(report_number);
+CREATE INDEX idx_moi_vin ON moi_accident_reports(vehicle_vin);
 
 -- ============================================
 -- 2. Escrow Payments Table
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS escrow_payments (
+CREATE TABLE IF NOT EXISTS escrow_payments (
     escrow_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     claim_id UUID NOT NULL UNIQUE,
     
@@ -95,11 +95,11 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS escrow_payments (
 );
 
 -- Indexes for escrow
-CREATE INDEX IF NOT EXISTS idx_escrow_claim ON escrow_payments(claim_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_status ON escrow_payments(status);
-CREATE INDEX IF NOT EXISTS idx_escrow_garage ON escrow_payments(garage_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_insurance ON escrow_payments(insurance_company_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_expiry ON escrow_payments(expiry_date) WHERE status = 'held';
+CREATE INDEX idx_escrow_claim ON escrow_payments(claim_id);
+CREATE INDEX idx_escrow_status ON escrow_payments(status);
+CREATE INDEX idx_escrow_garage ON escrow_payments(garage_id);
+CREATE INDEX idx_escrow_insurance ON escrow_payments(insurance_company_id);
+CREATE INDEX idx_escrow_expiry ON escrow_payments(expiry_date) WHERE status = 'held';
 
 -- ============================================
 -- 3. Update insurance_claims table
@@ -110,7 +110,7 @@ ADD COLUMN IF NOT EXISTS escrow_id UUID REFERENCES escrow_payments(escrow_id),
 ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'pending',
 ADD COLUMN IF NOT EXISTS has_moi_report BOOLEAN DEFAULT FALSE;
 
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_claims_payment_status ON insurance_claims(payment_status);
+CREATE INDEX IF NOT EXISTS idx_claims_payment_status ON insurance_claims(payment_status);
 
 -- ============================================
 -- 4. Escrow Auto-Refund Function
@@ -144,7 +144,7 @@ $$ LANGUAGE plpgsql;
 -- 5. Escrow Activity Log
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS escrow_activity_log (
+CREATE TABLE IF NOT EXISTS escrow_activity_log (
     log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     escrow_id UUID NOT NULL,
     activity_type VARCHAR(50) NOT NULL, -- created, held, released, refunded, verified
@@ -159,8 +159,8 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS escrow_activity_log (
     FOREIGN KEY (performed_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_escrow_log ON escrow_activity_log(escrow_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_log_date ON escrow_activity_log(created_at);
+CREATE INDEX idx_escrow_log ON escrow_activity_log(escrow_id);
+CREATE INDEX idx_escrow_log_date ON escrow_activity_log(created_at);
 
 -- ============================================
 -- 6. Triggers for Auto-Logging

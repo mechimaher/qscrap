@@ -2,7 +2,7 @@
 -- Purpose: Points-based rewards system with tier benefits
 
 -- 1. Create reward_tiers table (reference data)
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS reward_tiers (
+CREATE TABLE IF NOT EXISTS reward_tiers (
     tier_name VARCHAR(20) PRIMARY KEY,
     min_points INTEGER NOT NULL,
     discount_percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -20,7 +20,7 @@ INSERT INTO reward_tiers (tier_name, min_points, discount_percentage, priority_s
 ON CONFLICT (tier_name) DO NOTHING;
 
 -- 2. Create customer_rewards table
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS customer_rewards (
+CREATE TABLE IF NOT EXISTS customer_rewards (
     reward_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID REFERENCES users(user_id) ON DELETE CASCADE UNIQUE,
     points_balance INTEGER DEFAULT 0 CHECK (points_balance >= 0),
@@ -32,11 +32,11 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS customer_rewards (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_customer_rewards_customer ON customer_rewards(customer_id);
-CREATE INDEX IF NOT EXISTS idx_customer_rewards_tier ON customer_rewards(current_tier);
+CREATE INDEX idx_customer_rewards_customer ON customer_rewards(customer_id);
+CREATE INDEX idx_customer_rewards_tier ON customer_rewards(current_tier);
 
 -- 3. Create reward_transactions table (audit log)
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS reward_transactions (
+CREATE TABLE IF NOT EXISTS reward_transactions (
     transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     points_change INTEGER NOT NULL,
@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS IF NOT EXISTS reward_transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_reward_transactions_customer ON reward_transactions(customer_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_reward_transactions_order ON reward_transactions(order_id);
-CREATE INDEX IF NOT EXISTS idx_reward_transactions_type ON reward_transactions(transaction_type);
+CREATE INDEX idx_reward_transactions_customer ON reward_transactions(customer_id, created_at DESC);
+CREATE INDEX idx_reward_transactions_order ON reward_transactions(order_id);
+CREATE INDEX idx_reward_transactions_type ON reward_transactions(transaction_type);
 
 -- 4. Create function to calculate tier from points
 CREATE OR REPLACE FUNCTION calculate_tier(p_points INTEGER)
