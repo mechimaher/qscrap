@@ -433,12 +433,40 @@ export const getActiveDeliveries = async (req: AuthRequest, res: Response) => {
 
 export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
     try {
-        const { latitude, longitude } = req.body;
+        const { latitude, longitude, order_total } = req.body;
 
         if (!latitude || !longitude) {
             return res.status(400).json({ error: 'Latitude and longitude are required' });
         }
 
+        // If order_total provided, use DeliveryFeeService for tier discounts
+        if (order_total !== undefined) {
+            const { DeliveryFeeService } = await import('../services/delivery/delivery-fee.service');
+            const feeService = new DeliveryFeeService(pool);
+
+            const result = await feeService.calculateFee(
+                parseFloat(latitude),
+                parseFloat(longitude),
+                parseFloat(order_total)
+            );
+
+            return res.json({
+                success: true,
+                base_fee: result.base_fee,
+                discount_percent: result.discount_percent,
+                discount_amount: result.discount_amount,
+                delivery_fee: result.final_fee,
+                zone: {
+                    zone_id: result.zone_id,
+                    zone_name: result.zone_name
+                },
+                distance_km: result.distance_km,
+                is_free_delivery: result.is_free_delivery,
+                message: result.message
+            });
+        }
+
+        // Fallback to basic geo-based fee (no discount)
         const result = await geoService.calculateDeliveryFee(
             parseFloat(latitude),
             parseFloat(longitude),

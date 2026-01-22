@@ -23,6 +23,8 @@ export class RefundService {
     /**
      * Create refund with automatic payout adjustment
      * Creates refund record and adjusts garage payout if applicable
+     * 
+     * IMPORTANT: Delivery fee is retained on customer refusals to protect business
      */
     async createRefund(details: CreateRefundDto): Promise<RefundResult> {
         const client = await this.pool.connect();
@@ -31,9 +33,11 @@ export class RefundService {
 
             // Get order details
             const orderResult = await client.query(
-                `SELECT o.*, gp.payout_id, gp.net_amount as payout_amount, gp.payout_status
+                `SELECT o.*, gp.payout_id, gp.net_amount as payout_amount, gp.payout_status,
+                        da.assignment_id as has_driver_assigned
                  FROM orders o
                  LEFT JOIN garage_payouts gp ON o.order_id = gp.order_id
+                 LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
                  WHERE o.order_id = $1
                  FOR UPDATE OF o`,
                 [details.order_id]
@@ -44,10 +48,31 @@ export class RefundService {
             }
 
             const order = orderResult.rows[0];
+            const deliveryFee = parseFloat(order.delivery_fee || 0);
+            const driverAssigned = !!order.has_driver_assigned;
+
+            // Determine refund type (default to customer_refusal if driver was assigned)
+            const refundType = details.refund_type ||
+                (driverAssigned ? 'customer_refusal' : 'cancelled_before_dispatch');
+
+            // Calculate delivery fee to retain based on refund type
+            let deliveryFeeRetained = 0;
+            if (refundType === 'customer_refusal' || refundType === 'wrong_part') {
+                // Customer caused the issue - retain delivery fee
+                deliveryFeeRetained = deliveryFee;
+            } else if (refundType === 'cancelled_before_dispatch' && driverAssigned) {
+                // Driver was already assigned when cancelled - retain fee
+                deliveryFeeRetained = deliveryFee;
+            }
+            // driver_failure or cancelled_before_dispatch (no driver) = no fee retained
+
+            // Calculate maximum refundable amount
+            const partAmount = parseFloat(order.total_amount) - deliveryFee;
+            const maxRefundable = partAmount + (deliveryFee - deliveryFeeRetained);
 
             // Validate refund amount
-            if (details.refund_amount > order.total_amount) {
-                throw new InvalidRefundAmountError(details.refund_amount, order.total_amount);
+            if (details.refund_amount > maxRefundable) {
+                throw new InvalidRefundAmountError(details.refund_amount, maxRefundable);
             }
 
             // Check if refund already exists
@@ -60,15 +85,16 @@ export class RefundService {
                 throw new RefundAlreadyProcessedError(details.order_id);
             }
 
-            // Create refund record
+            // Create refund record with delivery fee retention tracking
             const refundResult = await client.query(
                 `INSERT INTO refunds (
                     order_id, original_amount, refund_amount, refund_reason, 
-                    refund_method, initiated_by, refund_status
-                 ) VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+                    refund_method, initiated_by, refund_status, refund_type, delivery_fee_retained
+                 ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
                  RETURNING *`,
                 [details.order_id, order.total_amount, details.refund_amount, details.refund_reason,
-                details.refund_method || 'original_payment', details.initiated_by]
+                details.refund_method || 'original_payment', details.initiated_by,
+                    refundType, deliveryFeeRetained]
             );
 
             const refund = refundResult.rows[0];
@@ -129,12 +155,15 @@ export class RefundService {
             return {
                 refund_id: refund.refund_id,
                 refund_amount: refund.refund_amount,
+                delivery_fee_retained: deliveryFeeRetained,
                 payout_adjustment: payoutAdjustment,
-                message: payoutAdjustment
-                    ? payoutAdjustment.reversal_created
-                        ? 'Refund created with payout reversal'
-                        : 'Refund created with payout adjustment'
-                    : 'Refund created (no payout impact)'
+                message: deliveryFeeRetained > 0
+                    ? `Refund created. Delivery fee of ${deliveryFeeRetained} QAR retained (driver was assigned).`
+                    : payoutAdjustment
+                        ? payoutAdjustment.reversal_created
+                            ? 'Refund created with payout reversal'
+                            : 'Refund created with payout adjustment'
+                        : 'Refund created (no payout impact)'
             };
         } catch (err) {
             await client.query('ROLLBACK');
