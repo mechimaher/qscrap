@@ -28,10 +28,10 @@ const DisputeScreen: React.FC = () => {
     const { orderId } = route.params as { orderId: string };
 
     const DISPUTE_REASONS = [
-        { id: 'wrong_item', label: t('dispute.reasonWrongItem'), icon: 'swap-horizontal-outline', refund: '100%' },
+        { id: 'wrong_part', label: t('dispute.reasonWrongItem'), icon: 'swap-horizontal-outline', refund: '100%' },
         { id: 'damaged', label: t('dispute.reasonDamaged'), icon: 'alert-circle-outline', refund: '100%' },
         { id: 'not_as_described', label: t('dispute.reasonNotAsDescribed'), icon: 'document-text-outline', refund: '100%' },
-        { id: 'quality_issue', label: t('dispute.reasonQuality'), icon: 'construct-outline', refund: '80%' },
+        { id: 'doesnt_fit', label: t('dispute.reasonDoesntFit'), icon: 'construct-outline', refund: '85%' },
         { id: 'changed_mind', label: t('dispute.reasonChangedMind'), icon: 'refresh-outline', refund: '70%' },
     ];
 
