@@ -43,14 +43,40 @@ export class DisputeOrderService {
 
             const config = DISPUTE_CONFIGS[data.reason];
             const partPrice = parseFloat(order.part_price);
-            const refundAmount = Math.round(partPrice * (config.refundPercent / 100) * 100) / 100;
+            const deliveryFee = parseFloat(order.delivery_fee || 0);
+
+            // Calculate refund amount - include delivery fee if applicable
+            let refundAmount = Math.round(partPrice * (config.refundPercent / 100) * 100) / 100;
+            if (config.deliveryRefund) {
+                refundAmount += deliveryFee;
+            }
             const restockingFee = Math.round(partPrice * (config.restockingFee / 100) * 100) / 100;
 
             const disputeResult = await client.query(`INSERT INTO disputes (order_id, customer_id, garage_id, reason, description, photo_urls, refund_amount, restocking_fee) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING dispute_id, created_at`, [data.order_id, customerId, order.garage_id, data.reason, data.description, data.photoUrls, refundAmount, restockingFee]);
             await client.query(`UPDATE orders SET order_status = 'disputed', updated_at = NOW() WHERE order_id = $1`, [data.order_id]);
+
+            // CRITICAL: Hold any pending/processing payout for this order
+            const payoutHoldResult = await client.query(`
+                UPDATE garage_payouts 
+                SET payout_status = 'held',
+                    held_reason = 'Customer opened dispute: ' || $2,
+                    held_at = NOW(),
+                    updated_at = NOW()
+                WHERE order_id = $1 
+                AND payout_status IN ('pending', 'processing')
+                RETURNING payout_id
+            `, [data.order_id, data.reason]);
+
             await client.query('COMMIT');
 
-            return { dispute: disputeResult.rows[0], order, refundAmount, restockingFee, config };
+            return {
+                dispute: disputeResult.rows[0],
+                order,
+                refundAmount,
+                restockingFee,
+                config,
+                payoutHeld: payoutHoldResult.rows.length > 0
+            };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;

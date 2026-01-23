@@ -110,7 +110,7 @@ export class DisputeService {
         disputeId: string,
         resolution: DisputeResolution,
         staffId: string
-    ): Promise<{ message: string; resolution: string; refund_amount: number | null; return_assignment: any }> {
+    ): Promise<{ message: string; resolution: string; refund_amount: number | null; return_assignment: any; payout_action: any }> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -163,6 +163,8 @@ export class DisputeService {
 
             // If refund approved, create return-to-garage assignment
             let returnAssignment = null;
+            let payoutAction = null;
+
             if (resolution.resolution === 'refund_approved') {
                 const returnResult = await client.query(`
                     INSERT INTO delivery_assignments 
@@ -189,6 +191,59 @@ export class DisputeService {
                     resolution.notes || 'Customer refused delivery',
                     staffId
                 ]);
+
+                // CRITICAL: Handle payout - cancel if pending/held, or create reversal if already confirmed
+                const cancelledPayout = await client.query(`
+                    UPDATE garage_payouts 
+                    SET payout_status = 'cancelled',
+                        cancellation_reason = 'Order refunded - dispute approved by operations',
+                        cancelled_at = NOW(),
+                        updated_at = NOW()
+                    WHERE order_id = $1 
+                    AND payout_status IN ('pending', 'held', 'processing', 'awaiting_confirmation')
+                    RETURNING payout_id, net_amount
+                `, [dispute.order_id]);
+
+                if (cancelledPayout.rows.length > 0) {
+                    payoutAction = { action: 'cancelled', payout_id: cancelledPayout.rows[0].payout_id };
+                } else {
+                    // Check if payout was already confirmed - need to create reversal
+                    const confirmedPayout = await client.query(`
+                        SELECT payout_id, net_amount FROM garage_payouts 
+                        WHERE order_id = $1 AND payout_status = 'confirmed'
+                    `, [dispute.order_id]);
+
+                    if (confirmedPayout.rows.length > 0) {
+                        const payout = confirmedPayout.rows[0];
+                        await client.query(`
+                            INSERT INTO payout_reversals (garage_id, original_payout_id, order_id, amount, reason, status)
+                            VALUES ($1, $2, $3, $4, $5, 'pending')
+                        `, [
+                            dispute.garage_id,
+                            payout.payout_id,
+                            dispute.order_id,
+                            finalRefundAmount,
+                            `Refund approved after payout confirmed - Dispute: ${resolution.notes || dispute.description}`
+                        ]);
+                        payoutAction = { action: 'reversal_created', payout_id: payout.payout_id, reversal_amount: finalRefundAmount };
+                    }
+                }
+            } else {
+                // Dispute rejected - release held payout back to pending
+                const releasedPayout = await client.query(`
+                    UPDATE garage_payouts 
+                    SET payout_status = 'pending',
+                        held_reason = NULL,
+                        held_at = NULL,
+                        notes = 'Released - customer dispute rejected by operations',
+                        updated_at = NOW()
+                    WHERE order_id = $1 AND payout_status = 'held'
+                    RETURNING payout_id
+                `, [dispute.order_id]);
+
+                if (releasedPayout.rows.length > 0) {
+                    payoutAction = { action: 'released', payout_id: releasedPayout.rows[0].payout_id };
+                }
             }
 
             await client.query('COMMIT');
@@ -197,7 +252,8 @@ export class DisputeService {
                 message: 'Dispute resolved',
                 resolution: resolution.resolution,
                 refund_amount: resolution.resolution === 'refund_approved' ? finalRefundAmount : null,
-                return_assignment: returnAssignment
+                return_assignment: returnAssignment,
+                payout_action: payoutAction
             };
         } catch (err) {
             await client.query('ROLLBACK');
