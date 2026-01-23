@@ -26,8 +26,8 @@ export interface LoginResult {
     token: string;
     userId: string;
     userType: string;
-    fullName: string;
-    phoneNumber: string;
+    fullName?: string;
+    phoneNumber?: string;
     status?: string;
     message?: string;
     staffRole?: string;
