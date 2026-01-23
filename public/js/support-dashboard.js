@@ -96,6 +96,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             localStorage.setItem('supportToken', data.token);
             localStorage.setItem('userId', data.userId);
             localStorage.setItem('userType', data.userType);
+            localStorage.setItem('userName', data.fullName || 'Support Agent');
+            localStorage.setItem('userPhone', data.phoneNumber || '');
             token = data.token;
             showDashboard();
         } else {
@@ -113,6 +115,19 @@ if (token && isAuthorizedUser(token)) {
 function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+
+    // Display logged-in user info
+    const userName = localStorage.getItem('userName') || 'Support Agent';
+    const userPhone = localStorage.getItem('userPhone') || '';
+    const userNameEl = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+
+    if (userNameEl) userNameEl.textContent = userName;
+    if (userAvatarEl) userAvatarEl.textContent = userName.charAt(0).toUpperCase();
+
+    // Also update greeting
+    const greetingEl = document.getElementById('greetingText');
+    if (greetingEl) greetingEl.textContent = `Welcome, ${userName.split(' ')[0]}`;
 
     updateDateTime();
     setInterval(updateDateTime, 60000);

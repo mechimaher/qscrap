@@ -26,6 +26,8 @@ export interface LoginResult {
     token: string;
     userId: string;
     userType: string;
+    fullName: string;
+    phoneNumber: string;
     status?: string;
     message?: string;
     staffRole?: string;
@@ -123,7 +125,7 @@ export class AuthService {
             userType: user.user_type,
             staffRole: staffRole
         }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
-        return { token, userId: user.user_id, userType: user.user_type, staffRole };
+        return { token, userId: user.user_id, userType: user.user_type, fullName: user.full_name, phoneNumber: user.phone_number, staffRole };
     }
 
     async deleteAccount(userId: string): Promise<void> {
