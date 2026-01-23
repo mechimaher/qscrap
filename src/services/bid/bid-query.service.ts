@@ -36,6 +36,8 @@ export class BidQueryService {
             `SELECT b.*, 
                     CONCAT(pr.car_make, ' ', pr.car_model, ' ', pr.car_year) as car_summary, 
                     pr.part_description,
+                    pr.part_category,
+                    pr.part_subcategory,
                     pr.request_id,
                     pr.status as request_status,
                     o.part_price as final_accepted_amount,
