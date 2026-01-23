@@ -99,7 +99,7 @@ export interface SpecializationData {
 // ============================================
 
 export interface UserFilters {
-    user_type?: 'customer' | 'garage' | 'driver' | 'staff';
+    user_type?: 'customer' | 'garage' | 'driver' | 'staff' | 'admin' | 'all' | string;
     is_active?: boolean;
     is_suspended?: boolean;
     search?: string;
