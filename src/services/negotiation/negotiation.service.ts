@@ -432,10 +432,40 @@ export class NegotiationService {
     private async createCustomerCounter(offer: any, customerId: string, counterPrice: number, notes: string | undefined, client: PoolClient): Promise<void> {
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['countered', offer.counter_offer_id]);
         const round = offer.round_number + 1;
-        await client.query(`
+        const result = await client.query(`
             INSERT INTO counter_offers(bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
         VALUES($1, $2, 'customer', $3, $4, $5, $6)
+            RETURNING counter_offer_id
         `, [offer.bid_id, offer.request_id, customerId, counterPrice, notes, round]);
+
+        // Get garage_id from the bid to notify them
+        const bid = await client.query('SELECT garage_id, bid_amount FROM bids WHERE bid_id = $1', [offer.bid_id]);
+
+        if (bid.rows.length > 0) {
+            const garageId = bid.rows[0].garage_id;
+            const counterOfferId = result.rows[0].counter_offer_id;
+
+            // Create database notification
+            await createNotification({
+                userId: garageId,
+                type: 'counter_offer_received',
+                title: 'Counter-Offer Received 💰',
+                message: `Customer counter-offered ${counterPrice} QAR (was ${offer.proposed_amount} QAR)`,
+                data: { counter_offer_id: counterOfferId, bid_id: offer.bid_id, proposed_amount: counterPrice, round },
+                target_role: 'garage'
+            });
+
+            // Emit real-time WebSocket event to garage dashboard
+            const { emitToUser } = await import('../../utils/socketIO');
+            emitToUser(garageId, 'counter_offer_received', {
+                counter_offer_id: counterOfferId,
+                bid_id: offer.bid_id,
+                proposed_amount: counterPrice,
+                original_amount: offer.proposed_amount,
+                round,
+                notification: `Customer counter-offered ${counterPrice} QAR (was ${offer.proposed_amount} QAR)`
+            });
+        }
     }
 
     private async notifyCounterOffer(garageId: string, bidId: string, counterOfferId: string, proposed: number, original: number, round: number): Promise<void> {
