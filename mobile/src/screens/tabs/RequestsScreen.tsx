@@ -300,7 +300,7 @@ const ActiveRequestCard = ({
                                     style={[styles.partCategory, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                                     numberOfLines={1}
                                 >
-                                    {item.part_category}
+                                    {item.part_category}{(item as any).part_subcategory ? ` > ${(item as any).part_subcategory}` : ''}
                                 </Text>
                             )}
                             <Text

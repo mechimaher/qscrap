@@ -24,6 +24,7 @@ export interface CreateRequestParams {
     partDescription: string;
     partNumber?: string;
     partCategory?: string;
+    partSubcategory?: string;
     conditionRequired?: string;
     deliveryAddressText?: string;
     deliveryLat?: number;
@@ -102,6 +103,7 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
         partDescription,
         partNumber,
         partCategory,
+        partSubcategory,
         conditionRequired,
         deliveryAddressText,
         deliveryLat,
@@ -160,10 +162,10 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
         // 4. Insert Request
         const result = await client.query(
             `INSERT INTO part_requests
-       (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, part_category, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng, car_front_image_url, car_rear_image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, part_category, part_subcategory, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng, car_front_image_url, car_rear_image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        RETURNING request_id, created_at`,
-            [userId, carMake, carModel, yearCheck.value, vinNumber || null, partDescription, partNumber || null, partCategory || null, conditionRequired || 'any', imageUrls, deliveryAddressText, deliveryLat || null, deliveryLng || null, carFrontImageUrl, carRearImageUrl]
+            [userId, carMake, carModel, yearCheck.value, vinNumber || null, partDescription, partNumber || null, partCategory || null, partSubcategory || null, conditionRequired || 'any', imageUrls, deliveryAddressText, deliveryLat || null, deliveryLng || null, carFrontImageUrl, carRearImageUrl]
         );
 
         const request = result.rows[0];
@@ -181,7 +183,8 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
             deliveryAddressText || null,
             vinNumber || null,
             partNumber || null,
-            partCategory || null
+            partCategory || null,
+            partSubcategory || null
         );
 
         // 6. Auto-Save Vehicle
@@ -236,7 +239,8 @@ async function notifyRelevantGarages(
     deliveryAddressText: string | null,
     vinNumber: string | null,
     partNumber: string | null,
-    partCategory: string | null
+    partCategory: string | null,
+    partSubcategory: string | null
 ) {
     try {
         let conditionFilter = "1=1";
@@ -302,6 +306,7 @@ async function notifyRelevantGarages(
                         part_description: partDescription,
                         part_number: partNumber,
                         part_category: partCategory,
+                        part_subcategory: partSubcategory,
                         condition_required: conditionRequired,
                         image_urls: imageUrls,
                         delivery_address_text: deliveryAddressText,
