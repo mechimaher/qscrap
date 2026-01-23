@@ -437,15 +437,16 @@ export class UserManagementService {
                     driver_data.vehicle_plate,
                     driver_data.vehicle_model
                 ]);
-            } else if (user_type === 'staff' && permissions && permissions.length > 0) {
-                // Insert staff permissions (if staff_permissions table exists)
-                for (const permission of permissions) {
-                    await client.query(`
-                        INSERT INTO staff_permissions (user_id, permission)
-                        VALUES ($1, $2)
-                        ON CONFLICT DO NOTHING
-                    `, [user.user_id, permission]);
-                }
+            } else if (user_type === 'staff') {
+                // Create staff profile with role
+                const staffRole = userData.staff_data?.role || 'customer_service';
+                const department = userData.staff_data?.department || null;
+                const employeeId = userData.staff_data?.employee_id || null;
+
+                await client.query(`
+                    INSERT INTO staff_profiles (user_id, role, department, employee_id)
+                    VALUES ($1, $2, $3, $4)
+                `, [user.user_id, staffRole, department, employeeId]);
             }
 
             // Log action

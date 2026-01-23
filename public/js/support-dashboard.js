@@ -61,8 +61,15 @@ function renderStars(rating) {
 function isAuthorizedUser(token) {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // Must match backend authorizeOperations middleware: admin, operations, staff, support
-        return ['admin', 'operations', 'support', 'staff'].includes(payload.userType);
+        // Admin always has access
+        if (payload.userType === 'admin') return true;
+
+        // Staff users need customer_service role for support dashboard
+        if (payload.userType === 'staff') {
+            return payload.staffRole === 'customer_service';
+        }
+
+        return false;
     } catch {
         return false;
     }

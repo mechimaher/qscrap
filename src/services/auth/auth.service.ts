@@ -28,6 +28,7 @@ export interface LoginResult {
     userType: string;
     status?: string;
     message?: string;
+    staffRole?: string;
 }
 
 export class AuthService {
@@ -104,9 +105,25 @@ export class AuthService {
             }
         }
 
+        // For staff users, get their role from staff_profiles
+        let staffRole: string | undefined;
+        if (user.user_type === 'staff') {
+            const staffResult = await this.pool.query(
+                `SELECT role FROM staff_profiles WHERE user_id = $1 AND is_active = true`,
+                [user.user_id]
+            );
+            if (staffResult.rows.length > 0) {
+                staffRole = staffResult.rows[0].role;
+            }
+        }
+
         await this.pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-        const token = jwt.sign({ userId: user.user_id, userType: user.user_type }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
-        return { token, userId: user.user_id, userType: user.user_type };
+        const token = jwt.sign({
+            userId: user.user_id,
+            userType: user.user_type,
+            staffRole: staffRole
+        }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
+        return { token, userId: user.user_id, userType: user.user_type, staffRole };
     }
 
     async deleteAccount(userId: string): Promise<void> {
