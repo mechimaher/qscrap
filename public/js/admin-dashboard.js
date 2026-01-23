@@ -1756,7 +1756,7 @@ async function submitCreateUser() {
 
 const STAFF_ROLE_ICONS = {
     operations: '🎯',
-    accounting: '💰',
+    finance: '💰',
     customer_service: '🎧',
     quality_control: '✅',
     logistics: '🚚',
