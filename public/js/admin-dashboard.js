@@ -275,7 +275,7 @@ async function loadGarages(page = 1) {
     container.innerHTML = '<div class="empty-state"><i class="bi bi-hourglass"></i><p>Loading...</p></div>';
 
     try {
-        const params = new URLSearchParams({ status, search, page, limit: 12 });
+        const params = new URLSearchParams({ status, search, page, limit: 20 });
         const res = await fetch(`${API_URL}/admin/garages?${params}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -910,16 +910,22 @@ function renderPagination(containerId, pagination, loadFunctionName, options = {
         const startItem = (current_page - 1) * limit + 1;
         const endItem = Math.min(current_page * limit, total);
         html += `<span class="pagination-info">Showing ${startItem}-${endItem} of ${total}</span>`;
+
+        // Large dataset warning
+        if (total > 1000) {
+            html += `<span class="pagination-warning" title="Large dataset - use filters for better performance">
+                <i class="bi bi-exclamation-triangle"></i> Use filters
+            </span>`;
+        }
     }
 
-    // Page size selector (optional)
+    // Page size selector (optional) - capped at 50 max for performance
     if (showPageSize) {
         html += `
             <select class="pagination-size" onchange="${loadFunctionName}(1, this.value)">
-                <option value="10" ${limit == 10 ? 'selected' : ''}>10 / page</option>
-                <option value="20" ${limit == 20 ? 'selected' : ''}>20 / page</option>
+                <option value="15" ${limit == 15 ? 'selected' : ''}>15 / page</option>
+                <option value="25" ${limit == 25 ? 'selected' : ''}>25 / page</option>
                 <option value="50" ${limit == 50 ? 'selected' : ''}>50 / page</option>
-                <option value="100" ${limit == 100 ? 'selected' : ''}>100 / page</option>
             </select>
         `;
     }
@@ -1013,7 +1019,7 @@ async function loadUsers(page = 1) {
             status,
             search,
             page,
-            limit: 15
+            limit: 25
         });
         const res = await fetch(`${API_URL}/admin/users?${params}`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -1774,7 +1780,7 @@ async function loadStaff(page = 1) {
             user_type: 'staff',
             search,
             page,
-            limit: 12
+            limit: 20
         });
 
         const res = await fetch(`${API_URL}/admin/users?${params}`, {
@@ -1883,7 +1889,7 @@ async function loadDrivers(page = 1) {
             user_type: 'driver',
             search,
             page,
-            limit: 15
+            limit: 25
         });
 
         const res = await fetch(`${API_URL}/admin/users?${params}`, {
