@@ -24,7 +24,8 @@ function createDebounce(key, fn, delay = 300) {
 
 if (token) {
     showApp();
-    initializePremiumFeatures();
+    // Stagger premium features to avoid 429 rate limit
+    setTimeout(() => initializePremiumFeatures(), 500);
 } else {
     document.getElementById('authScreen').style.display = 'flex';
 }
