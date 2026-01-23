@@ -354,6 +354,16 @@ async function showDashboard() {
         updateBadge();
     });
 
+    // Handle customer deleting a request
+    socket.on('request_removed', (data) => {
+        console.log('[SOCKET] Request removed:', data.request_id);
+        // Remove the deleted request from local list
+        requests = requests.filter(r => r.request_id !== data.request_id);
+        renderRequests();
+        loadBids();
+        updateBadge();
+    });
+
     // NEW: Counter-offer listeners
     socket.on('counter_offer_received', (data) => {
         playNotificationSound('newRequest'); // Use distinct sound
