@@ -2427,9 +2427,22 @@ async function resolveDispute(disputeId, resolution, skipConfirm = false) {
         const data = await res.json();
 
         if (res.ok) {
-            const msg = resolution === 'refund_approved'
+            let msg = resolution === 'refund_approved'
                 ? 'Refund approved successfully'
                 : 'Refund denied successfully';
+
+            // Add payout action feedback if available
+            if (data.payout_action) {
+                const actionMsg = {
+                    cancelled: '• Garage payout cancelled',
+                    released: '• Garage payout released for processing',
+                    reversal_created: `• Reversal of ${data.payout_action.reversal_amount} QAR created`
+                };
+                if (actionMsg[data.payout_action.action]) {
+                    msg += '\n' + actionMsg[data.payout_action.action];
+                }
+            }
+
             showToast(msg, 'success');
             loadDisputes(); // Reload to show updated status
             loadStats();
