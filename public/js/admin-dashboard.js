@@ -1778,6 +1778,7 @@ async function loadStaff(page = 1) {
     try {
         const params = new URLSearchParams({
             user_type: 'staff',
+            role: roleFilter,  // Server-side role filtering
             search,
             page,
             limit: 20
@@ -1789,7 +1790,6 @@ async function loadStaff(page = 1) {
         const data = await res.json();
 
         if (data.users && data.users.length > 0) {
-            // Filter by role if needed (client-side for now)
             let staffUsers = data.users;
 
             container.innerHTML = staffUsers.map(staff => renderStaffCard(staff)).join('');

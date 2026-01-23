@@ -35,6 +35,7 @@ export class UserManagementService {
             is_active,
             is_suspended,
             search,
+            role,  // New: staff role filter
             page = 1,
             limit = 20
         } = filters;
@@ -44,36 +45,75 @@ export class UserManagementService {
         let whereClause = 'WHERE 1=1';
         const params: any[] = [];
         let paramIndex = 1;
+        const isStaffQuery = user_type === 'staff';
 
         if (user_type && user_type !== 'all') {
-            whereClause += ` AND user_type = $${paramIndex++}`;
+            whereClause += ` AND u.user_type = $${paramIndex++}`;
             params.push(user_type);
         }
 
         if (is_active !== undefined) {
-            whereClause += ` AND is_active = $${paramIndex++}`;
+            whereClause += ` AND u.is_active = $${paramIndex++}`;
             params.push(is_active);
         }
 
         if (is_suspended !== undefined) {
-            whereClause += ` AND is_suspended = $${paramIndex++}`;
+            whereClause += ` AND u.is_suspended = $${paramIndex++}`;
             params.push(is_suspended);
         }
 
         if (search) {
-            whereClause += ` AND (full_name ILIKE $${paramIndex} OR email ILIKE $${paramIndex} OR phone_number ILIKE $${paramIndex})`;
+            whereClause += ` AND (u.full_name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR u.phone_number ILIKE $${paramIndex})`;
             params.push(`%${search}%`);
             paramIndex++;
         }
 
-        // Get count
-        const countResult = await this.pool.query(`SELECT COUNT(*) FROM users ${whereClause}`, params);
+        // Staff role filter
+        if (isStaffQuery && role && role !== 'all') {
+            whereClause += ` AND sp.role = $${paramIndex++}`;
+            params.push(role);
+        }
+
+        // For staff queries, JOIN with staff_profiles to get role/department
+        if (isStaffQuery) {
+            // Get count
+            const countResult = await this.pool.query(`
+                SELECT COUNT(*) FROM users u
+                LEFT JOIN staff_profiles sp ON u.user_id = sp.user_id
+                ${whereClause}
+            `, params);
+            const total = parseInt(countResult.rows[0].count);
+
+            // Get paginated results with staff profile info
+            const result = await this.pool.query(`
+                SELECT u.user_id, u.user_type, u.full_name, u.email, u.phone_number, 
+                       u.is_active, u.is_suspended, u.created_at,
+                       sp.role as staff_role, sp.department, sp.employee_id
+                FROM users u
+                LEFT JOIN staff_profiles sp ON u.user_id = sp.user_id
+                ${whereClause}
+                ORDER BY u.created_at DESC
+                LIMIT $${paramIndex++} OFFSET $${paramIndex}
+            `, [...params, limit, offset]);
+
+            return {
+                users: result.rows,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    pages: Math.ceil(total / limit)
+                }
+            };
+        }
+
+        // Regular user query (non-staff)
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM users u ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
 
-        // Get paginated results
         const result = await this.pool.query(`
             SELECT user_id, user_type, full_name, email, phone_number, is_active, is_suspended, created_at
-            FROM users
+            FROM users u
             ${whereClause}
             ORDER BY created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
