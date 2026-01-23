@@ -124,6 +124,17 @@ export class PayoutQueryService {
             params.push(filters.userId);
         }
 
+        // Date range filters - use confirmed_at for confirmed/completed, otherwise created_at
+        if (filters.from_date) {
+            whereClause += ` AND COALESCE(gp.confirmed_at, gp.created_at)::date >= $${paramIndex++}::date`;
+            params.push(filters.from_date);
+        }
+
+        if (filters.to_date) {
+            whereClause += ` AND COALESCE(gp.confirmed_at, gp.created_at)::date <= $${paramIndex++}::date`;
+            params.push(filters.to_date);
+        }
+
         const offset = ((filters.page || 1) - 1) * (filters.limit || 20);
 
         const countResult = await this.pool.query(
