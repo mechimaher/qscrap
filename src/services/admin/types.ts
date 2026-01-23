@@ -125,6 +125,8 @@ export interface UserDetail extends User {
     account_balance?: number;
     suspension_reason?: string;
     recent_activity?: any[];
+    type_data?: any;
+    activity?: any;
 }
 
 export interface PaginatedUsers {
