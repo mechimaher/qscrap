@@ -116,7 +116,18 @@ export const ar = {
         no: 'لا',
         ok: 'حسناً',
         confirm: 'تأكيد',
+        required: 'مطلوب',
         qar: 'ر.ق',
+        refund: 'استرداد',
+        camera: 'الكاميرا',
+        gallery: 'المعرض',
+        type: 'النوع',
+        subcategory: 'الفئة الفرعية',
+        part: 'القطعة',
+        orderSummary: 'ملخص الطلب',
+        garage: 'الكراج',
+        vehicle: 'المركبة',
+        notes: 'ملاحظات',
     },
 
     // Status labels

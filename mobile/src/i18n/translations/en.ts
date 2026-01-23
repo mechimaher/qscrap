@@ -120,6 +120,13 @@ export const en = {
         refund: 'Refund',
         camera: 'Camera',
         gallery: 'Gallery',
+        type: 'Type',
+        subcategory: 'Subcategory',
+        part: 'Part',
+        orderSummary: 'Order Summary',
+        garage: 'Garage',
+        vehicle: 'Vehicle',
+        notes: 'Notes',
     },
 
     // Status labels
