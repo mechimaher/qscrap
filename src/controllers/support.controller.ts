@@ -177,3 +177,39 @@ export const assignTicket = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+// Customer: Reopen a closed ticket (within 7 days)
+export const reopenTicket = async (req: AuthRequest, res: Response) => {
+    try {
+        // Only customers can reopen their own tickets
+        if (req.user!.userType !== 'customer') {
+            return res.status(403).json({ error: 'Only customers can reopen their tickets' });
+        }
+
+        const result = await supportService.reopenTicket(
+            req.params.ticket_id,
+            req.user!.userId,
+            req.body.message
+        );
+
+        if (!result.success) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        // Notify operations of reopened ticket
+        await createNotification({
+            userId: 'operations',
+            type: 'ticket_reopened',
+            title: 'Ticket Reopened 🔄',
+            message: `Customer reopened ticket: ${result.ticket.subject}`,
+            data: { ticket_id: req.params.ticket_id },
+            target_role: 'operations'
+        });
+        getIO()?.to('operations').emit('ticket_reopened', { ticket_id: req.params.ticket_id, ticket: result.ticket });
+
+        res.json({ message: 'Ticket reopened successfully', ticket: result.ticket });
+    } catch (err) {
+        console.error('[SUPPORT] reopenTicket error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
