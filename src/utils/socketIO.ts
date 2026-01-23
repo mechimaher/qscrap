@@ -59,6 +59,12 @@ export function initializeSocketIO(io: Server): void {
             }
         });
 
+        // Admin dashboard room - for real-time pending counts
+        socket.on('join_admin_room', () => {
+            socket.join('admin');
+            console.log(`[Socket.IO] Admin client ${socket.id} joined admin room`);
+        });
+
         socket.on('disconnect', () => {
             console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
 
@@ -128,8 +134,17 @@ export function emitToDriver(driverId: string, event: string, data: unknown): bo
 }
 
 /**
+ * Emit to admin room helper
+ * Used for real-time admin dashboard updates
+ */
+export function emitToAdmin(event: string, data: unknown): boolean {
+    return emitToRoom('admin', event, data);
+}
+
+/**
  * Cleanup for testing purposes
  */
 export function resetSocketIO(): void {
     ioInstance = null;
 }
+

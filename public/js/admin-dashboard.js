@@ -94,6 +94,14 @@ function switchSection(section) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1))?.classList.add('active');
 
+    // Auto-scroll main content to top when switching sections
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // Also scroll window for fallback
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     if (section === 'dashboard') loadDashboard();
     if (section === 'approvals') loadPendingGarages();
     if (section === 'requests') loadPlanRequests();
@@ -2616,3 +2624,137 @@ async function rejectRequest(id) {
         showToast('Connection error', 'error');
     }
 }
+
+// ============================================
+// REAL-TIME WEBSOCKET UPDATES
+// ============================================
+
+let socket = null;
+
+function initializeWebSocket() {
+    if (typeof io === 'undefined') {
+        console.warn('[WebSocket] Socket.IO not loaded');
+        return;
+    }
+
+    try {
+        socket = io({
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
+        });
+
+        socket.on('connect', () => {
+            console.log('[WebSocket] Connected to server');
+            // Join admin room for real-time updates
+            socket.emit('join_admin_room');
+            updateConnectionStatus(true);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('[WebSocket] Disconnected');
+            updateConnectionStatus(false);
+        });
+
+        // Real-time stats update
+        socket.on('admin_stats_update', (data) => {
+            console.log('[WebSocket] Stats update received:', data);
+            updateBadgesRealtime(data);
+            showToast('📊 Dashboard updated', 'info');
+        });
+
+        // New garage registration - update pending count
+        socket.on('new_garage_registration', (data) => {
+            console.log('[WebSocket] New garage registration:', data);
+            incrementBadge('pendingBadge');
+            showToast(`🏪 New garage: ${data.garage_name || 'New registration'}`, 'info');
+
+            // Refresh approvals section if currently viewing
+            if (document.getElementById('sectionApprovals')?.classList.contains('active')) {
+                loadPendingGarages();
+            }
+        });
+
+        // New plan request - update plan requests count
+        socket.on('new_plan_request', (data) => {
+            console.log('[WebSocket] New plan request:', data);
+            incrementBadge('planRequestsBadge');
+            showToast(`📋 New plan request from ${data.garage_name || 'a garage'}`, 'info');
+
+            // Refresh requests section if currently viewing
+            if (document.getElementById('sectionRequests')?.classList.contains('active')) {
+                loadPlanRequests();
+            }
+        });
+
+        // Garage approved/rejected - update counts
+        socket.on('garage_status_changed', (data) => {
+            console.log('[WebSocket] Garage status changed:', data);
+            // Refresh dashboard stats
+            loadDashboard();
+        });
+
+        socket.on('connect_error', (err) => {
+            console.warn('[WebSocket] Connection error:', err.message);
+        });
+
+    } catch (err) {
+        console.error('[WebSocket] Initialization error:', err);
+    }
+}
+
+function updateConnectionStatus(isOnline) {
+    const statusIndicator = document.querySelector('.status-indicator');
+    const statusText = document.querySelector('.header-status span:last-child');
+
+    if (statusIndicator) {
+        statusIndicator.classList.toggle('online', isOnline);
+    }
+    if (statusText) {
+        statusText.textContent = isOnline ? 'Live' : 'Offline';
+    }
+}
+
+function updateBadgesRealtime(data) {
+    if (data.pending_approvals !== undefined) {
+        updateBadge('pendingBadge', data.pending_approvals);
+        animateStat('statPending', data.pending_approvals);
+    }
+    if (data.pending_plan_requests !== undefined) {
+        updateBadge('planRequestsBadge', data.pending_plan_requests);
+    }
+    if (data.active_orders !== undefined) {
+        animateStat('statActiveOrders', data.active_orders);
+    }
+    if (data.open_disputes !== undefined) {
+        animateStat('statDisputes', data.open_disputes);
+    }
+}
+
+function updateBadge(badgeId, count) {
+    const badge = document.getElementById(badgeId);
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        // Pulse animation on update
+        badge.classList.add('pulse-update');
+        setTimeout(() => badge.classList.remove('pulse-update'), 500);
+    }
+}
+
+function incrementBadge(badgeId) {
+    const badge = document.getElementById(badgeId);
+    if (badge) {
+        const current = parseInt(badge.textContent) || 0;
+        updateBadge(badgeId, current + 1);
+    }
+}
+
+// Initialize WebSocket when app loads
+if (token) {
+    setTimeout(() => {
+        initializeWebSocket();
+    }, 500);
+}
+
