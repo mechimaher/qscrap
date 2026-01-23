@@ -96,7 +96,7 @@ export class UserManagementService {
     async getUserDetails(userId: string): Promise<UserDetail> {
         const userResult = await this.pool.query(`
             SELECT user_id, user_type, full_name, email, phone_number, 
-                   is_active, is_suspended, created_at, last_login, suspension_reason
+                   is_active, is_suspended, created_at, last_login_at, suspension_reason
             FROM users
             WHERE user_id = $1
         `, [userId]);
