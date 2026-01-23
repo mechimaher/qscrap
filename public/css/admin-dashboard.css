@@ -3,6 +3,15 @@
    QScrap Premium Platform
    ============================================ */
 
+/* Lock scroll to .main-content only - prevent body/html scrolling */
+html,
+body {
+    overflow: hidden;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 /* Auth Screen */
 .auth-screen {
     min-height: 100vh;
@@ -234,7 +243,8 @@
 /* App Container */
 .app-container {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background: var(--bg-secondary);
 }
 
@@ -386,7 +396,8 @@
     margin-top: 60px;
     padding: 32px;
     overflow-y: auto;
-    min-height: calc(100vh - 60px);
+    height: calc(100vh - 60px);
+    /* Fixed height, not min-height */
     transition: margin-left 0.3s ease;
     width: 100%;
 }

@@ -95,19 +95,10 @@ function switchSection(section) {
     const targetSection = document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1));
     targetSection?.classList.add('active');
 
-    // Scroll to top immediately using multiple approaches for reliability
-    // 1. Scroll the main-content container
+    // Scroll main-content to top - it's the ONLY scroll container now
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
         mainContent.scrollTop = 0;
-    }
-    // 2. Scroll window/document
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    // 3. Scroll the section into view as fallback
-    if (targetSection) {
-        targetSection.scrollTop = 0;
     }
 
     if (section === 'dashboard') loadDashboard();
