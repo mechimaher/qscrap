@@ -11,7 +11,8 @@
     <script src="/js/chart.min.js"></script>
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
-    <link rel="stylesheet" href="css/garage-dashboard.css?v=20260110b">
+    <link id="garageCss" rel="stylesheet" href="">
+    <script>document.getElementById('garageCss').href = 'css/garage-dashboard.css?v=' + Date.now();</script>
     <!-- Leaflet CSS for GPS Location Picker (Free, No Billing) -->
     <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
     <script>

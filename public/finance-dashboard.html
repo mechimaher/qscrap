@@ -9,7 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
     <link rel="stylesheet" href="css/shared.css">
-    <link rel="stylesheet" href="css/operations-dashboard.css?v=2.1">
+    <link id="dashCss" rel="stylesheet" href="">
+    <script>document.getElementById('dashCss').href = 'css/operations-dashboard.css?v=' + Date.now();</script>
     <script>
         window.toggleSidebar = function () {
             const sidebar = document.querySelector('.sidebar');
