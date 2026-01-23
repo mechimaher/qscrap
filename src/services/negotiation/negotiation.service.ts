@@ -456,8 +456,8 @@ export class NegotiationService {
             });
 
             // Emit real-time WebSocket event to garage dashboard
-            const { emitToUser } = await import('../../utils/socketIO');
-            emitToUser(garageId, 'counter_offer_received', {
+            const { emitToGarage } = await import('../../utils/socketIO');
+            emitToGarage(garageId, 'counter_offer_received', {
                 counter_offer_id: counterOfferId,
                 bid_id: offer.bid_id,
                 proposed_amount: counterPrice,
@@ -480,8 +480,8 @@ export class NegotiationService {
         });
 
         // Emit real-time WebSocket event to garage dashboard
-        const { emitToUser } = await import('../../utils/socketIO');
-        emitToUser(garageId, 'counter_offer_received', {
+        const { emitToGarage } = await import('../../utils/socketIO');
+        emitToGarage(garageId, 'counter_offer_received', {
             counter_offer_id: counterOfferId,
             bid_id: bidId,
             proposed_amount: proposed,
