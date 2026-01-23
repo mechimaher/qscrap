@@ -153,6 +153,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
             token = data.token;
             localStorage.setItem('opsToken', token);
+            localStorage.setItem('opsUserName', data.fullName || 'Operator');
+            localStorage.setItem('opsUserPhone', data.phoneNumber || '');
             showDashboard();
         } else {
             showToast(data.error || 'Login failed', 'error');
@@ -177,6 +179,16 @@ if (token) {
 async function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+
+    // Display logged-in user info
+    const userName = localStorage.getItem('opsUserName') || 'Operator';
+    const userNameEl = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+    const greetingEl = document.getElementById('greetingText');
+
+    if (userNameEl) userNameEl.textContent = userName;
+    if (userAvatarEl) userAvatarEl.textContent = userName.charAt(0).toUpperCase();
+    if (greetingEl) greetingEl.textContent = `Welcome, ${userName.split(' ')[0]}`;
 
     // Connect socket - only if not already connected
     if (!socket || !socket.connected) {

@@ -88,6 +88,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             localStorage.setItem('financeToken', data.token);
             localStorage.setItem('userId', data.userId);
             localStorage.setItem('userType', data.userType);
+            localStorage.setItem('finUserName', data.fullName || 'Finance User');
+            localStorage.setItem('finUserPhone', data.phoneNumber || '');
             token = data.token;
             showDashboard();
         } else {
@@ -105,6 +107,16 @@ if (token && isAuthorizedUser(token)) {
 function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+
+    // Display logged-in user info
+    const userName = localStorage.getItem('finUserName') || 'Finance User';
+    const userNameEl = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+    const greetingEl = document.getElementById('greetingText');
+
+    if (userNameEl) userNameEl.textContent = userName;
+    if (userAvatarEl) userAvatarEl.textContent = userName.charAt(0).toUpperCase();
+    if (greetingEl) greetingEl.textContent = `Welcome, ${userName.split(' ')[0]}`;
 
     // Update datetime
     updateDateTime();
