@@ -72,9 +72,9 @@ export class RevenueReportService {
             SELECT 
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as gross_revenue,
-                COALESCE(SUM(platform_commission), 0) as commission_revenue,
-                COALESCE(AVG(platform_commission), 0) as avg_commission_per_order,
-                COALESCE(AVG(platform_commission / NULLIF(total_amount, 0) * 100), 0) as avg_commission_rate
+                COALESCE(SUM(platform_fee), 0) as commission_revenue,
+                COALESCE(AVG(platform_fee), 0) as avg_commission_per_order,
+                COALESCE(AVG(platform_fee / NULLIF(total_amount, 0) * 100), 0) as avg_commission_rate
             FROM orders
             WHERE order_status = 'completed'
             AND created_at >= $1 AND created_at <= $2
@@ -86,7 +86,7 @@ export class RevenueReportService {
                 TO_CHAR(created_at, '${groupFormat}') as period,
                 COUNT(*) as order_count,
                 COALESCE(SUM(total_amount), 0) as gross_revenue,
-                COALESCE(SUM(platform_commission), 0) as commission_revenue
+                COALESCE(SUM(platform_fee), 0) as commission_revenue
             FROM orders
             WHERE order_status = 'completed'
             AND created_at >= $1 AND created_at <= $2
@@ -98,7 +98,7 @@ export class RevenueReportService {
             SELECT 
                 g.garage_name,
                 COUNT(*) as order_count,
-                COALESCE(SUM(o.platform_commission), 0) as commission_generated
+                COALESCE(SUM(o.platform_fee), 0) as commission_generated
             FROM orders o
             JOIN garages g ON o.garage_id = g.garage_id
             WHERE o.order_status = 'completed'
