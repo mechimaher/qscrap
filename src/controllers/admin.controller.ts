@@ -346,7 +346,15 @@ export const getAdminUserDetails = async (req: AuthRequest, res: Response) => {
     try {
         const { user_id } = req.params;
         const userDetail = await userManagementService.getUserDetails(user_id);
-        res.json({ user: userDetail });
+
+        // Extract type_data and activity from the response
+        const { type_data, activity, ...user } = userDetail;
+
+        res.json({
+            user,
+            type_data: type_data || null,
+            activity: activity || null
+        });
     } catch (err) {
         console.error('[ADMIN] getAdminUserDetails error:', err);
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
