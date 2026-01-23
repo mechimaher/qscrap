@@ -85,6 +85,8 @@ export const ar = {
         vehicle: 'السيارة',
         part: 'القطعة',
         notes: 'ملاحظات',
+        type: 'النوع',
+        subcategory: 'الفئة الفرعية',
         partPrice: 'سعر القطعة',
         total: 'الإجمالي',
         currency: 'ر.ق',

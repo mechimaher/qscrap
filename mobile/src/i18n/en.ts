@@ -84,6 +84,8 @@ export const en = {
         vehicle: 'Vehicle',
         part: 'Part',
         notes: 'Notes',
+        type: 'Type',
+        subcategory: 'Subcategory',
         partPrice: 'Part Price',
         total: 'Total',
         currency: 'QAR',
