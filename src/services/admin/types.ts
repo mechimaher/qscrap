@@ -103,6 +103,7 @@ export interface UserFilters {
     is_active?: boolean;
     is_suspended?: boolean;
     search?: string;
+    role?: string;  // Staff role filter
     page?: number;
     limit?: number;
 }
