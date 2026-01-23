@@ -9,12 +9,11 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
-    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
+// ImagePicker removed - avatar upload not yet implemented on backend
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../services/api';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
@@ -33,7 +32,7 @@ export default function EditProfileScreen() {
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
-    const [avatarUri, setAvatarUri] = useState<string | null>(null);
+    // avatarUri removed - avatar upload not yet implemented on backend
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -48,10 +47,13 @@ export default function EditProfileScreen() {
         setIsLoading(true);
         try {
             const data = await api.getProfile();
-            if (data.profile) {
-                setFullName(data.profile.full_name || '');
-                setPhoneNumber(data.profile.phone_number || '');
-                setEmail(data.profile.email || '');
+            // Backend returns { user: {...}, stats: {...}, addresses: [...] }
+            // Check both 'user' (new format) and 'profile' (legacy fallback)
+            const profileData = data.user || data.profile;
+            if (profileData) {
+                setFullName(profileData.full_name || '');
+                setPhoneNumber(profileData.phone_number || '');
+                setEmail(profileData.email || '');
             }
         } catch (error) {
             console.log('Failed to load profile:', error);
@@ -107,56 +109,7 @@ export default function EditProfileScreen() {
         }
     };
 
-    const handleChangePhoto = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        Alert.alert(
-            t('profile.changePhoto'),
-            t('profile.chooseOption'),
-            [
-                {
-                    text: `📷 ${t('profile.takePhoto')}`,
-                    onPress: async () => {
-                        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-                        if (status !== 'granted') {
-                            Alert.alert(t('common.permissionRequired'), t('profile.cameraAccessNeeded'));
-                            return;
-                        }
-                        const result = await ImagePicker.launchCameraAsync({
-                            mediaTypes: ['images'],
-                            allowsEditing: true,
-                            aspect: [1, 1],
-                            quality: 0.8,
-                        });
-                        if (!result.canceled && result.assets[0]) {
-                            setAvatarUri(result.assets[0].uri);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        }
-                    },
-                },
-                {
-                    text: `🖼️ ${t('profile.chooseFromGallery')}`,
-                    onPress: async () => {
-                        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                        if (status !== 'granted') {
-                            Alert.alert(t('common.permissionRequired'), t('profile.galleryAccessNeeded'));
-                            return;
-                        }
-                        const result = await ImagePicker.launchImageLibraryAsync({
-                            mediaTypes: ['images'],
-                            allowsEditing: true,
-                            aspect: [1, 1],
-                            quality: 0.8,
-                        });
-                        if (!result.canceled && result.assets[0]) {
-                            setAvatarUri(result.assets[0].uri);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        }
-                    },
-                },
-                { text: t('common.cancel'), style: 'cancel' },
-            ]
-        );
-    };
+    // handleChangePhoto removed - avatar upload not yet implemented on backend
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
@@ -229,20 +182,13 @@ export default function EditProfileScreen() {
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Profile Avatar */}
+                {/* Simple Avatar - Display Only */}
                 <View style={styles.avatarSection}>
                     <View style={styles.avatar}>
-                        {avatarUri ? (
-                            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-                        ) : (
-                            <Text style={styles.avatarText}>
-                                {fullName.charAt(0).toUpperCase() || '👤'}
-                            </Text>
-                        )}
+                        <Text style={styles.avatarText}>
+                            {fullName.charAt(0).toUpperCase() || '👤'}
+                        </Text>
                     </View>
-                    <TouchableOpacity style={styles.changePhotoButton} onPress={handleChangePhoto}>
-                        <Text style={styles.changePhotoText}>📷 {t('profile.changePhoto')}</Text>
-                    </TouchableOpacity>
                 </View>
 
                 {/* Personal Info Section */}
