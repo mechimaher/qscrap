@@ -743,16 +743,24 @@ async function loadAuditLog(page = 1) {
         const data = await res.json();
 
         if (data.logs && data.logs.length > 0) {
-            container.innerHTML = data.logs.map(log => `
-                <div class="audit-item">
+            container.innerHTML = data.logs.map((log, idx) => `
+                <div class="audit-item collapsed" data-idx="${idx}">
+                    <button class="audit-toggle" onclick="toggleAuditItem(${idx})" title="Expand details">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
                     <div class="audit-icon ${getAuditIconClass(log.action_type)}">
                         <i class="bi bi-${getAuditIcon(log.action_type)}"></i>
                     </div>
                     <div class="audit-content">
-                        <div class="audit-action">${formatActionType(log.action_type)}</div>
-                        <div class="audit-details">
-                            By <strong>${log.admin_name || 'Admin'}</strong> on ${log.target_type} 
-                            ${log.target_id ? '<span class="audit-id">(' + log.target_id.slice(0, 8) + '...)</span>' : ''}
+                        <div class="audit-summary">
+                            <span class="audit-action">${formatActionType(log.action_type)}</span>
+                            <span class="audit-brief">• By ${escapeHtml(log.admin_name || 'Admin')} on ${log.target_type}</span>
+                        </div>
+                        <div class="audit-expanded">
+                            <div class="audit-detail-row"><strong>Target ID:</strong> ${log.target_id || 'N/A'}</div>
+                            ${log.notes ? `<div class="audit-detail-row"><strong>Notes:</strong> ${escapeHtml(log.notes)}</div>` : ''}
+                            <div class="audit-detail-row"><strong>Admin:</strong> ${escapeHtml(log.admin_name || 'Unknown')} (${log.admin_id ? log.admin_id.slice(0, 8) + '...' : 'N/A'})</div>
+                            <div class="audit-detail-row"><strong>Full Timestamp:</strong> ${formatDateTime(log.created_at, true)}</div>
                         </div>
                     </div>
                     <div class="audit-time">${formatDateTime(log.created_at)}</div>
@@ -809,6 +817,27 @@ function getAuditIcon(action) {
 
 function formatActionType(action) {
     return action.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+/**
+ * Toggle audit log item expansion
+ */
+function toggleAuditItem(idx) {
+    const item = document.querySelector(`.audit-item[data-idx="${idx}"]`);
+    if (!item) return;
+
+    const expanded = item.querySelector('.audit-expanded');
+    const icon = item.querySelector('.audit-toggle i');
+
+    item.classList.toggle('collapsed');
+
+    if (item.classList.contains('collapsed')) {
+        expanded.style.display = 'none';
+        icon.className = 'bi bi-chevron-right';
+    } else {
+        expanded.style.display = 'block';
+        icon.className = 'bi bi-chevron-down';
+    }
 }
 
 // ============================================
