@@ -346,7 +346,7 @@ export class NegotiationService {
         });
 
         // Emit WebSocket to garage
-        emitToUser(bid.garage_id, 'counter_offer_accepted', {
+        emitToGarage(bid.garage_id, 'counter_offer_accepted', {
             order_id: order.order_id,
             order_number: order.order_number,
             bid_id: offer.bid_id,

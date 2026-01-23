@@ -944,7 +944,7 @@ async function loadBids(page = 1) {
                                 <span class="bid-status-badge ${b.status}">${statusLabels[b.status] || b.status}</span>
                             </div>
                             ${b.order_number ? `<div class="order-number-badge"><i class="bi bi-hash"></i> ${b.order_number}</div>` : ''}
-                            <div class="bid-car">${escapeHTML(b.car_summary || 'Vehicle')} - ${escapeHTML(b.part_category || b.part_description?.slice(0, 35) || 'Part')}</div>
+                            <div class="bid-car">${escapeHTML(b.car_summary || 'Vehicle')} - ${escapeHTML(b.part_category || 'Part')}${b.part_subcategory ? ' > ' + escapeHTML(b.part_subcategory) : ''}</div>
                             ${b.part_description && b.part_category ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHTML(b.part_description.slice(0, 40))}</div>` : ''}
                             <div class="bid-meta">
                                 <span><i class="bi bi-calendar3"></i> ${getTimeAgo(b.created_at)}</span>
