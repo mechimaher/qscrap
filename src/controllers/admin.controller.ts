@@ -326,11 +326,22 @@ export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Res
 
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
     try {
-        const { user_type, is_active, is_suspended, search, page, limit } = req.query;
+        const { user_type, status, is_active, is_suspended, search, page, limit } = req.query;
+
+        // Handle status param from frontend: 'active', 'suspended', or 'all'
+        let suspendedFilter: boolean | undefined;
+        if (status === 'suspended') {
+            suspendedFilter = true;
+        } else if (status === 'active') {
+            suspendedFilter = false;
+        } else if (is_suspended !== undefined) {
+            suspendedFilter = is_suspended === 'true';
+        }
+
         const result = await userManagementService.getAllUsers({
             user_type: user_type as any,
             is_active: is_active === 'true' ? true : is_active === 'false' ? false : undefined,
-            is_suspended: is_suspended === 'true' ? true : is_suspended === 'false' ? false : undefined,
+            is_suspended: suspendedFilter,
             search: search as string,
             page: page ? parseInt(page as string) : undefined,
             limit: limit ? parseInt(limit as string) : undefined

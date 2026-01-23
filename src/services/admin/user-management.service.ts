@@ -45,7 +45,7 @@ export class UserManagementService {
         const params: any[] = [];
         let paramIndex = 1;
 
-        if (user_type) {
+        if (user_type && user_type !== 'all') {
             whereClause += ` AND user_type = $${paramIndex++}`;
             params.push(user_type);
         }
