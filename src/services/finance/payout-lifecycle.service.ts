@@ -29,7 +29,8 @@ export class PayoutLifecycleService {
     }
 
     /**
-     * Send payment to garage (Operations)
+     * Send payment to garage (Operations/Finance)
+     * VALIDATION: Blocks payout for orders with active disputes
      */
     async sendPayment(payoutId: string, details: SendPaymentDto): Promise<PayoutResult> {
         const client = await this.pool.connect();
@@ -38,6 +39,24 @@ export class PayoutLifecycleService {
 
             const payout = await this.helpers.getPayoutForUpdate(payoutId, client);
             this.helpers.validatePayoutStatus(payout, ['pending', 'processing']);
+
+            // CRITICAL: Check for active disputes on this order
+            if (payout.order_id) {
+                const disputeCheck = await client.query(`
+                    SELECT dispute_id, status, reason 
+                    FROM disputes 
+                    WHERE order_id = $1 
+                    AND status IN ('pending', 'under_review', 'contested')
+                `, [payout.order_id]);
+
+                if (disputeCheck.rows.length > 0) {
+                    const dispute = disputeCheck.rows[0];
+                    throw new Error(
+                        `Cannot send payout: Order has active dispute (${dispute.status}). ` +
+                        `Dispute reason: ${dispute.reason}. Resolve dispute first.`
+                    );
+                }
+            }
 
             const updated = await this.helpers.markAsSent(payout, details, client);
             await this.helpers.createPaymentNotification(updated, 'sent');

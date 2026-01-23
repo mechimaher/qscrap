@@ -64,7 +64,7 @@ export class DisputeService {
     }
 
     /**
-     * Get dispute details
+     * Get dispute details with payout status for cross-system visibility
      */
     async getDisputeDetails(disputeId: string): Promise<any> {
         const disputeResult = await this.pool.query(`
@@ -73,13 +73,16 @@ export class DisputeService {
                    o.created_at as order_created,
                    pr.car_make, pr.car_model, pr.car_year, pr.part_description,
                    u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email,
-                   g.garage_name, gu.phone_number as garage_phone
+                   g.garage_name, gu.phone_number as garage_phone,
+                   gp.payout_id, gp.payout_status, gp.net_amount as payout_amount,
+                   gp.sent_at as payout_sent_at, gp.held_reason as payout_held_reason
             FROM disputes d
             JOIN orders o ON d.order_id = o.order_id
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN users u ON o.customer_id = u.user_id
             JOIN garages g ON o.garage_id = g.garage_id
             JOIN users gu ON g.garage_id = gu.user_id
+            LEFT JOIN garage_payouts gp ON o.order_id = gp.order_id
             WHERE d.dispute_id = $1
         `, [disputeId]);
 
@@ -99,7 +102,14 @@ export class DisputeService {
 
         return {
             dispute,
-            order_history: historyResult.rows
+            order_history: historyResult.rows,
+            payout: dispute.payout_id ? {
+                payout_id: dispute.payout_id,
+                status: dispute.payout_status,
+                amount: dispute.payout_amount,
+                sent_at: dispute.payout_sent_at,
+                held_reason: dispute.payout_held_reason
+            } : null
         };
     }
 
