@@ -56,9 +56,9 @@ function isAuthorizedUser(token) {
         // Admin always has access
         if (payload.userType === 'admin') return true;
 
-        // Staff users need accounting role for finance dashboard
+        // Staff users need finance role for finance dashboard
         if (payload.userType === 'staff') {
-            return payload.staffRole === 'accounting';
+            return payload.staffRole === 'finance';
         }
 
         return false;
