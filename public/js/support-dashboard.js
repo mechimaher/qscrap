@@ -455,7 +455,7 @@ async function sendReply() {
         const res = await fetch(`${API_URL}/support/tickets/${currentTicketId}/reply`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message_text: message })
         });
 
         if (res.ok) {
@@ -509,20 +509,24 @@ async function loadOrderDisputes() {
             return;
         }
 
+        // Support team views disputes for context - resolution is handled by Operations
         tbody.innerHTML = disputes.map(d => `
             <tr>
-                <td><strong>#${d.order_number}</strong></td>
-                <td>${escapeHTML(d.customer_name)}</td>
-                <td>${escapeHTML(d.part_description).substring(0, 30)}...</td>
-                <td><span class="status-badge pending">${escapeHTML(d.reason)}</span></td>
+                <td><strong>#${d.order_number || 'N/A'}</strong></td>
+                <td>${escapeHTML(d.customer_name || '-')}</td>
+                <td title="${escapeHTML(d.part_description || '')}">${escapeHTML((d.part_description || '').substring(0, 25))}${(d.part_description || '').length > 25 ? '...' : ''}</td>
+                <td><span class="status-badge ${d.status || 'pending'}">${escapeHTML(d.reason || d.status || 'pending')}</span></td>
                 <td>${formatDate(d.created_at)}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="resolveOrderDispute('${d.dispute_id}')">Resolve</button>
+                    <a href="/operations-dashboard.html#disputes" class="btn btn-outline btn-sm" title="Disputes resolved by Operations">
+                        <i class="bi bi-box-arrow-up-right"></i> Ops
+                    </a>
                 </td>
             </tr>
         `).join('');
     } catch (err) {
         console.error('Failed to load order disputes:', err);
+        document.getElementById('orderDisputesTable').innerHTML = '<tr><td colspan="6" class="empty-state text-danger">Failed to load disputes</td></tr>';
     }
 }
 
@@ -541,68 +545,29 @@ async function loadPaymentDisputes() {
             return;
         }
 
+        // Support team views payment disputes for context - resolution by Finance team
         tbody.innerHTML = disputes.map(d => `
             <tr>
-                <td><strong>${escapeHTML(d.garage_name)}</strong></td>
-                <td>#${d.order_number}</td>
+                <td><strong>${escapeHTML(d.garage_name || '-')}</strong></td>
+                <td>#${d.order_number || 'N/A'}</td>
                 <td>${parseFloat(d.net_amount || 0).toLocaleString()} QAR</td>
                 <td><span class="status-badge cancelled">${escapeHTML(d.dispute_reason || 'Not received')}</span></td>
                 <td>${formatDate(d.disputed_at)}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="resolvePaymentDispute('${d.payout_id}')">Resolve</button>
+                    <a href="/finance-dashboard.html" class="btn btn-outline btn-sm" title="Payment disputes resolved by Finance">
+                        <i class="bi bi-currency-dollar"></i> Finance
+                    </a>
                 </td>
             </tr>
         `).join('');
     } catch (err) {
         console.error('Failed to load payment disputes:', err);
+        document.getElementById('paymentDisputesTable').innerHTML = '<tr><td colspan="6" class="empty-state text-danger">Failed to load</td></tr>';
     }
 }
 
-async function resolveOrderDispute(disputeId) {
-    const resolution = prompt('Resolution decision (e.g., refund, replacement, closed):');
-    if (!resolution) return;
-
-    try {
-        const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resolution })
-        });
-
-        if (res.ok) {
-            showToast('Dispute resolved', 'success');
-            loadOrderDisputes();
-            loadBadges();
-        } else {
-            showToast('Failed to resolve dispute', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-async function resolvePaymentDispute(payoutId) {
-    const resolution = prompt('Resolution (e.g., resend payment, verified received):');
-    if (!resolution) return;
-
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resolution })
-        });
-
-        if (res.ok) {
-            showToast('Payment dispute resolved', 'success');
-            loadPaymentDisputes();
-            loadBadges();
-        } else {
-            showToast('Failed to resolve dispute', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
+// Note: Dispute resolution is handled by Operations (order) and Finance (payment) teams
+// Support team views disputes for context only
 
 // ==========================================
 // REVIEWS

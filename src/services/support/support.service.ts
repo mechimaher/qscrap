@@ -75,7 +75,19 @@ export class SupportService {
         try {
             await client.query('BEGIN');
             const result = await client.query(`INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text) VALUES ($1, $2, $3, $4) RETURNING *`, [ticketId, senderId, senderType, messageText]);
-            await client.query(`UPDATE support_tickets SET last_message_at = NOW(), updated_at = NOW() WHERE ticket_id = $1`, [ticketId]);
+
+            // Track first_response_at for SLA metrics when staff responds
+            if (senderType === 'admin') {
+                await client.query(`
+                    UPDATE support_tickets 
+                    SET last_message_at = NOW(), 
+                        updated_at = NOW(),
+                        first_response_at = COALESCE(first_response_at, NOW())
+                    WHERE ticket_id = $1`, [ticketId]);
+            } else {
+                await client.query(`UPDATE support_tickets SET last_message_at = NOW(), updated_at = NOW() WHERE ticket_id = $1`, [ticketId]);
+            }
+
             await client.query('COMMIT');
             return result.rows[0];
         } catch (err) {
@@ -87,13 +99,25 @@ export class SupportService {
     }
 
     async updateTicketStatus(ticketId: string, status: string) {
+        // Calculate resolution time when marking as resolved/closed
+        if (status === 'resolved' || status === 'closed') {
+            const result = await this.pool.query(`
+                UPDATE support_tickets 
+                SET status = $1, 
+                    updated_at = NOW(),
+                    resolution_time_minutes = EXTRACT(EPOCH FROM (NOW() - created_at))/60
+                WHERE ticket_id = $2 
+                RETURNING *`, [status, ticketId]);
+            return result.rows[0];
+        }
         const result = await this.pool.query(`UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE ticket_id = $2 RETURNING *`, [status, ticketId]);
         return result.rows[0];
     }
 
     async getStats() {
-        const [statsResult, paymentDisputeResult, reviewResult] = await Promise.all([
+        const [statsResult, orderDisputeResult, paymentDisputeResult, reviewResult] = await Promise.all([
             this.pool.query(`SELECT COUNT(*) FILTER (WHERE status = 'open') as open_tickets, COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_tickets, COUNT(*) FILTER (WHERE status = 'resolved' AND DATE(updated_at) = CURRENT_DATE) as resolved_today FROM support_tickets`),
+            this.pool.query(`SELECT COUNT(*) as order_disputes FROM disputes WHERE status IN ('pending', 'contested')`),
             this.pool.query(`SELECT COUNT(*) as payment_disputes FROM garage_payouts WHERE payout_status = 'disputed'`),
             this.pool.query(`SELECT COUNT(*) as pending_reviews FROM order_reviews WHERE moderation_status = 'pending'`)
         ]);
@@ -102,19 +126,22 @@ export class SupportService {
             open_tickets: parseInt(stats.open_tickets) || 0,
             in_progress_tickets: parseInt(stats.in_progress_tickets) || 0,
             resolved_today: parseInt(stats.resolved_today) || 0,
-            order_disputes: 0, // Table doesn't exist yet
+            order_disputes: parseInt(orderDisputeResult.rows[0]?.order_disputes) || 0,
             payment_disputes: parseInt(paymentDisputeResult.rows[0]?.payment_disputes) || 0,
             pending_reviews: parseInt(reviewResult.rows[0]?.pending_reviews) || 0
         };
     }
 
     async getUrgentItems() {
-        // Only query tickets for now - order_disputes table doesn't exist yet
+        // Query tickets that are either SLA breached or waiting too long
         const urgentTickets = await this.pool.query(
-            `SELECT ticket_id as id, 'ticket' as type, subject as title, created_at 
+            `SELECT ticket_id as id, 'ticket' as type, subject as title, created_at, sla_deadline,
+                    CASE WHEN sla_deadline < NOW() THEN true ELSE false END as sla_breached
              FROM support_tickets 
-             WHERE status = 'open' AND created_at < NOW() - INTERVAL '24 hours' 
-             ORDER BY created_at ASC LIMIT 5`
+             WHERE status IN ('open', 'in_progress') 
+             AND (created_at < NOW() - INTERVAL '24 hours' OR sla_deadline < NOW())
+             ORDER BY sla_breached DESC, created_at ASC 
+             LIMIT 10`
         );
         return urgentTickets.rows;
     }
@@ -129,5 +156,30 @@ export class SupportService {
         if (ticketResult.rows.length === 0) return null;
         const messagesResult = await this.pool.query(`SELECT m.*, u.full_name as sender_name FROM chat_messages m JOIN users u ON m.sender_id = u.user_id WHERE m.ticket_id = $1 ORDER BY m.created_at ASC`, [ticketId]);
         return { ticket: ticketResult.rows[0], messages: messagesResult.rows };
+    }
+
+    async getSLAStats() {
+        const result = await this.pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE sla_deadline < NOW() AND status IN ('open','in_progress')) as breached,
+                COUNT(*) FILTER (WHERE first_response_at IS NOT NULL AND status IN ('open','in_progress','resolved')) as responded,
+                COUNT(*) FILTER (WHERE status IN ('open','in_progress')) as active,
+                ROUND(AVG(resolution_time_minutes) FILTER (WHERE status = 'resolved' AND resolution_time_minutes IS NOT NULL)) as avg_resolution_mins
+            FROM support_tickets
+            WHERE created_at > NOW() - INTERVAL '30 days'
+        `);
+        return result.rows[0];
+    }
+
+    async assignTicket(ticketId: string, assigneeId: string) {
+        const result = await this.pool.query(`
+            UPDATE support_tickets 
+            SET assigned_to = $1, 
+                status = CASE WHEN status = 'open' THEN 'in_progress' ELSE status END,
+                updated_at = NOW()
+            WHERE ticket_id = $2 
+            RETURNING *
+        `, [assigneeId, ticketId]);
+        return result.rows[0];
     }
 }

@@ -152,3 +152,28 @@ export const getTicketDetail = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+// SLA Statistics
+export const getSLAStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const stats = await supportService.getSLAStats();
+        res.json(stats);
+    } catch (err) {
+        console.error('[SUPPORT] getSLAStats error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Assign ticket to agent
+export const assignTicket = async (req: AuthRequest, res: Response) => {
+    try {
+        const ticket = await supportService.assignTicket(req.params.ticket_id, req.body.assignee_id);
+        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+        getIO()?.to(`ticket_${req.params.ticket_id}`).emit('ticket_updated', { assigned_to: req.body.assignee_id });
+        res.json(ticket);
+    } catch (err) {
+        console.error('[SUPPORT] assignTicket error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
