@@ -2365,6 +2365,24 @@ body {
     padding: 12px;
 }
 
+/* Large dataset warning */
+.pagination-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    cursor: help;
+}
+
+.pagination-warning i {
+    font-size: 12px;
+}
+
 .pagination-buttons {
     display: flex;
     align-items: center;
