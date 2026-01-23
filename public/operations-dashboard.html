@@ -942,6 +942,27 @@
                             <div class="part-meta-item"><i class="bi bi-cash"></i> Refund: <strong
                                     id="modalRefundAmount">0 QAR</strong></div>
                         </div>
+
+                        <!-- Payout Status Section (NEW - aligned with backend) -->
+                        <div id="modalPayoutSection"
+                            style="margin-top: 15px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="color: var(--text-secondary); font-size: 13px;">
+                                    <i class="bi bi-wallet2"></i> Garage Payout:
+                                </span>
+                                <span class="status-badge" id="modalPayoutStatus" style="font-size: 11px;">---</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: var(--text-secondary);">Amount:</span>
+                                <strong id="modalPayoutAmount" style="color: var(--accent);">0 QAR</strong>
+                            </div>
+                            <div id="modalPayoutHeldReason"
+                                style="display: none; margin-top: 8px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; font-size: 12px; color: var(--danger);">
+                                <i class="bi bi-exclamation-circle"></i> <span id="modalPayoutHeldReasonText">---</span>
+                            </div>
+                        </div>
+
                         <div class="dispute-actions" id="modalDisputeActions">
                             <button class="btn btn-success" id="btnApproveRefund"><i class="bi bi-check-lg"></i> Approve
                                 Refund</button>
