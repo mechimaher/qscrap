@@ -10,7 +10,8 @@ import {
     getActivity,
     getTicketDetail,
     getSLAStats,
-    assignTicket
+    assignTicket,
+    reopenTicket
 } from '../controllers/support.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
@@ -49,6 +50,9 @@ router.get('/tickets/:ticket_id/messages', authenticate, getTicketMessages);
 // Both: Send a message in a ticket (alias for reply)
 router.post('/tickets/:ticket_id/messages', authenticate, sendMessage);
 router.post('/tickets/:ticket_id/reply', authenticate, sendMessage);
+
+// Customer: Reopen a closed ticket (within 7 days)
+router.post('/tickets/:ticket_id/reopen', authenticate, reopenTicket);
 
 // Operations: Update status (close/resolve)
 router.patch('/tickets/:ticket_id/status', authenticate, authorizeOperations, updateTicketStatus);

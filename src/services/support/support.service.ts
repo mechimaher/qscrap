@@ -182,4 +182,92 @@ export class SupportService {
         `, [assigneeId, ticketId]);
         return result.rows[0];
     }
+
+    /**
+     * Auto-escalate stale tickets after 24 hours without response
+     * Called by scheduled job hourly
+     */
+    async escalateStaleTickets(): Promise<{ escalated: number; tickets: any[] }> {
+        const result = await this.pool.query(`
+            UPDATE support_tickets 
+            SET priority = 'urgent',
+                escalated_at = NOW(),
+                notes = COALESCE(notes, '') || '[AUTO-ESCALATED: No response after 24h] ',
+                updated_at = NOW()
+            WHERE status = 'open'
+            AND first_response_at IS NULL
+            AND created_at < NOW() - INTERVAL '24 hours'
+            AND (escalated_at IS NULL)
+            RETURNING ticket_id, subject, customer_id, created_at
+        `);
+
+        return {
+            escalated: result.rowCount || 0,
+            tickets: result.rows
+        };
+    }
+
+    /**
+     * Customer can reopen a closed ticket within 7 days
+     */
+    async reopenTicket(ticketId: string, customerId: string, message?: string): Promise<{ success: boolean; ticket?: any; error?: string }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Verify ticket belongs to customer and was closed within 7 days
+            const ticketResult = await client.query(`
+                SELECT * FROM support_tickets 
+                WHERE ticket_id = $1 
+                AND customer_id = $2
+                FOR UPDATE
+            `, [ticketId, customerId]);
+
+            if (ticketResult.rows.length === 0) {
+                return { success: false, error: 'Ticket not found' };
+            }
+
+            const ticket = ticketResult.rows[0];
+
+            if (!['resolved', 'closed'].includes(ticket.status)) {
+                return { success: false, error: 'Ticket is not closed' };
+            }
+
+            // Check if closed within last 7 days
+            const closedDate = new Date(ticket.updated_at);
+            const daysSinceClosed = (Date.now() - closedDate.getTime()) / (1000 * 60 * 60 * 24);
+
+            if (daysSinceClosed > 7) {
+                return { success: false, error: 'Cannot reopen ticket after 7 days. Please create a new ticket.' };
+            }
+
+            // Reopen the ticket
+            const updateResult = await client.query(`
+                UPDATE support_tickets 
+                SET status = 'open',
+                    reopened_at = NOW(),
+                    reopened_count = COALESCE(reopened_count, 0) + 1,
+                    updated_at = NOW()
+                WHERE ticket_id = $1
+                RETURNING *
+            `, [ticketId]);
+
+            // Add reopen message if provided
+            if (message) {
+                await client.query(`
+                    INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text)
+                    VALUES ($1, $2, 'customer', $3)
+                `, [ticketId, customerId, `[TICKET REOPENED] ${message}`]);
+            }
+
+            await client.query('COMMIT');
+
+            return { success: true, ticket: updateResult.rows[0] };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
 }

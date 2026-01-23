@@ -67,3 +67,35 @@ export async function abandonStaleInspections(pool: Pool): Promise<number> {
         return 0;
     }
 }
+
+/**
+ * Auto-escalate support tickets without response after 24 hours
+ * Sets priority to 'urgent' and notifies operations
+ */
+export async function escalateStaleTickets(pool: Pool): Promise<number> {
+    try {
+        // Import SupportService dynamically to avoid circular dependencies
+        const { SupportService } = await import('../services/support/support.service');
+        const supportService = new SupportService(pool);
+
+        const result = await supportService.escalateStaleTickets();
+
+        if (result.escalated > 0) {
+            logger.warn('Tickets auto-escalated', { count: result.escalated });
+
+            const io = (global as any).io;
+            if (io) {
+                io.to('operations').emit('tickets_escalated', {
+                    count: result.escalated,
+                    tickets: result.tickets,
+                    notification: `⚠️ ${result.escalated} ticket(s) auto-escalated: No response after 24 hours`
+                });
+            }
+        }
+
+        return result.escalated;
+    } catch (err) {
+        logger.error('escalateStaleTickets failed', { error: (err as Error).message });
+        return 0;
+    }
+}
