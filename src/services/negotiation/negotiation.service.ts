@@ -303,7 +303,7 @@ export class NegotiationService {
         `, [order.order_id, customerId]);
 
         // 10. Notify both parties about accepted counter-offer
-        const { emitToUser } = await import('../../utils/socketIO');
+        const { emitToUser, emitToGarage } = await import('../../utils/socketIO');
 
         // Notify CUSTOMER (their counter-offer was accepted!)
         await createNotification({
