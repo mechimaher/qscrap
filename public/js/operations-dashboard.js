@@ -33,14 +33,21 @@ function decodeJWT(token) {
 
 /**
  * Check if current token belongs to an authorized operations user
- * Allowed roles: admin, operations, staff
+ * Allowed: admin, or staff with operations role
  */
 function isAuthorizedUser(token) {
     const payload = decodeJWT(token);
     if (!payload) return false;
 
-    const allowedRoles = ['admin', 'operations', 'staff'];
-    return allowedRoles.includes(payload.userType);
+    // Admin always has access
+    if (payload.userType === 'admin') return true;
+
+    // Staff users need operations role for this dashboard
+    if (payload.userType === 'staff') {
+        return payload.staffRole === 'operations';
+    }
+
+    return false;
 }
 
 /**

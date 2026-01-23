@@ -53,7 +53,15 @@ function showToast(message, type = 'info') {
 function isAuthorizedUser(token) {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return ['admin', 'operations', 'finance'].includes(payload.userType);
+        // Admin always has access
+        if (payload.userType === 'admin') return true;
+
+        // Staff users need accounting role for finance dashboard
+        if (payload.userType === 'staff') {
+            return payload.staffRole === 'accounting';
+        }
+
+        return false;
     } catch {
         return false;
     }

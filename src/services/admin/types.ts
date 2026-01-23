@@ -164,7 +164,12 @@ export interface CreateUserDto {
         vehicle_plate: string;
         vehicle_model?: string;
     };
-    permissions?: string[];
+    staff_data?: {
+        role: 'operations' | 'accounting' | 'customer_service' | 'quality_control' | 'logistics' | 'hr' | 'management';
+        department?: string;
+        employee_id?: string;
+    };
+    permissions?: string[]; // deprecated - use staff_data instead
 }
 
 // ============================================
