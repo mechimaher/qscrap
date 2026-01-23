@@ -124,18 +124,23 @@ export const en = {
     // =============================================
     auth: {
         login: 'Sign In',
+        signIn: 'Sign In',
         register: 'Create Account',
         logout: 'Sign Out',
         phone: 'Phone Number',
+        phoneNumber: 'Phone Number',
         phonePlaceholder: '+974 XXXX XXXX',
         password: 'Password',
         passwordPlaceholder: 'Enter your password',
         confirmPassword: 'Confirm Password',
+        repeatPassword: 'Repeat Password',
         fullName: 'Full Name',
+        enterFullName: 'Enter your full name',
         welcomeBack: 'Welcome Back',
         signInContinue: 'Sign in to continue',
         noAccount: "Don't have an account?",
         hasAccount: 'Already have an account?',
+        alreadyHaveAccount: 'Already have an account?',
         forgotPassword: 'Forgot Password?',
         agreeTerms: 'By signing in, you agree to our',
         termsOfService: 'Terms of Service',
@@ -143,11 +148,23 @@ export const en = {
         privacyPolicy: 'Privacy Policy',
         loginFailed: 'Login Failed',
         registerFailed: 'Registration Failed',
+        registrationFailed: 'Registration Failed',
         enterPhonePassword: 'Please enter phone number and password',
+        fillAllFields: 'Please fill all required fields',
         tagline: "Qatar's Premier Auto Parts",
         taglineSubtext: 'Used • Commercial • Genuine OEM',
         terms: 'Terms',
         createAccount: 'Create Account',
+        createAccountInSeconds: 'Create account in seconds',
+        joinQScrap: 'Join QScrap',
+        freeToJoin: 'Free to join',
+        noHiddenFees: 'No hidden fees',
+        verifiedSellers: '100+ verified sellers',
+        minCharacters: 'Minimum {{count}} characters',
+        passwordMinLength: 'Password must be at least 6 characters',
+        passwordsDontMatch: 'Passwords do not match',
+        sessionExpired: 'Session expired. Please login again.',
+        loginAgainInvoice: 'Please login again to download invoice',
     },
 
     // =============================================
@@ -625,11 +642,15 @@ export const en = {
     support: {
         title: 'Support',
         newTicket: 'Create New Ticket',
+        createNew: 'Create New Ticket',
+        newTicketTitle: 'New Support Ticket',
         openTickets: 'Open Tickets',
         closedTickets: 'Closed Tickets',
         noTickets: 'No Support Tickets',
         noTicketsMsg: 'Create a ticket if you need help',
         createTicket: 'Create Ticket',
+        createTicketHint: 'Describe your issue in detail',
+        createFailed: 'Failed to create ticket',
         subject: 'Subject',
         subjectPlaceholder: 'Brief description of your issue',
         message: 'Message',
@@ -1085,6 +1106,90 @@ export const en = {
         thankYou: 'Thank You!',
         submittedMsg: 'Your review has been submitted',
         failed: 'Failed to submit review',
+        howWasExp: 'How was your experience?',
+    },
+
+    // =============================================
+    // BID CARD - Bid Display
+    // =============================================
+    bidCard: {
+        bestPrice: 'Best Price',
+        agreed: 'Agreed',
+        conditionPhotos: 'Condition Photos',
+        counteredStatus: 'Countered',
+        counterOffer: 'Counter Offer',
+        final: 'Final',
+        garageOffers: 'Garage Offers',
+        garagePartPhotos: 'Part Photos',
+        negotiationRound: 'Round {{round}}',
+        offered: 'Offered',
+        orderCreated: 'Order Created',
+        photoCount: '{{count}} photos',
+        price: 'Price',
+        priceAgreed: 'Price Agreed',
+        warrantyDays: '{{days}} day warranty',
+        youOffered: 'You Offered',
+    },
+
+    // =============================================
+    // CANCEL - Order Cancellation
+    // =============================================
+    cancel: {
+        title: 'Cancel Order',
+        confirmTitle: 'Cancel Order?',
+        confirmMessage: 'Are you sure you want to cancel this order?',
+        confirmAction: 'This action cannot be undone',
+        reasonTitle: 'Reason for Cancellation',
+        selectReason: 'Select a reason',
+        provideReason: 'Please provide a reason',
+        changedMind: 'Changed my mind',
+        foundElsewhere: 'Found elsewhere',
+        priceIssue: 'Price issue',
+        takingTooLong: 'Taking too long',
+        other: 'Other',
+        otherReasonPlaceholder: 'Please describe...',
+        yesCancel: 'Yes, Cancel',
+        noKeepOrder: 'No, Keep Order',
+        keepOrder: 'Keep Order',
+        cancelled: 'Order Cancelled',
+        cancelFailed: 'Failed to cancel order',
+        loadFailed: 'Failed to load order',
+        orderSummary: 'Order Summary',
+        orderTotal: 'Order Total',
+        feeWarning: 'A cancellation fee may apply',
+        cancellationFee: 'Cancellation Fee',
+        refundAmount: 'Refund Amount',
+        refundDetails: 'Refund will be processed within 3-5 business days',
+        refundProcessed: 'Refund processed',
+    },
+
+    // =============================================
+    // REQUEST DETAIL - Request Detail Screen
+    // =============================================
+    requestDetail: {
+        title: 'Request Details',
+        partNeeded: 'Part Needed',
+        waitingForBids: 'Waiting for Bids',
+        noBids: 'No Bids Yet',
+        noBidsSubtext: 'Garages are reviewing your request',
+        bidsReceived: '{{count}} Bids Received',
+        priceRange: 'Price Range',
+        partNumber: 'Part Number',
+        expired: 'Request Expired',
+        deletedRequest: 'Request Deleted',
+        loadFailed: 'Failed to load request',
+    },
+
+    // =============================================
+    // TERMS - Terms and Conditions
+    // =============================================
+    terms: {
+        title: 'Terms of Service',
+        lastUpdated: 'Last Updated: {{date}}',
+        address: 'Address',
+        dohaQatar: 'Doha, Qatar',
+        phone: 'Phone',
+        email: 'Email',
     },
 };
 

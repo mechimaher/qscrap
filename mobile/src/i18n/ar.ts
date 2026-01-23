@@ -125,18 +125,23 @@ export const ar = {
     // =============================================
     auth: {
         login: 'تسجيل الدخول',
+        signIn: 'تسجيل الدخول',
         register: 'إنشاء حساب',
         logout: 'تسجيل الخروج',
         phone: 'رقم الهاتف',
+        phoneNumber: 'رقم الهاتف',
         phonePlaceholder: '+974 XXXX XXXX',
         password: 'كلمة المرور',
         passwordPlaceholder: 'أدخل كلمة المرور',
         confirmPassword: 'تأكيد كلمة المرور',
+        repeatPassword: 'إعادة كلمة المرور',
         fullName: 'الاسم الكامل',
+        enterFullName: 'أدخل اسمك الكامل',
         welcomeBack: 'مرحباً بعودتك',
         signInContinue: 'سجل الدخول للمتابعة',
         noAccount: 'ليس لديك حساب؟',
         hasAccount: 'لديك حساب بالفعل؟',
+        alreadyHaveAccount: 'لديك حساب بالفعل؟',
         forgotPassword: 'نسيت كلمة المرور؟',
         agreeTerms: 'بتسجيل الدخول، أنت توافق على',
         termsOfService: 'شروط الخدمة',
@@ -144,11 +149,23 @@ export const ar = {
         privacyPolicy: 'سياسة الخصوصية',
         loginFailed: 'فشل تسجيل الدخول',
         registerFailed: 'فشل إنشاء الحساب',
+        registrationFailed: 'فشل إنشاء الحساب',
         enterPhonePassword: 'يرجى إدخال رقم الهاتف وكلمة المرور',
+        fillAllFields: 'يرجى ملء جميع الحقول المطلوبة',
         tagline: 'الرائد في قطع غيار السيارات بقطر',
         taglineSubtext: 'مستعمل • تجاري • أصلي',
         terms: 'الشروط',
         createAccount: 'إنشاء حساب',
+        createAccountInSeconds: 'أنشئ حسابك في ثوانٍ',
+        joinQScrap: 'انضم إلى كيو سكراب',
+        freeToJoin: 'الانضمام مجاني',
+        noHiddenFees: 'لا رسوم خفية',
+        verifiedSellers: '+100 بائع معتمد',
+        minCharacters: '{{count}} أحرف كحد أدنى',
+        passwordMinLength: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+        passwordsDontMatch: 'كلمات المرور غير متطابقة',
+        sessionExpired: 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
+        loginAgainInvoice: 'يرجى تسجيل الدخول مرة أخرى لتحميل الفاتورة',
     },
 
     // =============================================
@@ -626,11 +643,15 @@ export const ar = {
     support: {
         title: 'الدعم',
         newTicket: 'إنشاء تذكرة جديدة',
+        createNew: 'إنشاء تذكرة جديدة',
+        newTicketTitle: 'تذكرة دعم جديدة',
         openTickets: 'التذاكر المفتوحة',
         closedTickets: 'التذاكر المغلقة',
         noTickets: 'لا توجد تذاكر دعم',
         noTicketsMsg: 'أنشئ تذكرة إذا كنت بحاجة للمساعدة',
         createTicket: 'إنشاء تذكرة',
+        createTicketHint: 'اشرح مشكلتك بالتفصيل',
+        createFailed: 'فشل إنشاء التذكرة',
         subject: 'الموضوع',
         subjectPlaceholder: 'وصف مختصر لمشكلتك',
         message: 'الرسالة',
@@ -1089,6 +1110,90 @@ export const ar = {
         thankYou: 'شكراً لك!',
         submittedMsg: 'تم إرسال تقييمك',
         failed: 'فشل إرسال التقييم',
+        howWasExp: 'كيف كانت تجربتك؟',
+    },
+
+    // =============================================
+    // BID CARD - عرض العروض
+    // =============================================
+    bidCard: {
+        bestPrice: 'أفضل سعر',
+        agreed: 'تم الاتفاق',
+        conditionPhotos: 'صور الحالة',
+        counteredStatus: 'تم المفاوضة',
+        counterOffer: 'عرض مضاد',
+        final: 'نهائي',
+        garageOffers: 'عروض الكراج',
+        garagePartPhotos: 'صور القطعة',
+        negotiationRound: 'الجولة {{round}}',
+        offered: 'المعروض',
+        orderCreated: 'تم إنشاء الطلبية',
+        photoCount: '{{count}} صور',
+        price: 'السعر',
+        priceAgreed: 'تم الاتفاق على السعر',
+        warrantyDays: 'ضمان {{days}} يوم',
+        youOffered: 'عرضت',
+    },
+
+    // =============================================
+    // CANCEL - إلغاء الطلب
+    // =============================================
+    cancel: {
+        title: 'إلغاء الطلبية',
+        confirmTitle: 'إلغاء الطلبية؟',
+        confirmMessage: 'هل أنت متأكد من إلغاء هذه الطلبية؟',
+        confirmAction: 'لا يمكن التراجع عن هذا الإجراء',
+        reasonTitle: 'سبب الإلغاء',
+        selectReason: 'اختر سبباً',
+        provideReason: 'يرجى تقديم سبب',
+        changedMind: 'غيرت رأيي',
+        foundElsewhere: 'وجدتها في مكان آخر',
+        priceIssue: 'مشكلة في السعر',
+        takingTooLong: 'يستغرق وقتاً طويلاً',
+        other: 'أخرى',
+        otherReasonPlaceholder: 'يرجى التوضيح...',
+        yesCancel: 'نعم، إلغاء',
+        noKeepOrder: 'لا، احتفظ بالطلبية',
+        keepOrder: 'احتفظ بالطلبية',
+        cancelled: 'تم إلغاء الطلبية',
+        cancelFailed: 'فشل إلغاء الطلبية',
+        loadFailed: 'فشل تحميل الطلبية',
+        orderSummary: 'ملخص الطلبية',
+        orderTotal: 'إجمالي الطلبية',
+        feeWarning: 'قد تُطبق رسوم إلغاء',
+        cancellationFee: 'رسوم الإلغاء',
+        refundAmount: 'مبلغ الاسترداد',
+        refundDetails: 'سيتم معالجة الاسترداد خلال 3-5 أيام عمل',
+        refundProcessed: 'تم معالجة الاسترداد',
+    },
+
+    // =============================================
+    // REQUEST DETAIL - تفاصيل الطلب
+    // =============================================
+    requestDetail: {
+        title: 'تفاصيل الطلب',
+        partNeeded: 'القطعة المطلوبة',
+        waitingForBids: 'في انتظار العروض',
+        noBids: 'لا توجد عروض بعد',
+        noBidsSubtext: 'الكراجات تراجع طلبك',
+        bidsReceived: 'تم استلام {{count}} عروض',
+        priceRange: 'نطاق السعر',
+        partNumber: 'رقم القطعة',
+        expired: 'الطلب منتهي',
+        deletedRequest: 'الطلب محذوف',
+        loadFailed: 'فشل تحميل الطلب',
+    },
+
+    // =============================================
+    // TERMS - الشروط والأحكام
+    // =============================================
+    terms: {
+        title: 'شروط الخدمة',
+        lastUpdated: 'آخر تحديث: {{date}}',
+        address: 'العنوان',
+        dohaQatar: 'الدوحة، قطر',
+        phone: 'الهاتف',
+        email: 'البريد الإلكتروني',
     },
 };
 
