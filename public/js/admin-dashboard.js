@@ -96,9 +96,14 @@ function switchSection(section) {
     targetSection?.classList.add('active');
 
     // Scroll main-content to top - it's the ONLY scroll container now
+    // Scroll main-content to top - force reset
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
         mainContent.scrollTop = 0;
+        // Backup scroll reset for async rendering/layout shifts
+        setTimeout(() => {
+            mainContent.scrollTop = 0;
+        }, 50);
     }
 
     if (section === 'dashboard') loadDashboard();
