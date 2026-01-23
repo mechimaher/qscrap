@@ -822,7 +822,7 @@ function createRequestCard(req, isNew = false) {
                         <div class="tech-specs">
                             ${req.vin_number ? `<span class="spec-item vin"><i class="bi bi-upc-scan"></i> VIN: <strong>${escapeHTML(req.vin_number)}</strong></span>` : ''}
                             ${req.part_number ? `<span class="spec-item"><i class="bi bi-hash"></i> Part#: <strong>${escapeHTML(req.part_number)}</strong></span>` : ''}
-                            ${req.part_category ? `<span class="spec-item"><i class="bi bi-folder"></i> ${escapeHTML(req.part_category)}</span>` : ''}
+                            ${req.part_category ? `<span class="spec-item"><i class="bi bi-folder"></i> ${escapeHTML(req.part_category)}${req.part_subcategory ? ' > ' + escapeHTML(req.part_subcategory) : ''}</span>` : ''}
                             <span class="spec-item condition ${req.condition_required === 'new' ? 'new' : req.condition_required === 'used' ? 'used' : 'any'}"><i class="bi bi-${req.condition_required === 'new' ? 'star-fill' : req.condition_required === 'used' ? 'recycle' : 'check-circle'}"></i> ${(req.condition_required || 'any').toUpperCase()}</span>
                         </div>
                         
@@ -865,6 +865,7 @@ function prependRequest(data) {
         part_description: data.part_description,
         part_number: data.part_number,
         part_category: data.part_category,
+        part_subcategory: data.part_subcategory,
         condition_required: data.condition_required,
         image_urls: data.image_urls || [],
         car_front_image_url: data.car_front_image_url || null,

@@ -195,7 +195,7 @@ const HeroRequestCard = ({
                 {request.part_category ? (
                     <>
                         <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
-                            {request.part_category}
+                            {request.part_category}{(request as any).part_subcategory ? ` > ${(request as any).part_subcategory}` : ''}
                         </Text>
                         {request.part_description && request.part_description !== request.part_category && (
                             <Text style={[styles.heroPartNotes, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
