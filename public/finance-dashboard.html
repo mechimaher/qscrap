@@ -619,9 +619,10 @@
                     <label>Resolution Type *</label>
                     <select id="rdResolutionType" class="form-control" required onchange="toggleAmountCorrection()">
                         <option value="">Select resolution...</option>
-                        <option value="corrected">✅ Corrected - Resend with fix</option>
+                        <option value="confirmed">✅ Confirmed - Garage received payment (dispute invalid)</option>
+                        <option value="corrected">🔧 Corrected - Resend with fix</option>
                         <option value="resent">🔄 Resent - Payment resent</option>
-                        <option value="cancelled">❌ Cancelled - Cancel payout</option>
+                        <option value="cancelled">❌ Cancelled - Cancel payout (order cancelled)</option>
                     </select>
                 </div>
 

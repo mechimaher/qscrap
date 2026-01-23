@@ -157,7 +157,13 @@ export class PayoutLifecycleService {
                     );
                     updated.net_amount = resolution.new_amount;
                 }
+            } else if (resolution.resolution === 'confirmed') {
+                // Garage actually received the payment - mark as confirmed
+                updated = await this.helpers.markAsConfirmed(payout, {
+                    confirmation_notes: resolution.resolution_notes || 'Dispute resolved - payment confirmed received'
+                }, client);
             } else {
+                // Cancelled - garage not receiving this payout
                 updated = await this.helpers.markAsCancelled(payout, resolution.resolution_notes, client);
             }
 
