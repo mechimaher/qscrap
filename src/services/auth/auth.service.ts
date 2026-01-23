@@ -6,6 +6,7 @@ import { Pool, PoolClient } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret, BCRYPT_ROUNDS, TRIAL_DAYS, TOKEN_EXPIRY_SECONDS } from '../../config/security';
+import { emitToAdmin } from '../../utils/socketIO';
 
 export interface RegisterData {
     phone_number: string;
@@ -52,6 +53,17 @@ export class AuthService {
             }
 
             await client.query('COMMIT');
+
+            // Emit real-time notification to admin dashboard for new garage registrations
+            if (data.user_type === 'garage' && data.garage_name) {
+                emitToAdmin('new_garage_registration', {
+                    garage_id: userId,
+                    garage_name: data.garage_name,
+                    phone_number: data.phone_number,
+                    registered_at: new Date().toISOString()
+                });
+            }
+
             const token = jwt.sign({ userId, userType: data.user_type }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
             return { userId, token };
         } catch (err) {
