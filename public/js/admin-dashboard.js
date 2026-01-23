@@ -1143,6 +1143,45 @@ function renderUserDetails(user, typeData, activity) {
         `;
     }
 
+    // Driver-specific data
+    if (user.user_type === 'driver' && typeData) {
+        html += `
+            <div class="detail-section">
+                <h4>Driver Information</h4>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Driver ID</label>
+                        <span>${typeData.driver_id || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status</label>
+                        <span class="status-badge ${typeData.status || 'offline'}">${typeData.status || 'Offline'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Vehicle Type</label>
+                        <span>${escapeHtml(typeData.vehicle_type || 'N/A')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Vehicle Plate</label>
+                        <span>${escapeHtml(typeData.vehicle_plate || 'N/A')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Vehicle Model</label>
+                        <span>${escapeHtml(typeData.vehicle_model || 'N/A')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Rating</label>
+                        <span>${typeData.rating ? `⭐ ${parseFloat(typeData.rating).toFixed(1)}` : 'No rating'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Total Earnings</label>
+                        <span>${typeData.total_earnings ? `QAR ${parseFloat(typeData.total_earnings).toFixed(2)}` : 'QAR 0.00'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Activity summary
     if (activity) {
         html += `

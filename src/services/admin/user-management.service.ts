@@ -109,6 +109,8 @@ export class UserManagementService {
 
         // Get additional metrics based on user type
         let additionalData: any = {};
+        let typeData: any = null;
+        let activity: any = null;
 
         if (user.user_type === 'customer') {
             const orderData = await this.pool.query(`
@@ -116,19 +118,57 @@ export class UserManagementService {
                 FROM orders
                 WHERE customer_id = $1
             `, [userId]);
-            additionalData.total_orders = parseInt(orderData.rows[0].total_orders);
+            activity = { orders_count: parseInt(orderData.rows[0].total_orders) };
         } else if (user.user_type === 'garage') {
             const garageData = await this.pool.query(`
-                SELECT 
+                SELECT g.*, 
                     (SELECT COUNT(*) FROM bids WHERE garage_id = $1) as total_bids,
                     (SELECT COUNT(*) FROM orders WHERE garage_id = $1) as total_orders
+                FROM garages g WHERE g.garage_id = $1
             `, [userId]);
-            additionalData = garageData.rows[0];
+            if (garageData.rows.length > 0) {
+                typeData = garageData.rows[0];
+                activity = {
+                    bids_count: parseInt(garageData.rows[0].total_bids),
+                    orders_count: parseInt(garageData.rows[0].total_orders)
+                };
+            }
+        } else if (user.user_type === 'driver') {
+            const driverData = await this.pool.query(`
+                SELECT d.*, 
+                    (SELECT COUNT(*) FROM delivery_assignments WHERE driver_id = d.driver_id) as total_deliveries,
+                    (SELECT COUNT(*) FROM delivery_assignments WHERE driver_id = d.driver_id AND status = 'completed') as completed_deliveries
+                FROM drivers d WHERE d.user_id = $1
+            `, [userId]);
+            if (driverData.rows.length > 0) {
+                typeData = {
+                    driver_id: driverData.rows[0].driver_id,
+                    vehicle_type: driverData.rows[0].vehicle_type,
+                    vehicle_plate: driverData.rows[0].vehicle_plate,
+                    vehicle_model: driverData.rows[0].vehicle_model,
+                    status: driverData.rows[0].status,
+                    rating: driverData.rows[0].average_rating,
+                    total_earnings: driverData.rows[0].total_earnings
+                };
+                activity = {
+                    deliveries_count: parseInt(driverData.rows[0].total_deliveries || 0),
+                    completed_count: parseInt(driverData.rows[0].completed_deliveries || 0)
+                };
+            }
+        } else if (user.user_type === 'staff') {
+            const staffData = await this.pool.query(`
+                SELECT role, employee_id, department, hire_date
+                FROM staff WHERE user_id = $1
+            `, [userId]);
+            if (staffData.rows.length > 0) {
+                typeData = staffData.rows[0];
+            }
         }
 
         return {
             ...user,
-            ...additionalData
+            type_data: typeData,
+            activity: activity
         };
     }
 
