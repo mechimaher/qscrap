@@ -105,6 +105,7 @@ export const en = {
         viewOrders: 'View Orders',
         compare: 'Compare',
         networkError: 'Network error. Please check your connection.',
+        saveChanges: 'Save Changes',
     },
 
 

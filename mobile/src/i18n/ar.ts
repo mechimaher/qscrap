@@ -106,6 +106,7 @@ export const ar = {
         viewOrders: 'عرض الطلبات',
         compare: 'مقارنة',
         networkError: 'خطأ في الاتصال. يرجى التحقق من الإنترنت.',
+        saveChanges: 'حفظ التغييرات',
     },
 
 
