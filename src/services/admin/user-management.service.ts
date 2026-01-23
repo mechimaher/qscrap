@@ -147,7 +147,7 @@ export class UserManagementService {
                     vehicle_plate: driverData.rows[0].vehicle_plate,
                     vehicle_model: driverData.rows[0].vehicle_model,
                     status: driverData.rows[0].status,
-                    rating: driverData.rows[0].average_rating,
+                    rating: driverData.rows[0].rating_average,
                     total_earnings: driverData.rows[0].total_earnings
                 };
                 activity = {
@@ -156,13 +156,9 @@ export class UserManagementService {
                 };
             }
         } else if (user.user_type === 'staff') {
-            const staffData = await this.pool.query(`
-                SELECT role, employee_id, department, hire_date
-                FROM staff WHERE user_id = $1
-            `, [userId]);
-            if (staffData.rows.length > 0) {
-                typeData = staffData.rows[0];
-            }
+            // Staff users don't have a separate profile table, just permissions
+            // No additional type_data needed for staff users
+            typeData = null;
         }
 
         return {
