@@ -863,7 +863,11 @@ function renderPagination(containerId, pagination, loadFunctionName, options = {
     if (!container) return;
 
     const { showPageSize = false, showInfo = true } = options;
-    const { current_page, total_pages, total, limit = 20 } = pagination || {};
+    // Handle both 'page' and 'current_page' from different API responses
+    const current_page = pagination?.current_page || pagination?.page || 1;
+    const total_pages = pagination?.total_pages || pagination?.pages || 1;
+    const total = pagination?.total || 0;
+    const limit = pagination?.limit || 20;
 
     if (!pagination || total_pages <= 1) {
         container.innerHTML = total > 0 ? `<div class="pagination-info-only">Showing all ${total} items</div>` : '';
