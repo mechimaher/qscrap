@@ -52,7 +52,7 @@ export interface DisputeDto {
 }
 
 export interface ResolveDisputeDto {
-    resolution: 'corrected' | 'resent' | 'cancelled';
+    resolution: 'confirmed' | 'corrected' | 'resent' | 'cancelled';
     new_payout_method?: string;
     new_payout_reference?: string;
     new_amount?: number;
