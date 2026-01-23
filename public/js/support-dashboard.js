@@ -61,7 +61,8 @@ function renderStars(rating) {
 function isAuthorizedUser(token) {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return ['admin', 'operations', 'support'].includes(payload.userType);
+        // Must match backend authorizeOperations middleware: admin, operations, staff, support
+        return ['admin', 'operations', 'support', 'staff'].includes(payload.userType);
     } catch {
         return false;
     }
