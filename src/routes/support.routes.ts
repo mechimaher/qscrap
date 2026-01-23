@@ -8,7 +8,9 @@ import {
     getStats,
     getUrgent,
     getActivity,
-    getTicketDetail
+    getTicketDetail,
+    getSLAStats,
+    assignTicket
 } from '../controllers/support.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
@@ -50,5 +52,11 @@ router.post('/tickets/:ticket_id/reply', authenticate, sendMessage);
 
 // Operations: Update status (close/resolve)
 router.patch('/tickets/:ticket_id/status', authenticate, authorizeOperations, updateTicketStatus);
+
+// Operations: Assign ticket to agent
+router.patch('/tickets/:ticket_id/assign', authenticate, authorizeOperations, assignTicket);
+
+// SLA statistics (30-day rolling)
+router.get('/sla-stats', authenticate, authorizeOperations, getSLAStats);
 
 export default router;
