@@ -982,6 +982,7 @@ export const en = {
     // LOYALTY
     // =============================================
     loyalty: {
+        bronze: 'Bronze',
         silver: 'Silver',
         gold: 'Gold',
         platinum: 'Platinum',
