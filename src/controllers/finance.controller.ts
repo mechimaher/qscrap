@@ -41,13 +41,15 @@ export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
 
 export const getPayouts = async (req: AuthRequest, res: Response) => {
     try {
-        const { status, garage_id, page, limit } = req.query;
+        const { status, garage_id, page, limit, from_date, to_date } = req.query;
 
         const result = await payoutService.getPayouts({
             status: status as any,
             garage_id: garage_id as string,
             page: page ? parseInt(page as string) : undefined,
             limit: limit ? parseInt(limit as string) : undefined,
+            from_date: from_date as string,
+            to_date: to_date as string,
             userId: req.user!.userId,
             userType: req.user!.userType as any
         });
