@@ -92,15 +92,23 @@ function switchSection(section) {
     document.querySelector(`.nav-item[data-section="${section}"]`)?.classList.add('active');
 
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1))?.classList.add('active');
+    const targetSection = document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1));
+    targetSection?.classList.add('active');
 
-    // Auto-scroll main content to top when switching sections
+    // Scroll to top immediately using multiple approaches for reliability
+    // 1. Scroll the main-content container
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
-        mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+        mainContent.scrollTop = 0;
     }
-    // Also scroll window for fallback
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 2. Scroll window/document
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    // 3. Scroll the section into view as fallback
+    if (targetSection) {
+        targetSection.scrollTop = 0;
+    }
 
     if (section === 'dashboard') loadDashboard();
     if (section === 'approvals') loadPendingGarages();
