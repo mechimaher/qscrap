@@ -924,7 +924,9 @@ async function loadBids(page = 1) {
 
             // Use final accepted amount for accepted bids, otherwise use bid_amount
             const displayAmount = (b.status === 'accepted' && b.final_accepted_amount) ? b.final_accepted_amount : b.bid_amount;
-            const wasNegotiated = b.status === 'accepted' && b.final_accepted_amount && parseFloat(b.final_accepted_amount) !== parseFloat(b.bid_amount);
+            // original_bid_amount preserves the initial garage bid; bid_amount is overwritten on acceptance
+            const originalBidAmount = b.original_bid_amount || b.bid_amount;
+            const wasNegotiated = b.status === 'accepted' && b.final_accepted_amount && parseFloat(b.final_accepted_amount) !== parseFloat(originalBidAmount);
 
             return `
                 <div class="bid-card-pro ${b.status}" data-bid-id="${b.bid_id}">
@@ -933,7 +935,7 @@ async function loadBids(page = 1) {
                         <div class="bid-info">
                             <div class="bid-amount-row">
                                 ${wasNegotiated ? `
-                                    <span class="bid-amount-original">${b.bid_amount} QAR</span>
+                                    <span class="bid-amount-original">${originalBidAmount} QAR</span>
                                     <span class="bid-amount final">${displayAmount} QAR</span>
                                     <span class="negotiated-badge"><i class="bi bi-arrow-repeat"></i> Negotiated</span>
                                 ` : `
@@ -966,7 +968,8 @@ async function loadBids(page = 1) {
         document.getElementById('bidsList').innerHTML = html;
 
         // Fetch and render negotiation timelines for each bid asynchronously
-        bids.forEach(b => fetchAndRenderTimeline(b.bid_id, b.bid_amount, b.created_at));
+        // Use original_bid_amount to show true initial bid (bid_amount is overwritten on acceptance)
+        bids.forEach(b => fetchAndRenderTimeline(b.bid_id, b.original_bid_amount || b.bid_amount, b.created_at));
 
 
         // Render pagination
