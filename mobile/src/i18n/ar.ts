@@ -819,6 +819,7 @@ export const ar = {
         // مفاتيح الحالة الإضافية
         open: 'مفتوح',
         closed: 'مغلق',
+        resolved: 'تم الحل',
         inProgress: 'قيد التنفيذ',
         onTheWay: 'في الطريق',
         ready: 'جاهز',
