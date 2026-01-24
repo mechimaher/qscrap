@@ -116,7 +116,7 @@ export default function SupportScreen() {
     const renderTicket = ({ item }: { item: Ticket }) => (
         <TouchableOpacity
             style={[styles.ticketCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => Alert.alert(item.subject, item.message)}
+            onPress={() => (navigation as any).navigate('TicketChat', { ticketId: item.ticket_id })}
             activeOpacity={0.7}
         >
             <View style={[styles.ticketHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>

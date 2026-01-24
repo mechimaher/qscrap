@@ -38,6 +38,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import CounterOfferScreen from './src/screens/CounterOfferScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import SupportScreen from './src/screens/SupportScreen';
+import TicketChatScreen from './src/screens/TicketChatScreen';
 import VINScannerScreen from './src/screens/VINScannerScreen';
 import ManualVINEntryScreen from './src/screens/ManualVINEntryScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
@@ -75,6 +76,7 @@ export type RootStackParamList = {
   CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string; garageCounterId?: string | null; requestId: string };
   Notifications: undefined;
   Support: undefined;
+  TicketChat: { ticketId: string };
   // VIN Scanner
   VINScanner: undefined;
   ManualVINEntry: { onVINScanned?: (vin: string) => void };
@@ -270,6 +272,11 @@ function RootNavigator() {
             <RootStack.Screen
               name="Support"
               component={SupportScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="TicketChat"
+              component={TicketChatScreen}
               options={{ animation: 'slide_from_right' }}
             />
 
