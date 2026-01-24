@@ -50,6 +50,8 @@ export default function PaymentScreen() {
     const [orderId, setOrderId] = useState<string | null>(existingOrderId || null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [cardComplete, setCardComplete] = useState(false);
+    const [paymentType, setPaymentType] = useState<'delivery_only' | 'full'>('delivery_only');
+    const [paymentAmount, setPaymentAmount] = useState(deliveryFee);
 
     const totalAmount = partPrice + deliveryFee;
 
@@ -57,6 +59,13 @@ export default function PaymentScreen() {
     useEffect(() => {
         initializePayment();
     }, []);
+
+    // Re-initialize when payment type changes (if order exists)
+    useEffect(() => {
+        if (orderId && !clientSecret) {
+            initializePayment();
+        }
+    }, [paymentType]);
 
     const initializePayment = async () => {
         setIsCreatingOrder(true);
@@ -71,10 +80,19 @@ export default function PaymentScreen() {
                 }
                 orderIdToUse = orderResult.order_id;
                 setOrderId(orderIdToUse);
+            } else {
+                setOrderId(orderIdToUse);
             }
 
-            // Create payment intent for delivery fee
-            const paymentResult = await api.createDeliveryFeeIntent(orderIdToUse);
+            // Create payment intent based on payment type
+            let paymentResult;
+            if (paymentType === 'full') {
+                paymentResult = await api.createFullPaymentIntent(orderIdToUse);
+                setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
+            } else {
+                paymentResult = await api.createDeliveryFeeIntent(orderIdToUse);
+                setPaymentAmount(deliveryFee);
+            }
 
             if (!paymentResult.intent?.clientSecret) {
                 throw new Error(paymentResult.error || 'Failed to create payment intent');
@@ -241,24 +259,64 @@ export default function PaymentScreen() {
 
                         <View style={styles.divider} />
 
-                        {/* Price Breakdown */}
-                        <View style={styles.priceRow}>
-                            <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
-                                Part Price (Cash on Delivery)
-                            </Text>
-                            <Text style={[styles.priceValue, { color: colors.text }]}>
-                                {partPrice} QAR
-                            </Text>
-                        </View>
+                        {/* Payment Type Selector */}
+                        <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginBottom: Spacing.sm }]}>
+                            Choose Payment Option
+                        </Text>
 
-                        <View style={styles.priceRow}>
-                            <Text style={[styles.priceLabel, { color: Colors.primary, fontWeight: '700' }]}>
-                                🚚 Delivery Fee (Pay Now)
-                            </Text>
-                            <Text style={[styles.priceValue, { color: Colors.primary, fontWeight: '700' }]}>
+                        <TouchableOpacity
+                            style={[
+                                styles.paymentTypeOption,
+                                paymentType === 'delivery_only' && styles.paymentTypeSelected,
+                                { borderColor: paymentType === 'delivery_only' ? Colors.primary : colors.border }
+                            ]}
+                            onPress={() => {
+                                if (paymentType !== 'delivery_only') {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setPaymentType('delivery_only');
+                                    setClientSecret(null); // Reset to trigger new intent
+                                }
+                            }}
+                        >
+                            <View style={styles.paymentTypeContent}>
+                                <Text style={[styles.paymentTypeTitle, { color: colors.text }]}>
+                                    🚚 Pay Delivery Only
+                                </Text>
+                                <Text style={[styles.paymentTypeDesc, { color: colors.textSecondary }]}>
+                                    Pay {deliveryFee} QAR now, pay {partPrice} QAR at delivery
+                                </Text>
+                            </View>
+                            <Text style={[styles.paymentTypeAmount, { color: Colors.primary }]}>
                                 {deliveryFee} QAR
                             </Text>
-                        </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.paymentTypeOption,
+                                paymentType === 'full' && styles.paymentTypeSelected,
+                                { borderColor: paymentType === 'full' ? Colors.success : colors.border, marginTop: Spacing.sm }
+                            ]}
+                            onPress={() => {
+                                if (paymentType !== 'full') {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setPaymentType('full');
+                                    setClientSecret(null); // Reset to trigger new intent
+                                }
+                            }}
+                        >
+                            <View style={styles.paymentTypeContent}>
+                                <Text style={[styles.paymentTypeTitle, { color: colors.text }]}>
+                                    💳 Pay Full Amount
+                                </Text>
+                                <Text style={[styles.paymentTypeDesc, { color: colors.textSecondary }]}>
+                                    No cash payment at delivery - faster checkout
+                                </Text>
+                            </View>
+                            <Text style={[styles.paymentTypeAmount, { color: Colors.success }]}>
+                                {totalAmount} QAR
+                            </Text>
+                        </TouchableOpacity>
 
                         <View style={[styles.divider, { marginVertical: Spacing.md }]} />
 
@@ -545,5 +603,35 @@ const styles = StyleSheet.create({
         marginTop: Spacing.sm,
         fontSize: FontSizes.sm,
         color: '#6B7280',
+    },
+    // Payment Type Selector Styles
+    sectionLabel: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+    },
+    paymentTypeOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 2,
+    },
+    paymentTypeSelected: {
+        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+    },
+    paymentTypeContent: {
+        flex: 1,
+    },
+    paymentTypeTitle: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    paymentTypeDesc: {
+        fontSize: FontSizes.sm,
+    },
+    paymentTypeAmount: {
+        fontSize: FontSizes.lg,
+        fontWeight: '800',
     },
 });

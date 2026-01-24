@@ -118,6 +118,75 @@ export class PaymentService {
     }
 
     /**
+     * Create full payment intent (Part Price + Delivery Fee)
+     * Scenario B: Customer pays everything upfront, no COD
+     */
+    async createFullPaymentIntent(
+        orderId: string,
+        customerId: string,
+        totalAmount: number,
+        partPrice: number,
+        deliveryFee: number,
+        currency: string = 'QAR'
+    ): Promise<DepositResult> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // Create payment intent for full amount
+            const intent = await this.provider.createPaymentIntent({
+                amount: totalAmount,
+                currency,
+                customerId,
+                orderId,
+                description: `QScrap Full Payment - Order ${orderId}`,
+                metadata: {
+                    type: 'full_payment',
+                    orderId,
+                    customerId,
+                    partPrice: partPrice.toString(),
+                    deliveryFee: deliveryFee.toString()
+                }
+            });
+
+            // Store in database with intent_type = 'full'
+            await client.query(`
+                INSERT INTO payment_intents 
+                (intent_id, order_id, customer_id, amount, currency, intent_type, provider, provider_intent_id, provider_client_secret, status)
+                VALUES (gen_random_uuid(), $1, $2, $3, $4, 'full', $5, $6, $7, $8)
+            `, [orderId, customerId, totalAmount, currency, this.provider.providerName, intent.id, intent.clientSecret, intent.status]);
+
+            // Update order with full payment info
+            // payment_method = 'card_full' signals driver POD to skip COD collection
+            await client.query(`
+                UPDATE orders 
+                SET deposit_amount = $2, 
+                    deposit_status = 'pending',
+                    payment_method = 'card_full'
+                WHERE order_id = $1
+            `, [orderId, deliveryFee]); // Still track delivery fee in deposit_amount
+
+            await client.query('COMMIT');
+
+            console.log(`[PaymentService] Created FULL payment intent ${intent.id} for order ${orderId}: ${totalAmount} ${currency}`);
+
+            return {
+                intentId: intent.id,
+                clientSecret: intent.clientSecret,
+                amount: totalAmount,
+                currency,
+                status: intent.status
+            };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
      * Confirm deposit payment succeeded
      * Called via webhook or after client-side confirmation
      * KEY: This also confirms the order (pending_payment → confirmed)

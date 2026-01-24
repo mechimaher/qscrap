@@ -708,6 +708,26 @@ class ApiService {
         });
     }
 
+    // Stripe Full Payment (Part + Delivery Fee) - Scenario B
+    async createFullPaymentIntent(orderId: string): Promise<{
+        success: boolean;
+        intent: {
+            id: string;
+            clientSecret: string;
+            amount: number;
+            currency: string;
+        };
+        breakdown: {
+            partPrice: number;
+            deliveryFee: number;
+            total: number;
+        };
+    }> {
+        return this.request(`/payments/full/${orderId}`, {
+            method: 'POST',
+        });
+    }
+
     // ============================================
     // DASHBOARD - Smart HomeScreen
     // ============================================

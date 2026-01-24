@@ -285,6 +285,75 @@ router.post('/deposit/:orderId',
 );
 
 /**
+ * POST /api/payments/full/:orderId
+ * Create full payment intent (Part Price + Delivery Fee)
+ * Scenario B: Customer pays everything upfront, no COD at delivery
+ */
+router.post('/full/:orderId',
+    authenticate,
+    paymentLimiter,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { orderId } = req.params;
+
+            // Get order details with full pricing
+            const pool = getWritePool();
+            const orderResult = await pool.query(
+                'SELECT part_price, delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
+                [orderId]
+            );
+
+            if (orderResult.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+
+            const order = orderResult.rows[0];
+
+            // Verify ownership
+            if (order.customer_id !== userId) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+
+            const partPrice = parseFloat(order.part_price) || 0;
+            const deliveryFee = parseFloat(order.delivery_fee) || 0;
+            const totalAmount = partPrice + deliveryFee;
+
+            if (totalAmount <= 0) {
+                return res.status(400).json({ success: false, error: 'No amount to pay' });
+            }
+
+            const result = await depositService.createFullPaymentIntent(
+                orderId,
+                userId,
+                totalAmount,
+                partPrice,
+                deliveryFee,
+                'QAR'
+            );
+
+            res.json({
+                success: true,
+                intent: {
+                    id: result.intentId,
+                    clientSecret: result.clientSecret,
+                    amount: result.amount,
+                    currency: result.currency
+                },
+                breakdown: {
+                    partPrice,
+                    deliveryFee,
+                    total: totalAmount
+                }
+            });
+        } catch (error: any) {
+            console.error('[Payment API] Full payment error:', error);
+            res.status(500).json({ success: false, error: error.message || 'Full payment creation failed' });
+        }
+    }
+);
+
+/**
  * POST /api/payments/deposit/confirm/:intentId
  * Confirm deposit payment was successful
  */
