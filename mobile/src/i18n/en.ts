@@ -818,6 +818,7 @@ export const en = {
         // Additional status keys used in screens
         open: 'Open',
         closed: 'Closed',
+        resolved: 'Resolved',
         inProgress: 'In Progress',
         onTheWay: 'On The Way',
         ready: 'Ready',
