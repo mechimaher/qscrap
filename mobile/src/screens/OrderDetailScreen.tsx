@@ -467,7 +467,7 @@ export default function OrderDetailScreen() {
                         setIsCancelling(true);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                         try {
-                            await api.request(`/cancellations/order/${orderId}`, {
+                            await api.request(`/cancellations/orders/${orderId}/cancel/customer`, {
                                 method: 'POST',
                                 body: JSON.stringify({
                                     reason_code: 'changed_mind',
