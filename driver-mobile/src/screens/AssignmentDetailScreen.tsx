@@ -492,15 +492,24 @@ export default function AssignmentDetailScreen() {
                                 try {
                                     // 1. Determine if we need specialized flow
                                     if (nextAction.status === 'picked_up') {
+                                        // SIMPLIFIED: Direct pickup confirmation (no inspection)
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                        // Navigate to inspection
-                                        navigation.navigate('PartInspection', {
-                                            assignmentId: assignment.assignment_id,
-                                            orderId: assignment.order_id,
-                                            orderNumber: assignment.order_number,
-                                            partDescription: assignment.part_description
-                                        });
-                                        // We do NOT update status here, PartInspection does it.
+
+                                        // Optimistic update
+                                        updateLocalStatus(assignment.assignment_id, 'picked_up');
+
+                                        // Sync to backend
+                                        await executeWithOfflineFallback(
+                                            async () => api.updateAssignmentStatus(assignment.assignment_id, 'picked_up'),
+                                            {
+                                                endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                                method: 'PATCH',
+                                                body: { status: 'picked_up' }
+                                            },
+                                            { successMessage: 'Part picked up!' }
+                                        );
+
+                                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                                         setIsUpdating(false);
                                         return;
                                     }
