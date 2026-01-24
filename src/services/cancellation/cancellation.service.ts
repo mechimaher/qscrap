@@ -4,6 +4,7 @@
  */
 import { Pool, PoolClient } from 'pg';
 import { createNotification } from '../notification.service';
+import { emitToOperations } from '../../utils/socketIO';
 import { CancellationFeeResult, CancellationPreview, CancelRequestResult, WithdrawBidResult, CancelOrderResult } from './types';
 
 export class CancellationService {
@@ -345,6 +346,18 @@ export class CancellationService {
                 message: 'Customer has cancelled this order'
             });
 
+            // Notify Operations for refund processing
+            emitToOperations('order_cancelled', {
+                order_id: orderId,
+                order_number: order.order_number,
+                cancelled_by: 'customer',
+                customer_id: customerId,
+                garage_id: order.garage_id,
+                cancellation_fee: feeInfo.fee,
+                refund_amount: refundAmount,
+                requires_refund: refundAmount > 0 && order.payment_status === 'paid'
+            });
+
             return {
                 message: 'Order cancelled successfully',
                 cancellation_fee: feeInfo.fee,
@@ -471,6 +484,19 @@ export class CancellationService {
                 cancelled_by: 'garage',
                 message: 'Unfortunately, the garage cannot fulfill this order. Full refund will be processed.',
                 refund_amount: order.total_amount
+            });
+
+            // Notify Operations for urgent refund processing (Garage cancellation = full refund)
+            emitToOperations('order_cancelled', {
+                order_id: orderId,
+                order_number: order.order_number,
+                cancelled_by: 'garage',
+                customer_id: order.customer_id,
+                garage_id: garageId,
+                cancellation_fee: 0,
+                refund_amount: order.total_amount,
+                requires_refund: order.payment_status === 'paid',
+                urgent: true // Garage-initiated = urgent
             });
 
             return {
