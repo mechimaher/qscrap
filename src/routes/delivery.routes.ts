@@ -32,6 +32,10 @@ router.post('/calculate-fee', authenticate, calculateDeliveryFee);
 // Admin-only zone management
 router.patch('/zones/:zone_id', authenticate, authorizeAdmin, updateZoneFee);
 
+// CRITICAL: Driver POD endpoint MUST be accessible to drivers
+// Moving BEFORE authorizeOperations middleware
+router.post('/complete-with-pod', authenticate, completeWithPOD);
+
 // All other delivery routes require authentication AND operations authorization
 router.use(authenticate);
 router.use(authorizeOperations);
@@ -64,9 +68,6 @@ router.post('/assign/:order_id', assignDriver);
 router.post('/reassign/:assignment_id', reassignDriver);  // Emergency driver reassignment
 router.patch('/assignment/:assignment_id/status', updateDeliveryStatus);
 router.post('/assignment/:assignment_id/location', updateDriverLocation);
-
-// Driver POD - Complete delivery with proof of delivery
-router.post('/complete-with-pod', completeWithPOD);
 
 export default router;
 
