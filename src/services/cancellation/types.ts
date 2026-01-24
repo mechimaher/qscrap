@@ -32,6 +32,7 @@ export interface WithdrawBidResult {
 export interface CancelOrderResult {
     message: string;
     cancellation_fee?: number;
+    delivery_fee_retained?: number;
     refund_amount?: number;
     refund_status?: string;
     impact?: string;
