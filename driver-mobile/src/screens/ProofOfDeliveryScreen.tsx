@@ -1,6 +1,6 @@
 // QScrap Driver App - Proof of Delivery (POD) Wizard
-// VVIP Experience: Step-by-step flow for smooth handoff
-// Steps: Photo -> Signature -> Payment -> Success
+// Enterprise Fast-Flow: Photo → Payment → Complete
+// Signature removed for speed - Operations can view POD photo if needed
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import SignatureScreen from 'react-native-signature-canvas';
+// SignatureScreen removed for faster delivery flow
 import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -26,7 +26,7 @@ import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
 import { executeWithOfflineFallback } from '../utils/syncHelper';
 
-type WizardStep = 'photo' | 'signature' | 'payment' | 'success';
+type WizardStep = 'photo' | 'payment' | 'success';
 
 export default function ProofOfDeliveryScreen() {
     const { colors } = useTheme();
@@ -39,9 +39,9 @@ export default function ProofOfDeliveryScreen() {
 
     // Data
     const [photoUri, setPhotoUri] = useState<string | null>(null);
-    const [signatureData, setSignatureData] = useState<string | null>(null);
+    // Signature removed for faster delivery flow
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
-    const [orderDetails, setOrderDetails] = useState<{ total_amount: number; payment_method: string } | null>(null);
+    const [orderDetails, setOrderDetails] = useState<{ total_amount: number; part_price: number; delivery_fee: number; cod_amount: number; payment_method: string } | null>(null);
     const [isLoadingOrder, setIsLoadingOrder] = useState(true);
 
     // Camera
@@ -49,8 +49,7 @@ export default function ProofOfDeliveryScreen() {
     const [permission, requestPermission] = useCameraPermissions();
     const [isCameraReady, setIsCameraReady] = useState(false);
 
-    // Signature
-    const signatureRef = useRef<any>(null);
+    // Signature removed for enterprise speed optimization
 
     // Load order details on mount
     useEffect(() => {
@@ -58,8 +57,18 @@ export default function ProofOfDeliveryScreen() {
             try {
                 const response = await api.getOrderDetails(orderId);
                 if (response?.order) {
+                    const total = parseFloat(String(response.order.total_amount)) || 0;
+                    const partPrice = parseFloat(String(response.order.part_price)) || total;
+                    const deliveryFee = parseFloat(String(response.order.delivery_fee)) || 0;
+
+                    // COD amount = part_price only (delivery fee already paid upfront)
+                    const codAmount = response.order.payment_method === 'card' ? 0 : partPrice;
+
                     setOrderDetails({
-                        total_amount: parseFloat(String(response.order.total_amount)) || 0,
+                        total_amount: total,
+                        part_price: partPrice,
+                        delivery_fee: deliveryFee,
+                        cod_amount: codAmount,
                         payment_method: response.order.payment_method || 'cash'
                     });
                     // Pre-select payment method from order
@@ -93,17 +102,12 @@ export default function ProofOfDeliveryScreen() {
         setPhotoUri(null);
     };
 
-    // --- STEP 2: SIGNATURE ---
-    const handleSignatureOK = (signature: string) => {
-        // signature is base64 string
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setSignatureData(signature);
-        setStep('payment');
-    };
+    // Signature step removed for faster enterprise delivery flow
+    // Operations can view delivery photo via dashboard if needed
 
     // --- STEP 3: SUBMIT ---
     const handleSubmit = async () => {
-        if (!photoUri || !signatureData || !orderId) return;
+        if (!photoUri || !orderId) return;
 
         setIsSubmitting(true);
         try {
@@ -118,11 +122,12 @@ export default function ProofOfDeliveryScreen() {
             });
 
             // 3. Upload photo to get URL (backend will store and return URL)
+            // Upload proof - photo only (no signature for faster flow)
             const uploadResponse = await executeWithOfflineFallback(
                 async () => api.uploadProof(
                     assignmentId,
                     base64Photo,
-                    signatureData.replace('data:image/png;base64,', ''),
+                    undefined, // No signature - enterprise speed optimization
                     `Payment: ${paymentMethod}`
                 ),
                 {
@@ -232,7 +237,7 @@ export default function ProofOfDeliveryScreen() {
                             style={styles.btnGradientWrapper}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                setStep('signature');
+                                setStep('payment');
                             }}
                         >
                             <LinearGradient
@@ -241,7 +246,7 @@ export default function ProofOfDeliveryScreen() {
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                             >
-                                <Text style={styles.btnText}>Next: Signature →</Text>
+                                <Text style={styles.btnText}>Next: Confirm Payment →</Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
@@ -268,58 +273,17 @@ export default function ProofOfDeliveryScreen() {
         );
     };
 
-    const renderSignatureStep = () => (
-        <View style={[styles.stepContainer, { backgroundColor: colors.background }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Customer Signature</Text>
-            <View style={styles.signatureBox}>
-                <SignatureScreen
-                    ref={signatureRef}
-                    onOK={handleSignatureOK}
-                    webStyle={`
-                        .m-signature-pad { box-shadow: none; border: none; } 
-                        .m-signature-pad--body { border: none; }
-                        .m-signature-pad--footer { display: none; margin: 0px; }
-                        body,html { width: 100%; height: 100%; background: #f5f5f5; }
-                    `}
-                    backgroundColor="#f5f5f5"
-                />
-            </View>
-            <View style={styles.row}>
-                <TouchableOpacity
-                    style={styles.btnOutline}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        signatureRef.current?.clearSignature();
-                    }}
-                >
-                    <Text style={[styles.btnTextOutline, { color: colors.text }]}>Clear</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.btnGradientWrapper}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        signatureRef.current?.readSignature();
-                    }}
-                >
-                    <LinearGradient
-                        colors={Colors.gradients.primary}
-                        style={styles.btnGradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                    >
-                        <Text style={styles.btnText}>Confirm Signature</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+    // renderSignatureStep removed - enterprise speed optimization
 
     const renderPaymentStep = () => (
         <View style={styles.stepContainer}>
             <Text style={[styles.title, { color: colors.text }]}>Payment Collection</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                {isLoadingOrder ? 'Loading...' : `Collect ${orderDetails?.total_amount?.toFixed(2) || '0.00'} QAR`}
+                {isLoadingOrder ? 'Loading...' :
+                    orderDetails?.payment_method === 'card'
+                        ? 'Payment already collected online ✓'
+                        : `Collect ${orderDetails?.cod_amount?.toFixed(2) || '0.00'} QAR`
+                }
             </Text>
 
             <View style={styles.paymentOptions}>
@@ -399,7 +363,6 @@ export default function ProofOfDeliveryScreen() {
                     </TouchableOpacity>
                     <View style={styles.stepIndicators}>
                         <View style={[styles.dot, step === 'photo' && styles.dotActive]} />
-                        <View style={[styles.dot, step === 'signature' && styles.dotActive]} />
                         <View style={[styles.dot, step === 'payment' && styles.dotActive]} />
                     </View>
                     <View style={{ width: 40 }} />
@@ -408,7 +371,6 @@ export default function ProofOfDeliveryScreen() {
 
             <View style={styles.content}>
                 {step === 'photo' && renderPhotoStep()}
-                {step === 'signature' && renderSignatureStep()}
                 {step === 'payment' && renderPaymentStep()}
                 {step === 'success' && renderSuccessStep()}
             </View>
