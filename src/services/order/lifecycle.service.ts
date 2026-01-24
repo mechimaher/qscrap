@@ -223,9 +223,9 @@ export class OrderLifecycleService {
                 UPDATE delivery_assignments
                 SET status = 'delivered',
                     delivered_at = NOW(),
-                    delivery_photo_url = $2
-                WHERE assignment_id = $3
-            `, [orderId, podPhotoUrl, assignment.assignment_id]);
+                    delivery_photo_url = $1
+                WHERE assignment_id = $2
+            `, [podPhotoUrl, assignment.assignment_id]);
 
             // Log status change
             await client.query(`
