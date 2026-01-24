@@ -317,14 +317,85 @@ export class CancellationService {
                 [orderId, order.order_status, customerId, reasonText]
             );
 
-            // Create refund record if applicable
-            if (refundAmount > 0 && order.payment_status === 'paid') {
-                await client.query(
-                    `INSERT INTO refunds 
-                     (order_id, cancellation_id, original_amount, refund_amount, fee_retained, refund_status)
-                     VALUES ($1, $2, $3, $4, $5, 'pending')`,
-                    [orderId, cancelResult.rows[0].cancellation_id, order.total_amount, refundAmount, feeInfo.fee]
+            // Calculate refund: KEEP delivery fee (not refunded per business rule)
+            const deliveryFee = parseFloat(order.delivery_fee || 0);
+            const partPrice = parseFloat(order.total_amount) - deliveryFee;
+            const refundableAmount = Math.max(0, partPrice - feeInfo.fee); // Part price minus cancellation fee
+
+            let stripeRefundResult = null;
+
+            // Auto-execute Stripe refund if applicable
+            if (refundableAmount > 0 && order.payment_status === 'paid') {
+                // Get Stripe payment intent
+                const piResult = await client.query(
+                    `SELECT provider_intent_id FROM payment_intents 
+                     WHERE order_id = $1 AND status = 'succeeded' LIMIT 1`,
+                    [orderId]
                 );
+
+                // Create refund record
+                const refundInsert = await client.query(
+                    `INSERT INTO refunds 
+                     (order_id, cancellation_id, original_amount, refund_amount, fee_retained, 
+                      delivery_fee_retained, refund_status)
+                     VALUES ($1, $2, $3, $4, $5, $6, 'processing')
+                     RETURNING refund_id`,
+                    [orderId, cancelResult.rows[0].cancellation_id, order.total_amount,
+                        refundableAmount, feeInfo.fee, deliveryFee]
+                );
+
+                if (piResult.rows.length > 0 && piResult.rows[0].provider_intent_id) {
+                    try {
+                        // Execute Stripe refund immediately
+                        const Stripe = require('stripe');
+                        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                            apiVersion: '2025-12-15.acacia'
+                        });
+
+                        const stripeRefund = await stripe.refunds.create({
+                            payment_intent: piResult.rows[0].provider_intent_id,
+                            amount: Math.round(refundableAmount * 100), // cents
+                            metadata: {
+                                order_id: orderId,
+                                order_number: order.order_number,
+                                reason: 'customer_cancellation',
+                                delivery_fee_retained: deliveryFee.toString()
+                            }
+                        });
+
+                        // Update refund as completed
+                        await client.query(
+                            `UPDATE refunds SET 
+                                refund_status = 'completed',
+                                stripe_refund_id = $2,
+                                processed_at = NOW()
+                             WHERE refund_id = $1`,
+                            [refundInsert.rows[0].refund_id, stripeRefund.id]
+                        );
+
+                        // Update order payment status
+                        await client.query(
+                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
+                            [orderId]
+                        );
+
+                        stripeRefundResult = {
+                            refund_id: stripeRefund.id,
+                            amount: refundableAmount,
+                            status: 'completed'
+                        };
+
+                        console.log(`[Cancellation] Auto-refund ${stripeRefund.id}: ${refundableAmount} QAR (delivery fee ${deliveryFee} retained)`);
+                    } catch (stripeErr: any) {
+                        console.error('[Cancellation] Stripe refund failed:', stripeErr.message);
+                        // Mark refund as failed, Operations can retry
+                        await client.query(
+                            `UPDATE refunds SET refund_status = 'failed', 
+                             refund_reason = $2 WHERE refund_id = $1`,
+                            [refundInsert.rows[0].refund_id, stripeErr.message]
+                        );
+                    }
+                }
             }
 
             await client.query('COMMIT');
@@ -346,7 +417,24 @@ export class CancellationService {
                 message: 'Customer has cancelled this order'
             });
 
-            // Notify Operations for refund processing
+            // Notify customer about refund (in-app + email)
+            if (stripeRefundResult) {
+                await createNotification({
+                    userId: customerId,
+                    type: 'refund_completed',
+                    title: '💰 Refund Processed',
+                    message: `Your refund of ${refundableAmount.toFixed(2)} QAR for Order #${order.order_number} has been processed. Delivery fee of ${deliveryFee.toFixed(2)} QAR was retained. It may take 5-10 business days to appear.`,
+                    data: {
+                        order_id: orderId,
+                        refund_amount: refundableAmount,
+                        delivery_fee_retained: deliveryFee
+                    },
+                    target_role: 'customer',
+                    send_email: true // Send email notification
+                });
+            }
+
+            // Notify Operations (for audit trail)
             emitToOperations('order_cancelled', {
                 order_id: orderId,
                 order_number: order.order_number,
@@ -354,15 +442,18 @@ export class CancellationService {
                 customer_id: customerId,
                 garage_id: order.garage_id,
                 cancellation_fee: feeInfo.fee,
-                refund_amount: refundAmount,
-                requires_refund: refundAmount > 0 && order.payment_status === 'paid'
+                delivery_fee_retained: deliveryFee,
+                refund_amount: refundableAmount,
+                refund_status: stripeRefundResult ? 'completed' : 'not_applicable',
+                auto_processed: true
             });
 
             return {
                 message: 'Order cancelled successfully',
                 cancellation_fee: feeInfo.fee,
-                refund_amount: refundAmount,
-                refund_status: order.payment_status === 'paid' ? 'pending' : 'not_applicable'
+                delivery_fee_retained: deliveryFee,
+                refund_amount: refundableAmount,
+                refund_status: stripeRefundResult ? 'completed' : 'not_applicable'
             };
         } catch (err) {
             await client.query('ROLLBACK');
