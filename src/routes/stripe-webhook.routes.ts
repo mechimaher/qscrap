@@ -14,7 +14,7 @@ const router = express.Router();
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2024-12-18.acacia',
+    apiVersion: '2025-12-15.clover',
 });
 
 /**
@@ -188,19 +188,8 @@ async function notifyGarageAsync(orderId: string): Promise<void> {
             ]
         );
 
-        // Emit socket event if available
-        try {
-            const { io } = await import('../config/socket');
-            if (io) {
-                io.to(`garage_${order.garage_id}`).emit('order_confirmed', {
-                    order_id: orderId,
-                    order_number: order.order_number,
-                    part_description: order.part_description
-                });
-            }
-        } catch (socketError) {
-            // Socket not available, notification was still created
-        }
+        // Socket notification handled separately via notification service
+        // The in-app notification created above will be pushed via polling
 
     } catch (error) {
         console.error('[Stripe Webhook] Garage notification error:', error);
