@@ -5,8 +5,13 @@ import express, { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middleware/auth.middleware';
 import { paymentService } from '../services/payments';
+import { getPaymentService } from '../services/payment/payment.service';
+import { getWritePool } from '../config/db';
 
 const router = express.Router();
+
+// Deposit payment service (Stripe integration)
+const depositService = getPaymentService(getWritePool());
 
 // ============================================================================
 // RATE LIMITERS
@@ -216,5 +221,187 @@ router.get('/test-cards', (req: Request, res: Response) => {
         note: 'Use any future expiry date (e.g., 12/25) and any 3-digit CVV (e.g., 123)'
     });
 });
+
+// ============================================================================
+// STRIPE DEPOSIT ROUTES (Delivery Fee Upfront Model)
+// ============================================================================
+
+/**
+ * POST /api/payments/deposit/:orderId
+ * Create deposit intent for delivery fee payment
+ */
+router.post('/deposit/:orderId',
+    authenticate,
+    paymentLimiter,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { orderId } = req.params;
+
+            // Get order details to get delivery fee
+            const pool = getWritePool();
+            const orderResult = await pool.query(
+                'SELECT delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
+                [orderId]
+            );
+
+            if (orderResult.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+
+            const order = orderResult.rows[0];
+
+            // Verify ownership
+            if (order.customer_id !== userId) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+
+            const deliveryFee = parseFloat(order.delivery_fee) || 0;
+            if (deliveryFee <= 0) {
+                return res.status(400).json({ success: false, error: 'No delivery fee to pay' });
+            }
+
+            const result = await depositService.createDeliveryFeeDeposit(
+                orderId,
+                userId,
+                deliveryFee,
+                'QAR'
+            );
+
+            res.json({
+                success: true,
+                intent: {
+                    id: result.intentId,
+                    clientSecret: result.clientSecret,
+                    amount: result.amount,
+                    currency: result.currency
+                }
+            });
+        } catch (error: any) {
+            console.error('[Payment API] Deposit error:', error);
+            res.status(500).json({ success: false, error: error.message || 'Deposit creation failed' });
+        }
+    }
+);
+
+/**
+ * POST /api/payments/deposit/confirm/:intentId
+ * Confirm deposit payment was successful
+ */
+router.post('/deposit/confirm/:intentId',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const { intentId } = req.params;
+            const success = await depositService.confirmDepositPayment(intentId);
+
+            if (success) {
+                res.json({ success: true, message: 'Deposit payment confirmed' });
+            } else {
+                res.status(400).json({ success: false, message: 'Payment not completed' });
+            }
+        } catch (error: any) {
+            console.error('[Payment API] Confirm deposit error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
+ * GET /api/payments/order/:orderId/status
+ * Get payment status for an order
+ */
+router.get('/order/:orderId/status',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const { orderId } = req.params;
+            const userId = (req as any).user.userId;
+
+            // Verify ownership
+            const pool = getWritePool();
+            const orderResult = await pool.query(
+                'SELECT customer_id FROM orders WHERE order_id = $1',
+                [orderId]
+            );
+
+            if (orderResult.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+
+            if (orderResult.rows[0].customer_id !== userId) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+
+            const status = await depositService.getOrderPaymentStatus(orderId);
+            res.json({ success: true, ...status });
+        } catch (error: any) {
+            console.error('[Payment API] Get status error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
+ * POST /api/payments/methods
+ * Save a payment method (card)
+ */
+router.post('/methods',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { paymentMethodId } = req.body;
+
+            if (!paymentMethodId) {
+                return res.status(400).json({ success: false, error: 'paymentMethodId required' });
+            }
+
+            const method = await depositService.savePaymentMethod(userId, paymentMethodId);
+            res.json({ success: true, method });
+        } catch (error: any) {
+            console.error('[Payment API] Save method error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
+ * GET /api/payments/methods
+ * Get saved payment methods
+ */
+router.get('/methods',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const methods = await depositService.getPaymentMethods(userId);
+            res.json({ success: true, methods });
+        } catch (error: any) {
+            console.error('[Payment API] Get methods error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
+ * DELETE /api/payments/methods/:methodId
+ * Remove a saved payment method
+ */
+router.delete('/methods/:methodId',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { methodId } = req.params;
+
+            await depositService.removePaymentMethod(userId, methodId);
+            res.json({ success: true, message: 'Payment method removed' });
+        } catch (error: any) {
+            console.error('[Payment API] Remove method error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
 
 export default router;
