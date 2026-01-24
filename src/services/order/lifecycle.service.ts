@@ -174,16 +174,16 @@ export class OrderLifecycleService {
     }
 
     /**
-     * Complete order by driver (with POD)
+     * Mark order as delivered by driver (with POD)
      * Driver confirms delivery with proof of delivery photo
-     * Auto-completes order and triggers payout immediately
+     * Order becomes 'delivered' - awaits customer confirmation or 48h auto-complete
      */
     async completeOrderByDriver(orderId: string, driverId: string, podPhotoUrl: string): Promise<void> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
-            // CRITICAL FIX: Verify driver assignment through delivery_assignments, not orders.driver_id
+            // Verify driver assignment - must be in_transit
             const assignmentCheck = await client.query(`
                 SELECT da.assignment_id, da.driver_id, d.user_id
                 FROM delivery_assignments da
@@ -199,23 +199,21 @@ export class OrderLifecycleService {
 
             const assignment = assignmentCheck.rows[0];
 
-            // Update order status
-            // CRITICAL FIX: Accept both 'in_transit' AND 'delivered' - POD IS the delivery confirmation
+            // Update order status: in_transit → delivered (NOT completed)
+            // Customer confirmation or 48h auto-complete will mark as completed
             const result = await client.query(`
                 UPDATE orders 
-                SET order_status = 'completed', 
-                    completed_at = NOW(),
-                    payment_status = 'paid',
+                SET order_status = 'delivered', 
+                    delivered_at = NOW(),
                     pod_photo_url = $2,
-                    completed_by_driver = TRUE,
                     updated_at = NOW()
                 WHERE order_id = $1 
-                  AND order_status IN ('in_transit', 'delivered')
+                  AND order_status = 'in_transit'
                 RETURNING garage_id, customer_id, order_number, garage_payout_amount
             `, [orderId, podPhotoUrl]);
 
             if (result.rows.length === 0) {
-                throw new Error('Order not found or not in valid status (must be in_transit or delivered)');
+                throw new Error('Order not found or not in in_transit status');
             }
 
             const order = result.rows[0];
@@ -233,28 +231,41 @@ export class OrderLifecycleService {
             await client.query(`
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-                VALUES ($1, 'delivered', 'completed', $2, 'driver', 'Driver confirmed delivery with POD')
+                VALUES ($1, 'in_transit', 'delivered', $2, 'driver', 'Driver confirmed delivery with POD')
             `, [orderId, driverId]);
 
-            // Create payout record
-            await this.createPayoutForOrder(orderId, client);
-
-            // Release driver
+            // Release driver (they're done with this delivery)
             await this.releaseDriver(orderId, client);
 
             await client.query('COMMIT');
 
-            // Notify customer and garage
+            // Notify customer - order delivered, awaiting confirmation
             await createNotification({
                 userId: order.customer_id,
-                type: 'order_completed',
-                title: 'Delivery Confirmed ✅',
-                message: `Order #${order.order_number} has been delivered! Driver confirmed with photo proof.`,
+                type: 'order_delivered',
+                title: 'Order Delivered! 📦',
+                message: `Order #${order.order_number} has been delivered! Please confirm receipt.`,
                 data: { order_id: orderId, order_number: order.order_number, pod_photo_url: podPhotoUrl },
                 target_role: 'customer'
             });
 
-            await this.notifyOrderCompleted(order, orderId);
+            // Notify garage
+            await createNotification({
+                userId: order.garage_id,
+                type: 'order_delivered',
+                title: 'Order Delivered 📦',
+                message: `Order #${order.order_number} delivered to customer. Awaiting confirmation.`,
+                data: { order_id: orderId, order_number: order.order_number },
+                target_role: 'garage'
+            });
+
+            // Socket emit for real-time update
+            const io = (global as any).io;
+            io.to(`user_${order.customer_id}`).emit('order_delivered', {
+                order_id: orderId,
+                order_number: order.order_number,
+                pod_photo_url: podPhotoUrl
+            });
 
         } catch (err) {
             await client.query('ROLLBACK');
