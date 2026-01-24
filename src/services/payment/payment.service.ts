@@ -120,6 +120,7 @@ export class PaymentService {
     /**
      * Confirm deposit payment succeeded
      * Called via webhook or after client-side confirmation
+     * KEY: This also confirms the order (pending_payment → confirmed)
      */
     async confirmDepositPayment(providerIntentId: string): Promise<boolean> {
         const client = await this.pool.connect();
@@ -142,24 +143,100 @@ export class PaymentService {
                 WHERE provider_intent_id = $1
             `, [providerIntentId]);
 
-            // Update order deposit status
-            await client.query(`
-                UPDATE orders o
-                SET deposit_status = 'paid'
-                FROM payment_intents pi
-                WHERE pi.provider_intent_id = $1 
-                AND pi.order_id = o.order_id
+            // Get order details for notification
+            const orderResult = await client.query(`
+                SELECT o.order_id, o.order_number, o.customer_id, o.garage_id, 
+                       o.total_amount, o.delivery_fee, pr.part_description
+                FROM orders o
+                JOIN payment_intents pi ON pi.order_id = o.order_id
+                LEFT JOIN part_requests pr ON o.request_id = pr.request_id
+                WHERE pi.provider_intent_id = $1
             `, [providerIntentId]);
+
+            if (orderResult.rows.length === 0) {
+                throw new Error('Order not found for payment intent');
+            }
+
+            const order = orderResult.rows[0];
+
+            // Update order: deposit status = paid, order status = confirmed
+            await client.query(`
+                UPDATE orders 
+                SET deposit_status = 'paid',
+                    order_status = 'confirmed',
+                    updated_at = NOW()
+                WHERE order_id = $1
+            `, [order.order_id]);
+
+            // Add to order status history
+            await client.query(`
+                INSERT INTO order_status_history 
+                (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                VALUES ($1, 'pending_payment', 'confirmed', $2, 'system', 'Delivery fee payment confirmed')
+            `, [order.order_id, order.customer_id]);
 
             await client.query('COMMIT');
 
-            console.log(`[PaymentService] Deposit confirmed for intent ${providerIntentId}`);
+            console.log(`[PaymentService] Deposit confirmed for order ${order.order_number}, status → confirmed`);
+
+            // Send notifications to garage (async, don't block)
+            this.notifyGarageOfConfirmedOrder(order).catch(err =>
+                console.error('[PaymentService] Notification error:', err)
+            );
+
             return true;
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
         } finally {
             client.release();
+        }
+    }
+
+    /**
+     * Notify garage that order is confirmed after payment
+     */
+    private async notifyGarageOfConfirmedOrder(order: any): Promise<void> {
+        try {
+            const { createNotification } = await import('../notification.service');
+            const { emitToGarage } = await import('../../utils/socketIO');
+            const { pushService } = await import('../push.service');
+
+            // Push notification
+            await pushService.sendToUser(
+                order.garage_id,
+                '🎉 Order Confirmed!',
+                `Order #${order.order_number} is confirmed. Customer paid delivery fee. Start preparing!`,
+                {
+                    type: 'order_confirmed',
+                    orderId: order.order_id,
+                    orderNumber: order.order_number,
+                },
+                { channelId: 'orders', sound: true }
+            );
+
+            // In-app notification
+            await createNotification({
+                userId: order.garage_id,
+                type: 'order_confirmed',
+                title: 'Order Confirmed! 🎉',
+                message: `Order #${order.order_number} is confirmed and paid. Please start preparing the part.`,
+                data: {
+                    order_id: order.order_id,
+                    order_number: order.order_number,
+                },
+                target_role: 'garage'
+            });
+
+            // Socket emit
+            emitToGarage(order.garage_id, 'order_confirmed', {
+                order_id: order.order_id,
+                order_number: order.order_number,
+                status: 'confirmed'
+            });
+
+        } catch (err) {
+            console.error('[PaymentService] Garage notification failed:', err);
         }
     }
 

@@ -122,17 +122,17 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
         const totalAmount = partPrice + params.deliveryFee;
         const garagePayout = partPrice - platformFee;
 
-        // 5. Create Order
+        // 5. Create Order (with pending_payment status - requires delivery fee payment)
         const orderResult = await client.query(
             `INSERT INTO orders 
              (request_id, bid_id, customer_id, garage_id, part_price, commission_rate, 
               platform_fee, delivery_fee, total_amount, garage_payout_amount, 
-              payment_method, delivery_address, delivery_notes)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-             RETURNING order_id, order_number`,
+              payment_method, delivery_address, delivery_notes, order_status, deposit_amount, deposit_status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending_payment', $8, 'pending')
+             RETURNING order_id, order_number, order_status`,
             [bid.request_id, bidId, customerId, bid.garage_id, partPrice, commissionRate,
                 platformFee, params.deliveryFee, totalAmount, garagePayout,
-            params.paymentMethod || 'cash', params.deliveryAddress, params.deliveryNotes]
+            params.paymentMethod || 'card', params.deliveryAddress, params.deliveryNotes]
         );
         const order = orderResult.rows[0];
 
@@ -148,7 +148,7 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
         await client.query(
             `INSERT INTO order_status_history 
              (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-             VALUES ($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted bid')`,
+             VALUES ($1, NULL, 'pending_payment', $2, 'customer', 'Order created - awaiting delivery fee payment')`,
             [order.order_id, customerId]
         );
 
