@@ -55,33 +55,58 @@ export default function ProofOfDeliveryScreen() {
     useEffect(() => {
         const loadOrderDetails = async () => {
             try {
-                const response = await api.getOrderDetails(orderId);
-                if (response?.order) {
-                    const total = parseFloat(String(response.order.total_amount)) || 0;
-                    const partPrice = parseFloat(String(response.order.part_price)) || total;
-                    const deliveryFee = parseFloat(String(response.order.delivery_fee)) || 0;
+                // CRITICAL FIX: Driver app should use /driver/assignments/:id, NOT /orders/:id
+                const response = await api.getAssignmentDetails(assignmentId);
+
+                if (response?.assignment) {
+                    const assignment = response.assignment;
+
+                    // Parse amounts safely
+                    const total = parseFloat(String(assignment.total_amount)) || 0;
+                    const partPrice = parseFloat(String(assignment.part_price)) || 0;
+                    const deliveryFee = parseFloat(String(assignment.delivery_fee)) || 0;
+                    const paymentMethod = assignment.payment_method || 'cash';
 
                     // COD amount = part_price only (delivery fee already paid upfront)
-                    const codAmount = response.order.payment_method === 'card' ? 0 : partPrice;
+                    // If payment_method is 'card', customer paid online so COD = 0
+                    const codAmount = paymentMethod === 'card' ? 0 : partPrice;
+
+                    console.log('[POD] Loaded assignment:', {
+                        assignmentId,
+                        partPrice,
+                        deliveryFee,
+                        total,
+                        paymentMethod,
+                        codAmount
+                    });
 
                     setOrderDetails({
                         total_amount: total,
                         part_price: partPrice,
                         delivery_fee: deliveryFee,
                         cod_amount: codAmount,
-                        payment_method: response.order.payment_method || 'cash'
+                        payment_method: paymentMethod
                     });
-                    // Pre-select payment method from order
-                    setPaymentMethod(response.order.payment_method === 'card' ? 'online' : 'cash');
+
+                    // Pre-select payment method from assignment
+                    setPaymentMethod(paymentMethod === 'card' ? 'online' : 'cash');
                 }
             } catch (error) {
-                console.error('Failed to load order details:', error);
+                console.error('[POD] Failed to load assignment details:', error);
+                Alert.alert(
+                    'Error Loading Details',
+                    'Could not load order information. Please try again.',
+                    [
+                        { text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack() },
+                        { text: 'Retry', onPress: () => loadOrderDetails() }
+                    ]
+                );
             } finally {
                 setIsLoadingOrder(false);
             }
         };
         loadOrderDetails();
-    }, [orderId]);
+    }, [assignmentId]);
 
     // --- STEP 1: PHOTO ---
     const takePicture = async () => {
