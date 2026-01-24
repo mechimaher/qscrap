@@ -77,18 +77,43 @@ export default function PaymentScreen() {
         setIsLoading(true);
 
         try {
-            const result = await api.processPayment({
-                order_id: order?.order_id || 'test',
-                amount: parseFloat(amount),
-                card_number: cardNumber.replace(/\s/g, ''),
-                expiry_month: expiryMonth,
-                expiry_year: expiryYear,
-                cvv,
-                cardholder_name: cardholderName,
+            const orderId = order?.order_id;
+
+            // Step 1: Create deposit intent for delivery fee
+            const depositResponse = await api.request(`/payments/deposit/${orderId}`, {
+                method: 'POST'
+            });
+
+            if (!depositResponse.success) {
+                throw new Error(depositResponse.error || t('payment.depositFailed'));
+            }
+
+            // Step 2: Process the payment
+            const paymentResult = await api.request('/payments/process', {
+                method: 'POST',
+                body: JSON.stringify({
+                    orderId,
+                    amount: parseFloat(amount),
+                    paymentMethod: {
+                        type: 'mock_card',
+                        cardNumber: cardNumber.replace(/\s/g, ''),
+                        cardExpiry: `${expiryMonth}/${expiryYear}`,
+                        cardCVV: cvv
+                    }
+                })
+            });
+
+            if (!paymentResult.success) {
+                throw new Error(paymentResult.error || t('payment.failed'));
+            }
+
+            // Step 3: Confirm the deposit
+            await api.request(`/payments/deposit/confirm/${depositResponse.intent.id}`, {
+                method: 'POST'
             });
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            setTransactionId(result.transaction_id);
+            setTransactionId(paymentResult.transactionId || depositResponse.intent.id);
             setStep('success');
         } catch (err: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
