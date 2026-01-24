@@ -200,6 +200,7 @@ export class OrderLifecycleService {
             const assignment = assignmentCheck.rows[0];
 
             // Update order status
+            // CRITICAL FIX: Accept both 'in_transit' AND 'delivered' - POD IS the delivery confirmation
             const result = await client.query(`
                 UPDATE orders 
                 SET order_status = 'completed', 
@@ -209,12 +210,12 @@ export class OrderLifecycleService {
                     completed_by_driver = TRUE,
                     updated_at = NOW()
                 WHERE order_id = $1 
-                  AND order_status = 'delivered'
+                  AND order_status IN ('in_transit', 'delivered')
                 RETURNING garage_id, customer_id, order_number, garage_payout_amount
             `, [orderId, podPhotoUrl]);
 
             if (result.rows.length === 0) {
-                throw new Error('Order not found or not in delivered status');
+                throw new Error('Order not found or not in valid status (must be in_transit or delivered)');
             }
 
             const order = result.rows[0];
