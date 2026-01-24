@@ -13,11 +13,14 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    Image,
+    ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
@@ -45,6 +48,10 @@ export default function SupportScreen() {
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Enhanced new ticket fields
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [attachments, setAttachments] = useState<string[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
 
     const loadTickets = async () => {
         try {
@@ -78,15 +85,65 @@ export default function SupportScreen() {
         setIsSubmitting(true);
 
         try {
-            await api.createTicket(subject.trim(), message.trim());
+            await api.request('/support/tickets', {
+                method: 'POST',
+                body: JSON.stringify({
+                    subject: subject.trim(),
+                    message: message.trim(),
+                    order_id: selectedOrderId,
+                    attachments: attachments
+                })
+            });
+            // Reset form
             setSubject('');
             setMessage('');
+            setSelectedOrderId(null);
+            setAttachments([]);
+            setShowNewTicket(false);
             Alert.alert(t('common.success'), t('support.ticketSubmitted'));
             loadTickets();
         } catch (error: any) {
             Alert.alert(t('common.error'), error.message || t('support.createFailed'));
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleAddPhoto = async () => {
+        if (attachments.length >= 5) {
+            Alert.alert(t('common.error'), 'Maximum 5 photos allowed');
+            return;
+        }
+
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert(t('common.permissionRequired'), 'Gallery access is needed');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.8,
+            allowsMultipleSelection: false,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setAttachments([...attachments, result.assets[0].uri]);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+    };
+
+    const removeAttachment = (index: number) => {
+        setAttachments(attachments.filter((_, i) => i !== index));
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    };
+
+    const loadOrders = async () => {
+        try {
+            const data = await api.getMyOrders();
+            setOrders((data.orders || []).slice(0, 10)); // Show last 10 orders
+        } catch (error) {
+            console.log('Failed to load orders:', error);
         }
     };
 
@@ -191,13 +248,49 @@ export default function SupportScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.modalOverlay}
                 >
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                    <ScrollView style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.modalHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('support.newTicketTitle')}</Text>
-                            <TouchableOpacity onPress={() => setShowNewTicket(false)}>
+                            <TouchableOpacity onPress={() => { setShowNewTicket(false); loadOrders(); }}>
                                 <Text style={[styles.closeButton, { color: colors.textMuted }]}>✕</Text>
                             </TouchableOpacity>
                         </View>
+
+                        {/* Order Picker */}
+                        <Text style={[styles.label, { color: colors.text }]}>Link to Order (Optional)</Text>
+                        <TouchableOpacity
+                            style={[styles.orderPicker, { backgroundColor: colors.background, borderColor: colors.border }]}
+                            onPress={() => {
+                                if (orders.length === 0) loadOrders();
+                            }}
+                        >
+                            <Text style={[styles.orderPickerText, { color: selectedOrderId ? colors.text : colors.textMuted }]}>
+                                {selectedOrderId
+                                    ? orders.find(o => o.order_id === selectedOrderId)?.order_number || 'Order Selected'
+                                    : 'Select an order (optional)'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {/* Order List */}
+                        {orders.length > 0 && (
+                            <View style={styles.ordersList}>
+                                {orders.map((order) => (
+                                    <TouchableOpacity
+                                        key={order.order_id}
+                                        style={[styles.orderItem, { backgroundColor: selectedOrderId === order.order_id ? Colors.primary + '10' : colors.background }]}
+                                        onPress={() => {
+                                            setSelectedOrderId(order.order_id);
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        }}
+                                    >
+                                        <Text style={[styles.orderNumber, { color: colors.text }]}>#{order.order_number}</Text>
+                                        <Text style={[styles.orderDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                                            {order.part_description}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
 
                         <TextInput
                             style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
@@ -220,6 +313,34 @@ export default function SupportScreen() {
                             maxLength={1000}
                         />
 
+                        {/* Photo Attachments */}
+                        <Text style={[styles.label, { color: colors.text }]}>Attach Photos (Max 5)</Text>
+                        <View style={styles.attachmentsContainer}>
+                            {/* Add Photo Button */}
+                            {attachments.length < 5 && (
+                                <TouchableOpacity
+                                    style={[styles.addPhotoButton, { borderColor: colors.border }]}
+                                    onPress={handleAddPhoto}
+                                >
+                                    <Text style={styles.addPhotoIcon}>📷</Text>
+                                    <Text style={[styles.addPhotoText, { color: colors.textMuted }]}>Add Photo</Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {/* Attached Photos */}
+                            {attachments.map((uri, index) => (
+                                <View key={index} style={styles.attachmentPreview}>
+                                    <Image source={{ uri }} style={styles.attachmentImage} />
+                                    <TouchableOpacity
+                                        style={styles.removeButton}
+                                        onPress={() => removeAttachment(index)}
+                                    >
+                                        <Text style={styles.removeButtonText}>✕</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </View>
+
                         <TouchableOpacity
                             onPress={handleCreateTicket}
                             disabled={isSubmitting}
@@ -236,7 +357,7 @@ export default function SupportScreen() {
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
-                    </View>
+                    </ScrollView>
                 </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
@@ -371,4 +492,19 @@ const styles = StyleSheet.create({
         ...Shadows.sm,
     },
     submitText: { color: '#fff', fontSize: FontSizes.md, fontWeight: '700' },
+    label: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: Spacing.xs, marginTop: Spacing.sm },
+    orderPicker: { backgroundColor: '#F8F9FA', borderRadius: BorderRadius.lg, padding: Spacing.md, marginBottom: Spacing.md, borderWidth: 1, borderColor: '#E8E8E8' },
+    orderPickerText: { fontSize: FontSizes.md },
+    ordersList: { maxHeight: 150, marginBottom: Spacing.md },
+    orderItem: { padding: Spacing.md, borderRadius: BorderRadius.md, marginBottom: Spacing.xs },
+    orderNumber: { fontSize: FontSizes.sm, fontWeight: '700' },
+    orderDesc: { fontSize: FontSizes.xs, marginTop: 2 },
+    attachmentsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: Spacing.md, gap: Spacing.sm },
+    addPhotoButton: { width: 80, height: 80, borderRadius: BorderRadius.lg, borderWidth: 2, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F9FA' },
+    addPhotoIcon: { fontSize: 24, marginBottom: 4 },
+    addPhotoText: { fontSize: FontSizes.xs, fontWeight: '600' },
+    attachmentPreview: { width: 80, height: 80, borderRadius: BorderRadius.lg, overflow: 'hidden', position: 'relative' },
+    attachmentImage: { width: '100%', height: '100%' },
+    removeButton: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+    removeButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
