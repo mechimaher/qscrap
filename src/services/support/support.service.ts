@@ -7,13 +7,16 @@ import { Pool, PoolClient } from 'pg';
 export class SupportService {
     constructor(private pool: Pool) { }
 
-    async createTicket(userId: string, data: { subject: string; message: string; priority?: string; order_id?: string }) {
+    async createTicket(userId: string, data: { subject: string; message: string; priority?: string; order_id?: string; attachments?: string[] }) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
             const ticketResult = await client.query(`INSERT INTO support_tickets (customer_id, subject, priority, order_id) VALUES ($1, $2, $3, $4) RETURNING *`, [userId, data.subject, data.priority || 'normal', data.order_id || null]);
             const ticket = ticketResult.rows[0];
-            const messageResult = await client.query(`INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text) VALUES ($1, $2, 'customer', $3) RETURNING *`, [ticket.ticket_id, userId, data.message]);
+            const messageResult = await client.query(
+                `INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, attachments) VALUES ($1, $2, 'customer', $3, $4) RETURNING *`,
+                [ticket.ticket_id, userId, data.message, data.attachments || []]
+            );
             await client.query('COMMIT');
             return { ticket, message: messageResult.rows[0] };
         } catch (err) {
@@ -70,11 +73,14 @@ export class SupportService {
         return { hasAccess: true, customerId };
     }
 
-    async sendMessage(ticketId: string, senderId: string, senderType: string, messageText: string) {
+    async sendMessage(ticketId: string, senderId: string, senderType: string, messageText: string, attachments?: string[]) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            const result = await client.query(`INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text) VALUES ($1, $2, $3, $4) RETURNING *`, [ticketId, senderId, senderType, messageText]);
+            const result = await client.query(
+                `INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, attachments) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                [ticketId, senderId, senderType, messageText, attachments || []]
+            );
 
             // Track first_response_at for SLA metrics when staff responds
             if (senderType === 'admin') {
