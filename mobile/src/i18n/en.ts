@@ -29,6 +29,7 @@ export const en = {
         required: 'Required',
         qar: 'QAR',
         yes: 'Yes',
+        no: 'No',
         addVehicle: 'Add Vehicle',
         requestsCount: '{{count}} request',
         requestsCount_plural: '{{count}} requests',
@@ -434,6 +435,7 @@ export const en = {
         invoiceFailed: 'Failed to download invoice',
         openLiveMap: 'Open Live Map',
         progress: 'Order Progress',
+        cancelOrder: 'Cancel Order',
     },
 
     // =============================================
@@ -1085,16 +1087,7 @@ export const en = {
         commercial: 'Commercial',
         genuine: 'Genuine',
     },
-    requestDetail: {
-        title: 'Request Details',
-        partNeeded: 'PART NEEDED',
-        partNumber: 'Part #',
-        waitingForBids: '⏳ Waiting for Bids',
-        bidCount: '{{count}} Bids',
-        noBidsMessage: 'Garages are reviewing your request...',
-        noBidsSubtext: 'You\'ll be notified when bids arrive',
-        priceRange: '💰 Price Range',
-    },
+
 
     // =============================================
     // BID CARD
@@ -1238,13 +1231,15 @@ export const en = {
         partNeeded: 'Part Needed',
         waitingForBids: 'Waiting for Bids',
         noBids: 'No Bids Yet',
-        noBidsSubtext: 'Garages are reviewing your request',
+        noBidsMessage: 'Garages are reviewing your request...',
+        noBidsSubtext: 'You\'ll be notified when bids arrive',
         bidsReceived: '{{count}} Bids Received',
         priceRange: 'Price Range',
         partNumber: 'Part Number',
         expired: 'Request Expired',
         deletedRequest: 'Request Deleted',
         loadFailed: 'Failed to load request',
+        bidCount: '{{count}} Bids',
     },
 
     // =============================================

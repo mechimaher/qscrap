@@ -56,6 +56,13 @@ app.use(cors({
 }));
 
 // ==========================================
+// STRIPE WEBHOOK (Must be BEFORE express.json)
+// Webhook requires raw body for signature verification
+// ==========================================
+import stripeWebhookRoutes from './routes/stripe-webhook.routes';
+app.use('/api/stripe', stripeWebhookRoutes);
+
+// ==========================================
 // BODY PARSING & SANITIZATION
 // ==========================================
 app.use(express.json({ limit: '50mb' }));

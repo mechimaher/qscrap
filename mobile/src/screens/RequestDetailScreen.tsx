@@ -853,45 +853,38 @@ export default function RequestDetailScreen() {
 
     const handleAcceptBid = async (bid: Bid, priceToShow: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+        // Calculate delivery fee based on request location
+        let deliveryFee = 25; // Default zone 1
+        try {
+            if (request?.delivery_lat && request?.delivery_lng) {
+                const feeResult = await api.calculateDeliveryFee(
+                    parseFloat(request.delivery_lat),
+                    parseFloat(request.delivery_lng)
+                );
+                deliveryFee = feeResult.fee || 25;
+            }
+        } catch (e) {
+            console.log('Using default delivery fee');
+        }
+
         Alert.alert(
             t('alerts.acceptBidTitle'),
-            t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }),
+            t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }) +
+            `\n\nDelivery fee (${deliveryFee} QAR) will be paid now by card.\nPart price (${priceToShow} QAR) is Cash on Delivery.`,
             [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: t('common.accept'),
-                    onPress: async () => {
-                        setAcceptingBid(bid.bid_id);
-                        try {
-                            await api.acceptBid(bid.bid_id);
-
-                            // Check if this is first order for confetti
-                            try {
-                                const orderCount = await api.getOrderCount();
-                                if (orderCount.total === 1) {
-                                    setShowConfetti(true);
-                                    setTimeout(() => setShowConfetti(false), 4000);
-                                }
-                            } catch (e) {
-                                // Silent fail for confetti check
-                            }
-
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            toast.show({
-                                type: 'success',
-                                title: t('alerts.orderCreatedTitle'),
-                                message: t('alerts.orderCreatedMessage'),
-                                action: {
-                                    label: t('common.viewOrders'),
-                                    onPress: () => navigation.goBack()
-                                }
-                            });
-                        } catch (error: any) {
-                            toast.error(t('common.error'), error.message || t('errors.acceptBidFailed'));
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                        } finally {
-                            setAcceptingBid(null);
-                        }
+                    text: `Pay ${deliveryFee} QAR`,
+                    onPress: () => {
+                        // Navigate to Payment screen with bid details
+                        navigation.navigate('Payment', {
+                            bidId: bid.bid_id,
+                            garageName: bid.garage_name,
+                            partPrice: priceToShow,
+                            deliveryFee: deliveryFee,
+                            partDescription: request?.part_description || 'Part',
+                        });
                     },
                 },
             ]
