@@ -68,9 +68,17 @@ export default function ProofOfDeliveryScreen() {
                     const deliveryFee = parseFloat(String(assignment.delivery_fee)) || 0;
                     const paymentMethod = assignment.payment_method || 'cash';
 
-                    // COD amount = part_price only (delivery fee already paid upfront)
-                    // If payment_method is 'card', customer paid online so COD = 0
-                    const codAmount = paymentMethod === 'card' ? 0 : partPrice;
+                    // BUSINESS MODEL FIX:
+                    // - payment_method = 'card' means DELIVERY FEE was paid upfront via Stripe
+                    // - payment_method = 'cash' means DELIVERY FEE is collected at delivery too
+                    // - PART PRICE is ALWAYS collected at delivery (COD) regardless of payment_method
+                    //
+                    // COD amount calculation:
+                    // - If delivery fee paid online (card): COD = part_price only
+                    // - If delivery fee not paid (cash): COD = part_price + delivery_fee
+                    const codAmount = paymentMethod === 'card'
+                        ? partPrice  // Delivery fee paid, collect part only
+                        : partPrice + deliveryFee;  // Collect both at delivery
 
                     console.log('[POD] Loaded assignment:', {
                         assignmentId,
@@ -78,7 +86,8 @@ export default function ProofOfDeliveryScreen() {
                         deliveryFee,
                         total,
                         paymentMethod,
-                        codAmount
+                        codAmount,
+                        deliveryFeePaidOnline: paymentMethod === 'card'
                     });
 
                     setOrderDetails({
@@ -89,8 +98,8 @@ export default function ProofOfDeliveryScreen() {
                         payment_method: paymentMethod
                     });
 
-                    // Pre-select payment method from assignment
-                    setPaymentMethod(paymentMethod === 'card' ? 'online' : 'cash');
+                    // Always default to cash for COD collection (driver always needs to collect something)
+                    setPaymentMethod('cash');
                 }
             } catch (error) {
                 console.error('[POD] Failed to load assignment details:', error);
@@ -310,82 +319,66 @@ export default function ProofOfDeliveryScreen() {
     const renderPaymentStep = () => (
         <View style={styles.stepContainer}>
             <Text style={[styles.title, { color: colors.text }]}>Payment Collection</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                {isLoadingOrder ? 'Loading...' :
-                    orderDetails?.payment_method === 'card'
-                        ? 'Payment already collected online ✓'
-                        : `Collect ${orderDetails?.cod_amount?.toFixed(2) || '0.00'} QAR`
-                }
-            </Text>
 
+            {/* Clear breakdown of what to collect */}
+            {isLoadingOrder ? (
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Loading...</Text>
+            ) : (
+                <View style={{ marginBottom: 24 }}>
+                    {orderDetails?.payment_method === 'card' && (
+                        <Text style={{ fontSize: 14, color: Colors.success, textAlign: 'center', marginBottom: 8 }}>
+                            ✓ Delivery fee ({orderDetails?.delivery_fee?.toFixed(0)} QAR) paid online
+                        </Text>
+                    )}
+                    <Text style={[styles.subtitle, { color: colors.text, marginBottom: 0 }]}>
+                        Collect {orderDetails?.cod_amount?.toFixed(0) || '0'} QAR
+                    </Text>
+                    <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
+                        {orderDetails?.payment_method === 'card'
+                            ? `(Part price only)`
+                            : `(Part ${orderDetails?.part_price?.toFixed(0)} + Delivery ${orderDetails?.delivery_fee?.toFixed(0)})`}
+                    </Text>
+                </View>
+            )}
+
+            {/* Payment method selection - driver selects HOW they collected COD */}
+            <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 12 }}>
+                How did customer pay?
+            </Text>
             <View style={styles.paymentOptions}>
                 <TouchableOpacity
                     style={[
                         styles.paymentOption,
                         paymentMethod === 'cash' && styles.paymentSelected,
-                        {
-                            borderColor: paymentMethod === 'cash' ? Colors.primary : colors.border,
-                            opacity: orderDetails?.payment_method === 'card' ? 0.4 : 1
-                        }
+                        { borderColor: paymentMethod === 'cash' ? Colors.primary : colors.border }
                     ]}
                     onPress={() => {
-                        if (orderDetails?.payment_method === 'card') {
-                            // P1 FIX: Prevent override - order was paid by card
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(
-                                'Payment Already Collected',
-                                'This order was paid online. You cannot collect cash.',
-                                [{ text: 'OK' }]
-                            );
-                            return;
-                        }
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setPaymentMethod('cash');
                     }}
-                    disabled={orderDetails?.payment_method === 'card'}
                 >
                     <Text style={{ fontSize: 32 }}>💵</Text>
                     <Text style={[
                         styles.paymentText,
                         { color: paymentMethod === 'cash' ? Colors.primary : colors.text }
                     ]}>Cash</Text>
-                    {orderDetails?.payment_method === 'card' && (
-                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>N/A</Text>
-                    )}
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[
                         styles.paymentOption,
                         paymentMethod === 'online' && styles.paymentSelected,
-                        {
-                            borderColor: paymentMethod === 'online' ? Colors.primary : colors.border,
-                            opacity: orderDetails?.payment_method === 'cash' ? 0.4 : 1
-                        }
+                        { borderColor: paymentMethod === 'online' ? Colors.primary : colors.border }
                     ]}
                     onPress={() => {
-                        if (orderDetails?.payment_method === 'cash') {
-                            // P1 FIX: Prevent override - order requires cash collection
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(
-                                'Cash Payment Required',
-                                `You must collect ${orderDetails?.cod_amount?.toFixed(2) || '0.00'} QAR in cash from the customer.`,
-                                [{ text: 'OK' }]
-                            );
-                            return;
-                        }
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setPaymentMethod('online');
                     }}
-                    disabled={orderDetails?.payment_method === 'cash'}
                 >
                     <Text style={{ fontSize: 32 }}>💳</Text>
                     <Text style={[
                         styles.paymentText,
                         { color: paymentMethod === 'online' ? Colors.primary : colors.text }
-                    ]}>Paid Online</Text>
-                    {orderDetails?.payment_method === 'cash' && (
-                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>N/A</Text>
-                    )}
+                    ]}>Card / Transfer</Text>
                 </TouchableOpacity>
             </View>
 

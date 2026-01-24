@@ -265,6 +265,11 @@ export default function AssignmentDetailScreen() {
                 {/* Part Information */}
                 <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>📦 Part Details</Text>
+                    {assignment.part_category && (
+                        <Text style={[styles.carInfo, { color: Colors.primary, fontWeight: '600', marginBottom: 4 }]}>
+                            📂 {assignment.part_category}{assignment.part_subcategory ? ` > ${assignment.part_subcategory}` : ''}
+                        </Text>
+                    )}
                     <Text style={[styles.partDescription, { color: colors.text }]}>
                         {assignment.part_description}
                     </Text>

@@ -93,7 +93,7 @@ export class DriverRepository {
                 o.payment_method,
                 o.created_at as order_created,
                 o.customer_id, o.garage_id,
-                pr.part_description, pr.car_make, pr.car_model, pr.car_year,
+                pr.part_description, pr.part_category, pr.part_subcategory, pr.car_make, pr.car_model, pr.car_year,
                 pr.condition_required,
                 u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email,
                 g.garage_name, g.address as garage_address,

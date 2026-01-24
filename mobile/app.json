@@ -122,7 +122,14 @@
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.qa.qscrap.app",
+          "enableGooglePay": true
+        }
+      ]
     ],
     "extra": {
       "privacyPolicyUrl": "https://qscrap.qa/privacy",

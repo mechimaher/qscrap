@@ -43,6 +43,11 @@ const getStatusConfig = (status: string, t: any) => {
         description: string;
         gradient: readonly [string, string];
     }> = {
+        'pending_payment': {
+            color: '#F59E0B', icon: '💳', label: t('status.awaitingPayment') || 'Awaiting Payment',
+            description: 'Complete payment to confirm your order',
+            gradient: ['#F59E0B', '#D97706'] as const
+        },
         'confirmed': {
             color: '#3B82F6', icon: '✓', label: t('status.confirmed'),
             description: t('status.confirmedDesc'),
@@ -753,6 +758,29 @@ export default function OrderDetailScreen() {
                     </TouchableOpacity>
                 )}
 
+                {/* Continue Payment - For pending_payment orders */}
+                {order.order_status === 'pending_payment' && (
+                    <TouchableOpacity
+                        style={styles.continuePaymentButton}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            navigation.navigate('Payment' as any, {
+                                bidId: order.bid_id,
+                                garageName: order.garage_name,
+                                partPrice: order.part_price,
+                                deliveryFee: order.delivery_fee,
+                                partDescription: order.part_description || 'Part',
+                                orderId: order.order_id, // Pass existing order ID to resume payment
+                            });
+                        }}
+                    >
+                        <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.confirmGradient}>
+                            <Text style={styles.confirmIcon}>💳</Text>
+                            <Text style={styles.confirmText}>{t('payment.payNow') || 'Continue Payment'}</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                )}
+
                 {/* Cancel Order - Only for confirmed/preparing */}
                 {['confirmed', 'preparing'].includes(order.order_status) && (
                     <TouchableOpacity
@@ -948,6 +976,9 @@ const styles = StyleSheet.create({
     addressRow: { flexDirection: 'row', alignItems: 'flex-start' },
     addressIcon: { fontSize: 20, marginRight: Spacing.sm },
     addressText: { fontSize: FontSizes.md, flex: 1, lineHeight: 22 },
+
+    // Continue Payment
+    continuePaymentButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
 
     // Confirm
     confirmButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },

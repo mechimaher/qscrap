@@ -1,181 +1,209 @@
-// QScrap Premium Payment Screen
-// Digital payment with card validation and escrow integration
+// QScrap - Delivery Fee Payment Screen
+// Collects upfront delivery fee via Stripe before order confirmation
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
-    TouchableOpacity,
-    TextInput,
     ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
+    Alert,
+    TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { StripeProvider, CardField, useStripe } from '@stripe/stripe-react-native';
+
+import { Colors, FontSizes, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
-import { api } from '../services/api';
-import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
-import { useTranslation } from '../contexts/LanguageContext';
-import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { useLanguage as useTranslation } from '../contexts/LanguageContext';
+import { useToast } from '../components/Toast';
+import { api, API_BASE_URL } from '../services/api';
+
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51St6AI39lYR0XT69rqWSeL7KgzTodXnECkPed1CAsZ7KsqhJOB4W3VD6QvhWyUhrVsTfADxh33p6DIJOTH30q4dK00dnPzwcBt';
+
+interface RouteParams {
+    bidId: string;
+    garageName: string;
+    partPrice: number;
+    deliveryFee: number;
+    partDescription: string;
+    orderId?: string; // Optional: For resuming payment on existing order
+}
 
 export default function PaymentScreen() {
     const navigation = useNavigation<any>();
-    const route = useRoute<any>();
+    const route = useRoute();
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+    const toast = useToast();
+    const { confirmPayment } = useStripe();
 
-    const { order, amount } = route.params || { amount: 0 };
+    const params = route.params as RouteParams;
+    const { bidId, garageName, partPrice, deliveryFee, partDescription, orderId: existingOrderId } = params;
 
-    const [cardNumber, setCardNumber] = useState('');
-    const [expiryMonth, setExpiryMonth] = useState('');
-    const [expiryYear, setExpiryYear] = useState('');
-    const [cvv, setCvv] = useState('');
-    const [cardholderName, setCardholderName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [step, setStep] = useState<'input' | 'processing' | 'success' | 'error'>('input');
-    const [error, setError] = useState<string | null>(null);
-    const [transactionId, setTransactionId] = useState<string | null>(null);
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [orderId, setOrderId] = useState<string | null>(existingOrderId || null);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [cardComplete, setCardComplete] = useState(false);
 
-    // Format card number with spaces
-    const formatCardNumber = (text: string) => {
-        const cleaned = text.replace(/\D/g, '').slice(0, 16);
-        const groups = cleaned.match(/.{1,4}/g);
-        return groups ? groups.join(' ') : cleaned;
-    };
+    const totalAmount = partPrice + deliveryFee;
 
-    // Luhn validation
-    const isValidCard = () => {
-        const cleaned = cardNumber.replace(/\s/g, '');
-        if (cleaned.length !== 16) return false;
-        let sum = 0;
-        for (let i = 0; i < cleaned.length; i++) {
-            let digit = parseInt(cleaned[i]);
-            if ((cleaned.length - i) % 2 === 0) {
-                digit *= 2;
-                if (digit > 9) digit -= 9;
+    // Step 1: Create order first (pending_payment status) OR resume existing order
+    useEffect(() => {
+        initializePayment();
+    }, []);
+
+    const initializePayment = async () => {
+        setIsCreatingOrder(true);
+        try {
+            let orderIdToUse = existingOrderId;
+
+            // If no existing order, create new one via acceptBid
+            if (!orderIdToUse) {
+                const orderResult = await api.acceptBid(bidId, 'card');
+                if (!orderResult.order_id) {
+                    throw new Error('Failed to create order');
+                }
+                orderIdToUse = orderResult.order_id;
+                setOrderId(orderIdToUse);
             }
-            sum += digit;
+
+            // Create payment intent for delivery fee
+            const paymentResult = await api.createDeliveryFeeIntent(orderIdToUse);
+
+            if (!paymentResult.intent?.clientSecret) {
+                throw new Error(paymentResult.error || 'Failed to create payment intent');
+            }
+
+            setClientSecret(paymentResult.intent.clientSecret);
+        } catch (error: any) {
+            console.error('Error initializing payment:', error);
+            const errorMessage = typeof error === 'object'
+                ? (error.message || error.error || JSON.stringify(error))
+                : String(error);
+            Alert.alert(
+                t('common.error'),
+                errorMessage || 'Failed to initialize payment',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
+        } finally {
+            setIsCreatingOrder(false);
         }
-        return sum % 10 === 0;
     };
 
     const handlePayment = async () => {
-        if (!isValidCard()) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            setError(t('payment.invalidCard'));
+        if (!clientSecret || !cardComplete) {
+            toast.error(t('common.error'), 'Please enter valid card details');
             return;
         }
 
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setStep('processing');
         setIsLoading(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            const orderId = order?.order_id;
-
-            // Step 1: Create deposit intent for delivery fee
-            const depositResponse = await api.request(`/payments/deposit/${orderId}`, {
-                method: 'POST'
+            const { error, paymentIntent } = await confirmPayment(clientSecret, {
+                paymentMethodType: 'Card',
             });
 
-            if (!depositResponse.success) {
-                throw new Error(depositResponse.error || t('payment.depositFailed'));
+            if (error) {
+                console.error('Payment error:', error);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                toast.error(t('common.error'), error.message || 'Payment failed');
+                return;
             }
 
-            // Step 2: Process the payment
-            const paymentResult = await api.request('/payments/process', {
-                method: 'POST',
-                body: JSON.stringify({
-                    orderId,
-                    amount: parseFloat(amount),
-                    paymentMethod: {
-                        type: 'mock_card',
-                        cardNumber: cardNumber.replace(/\s/g, ''),
-                        cardExpiry: `${expiryMonth}/${expiryYear}`,
-                        cardCVV: cvv
+            // Check for success status (case-insensitive)
+            const status = paymentIntent?.status?.toLowerCase();
+            console.log('[Payment] Stripe status:', paymentIntent?.status, 'orderId:', orderId);
+
+            if (status === 'succeeded') {
+                // Confirm payment on backend to update order status
+                try {
+                    const confirmResult = await api.confirmDeliveryFeePayment(paymentIntent.id);
+                    console.log('[Payment] Backend confirmed:', confirmResult);
+                } catch (confirmError) {
+                    console.error('[Payment] Backend confirm error:', confirmError);
+                    // Continue anyway - webhook can handle it
+                }
+
+                // Payment successful - order is now confirmed
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                toast.show({
+                    type: 'success',
+                    title: '✅ Payment Successful',
+                    message: 'Your order has been confirmed!',
+                });
+
+                // Small delay to ensure toast shows before navigation
+                setTimeout(() => {
+                    // Navigate to order details
+                    if (orderId) {
+                        navigation.reset({
+                            index: 1,
+                            routes: [
+                                { name: 'MainTabs' },
+                                { name: 'OrderDetail', params: { orderId } },
+                            ],
+                        });
+                    } else {
+                        navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'MainTabs' }],
+                        });
                     }
-                })
-            });
-
-            if (!paymentResult.success) {
-                throw new Error(paymentResult.error || t('payment.failed'));
+                }, 500);
+            } else {
+                // Unexpected status - show warning but try to proceed
+                console.warn('[Payment] Unexpected status:', paymentIntent?.status);
+                toast.show({
+                    type: 'info',
+                    title: 'Payment Processing',
+                    message: `Status: ${paymentIntent?.status}. Please check your orders.`,
+                });
+                setTimeout(() => {
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'MainTabs' }],
+                    });
+                }, 1500);
             }
-
-            // Step 3: Confirm the deposit
-            await api.request(`/payments/deposit/confirm/${depositResponse.intent.id}`, {
-                method: 'POST'
-            });
-
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            setTransactionId(paymentResult.transactionId || depositResponse.intent.id);
-            setStep('success');
-        } catch (err: any) {
+        } catch (error: any) {
+            console.error('Payment error:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            setError(err.message || t('payment.failed'));
-            setStep('error');
+            toast.error(t('common.error'), error.message || 'Payment failed');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Success State
-    if (step === 'success') {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <View style={styles.successContainer}>
-                    <View style={styles.successIcon}>
-                        <LinearGradient
-                            colors={[Colors.success, '#2d8a4e']}
-                            style={styles.successGradient}
-                        >
-                            <Ionicons name="checkmark" size={60} color="#fff" />
-                        </LinearGradient>
-                    </View>
-                    <Text style={[styles.successTitle, { color: colors.text }]}>
-                        {t('payment.successTitle')}
-                    </Text>
-                    <Text style={[styles.successAmount, { color: Colors.primary }]}>
-                        {amount} {t('common.currency')}
-                    </Text>
-                    <Text style={[styles.transactionId, { color: colors.textSecondary }]}>
-                        {t('payment.transaction')}: {transactionId}
-                    </Text>
-                    <Text style={[styles.escrowNote, { color: colors.textSecondary }]}>
-                        {t('payment.escrowNote')}
-                    </Text>
-                    <TouchableOpacity
-                        style={styles.doneButton}
-                        onPress={() => navigation.navigate('HomeTab')}
-                    >
-                        <LinearGradient
-                            colors={[Colors.primary, '#6b1029']}
-                            style={styles.doneGradient}
-                        >
-                            <Text style={styles.doneButtonText}>{t('common.backToHome')}</Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
+    const handleCancel = () => {
+        Alert.alert(
+            'Cancel Order',
+            'Are you sure you want to cancel? Your order will not be placed.',
+            [
+                { text: 'Stay', style: 'cancel' },
+                {
+                    text: 'Cancel Order',
+                    style: 'destructive',
+                    onPress: () => navigation.goBack(),
+                },
+            ]
         );
-    }
+    };
 
-    // Processing State
-    if (step === 'processing') {
+    if (isCreatingOrder) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <View style={styles.processingContainer}>
+                <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={[styles.processingText, { color: colors.text }]}>
-                        {t('payment.processing')}
-                    </Text>
-                    <Text style={[styles.processingSubtext, { color: colors.textSecondary }]}>
-                        {t('payment.doNotClose')}
+                    <Text style={[styles.loadingText, { color: colors.text }]}>
+                        Preparing your order...
                     </Text>
                 </View>
             </SafeAreaView>
@@ -183,250 +211,339 @@ export default function PaymentScreen() {
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
-            >
+        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 {/* Header */}
-                <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
+                <View style={[styles.header, { backgroundColor: colors.surface }]}>
+                    <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
+                        <Text style={styles.backText}>← Cancel</Text>
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>{t('payment.title')}</Text>
-                    <View style={{ width: 40 }} />
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>
+                        💳 Pay Delivery Fee
+                    </Text>
+                    <View style={{ width: 60 }} />
                 </View>
 
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                    {/* Amount Card */}
-                    <View style={[styles.amountCard, { backgroundColor: Colors.primary }]}>
-                        <Text style={styles.amountLabel}>{t('payment.totalAmount')}</Text>
-                        <Text style={styles.amountValue}>{amount} {t('common.currency')}</Text>
-                        <View style={styles.escrowBadge}>
-                            <Ionicons name="shield-checkmark" size={16} color="#fff" />
-                            <Text style={styles.escrowBadgeText}>{t('payment.escrowProtected')}</Text>
-                        </View>
-                    </View>
-
-                    {/* Error Message */}
-                    {error && (
-                        <View style={styles.errorCard}>
-                            <Ionicons name="warning" size={20} color={Colors.error} />
-                            <Text style={styles.errorText}>{error}</Text>
-                        </View>
-                    )}
-
-                    {/* Card Form */}
-                    <View style={styles.form}>
-                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            💳 {t('payment.cardDetails')}
+                    {/* Order Summary Card */}
+                    <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                            📦 Order Summary
                         </Text>
 
-                        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="card" size={20} color={colors.textSecondary} />
-                            <TextInput
-                                style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder={t('payment.cardNumber')}
-                                placeholderTextColor={colors.textSecondary}
-                                value={formatCardNumber(cardNumber)}
-                                onChangeText={(text) => setCardNumber(text.replace(/\s/g, ''))}
-                                keyboardType="number-pad"
-                                maxLength={19}
-                            />
+                        <Text style={[styles.garageName, { color: Colors.primary }]}>
+                            {garageName}
+                        </Text>
+
+                        <Text style={[styles.partDesc, { color: colors.textSecondary }]}>
+                            {partDescription}
+                        </Text>
+
+                        <View style={styles.divider} />
+
+                        {/* Price Breakdown */}
+                        <View style={styles.priceRow}>
+                            <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
+                                Part Price (Cash on Delivery)
+                            </Text>
+                            <Text style={[styles.priceValue, { color: colors.text }]}>
+                                {partPrice} QAR
+                            </Text>
                         </View>
 
-                        <View style={[styles.row, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <TextInput
-                                    style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
-                                    placeholder={t('payment.mm')}
-                                    placeholderTextColor={colors.textSecondary}
-                                    value={expiryMonth}
-                                    onChangeText={setExpiryMonth}
-                                    keyboardType="number-pad"
-                                    maxLength={2}
-                                />
-                                <Text style={{ color: colors.textSecondary }}>/</Text>
-                                <TextInput
-                                    style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
-                                    placeholder={t('payment.yy')}
-                                    placeholderTextColor={colors.textSecondary}
-                                    value={expiryYear}
-                                    onChangeText={setExpiryYear}
-                                    keyboardType="number-pad"
-                                    maxLength={2}
-                                />
-                            </View>
-                            <View style={[styles.inputContainer, styles.halfInput, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Ionicons name="lock-closed" size={20} color={colors.textSecondary} />
-                                <TextInput
-                                    style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
-                                    placeholder={t('payment.cvv')}
-                                    placeholderTextColor={colors.textSecondary}
-                                    value={cvv}
-                                    onChangeText={setCvv}
-                                    keyboardType="number-pad"
-                                    maxLength={4}
-                                    secureTextEntry
-                                />
-                            </View>
+                        <View style={styles.priceRow}>
+                            <Text style={[styles.priceLabel, { color: Colors.primary, fontWeight: '700' }]}>
+                                🚚 Delivery Fee (Pay Now)
+                            </Text>
+                            <Text style={[styles.priceValue, { color: Colors.primary, fontWeight: '700' }]}>
+                                {deliveryFee} QAR
+                            </Text>
                         </View>
 
-                        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="person" size={20} color={colors.textSecondary} />
-                            <TextInput
-                                style={[styles.input, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder={t('payment.cardholderName')}
-                                placeholderTextColor={colors.textSecondary}
-                                value={cardholderName}
-                                onChangeText={setCardholderName}
-                                autoCapitalize="characters"
-                            />
-                        </View>
+                        <View style={[styles.divider, { marginVertical: Spacing.md }]} />
 
-                        {/* Test Card Hint */}
-                        <View style={[styles.hintCard, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="information-circle" size={20} color={Colors.info} />
-                            <Text style={[styles.hintText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                {t('payment.testCardHint')}
+                        <View style={styles.priceRow}>
+                            <Text style={[styles.totalLabel, { color: colors.text }]}>
+                                Total Order Value
+                            </Text>
+                            <Text style={[styles.totalValue, { color: colors.text }]}>
+                                {totalAmount} QAR
                             </Text>
                         </View>
                     </View>
+
+                    {/* Payment Info */}
+                    <View style={[styles.infoCard, { backgroundColor: '#EBF5FF' }]}>
+                        <Text style={styles.infoIcon}>ℹ️</Text>
+                        <Text style={styles.infoText}>
+                            Only the delivery fee ({deliveryFee} QAR) is charged now.
+                            Pay the part price ({partPrice} QAR) in cash when delivered.
+                        </Text>
+                    </View>
+
+                    {/* Card Input */}
+                    <View style={[styles.cardSection, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                            💳 Card Details
+                        </Text>
+
+                        <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>
+                            Enter your card information
+                        </Text>
+
+                        <View style={styles.cardFieldWrapper}>
+                            <CardField
+                                postalCodeEnabled={false}
+                                placeholders={{
+                                    number: '4242 4242 4242 4242',
+                                    expiration: 'MM/YY',
+                                    cvc: 'CVC',
+                                }}
+                                cardStyle={{
+                                    backgroundColor: '#FFFFFF',
+                                    textColor: '#1F2937',
+                                    placeholderColor: '#9CA3AF',
+                                    borderColor: '#E5E7EB',
+                                    borderWidth: 1,
+                                    borderRadius: 12,
+                                    fontSize: 16,
+                                    fontFamily: 'System',
+                                }}
+                                style={styles.cardField}
+                                onCardChange={(cardDetails) => {
+                                    setCardComplete(cardDetails.complete);
+                                }}
+                            />
+                        </View>
+
+                        <View style={styles.cardSecurityRow}>
+                            <Text style={styles.securityIcon}>🔒</Text>
+                            <Text style={[styles.securityText, { color: colors.textSecondary }]}>
+                                Your card details are encrypted and secure
+                            </Text>
+                        </View>
+
+                        {/* Test Card Info */}
+                        <View style={[styles.testCardInfo, { backgroundColor: '#FEF3C7' }]}>
+                            <Text style={styles.testCardTitle}>🧪 Test Mode</Text>
+                            <Text style={styles.testCardText}>
+                                Card: 4242 4242 4242 4242{'\n'}
+                                Expiry: 12/30  •  CVC: 123
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={{ height: 120 }} />
                 </ScrollView>
 
                 {/* Pay Button */}
-                <View style={[styles.footer, { borderTopColor: colors.border }]}>
+                <View style={[styles.footer, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity
+                        style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
                         onPress={handlePayment}
-                        disabled={isLoading || cardNumber.length < 16}
-                        style={[styles.payButton, (isLoading || cardNumber.length < 16) && styles.buttonDisabled]}
+                        disabled={!cardComplete || isLoading}
                     >
                         <LinearGradient
-                            colors={cardNumber.length >= 16 ? [Colors.primary, '#6b1029'] : ['#ccc', '#aaa']}
+                            colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
                             style={styles.payGradient}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
                         >
                             {isLoading ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <>
-                                    <Ionicons name="lock-closed" size={20} color="#fff" />
-                                    <Text style={styles.payButtonText}>{t('payment.pay')} {amount} {t('common.currency')}</Text>
-                                </>
+                                <Text style={styles.payButtonText}>
+                                    🔒 Pay {deliveryFee} QAR
+                                </Text>
                             )}
                         </LinearGradient>
                     </TouchableOpacity>
+
+                    <Text style={styles.secureText}>
+                        🔐 Secured by Stripe
+                    </Text>
                 </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+            </SafeAreaView>
+        </StripeProvider>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: Spacing.lg,
+        fontSize: FontSizes.lg,
+        fontWeight: '600',
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
         borderBottomWidth: 1,
+        borderBottomColor: '#E5E5E5',
     },
-    backButton: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { fontSize: FontSizes.xl, fontWeight: '700' },
-    content: { flex: 1, padding: Spacing.lg },
-    amountCard: {
-        padding: Spacing.xl,
+    backButton: {
+        padding: Spacing.sm,
+    },
+    backText: {
+        color: Colors.primary,
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+    },
+    headerTitle: {
+        fontSize: FontSizes.xl,
+        fontWeight: '800',
+    },
+    content: {
+        flex: 1,
+        padding: Spacing.lg,
+    },
+    summaryCard: {
         borderRadius: BorderRadius.xl,
-        alignItems: 'center',
+        padding: Spacing.lg,
         marginBottom: Spacing.lg,
+        ...Shadows.md,
     },
-    amountLabel: { color: 'rgba(255,255,255,0.8)', fontSize: FontSizes.sm },
-    amountValue: { color: '#fff', fontSize: 36, fontWeight: '700', marginVertical: Spacing.sm },
-    escrowBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
-        gap: 6,
-    },
-    escrowBadgeText: { color: '#fff', fontSize: FontSizes.sm, fontWeight: '600' },
-    errorCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.error + '20',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.md,
+    sectionTitle: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
         marginBottom: Spacing.md,
-        gap: Spacing.sm,
     },
-    errorText: { color: Colors.error, flex: 1 },
-    form: { marginBottom: Spacing.xl },
-    sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700', marginBottom: Spacing.md },
-    inputContainer: {
+    garageName: {
+        fontSize: FontSizes.xl,
+        fontWeight: '800',
+        marginBottom: Spacing.xs,
+    },
+    partDesc: {
+        fontSize: FontSizes.md,
+        marginBottom: Spacing.md,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#E5E5E5',
+        marginVertical: Spacing.sm,
+    },
+    priceRow: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        borderWidth: 1,
+        paddingVertical: Spacing.sm,
+    },
+    priceLabel: {
+        fontSize: FontSizes.md,
+        flex: 1,
+    },
+    priceValue: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+    },
+    totalLabel: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
+    },
+    totalValue: {
+        fontSize: FontSizes.xl,
+        fontWeight: '800',
+    },
+    infoCard: {
+        flexDirection: 'row',
+        padding: Spacing.md,
         borderRadius: BorderRadius.lg,
-        paddingHorizontal: Spacing.md,
-        marginBottom: Spacing.md,
-        gap: Spacing.sm,
+        marginBottom: Spacing.lg,
+        alignItems: 'flex-start',
     },
-    input: { flex: 1, paddingVertical: Spacing.md, fontSize: FontSizes.md },
-    row: { flexDirection: 'row', gap: Spacing.md },
-    halfInput: { flex: 1 },
-    hintCard: {
+    infoIcon: {
+        fontSize: 16,
+        marginRight: Spacing.sm,
+    },
+    infoText: {
+        flex: 1,
+        fontSize: FontSizes.sm,
+        color: '#1E40AF',
+        lineHeight: 20,
+    },
+    cardSection: {
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.lg,
+        ...Shadows.md,
+    },
+    cardInputLabel: {
+        fontSize: FontSizes.sm,
+        marginBottom: Spacing.sm,
+    },
+    cardFieldWrapper: {
+        backgroundColor: '#F9FAFB',
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.sm,
+        marginBottom: Spacing.md,
+    },
+    cardField: {
+        width: '100%',
+        height: 56,
+    },
+    cardSecurityRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    securityIcon: {
+        fontSize: 14,
+        marginRight: Spacing.xs,
+    },
+    securityText: {
+        fontSize: FontSizes.xs,
+    },
+    testCardInfo: {
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
-        gap: Spacing.sm,
+        marginTop: Spacing.sm,
     },
-    hintText: { flex: 1, fontSize: FontSizes.sm },
-    footer: { padding: Spacing.lg, borderTopWidth: 1 },
-    payButton: { width: '100%' },
-    buttonDisabled: { opacity: 0.6 },
+    testCardTitle: {
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+        color: '#92400E',
+        marginBottom: Spacing.xs,
+    },
+    testCardText: {
+        fontSize: FontSizes.sm,
+        color: '#92400E',
+        lineHeight: 18,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: Spacing.lg,
+        paddingBottom: Spacing.xl,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E5E5',
+    },
+    payButton: {
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+    },
+    payButtonDisabled: {
+        opacity: 0.7,
+    },
     payGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: Spacing.sm,
         paddingVertical: Spacing.lg,
-        borderRadius: BorderRadius.lg,
-    },
-    payButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.lg },
-    successContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: Spacing.xl,
-    },
-    successIcon: { marginBottom: Spacing.lg },
-    successGradient: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    successTitle: { fontSize: FontSizes.xxl, fontWeight: '700', marginBottom: Spacing.sm },
-    successAmount: { fontSize: 32, fontWeight: '700', marginBottom: Spacing.sm },
-    transactionId: { fontSize: FontSizes.sm, marginBottom: Spacing.lg },
-    escrowNote: { fontSize: FontSizes.sm, textAlign: 'center', marginBottom: Spacing.xl },
-    doneButton: { width: '100%' },
-    doneGradient: {
-        paddingVertical: Spacing.lg,
-        borderRadius: BorderRadius.lg,
-        alignItems: 'center',
+    payButtonText: {
+        color: '#fff',
+        fontSize: FontSizes.lg,
+        fontWeight: '800',
     },
-    doneButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.md },
-    processingContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+    secureText: {
+        textAlign: 'center',
+        marginTop: Spacing.sm,
+        fontSize: FontSizes.sm,
+        color: '#6B7280',
     },
-    processingText: { fontSize: FontSizes.lg, fontWeight: '600', marginTop: Spacing.lg },
-    processingSubtext: { fontSize: FontSizes.sm, marginTop: Spacing.sm },
 });

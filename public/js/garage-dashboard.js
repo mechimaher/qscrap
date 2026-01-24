@@ -4577,6 +4577,13 @@ async function viewOrder(orderId) {
         // Part details
         document.getElementById('orderModalVehicle').textContent = `${order.car_make || ''} ${order.car_model || ''} ${order.car_year || ''}`.trim();
         document.getElementById('orderModalPrice').textContent = (order.total_amount || order.part_price || 0) + ' QAR';
+
+        // Category and Subcategory
+        const categoryText = order.part_category
+            ? (order.part_subcategory ? `${order.part_category} > ${order.part_subcategory}` : order.part_category)
+            : '---';
+        document.getElementById('orderModalCategory').textContent = categoryText;
+
         document.getElementById('orderModalPart').textContent = order.part_description || '---';
         document.getElementById('orderModalCondition').textContent = formatConditionLabel(order.part_condition);
         document.getElementById('orderModalWarranty').textContent = (order.warranty_days || 0) + ' days';

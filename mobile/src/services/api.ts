@@ -36,6 +36,8 @@ export interface Request {
     bid_count: number;
     image_urls?: string[];
     delivery_address_text?: string;
+    delivery_lat?: string;
+    delivery_lng?: string;
     created_at: string;
     expires_at: string;
     lowest_bid_price?: number;  // Best offer price for display
@@ -682,6 +684,28 @@ class ApiService {
 
     async getPaymentMethods(): Promise<{ methods: any[] }> {
         return this.request('/payments/methods');
+    }
+
+    // Stripe Delivery Fee Payment
+    async createDeliveryFeeIntent(orderId: string): Promise<{
+        success: boolean;
+        intent: {
+            id: string;
+            clientSecret: string;
+            amount: number;
+            currency: string;
+        };
+    }> {
+        return this.request(`/payments/deposit/${orderId}`, {
+            method: 'POST',
+        });
+    }
+
+    // Confirm delivery fee payment - updates order from pending_payment to confirmed
+    async confirmDeliveryFeePayment(intentId: string): Promise<{ success: boolean; message: string }> {
+        return this.request(`/payments/deposit/confirm/${intentId}`, {
+            method: 'POST',
+        });
     }
 
     // ============================================

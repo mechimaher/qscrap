@@ -40,12 +40,12 @@ export class BadgeCountService {
         `, [customerId]);
 
         // Get order counts
-        // Note: Valid order_status values are: confirmed, preparing, ready_for_pickup, in_transit, delivered, completed, etc.
+        // Note: Valid order_status values are: pending_payment, confirmed, preparing, ready_for_pickup, in_transit, delivered, completed, etc.
         // Valid payment_status values are: pending, paid, refunded, partially_refunded
         const ordersResult = await this.pool.query(`
             SELECT 
-                COUNT(*) FILTER (WHERE order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'in_transit')) as active,
-                COUNT(*) FILTER (WHERE order_status IN ('confirmed', 'preparing', 'ready_for_pickup') AND payment_status = 'pending') as pending_payment,
+                COUNT(*) FILTER (WHERE order_status IN ('pending_payment', 'confirmed', 'preparing', 'ready_for_pickup', 'in_transit')) as active,
+                COUNT(*) FILTER (WHERE order_status = 'pending_payment') as pending_payment,
                 COUNT(*) FILTER (WHERE order_status = 'in_transit') as in_transit,
                 COUNT(*) FILTER (WHERE order_status = 'delivered' AND payment_status != 'paid') as pending_confirmation
             FROM orders o

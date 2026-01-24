@@ -82,7 +82,13 @@ export type RootStackParamList = {
   VINScanner: undefined;
   ManualVINEntry: { onVINScanned?: (vin: string) => void };
   // Payment & Escrow
-  Payment: { order?: any; amount: number };
+  Payment: {
+    bidId: string;
+    garageName: string;
+    partPrice: number;
+    deliveryFee: number;
+    partDescription: string;
+  };
   DeliveryConfirmation: { order?: any; escrow?: any };
   // Vehicles
   MyVehicles: undefined;

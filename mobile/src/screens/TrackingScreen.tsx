@@ -535,7 +535,7 @@ export default function TrackingScreen() {
                     </TouchableOpacity>
                     <View style={styles.headerInfo}>
                         <Text style={[styles.headerTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.liveTracking')}</Text>
-                        <Text style={[styles.orderNumber, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.orderNumber')} {orderNumber}</Text>
+                        <Text style={[styles.orderNumber, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.orderNumber', { number: orderNumber })}</Text>
                     </View>
                     <View style={styles.headerActions}>
                         <View style={[styles.connectionDot, isConnected && styles.connectionDotActive]} />
