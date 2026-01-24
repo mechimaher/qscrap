@@ -13,6 +13,7 @@ export const en = {
     back: 'Back',
     next: 'Next',
     done: 'Done',
+    ok: 'OK',
 
     // Auth
     login: 'Login',
@@ -41,6 +42,8 @@ export const en = {
     no_assignments: 'No active assignments',
     go_online_message: 'Go online to receive assignments',
     new_assignments_message: 'New assignments will appear here',
+    acquiring_gps: 'Acquiring GPS...',
+    map_unavailable: 'Map unavailable',
 
     // Assignments
     assignment: 'Assignment',
@@ -51,6 +54,12 @@ export const en = {
     pickup_from: 'Pick up from',
     deliver_to: 'Deliver to',
     order_number: 'Order #',
+    assignment_accepted: 'Assignment Accepted!',
+    assignment_accepted_message: 'You can now start the delivery. Good luck!',
+    assignment_rejected: 'Assignment Rejected',
+    assignment_rejected_message: 'This assignment has been declined. Operations will reassign it to another driver.',
+    assignment_expired: 'Assignment Expired',
+    assignment_expired_message: 'You did not respond in time. The assignment may be reassigned.',
 
     // Status
     assigned: 'Assigned',
@@ -63,13 +72,40 @@ export const en = {
     complete_delivery: 'Complete Delivery',
     mark_failed: 'Mark as Failed',
 
+    // POD (Proof of Delivery)
+    pod_title: 'Proof of Delivery',
+    take_photo: 'Take Photo',
+    retake_photo: 'Retake Photo',
+    photo_required: 'Photo Required',
+    photo_of_package: 'Take a photo of the delivered package',
+    payment_collection: 'Payment Collection',
+    collect_amount: 'Collect {{amount}} QAR',
+    how_did_customer_pay: 'How did customer pay?',
+    cash: 'Cash',
+    card_transfer: 'Card / Transfer',
+    full_payment_collected: 'Full Payment Already Collected',
+    customer_paid_online: 'Customer paid {{amount}} QAR online',
+    no_cash_collection: 'No cash collection needed',
+    part_price_only: 'Part price only',
+    part_plus_delivery: 'Part {{part}} + Delivery {{delivery}}',
+    delivery_fee_paid_online: 'Delivery fee ({{amount}} QAR) paid online',
+    complete_delivery_button: 'Complete Delivery ✓',
+    delivery_completed: 'Delivery Completed!',
+    delivery_completed_message: 'Great job! The delivery has been confirmed.',
+
     // Earnings
     today_earnings: "Today's Earnings",
     this_week: 'This Week',
+    this_month: 'This Month',
     total_earnings: 'Total Earnings',
     total_deliveries: 'Total Deliveries',
     earning_history: 'Earning History',
     no_earnings: 'No earnings yet',
+    pending_payout: 'Pending Payout',
+    payout_history: 'Payout History',
+    wallet: 'Wallet',
+    balance: 'Balance',
+    withdraw: 'Withdraw',
 
     // Profile
     profile: 'Profile',
@@ -81,6 +117,22 @@ export const en = {
     completed_deliveries: 'Completed Deliveries',
     average_rating: 'Average Rating',
     settings: 'Settings',
+
+    // Settings
+    language: 'Language',
+    english: 'English',
+    arabic: 'العربية',
+    change_language: 'Change Language',
+    language_changed: 'Language Changed',
+    restart_for_layout: 'Please restart the app to apply layout changes',
+    notifications: 'Notifications',
+    dark_mode: 'Dark Mode',
+    about: 'About',
+    version: 'Version',
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
+    support: 'Support',
+    contact_support: 'Contact Support',
 
     // Chat
     chat: 'Chat',
@@ -105,6 +157,14 @@ export const en = {
     minutes_ago: '{{count}} min ago',
     hours_ago: '{{count}}h ago',
     yesterday: 'Yesterday',
+
+    // Navigation Screen
+    navigate: 'Navigate',
+    start_navigation: 'Start Navigation',
+    arrived_at_pickup: 'Arrived at Pickup',
+    arrived_at_delivery: 'Arrived at Delivery',
+    confirm_arrived: 'Confirm Arrived',
 };
 
 export default en;
+

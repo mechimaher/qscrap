@@ -59,7 +59,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const setLanguage = async (lang: Language) => {
         setLanguageState(lang);
         await AsyncStorage.setItem('settings_language', lang);
-        // In a real app, you'd trigger i18n reload here
+        // Also save to I18n storage key for I18nProvider compatibility
+        await AsyncStorage.setItem('qscrap_driver_language', lang);
+        // RTL is handled by I18nManager in the I18nProvider on next app load
     };
 
     const setThemeMode = async (mode: ThemeMode) => {
