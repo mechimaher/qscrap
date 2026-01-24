@@ -13,6 +13,7 @@ export const ar = {
     back: 'رجوع',
     next: 'التالي',
     done: 'تم',
+    ok: 'حسناً',
 
     // Auth
     login: 'تسجيل الدخول',
@@ -41,6 +42,8 @@ export const ar = {
     no_assignments: 'لا توجد مهام نشطة',
     go_online_message: 'كن متصلاً لاستلام المهام',
     new_assignments_message: 'ستظهر المهام الجديدة هنا',
+    acquiring_gps: 'جاري تحديد الموقع...',
+    map_unavailable: 'الخريطة غير متاحة',
 
     // Assignments
     assignment: 'مهمة',
@@ -51,6 +54,12 @@ export const ar = {
     pickup_from: 'الاستلام من',
     deliver_to: 'التوصيل إلى',
     order_number: 'رقم الطلب #',
+    assignment_accepted: 'تم قبول المهمة!',
+    assignment_accepted_message: 'يمكنك الآن بدء التوصيل. بالتوفيق!',
+    assignment_rejected: 'تم رفض المهمة',
+    assignment_rejected_message: 'تم رفض هذه المهمة. سيتم إعادة تعيينها لسائق آخر.',
+    assignment_expired: 'انتهت المهمة',
+    assignment_expired_message: 'لم ترد في الوقت المحدد. قد تُعاد المهمة لسائق آخر.',
 
     // Status
     assigned: 'مُعيّن',
@@ -63,13 +72,40 @@ export const ar = {
     complete_delivery: 'إتمام التوصيل',
     mark_failed: 'تحديد كفشل',
 
+    // POD (Proof of Delivery)
+    pod_title: 'إثبات التسليم',
+    take_photo: 'التقط صورة',
+    retake_photo: 'إعادة التقاط الصورة',
+    photo_required: 'الصورة مطلوبة',
+    photo_of_package: 'التقط صورة للطرد المسلّم',
+    payment_collection: 'تحصيل المبلغ',
+    collect_amount: 'حصّل {{amount}} ر.ق',
+    how_did_customer_pay: 'كيف دفع العميل؟',
+    cash: 'نقداً',
+    card_transfer: 'بطاقة / تحويل',
+    full_payment_collected: 'تم تحصيل المبلغ بالكامل',
+    customer_paid_online: 'دفع العميل {{amount}} ر.ق عبر الإنترنت',
+    no_cash_collection: 'لا حاجة لتحصيل نقدي',
+    part_price_only: 'سعر القطعة فقط',
+    part_plus_delivery: 'قطعة {{part}} + توصيل {{delivery}}',
+    delivery_fee_paid_online: 'رسوم التوصيل ({{amount}} ر.ق) مدفوعة',
+    complete_delivery_button: 'إتمام التوصيل ✓',
+    delivery_completed: 'اكتمل التوصيل!',
+    delivery_completed_message: 'أحسنت! تم تأكيد التوصيل.',
+
     // Earnings
     today_earnings: 'أرباح اليوم',
     this_week: 'هذا الأسبوع',
+    this_month: 'هذا الشهر',
     total_earnings: 'إجمالي الأرباح',
     total_deliveries: 'إجمالي التوصيلات',
     earning_history: 'سجل الأرباح',
     no_earnings: 'لا توجد أرباح بعد',
+    pending_payout: 'مستحقات معلقة',
+    payout_history: 'سجل المدفوعات',
+    wallet: 'المحفظة',
+    balance: 'الرصيد',
+    withdraw: 'سحب',
 
     // Profile
     profile: 'الملف الشخصي',
@@ -81,6 +117,22 @@ export const ar = {
     completed_deliveries: 'التوصيلات المكتملة',
     average_rating: 'متوسط التقييم',
     settings: 'الإعدادات',
+
+    // Settings
+    language: 'اللغة',
+    english: 'English',
+    arabic: 'العربية',
+    change_language: 'تغيير اللغة',
+    language_changed: 'تم تغيير اللغة',
+    restart_for_layout: 'يرجى إعادة تشغيل التطبيق لتطبيق تغييرات التخطيط',
+    notifications: 'الإشعارات',
+    dark_mode: 'الوضع الداكن',
+    about: 'حول',
+    version: 'الإصدار',
+    terms: 'شروط الخدمة',
+    privacy: 'سياسة الخصوصية',
+    support: 'الدعم',
+    contact_support: 'تواصل مع الدعم',
 
     // Chat
     chat: 'المحادثة',
@@ -105,6 +157,13 @@ export const ar = {
     minutes_ago: 'منذ {{count}} دقيقة',
     hours_ago: 'منذ {{count}} ساعة',
     yesterday: 'أمس',
+
+    // Navigation Screen
+    navigate: 'تنقل',
+    start_navigation: 'بدء الملاحة',
+    arrived_at_pickup: 'وصلت لنقطة الاستلام',
+    arrived_at_delivery: 'وصلت لنقطة التسليم',
+    confirm_arrived: 'تأكيد الوصول',
 };
 
 export default ar;

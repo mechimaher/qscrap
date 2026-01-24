@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { I18nManager } from 'react-native';
+import { I18nManager, Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { en } from './en';
 import { ar } from './ar';
 
@@ -28,10 +29,19 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         const loadLanguage = async () => {
             try {
-                const savedLang = await SecureStore.getItemAsync(LANGUAGE_KEY);
+                // Try SecureStore first, then AsyncStorage
+                let savedLang = await SecureStore.getItemAsync(LANGUAGE_KEY);
+                if (!savedLang) {
+                    savedLang = await AsyncStorage.getItem(LANGUAGE_KEY);
+                }
                 if (savedLang && (savedLang === 'en' || savedLang === 'ar')) {
                     setLanguageState(savedLang);
-                    I18nManager.forceRTL(savedLang === 'ar');
+                    // Sync RTL state
+                    const shouldBeRTL = savedLang === 'ar';
+                    if (I18nManager.isRTL !== shouldBeRTL) {
+                        I18nManager.allowRTL(shouldBeRTL);
+                        I18nManager.forceRTL(shouldBeRTL);
+                    }
                 }
             } catch (e) {
                 console.log('Failed to load language:', e);
@@ -44,14 +54,35 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const setLanguage = useCallback(async (lang: Language) => {
         try {
+            const previousLang = language;
+            const previousRTL = I18nManager.isRTL;
+            const shouldBeRTL = lang === 'ar';
+
+            // Save to storage
             await SecureStore.setItemAsync(LANGUAGE_KEY, lang);
+            await AsyncStorage.setItem(LANGUAGE_KEY, lang);
             setLanguageState(lang);
-            I18nManager.forceRTL(lang === 'ar');
-            // Note: App restart may be required for full RTL support
+
+            // Handle RTL layout change
+            if (previousRTL !== shouldBeRTL) {
+                I18nManager.allowRTL(shouldBeRTL);
+                I18nManager.forceRTL(shouldBeRTL);
+
+                // Alert user about restart requirement
+                Alert.alert(
+                    lang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
+                    lang === 'ar'
+                        ? 'يرجى إعادة تشغيل التطبيق لتطبيق تغييرات التخطيط'
+                        : 'Please restart the app to apply layout changes',
+                    [{ text: lang === 'ar' ? 'حسناً' : 'OK', style: 'default' }]
+                );
+            }
+
+            console.log(`[i18n] Language changed: ${previousLang} → ${lang}`);
         } catch (e) {
             console.error('Failed to save language:', e);
         }
-    }, []);
+    }, [language]);
 
     const t = useCallback((key: TranslationKey, params?: Record<string, string | number>): string => {
         let text = translations[language][key] || translations.en[key] || key;
