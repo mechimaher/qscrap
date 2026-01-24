@@ -80,6 +80,10 @@ export default function LoginScreen() {
                             <View style={styles.inputIconContainer}>
                                 <Text style={styles.inputIcon}>📱</Text>
                             </View>
+                            {/* P1 FIX: Qatar Country Code Display */}
+                            <View style={styles.countryCodeContainer}>
+                                <Text style={styles.countryCodeText}>+974</Text>
+                            </View>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Phone Number"
@@ -137,6 +141,26 @@ export default function LoginScreen() {
                                     </>
                                 )}
                             </LinearGradient>
+                        </TouchableOpacity>
+
+                        {/* P2: Forgot Password */}
+                        <TouchableOpacity
+                            style={styles.forgotPasswordButton}
+                            onPress={() => {
+                                Alert.alert(
+                                    'Forgot Password?',
+                                    'Driver accounts are managed by QScrap Operations. Please contact support on WhatsApp to reset your password.',
+                                    [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        {
+                                            text: 'Contact Support',
+                                            onPress: () => Linking.openURL('whatsapp://send?phone=97455555555&text=Hi, I need help resetting my driver password')
+                                        }
+                                    ]
+                                );
+                            }}
+                        >
+                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -231,6 +255,16 @@ const styles = StyleSheet.create({
     inputIcon: {
         fontSize: 20,
     },
+    countryCodeContainer: {
+        paddingRight: 8,
+        borderRightWidth: 1,
+        borderRightColor: 'rgba(255,255,255,0.2)',
+    },
+    countryCodeText: {
+        fontSize: 16,
+        color: '#fff',
+        fontWeight: '600',
+    },
     input: {
         flex: 1,
         height: 56,
@@ -268,6 +302,17 @@ const styles = StyleSheet.create({
         color: Colors.primaryDark,
         fontSize: 20,
         fontWeight: FontWeights.bold,
+    },
+    forgotPasswordButton: {
+        marginTop: 16,
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    forgotPasswordText: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 14,
+        fontWeight: '600',
+        textDecorationLine: 'underline',
     },
     footer: {
         alignItems: 'center',

@@ -318,6 +318,32 @@ export default function AssignmentDetailScreen() {
                         {assignment.delivery_address}
                     </Text>
 
+                    {/* P1 FIX: ETA Display for Active Assignments */}
+                    {isActive && location && assignment.delivery_lat && assignment.delivery_lng && (() => {
+                        const { calculateETA, formatCountdown, getETAColor } = require('../services/eta.service');
+                        const eta = calculateETA(
+                            location.latitude,
+                            location.longitude,
+                            assignment.delivery_lat,
+                            assignment.delivery_lng,
+                            assignment.status === 'in_transit' ? 'delivery' : 'none'
+                        );
+                        return (
+                            <View style={[styles.etaBadge, { backgroundColor: getETAColor(eta.durationMinutes) + '15' }]}>
+                                <Text style={{ fontSize: 16 }}>🕒</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.etaLabel, { color: colors.textMuted }]}>Estimated Arrival</Text>
+                                    <Text style={[styles.etaTime, { color: getETAColor(eta.durationMinutes) }]}>
+                                        {eta.countdownText} • {eta.formattedETA}
+                                    </Text>
+                                    <Text style={[styles.etaDistance, { color: colors.textMuted }]}>
+                                        {eta.distanceKm} km away
+                                    </Text>
+                                </View>
+                            </View>
+                        );
+                    })()}
+
                     {/* Actions - Different for active vs completed */}
                     <View style={styles.actionRow}>
                         {isActive && ['picked_up', 'in_transit'].includes(assignment.status) && (
@@ -638,6 +664,19 @@ const styles = StyleSheet.create({
     },
     locationName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
     locationAddress: { fontSize: 14, lineHeight: 20 },
+
+    // ETA Badge (P1 Fix)
+    etaBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 12,
+    },
+    etaLabel: { fontSize: 12, fontWeight: '500' },
+    etaTime: { fontSize: 16, fontWeight: '700', marginTop: 2 },
+    etaDistance: { fontSize: 12, marginTop: 2 },
 
     // Action Buttons
     actionRow: { flexDirection: 'row', gap: 10, marginTop: 14, flexWrap: 'wrap' },

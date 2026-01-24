@@ -18,6 +18,8 @@ import {
     getMyProfile,
     getMyAssignments,
     getAssignmentDetails,
+    acceptAssignment,
+    rejectAssignment,
     updateAssignmentStatus,
     updateMyLocation,
     getWallet,
@@ -64,6 +66,12 @@ router.post('/availability', validate(toggleAvailabilitySchema), toggleAvailabil
 
 // Get driver's assignments (active by default)
 router.get('/assignments', getMyAssignments as unknown as RequestHandler);
+
+// Accept pending assignment (P0 Critical - Jan 2026)
+router.post('/assignments/:assignment_id/accept', acceptAssignment as unknown as RequestHandler);
+
+// Reject pending assignment (P0 Critical - Jan 2026)
+router.post('/assignments/:assignment_id/reject', rejectAssignment as unknown as RequestHandler);
 
 // Get specific assignment details
 router.get('/assignments/:assignment_id', getAssignmentDetails as unknown as RequestHandler);

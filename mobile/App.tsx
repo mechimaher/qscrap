@@ -19,6 +19,7 @@ import { Address } from './src/services/api';
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import VerifyOTPScreen from './src/screens/auth/VerifyOTPScreen';
 
 // Import Tab screens
 import HomeScreen from './src/screens/tabs/HomeScreen';
@@ -94,6 +95,12 @@ export type RootStackParamList = {
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  VerifyOTP: {
+    email: string;
+    full_name: string;
+    phone_number: string;
+    password: string;
+  };
 };
 
 export type MainTabParamList = {
@@ -188,6 +195,7 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
     </AuthStack.Navigator>
   );
 }

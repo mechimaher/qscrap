@@ -89,7 +89,30 @@ export class WalletService {
 
             updateQuery += ` WHERE wallet_id = $2`;
 
+            // P0 Safety Check: Negative Balance Threshold (Jan 2026 Audit)
+            // PREVENT transactions that would exceed 500 QAR deficit (credit risk protection)
+            const balanceCheckBefore = await client.query(`
+                SELECT balance FROM driver_wallets WHERE wallet_id = $1
+            `, [walletId]);
+
+            const currentBalance = parseFloat(balanceCheckBefore.rows[0]?.balance || 0);
+            const projectedBalance = currentBalance + amount;
+            const NEGATIVE_BALANCE_THRESHOLD = -500; // QAR
+
+            // Block transaction if it would exceed the negative threshold
+            if (projectedBalance < NEGATIVE_BALANCE_THRESHOLD) {
+                await client.query('ROLLBACK');
+                console.error(`[WALLET_BLOCKED] Transaction blocked for wallet ${walletId}: Would result in ${projectedBalance.toFixed(2)} QAR (threshold: ${NEGATIVE_BALANCE_THRESHOLD} QAR)`);
+                throw new Error(`Transaction blocked: Driver balance would exceed credit limit of ${Math.abs(NEGATIVE_BALANCE_THRESHOLD)} QAR. Current: ${currentBalance.toFixed(2)} QAR, Attempted: ${amount.toFixed(2)} QAR`);
+            }
+
+            // Execute wallet update if within safety threshold
             await client.query(updateQuery, [amount, walletId]);
+
+            // Warning for balances approaching threshold (within 100 QAR of limit)
+            if (projectedBalance < (NEGATIVE_BALANCE_THRESHOLD + 100) && projectedBalance >= NEGATIVE_BALANCE_THRESHOLD) {
+                console.warn(`[WALLET_WARNING] Driver wallet ${walletId} approaching negative balance threshold: ${projectedBalance.toFixed(2)} QAR (limit: ${NEGATIVE_BALANCE_THRESHOLD} QAR)`);
+            }
 
             await client.query('COMMIT');
             return txRes.rows[0];

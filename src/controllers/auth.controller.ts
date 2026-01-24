@@ -5,6 +5,8 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import logger from '../utils/logger';
 import { catchAsync } from '../utils/catchAsync';
 import { AuthService } from '../services/auth';
+import { otpService } from '../services/otp.service';
+import { emailService } from '../services/email.service';
 
 const authService = new AuthService(pool);
 
@@ -68,4 +70,181 @@ export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) 
         if (getErrorMessage(err) === 'User not found') return res.status(404).json({ error: 'User not found' });
         throw err;
     }
+});
+
+/**
+ * Register customer with email (Step 1 of 2)
+ * Creates pending account and sends OTP email
+ */
+export const registerWithEmail = catchAsync(async (req: Request, res: Response) => {
+    const { full_name, email, phone_number, password } = req.body;
+
+    // Validation
+    if (!full_name || !email || !phone_number || !password) {
+        return res.status(400).json({ error: 'Missing required fields: full_name, email, phone_number, password' });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Phone validation
+    if (!isValidPhoneNumber(phone_number)) {
+        return res.status(400).json({
+            error: 'Invalid phone number format',
+            hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number'
+        });
+    }
+
+    // Password length
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Check if user already exists
+    const userExists = await authService.checkUserExists(phone_number);
+    if (userExists) {
+        return res.status(400).json({ error: 'User with this phone number already exists' });
+    }
+
+    // Check if email already in use
+    const emailCheck = await pool.query(
+        'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+        [email]
+    );
+    if (emailCheck.rows.length > 0) {
+        return res.status(400).json({ error: 'Email address already in use' });
+    }
+
+    // Create OTP
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    const otpResult = await otpService.createOTP(email, 'registration', ipAddress, userAgent);
+
+    if (!otpResult.success) {
+        return res.status(429).json({
+            error: otpResult.error,
+            waitSeconds: otpResult.waitSeconds
+        });
+    }
+
+    // Send OTP email
+    const emailSent = await emailService.sendOTPEmail(email, otpResult.otp!, full_name);
+
+    if (!emailSent) {
+        return res.status(500).json({ error: 'Failed to send verification email. Please try again.' });
+    }
+
+    logger.info('[Auth] OTP email sent for registration', { email, phone_number });
+
+    res.status(200).json({
+        success: true,
+        message: 'Verification code sent to your email',
+        email,
+        expiresIn: 600 // 10 minutes
+    });
+});
+
+/**
+ * Verify email OTP and complete registration (Step 2 of 2)
+ */
+export const verifyEmailOTP = catchAsync(async (req: Request, res: Response) => {
+    const { email, otp, full_name, phone_number, password } = req.body;
+
+    // Validation
+    if (!email || !otp || !full_name || !phone_number || !password) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Verify OTP
+    const verifyResult = await otpService.verifyOTP(email, otp, 'registration');
+
+    if (!verifyResult.success) {
+        return res.status(400).json({
+            error: verifyResult.error,
+            attemptsRemaining: verifyResult.attemptsRemaining
+        });
+    }
+
+    // Register the user
+    try {
+        const result = await authService.registerUser({
+            phone_number,
+            password,
+            user_type: 'customer',
+            full_name,
+            email: email.toLowerCase().trim()
+        });
+
+        // Mark email as verified
+        await pool.query(
+            'UPDATE users SET email_verified = TRUE WHERE id = $1',
+            [result.userId]
+        );
+
+        // Invalidate all other OTPs for this email
+        await otpService.invalidateOTPs(email, 'registration');
+
+        logger.info('[Auth] Email verified and user registered', { userId: result.userId, email });
+
+        res.status(201).json({
+            success: true,
+            message: 'Registration successful',
+            token: result.token,
+            userId: result.userId,
+            userType: 'customer',
+            emailVerified: true
+        });
+    } catch (error) {
+        logger.error('[Auth] Registration failed after OTP verification', { error, email });
+        return res.status(500).json({ error: 'Registration failed. Please try again.' });
+    }
+});
+
+/**
+ * Resend OTP email
+ */
+export const resendOTP = catchAsync(async (req: Request, res: Response) => {
+    const { email, full_name } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    // Create new OTP
+    const otpResult = await otpService.createOTP(email, 'registration', ipAddress, userAgent);
+
+    if (!otpResult.success) {
+        return res.status(429).json({
+            error: otpResult.error,
+            waitSeconds: otpResult.waitSeconds
+        });
+    }
+
+    // Send OTP email
+    const emailSent = await emailService.sendOTPEmail(email, otpResult.otp!, full_name);
+
+    if (!emailSent) {
+        return res.status(500).json({ error: 'Failed to send verification email. Please try again.' });
+    }
+
+    logger.info('[Auth] OTP email resent', { email });
+
+    res.status(200).json({
+        success: true,
+        message: 'Verification code resent to your email',
+        expiresIn: 600
+    });
 });

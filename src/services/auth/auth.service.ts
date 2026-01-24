@@ -13,6 +13,7 @@ export interface RegisterData {
     password: string;
     user_type: 'customer' | 'garage';
     full_name?: string;
+    email?: string;
     garage_name?: string;
     address?: string;
     supplier_type?: string;
@@ -46,7 +47,10 @@ export class AuthService {
         try {
             await client.query('BEGIN');
             const hash = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
-            const userResult = await client.query('INSERT INTO users (phone_number, password_hash, user_type, full_name) VALUES ($1, $2, $3, $4) RETURNING user_id', [data.phone_number, hash, data.user_type, data.full_name]);
+            const userResult = await client.query(
+                'INSERT INTO users (phone_number, password_hash, user_type, full_name, email) VALUES ($1, $2, $3, $4, $5) RETURNING user_id',
+                [data.phone_number, hash, data.user_type, data.full_name, data.email || null]
+            );
             const userId = userResult.rows[0].user_id;
 
             if (data.user_type === 'garage' && data.garage_name) {

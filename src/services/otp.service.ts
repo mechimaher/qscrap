@@ -1,0 +1,273 @@
+// QScrap OTP Service - Email Verification System
+// Provides secure, cost-free email verification via 6-digit OTP codes
+
+import crypto from 'crypto';
+import pool from '../config/db';
+
+interface OTPResult {
+    success: boolean;
+    otp?: string;
+    error?: string;
+    waitSeconds?: number;
+}
+
+interface VerifyResult {
+    success: boolean;
+    error?: string;
+    attemptsRemaining?: number;
+}
+
+interface RateLimitResult {
+    allowed: boolean;
+    waitSeconds?: number;
+}
+
+export class OTPService {
+    private readonly OTP_LENGTH = 6;
+    private readonly OTP_EXPIRY_MINUTES = 10;
+    private readonly RESEND_COOLDOWN_SECONDS = 30;
+    private readonly MAX_ATTEMPTS = 5;
+
+    /**
+     * Generate a secure 6-digit OTP
+     */
+    generateOTP(): string {
+        return crypto.randomInt(100000, 999999).toString();
+    }
+
+    /**
+     * Create and store OTP in database
+     */
+    async createOTP(
+        email: string,
+        purpose: string = 'registration',
+        ipAddress?: string,
+        userAgent?: string
+    ): Promise<OTPResult> {
+        try {
+            email = email.toLowerCase().trim();
+
+            // Check rate limiting
+            const rateLimit = await this.canSendOTP(email);
+            if (!rateLimit.allowed) {
+                return {
+                    success: false,
+                    error: `Please wait ${rateLimit.waitSeconds} seconds before requesting another code`,
+                    waitSeconds: rateLimit.waitSeconds
+                };
+            }
+
+            const otp = this.generateOTP();
+            const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
+
+            await pool.query(
+                `INSERT INTO email_otps (email, otp_code, purpose, expires_at, ip_address, user_agent)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [email, otp, purpose, expiresAt, ipAddress, userAgent]
+            );
+
+            console.log(`[OTP] Created OTP for ${email} (purpose: ${purpose})`);
+
+            return {
+                success: true,
+                otp
+            };
+        } catch (error: any) {
+            console.error('[OTP] Create error:', error);
+            return {
+                success: false,
+                error: 'Failed to generate OTP'
+            };
+        }
+    }
+
+    /**
+     * Verify OTP code
+     */
+    async verifyOTP(
+        email: string,
+        otpCode: string,
+        purpose: string = 'registration'
+    ): Promise<VerifyResult> {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            email = email.toLowerCase().trim();
+
+            // Find the most recent valid OTP
+            const result = await client.query(
+                `SELECT * FROM email_otps
+                 WHERE email = $1 
+                 AND purpose = $2
+                 AND is_used = FALSE
+                 AND expires_at > NOW()
+                 ORDER BY created_at DESC
+                 LIMIT 1`,
+                [email, purpose]
+            );
+
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return {
+                    success: false,
+                    error: 'No valid OTP found. Please request a new code.'
+                };
+            }
+
+            const otpRecord = result.rows[0];
+
+            // Check if max attempts exceeded
+            if (otpRecord.attempts >= otpRecord.max_attempts) {
+                await client.query('ROLLBACK');
+                return {
+                    success: false,
+                    error: 'Maximum verification attempts exceeded. Please request a new code.'
+                };
+            }
+
+            // Increment attempts
+            await client.query(
+                `UPDATE email_otps SET attempts = attempts + 1 WHERE id = $1`,
+                [otpRecord.id]
+            );
+
+            // Verify the OTP code
+            if (otpRecord.otp_code !== otpCode.trim()) {
+                const attemptsRemaining = otpRecord.max_attempts - (otpRecord.attempts + 1);
+                await client.query('ROLLBACK');
+
+                return {
+                    success: false,
+                    error: `Invalid code. ${attemptsRemaining} attempts remaining.`,
+                    attemptsRemaining
+                };
+            }
+
+            // Mark OTP as used
+            await client.query(
+                `UPDATE email_otps SET is_used = TRUE WHERE id = $1`,
+                [otpRecord.id]
+            );
+
+            await client.query('COMMIT');
+
+            console.log(`[OTP] Successfully verified OTP for ${email}`);
+
+            return {
+                success: true
+            };
+        } catch (error: any) {
+            await client.query('ROLLBACK');
+            console.error('[OTP] Verify error:', error);
+            return {
+                success: false,
+                error: 'Verification failed. Please try again.'
+            };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Check if user can send another OTP (rate limiting)
+     */
+    async canSendOTP(email: string): Promise<RateLimitResult> {
+        try {
+            email = email.toLowerCase().trim();
+
+            const result = await pool.query(
+                `SELECT created_at FROM email_otps
+                 WHERE email = $1
+                 ORDER BY created_at DESC
+                 LIMIT 1`,
+                [email]
+            );
+
+            if (result.rows.length === 0) {
+                return { allowed: true };
+            }
+
+            const lastSent = new Date(result.rows[0].created_at);
+            const now = new Date();
+            const diffSeconds = Math.floor((now.getTime() - lastSent.getTime()) / 1000);
+
+            if (diffSeconds < this.RESEND_COOLDOWN_SECONDS) {
+                return {
+                    allowed: false,
+                    waitSeconds: this.RESEND_COOLDOWN_SECONDS - diffSeconds
+                };
+            }
+
+            return { allowed: true };
+        } catch (error: any) {
+            console.error('[OTP] Rate limit check error:', error);
+            // Allow on error to not block users
+            return { allowed: true };
+        }
+    }
+
+    /**
+     * Invalidate all OTPs for an email (e.g., on successful verification)
+     */
+    async invalidateOTPs(email: string, purpose: string = 'registration'): Promise<void> {
+        try {
+            email = email.toLowerCase().trim();
+
+            await pool.query(
+                `UPDATE email_otps 
+                 SET is_used = TRUE 
+                 WHERE email = $1 AND purpose = $2 AND is_used = FALSE`,
+                [email, purpose]
+            );
+
+            console.log(`[OTP] Invalidated all OTPs for ${email} (purpose: ${purpose})`);
+        } catch (error: any) {
+            console.error('[OTP] Invalidate error:', error);
+        }
+    }
+
+    /**
+     * Cleanup expired OTPs (should be run as cron job)
+     */
+    async cleanupExpiredOTPs(): Promise<number> {
+        try {
+            const result = await pool.query(
+                `DELETE FROM email_otps WHERE expires_at < NOW()`
+            );
+
+            const deletedCount = result.rowCount || 0;
+            if (deletedCount > 0) {
+                console.log(`[OTP] Cleaned up ${deletedCount} expired OTPs`);
+            }
+
+            return deletedCount;
+        } catch (error: any) {
+            console.error('[OTP] Cleanup error:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Get OTP statistics for monitoring
+     */
+    async getStats(): Promise<{ total: number; active: number; expired: number; used: number }> {
+        try {
+            const result = await pool.query(`
+                SELECT 
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE is_used = FALSE AND expires_at > NOW()) as active,
+                    COUNT(*) FILTER (WHERE expires_at < NOW() AND is_used = FALSE) as expired,
+                    COUNT(*) FILTER (WHERE is_used = TRUE) as used
+                FROM email_otps
+            `);
+
+            return result.rows[0];
+        } catch (error: any) {
+            console.error('[OTP] Stats error:', error);
+            return { total: 0, active: 0, expired: 0, used: 0 };
+        }
+    }
+}
+
+export const otpService = new OTPService();

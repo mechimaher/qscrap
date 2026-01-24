@@ -50,6 +50,71 @@ export const getAssignmentDetails = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const acceptAssignment = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await driverService.acceptAssignment(req.user!.userId, req.params.assignment_id);
+
+        // Real-time status sync
+        const io = (global as any).io;
+        if (io) {
+            io.to(`driver_${req.user!.userId}`).emit('assignment_accepted', {
+                assignment_id: req.params.assignment_id,
+                user_id: req.user!.userId
+            });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error('acceptAssignment Error:', err);
+        if (getErrorMessage(err).includes('not found')) {
+            return res.status(404).json({ error: getErrorMessage(err) });
+        }
+        if (getErrorMessage(err).includes('Cannot accept assignment')) {
+            return res.status(400).json({ error: getErrorMessage(err) });
+        }
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const rejectAssignment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { rejection_reason } = req.body;
+        const result = await driverService.rejectAssignment(
+            req.user!.userId,
+            req.params.assignment_id,
+            rejection_reason
+        );
+
+        // Real-time status sync
+        const io = (global as any).io;
+        if (io) {
+            io.to(`driver_${req.user!.userId}`).emit('assignment_rejected', {
+                assignment_id: req.params.assignment_id,
+                user_id: req.user!.userId,
+                reason: rejection_reason
+            });
+
+            // Notify operations that assignment was rejected for reassignment
+            io.to('operations').emit('assignment_rejected_by_driver', {
+                assignment_id: req.params.assignment_id,
+                driver_id: req.user!.userId,
+                reason: rejection_reason
+            });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error('rejectAssignment Error:', err);
+        if (getErrorMessage(err).includes('not found')) {
+            return res.status(404).json({ error: getErrorMessage(err) });
+        }
+        if (getErrorMessage(err).includes('Cannot reject assignment')) {
+            return res.status(400).json({ error: getErrorMessage(err) });
+        }
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
 // ============================================================================
 // LOCATION TRACKING
 // ============================================================================

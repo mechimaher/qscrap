@@ -11,7 +11,7 @@ import {
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useJobStore } from '../../stores/useJobStore';
 import { GlassCard } from '../../components/common/GlassCard';
@@ -41,19 +41,36 @@ export default function AssignmentsScreen() {
         return true;
     });
 
-    useEffect(() => {
-        // Initial sync
-        loadAssignments();
-    }, []);
+    // FIX: Auto-reload when screen comes into focus (e.g., navigating back from details)
+    useFocusEffect(
+        useCallback(() => {
+            console.log('[Assignments] Screen focused, loading assignments...');
+            loadAssignments();
+        }, [filter])
+    );
 
     const loadAssignments = async () => {
         try {
             // Only show loader if we have no data
             if (assignments.length === 0) setIsLoading(true);
 
-            // Fetch all to update store
-            const result = await api.getAssignments('all');
-            setAssignments(result.assignments || []);
+            // Fetch based on current filter to reduce data transfer
+            const result = await api.getAssignments(filter);
+
+            // Update the store with fetched assignments
+            // For 'all' filter, replace entire store
+            // For specific filters, merge with existing data
+            if (filter === 'all') {
+                setAssignments(result.assignments || []);
+            } else {
+                // Smart merge: keep assignments from other filters, update current filter
+                const otherFilterAssignments = assignments.filter(a => {
+                    if (filter === 'active') return ['delivered', 'failed'].includes(a.status);
+                    if (filter === 'completed') return !['delivered', 'failed'].includes(a.status);
+                    return false;
+                });
+                setAssignments([...otherFilterAssignments, ...(result.assignments || [])]);
+            }
         } catch (err) {
             console.error('[Assignments] Load error:', err);
             // Don't show error to user if we have offline data

@@ -1,5 +1,5 @@
 // QScrap Driver App - Biometric Setup Screen
-// VVIP Premium Experience: Face ID / Touch ID Enrollment Simulation
+// P2 FEATURE: Real Face ID / Touch ID Integration
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,13 +10,16 @@ import {
     Alert,
     Dimensions,
     Animated,
-    Easing
+    Easing,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 
@@ -26,44 +29,93 @@ export default function BiometricSetupScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
     const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'failed'>('idle');
+    const [biometricType, setBiometricType] = useState<string>('');
+    const [isCompatible, setIsCompatible] = useState(false);
+    const [isEnrolled, setIsEnrolled] = useState(false);
 
     // Animations
     const scanAnim = React.useRef(new Animated.Value(0)).current;
     const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
-    const startScan = () => {
+    useEffect(() => {
+        checkBiometricCapability();
+    }, []);
+
+    // P2: Check device biometric capability
+    const checkBiometricCapability = async () => {
+        try {
+            const compatible = await LocalAuthentication.hasHardwareAsync();
+            setIsCompatible(compatible);
+
+            if (compatible) {
+                const enrolled = await LocalAuthentication.isEnrolledAsync();
+                setIsEnrolled(enrolled);
+
+                const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+                if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+                    setBiometricType('Face ID');
+                } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+                    setBiometricType('Fingerprint');
+                } else if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) {
+                    setBiometricType('Iris');
+                } else {
+                    setBiometricType('Biometric');
+                }
+            }
+        } catch (error) {
+            console.error('[Biometric] Capability check failed:', error);
+        }
+    };
+
+    const startScan = async () => {
+        if (!isCompatible) {
+            Alert.alert('Not Supported', 'Your device does not support biometric authentication.');
+            return;
+        }
+
+        if (!isEnrolled) {
+            Alert.alert(
+                'No Biometrics Enrolled',
+                'Please set up Face ID or Fingerprint in your device settings first.',
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
         setStatus('scanning');
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Simulation logic
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(scanAnim, {
-                    toValue: 1,
-                    duration: 1500,
-                    easing: Easing.linear,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(scanAnim, {
-                    toValue: 0,
-                    duration: 1500,
-                    easing: Easing.linear,
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
+        try {
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: `Authenticate to enable ${biometricType}`,
+                fallbackLabel: 'Use Passcode',
+                disableDeviceFallback: false,
+            });
 
-        // Finish after 3 seconds
-        setTimeout(() => {
-            scanAnim.stopAnimation();
-            setStatus('success');
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }, 3000);
+            if (result.success) {
+                // Save biometric preference
+                await SecureStore.setItemAsync('biometric_enabled', 'true');
+                setStatus('success');
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } else {
+                setStatus('failed');
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                setTimeout(() => setStatus('idle'), 2000);
+            }
+        } catch (error) {
+            console.error('[Biometric] Authentication error:', error);
+            setStatus('failed');
+            setTimeout(() => setStatus('idle'), 2000);
+        }
     };
 
     const handleContinue = () => {
-        // In real app, save preference to storage
-        navigation.navigate('Main'); // Or wherever appropriate
+        navigation.navigate('Main');
+    };
+
+    const handleSkip = async () => {
+        await SecureStore.setItemAsync('biometric_enabled', 'false');
+        navigation.navigate('Main');
     };
 
     const renderScanner = () => {
@@ -108,16 +160,22 @@ export default function BiometricSetupScreen() {
                     <View style={styles.iconContainer}>
                         <Ionicons name="finger-print" size={40} color={Colors.primary} />
                     </View>
-                    <Text style={[styles.title, { color: colors.text }]}>Biometric Access</Text>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                        {biometricType || 'Biometric'} Access
+                    </Text>
                     <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                        Secure your account and login faster with Face ID or Fingerprint.
+                        {isCompatible && isEnrolled
+                            ? `Secure your account and login faster with ${biometricType}.`
+                            : isCompatible
+                                ? `Please set up ${biometricType} in your device settings first.`
+                                : 'Your device does not support biometric authentication.'}
                     </Text>
                 </View>
 
                 <TouchableOpacity
                     style={styles.scanArea}
                     onPress={startScan}
-                    disabled={status !== 'idle'}
+                    disabled={status !== 'idle' || !isCompatible || !isEnrolled}
                     activeOpacity={0.8}
                 >
                     {renderScanner()}
@@ -129,7 +187,7 @@ export default function BiometricSetupScreen() {
                             <Text style={styles.btnText}>Enable & Continue</Text>
                         </TouchableOpacity>
                     ) : (
-                        <TouchableOpacity style={styles.btnSecondary} onPress={() => navigation.goBack()}>
+                        <TouchableOpacity style={styles.btnSecondary} onPress={handleSkip}>
                             <Text style={[styles.btnTextSecondary, { color: colors.textSecondary }]}>Skip for Now</Text>
                         </TouchableOpacity>
                     )}
