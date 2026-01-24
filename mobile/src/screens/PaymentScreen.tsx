@@ -44,7 +44,11 @@ export default function PaymentScreen() {
     const { confirmPayment } = useStripe();
 
     const params = route.params as RouteParams;
-    const { bidId, garageName, partPrice, deliveryFee, partDescription, orderId: existingOrderId } = params;
+    const { bidId, garageName, partDescription, orderId: existingOrderId } = params;
+
+    // CRITICAL: Parse prices as numbers to prevent string concatenation
+    const partPrice = parseFloat(String(params.partPrice)) || 0;
+    const deliveryFee = parseFloat(String(params.deliveryFee)) || 0;
 
     const [isLoading, setIsLoading] = useState(false);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
@@ -325,11 +329,11 @@ export default function PaymentScreen() {
                                     🚚 Pay Delivery Only
                                 </Text>
                                 <Text style={[styles.paymentTypeDesc, { color: colors.textSecondary }]}>
-                                    Pay {deliveryFee} QAR now, pay {partPrice} QAR at delivery
+                                    Pay {deliveryFee.toFixed(2)} QAR now, pay {partPrice.toFixed(2)} QAR at delivery
                                 </Text>
                             </View>
                             <Text style={[styles.paymentTypeAmount, { color: Colors.primary }]}>
-                                {deliveryFee} QAR
+                                {deliveryFee.toFixed(2)} QAR
                             </Text>
                         </TouchableOpacity>
 
@@ -356,7 +360,7 @@ export default function PaymentScreen() {
                                 </Text>
                             </View>
                             <Text style={[styles.paymentTypeAmount, { color: Colors.success }]}>
-                                {totalAmount} QAR
+                                {totalAmount.toFixed(2)} QAR
                             </Text>
                         </TouchableOpacity>
 
@@ -364,10 +368,10 @@ export default function PaymentScreen() {
 
                         <View style={styles.priceRow}>
                             <Text style={[styles.totalLabel, { color: colors.text }]}>
-                                Total Order Value
+                                Total
                             </Text>
                             <Text style={[styles.totalValue, { color: colors.text }]}>
-                                {totalAmount} QAR
+                                {totalAmount.toFixed(2)} QAR
                             </Text>
                         </View>
 
@@ -417,10 +421,10 @@ export default function PaymentScreen() {
                                 </Text>
                                 <View style={{ alignItems: 'flex-end' }}>
                                     <Text style={{ color: colors.textSecondary, textDecorationLine: 'line-through', fontSize: FontSizes.sm }}>
-                                        {paymentType === 'full' ? totalAmount : deliveryFee} QAR
+                                        {(paymentType === 'full' ? totalAmount : deliveryFee).toFixed(2)} QAR
                                     </Text>
                                     <Text style={[styles.totalValue, { color: Colors.success }]}>
-                                        {(paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount} QAR
+                                        {((paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount).toFixed(2)} QAR
                                     </Text>
                                 </View>
                             </View>
@@ -432,8 +436,8 @@ export default function PaymentScreen() {
                         <Text style={styles.infoIcon}>{paymentType === 'full' ? '✅' : 'ℹ️'}</Text>
                         <Text style={[styles.infoText, paymentType === 'full' && { color: '#15803d' }]}>
                             {paymentType === 'full'
-                                ? `Full amount (${totalAmount} QAR) will be charged now. No cash payment required at delivery.`
-                                : `Only the delivery fee (${deliveryFee} QAR) is charged now. Pay the part price (${partPrice} QAR) in cash when delivered.`
+                                ? 'Full payment now. No cash at delivery.'
+                                : `Pay ${partPrice.toFixed(2)} QAR cash at delivery.`
                             }
                         </Text>
                     </View>
@@ -490,7 +494,7 @@ export default function PaymentScreen() {
                         </View>
                     </View>
 
-                    <View style={{ height: 120 }} />
+                    <View style={{ height: 180 }} />
                 </ScrollView>
 
                 {/* Pay Button */}
@@ -508,7 +512,7 @@ export default function PaymentScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.payButtonText}>
-                                    🔒 Pay {(paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount} QAR
+                                    🔒 Pay {((paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount).toFixed(2)} QAR
                                 </Text>
                             )}
                         </LinearGradient>
@@ -518,8 +522,8 @@ export default function PaymentScreen() {
                         🔐 Secured by Stripe
                     </Text>
                 </View>
-            </SafeAreaView>
-        </StripeProvider>
+            </SafeAreaView >
+        </StripeProvider >
     );
 }
 
