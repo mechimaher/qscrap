@@ -387,18 +387,34 @@ export class OrderLifecycleService {
      * Release driver if no other active assignments
      */
     private async releaseDriver(orderId: string, client: PoolClient): Promise<void> {
-        await client.query(`
-            UPDATE drivers 
-            SET status = 'available', updated_at = NOW()
-            WHERE driver_id = (SELECT driver_id FROM orders WHERE order_id = $1)
-            AND driver_id IS NOT NULL
-            AND NOT EXISTS (
-                SELECT 1 FROM delivery_assignments 
-                WHERE driver_id = drivers.driver_id 
-                AND status IN ('assigned', 'picked_up', 'in_transit')
-                AND order_id != $1
-            )
+        // Get driver_id from delivery_assignments (not orders.driver_id which may be null)
+        const driverResult = await client.query(`
+            SELECT driver_id FROM delivery_assignments WHERE order_id = $1 LIMIT 1
         `, [orderId]);
+
+        if (driverResult.rows.length === 0) {
+            return; // No driver assigned
+        }
+
+        const driverId = driverResult.rows[0].driver_id;
+
+        // Check if driver has other active assignments
+        const activeCheck = await client.query(`
+            SELECT 1 FROM delivery_assignments 
+            WHERE driver_id = $1 
+            AND status IN ('assigned', 'picked_up', 'in_transit')
+            AND order_id != $2
+            LIMIT 1
+        `, [driverId, orderId]);
+
+        if (activeCheck.rows.length === 0) {
+            // No other active assignments, release driver
+            await client.query(`
+                UPDATE drivers 
+                SET status = 'available', updated_at = NOW()
+                WHERE driver_id = $1
+            `, [driverId]);
+        }
     }
 
     /**
