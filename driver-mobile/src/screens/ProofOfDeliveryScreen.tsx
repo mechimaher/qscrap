@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { api, API_ENDPOINTS } from '../services/api';
+import { API_BASE_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/theme';
 import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
@@ -174,7 +175,10 @@ export default function ProofOfDeliveryScreen() {
             await executeWithOfflineFallback(
                 async () => {
                     const token = await api.getToken();
-                    const response = await fetch(`${API_ENDPOINTS.COMPLETE_WITH_POD}`, {
+                    // CRITICAL FIX: Must use full URL with API_BASE_URL
+                    const fullUrl = `${API_BASE_URL}${API_ENDPOINTS.COMPLETE_WITH_POD}`;
+                    console.log('[POD] Completing delivery:', { orderId, fullUrl });
+                    const response = await fetch(fullUrl, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -185,7 +189,11 @@ export default function ProofOfDeliveryScreen() {
                             pod_photo_url: podPhotoUrl
                         })
                     });
-                    if (!response.ok) throw new Error('Failed to complete delivery');
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('[POD] Completion failed:', response.status, errorText);
+                        throw new Error(`Failed to complete delivery: ${response.status}`);
+                    }
                     return response.json();
                 },
                 {
