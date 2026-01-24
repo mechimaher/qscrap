@@ -133,7 +133,8 @@ export default function PaymentScreen() {
             // Create payment intent based on payment type
             let paymentResult;
             if (paymentType === 'full') {
-                paymentResult = await api.createFullPaymentIntent(orderIdToUse);
+                // Pass loyalty discount to backend - platform absorbs the difference
+                paymentResult = await api.createFullPaymentIntent(orderIdToUse, discountAmount);
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
             } else {
                 paymentResult = await api.createDeliveryFeeIntent(orderIdToUse);
@@ -206,22 +207,23 @@ export default function PaymentScreen() {
 
                 // Small delay to ensure toast shows before navigation
                 setTimeout(() => {
-                    // Navigate to order details
+                    // Navigate to delivery tracking for real-time order status
                     if (orderId) {
                         navigation.reset({
                             index: 1,
                             routes: [
                                 { name: 'MainTabs' },
-                                { name: 'OrderDetail', params: { orderId } },
+                                { name: 'DeliveryTracking', params: { orderId } },
                             ],
                         });
                     } else {
+                        // Fallback to Orders tab if orderId missing
                         navigation.reset({
                             index: 0,
-                            routes: [{ name: 'MainTabs' }],
+                            routes: [{ name: 'MainTabs', params: { screen: 'Orders' } }],
                         });
                     }
-                }, 500);
+                }, 1000);
             } else {
                 // Unexpected status - show warning but try to proceed
                 console.warn('[Payment] Unexpected status:', paymentIntent?.status);
