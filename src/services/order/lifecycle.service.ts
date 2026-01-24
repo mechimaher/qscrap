@@ -201,10 +201,10 @@ export class OrderLifecycleService {
 
             // Update order status: in_transit → delivered (NOT completed)
             // Customer confirmation or 48h auto-complete will mark as completed
+            // Note: orders table doesn't have delivered_at column, using updated_at
             const result = await client.query(`
                 UPDATE orders 
                 SET order_status = 'delivered', 
-                    delivered_at = NOW(),
                     pod_photo_url = $2,
                     updated_at = NOW()
                 WHERE order_id = $1 
