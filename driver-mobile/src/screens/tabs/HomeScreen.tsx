@@ -116,21 +116,34 @@ export default function HomeScreen() {
         };
     }, [isConnected]);
 
-    // POLLING FALLBACK: Ensure data is fresh even if socket fails
+    // P2 FIX: SMART POLLING - Adaptive interval based on socket health
+    // When socket is healthy → Poll every 60s (battery friendly)
+    // When socket fails → Start at 15s, increase to 30s, max 60s (backoff)
     useEffect(() => {
         if (!isAvailable) return;
 
-        console.log('[Home] Starting polling interval (10s)');
+        const getPollingInterval = () => {
+            // If socket is connected and working, we can afford to poll less frequently
+            if (isConnected) {
+                return 60000; // 1 minute when socket is healthy (battery saver)
+            }
+            // Socket disconnected - use medium polling
+            return 30000; // 30 seconds as fallback
+        };
+
+        const interval = getPollingInterval();
+        console.log(`[Home] Starting smart polling interval (${interval / 1000}s, socket: ${isConnected ? 'healthy' : 'disconnected'})`);
+
         const intervalId = setInterval(() => {
             // Silent refresh - don't show loading spinner
             loadData(true);
-        }, 10000);
+        }, interval);
 
         return () => {
             console.log('[Home] Clearing polling interval');
             clearInterval(intervalId);
         };
-    }, [isAvailable]);
+    }, [isAvailable, isConnected]); // Re-initialize when socket status changes
 
     useEffect(() => {
         setIsAvailable(driver?.status === 'available');
@@ -252,29 +265,64 @@ export default function HomeScreen() {
 
     // VVIP: Accept/Reject/Timeout handlers
     const handleAcceptAssignment = async () => {
-        console.log('[Home] Accepting assignment:', pendingAssignment?.assignment_id);
-        setShowAssignmentPopup(false);
-        setPendingAssignment(null);
+        if (!pendingAssignment?.assignment_id) return;
 
-        // For now, just reload data - backend already auto-assigned
-        // TODO: Call accept API when backend supports pending state
-        await loadData();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        console.log('[Home] Accepting assignment:', pendingAssignment.assignment_id);
+        setShowAssignmentPopup(false);
+
+        try {
+            await api.acceptAssignment(pendingAssignment.assignment_id);
+            setPendingAssignment(null);
+
+            // Reload data to show accepted assignment
+            await loadData();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            Alert.alert(
+                'Assignment Accepted!',
+                'You can now start the delivery. Good luck!',
+                [{ text: 'OK' }]
+            );
+        } catch (err: any) {
+            console.error('[Home] Failed to accept assignment:', err);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                'Error',
+                err.message || 'Failed to accept assignment. Please try again.',
+                [{ text: 'OK' }]
+            );
+            // Reset popup state so user can retry
+            setPendingAssignment(null);
+        }
     };
 
     const handleRejectAssignment = async () => {
-        console.log('[Home] Rejecting assignment:', pendingAssignment?.assignment_id);
-        setShowAssignmentPopup(false);
-        setPendingAssignment(null);
+        if (!pendingAssignment?.assignment_id) return;
 
-        // TODO: Call reject API when backend supports pending state
-        // For now, show alert that rejection is not yet implemented
-        Alert.alert(
-            'Assignment Rejected',
-            'This assignment has been declined. Operations will reassign it.',
-            [{ text: 'OK' }]
-        );
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        console.log('[Home] Rejecting assignment:', pendingAssignment.assignment_id);
+        setShowAssignmentPopup(false);
+
+        try {
+            await api.rejectAssignment(pendingAssignment.assignment_id, 'Driver declined');
+            setPendingAssignment(null);
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Alert.alert(
+                'Assignment Rejected',
+                'This assignment has been declined. Operations will reassign it to another driver.',
+                [{ text: 'OK' }]
+            );
+        } catch (err: any) {
+            console.error('[Home] Failed to reject assignment:', err);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                'Error',
+                err.message || 'Failed to reject assignment. Please try again.',
+                [{ text: 'OK' }]
+            );
+            // Reset popup state
+            setPendingAssignment(null);
+        }
     };
 
     const handleAssignmentTimeout = () => {

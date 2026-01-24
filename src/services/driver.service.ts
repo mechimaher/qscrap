@@ -94,6 +94,123 @@ export class DriverService {
         };
     }
 
+    async acceptAssignment(userId: string, assignmentId: string) {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 1. Get Assignment & Verify Ownership
+            const assignment = await driverRepository.findAssignmentForUpdate(assignmentId, userId, client);
+            if (!assignment) {
+                throw new Error('Assignment not found or not yours');
+            }
+
+            // 2. Validate Current Status
+            if (assignment.status !== 'pending') {
+                throw new Error(`Cannot accept assignment from status '${assignment.status}'. Must be 'pending'.`);
+            }
+
+            // 3. Update Assignment to 'assigned'
+            await client.query(`
+                UPDATE driver_assignments 
+                SET status = 'assigned',
+                    accepted_at = NOW()
+                WHERE assignment_id = $1
+            `, [assignmentId]);
+
+            // 4. Updated driver status to 'busy'
+            await driverRepository.updateDriverStatus(assignment.driver_id, 'busy', client);
+
+            await client.query('COMMIT');
+
+            // 5. Notifications (Post-Commit)
+            const io = (global as any).io;
+
+            // Notify customer
+            io.to(`user_${assignment.customer_id}`).emit('driver_accepted_assignment', {
+                assignment_id: assignmentId,
+                order_id: assignment.order_id,
+                order_number: assignment.order_number,
+                notification: `Driver has accepted your delivery!`
+            });
+
+            // Notify operations
+            io.to('operations').emit('assignment_accepted', {
+                assignment_id: assignmentId,
+                driver_id: assignment.driver_id,
+                order_id: assignment.order_id
+            });
+
+            return {
+                success: true,
+                message: 'Assignment accepted',
+                assignment: { ...assignment, status: 'assigned' }
+            };
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    async rejectAssignment(userId: string, assignmentId: string, rejectionReason?: string) {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 1. Get Assignment & Verify Ownership
+            const assignment = await driverRepository.findAssignmentForUpdate(assignmentId, userId, client);
+            if (!assignment) {
+                throw new Error('Assignment not found or not yours');
+            }
+
+            // 2. Validate Current Status
+            if (assignment.status !== 'pending') {
+                throw new Error(`Cannot reject assignment from status '${assignment.status}'. Must be 'pending'.`);
+            }
+
+            // 3. Update Assignment to 'rejected'
+            await client.query(`
+                UPDATE driver_assignments 
+                SET status = 'rejected',
+                    rejection_reason = $2,
+                    rejected_at = NOW()
+                WHERE assignment_id = $1
+            `, [assignmentId, rejectionReason || 'Driver declined']);
+
+            // 4. Driver remains 'available' for other assignments
+
+            await client.query('COMMIT');
+
+            // 5. Notifications (Post-Commit)
+            const io = (global as any).io;
+
+            // Notify operations for reassignment
+            io.to('operations').emit('assignment_rejected_by_driver', {
+                assignment_id: assignmentId,
+                driver_id: assignment.driver_id,
+                order_id: assignment.order_id,
+                order_number: assignment.order_number,
+                reason: rejectionReason,
+                notification: `⚠️ Driver rejected assignment for Order #${assignment.order_number}. Reassignment needed.`
+            });
+
+            return {
+                success: true,
+                message: 'Assignment rejected',
+                assignment: { ...assignment, status: 'rejected' }
+            };
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
     async updateAssignmentStatus(userId: string, assignmentId: string, status: string, notes?: string, failureReason?: string) {
         const client = await this.pool.connect();
         try {

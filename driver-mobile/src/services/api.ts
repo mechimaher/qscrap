@@ -332,6 +332,19 @@ class DriverApiService {
         });
     }
 
+    async acceptAssignment(assignmentId: string): Promise<{ success: boolean; message: string }> {
+        return this.request(`/driver/assignments/${assignmentId}/accept`, {
+            method: 'POST',
+        });
+    }
+
+    async rejectAssignment(assignmentId: string, rejectionReason?: string): Promise<{ success: boolean; message: string }> {
+        return this.request(`/driver/assignments/${assignmentId}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ rejection_reason: rejectionReason }),
+        });
+    }
+
     // ========== ORDERS ==========
     async getOrderDetails(orderId: string): Promise<{
         order: {

@@ -2,7 +2,7 @@
     "expo": {
         "name": "QScrap Driver",
         "slug": "qscrap",
-        "version": "1.1.0",
+        "version": "1.2.1",
         "extra": {
             "eas": {
                 "projectId": "47b26c9d-3bd0-4470-8543-dd303a49b287"

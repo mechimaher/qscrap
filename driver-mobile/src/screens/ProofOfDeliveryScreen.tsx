@@ -135,7 +135,6 @@ export default function ProofOfDeliveryScreen() {
                     method: 'POST',
                     body: {
                         photoPath: permanentUri,
-                        signature: signatureData,
                         paymentMethod,
                         completedAt: new Date().toISOString()
                     }
@@ -291,35 +290,69 @@ export default function ProofOfDeliveryScreen() {
                     style={[
                         styles.paymentOption,
                         paymentMethod === 'cash' && styles.paymentSelected,
-                        { borderColor: paymentMethod === 'cash' ? Colors.primary : colors.border }
+                        {
+                            borderColor: paymentMethod === 'cash' ? Colors.primary : colors.border,
+                            opacity: orderDetails?.payment_method === 'card' ? 0.4 : 1
+                        }
                     ]}
                     onPress={() => {
+                        if (orderDetails?.payment_method === 'card') {
+                            // P1 FIX: Prevent override - order was paid by card
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            Alert.alert(
+                                'Payment Already Collected',
+                                'This order was paid online. You cannot collect cash.',
+                                [{ text: 'OK' }]
+                            );
+                            return;
+                        }
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setPaymentMethod('cash');
                     }}
+                    disabled={orderDetails?.payment_method === 'card'}
                 >
                     <Text style={{ fontSize: 32 }}>💵</Text>
                     <Text style={[
                         styles.paymentText,
                         { color: paymentMethod === 'cash' ? Colors.primary : colors.text }
                     ]}>Cash</Text>
+                    {orderDetails?.payment_method === 'card' && (
+                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>N/A</Text>
+                    )}
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[
                         styles.paymentOption,
                         paymentMethod === 'online' && styles.paymentSelected,
-                        { borderColor: paymentMethod === 'online' ? Colors.primary : colors.border }
+                        {
+                            borderColor: paymentMethod === 'online' ? Colors.primary : colors.border,
+                            opacity: orderDetails?.payment_method === 'cash' ? 0.4 : 1
+                        }
                     ]}
                     onPress={() => {
+                        if (orderDetails?.payment_method === 'cash') {
+                            // P1 FIX: Prevent override - order requires cash collection
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            Alert.alert(
+                                'Cash Payment Required',
+                                `You must collect ${orderDetails?.cod_amount?.toFixed(2) || '0.00'} QAR in cash from the customer.`,
+                                [{ text: 'OK' }]
+                            );
+                            return;
+                        }
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setPaymentMethod('online');
                     }}
+                    disabled={orderDetails?.payment_method === 'cash'}
                 >
                     <Text style={{ fontSize: 32 }}>💳</Text>
                     <Text style={[
                         styles.paymentText,
                         { color: paymentMethod === 'online' ? Colors.primary : colors.text }
                     ]}>Paid Online</Text>
+                    {orderDetails?.payment_method === 'cash' && (
+                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>N/A</Text>
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -400,8 +433,7 @@ const styles = StyleSheet.create({
     overlayText: { textAlign: 'center', margin: 10, color: '#aaa' },
     previewImage: { width: '100%', height: 400, borderRadius: 16, marginBottom: 20 },
 
-    // Signature
-    signatureBox: { height: 300, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#ddd', marginBottom: 20 },
+
 
     // Payment
     paymentOptions: { flexDirection: 'row', gap: 16, marginBottom: 40 },

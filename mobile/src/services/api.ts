@@ -226,6 +226,56 @@ class ApiService {
         });
     }
 
+    // Email OTP Registration (NEW)
+    async registerWithEmail(data: {
+        full_name: string;
+        email: string;
+        phone_number: string;
+        password: string;
+    }): Promise<{ success: boolean; message: string; email: string; expiresIn: number }> {
+        return this.request('/auth/register-with-email', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async verifyEmailOTP(data: {
+        email: string;
+        otp: string;
+        full_name: string;
+        phone_number: string;
+        password: string;
+    }): Promise<AuthResponse & { success: boolean; emailVerified: boolean }> {
+        const response = await this.request<AuthResponse & { success: boolean; emailVerified: boolean }>(
+            '/auth/verify-email-otp',
+            {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }
+        );
+
+        // Auto-login after successful verification
+        if (response.token) {
+            await this.setToken(response.token);
+            await this.saveUser({
+                user_id: response.userId,
+                user_type: response.userType,
+                full_name: data.full_name,
+                email: data.email,
+                phone_number: data.phone_number,
+            });
+        }
+
+        return response;
+    }
+
+    async resendOTP(email: string, full_name?: string): Promise<{ success: boolean; message: string; expiresIn: number }> {
+        return this.request('/auth/resend-otp', {
+            method: 'POST',
+            body: JSON.stringify({ email, full_name }),
+        });
+    }
+
     // Dashboard
     async getStats(): Promise<{ stats: Stats }> {
         return this.request(API_ENDPOINTS.STATS);

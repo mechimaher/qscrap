@@ -20,6 +20,7 @@ import { useTranslation } from '../../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
+import { api } from '../../services/api';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -29,15 +30,29 @@ export default function RegisterScreen() {
     const { t, isRTL } = useTranslation();
 
     const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
     const handleRegister = async () => {
-        if (!name || !phone || !password || !confirmPassword) {
+        // Validation
+        if (!name || !email || !phone || !password || !confirmPassword) {
             setError(t('auth.fillAllFields'));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            return;
+        }
+
+        // Email validation
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -57,23 +72,29 @@ export default function RegisterScreen() {
         setIsLoading(true);
         setError('');
 
-        const result = await register(name, phone, password);
+        try {
+            // Call new Email OTP registration API
+            const result = await api.registerWithEmail({
+                full_name: name,
+                email: email.toLowerCase().trim(),
+                phone_number: phone,
+                password
+            });
 
-        if (!result.success) {
             setIsLoading(false);
-            setError(result.error || t('auth.registrationFailed'));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            // Navigate to OTP verification screen
+            navigation.navigate('VerifyOTP' as any, {
+                email: email.toLowerCase().trim(),
+                full_name: name,
+                phone_number: phone,
+                password
+            });
+        } catch (error: any) {
+            setIsLoading(false);
+            setError(error.message || 'Registration failed. Please try again.');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        } else {
-            // Auto login after registration
-            const loginResult = await login(phone, password);
-            setIsLoading(false);
-
-            if (!loginResult.success) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                navigation.navigate('Login');
-            } else {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            }
         }
     };
 
@@ -124,6 +145,21 @@ export default function RegisterScreen() {
                                 placeholderTextColor="#999"
                                 value={name}
                                 onChangeText={setName}
+                                autoCapitalize="words"
+                            />
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📧 Email Address</Text>
+                            <TextInput
+                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                                placeholder="your@email.com"
+                                placeholderTextColor="#999"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoCorrect={false}
                             />
                         </View>
 
