@@ -26,7 +26,7 @@ interface MapLocationPickerProps {
     initialLocation?: { latitude: number; longitude: number };
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw';
 
 const DOHA_COORDINATES: Region = {
     latitude: 25.2854,

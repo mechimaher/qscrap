@@ -237,7 +237,7 @@ export default function PaymentScreen() {
                         <Text style={styles.backText}>← Cancel</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        💳 Pay Delivery Fee
+                        💳 {paymentType === 'full' ? 'Pay Full Amount' : 'Pay Delivery Fee'}
                     </Text>
                     <View style={{ width: 60 }} />
                 </View>
@@ -331,11 +331,13 @@ export default function PaymentScreen() {
                     </View>
 
                     {/* Payment Info */}
-                    <View style={[styles.infoCard, { backgroundColor: '#EBF5FF' }]}>
-                        <Text style={styles.infoIcon}>ℹ️</Text>
-                        <Text style={styles.infoText}>
-                            Only the delivery fee ({deliveryFee} QAR) is charged now.
-                            Pay the part price ({partPrice} QAR) in cash when delivered.
+                    <View style={[styles.infoCard, { backgroundColor: paymentType === 'full' ? '#E6FFE6' : '#EBF5FF' }]}>
+                        <Text style={styles.infoIcon}>{paymentType === 'full' ? '✅' : 'ℹ️'}</Text>
+                        <Text style={[styles.infoText, paymentType === 'full' && { color: '#15803d' }]}>
+                            {paymentType === 'full'
+                                ? `Full amount (${totalAmount} QAR) will be charged now. No cash payment required at delivery.`
+                                : `Only the delivery fee (${deliveryFee} QAR) is charged now. Pay the part price (${partPrice} QAR) in cash when delivered.`
+                            }
                         </Text>
                     </View>
 
@@ -409,7 +411,7 @@ export default function PaymentScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.payButtonText}>
-                                    🔒 Pay {deliveryFee} QAR
+                                    🔒 Pay {paymentType === 'full' ? totalAmount : deliveryFee} QAR
                                 </Text>
                             )}
                         </LinearGradient>

@@ -25,7 +25,7 @@ import { api, getSocket } from '../services';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
-const GOOGLE_MAPS_API_KEY = 'AIzaSyAnmV1A16XEgQ6-_WwTpbVvKhoJZjor1Gs';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw';
 
 // Premium Qatar Map Styles
 const QATAR_LIGHT_MAP_STYLE = [
