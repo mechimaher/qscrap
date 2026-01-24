@@ -709,7 +709,7 @@ class ApiService {
     }
 
     // Stripe Full Payment (Part + Delivery Fee) - Scenario B
-    async createFullPaymentIntent(orderId: string): Promise<{
+    async createFullPaymentIntent(orderId: string, loyaltyDiscount?: number): Promise<{
         success: boolean;
         intent: {
             id: string;
@@ -720,11 +720,14 @@ class ApiService {
         breakdown: {
             partPrice: number;
             deliveryFee: number;
+            loyaltyDiscount?: number;
+            originalTotal?: number;
             total: number;
         };
     }> {
         return this.request(`/payments/full/${orderId}`, {
             method: 'POST',
+            body: JSON.stringify({ loyaltyDiscount: loyaltyDiscount || 0 }),
         });
     }
 

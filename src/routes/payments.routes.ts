@@ -319,15 +319,27 @@ router.post('/full/:orderId',
             const deliveryFee = parseFloat(order.delivery_fee) || 0;
             const totalAmount = partPrice + deliveryFee;
 
-            if (totalAmount <= 0) {
+            // Accept loyalty discount from request body (platform absorbs this)
+            const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
+            const chargeAmount = Math.max(0, totalAmount - loyaltyDiscount);
+
+            if (chargeAmount <= 0) {
                 return res.status(400).json({ success: false, error: 'No amount to pay' });
+            }
+
+            // Update order with discount info for tracking
+            if (loyaltyDiscount > 0) {
+                await pool.query(
+                    'UPDATE orders SET loyalty_discount = $2 WHERE order_id = $1',
+                    [orderId, loyaltyDiscount]
+                );
             }
 
             const result = await depositService.createFullPaymentIntent(
                 orderId,
                 userId,
-                totalAmount,
-                partPrice,
+                chargeAmount, // Customer pays discounted amount
+                partPrice,    // Garage still gets full part price
                 deliveryFee,
                 'QAR'
             );
@@ -343,7 +355,9 @@ router.post('/full/:orderId',
                 breakdown: {
                     partPrice,
                     deliveryFee,
-                    total: totalAmount
+                    loyaltyDiscount,
+                    originalTotal: totalAmount,
+                    total: chargeAmount
                 }
             });
         } catch (error: any) {
