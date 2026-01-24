@@ -13,6 +13,7 @@ import {
 } from './errors';
 import { createNotification } from '../notification.service';
 import { predictiveService } from '../predictive.service';
+import { LoyaltyService } from '../loyalty.service';
 
 export class OrderLifecycleService {
     constructor(private pool: Pool) { }
@@ -132,7 +133,7 @@ export class OrderLifecycleService {
                     payment_status = 'paid',
                     updated_at = NOW()
                 WHERE order_id = $1 AND customer_id = $2 AND order_status = 'delivered'
-                RETURNING garage_id, order_number, garage_payout_amount
+                RETURNING garage_id, order_number, garage_payout_amount, part_price, delivery_fee, customer_id
             `, [orderId, customerId]);
 
             if (result.rows.length === 0) {
@@ -158,6 +159,25 @@ export class OrderLifecycleService {
 
             // Notifications
             await this.notifyOrderCompleted(order, orderId);
+
+            // Award loyalty points (1 point per 10 QAR spent)
+            try {
+                const totalSpent = (parseFloat(order.part_price) || 0) + (parseFloat(order.delivery_fee) || 0);
+                const pointsToAward = LoyaltyService.calculatePointsFromAmount(totalSpent);
+                if (pointsToAward > 0) {
+                    await LoyaltyService.addPoints(
+                        order.customer_id,
+                        pointsToAward,
+                        'order_completion',
+                        orderId,
+                        `Earned ${pointsToAward} points for order #${order.order_number}`
+                    );
+                    console.log(`[LOYALTY] Awarded ${pointsToAward} points to customer ${order.customer_id} for order ${orderId}`);
+                }
+            } catch (loyaltyErr) {
+                console.error('[LOYALTY] Failed to award points:', loyaltyErr);
+                // Don't fail the order completion if loyalty fails
+            }
 
             // Predictive maintenance suggestions (best effort)
             try {
@@ -287,7 +307,7 @@ export class OrderLifecycleService {
 
             // Find orders eligible for auto-completion
             const eligibleOrders = await client.query(`
-                SELECT o.order_id, o.order_number, o.garage_id, o.customer_id, o.garage_payout_amount
+                SELECT o.order_id, o.order_number, o.garage_id, o.customer_id, o.garage_payout_amount, o.part_price, o.delivery_fee
                 FROM orders o
                 WHERE o.order_status = 'delivered'
                   AND o.delivered_at < NOW() - INTERVAL '48 hours'
@@ -347,6 +367,24 @@ export class OrderLifecycleService {
                     data: { order_id: order.order_id, order_number: order.order_number, payout_amount: order.garage_payout_amount },
                     target_role: 'garage'
                 });
+
+                // Award loyalty points (1 point per 10 QAR spent)
+                try {
+                    const totalSpent = (parseFloat(order.part_price) || 0) + (parseFloat(order.delivery_fee) || 0);
+                    const pointsToAward = LoyaltyService.calculatePointsFromAmount(totalSpent);
+                    if (pointsToAward > 0) {
+                        await LoyaltyService.addPoints(
+                            order.customer_id,
+                            pointsToAward,
+                            'order_completion',
+                            order.order_id,
+                            `Earned ${pointsToAward} points for order #${order.order_number} (auto-completed)`
+                        );
+                        console.log(`[LOYALTY] Awarded ${pointsToAward} points to customer ${order.customer_id} for auto-completed order ${order.order_id}`);
+                    }
+                } catch (loyaltyErr) {
+                    console.error('[LOYALTY] Failed to award points for auto-complete:', loyaltyErr);
+                }
             }
 
             await client.query('COMMIT');

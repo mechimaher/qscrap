@@ -126,12 +126,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     /**
      * Change language with RTL handling
+     * CRITICAL: Must ALWAYS update I18nManager state on language change,
+     * not just when isRTL differs, because the JS isRTL state can be stale.
      */
     const setLanguage = useCallback(async (lang: Language) => {
         try {
             const previousLanguage = language;
             const shouldBeRTL = isRTLLanguage(lang);
             const currentRTL = I18nManager.isRTL;
+            const needsLayoutChange = currentRTL !== shouldBeRTL;
 
             // Save to storage first
             await AsyncStorage.setItem(LANGUAGE_KEY, lang);
@@ -140,12 +143,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             setLanguageState(lang);
             setIsRTL(shouldBeRTL);
 
-            // Handle RTL layout change
-            if (currentRTL !== shouldBeRTL) {
-                I18nManager.allowRTL(shouldBeRTL);
-                I18nManager.forceRTL(shouldBeRTL);
+            // ALWAYS update I18nManager to ensure RTL state is correct
+            // This fixes the bug where switching AR → EN didn't properly revert RTL
+            console.log(`[i18n] Setting RTL: allowRTL(${shouldBeRTL}), forceRTL(${shouldBeRTL})`);
 
-                // Notify user that restart is needed for layout changes
+            // For LTR languages, we must explicitly disable RTL
+            // Order matters: allowRTL first, then forceRTL
+            I18nManager.allowRTL(shouldBeRTL);
+            I18nManager.forceRTL(shouldBeRTL);
+
+            // Notify user that restart is needed for layout changes
+            if (needsLayoutChange) {
                 Alert.alert(
                     lang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
                     lang === 'ar'
@@ -158,7 +166,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 );
             }
 
-            console.log(`[i18n] Language changed: ${previousLanguage} → ${lang}`);
+            console.log(`[i18n] Language changed: ${previousLanguage} → ${lang}, RTL: ${currentRTL} → ${shouldBeRTL}`);
         } catch (error) {
             console.log('[i18n] Failed to save language:', error);
         }
