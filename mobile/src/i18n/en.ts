@@ -1223,6 +1223,11 @@ export const en = {
         refundAmount: 'Refund Amount',
         refundDetails: 'Refund will be processed within 3-5 business days',
         refundProcessed: 'Refund processed',
+        feeConfirmed: 'Free within 1 hour, 10% fee after',
+        feePreparing: '25% cancellation fee applies (part being prepared)',
+        success: 'Order Cancelled',
+        successMessage: 'Your order has been cancelled. Refund will be processed if applicable.',
+        failed: 'Failed to cancel order',
     },
 
     // =============================================
