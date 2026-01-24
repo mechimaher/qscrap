@@ -10,6 +10,8 @@ import {
     getTransactionDetails,
     createRefund,
     getRefunds,
+    getPendingRefunds,
+    processStripeRefund,
     getRevenueReport,
     getTransactions,
     forceProcessPayout,
@@ -88,6 +90,8 @@ router.get('/transaction/:order_id', getTransactionDetails);
 
 // Refunds (Operations Only)
 router.get('/refunds', authorizeOperations, getRefunds);
+router.get('/refunds/pending', authorizeOperations, getPendingRefunds);
+router.post('/refunds/:refund_id/process', authorizeOperations, processStripeRefund);
 router.post('/refund/:order_id', authorizeOperations, createRefund);
 
 export default router;

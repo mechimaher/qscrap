@@ -255,4 +255,142 @@ export class RefundService {
             total: parseInt(countResult.rows[0].count)
         };
     }
+
+    /**
+     * Get pending refunds for Operations dashboard
+     */
+    async getPendingRefunds(): Promise<{
+        refunds: RefundDetail[];
+        total: number;
+    }> {
+        const countResult = await this.pool.query(
+            `SELECT COUNT(*) FROM refunds WHERE refund_status = 'pending'`
+        );
+
+        const result = await this.pool.query(
+            `SELECT r.*, 
+                    o.order_number, o.customer_id, o.payment_method,
+                    u.full_name as customer_name, u.phone_number as customer_phone,
+                    g.garage_name,
+                    pi.provider_intent_id as stripe_payment_intent_id
+             FROM refunds r
+             JOIN orders o ON r.order_id = o.order_id
+             LEFT JOIN users u ON o.customer_id = u.user_id
+             LEFT JOIN garages g ON o.garage_id = g.garage_id
+             LEFT JOIN payment_intents pi ON o.order_id = pi.order_id AND pi.status = 'succeeded'
+             WHERE r.refund_status = 'pending'
+             ORDER BY r.created_at ASC`
+        );
+
+        return {
+            refunds: result.rows,
+            total: parseInt(countResult.rows[0].count)
+        };
+    }
+
+    /**
+     * Execute Stripe refund and update status
+     * Called by Operations to actually process the refund via Stripe
+     */
+    async executeStripeRefund(refundId: string, processedBy: string): Promise<{
+        success: boolean;
+        stripe_refund_id?: string;
+        message: string;
+    }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get refund details with payment intent
+            const refundResult = await client.query(
+                `SELECT r.*, o.order_id, o.order_number, o.customer_id,
+                        pi.provider_intent_id as stripe_payment_intent_id
+                 FROM refunds r
+                 JOIN orders o ON r.order_id = o.order_id
+                 LEFT JOIN payment_intents pi ON o.order_id = pi.order_id AND pi.status = 'succeeded'
+                 WHERE r.refund_id = $1
+                 FOR UPDATE OF r`,
+                [refundId]
+            );
+
+            if (refundResult.rows.length === 0) {
+                throw new RefundNotFoundError(refundId);
+            }
+
+            const refund = refundResult.rows[0];
+
+            if (refund.refund_status !== 'pending') {
+                throw new RefundAlreadyProcessedError(refund.order_id);
+            }
+
+            if (!refund.stripe_payment_intent_id) {
+                throw new Error('No Stripe payment found for this order - manual refund required');
+            }
+
+            // Initialize Stripe
+            const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+            if (!stripeSecretKey) {
+                throw new Error('Stripe not configured');
+            }
+
+            const Stripe = require('stripe');
+            const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.acacia' });
+
+            // Execute Stripe refund
+            const refundAmountCents = Math.round(parseFloat(refund.refund_amount) * 100);
+            const stripeRefund = await stripe.refunds.create({
+                payment_intent: refund.stripe_payment_intent_id,
+                amount: refundAmountCents,
+                metadata: {
+                    refund_id: refundId,
+                    order_number: refund.order_number,
+                    processed_by: processedBy
+                }
+            });
+
+            // Update refund record
+            await client.query(
+                `UPDATE refunds SET
+                    refund_status = 'completed',
+                    stripe_refund_id = $2,
+                    processed_by = $3,
+                    processed_at = NOW()
+                 WHERE refund_id = $1`,
+                [refundId, stripeRefund.id, processedBy]
+            );
+
+            // Update order payment status
+            await client.query(
+                `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
+                [refund.order_id]
+            );
+
+            await client.query('COMMIT');
+
+            // Notify customer (import would be at top of file)
+            const { createNotification } = require('../notification.service');
+            await createNotification({
+                userId: refund.customer_id,
+                type: 'refund_completed',
+                title: '💰 Refund Processed',
+                message: `Your refund of ${refund.refund_amount} QAR for Order #${refund.order_number} has been processed. It may take 5-10 business days to appear in your account.`,
+                data: { order_id: refund.order_id, refund_amount: refund.refund_amount },
+                target_role: 'customer'
+            });
+
+            console.log(`[RefundService] Stripe refund ${stripeRefund.id} processed for ${refund.refund_amount} QAR`);
+
+            return {
+                success: true,
+                stripe_refund_id: stripeRefund.id,
+                message: `Refund of ${refund.refund_amount} QAR processed successfully`
+            };
+        } catch (err: any) {
+            await client.query('ROLLBACK');
+            console.error('[RefundService] Stripe refund error:', err.message);
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
 }

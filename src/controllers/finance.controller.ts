@@ -340,6 +340,42 @@ export const getRefunds = async (req: AuthRequest, res: Response) => {
     }
 };
 
+/**
+ * Get pending refunds for Operations dashboard
+ */
+export const getPendingRefunds = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await refundService.getPendingRefunds();
+        res.json(result);
+    } catch (err) {
+        console.error('getPendingRefunds Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to fetch pending refunds' });
+    }
+};
+
+/**
+ * Execute Stripe refund for a pending refund
+ * This actually calls Stripe API to process the refund
+ */
+export const processStripeRefund = async (req: AuthRequest, res: Response) => {
+    try {
+        const { refund_id } = req.params;
+        const processedBy = req.user!.userId;
+
+        const result = await refundService.executeStripeRefund(refund_id, processedBy);
+        res.json(result);
+    } catch (err: any) {
+        console.error('processStripeRefund Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: err.message || 'Failed to process refund' });
+    }
+};
+
 // ============================================
 // REVENUE & TRANSACTIONS
 // ============================================
