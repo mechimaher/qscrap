@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     Alert,
     TouchableOpacity,
+    Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -53,12 +54,42 @@ export default function PaymentScreen() {
     const [paymentType, setPaymentType] = useState<'delivery_only' | 'full'>('delivery_only');
     const [paymentAmount, setPaymentAmount] = useState(deliveryFee);
 
+    // Loyalty state
+    const [loyaltyData, setLoyaltyData] = useState<{
+        points: number;
+        tier: string;
+        discountPercentage: number;
+    } | null>(null);
+    const [applyDiscount, setApplyDiscount] = useState(false);
+    const [discountAmount, setDiscountAmount] = useState(0);
+
     const totalAmount = partPrice + deliveryFee;
 
     // Step 1: Create order first (pending_payment status) OR resume existing order
     useEffect(() => {
         initializePayment();
+        fetchLoyaltyData();
     }, []);
+
+    // Fetch loyalty balance
+    const fetchLoyaltyData = async () => {
+        try {
+            const data = await api.getLoyaltyBalance();
+            const tierDiscounts: Record<string, number> = {
+                bronze: 0,
+                silver: 5,
+                gold: 10,
+                platinum: 15
+            };
+            setLoyaltyData({
+                points: data.points,
+                tier: data.tier,
+                discountPercentage: tierDiscounts[data.tier.toLowerCase()] || 0
+            });
+        } catch (err) {
+            console.log('[Payment] Failed to fetch loyalty:', err);
+        }
+    };
 
     // Re-initialize when payment type changes (if order exists)
     useEffect(() => {
@@ -66,6 +97,17 @@ export default function PaymentScreen() {
             initializePayment();
         }
     }, [paymentType]);
+
+    // Calculate discount when toggle changes
+    useEffect(() => {
+        if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
+            const baseAmount = paymentType === 'full' ? totalAmount : deliveryFee;
+            const discount = Math.round(baseAmount * (loyaltyData.discountPercentage / 100));
+            setDiscountAmount(discount);
+        } else {
+            setDiscountAmount(0);
+        }
+    }, [applyDiscount, paymentType, loyaltyData]);
 
     const initializePayment = async () => {
         setIsCreatingOrder(true);
@@ -328,6 +370,61 @@ export default function PaymentScreen() {
                                 {totalAmount} QAR
                             </Text>
                         </View>
+
+                        {/* Loyalty Discount Section */}
+                        {loyaltyData && loyaltyData.discountPercentage > 0 && (
+                            <>
+                                <View style={[styles.divider, { marginVertical: Spacing.md }]} />
+                                <View style={[styles.loyaltyBanner, { backgroundColor: '#FEF3C7' }]}>
+                                    <View style={styles.loyaltyHeader}>
+                                        <Text style={styles.loyaltyEmoji}>
+                                            {loyaltyData.tier === 'platinum' ? '💎' : loyaltyData.tier === 'gold' ? '🥇' : '🥈'}
+                                        </Text>
+                                        <View style={styles.loyaltyInfo}>
+                                            <Text style={styles.loyaltyTier}>
+                                                {loyaltyData.tier.charAt(0).toUpperCase() + loyaltyData.tier.slice(1)} Member
+                                            </Text>
+                                            <Text style={styles.loyaltyPoints}>
+                                                {loyaltyData.points.toLocaleString()} pts • {loyaltyData.discountPercentage}% discount
+                                            </Text>
+                                        </View>
+                                        <Switch
+                                            value={applyDiscount}
+                                            onValueChange={(value) => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setApplyDiscount(value);
+                                            }}
+                                            trackColor={{ false: '#D1D5DB', true: Colors.success }}
+                                            thumbColor={applyDiscount ? '#fff' : '#f4f3f4'}
+                                        />
+                                    </View>
+                                    {applyDiscount && discountAmount > 0 && (
+                                        <View style={styles.discountApplied}>
+                                            <Text style={styles.discountText}>
+                                                🎉 -{discountAmount} QAR discount applied!
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </>
+                        )}
+
+                        {/* Show final amount if discount applied */}
+                        {discountAmount > 0 && (
+                            <View style={[styles.priceRow, { marginTop: Spacing.sm }]}>
+                                <Text style={[styles.totalLabel, { color: Colors.success, fontWeight: '700' }]}>
+                                    💰 You Pay
+                                </Text>
+                                <View style={{ alignItems: 'flex-end' }}>
+                                    <Text style={{ color: colors.textSecondary, textDecorationLine: 'line-through', fontSize: FontSizes.sm }}>
+                                        {paymentType === 'full' ? totalAmount : deliveryFee} QAR
+                                    </Text>
+                                    <Text style={[styles.totalValue, { color: Colors.success }]}>
+                                        {(paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount} QAR
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
                     </View>
 
                     {/* Payment Info */}
@@ -411,7 +508,7 @@ export default function PaymentScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.payButtonText}>
-                                    🔒 Pay {paymentType === 'full' ? totalAmount : deliveryFee} QAR
+                                    🔒 Pay {(paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount} QAR
                                 </Text>
                             )}
                         </LinearGradient>
@@ -635,5 +732,42 @@ const styles = StyleSheet.create({
     paymentTypeAmount: {
         fontSize: FontSizes.lg,
         fontWeight: '800',
+    },
+    // Loyalty Discount Styles
+    loyaltyBanner: {
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+    },
+    loyaltyHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    loyaltyEmoji: {
+        fontSize: 28,
+        marginRight: Spacing.sm,
+    },
+    loyaltyInfo: {
+        flex: 1,
+    },
+    loyaltyTier: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        color: '#92400E',
+    },
+    loyaltyPoints: {
+        fontSize: FontSizes.sm,
+        color: '#B45309',
+    },
+    discountApplied: {
+        marginTop: Spacing.sm,
+        paddingTop: Spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: '#FCD34D',
+    },
+    discountText: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+        color: '#15803D',
+        textAlign: 'center',
     },
 });
