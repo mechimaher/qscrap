@@ -183,26 +183,50 @@ export class OrderLifecycleService {
         try {
             await client.query('BEGIN');
 
-            // Verify driver assignment and order status
+            // CRITICAL FIX: Verify driver assignment through delivery_assignments, not orders.driver_id
+            const assignmentCheck = await client.query(`
+                SELECT da.assignment_id, da.driver_id, d.user_id
+                FROM delivery_assignments da
+                JOIN drivers d ON da.driver_id = d.driver_id
+                WHERE da.order_id = $1 
+                  AND d.user_id = $2
+                  AND da.status = 'in_transit'
+            `, [orderId, driverId]);
+
+            if (assignmentCheck.rows.length === 0) {
+                throw new Error('No active delivery assignment found for this driver');
+            }
+
+            const assignment = assignmentCheck.rows[0];
+
+            // Update order status
             const result = await client.query(`
                 UPDATE orders 
                 SET order_status = 'completed', 
                     completed_at = NOW(),
                     payment_status = 'paid',
-                    pod_photo_url = $3,
+                    pod_photo_url = $2,
                     completed_by_driver = TRUE,
                     updated_at = NOW()
                 WHERE order_id = $1 
-                  AND driver_id = $2 
                   AND order_status = 'delivered'
                 RETURNING garage_id, customer_id, order_number, garage_payout_amount
-            `, [orderId, driverId, podPhotoUrl]);
+            `, [orderId, podPhotoUrl]);
 
             if (result.rows.length === 0) {
-                throw new Error('Order not found, not delivered, or driver mismatch');
+                throw new Error('Order not found or not in delivered status');
             }
 
             const order = result.rows[0];
+
+            // Update delivery assignment status
+            await client.query(`
+                UPDATE delivery_assignments
+                SET status = 'delivered',
+                    delivered_at = NOW(),
+                    delivery_photo_url = $2
+                WHERE assignment_id = $3
+            `, [orderId, podPhotoUrl, assignment.assignment_id]);
 
             // Log status change
             await client.query(`
