@@ -369,6 +369,7 @@ export default function OrderDetailScreen() {
     const [order, setOrder] = useState<Order | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
     // Review modal state
@@ -442,6 +443,52 @@ export default function OrderDetailScreen() {
         } finally {
             setIsSubmittingReview(false);
         }
+    };
+
+    const handleCancelOrder = async () => {
+        if (!order) return;
+
+        // Determine fee based on status
+        const isConfirmedStatus = order.order_status === 'confirmed';
+        const fee = isConfirmedStatus ? '0-10%' : '25%';
+        const feeMessage = isConfirmedStatus
+            ? t('cancel.feeConfirmed') || 'Free within 1 hour, 10% after'
+            : t('cancel.feePreparing') || '25% cancellation fee applies';
+
+        Alert.alert(
+            t('cancel.confirmTitle') || 'Cancel Order?',
+            `${t('cancel.confirmMessage') || 'Are you sure you want to cancel this order?'}\n\n${feeMessage}`,
+            [
+                { text: t('common.no'), style: 'cancel' },
+                {
+                    text: t('common.yes'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsCancelling(true);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                        try {
+                            await api.request(`/cancellations/order/${orderId}`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    reason_code: 'changed_mind',
+                                    reason_text: 'Customer cancelled from app'
+                                })
+                            });
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            Alert.alert(
+                                t('cancel.success') || 'Order Cancelled',
+                                t('cancel.successMessage') || 'Your order has been cancelled. Refund will be processed if applicable.',
+                                [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
+                            );
+                        } catch (error: any) {
+                            Alert.alert(t('common.error'), error.message || t('cancel.failed') || 'Failed to cancel order');
+                        } finally {
+                            setIsCancelling(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleCallDriver = () => {
@@ -706,6 +753,24 @@ export default function OrderDetailScreen() {
                     </TouchableOpacity>
                 )}
 
+                {/* Cancel Order - Only for confirmed/preparing */}
+                {['confirmed', 'preparing'].includes(order.order_status) && (
+                    <TouchableOpacity
+                        style={[styles.cancelOrderButton, isCancelling && { opacity: 0.7 }]}
+                        onPress={handleCancelOrder}
+                        disabled={isCancelling}
+                    >
+                        {isCancelling ? (
+                            <ActivityIndicator color="#EF4444" />
+                        ) : (
+                            <>
+                                <Text style={styles.cancelOrderIcon}>✕</Text>
+                                <Text style={styles.cancelOrderText}>{t('order.cancelOrder') || 'Cancel Order'}</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                )}
+
                 {/* Order Date */}
                 <View style={styles.metaInfo}>
                     <Text style={styles.metaText}>
@@ -919,4 +984,20 @@ const styles = StyleSheet.create({
     submitButton: { flex: 2, borderRadius: BorderRadius.xl, overflow: 'hidden' },
     submitGradient: { paddingVertical: Spacing.md, alignItems: 'center', justifyContent: 'center' },
     submitButtonText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
+
+    // Cancel Order Button
+    cancelOrderButton: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.md,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 2,
+        borderColor: '#EF4444',
+        backgroundColor: '#FEF2F2',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    cancelOrderIcon: { fontSize: 18, color: '#EF4444', marginRight: Spacing.sm, fontWeight: '700' },
+    cancelOrderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#EF4444' },
 });
