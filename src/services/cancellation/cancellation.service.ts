@@ -417,7 +417,7 @@ export class CancellationService {
                 message: 'Customer has cancelled this order'
             });
 
-            // Notify customer about refund (in-app + email)
+            // Notify customer about refund (in-app)
             if (stripeRefundResult) {
                 await createNotification({
                     userId: customerId,
@@ -429,9 +429,10 @@ export class CancellationService {
                         refund_amount: refundableAmount,
                         delivery_fee_retained: deliveryFee
                     },
-                    target_role: 'customer',
-                    send_email: true // Send email notification
+                    target_role: 'customer'
                 });
+
+                // TODO: Add email notification service call here
             }
 
             // Notify Operations (for audit trail)
