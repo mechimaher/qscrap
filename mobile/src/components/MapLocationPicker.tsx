@@ -176,18 +176,39 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     const reverseGeocode = async (lat: number, lng: number) => {
         try {
             setIsLoading(true);
-            const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-            if (results[0]) {
-                const geocoded = results[0];
-                const area = geocoded.district || geocoded.subregion || geocoded.name || '';
-                const city = geocoded.city || 'Doha';
-                const street = geocoded.street || '';
-                const fullAddress = `${street}, ${area}, ${city}`.replace(/^, /, '').trim();
-                setAddress(fullAddress);
+
+            // Use Google Maps Geocoding API for reliable results
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}&language=en`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                // Get the formatted address from Google
+                const formattedAddress = data.results[0].formatted_address;
+                setAddress(formattedAddress);
+                console.log('[Map] Reverse geocoded:', formattedAddress);
+            } else {
+                // Fallback: try Expo Location
+                const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+                if (results[0]) {
+                    const geocoded = results[0];
+                    const area = geocoded.district || geocoded.subregion || geocoded.name || '';
+                    const city = geocoded.city || 'Doha';
+                    const street = geocoded.street || '';
+                    const fullAddress = `${street}, ${area}, ${city}`.replace(/^, /, '').trim();
+                    setAddress(fullAddress);
+                    console.log('[Map] Expo geocoded:', fullAddress);
+                } else {
+                    // Last resort: use coordinates
+                    setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                    console.warn('[Map] Using coordinates as address');
+                }
             }
         } catch (error) {
             console.error('[Map] Reverse geocode failed:', error);
-            setAddress(t('home.mapPicker.locationSelected'));
+            // Use coordinates instead of placeholder text
+            setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
         } finally {
             setIsLoading(false);
         }
