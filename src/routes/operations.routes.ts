@@ -10,7 +10,9 @@ import {
     getDisputes,
     getDisputeDetails,
     resolveDispute,
-    getUsers
+    getUsers,
+    cancelOrderByOperations,
+    getOrphanOrders
 } from '../controllers/operations.controller';
 
 const router = Router();
@@ -26,9 +28,11 @@ router.get('/stats', getDashboardStats); // Alias for compatibility
 
 // Orders
 router.get('/orders', getOrders);
+router.get('/orders/orphan', getOrphanOrders); // Get stuck/orphan orders
 router.get('/orders/:order_id', getOrderDetails);
 router.patch('/orders/:order_id/status', updateOrderStatus);
 router.post('/orders/:order_id/collect', collectOrder);
+router.post('/orders/:order_id/cancel', cancelOrderByOperations); // Cancel order (admin cleanup)
 
 // Disputes
 router.get('/disputes', getDisputes);

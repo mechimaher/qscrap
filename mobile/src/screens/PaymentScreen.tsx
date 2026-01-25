@@ -142,18 +142,22 @@ export default function PaymentScreen() {
             }
 
             if (!paymentResult.intent?.clientSecret) {
-                throw new Error(paymentResult.error || 'Failed to create payment intent');
+                // Extract error message properly
+                const errorMsg = typeof paymentResult.error === 'string'
+                    ? paymentResult.error
+                    : (paymentResult.error?.message || paymentResult.message || 'Failed to create payment intent');
+                throw new Error(errorMsg);
             }
 
             setClientSecret(paymentResult.intent.clientSecret);
         } catch (error: any) {
             console.error('Error initializing payment:', error);
-            const errorMessage = typeof error === 'object'
-                ? (error.message || error.error || JSON.stringify(error))
-                : String(error);
+            const errorMessage = typeof error === 'string'
+                ? error
+                : (error?.message || 'Failed to initialize payment');
             Alert.alert(
                 t('common.error'),
-                errorMessage || 'Failed to initialize payment',
+                errorMessage,
                 [{ text: 'OK', onPress: () => navigation.goBack() }]
             );
         } finally {

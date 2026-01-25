@@ -349,3 +349,79 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch users' });
     }
 };
+
+// ============================================
+// ORDER CLEANUP (Orphan Management)
+// ============================================
+
+import { CancellationService } from '../services/cancellation/cancellation.service';
+const cancellationService = new CancellationService(getWritePool());
+
+export const cancelOrderByOperations = async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+    const { reason, refund_type, partial_refund_amount, notify_customer, notify_garage } = req.body;
+    const operationsUserId = req.user!.userId;
+
+    if (!reason) {
+        return res.status(400).json({ error: 'Cancellation reason is required' });
+    }
+
+    try {
+        const result = await cancellationService.cancelOrderByOperations(
+            order_id,
+            operationsUserId,
+            reason,
+            {
+                refund_type: refund_type || 'full',
+                partial_refund_amount,
+                notify_customer: notify_customer !== false,
+                notify_garage: notify_garage !== false
+            }
+        );
+
+        // Invalidate dashboard stats cache
+        await dashboardService.invalidateCache();
+
+        // Notify Operations room
+        emitToOperations('order_cancelled_by_operations', {
+            order_id,
+            previous_status: result.previous_status,
+            refund_processed: result.refund_processed,
+            refund_amount: result.refund_amount,
+            cancelled_by: operationsUserId,
+            reason
+        });
+
+        logger.info('[OPERATIONS] Order cancelled', {
+            order_id,
+            previous_status: result.previous_status,
+            refund_processed: result.refund_processed,
+            cancelled_by: operationsUserId
+        });
+
+        res.json(result);
+    } catch (err) {
+        logger.error('[OPERATIONS] cancelOrder error:', { error: getErrorMessage(err) } as any);
+        if (err instanceof Error && err.message.includes('not found')) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const getOrphanOrders = async (req: AuthRequest, res: Response) => {
+    try {
+        const orphanOrders = await cancellationService.getOrphanOrders();
+
+        res.json({
+            orphan_orders: orphanOrders,
+            count: orphanOrders.length,
+            message: orphanOrders.length > 0
+                ? `${orphanOrders.length} orphan order(s) require attention`
+                : 'No orphan orders found'
+        });
+    } catch (err) {
+        logger.error('[OPERATIONS] getOrphanOrders error:', { error: getErrorMessage(err) } as any);
+        res.status(500).json({ error: 'Failed to fetch orphan orders' });
+    }
+};

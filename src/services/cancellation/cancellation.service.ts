@@ -621,4 +621,239 @@ export class CancellationService {
 
         return result.rows;
     }
+
+    /**
+     * Cancel order by Operations (admin-level cleanup)
+     * Can cancel orders in ANY status, handles refunds, releases bids
+     */
+    async cancelOrderByOperations(
+        orderId: string,
+        operationsUserId: string,
+        reason: string,
+        options: {
+            refund_type?: 'full' | 'partial' | 'none';
+            partial_refund_amount?: number;
+            notify_customer?: boolean;
+            notify_garage?: boolean;
+        } = {}
+    ): Promise<{
+        success: boolean;
+        message: string;
+        previous_status: string;
+        refund_processed: boolean;
+        refund_amount?: number;
+    }> {
+        const client = await this.pool.connect();
+        const {
+            refund_type = 'full',
+            notify_customer = true,
+            notify_garage = true
+        } = options;
+
+        try {
+            await client.query('BEGIN');
+
+            // Get order details
+            const orderResult = await client.query(
+                `SELECT o.*, b.bid_id, b.request_id, r.status as request_status
+                 FROM orders o
+                 LEFT JOIN bids b ON o.bid_id = b.bid_id
+                 LEFT JOIN part_requests r ON b.request_id = r.request_id
+                 WHERE o.order_id = $1
+                 FOR UPDATE`,
+                [orderId]
+            );
+
+            if (orderResult.rows.length === 0) {
+                throw new Error('Order not found');
+            }
+
+            const order = orderResult.rows[0];
+            const previousStatus = order.order_status;
+
+            // Skip if already cancelled
+            if (previousStatus.includes('cancelled')) {
+                return {
+                    success: false,
+                    message: `Order already cancelled (${previousStatus})`,
+                    previous_status: previousStatus,
+                    refund_processed: false
+                };
+            }
+
+            // Update order status
+            await client.query(
+                `UPDATE orders 
+                 SET order_status = 'cancelled_by_operations',
+                     cancellation_reason = $2,
+                     cancelled_by = $3,
+                     cancelled_at = NOW(),
+                     updated_at = NOW()
+                 WHERE order_id = $1`,
+                [orderId, reason, operationsUserId]
+            );
+
+            // Log status change
+            await client.query(
+                `INSERT INTO order_status_history 
+                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                 VALUES ($1, $2, 'cancelled_by_operations', $3, 'operations', $4)`,
+                [orderId, previousStatus, operationsUserId, reason]
+            );
+
+            let refundProcessed = false;
+            let refundAmount = 0;
+
+            // Handle refund if order was paid
+            if (order.payment_status === 'paid' && refund_type !== 'none') {
+                const paymentIntentResult = await client.query(
+                    `SELECT provider_intent_id FROM payment_intents 
+                     WHERE order_id = $1 AND status = 'succeeded' 
+                     ORDER BY created_at DESC LIMIT 1`,
+                    [orderId]
+                );
+
+                if (paymentIntentResult.rows.length > 0) {
+                    refundAmount = refund_type === 'partial'
+                        ? (options.partial_refund_amount || parseFloat(order.total_amount))
+                        : parseFloat(order.total_amount);
+
+                    try {
+                        const Stripe = require('stripe');
+                        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                            apiVersion: '2025-12-15.acacia'
+                        });
+
+                        const stripeRefund = await stripe.refunds.create({
+                            payment_intent: paymentIntentResult.rows[0].provider_intent_id,
+                            amount: Math.round(refundAmount * 100),
+                            metadata: {
+                                order_id: orderId,
+                                order_number: order.order_number,
+                                reason: 'operations_cancellation',
+                                cancelled_by: operationsUserId
+                            }
+                        });
+
+                        // Create refund record
+                        await client.query(
+                            `INSERT INTO refunds 
+                             (order_id, original_amount, refund_amount, refund_status, 
+                              stripe_refund_id, processed_by, processed_at, refund_reason)
+                             VALUES ($1, $2, $3, 'completed', $4, $5, NOW(), $6)`,
+                            [orderId, order.total_amount, refundAmount, stripeRefund.id,
+                                operationsUserId, reason]
+                        );
+
+                        // Update payment status
+                        await client.query(
+                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
+                            [orderId]
+                        );
+
+                        refundProcessed = true;
+                        console.log(`[Operations] Refunded ${refundAmount} QAR for order ${order.order_number}`);
+                    } catch (stripeErr: any) {
+                        console.error('[Operations] Stripe refund failed:', stripeErr.message);
+                        // Log failed refund for manual processing
+                        await client.query(
+                            `INSERT INTO refunds 
+                             (order_id, original_amount, refund_amount, refund_status, 
+                              processed_by, refund_reason)
+                             VALUES ($1, $2, $3, 'failed', $4, $5)`,
+                            [orderId, order.total_amount, refundAmount, operationsUserId,
+                                `${reason} (Stripe error: ${stripeErr.message})`]
+                        );
+                    }
+                }
+            }
+
+            // If order was pending_payment, release the bid back
+            if (previousStatus === 'pending_payment' && order.bid_id) {
+                // Reset bid status to pending so it can be accepted again
+                await client.query(
+                    `UPDATE bids SET status = 'pending', updated_at = NOW() 
+                     WHERE bid_id = $1`,
+                    [order.bid_id]
+                );
+
+                // Reactivate request if it was matched
+                if (order.request_id && order.request_status === 'matched') {
+                    await client.query(
+                        `UPDATE part_requests SET status = 'active', updated_at = NOW() 
+                         WHERE request_id = $1`,
+                        [order.request_id]
+                    );
+                }
+            }
+
+            await client.query('COMMIT');
+
+            // Send notifications
+            if (notify_customer && order.customer_id) {
+                await createNotification({
+                    userId: order.customer_id,
+                    type: 'order_cancelled',
+                    title: '🚫 Order Cancelled',
+                    message: refundProcessed
+                        ? `Order #${order.order_number} has been cancelled. Refund of ${refundAmount} QAR processed.`
+                        : `Order #${order.order_number} has been cancelled.`,
+                    data: { order_id: orderId, refund_amount: refundAmount },
+                    target_role: 'customer'
+                });
+            }
+
+            if (notify_garage && order.garage_id) {
+                await createNotification({
+                    userId: order.garage_id,
+                    type: 'order_cancelled',
+                    title: '🚫 Order Cancelled by Operations',
+                    message: `Order #${order.order_number} has been cancelled by Operations: ${reason}`,
+                    data: { order_id: orderId },
+                    target_role: 'garage'
+                });
+            }
+
+            return {
+                success: true,
+                message: `Order cancelled successfully${refundProcessed ? ` (${refundAmount} QAR refunded)` : ''}`,
+                previous_status: previousStatus,
+                refund_processed: refundProcessed,
+                refund_amount: refundAmount
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Get orphan orders (stuck in limbo states)
+     */
+    async getOrphanOrders(): Promise<any[]> {
+        const result = await this.pool.query(`
+            SELECT 
+                o.order_id, o.order_number, o.order_status, o.payment_status,
+                o.total_amount, o.delivery_fee, o.created_at, o.updated_at,
+                c.full_name as customer_name, c.phone_number as customer_phone,
+                g.garage_name, g.phone_number as garage_phone,
+                EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 3600 as hours_old
+            FROM orders o
+            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            LEFT JOIN garages g ON o.garage_id = g.garage_id
+            WHERE 
+                -- Payment abandoned (pending_payment for > 2 hours)
+                (o.order_status = 'pending_payment' AND o.created_at < NOW() - INTERVAL '2 hours')
+                -- Stuck in processing (> 24 hours)
+                OR (o.order_status IN ('pending_driver', 'driver_assigned') AND o.created_at < NOW() - INTERVAL '24 hours')
+                -- Failed payment never recovered
+                OR (o.payment_status = 'failed' AND o.updated_at < NOW() - INTERVAL '1 hour')
+            ORDER BY o.created_at ASC
+            LIMIT 50
+        `);
+
+        return result.rows;
+    }
 }
