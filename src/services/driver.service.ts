@@ -4,6 +4,7 @@ import { driverRepository } from '../repositories/driver.repository';
 import { AssignmentState } from '../state/assignment.state';
 import { storageService } from './storage.service';
 import { walletService } from './wallet.service';
+import { pushService } from './push.service';
 
 export class DriverService {
     private pool = getWritePool();
@@ -465,6 +466,17 @@ export class DriverService {
             old_status: assignment.order_status,
             new_status: newOrderStatus || status
         });
+
+        // PUSH NOTIFICATION - Critical for customer app notifications
+        if (newOrderStatus && ['collected', 'in_transit', 'delivered'].includes(newOrderStatus)) {
+            pushService.sendOrderStatusNotification(
+                assignment.customer_id,
+                assignment.order_number,
+                newOrderStatus,
+                assignment.order_id,
+                { driverName: assignment.driver_name }
+            ).catch(err => console.error('[Push] Failed to send order status notification:', err));
+        }
     }
 
     async uploadProof(userId: string, assignmentId: string, photoBase64: string, signatureBase64?: string, notes?: string) {
