@@ -14,6 +14,7 @@ import {
     Animated,
     Easing,
     Dimensions,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -747,6 +748,20 @@ export default function OrderDetailScreen() {
                             <Text style={styles.addressIcon}>📍</Text>
                             <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
                         </View>
+                    </View>
+                )}
+
+                {/* Proof of Delivery Image */}
+                {order.pod_photo_url && (order.order_status === 'delivered' || order.order_status === 'completed') && (
+                    <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            📸 {t('order.proofOfDelivery') || 'Proof of Delivery'}
+                        </Text>
+                        <Image
+                            source={{ uri: order.pod_photo_url }}
+                            style={{ width: '100%', height: 200, borderRadius: 12, marginTop: 12 }}
+                            resizeMode="cover"
+                        />
                     </View>
                 )}
 

@@ -427,6 +427,7 @@ export const en = {
         deliveryFee: 'Delivery Fee',
         partPrice: 'Part Price',
         loyaltyDiscount: 'Loyalty Discount',
+        proofOfDelivery: 'Proof of Delivery',
         haveYouReceived: 'Have you received this order?',
         confirmReceived: 'Confirm Received',
         confirmDelivery: 'Confirm Delivery',
