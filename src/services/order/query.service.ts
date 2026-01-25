@@ -37,6 +37,7 @@ export class OrderQueryService {
         // Build main query
         let query = `
             SELECT o.*, 
+                   o.pod_photo_url,
                    pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
                    pr.delivery_lat::float, pr.delivery_lng::float,
                    pr.part_category, pr.part_subcategory,

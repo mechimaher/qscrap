@@ -39,15 +39,14 @@ export class CacheService {
         try {
             this.redis = new Redis(redisUrl, {
                 maxRetriesPerRequest: 3,
-                lazyConnect: true,
-                retryDelayOnFailover: 100
+                lazyConnect: true
             });
 
             await this.redis.connect();
             this.enabled = true;
             logger.info('[Cache] Redis connected - caching enabled');
         } catch (error) {
-            logger.warn('[Cache] Redis connection failed - caching disabled', error);
+            logger.warn('[Cache] Redis connection failed - caching disabled');
             this.enabled = false;
         }
     }
@@ -65,7 +64,7 @@ export class CacheService {
             }
             return null;
         } catch (error) {
-            logger.warn('[Cache] Get error:', key, error);
+            logger.warn(`[Cache] Get error: ${key}`);
             return null;
         }
     }
@@ -81,7 +80,7 @@ export class CacheService {
             await this.redis.setex(key, ttl, JSON.stringify(value));
             return true;
         } catch (error) {
-            logger.warn('[Cache] Set error:', key, error);
+            logger.warn(`[Cache] Set error: ${key}`);
             return false;
         }
     }
@@ -96,7 +95,7 @@ export class CacheService {
             await this.redis.del(key);
             return true;
         } catch (error) {
-            logger.warn('[Cache] Delete error:', key, error);
+            logger.warn(`[Cache] Delete error: ${key}`);
             return false;
         }
     }
@@ -114,7 +113,7 @@ export class CacheService {
             }
             return keys.length;
         } catch (error) {
-            logger.warn('[Cache] DeletePattern error:', pattern, error);
+            logger.warn(`[Cache] DeletePattern error: ${pattern}`);
             return 0;
         }
     }
