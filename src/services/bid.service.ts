@@ -8,6 +8,7 @@
 import pool from '../config/db';
 import { emitToUser, emitToGarage } from '../utils/socketIO';
 import fs from 'fs/promises';
+import { getFraudDetectionService } from './security/fraud-detection.service';
 
 // ============================================
 // TYPES
@@ -66,6 +67,19 @@ const validateWarrantyDays = (days: unknown): number | null => {
  */
 export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
     const { requestId, garageId, bidAmount, warrantyDays, notes, partCondition, brandName, partNumber, files } = params;
+
+    // 0. Fraud Detection Check
+    const fraudService = getFraudDetectionService(pool);
+    const fraudCheck = await fraudService.checkBidAllowed({
+        garageId,
+        requestId,
+        bidAmount: parseFloat(String(bidAmount)) || 0,
+        partCondition
+    });
+
+    if (!fraudCheck.allowed) {
+        throw new Error(fraudCheck.reason || 'Bid rejected by fraud detection');
+    }
 
     // 1. Validation
     const amountCheck = validateBidAmount(bidAmount);
