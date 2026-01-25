@@ -108,6 +108,7 @@ export const ar = {
         compare: 'مقارنة',
         networkError: 'خطأ في الاتصال. يرجى التحقق من الإنترنت.',
         saveChanges: 'حفظ التغييرات',
+        yourDriver: 'سائقك',
     },
 
 
