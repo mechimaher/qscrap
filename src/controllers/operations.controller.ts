@@ -25,6 +25,13 @@ const userService = new UserManagementService(getReadPool());
 export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     try {
         const stats = await dashboardService.getDashboardStats();
+        // DEBUG: Log loyalty stats
+        logger.info('[OPERATIONS] Dashboard stats returned', {
+            loyalty_discounts_today: stats.loyalty_discounts_today,
+            loyalty_discounts_count_today: stats.loyalty_discounts_count_today,
+            loyalty_discounts_week: stats.loyalty_discounts_week,
+            loyalty_discounts_month: stats.loyalty_discounts_month
+        });
         res.json({ stats });
     } catch (err) {
         logger.error('[OPERATIONS] getDashboardStats error:', { error: getErrorMessage(err) } as any);
