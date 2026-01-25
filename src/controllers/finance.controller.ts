@@ -198,6 +198,15 @@ export const getAwaitingConfirmation = async (req: AuthRequest, res: Response) =
 };
 
 export const confirmAllPayouts = async (req: AuthRequest, res: Response) => {
+    // DISABLED FOR COMPLIANCE: Each payout must be confirmed individually
+    // to ensure proper verification and audit trail
+    return res.status(403).json({
+        error: 'Bulk confirmation disabled for compliance',
+        message: 'Please confirm each payout individually to ensure proper verification and documentation.',
+        compliance_reason: 'Financial controls require individual verification of each transaction'
+    });
+
+    /* ORIGINAL CODE PRESERVED FOR REFERENCE:
     try {
         const garageId = req.user!.userId;
         const { password } = req.body;
@@ -215,6 +224,7 @@ export const confirmAllPayouts = async (req: AuthRequest, res: Response) => {
         }
         res.status(500).json({ error: 'Failed to confirm payouts' });
     }
+    */
 };
 
 // ============================================
