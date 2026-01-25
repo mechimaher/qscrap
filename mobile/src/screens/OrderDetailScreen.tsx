@@ -740,6 +740,16 @@ export default function OrderDetailScreen() {
                     )}
                 </View>
 
+                {/* Delivery Address */}
+                {order.delivery_address && (
+                    <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.deliveryAddress')}</Text>
+                        <View style={[styles.addressRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={styles.addressIcon}>📍</Text>
+                            <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
+                        </View>
+                    </View>
+                )}
 
 
                 {/* Proof of Delivery Image */}
