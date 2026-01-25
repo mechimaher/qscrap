@@ -327,12 +327,14 @@ router.post('/full/:orderId',
                 return res.status(400).json({ success: false, error: 'No amount to pay' });
             }
 
-            // Update order with discount info for tracking
+            // Update order with discount info and adjusted total
             if (loyaltyDiscount > 0) {
+                // Save discount and update total_amount to reflect discounted price
                 await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount]
+                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
+                    [orderId, loyaltyDiscount, chargeAmount]
                 );
+                console.log(`[Payment] Applied ${loyaltyDiscount} QAR discount. New total: ${chargeAmount} QAR`);
             }
 
             const result = await depositService.createFullPaymentIntent(
