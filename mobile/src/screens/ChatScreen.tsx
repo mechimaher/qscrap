@@ -253,7 +253,7 @@ export default function ChatScreen() {
                 <View style={[styles.headerInfo, isRTL && { marginLeft: 0, marginRight: Spacing.md }]}>
                     <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{recipientName}</Text>
                     <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                        {t('orders.orderNumber')} {orderNumber} • {isConnected ? `🟢 ${t('chat.online')}` : `⚪ ${t('chat.connecting')}`}
+                        {t('orders.orderNumber', { number: orderNumber })} • {isConnected ? `🟢 ${t('chat.online')}` : `⚪ ${t('chat.connecting')}`}
                     </Text>
                 </View>
                 <View style={styles.headerIcon}>
