@@ -1,7 +1,7 @@
 // QScrap - Delivery Fee Payment Screen
 // Collects upfront delivery fee via Stripe before order confirmation
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -22,7 +22,8 @@ import { Colors, FontSizes, Spacing, BorderRadius, Shadows } from '../constants/
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage as useTranslation } from '../contexts/LanguageContext';
 import { useToast } from '../components/Toast';
-import { api, API_BASE_URL } from '../services/api';
+import { api } from '../services/api';
+import { API_BASE_URL } from '../config/api';
 
 const STRIPE_PUBLISHABLE_KEY = 'pk_test_51St6AI39lYR0XT69rqWSeL7KgzTodXnECkPed1CAsZ7KsqhJOB4W3VD6QvhWyUhrVsTfADxh33p6DIJOTH30q4dK00dnPzwcBt';
 
@@ -67,6 +68,9 @@ export default function PaymentScreen() {
     const [applyDiscount, setApplyDiscount] = useState(false);
     const [discountAmount, setDiscountAmount] = useState(0);
 
+    // Track if initialization is in progress to prevent race conditions
+    const isInitializing = useRef(false);
+
     const totalAmount = partPrice + deliveryFee;
 
     // Step 1: Create order first (pending_payment status) OR resume existing order
@@ -95,35 +99,94 @@ export default function PaymentScreen() {
         }
     };
 
-    // Re-initialize when payment type changes (if order exists)
-    useEffect(() => {
-        if (orderId && !clientSecret) {
-            initializePayment();
-        }
-    }, [paymentType]);
+    // Single consolidated useEffect for payment type and discount changes
+    // Uses a version counter to cancel outdated requests
+    const requestVersion = useRef(0);
 
-    // When discount toggle or payment type changes, reset clientSecret to force new intent
     useEffect(() => {
-        // Don't run on initial mount or if no order exists yet
+        // Skip if no order yet (initial order creation happens separately)
         if (!orderId) return;
 
-        // Clear existing intent to force new one with correct discount
-        setClientSecret('');
-
-        // Calculate new discount amount for display
+        // Calculate discount for display immediately
         if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
-            const baseAmount = paymentType === 'full' ? totalAmount : deliveryFee;
-            const discount = Math.round(baseAmount * (loyaltyData.discountPercentage / 100));
+            // CRITICAL: Discount ALWAYS calculated on total order (part + delivery)
+            const discount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
             setDiscountAmount(discount);
         } else {
             setDiscountAmount(0);
         }
 
-        // Re-initialize to create new payment intent with updated discount
-        initializePayment();
-    }, [applyDiscount, paymentType]);
+        // Increment version to cancel any in-flight requests
+        requestVersion.current += 1;
+        const thisVersion = requestVersion.current;
+
+        // Clear existing intent
+        setClientSecret('');
+        setIsCreatingOrder(true);
+
+        // Create new payment intent with debounce
+        const timer = setTimeout(async () => {
+            // Check if this request is still the latest
+            if (thisVersion !== requestVersion.current) {
+                console.log('[Payment] Request cancelled - newer request pending');
+                return;
+            }
+
+            try {
+                // Calculate discount inline
+                let currentDiscount = 0;
+                if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
+                    currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
+                }
+
+                let paymentResult;
+                if (paymentType === 'full') {
+                    paymentResult = await api.createFullPaymentIntent(orderId, currentDiscount);
+                    setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
+                    setDiscountAmount(currentDiscount);
+                } else {
+                    paymentResult = await api.createDeliveryFeeIntent(orderId);
+                    setPaymentAmount(deliveryFee);
+                    // For delivery-only, discount is shown but not sent to backend yet
+                    // It will apply to the COD portion at delivery
+                }
+
+                // Check again if this is still the latest request
+                if (thisVersion !== requestVersion.current) {
+                    console.log('[Payment] Intent received but request is stale, ignoring');
+                    return;
+                }
+
+                if (paymentResult.intent?.clientSecret) {
+                    setClientSecret(paymentResult.intent.clientSecret);
+                } else {
+                    const result = paymentResult as any;
+                    const errorMsg = result.error?.message || result.message || 'Failed to create payment intent';
+                    console.error('[Payment] Intent creation failed:', errorMsg);
+                    toast.error(t('common.error'), errorMsg);
+                }
+            } catch (error: any) {
+                if (thisVersion !== requestVersion.current) return;
+                console.error('[Payment] Error creating intent:', error);
+                toast.error(t('common.error'), error?.message || 'Payment setup failed');
+            } finally {
+                if (thisVersion === requestVersion.current) {
+                    setIsCreatingOrder(false);
+                }
+            }
+        }, 400); // Slightly longer debounce for stability
+
+        return () => clearTimeout(timer);
+    }, [orderId, paymentType, applyDiscount]);
 
     const initializePayment = async () => {
+        // Prevent concurrent initialization calls
+        if (isInitializing.current) {
+            console.log('[Payment] ⚠️ Initialization already in progress, skipping...');
+            return;
+        }
+
+        isInitializing.current = true;
         setIsCreatingOrder(true);
         try {
             let orderIdToUse = existingOrderId;
@@ -135,20 +198,23 @@ export default function PaymentScreen() {
                     throw new Error('Failed to create order');
                 }
                 orderIdToUse = orderResult.order_id;
-                setOrderId(orderIdToUse);
+                setOrderId(orderIdToUse || null);
             } else {
-                setOrderId(orderIdToUse);
+                setOrderId(orderIdToUse || null);
             }
 
             // Calculate discount inline to avoid race condition with useEffect
             // This ensures we use the current applyDiscount and loyaltyData state
             let currentDiscount = 0;
             if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
-                const baseAmount = paymentType === 'full' ? totalAmount : deliveryFee;
-                currentDiscount = Math.round(baseAmount * (loyaltyData.discountPercentage / 100));
+                // CRITICAL: Discount ALWAYS calculated on total order (part + delivery)
+                currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
             }
 
             // Create payment intent based on payment type
+            if (!orderIdToUse) {
+                throw new Error('Order ID is required');
+            }
             let paymentResult;
             if (paymentType === 'full') {
                 // Pass loyalty discount to backend - platform absorbs the difference
@@ -161,10 +227,11 @@ export default function PaymentScreen() {
             }
 
             if (!paymentResult.intent?.clientSecret) {
-                // Extract error message properly
-                const errorMsg = typeof paymentResult.error === 'string'
-                    ? paymentResult.error
-                    : (paymentResult.error?.message || paymentResult.message || 'Failed to create payment intent');
+                // Extract error message properly - result may have error property on failure
+                const result = paymentResult as any;
+                const errorMsg = typeof result.error === 'string'
+                    ? result.error
+                    : (result.error?.message || result.message || 'Failed to create payment intent');
                 throw new Error(errorMsg);
             }
 
@@ -181,6 +248,7 @@ export default function PaymentScreen() {
             );
         } finally {
             setIsCreatingOrder(false);
+            isInitializing.current = false;
         }
     };
 
