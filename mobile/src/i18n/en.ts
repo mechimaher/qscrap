@@ -107,6 +107,7 @@ export const en = {
         compare: 'Compare',
         networkError: 'Network error. Please check your connection.',
         saveChanges: 'Save Changes',
+        yourDriver: 'Your Driver',
     },
 
 
