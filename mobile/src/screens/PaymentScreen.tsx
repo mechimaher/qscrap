@@ -194,6 +194,7 @@ export default function PaymentScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
+            console.log('[Payment] Starting confirmPayment with clientSecret:', clientSecret?.substring(0, 20) + '...');
             const { error, paymentIntent } = await confirmPayment(clientSecret, {
                 paymentMethodType: 'Card',
             });
@@ -202,12 +203,13 @@ export default function PaymentScreen() {
                 console.error('Payment error:', error);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 toast.error(t('common.error'), error.message || 'Payment failed');
+                setIsLoading(false);
                 return;
             }
 
             // Check for success status (case-insensitive)
             const status = paymentIntent?.status?.toLowerCase();
-            console.log('[Payment] Stripe status:', paymentIntent?.status, 'orderId:', orderId);
+            console.log('[Payment] Stripe status:', status, 'orderId:', orderId, 'paymentIntent:', JSON.stringify(paymentIntent));
 
             if (status === 'succeeded') {
                 // Confirm payment on backend to update order status
@@ -228,9 +230,12 @@ export default function PaymentScreen() {
                     message: 'Your order has been confirmed!',
                 });
 
-                // Small delay to ensure toast shows before navigation
-                setTimeout(() => {
-                    // Navigate to delivery tracking for real-time order status
+                // Navigate immediately - don't wait for setIsLoading
+                console.log('[Payment] SUCCESS - Navigating now. orderId:', orderId);
+
+                // Use shorter delay and ensure navigation happens
+                const navigateToOrder = () => {
+                    console.log('[Payment] Executing navigation reset...');
                     if (orderId) {
                         navigation.reset({
                             index: 1,
@@ -240,13 +245,17 @@ export default function PaymentScreen() {
                             ],
                         });
                     } else {
-                        // Fallback to Orders tab if orderId missing
+                        console.warn('[Payment] No orderId, navigating to Orders tab');
                         navigation.reset({
                             index: 0,
                             routes: [{ name: 'MainTabs', params: { screen: 'Orders' } }],
                         });
                     }
-                }, 1000);
+                };
+
+                // Execute after a short delay
+                setTimeout(navigateToOrder, 500);
+
             } else {
                 // Unexpected status - show warning but try to proceed
                 console.warn('[Payment] Unexpected status:', paymentIntent?.status);
@@ -260,7 +269,7 @@ export default function PaymentScreen() {
                         index: 0,
                         routes: [{ name: 'MainTabs' }],
                     });
-                }, 1500);
+                }, 1000);
             }
         } catch (error: any) {
             console.error('Payment error:', error);
