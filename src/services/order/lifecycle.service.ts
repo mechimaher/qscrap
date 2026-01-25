@@ -337,7 +337,7 @@ export class OrderLifecycleService {
                 await client.query(`
                     INSERT INTO order_status_history 
                     (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-                    VALUES ($1, 'delivered', 'completed', 'system', 'system', 'Auto-completed after 48h timeout')
+                    VALUES ($1, 'delivered', 'completed', NULL, 'system', 'Auto-completed after 48h timeout')
                 `, [order.order_id]);
 
                 // Create payout
