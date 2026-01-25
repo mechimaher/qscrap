@@ -335,6 +335,7 @@ export const en = {
         pleaseDescribePart: 'Please describe the part you need',
         requestCreated: 'Request Created!',
         garagesReviewing: 'Garages are reviewing your request',
+        orderAgain: 'Order Again',
         orderAgainPrefilled: 'Form pre-filled with your previous order details',
         prefilledMsg: 'Form pre-filled with your previous order details',
     },
