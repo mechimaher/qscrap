@@ -425,3 +425,32 @@ export const getOrphanOrders = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch orphan orders' });
     }
 };
+
+// ============================================
+// AUTO-COMPLETE TRIGGER (for testing)
+// ============================================
+
+import { runAutoCompleteNow } from '../jobs/auto-complete-orders';
+
+export const triggerAutoComplete = async (req: AuthRequest, res: Response) => {
+    try {
+        logger.info('[OPERATIONS] Manual auto-complete triggered by:', { userId: req.user?.userId });
+
+        const result = await runAutoCompleteNow();
+
+        // Invalidate dashboard stats cache
+        await dashboardService.invalidateCache();
+
+        res.json({
+            success: true,
+            completed_count: result.completed_count,
+            order_numbers: result.order_numbers,
+            message: result.completed_count > 0
+                ? `Auto-completed ${result.completed_count} order(s): ${result.order_numbers.join(', ')}`
+                : 'No orders eligible for auto-completion (must be delivered 48h+ with no open disputes)'
+        });
+    } catch (err) {
+        logger.error('[OPERATIONS] triggerAutoComplete error:', { error: getErrorMessage(err) } as any);
+        res.status(500).json({ error: 'Failed to run auto-complete job' });
+    }
+};
