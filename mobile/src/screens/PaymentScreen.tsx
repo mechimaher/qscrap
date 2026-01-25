@@ -102,8 +102,15 @@ export default function PaymentScreen() {
         }
     }, [paymentType]);
 
-    // Calculate discount when toggle changes
+    // When discount toggle or payment type changes, reset clientSecret to force new intent
     useEffect(() => {
+        // Don't run on initial mount or if no order exists yet
+        if (!orderId) return;
+
+        // Clear existing intent to force new one with correct discount
+        setClientSecret('');
+
+        // Calculate new discount amount for display
         if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
             const baseAmount = paymentType === 'full' ? totalAmount : deliveryFee;
             const discount = Math.round(baseAmount * (loyaltyData.discountPercentage / 100));
@@ -111,7 +118,10 @@ export default function PaymentScreen() {
         } else {
             setDiscountAmount(0);
         }
-    }, [applyDiscount, paymentType, loyaltyData]);
+
+        // Re-initialize to create new payment intent with updated discount
+        initializePayment();
+    }, [applyDiscount, paymentType]);
 
     const initializePayment = async () => {
         setIsCreatingOrder(true);
@@ -130,12 +140,21 @@ export default function PaymentScreen() {
                 setOrderId(orderIdToUse);
             }
 
+            // Calculate discount inline to avoid race condition with useEffect
+            // This ensures we use the current applyDiscount and loyaltyData state
+            let currentDiscount = 0;
+            if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
+                const baseAmount = paymentType === 'full' ? totalAmount : deliveryFee;
+                currentDiscount = Math.round(baseAmount * (loyaltyData.discountPercentage / 100));
+            }
+
             // Create payment intent based on payment type
             let paymentResult;
             if (paymentType === 'full') {
                 // Pass loyalty discount to backend - platform absorbs the difference
-                paymentResult = await api.createFullPaymentIntent(orderIdToUse, discountAmount);
+                paymentResult = await api.createFullPaymentIntent(orderIdToUse, currentDiscount);
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
+                setDiscountAmount(currentDiscount);
             } else {
                 paymentResult = await api.createDeliveryFeeIntent(orderIdToUse);
                 setPaymentAmount(deliveryFee);
@@ -462,7 +481,7 @@ export default function PaymentScreen() {
                             <CardField
                                 postalCodeEnabled={false}
                                 placeholders={{
-                                    number: '4242 4242 4242 4242',
+                                    number: '1234 1234 1234 1234',
                                     expiration: 'MM/YY',
                                     cvc: 'CVC',
                                 }}
@@ -490,45 +509,38 @@ export default function PaymentScreen() {
                             </Text>
                         </View>
 
-                        {/* Test Card Info */}
-                        <View style={[styles.testCardInfo, { backgroundColor: '#FEF3C7' }]}>
-                            <Text style={styles.testCardTitle}>🧪 Test Mode</Text>
-                            <Text style={styles.testCardText}>
-                                Card: 4242 4242 4242 4242{'\n'}
-                                Expiry: 12/30  •  CVC: 123
-                            </Text>
-                        </View>
                     </View>
-
-                    <View style={{ height: 180 }} />
-                </ScrollView>
-
-                {/* Pay Button */}
-                <View style={[styles.footer, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity
-                        style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
-                        onPress={handlePayment}
-                        disabled={!cardComplete || isLoading}
-                    >
-                        <LinearGradient
-                            colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
-                            style={styles.payGradient}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.payButtonText}>
-                                    🔒 Pay {((paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount).toFixed(2)} QAR
-                                </Text>
-                            )}
-                        </LinearGradient>
-                    </TouchableOpacity>
-
-                    <Text style={styles.secureText}>
-                        🔐 Secured by Stripe
-                    </Text>
                 </View>
-            </SafeAreaView >
+
+                <View style={{ height: 180 }} />
+            </ScrollView>
+
+            {/* Pay Button */}
+            <View style={[styles.footer, { backgroundColor: colors.surface }]}>
+                <TouchableOpacity
+                    style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
+                    onPress={handlePayment}
+                    disabled={!cardComplete || isLoading}
+                >
+                    <LinearGradient
+                        colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
+                        style={styles.payGradient}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.payButtonText}>
+                                🔒 Pay {((paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount).toFixed(2)} QAR
+                            </Text>
+                        )}
+                    </LinearGradient>
+                </TouchableOpacity>
+
+                <Text style={styles.secureText}>
+                    🔐 Secured by Stripe
+                </Text>
+            </View>
+        </SafeAreaView >
         </StripeProvider >
     );
 }
