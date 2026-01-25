@@ -118,35 +118,20 @@ const HeroWelcome = ({
     };
 
     useEffect(() => {
+        // Simple fade-in entrance animation only - no loops for performance
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 600,
+                duration: 300, // Reduced from 600ms
                 useNativeDriver: true,
             }),
             Animated.timing(slideAnim, {
                 toValue: 0,
-                duration: 600,
-                easing: Easing.out(Easing.back(1.2)),
+                duration: 300, // Reduced from 600ms
                 useNativeDriver: true,
             }),
         ]).start();
-
-        // Pulse for notification badge
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-                Animated.timing(pulseAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
-            ])
-        ).start();
-
-        // Subtle glow for loyalty badge
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(loyaltyGlow, { toValue: 1, duration: 1500, useNativeDriver: true }),
-                Animated.timing(loyaltyGlow, { toValue: 0.8, duration: 1500, useNativeDriver: true }),
-            ])
-        ).start();
+        // Removed: pulse and glow loop animations (battery/performance drain)
     }, []);
 
     const badgeScale = pulseAnim.interpolate({
@@ -276,32 +261,7 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                 useNativeDriver: true,
             }),
         ]).start();
-
-        // Subtle glow pulse
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(glowAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
-                Animated.timing(glowAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
-            ])
-        ).start();
-
-        // Persistent + icon breathing animation
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(plusIconAnim, {
-                    toValue: 1,
-                    duration: 1500,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(plusIconAnim, {
-                    toValue: 0,
-                    duration: 1500,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
+        // Removed: glow pulse and breathing animations (battery drain)
     }, []);
 
     const handlePressIn = () => {
@@ -637,28 +597,11 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
     useEffect(() => {
         Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 400,
-            delay: 600,
+            duration: 300,
+            delay: 400,
             useNativeDriver: true,
         }).start();
-
-        // Subtle lightbulb glow pulse
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(glowAnim, {
-                    toValue: 1,
-                    duration: 1000,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(glowAnim, {
-                    toValue: 0.6,
-                    duration: 1000,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
+        // Removed: lightbulb glow loop (battery drain)
     }, []);
 
     const handlePress = () => {
@@ -712,16 +655,12 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
             setLoyalty({ points: 0, tier: 'bronze' });
         });
 
-        // Entrance animation
+        // Entrance animation - simplified
         Animated.parallel([
-            Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: 600, useNativeDriver: true }),
-            Animated.timing(slideAnim, { toValue: 0, duration: 500, delay: 600, easing: Easing.out(Easing.back(1.1)), useNativeDriver: true }),
+            Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+            Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
         ]).start();
-
-        // Shimmer animation
-        Animated.loop(
-            Animated.timing(shimmerAnim, { toValue: 1, duration: 2500, useNativeDriver: true })
-        ).start();
+        // Removed: shimmer loop (battery drain)
     }, []);
 
     const handlePress = () => {
@@ -908,27 +847,47 @@ export default function HomeScreen() {
 
             const location = await Promise.race([locationPromise, timeoutPromise]);
 
-            // Reverse geocode to get area name
-            const [geocoded] = await Location.reverseGeocodeAsync({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            });
+            // Reverse geocode using Google Maps API for better results
+            const GOOGLE_MAPS_API_KEY = 'AIzaSyBXRcKuHOW9r7TYNjVvNXZjYwx_6TLfxXo';
+            const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.coords.latitude},${location.coords.longitude}&key=${GOOGLE_MAPS_API_KEY}`;
 
-            if (geocoded) {
-                const area = geocoded.district || geocoded.subregion || geocoded.name || '';
-                const city = geocoded.city || 'Doha';
-                const concise = area ? `${area}, ${city}` : city;
-                const fullAddress = `${geocoded.street || ''}, ${area}, ${city}`.replace(/^, /, '').trim();
+            try {
+                const response = await fetch(geocodeUrl);
+                const data = await response.json();
 
-                setDeliveryAddress(concise);
-                setDeliveryLocationData({
-                    lat: location.coords.latitude,
-                    lng: location.coords.longitude,
-                    address: fullAddress,
-                });
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } else {
-                // Geocoding failed but we have coordinates
+                if (data.status === 'OK' && data.results && data.results.length > 0) {
+                    const result = data.results[0];
+                    const fullAddress = result.formatted_address;
+
+                    // Smart display: Show first 3 parts (street, area, city) or full if short
+                    const parts = fullAddress.split(',').map((p: string) => p.trim());
+                    let displayAddress;
+                    if (parts.length > 3) {
+                        // Show: "Street, Area, City" (skip country)
+                        displayAddress = parts.slice(0, 3).join(', ');
+                    } else {
+                        displayAddress = fullAddress;
+                    }
+
+                    setDeliveryAddress(displayAddress);
+                    setDeliveryLocationData({
+                        lat: location.coords.latitude,
+                        lng: location.coords.longitude,
+                        address: fullAddress,
+                    });
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } else {
+                    // Geocoding failed but we have coordinates
+                    setDeliveryAddress(t('home.currentLocation'));
+                    setDeliveryLocationData({
+                        lat: location.coords.latitude,
+                        lng: location.coords.longitude,
+                        address: t('home.currentLocation'),
+                    });
+                }
+            } catch (geocodeError) {
+                console.log('[GPS Fallback] Google geocoding failed:', geocodeError);
+                // Fallback to showing current location
                 setDeliveryAddress(t('home.currentLocation'));
                 setDeliveryLocationData({
                     lat: location.coords.latitude,
@@ -1105,12 +1064,20 @@ export default function HomeScreen() {
                 <DeliveryLocationWidget
                     onLocationChange={(address) => {
                         if (address) {
-                            // Extract concise format for display
-                            const parts = address.address_text.split(',').map(p => p.trim());
-                            const concise = parts.length >= 2
-                                ? `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`
-                                : address.address_text;
-                            setDeliveryAddress(concise);
+                            // Show full geocoded address (or smart truncation if too long)
+                            const fullAddress = address.address_text;
+                            const parts = fullAddress.split(',').map(p => p.trim());
+
+                            // Smart display: Show first 3 parts (street, area, city) or full if short
+                            let displayAddress;
+                            if (parts.length > 3) {
+                                // Show: "Street, Area, City" (skip country)
+                                displayAddress = parts.slice(0, 3).join(', ');
+                            } else {
+                                displayAddress = fullAddress;
+                            }
+
+                            setDeliveryAddress(displayAddress);
                             // Store full coordinates for driver navigation
                             setDeliveryLocationData({
                                 lat: address.latitude || null,
