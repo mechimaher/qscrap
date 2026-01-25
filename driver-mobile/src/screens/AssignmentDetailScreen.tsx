@@ -275,7 +275,7 @@ export default function AssignmentDetailScreen() {
                     </Text>
                     {assignment.car_make && (
                         <Text style={[styles.carInfo, { color: colors.textMuted }]}>
-                            🚗 {assignment.car_make} {assignment.car_model}
+                            🚗 {assignment.car_make} {assignment.car_model} ({assignment.car_year})
                         </Text>
                     )}
                 </View>
