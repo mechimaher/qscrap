@@ -641,20 +641,20 @@ export default function OrderDetailScreen() {
                     </View>
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('common.part')}  <Text style={{ fontWeight: '700' }}>{order.part_category || t('common.part')}</Text>
+                            {t('common.type')}  <Text style={{ fontWeight: '700' }}>{order.part_category || t('common.part')}</Text>
                         </Text>
                     </View>
                     {order.part_subcategory && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                {t('common.type')}  <Text style={{ fontWeight: '700' }}>{order.part_subcategory}</Text>
+                                {t('common.part')}  <Text style={{ fontWeight: '700' }}>{order.part_subcategory}</Text>
                             </Text>
                         </View>
                     )}
                     {order.part_description && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.detailValue, { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={3}>
-                                {t('common.notes')}  <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
+                                {t('order.customerNotes') || 'Customer Notes'}  <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
                             </Text>
                         </View>
                     )}
@@ -663,19 +663,19 @@ export default function OrderDetailScreen() {
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('order.partPrice')}  <Text style={{ fontWeight: '700' }}>{order.part_price} {t('common.currency')}</Text>
+                            🔧 {t('order.partPrice')}  <Text style={{ fontWeight: '700' }}>{order.part_price} {t('common.currency')}</Text>
                         </Text>
                     </View>
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('order.deliveryFee')}  <Text style={{ fontWeight: '700' }}>{order.delivery_fee} {t('common.currency')}</Text>
+                            🚚 {t('order.deliveryFee')}  <Text style={{ fontWeight: '700' }}>{order.delivery_fee} {t('common.currency')}</Text>
                         </Text>
                     </View>
 
                     <View style={styles.divider} />
 
                     {/* Show loyalty discount if applied */}
-                    {order.loyalty_discount > 0 && (
+                    {(order.loyalty_discount ?? 0) > 0 && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.detailValue, { color: '#10B981', textAlign: rtlTextAlign(isRTL) }]}>
                                 🎁 {t('order.loyaltyDiscount') || 'Loyalty Discount'}
@@ -686,7 +686,7 @@ export default function OrderDetailScreen() {
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('common.total')}{order.loyalty_discount > 0 ? ' (after discount)' : ''}
+                            {t('common.total')}
                         </Text>
                         <Text style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>{order.total_amount} {t('common.currency')}</Text>
                     </View>
@@ -740,16 +740,7 @@ export default function OrderDetailScreen() {
                     )}
                 </View>
 
-                {/* Delivery Address */}
-                {order.delivery_address && (
-                    <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.deliveryAddress')}</Text>
-                        <View style={[styles.addressRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.addressIcon}>📍</Text>
-                            <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
-                        </View>
-                    </View>
-                )}
+
 
                 {/* Proof of Delivery Image */}
                 {order.pod_photo_url && (order.order_status === 'delivered' || order.order_status === 'completed') && (
