@@ -117,9 +117,9 @@ export default function AssignmentsScreen() {
                         </View>
                     </View>
 
-                    {/* Part Info */}
-                    <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-                        {item.part_description}
+                    {/* Part Category - simplified for drivers */}
+                    <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
+                        📦 {item.part_category || 'Auto Part'}
                     </Text>
 
                     {/* Locations */}

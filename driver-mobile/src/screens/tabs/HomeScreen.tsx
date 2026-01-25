@@ -610,8 +610,9 @@ function AssignmentCard({ assignment, colors, onPress }: { assignment: Assignmen
                 <Text style={[styles.orderNumber, { color: colors.text }]}>
                     Order #{assignment.order_number}
                 </Text>
+                {/* Part Category - simplified for drivers */}
                 <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {assignment.part_description}
+                    📦 {assignment.part_category || 'Auto Part'}
                 </Text>
 
                 {/* Locations */}

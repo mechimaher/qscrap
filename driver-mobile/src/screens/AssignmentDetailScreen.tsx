@@ -262,17 +262,14 @@ export default function AssignmentDetailScreen() {
                     </View>
                 </View>
 
-                {/* Part Information */}
+                {/* Part Information - Simplified for drivers (full details are for garages) */}
                 <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>📦 Part Details</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>📦 Part Info</Text>
                     {assignment.part_category && (
                         <Text style={[styles.carInfo, { color: Colors.primary, fontWeight: '600', marginBottom: 4 }]}>
                             📂 {assignment.part_category}{assignment.part_subcategory ? ` > ${assignment.part_subcategory}` : ''}
                         </Text>
                     )}
-                    <Text style={[styles.partDescription, { color: colors.text }]}>
-                        {assignment.part_description}
-                    </Text>
                     {assignment.car_make && (
                         <Text style={[styles.carInfo, { color: colors.textMuted }]}>
                             🚗 {assignment.car_make} {assignment.car_model} ({assignment.car_year})
