@@ -1,57 +1,69 @@
+// Minimal ImageViewerModal - Replaced with React Native Modal + Image
 import React from 'react';
-import ImageView from 'react-native-image-viewing';
-import { StyleSheet, Text, View } from 'react-native';
-import { Colors, FontSizes, Spacing } from '../constants/theme';
+import { Modal, View, Image, TouchableOpacity, Text, StyleSheet, Dimensions, FlatList } from 'react-native';
 
 interface ImageViewerModalProps {
     visible: boolean;
     images: string[];
     imageIndex: number;
     onClose: () => void;
-    footerComponent?: (imageIndex: number) => React.ReactElement;
 }
 
-export default function ImageViewerModal({
-    visible,
-    images,
-    imageIndex,
-    onClose,
-    footerComponent
-}: ImageViewerModalProps) {
-    // Format images for the library
-    const formattedImages = images.map(uri => ({ uri }));
+const { width, height } = Dimensions.get('window');
 
+export default function ImageViewerModal({ visible, images, imageIndex, onClose }: ImageViewerModalProps) {
     return (
-        <ImageView
-            images={formattedImages}
-            imageIndex={imageIndex}
-            visible={visible}
-            onRequestClose={onClose}
-            swipeToCloseEnabled={true}
-            doubleTapToZoomEnabled={true}
-            FooterComponent={({ imageIndex }) => (
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>
-                        {imageIndex + 1} / {images.length}
-                    </Text>
-                    {footerComponent && footerComponent(imageIndex)}
-                </View>
-            )}
-        />
+        <Modal visible={visible} transparent animationType="fade">
+            <View style={styles.container}>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                    <Text style={styles.closeText}>✕</Text>
+                </TouchableOpacity>
+                <FlatList
+                    data={images}
+                    horizontal
+                    pagingEnabled
+                    initialScrollIndex={imageIndex}
+                    getItemLayout={(_, index) => ({
+                        length: width,
+                        offset: width * index,
+                        index,
+                    })}
+                    renderItem={({ item }) => (
+                        <Image
+                            source={{ uri: item }}
+                            style={styles.image}
+                            resizeMode="contain"
+                        />
+                    )}
+                    keyExtractor={(_, i) => i.toString()}
+                />
+            </View>
+        </Modal>
     );
 }
 
 const styles = StyleSheet.create({
-    footer: {
-        height: 60,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        alignItems: 'center',
+    container: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.95)',
         justifyContent: 'center',
-        paddingHorizontal: Spacing.md,
     },
-    footerText: {
+    closeButton: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 10,
+        padding: 12,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 20,
+    },
+    closeText: {
         color: '#fff',
-        fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    image: {
+        width,
+        height: height * 0.7,
     },
 });

@@ -28,7 +28,12 @@ export class OperationsDashboardService {
                         (SELECT COALESCE(SUM(platform_fee + delivery_fee), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as revenue_today,
                         (SELECT COUNT(*) FROM part_requests WHERE status = 'active') as pending_requests,
                         (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
-                        (SELECT COUNT(*) FROM garages) as total_garages
+                        (SELECT COUNT(*) FROM garages) as total_garages,
+                        -- LOYALTY PROGRAM TRANSPARENCY
+                        (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as loyalty_discounts_today,
+                        (SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND COALESCE(loyalty_discount, 0) > 0 AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as loyalty_discounts_count_today,
+                        (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE) AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as loyalty_discounts_week,
+                        (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage')) as loyalty_discounts_month
                 `);
                 return result.rows[0];
             },

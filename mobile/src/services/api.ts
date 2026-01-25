@@ -97,6 +97,10 @@ export interface Order {
     part_description?: string;
     part_category?: string;
     part_subcategory?: string;
+    // Additional fields for payment/delivery
+    pod_photo_url?: string;  // Proof of delivery photo
+    bid_id?: string;         // Original bid reference for payment resume
+    loyalty_discount?: number; // Discount from loyalty points
 }
 
 export interface Stats {

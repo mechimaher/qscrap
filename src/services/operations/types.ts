@@ -14,6 +14,11 @@ export interface DashboardStats {
     pending_requests: number;
     total_customers: number;
     total_garages: number;
+    // Loyalty Program Transparency
+    loyalty_discounts_today: number;       // Total QAR given as discounts today
+    loyalty_discounts_count_today: number; // Number of orders with discounts today
+    loyalty_discounts_week: number;        // Total QAR discounts this week
+    loyalty_discounts_month: number;       // Total QAR discounts this month
 }
 
 export interface OrderFilters {
@@ -36,6 +41,12 @@ export interface OrderWithDetails {
     garage_name: string;
     garage_phone: string;
     created_at: Date;
+    // Financial Transparency
+    part_price: number;
+    delivery_fee: number;
+    loyalty_discount: number;  // Amount discounted (0 if none)
+    total_amount: number;      // Final amount paid by customer
+    has_loyalty_discount: boolean; // Quick flag for UI badges
     [key: string]: any;
 }
 
