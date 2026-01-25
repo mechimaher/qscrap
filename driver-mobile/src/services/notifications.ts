@@ -90,16 +90,22 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         }
 
         // Register with backend
+        console.log('[Notifications] Registering token with backend...', token.substring(0, 30));
         try {
-            await api.registerPushToken(token, Platform.OS as 'ios' | 'android');
-            console.log('[Notifications] Token registered with backend');
-        } catch (e) {
-            console.log('[Notifications] Failed to register token with backend:', e);
+            const result = await api.registerPushToken(token, Platform.OS as 'ios' | 'android');
+            console.log('[Notifications] ✅ Token registered with backend successfully', result);
+        } catch (e: any) {
+            console.error('[Notifications] ❌ CRITICAL: Failed to register token with backend');
+            console.error('[Notifications] Error details:', e?.message || e);
+            console.error('[Notifications] Full error:', JSON.stringify(e));
+            // Don't throw - allow app to continue but log critical error
         }
 
         return token;
-    } catch (error) {
-        console.error('[Notifications] Registration error:', error);
+    } catch (error: any) {
+        console.error('[Notifications] ❌ CRITICAL: Registration error');
+        console.error('[Notifications] Error:', error?.message || error);
+        console.error('[Notifications] Full:', JSON.stringify(error));
         return null;
     }
 };
