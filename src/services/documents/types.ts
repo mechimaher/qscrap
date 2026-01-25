@@ -57,6 +57,8 @@ export interface DocumentData {
     pricing?: {
         part_price: number;
         delivery_fee?: number;
+        loyalty_discount?: number;
+        loyalty_discount_percent?: number;
         vat_rate?: number;
         vat_amount?: number;
         total?: number;
