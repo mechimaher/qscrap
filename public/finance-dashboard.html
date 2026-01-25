@@ -243,10 +243,9 @@
             <section class="section" id="sectionPending">
                 <div class="page-header">
                     <h1 class="page-title"><i class="bi bi-clock-history"></i> Pending Payouts</h1>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-success" onclick="processBulkPayouts()">
-                            <i class="bi bi-send-check"></i> Process All
-                        </button>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        <i class="bi bi-info-circle"></i> Each payment requires individual reference and notes for
+                        compliance
                     </div>
                 </div>
 
@@ -254,8 +253,6 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" id="selectAllPending" onclick="toggleSelectAll('pending')">
-                                </th>
                                 <th>Garage</th>
                                 <th>Order #</th>
                                 <th>Part Amount</th>
@@ -267,7 +264,7 @@
                         </thead>
                         <tbody id="pendingPayoutsTable">
                             <tr>
-                                <td colspan="8" class="empty-state">Loading...</td>
+                                <td colspan="7" class="empty-state">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
