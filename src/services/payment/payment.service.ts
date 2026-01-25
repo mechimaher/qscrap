@@ -190,6 +190,7 @@ export class PaymentService {
      * Confirm deposit payment succeeded
      * Called via webhook or after client-side confirmation
      * KEY: This also confirms the order (pending_payment → confirmed)
+     * For full payments (intent_type='full'), also sets payment_status='paid'
      */
     async confirmDepositPayment(providerIntentId: string): Promise<boolean> {
         const client = await this.pool.connect();
@@ -212,10 +213,11 @@ export class PaymentService {
                 WHERE provider_intent_id = $1
             `, [providerIntentId]);
 
-            // Get order details for notification
+            // Get order details AND intent type for correct status updates
             const orderResult = await client.query(`
                 SELECT o.order_id, o.order_number, o.customer_id, o.garage_id, 
-                       o.total_amount, o.delivery_fee, pr.part_description
+                       o.total_amount, o.delivery_fee, pr.part_description,
+                       pi.intent_type, pi.amount as payment_amount
                 FROM orders o
                 JOIN payment_intents pi ON pi.order_id = o.order_id
                 LEFT JOIN part_requests pr ON o.request_id = pr.request_id
@@ -227,26 +229,42 @@ export class PaymentService {
             }
 
             const order = orderResult.rows[0];
+            const isFullPayment = order.intent_type === 'full';
 
             // Update order: deposit status = paid, order status = confirmed
-            await client.query(`
-                UPDATE orders 
-                SET deposit_status = 'paid',
-                    order_status = 'confirmed',
-                    updated_at = NOW()
-                WHERE order_id = $1
-            `, [order.order_id]);
+            // For FULL payments, also set payment_status = 'paid'
+            if (isFullPayment) {
+                await client.query(`
+                    UPDATE orders 
+                    SET deposit_status = 'paid',
+                        payment_status = 'paid',
+                        order_status = 'confirmed',
+                        updated_at = NOW()
+                    WHERE order_id = $1
+                `, [order.order_id]);
+                console.log(`[PaymentService] FULL payment confirmed for order ${order.order_number}, payment_status → paid`);
+            } else {
+                await client.query(`
+                    UPDATE orders 
+                    SET deposit_status = 'paid',
+                        order_status = 'confirmed',
+                        updated_at = NOW()
+                    WHERE order_id = $1
+                `, [order.order_id]);
+                console.log(`[PaymentService] Deposit confirmed for order ${order.order_number}, status → confirmed`);
+            }
 
             // Add to order status history
+            const reason = isFullPayment
+                ? 'Full payment confirmed (part + delivery)'
+                : 'Delivery fee payment confirmed';
             await client.query(`
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-                VALUES ($1, 'pending_payment', 'confirmed', $2, 'system', 'Delivery fee payment confirmed')
-            `, [order.order_id, order.customer_id]);
+                VALUES ($1, 'pending_payment', 'confirmed', $2, 'system', $3)
+            `, [order.order_id, order.customer_id, reason]);
 
             await client.query('COMMIT');
-
-            console.log(`[PaymentService] Deposit confirmed for order ${order.order_number}, status → confirmed`);
 
             // Send notifications to garage (async, don't block)
             this.notifyGarageOfConfirmedOrder(order).catch(err =>
