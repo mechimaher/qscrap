@@ -673,8 +673,20 @@ export default function OrderDetailScreen() {
 
                     <View style={styles.divider} />
 
+                    {/* Show loyalty discount if applied */}
+                    {order.loyalty_discount > 0 && (
+                        <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.detailValue, { color: '#10B981', textAlign: rtlTextAlign(isRTL) }]}>
+                                🎁 {t('order.loyaltyDiscount') || 'Loyalty Discount'}
+                                <Text style={{ fontWeight: '700' }}>-{order.loyalty_discount} {t('common.currency')}</Text>
+                            </Text>
+                        </View>
+                    )}
+
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.total')}</Text>
+                        <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('common.total')}{order.loyalty_discount > 0 ? ' (after discount)' : ''}
+                        </Text>
                         <Text style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>{order.total_amount} {t('common.currency')}</Text>
                     </View>
 
