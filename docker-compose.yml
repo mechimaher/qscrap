@@ -28,6 +28,11 @@ services:
       - DB_NAME=${DB_NAME:-qscrap_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - OCR_SPACE_API_KEY=${OCR_SPACE_API_KEY:-}
+      # Stripe Payment Gateway - REQUIRED for payment processing
+      - PAYMENT_PROVIDER=${PAYMENT_PROVIDER:-stripe}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
     volumes:
       - ./uploads:/app/uploads
     depends_on:
