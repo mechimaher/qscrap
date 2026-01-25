@@ -14,7 +14,7 @@ export class DashboardUrgentService {
         const pendingPayments = await this.pool.query(`
             SELECT order_id, order_number, total_amount, created_at FROM orders
             WHERE customer_id = $1 AND payment_status = 'pending'
-            AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'refunded')
+            AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops', 'refunded')
             ORDER BY created_at DESC LIMIT 5`, [customerId]);
 
         pendingPayments.rows.forEach(order => {
@@ -88,7 +88,7 @@ export class DashboardUrgentService {
         // Quick Services removed Jan 19 - Parts Marketplace only
         const [unreadBids, activeOrders, moneySaved, loyaltyPoints] = await Promise.all([
             this.pool.query(`SELECT COUNT(DISTINCT b.bid_id) as count FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE pr.customer_id = $1 AND b.status = 'pending' AND pr.status = 'active'`, [customerId]),
-            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')`, [customerId]),
+            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops', 'refunded')`, [customerId]),
             this.pool.query(`SELECT COALESCE(SUM(total_amount), 0) as total_spent, COUNT(*) as order_count FROM orders WHERE customer_id = $1 AND order_status = 'completed' AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [customerId]),
             this.pool.query(`SELECT COALESCE(points_balance, 0) as balance FROM customer_rewards WHERE customer_id = $1`, [customerId])
         ]);

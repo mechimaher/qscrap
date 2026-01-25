@@ -12,7 +12,7 @@ export class DashboardService {
         const [pendingBids, activeBids, activeOrders, completedOrders, revenue, profile] = await Promise.all([
             this.pool.query(`SELECT COUNT(*) as count FROM bids WHERE garage_id = $1 AND status = 'pending'`, [garageId]),
             this.pool.query(`SELECT COUNT(*) as count FROM bids WHERE garage_id = $1 AND status = 'accepted' AND created_at >= DATE_TRUNC('month', CURRENT_DATE)`, [garageId]),
-            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE garage_id = $1 AND order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded')`, [garageId]),
+            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE garage_id = $1 AND order_status NOT IN ('completed', 'delivered', 'cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops', 'refunded')`, [garageId]),
             this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE garage_id = $1 AND order_status = 'completed' AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [garageId]),
             this.pool.query(`SELECT COALESCE(SUM(garage_payout_amount), 0) as total FROM orders WHERE garage_id = $1 AND order_status = 'completed' AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [garageId]),
             this.pool.query(`SELECT g.*, gs.plan_id, gs.status as subscription_status, sp.plan_name FROM garages g LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN ('active', 'trial') LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id WHERE g.garage_id = $1`, [garageId])
