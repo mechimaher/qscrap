@@ -301,7 +301,7 @@ export default function AssignmentDetailScreen() {
                                 <Text style={styles.actionButtonTextWhite}>🧭 Navigate</Text>
                             </TouchableOpacity>
                         )}
-                        {!isCompleted && assignment.garage_phone && (
+                        {isActive && assignment.garage_phone && (
                             <TouchableOpacity
                                 style={[styles.actionButton, { backgroundColor: Colors.success + '20' }]}
                                 onPress={() => callContact(assignment.garage_phone!, assignment.garage_name)}
@@ -359,7 +359,7 @@ export default function AssignmentDetailScreen() {
                                 <Text style={styles.actionButtonTextWhite}>🧭 Navigate</Text>
                             </TouchableOpacity>
                         )}
-                        {!isCompleted && assignment.customer_phone && (
+                        {isActive && assignment.customer_phone && (
                             <TouchableOpacity
                                 style={[styles.actionButton, { backgroundColor: Colors.success + '20' }]}
                                 onPress={() => callContact(assignment.customer_phone!, assignment.customer_name)}
