@@ -188,7 +188,16 @@ class ApiService {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || 'Request failed');
+            // Properly extract error message from various response formats
+            let errorMessage = 'Request failed';
+            if (typeof data.error === 'string') {
+                errorMessage = data.error;
+            } else if (typeof data.error?.message === 'string') {
+                errorMessage = data.error.message;
+            } else if (typeof data.message === 'string') {
+                errorMessage = data.message;
+            }
+            throw new Error(errorMessage);
         }
 
         return data;
