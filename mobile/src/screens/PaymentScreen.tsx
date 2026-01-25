@@ -508,39 +508,37 @@ export default function PaymentScreen() {
                                 Your card details are encrypted and secure
                             </Text>
                         </View>
-
                     </View>
-                </View>
 
-                <View style={{ height: 180 }} />
-            </ScrollView>
+                    <View style={{ height: 180 }} />
+                </ScrollView>
 
-            {/* Pay Button */}
-            <View style={[styles.footer, { backgroundColor: colors.surface }]}>
-                <TouchableOpacity
-                    style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
-                    onPress={handlePayment}
-                    disabled={!cardComplete || isLoading}
-                >
-                    <LinearGradient
-                        colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
-                        style={styles.payGradient}
+                {/* Pay Button */}
+                <View style={[styles.footer, { backgroundColor: colors.surface }]}>
+                    <TouchableOpacity
+                        style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
+                        onPress={handlePayment}
+                        disabled={!cardComplete || isLoading}
                     >
-                        {isLoading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.payButtonText}>
-                                🔒 Pay {((paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount).toFixed(2)} QAR
-                            </Text>
-                        )}
-                    </LinearGradient>
-                </TouchableOpacity>
+                        <LinearGradient
+                            colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
+                            style={styles.payGradient}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.payButtonText}>
+                                    🔒 Pay {((paymentType === 'full' ? totalAmount : deliveryFee) - discountAmount).toFixed(2)} QAR
+                                </Text>
+                            )}
+                        </LinearGradient>
+                    </TouchableOpacity>
 
-                <Text style={styles.secureText}>
-                    🔐 Secured by Stripe
-                </Text>
-            </View>
-        </SafeAreaView >
+                    <Text style={styles.secureText}>
+                        🔐 Secured by Stripe
+                    </Text>
+                </View>
+            </SafeAreaView >
         </StripeProvider >
     );
 }
