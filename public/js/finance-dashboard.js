@@ -430,31 +430,43 @@ async function submitSendPayment() {
         showToast(`Processing ${payoutIds.length} payouts...`, 'info');
         let successCount = 0;
         let failCount = 0;
+        const errors = []; // Track errors for debugging
 
         for (const payoutId of payoutIds) {
             try {
+                console.log(`[Batch Payout] Processing ${payoutId}...`);
                 const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/send`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ payout_method: method, payout_reference: reference, notes })
                 });
 
+                const data = await res.json();
+
                 if (res.ok) {
+                    console.log(`[Batch Payout] ✅ Success for ${payoutId}`);
                     successCount++;
                 } else {
+                    console.error(`[Batch Payout] ❌ Failed for ${payoutId}:`, data);
                     failCount++;
+                    errors.push({ payoutId, error: data.error || 'Unknown error', status: res.status });
                 }
             } catch (err) {
+                console.error(`[Batch Payout] ❌ Exception for ${payoutId}:`, err);
                 failCount++;
+                errors.push({ payoutId, error: err.message || 'Network error' });
             }
         }
 
         closeSendPaymentModal();
 
+        // Show detailed results
         if (failCount === 0) {
-            showToast(`All ${successCount} payments sent successfully!`, 'success');
+            showToast(`✅ All ${successCount} payments sent successfully!`, 'success');
         } else {
-            showToast(`${successCount} sent, ${failCount} failed`, successCount > 0 ? 'warning' : 'error');
+            console.error('[Batch Payout] Errors:', errors);
+            const errorSummary = errors.slice(0, 3).map(e => `${e.payoutId}: ${e.error}`).join('; ');
+            showToast(`⚠️ ${successCount} sent, ${failCount} failed. Errors: ${errorSummary}`, 'error');
         }
 
         loadPendingPayouts();
