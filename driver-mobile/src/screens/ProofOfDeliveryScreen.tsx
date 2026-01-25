@@ -142,7 +142,6 @@ export default function ProofOfDeliveryScreen() {
     // Signature step removed for faster enterprise delivery flow
     // Operations can view delivery photo via dashboard if needed
 
-    // --- STEP 3: SUBMIT ---
     const handleSubmit = async () => {
         if (!photoUri || !orderId) return;
 
@@ -158,8 +157,9 @@ export default function ProofOfDeliveryScreen() {
                 encoding: 'base64'
             });
 
-            // 3. Upload photo to get URL (backend will store and return URL)
-            // Upload proof - photo only (no signature for faster flow)
+            console.log('[POD] Uploading photo to server...');
+
+            // 3. Upload photo to server and get public URL
             const uploadResponse = await executeWithOfflineFallback(
                 async () => api.uploadProof(
                     assignmentId,
@@ -179,16 +179,25 @@ export default function ProofOfDeliveryScreen() {
                 { successMessage: 'Proof uploaded' }
             );
 
-            // 4. Complete order with POD (creates payout immediately!)
-            // This new endpoint marks order as 'completed' and creates garage payout
-            const podPhotoUrl = uploadResponse?.photo_url || permanentUri;
+            console.log('[POD] Upload response:', uploadResponse);
 
+            // 4. Extract photo URL from response
+            const podPhotoUrl = uploadResponse?.photo_url;
+
+            if (!podPhotoUrl) {
+                console.error('[POD] No photo_url in response:', uploadResponse);
+                throw new Error('Failed to upload photo - no URL returned from server');
+            }
+
+            console.log('[POD] Photo uploaded successfully:', podPhotoUrl);
+
+            // 5. Complete order with POD (creates payout immediately!)
             await executeWithOfflineFallback(
                 async () => {
                     const token = await api.getToken();
-                    // CRITICAL FIX: Must use full URL with API_BASE_URL
                     const fullUrl = `${API_BASE_URL}${API_ENDPOINTS.COMPLETE_WITH_POD}`;
-                    console.log('[POD] Completing delivery:', { orderId, fullUrl });
+                    console.log('[POD] Completing delivery with photo URL:', podPhotoUrl);
+
                     const response = await fetch(fullUrl, {
                         method: 'POST',
                         headers: {
@@ -200,6 +209,7 @@ export default function ProofOfDeliveryScreen() {
                             pod_photo_url: podPhotoUrl
                         })
                     });
+
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error('[POD] Completion failed:', response.status, errorText);
@@ -215,13 +225,14 @@ export default function ProofOfDeliveryScreen() {
                 { successMessage: 'Order completed! Payout created.' }
             );
 
-            // 5. Update local store
+            // 6. Update local store
             const { useJobStore } = require('../stores/useJobStore');
             useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
 
             setStep('success');
         } catch (err: any) {
-            Alert.alert("Error", err.message);
+            console.error('[POD] Submit error:', err);
+            Alert.alert("Error", err.message || "Failed to complete delivery");
         } finally {
             setIsSubmitting(false);
         }
