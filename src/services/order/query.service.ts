@@ -82,6 +82,7 @@ export class OrderQueryService {
     async getOrderDetails(orderId: string, userId: string): Promise<OrderDetail> {
         const result = await this.pool.query(`
             SELECT o.*, 
+                    o.pod_photo_url,
                     pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
                     pr.delivery_lat::float as delivery_lat, pr.delivery_lng::float as delivery_lng,
                     pr.part_category, pr.part_subcategory,

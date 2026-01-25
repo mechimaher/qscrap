@@ -428,6 +428,7 @@ export const ar = {
         deliveryFee: 'رسوم التوصيل',
         partPrice: 'سعر القطعة',
         loyaltyDiscount: 'خصم الولاء',
+        proofOfDelivery: 'إثبات التوصيل',
         haveYouReceived: 'هل استلمت هذا الطلب؟',
         confirmReceived: 'تأكيد الاستلام',
         confirmDelivery: 'تأكيد التوصيل',
