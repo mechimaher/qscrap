@@ -299,13 +299,12 @@ async function loadPendingPayouts(page = 1) {
         const payouts = data.payouts || [];
 
         if (payouts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="bi bi-check-circle"></i> No pending payouts</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle"></i> No pending payouts</td></tr>';
             return;
         }
 
         tbody.innerHTML = payouts.map(p => `
             <tr>
-                <td><input type="checkbox" class="payout-checkbox" data-id="${p.payout_id}"></td>
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
                 <td>#${escapeHTML(p.order_number)}</td>
                 <td>${formatCurrency(p.gross_amount || p.amount)}</td>
