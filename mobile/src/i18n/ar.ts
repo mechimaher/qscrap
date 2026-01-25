@@ -336,6 +336,7 @@ export const ar = {
         pleaseDescribePart: 'يرجى وصف القطعة التي تحتاجها',
         requestCreated: 'تم إنشاء الطلب!',
         garagesReviewing: 'الكراجات تراجع طلبك',
+        orderAgain: 'اطلب مرة أخرى',
         orderAgainPrefilled: 'تم تعبئة النموذج بتفاصيل طلبك السابق',
         prefilledMsg: 'تم تعبئة النموذج بتفاصيل طلبك السابق',
     },
