@@ -489,6 +489,8 @@ export class DriverService {
         return {
             success: true,
             message: 'Proof of delivery uploaded',
+            photo_url: photoResult.url, // CRITICAL: Driver app needs this!
+            signature_url: signatureUrl,
             assignment: updatedAssignment
         };
     }
