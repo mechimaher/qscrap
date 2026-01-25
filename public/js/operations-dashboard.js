@@ -539,6 +539,9 @@ function getOrderActions(order) {
 
     // Define action buttons based on status
     switch (status) {
+        case 'pending_payment':
+            // Stuck orders - show cancel button
+            return `<button class="btn btn-danger btn-sm" onclick="cancelStuckOrder('${o.order_id}', '${o.order_number}')" title="Cancel stuck order"><i class="bi bi-x-circle"></i></button>`;
         case 'confirmed':
         case 'preparing':
             return `<span class="text-muted" style="font-size: 12px;">Awaiting garage</span>`;
@@ -561,6 +564,37 @@ function getOrderActions(order) {
                 return `<span class="status-badge cancelled" style="font-size: 11px;">Cancelled</span>`;
             }
             return `<span class="text-muted">-</span>`;
+    }
+}
+
+// Cancel stuck/orphan order (operations)
+async function cancelStuckOrder(orderId, orderNumber) {
+    if (!confirm(`Cancel order #${orderNumber}? This will mark it as cancelled by operations.`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: 'Cancelled by operations - stuck payment' })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Order #${orderNumber} cancelled successfully`, 'success');
+            loadStats();
+            loadOrders();
+        } else {
+            showToast(data.error || 'Failed to cancel order', 'error');
+        }
+    } catch (err) {
+        console.error('Cancel order error:', err);
+        showToast('Connection error', 'error');
     }
 }
 
@@ -733,6 +767,7 @@ async function loadOrders(page = 1) {
         const data = await res.json();
 
         const statusLabels = {
+            pending_payment: 'Pending Payment',
             confirmed: 'Confirmed',
             preparing: 'Preparing',
             ready_for_pickup: 'Ready for Pickup',
@@ -751,6 +786,7 @@ async function loadOrders(page = 1) {
         };
 
         const statusClass = {
+            pending_payment: 'pending',
             confirmed: 'confirmed',
             preparing: 'preparing',
             ready_for_pickup: 'ready',
@@ -772,6 +808,7 @@ async function loadOrders(page = 1) {
             // Helper function to determine row highlighting class
             const getRowClass = (status) => {
                 switch (status) {
+                    case 'pending_payment': return 'needs-attention-red';  // Stuck order, needs cancellation
                     case 'confirmed': return 'needs-attention-amber';  // Awaiting garage action
                     case 'disputed': return 'needs-attention-red';     // Urgent: dispute needs resolution
                     case 'ready_for_pickup': return 'needs-attention-green';  // Ready for driver assignment
