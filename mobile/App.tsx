@@ -40,8 +40,7 @@ import CounterOfferScreen from './src/screens/CounterOfferScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import SupportScreen from './src/screens/SupportScreen';
 import TicketChatScreen from './src/screens/TicketChatScreen';
-import VINScannerScreen from './src/screens/VINScannerScreen';
-import ManualVINEntryScreen from './src/screens/ManualVINEntryScreen';
+// VIN screens removed - not used
 import PaymentScreen from './src/screens/PaymentScreen';
 import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
 import DeliveryTrackingScreen from './src/screens/DeliveryTrackingScreen';
@@ -79,9 +78,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   Support: undefined;
   TicketChat: { ticketId: string };
-  // VIN Scanner
-  VINScanner: undefined;
-  ManualVINEntry: { onVINScanned?: (vin: string) => void };
+  // VIN Scanner - removed (unused)
   // Payment & Escrow
   Payment: {
     bidId: string;
@@ -296,17 +293,7 @@ function RootNavigator() {
               options={{ animation: 'slide_from_right' }}
             />
 
-            {/* VIN Scanner Flow */}
-            <RootStack.Screen
-              name="VINScanner"
-              component={VINScannerScreen}
-              options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
-            />
-            <RootStack.Screen
-              name="ManualVINEntry"
-              component={ManualVINEntryScreen}
-              options={{ animation: 'slide_from_right' }}
-            />
+            {/* VIN Scanner Flow - removed (unused) */}
 
             {/* Payment & Escrow Flow */}
             <RootStack.Screen

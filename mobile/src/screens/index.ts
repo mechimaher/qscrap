@@ -34,9 +34,7 @@ export { default as PrivacyPolicyScreen } from './PrivacyPolicyScreen';
 export { default as TermsScreen } from './TermsScreen';
 export { default as OnboardingScreen } from './OnboardingScreen';
 
-// VIN Scanner
-export { default as VINScannerScreen } from './VINScannerScreen';
-export { default as ManualVINEntryScreen } from './ManualVINEntryScreen';
+// VIN Scanner - removed (unused)
 
 // Payment & Escrow
 export { default as PaymentScreen } from './PaymentScreen';

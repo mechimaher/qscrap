@@ -478,6 +478,23 @@ async function loadStats() {
             document.getElementById('statTotalCustomers').textContent = s.total_customers;
             document.getElementById('statTotalGarages').textContent = s.total_garages;
 
+            // LOYALTY PROGRAM TRANSPARENCY
+            const loyaltyToday = parseFloat(s.loyalty_discounts_today) || 0;
+            const loyaltyCountToday = parseInt(s.loyalty_discounts_count_today) || 0;
+            const loyaltyWeek = parseFloat(s.loyalty_discounts_week) || 0;
+            const loyaltyMonth = parseFloat(s.loyalty_discounts_month) || 0;
+
+            // Update loyalty stats if elements exist
+            const loyaltyTodayEl = document.getElementById('statLoyaltyToday');
+            const loyaltyCountEl = document.getElementById('statLoyaltyCount');
+            const loyaltyWeekEl = document.getElementById('statLoyaltyWeek');
+            const loyaltyMonthEl = document.getElementById('statLoyaltyMonth');
+
+            if (loyaltyTodayEl) loyaltyTodayEl.textContent = Math.round(loyaltyToday) + ' QAR';
+            if (loyaltyCountEl) loyaltyCountEl.textContent = loyaltyCountToday + ' orders';
+            if (loyaltyWeekEl) loyaltyWeekEl.textContent = Math.round(loyaltyWeek) + ' QAR';
+            if (loyaltyMonthEl) loyaltyMonthEl.textContent = Math.round(loyaltyMonth) + ' QAR';
+
             // Update badges
             updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
             updateBadge('ordersBadge', s.active_orders);
@@ -817,18 +834,24 @@ async function loadOrders(page = 1) {
                 }
             };
 
-            // Orders table
-            document.getElementById('ordersTable').innerHTML = data.orders.map(o => `
+            // Orders table - with loyalty discount transparency
+            document.getElementById('ordersTable').innerHTML = data.orders.map(o => {
+                const hasDiscount = parseFloat(o.loyalty_discount) > 0;
+                const discountBadge = hasDiscount
+                    ? `<span style="display:inline-block; background:#10B981; color:white; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px;" title="Loyalty Discount: -${o.loyalty_discount} QAR">🎁 -${o.loyalty_discount}</span>`
+                    : '';
+                return `
                         <tr class="${getRowClass(o.order_status)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
                             <td>${escapeHTML(o.customer_name)}<br><small style="color: var(--text-muted);">${escapeHTML(o.customer_phone)}</small></td>
                             <td>${escapeHTML(o.garage_name)}</td>
                             <td>${escapeHTML(o.car_make)} ${escapeHTML(o.car_model)}<br><small style="color: var(--text-muted);">${escapeHTML(o.part_description?.slice(0, 30))}...</small></td>
                             <td><span class="status-badge ${statusClass[o.order_status] || ''}">${statusLabels[o.order_status] || o.order_status}</span></td>
-                            <td><strong>${o.total_amount} QAR</strong></td>
+                            <td><strong>${o.total_amount} QAR</strong>${discountBadge}</td>
                             <td>${getOrderActions(o)}</td>
                         </tr>
-                    `).join('');
+                    `;
+            }).join('');
 
             // Render pagination controls
             if (data.pagination) {

@@ -73,7 +73,7 @@ export default function TicketChatScreen() {
                 api.request(`/support/tickets/${ticketId}/messages`)
             ]);
             setTicket(ticketData.ticket || ticketData);
-            setMessages(messagesData.messages || messagesData || []);
+            setMessages((messagesData as any).messages || messagesData || []);
         } catch (error) {
             console.log('Failed to load ticket:', error);
             Alert.alert(t('common.error'), 'Failed to load ticket details');
@@ -85,7 +85,7 @@ export default function TicketChatScreen() {
     const loadMessages = async () => {
         try {
             const data = await api.request(`/support/tickets/${ticketId}/messages`);
-            setMessages(data.messages || data || []);
+            setMessages((data as any).messages || data || []);
         } catch (error) {
             console.log('Failed to refresh messages:', error);
         }

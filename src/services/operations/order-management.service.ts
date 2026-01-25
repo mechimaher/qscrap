@@ -18,6 +18,9 @@ export class OrderManagementService {
 
         let query = `
             SELECT o.*, 
+                   o.part_price, o.delivery_fee, o.total_amount,
+                   COALESCE(o.loyalty_discount, 0) as loyalty_discount,
+                   (COALESCE(o.loyalty_discount, 0) > 0) as has_loyalty_discount,
                    pr.car_make, pr.car_model, pr.car_year, pr.part_description,
                    u.full_name as customer_name, u.phone_number as customer_phone,
                    g.garage_name, gu.phone_number as garage_phone
