@@ -12,7 +12,8 @@ import {
     resolveDispute,
     getUsers,
     cancelOrderByOperations,
-    getOrphanOrders
+    getOrphanOrders,
+    triggerAutoComplete
 } from '../controllers/operations.controller';
 
 const router = Router();
@@ -51,7 +52,11 @@ router.get('/users', getUsers);
 // router.post('/users/:user_id/suspend', suspendUser); // TODO: Implement suspendUser
 // router.post('/users/:user_id/activate', activateUser); // TODO: Implement activateUser
 
+// Jobs (Manual Triggers for Testing)
+router.post('/jobs/auto-complete', triggerAutoComplete); // Manually trigger 48h auto-complete
+
 // Garages
 // router.get('/garages', getGarages); // TODO: Implement getGarages
 
 export default router;
+
