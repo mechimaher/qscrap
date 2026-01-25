@@ -336,6 +336,7 @@ export const en = {
         requestCreated: 'Request Created!',
         garagesReviewing: 'Garages are reviewing your request',
         orderAgainPrefilled: 'Form pre-filled with your previous order details',
+        prefilledMsg: 'Form pre-filled with your previous order details',
     },
 
     // =============================================
