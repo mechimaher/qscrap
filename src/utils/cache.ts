@@ -3,10 +3,27 @@
  * 
  * Provides type-safe caching operations with automatic JSON serialization.
  * Falls back gracefully when Redis is not available.
+ * 
+ * ENTERPRISE FEATURE: Cache versioning ensures stale data is never served
+ * when schema changes. Increment version when adding/removing cached fields.
  */
 
 import { getRedisClient } from '../config/redis';
 import logger from './logger';
+
+// ============================================
+// CACHE VERSIONING (Increment when schema changes)
+// ============================================
+
+/**
+ * CACHE VERSION - Increment this when cached data structure changes
+ * This ensures old cache is automatically invalidated on deploy
+ * 
+ * Version History:
+ * v1 - Initial cache structure
+ * v2 - Added loyalty_discount fields to dashboard stats (2026-01-26)
+ */
+const CACHE_VERSION = 'v2';
 
 // ============================================
 // CACHE CONFIGURATION
@@ -20,14 +37,14 @@ export const CacheTTL = {
     DAY: 86400,          // 24 hours - for rarely changing data
 } as const;
 
-/** Cache key prefixes for organization */
+/** Cache key prefixes for organization - all include version */
 export const CachePrefix = {
-    DASHBOARD: 'dash:',
-    GARAGE: 'garage:',
-    USER: 'user:',
-    REQUEST: 'req:',
-    ORDER: 'order:',
-    STATS: 'stats:',
+    DASHBOARD: `${CACHE_VERSION}:dash:`,
+    GARAGE: `${CACHE_VERSION}:garage:`,
+    USER: `${CACHE_VERSION}:user:`,
+    REQUEST: `${CACHE_VERSION}:req:`,
+    ORDER: `${CACHE_VERSION}:order:`,
+    STATS: `${CACHE_VERSION}:stats:`,
 } as const;
 
 // ============================================
