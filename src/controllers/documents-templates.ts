@@ -173,6 +173,7 @@ export function generateBilingualCustomerInvoiceHTML(
             <div class="totals">
                 <div class="total-row"><span>${L.part_price?.en || 'Part Price'} <span class="arabic" style="font-size:8px;color:#666">${L.part_price?.ar || 'سعر القطعة'}</span></span><span>${formatMoney(data.pricing?.part_price || 0)} QAR</span></div>
                 ${(data.pricing?.delivery_fee || 0) > 0 ? `<div class="total-row"><span>${L.delivery_fee?.en || 'Delivery'} <span class="arabic" style="font-size:8px;color:#666">${L.delivery_fee?.ar || 'التوصيل'}</span></span><span>${formatMoney(data.pricing?.delivery_fee || 0)} QAR</span></div>` : ''}
+                ${(data.pricing?.loyalty_discount || 0) > 0 ? `<div class="total-row" style="color:#059669;"><span>🎁 Loyalty Discount ${data.pricing?.loyalty_discount_percent || ''}% <span class="arabic" style="font-size:8px;">خصم الولاء</span></span><span>- ${formatMoney(data.pricing?.loyalty_discount || 0)} QAR</span></div>` : ''}
                 <div class="total-row grand"><span>${L.total_paid?.en || 'Total'} <span class="arabic">${L.total_paid?.ar || 'المجموع'}</span></span><span>${formatMoney(data.pricing?.total || 0)} QAR</span></div>
             </div>
         </div>

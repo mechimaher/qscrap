@@ -221,6 +221,12 @@ export class DocumentGenerationService {
             };
         } else {
             // Customer invoice (B2C)
+            // CRITICAL: Must include loyalty discount for Qatar Ministry of Commerce compliance
+            const loyaltyDiscount = parseFloat(order.loyalty_discount || 0);
+            const loyaltyDiscountPercent = loyaltyDiscount > 0 && partPrice > 0
+                ? Math.round((loyaltyDiscount / (totalAmount + loyaltyDiscount)) * 100)
+                : 0;
+
             return {
                 invoice_type: 'customer',
                 invoice_number: docNumber,
@@ -256,6 +262,8 @@ export class DocumentGenerationService {
                 pricing: {
                     part_price: partPrice,
                     delivery_fee: deliveryFee,
+                    loyalty_discount: loyaltyDiscount, // CRITICAL for legal compliance
+                    loyalty_discount_percent: loyaltyDiscountPercent > 0 ? loyaltyDiscountPercent : undefined,
                     vat_rate: 0,
                     vat_amount: 0,
                     total: totalAmount,
