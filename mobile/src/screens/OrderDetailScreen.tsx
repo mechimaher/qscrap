@@ -22,7 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Order } from '../services/api';
-import { SOCKET_URL } from '../config/api';
+import { SOCKET_URL, API_BASE_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -753,18 +753,23 @@ export default function OrderDetailScreen() {
 
 
                 {/* Proof of Delivery Image */}
-                {order.pod_photo_url && (order.order_status === 'delivered' || order.order_status === 'completed') && (
-                    <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            📸 {t('order.proofOfDelivery') || 'Proof of Delivery'}
-                        </Text>
-                        <Image
-                            source={{ uri: order.pod_photo_url }}
-                            style={{ width: '100%', height: 200, borderRadius: 12, marginTop: 12 }}
-                            resizeMode="cover"
-                        />
-                    </View>
-                )}
+                {order.pod_photo_url && (order.order_status === 'delivered' || order.order_status === 'completed') &&
+                    !order.pod_photo_url.startsWith('file://') && (
+                        <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
+                            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                📸 {t('order.proofOfDelivery') || 'Proof of Delivery'}
+                            </Text>
+                            <Image
+                                source={{
+                                    uri: order.pod_photo_url.startsWith('http')
+                                        ? order.pod_photo_url
+                                        : `${API_BASE_URL.replace('/api', '')}${order.pod_photo_url}`
+                                }}
+                                style={{ width: '100%', height: 200, borderRadius: 12, marginTop: 12 }}
+                                resizeMode="cover"
+                            />
+                        </View>
+                    )}
 
                 {/* Confirm Delivery */}
                 {order.order_status === 'delivered' && (
