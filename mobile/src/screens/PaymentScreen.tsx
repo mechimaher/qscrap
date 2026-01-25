@@ -240,7 +240,7 @@ export default function PaymentScreen() {
                         navigation.reset({
                             index: 1,
                             routes: [
-                                { name: 'MainTabs' },
+                                { name: 'Main' },
                                 { name: 'DeliveryTracking', params: { orderId } },
                             ],
                         });
@@ -248,7 +248,7 @@ export default function PaymentScreen() {
                         console.warn('[Payment] No orderId, navigating to Orders tab');
                         navigation.reset({
                             index: 0,
-                            routes: [{ name: 'MainTabs', params: { screen: 'Orders' } }],
+                            routes: [{ name: 'Main', params: { screen: 'Orders' } }],
                         });
                     }
                 };
@@ -267,7 +267,7 @@ export default function PaymentScreen() {
                 setTimeout(() => {
                     navigation.reset({
                         index: 0,
-                        routes: [{ name: 'MainTabs' }],
+                        routes: [{ name: 'Main' }],
                     });
                 }, 1000);
             }
