@@ -662,27 +662,35 @@ export default function OrderDetailScreen() {
                     <View style={styles.divider} />
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            🔧 {t('order.partPrice')}  <Text style={{ fontWeight: '700' }}>{order.part_price} {t('common.currency')}</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+                            🔧 {t('order.partPrice')}
+                        </Text>
+                        <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
+                            {order.part_price} {t('common.currency')}
                         </Text>
                     </View>
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            🚚 {t('order.deliveryFee')}  <Text style={{ fontWeight: '700' }}>{order.delivery_fee} {t('common.currency')}</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+                            🚚 {t('order.deliveryFee')}
+                        </Text>
+                        <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
+                            {order.delivery_fee} {t('common.currency')}
                         </Text>
                     </View>
-
-                    <View style={styles.divider} />
 
                     {/* Show loyalty discount if applied */}
                     {(order.loyalty_discount ?? 0) > 0 && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.detailValue, { color: '#10B981', textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text style={[styles.detailLabel, { color: '#10B981' }]}>
                                 🎁 {t('order.loyaltyDiscount') || 'Loyalty Discount'}
-                                <Text style={{ fontWeight: '700' }}>-{order.loyalty_discount} {t('common.currency')}</Text>
+                            </Text>
+                            <Text style={[styles.detailValue, { color: '#10B981', fontWeight: '700' }]}>
+                                -{order.loyalty_discount} {t('common.currency')}
                             </Text>
                         </View>
                     )}
+
+                    <View style={styles.divider} />
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>
