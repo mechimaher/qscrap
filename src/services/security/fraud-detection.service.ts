@@ -95,7 +95,7 @@ export class FraudDetectionService {
             return { allowed: true, riskScore, flags };
 
         } catch (error) {
-            logger.error('[FraudDetection] Error checking bid', error);
+            logger.error('[FraudDetection] Error checking bid');
             // Fail open but flag for review
             return { allowed: true, riskScore: 50, flags: ['check_error'] };
         }
