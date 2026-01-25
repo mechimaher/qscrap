@@ -427,6 +427,7 @@ export const en = {
         deliveryFee: 'Delivery Fee',
         partPrice: 'Part Price',
         loyaltyDiscount: 'Loyalty Discount',
+        customerNotes: 'Customer Notes',
         proofOfDelivery: 'Proof of Delivery',
         haveYouReceived: 'Have you received this order?',
         confirmReceived: 'Confirm Received',
@@ -1168,27 +1169,7 @@ export const en = {
         howWasExp: 'How was your experience?',
     },
 
-    // =============================================
-    // BID CARD - Bid Display
-    // =============================================
-    bidCard: {
-        bestPrice: 'Best Price',
-        agreed: 'Agreed',
-        conditionPhotos: 'Condition Photos',
-        counteredStatus: 'Countered',
-        counterOffer: 'Counter Offer',
-        final: 'Final',
-        garageOffers: 'Garage Offers',
-        garagePartPhotos: 'Part Photos',
-        negotiationRound: 'Round {{current}}/{{total}}',
-        offered: 'Offered',
-        orderCreated: 'Order Created',
-        photoCount: '{{count}} photos',
-        price: 'Price',
-        priceAgreed: 'Price Agreed',
-        warrantyDays: '{{count}} day warranty',
-        youOffered: 'You Offered',
-    },
+    // bidCard already defined above - duplicate removed
 
     // =============================================
     // CANCEL - Order Cancellation

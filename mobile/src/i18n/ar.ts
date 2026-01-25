@@ -428,6 +428,7 @@ export const ar = {
         deliveryFee: 'رسوم التوصيل',
         partPrice: 'سعر القطعة',
         loyaltyDiscount: 'خصم الولاء',
+        customerNotes: 'ملاحظات العميل',
         proofOfDelivery: 'إثبات التوصيل',
         haveYouReceived: 'هل استلمت هذا الطلب؟',
         confirmReceived: 'تأكيد الاستلام',
@@ -1172,27 +1173,7 @@ export const ar = {
         howWasExp: 'كيف كانت تجربتك؟',
     },
 
-    // =============================================
-    // BID CARD - عرض العروض
-    // =============================================
-    bidCard: {
-        bestPrice: 'أفضل سعر',
-        agreed: 'تم الاتفاق',
-        conditionPhotos: 'صور الحالة',
-        counteredStatus: 'تم المفاوضة',
-        counterOffer: 'عرض مضاد',
-        final: 'نهائي',
-        garageOffers: 'عروض الكراج',
-        garagePartPhotos: 'صور القطعة',
-        negotiationRound: 'الجولة {{current}}/{{total}}',
-        offered: 'المعروض',
-        orderCreated: 'تم إنشاء الطلبية',
-        photoCount: '{{count}} صور',
-        price: 'السعر',
-        priceAgreed: 'تم الاتفاق على السعر',
-        warrantyDays: 'ضمان {{count}} يوم',
-        youOffered: 'عرضت',
-    },
+    // bidCard already defined above - duplicate removed
 
     // =============================================
     // CANCEL - إلغاء الطلب
