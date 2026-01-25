@@ -100,8 +100,14 @@ export default function ProofOfDeliveryScreen() {
                         payment_method: paymentMethod
                     });
 
-                    // Always default to cash for COD collection (driver always needs to collect something)
-                    setPaymentMethod('cash');
+                    // Set payment method based on order payment status
+                    if (paymentMethod === 'card_full') {
+                        // Fully paid online - no COD needed
+                        setPaymentMethod('online');
+                    } else {
+                        // COD needed - default to cash
+                        setPaymentMethod('cash');
+                    }
                 }
             } catch (error) {
                 console.error('[POD] Failed to load assignment details:', error);
@@ -161,12 +167,24 @@ export default function ProofOfDeliveryScreen() {
 
             // 3. Upload photo to server and get public URL
             const uploadResponse = await executeWithOfflineFallback(
-                async () => api.uploadProof(
-                    assignmentId,
-                    base64Photo,
-                    undefined, // No signature - enterprise speed optimization
-                    `Payment: ${paymentMethod}`
-                ),
+                async () => {
+                    // Generate accurate payment notes based on order payment method
+                    let paymentNotes = '';
+                    if (orderDetails?.payment_method === 'card_full') {
+                        paymentNotes = 'Payment: Fully paid online (card)';
+                    } else if (orderDetails?.payment_method === 'card') {
+                        paymentNotes = `Payment: Part price collected as ${paymentMethod} (delivery fee paid online)`;
+                    } else {
+                        paymentNotes = `Payment: ${paymentMethod}`;
+                    }
+
+                    return api.uploadProof(
+                        assignmentId,
+                        base64Photo,
+                        undefined, // No signature - enterprise speed optimization
+                        paymentNotes
+                    );
+                },
                 {
                     endpoint: API_ENDPOINTS.UPLOAD_PROOF(assignmentId),
                     method: 'POST',
