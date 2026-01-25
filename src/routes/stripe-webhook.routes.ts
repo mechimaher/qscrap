@@ -12,10 +12,11 @@ import { getWritePool } from '../config/db';
 
 const router = express.Router();
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Initialize Stripe only if key is configured
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey, {
     apiVersion: '2025-12-15.clover',
-});
+}) : null;
 
 /**
  * POST /api/stripe/webhook
@@ -30,6 +31,11 @@ router.post('/webhook',
     async (req: Request, res: Response) => {
         const sig = req.headers['stripe-signature'] as string;
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+        if (!stripe) {
+            console.error('[Stripe Webhook] Stripe not configured');
+            return res.status(500).json({ error: 'Stripe not configured' });
+        }
 
         if (!webhookSecret) {
             console.error('[Stripe Webhook] No webhook secret configured');
