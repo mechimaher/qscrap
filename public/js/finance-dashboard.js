@@ -253,6 +253,28 @@ async function loadOverview() {
         document.getElementById('statAwaitingConfirm').textContent = formatCurrency(stats.processing_payouts || stats.total_sent || 0);
         document.getElementById('statCompletedPayouts').textContent = formatCurrency(stats.total_paid || stats.total_confirmed || 0);
 
+        // Load loyalty program stats from operations API
+        try {
+            const loyaltyRes = await fetch(`${API_URL}/operations/dashboard/stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const loyaltyData = await loyaltyRes.json();
+            if (loyaltyData.stats) {
+                const ls = loyaltyData.stats;
+                const loyaltyTodayEl = document.getElementById('statLoyaltyToday');
+                const loyaltyCountEl = document.getElementById('statLoyaltyCount');
+                const loyaltyWeekEl = document.getElementById('statLoyaltyWeek');
+                const loyaltyMonthEl = document.getElementById('statLoyaltyMonth');
+
+                if (loyaltyTodayEl) loyaltyTodayEl.textContent = Math.round(parseFloat(ls.loyalty_discounts_today) || 0) + ' QAR';
+                if (loyaltyCountEl) loyaltyCountEl.textContent = (parseInt(ls.loyalty_discounts_count_today) || 0) + ' orders';
+                if (loyaltyWeekEl) loyaltyWeekEl.textContent = Math.round(parseFloat(ls.loyalty_discounts_week) || 0) + ' QAR';
+                if (loyaltyMonthEl) loyaltyMonthEl.textContent = Math.round(parseFloat(ls.loyalty_discounts_month) || 0) + ' QAR';
+            }
+        } catch (err) {
+            console.error('Failed to load loyalty stats:', err);
+        }
+
         // Load recent payouts
         const payoutsRes = await fetch(`${API_URL}/finance/payouts?limit=5`, {
             headers: { 'Authorization': `Bearer ${token}` }
