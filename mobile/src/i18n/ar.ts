@@ -427,6 +427,7 @@ export const ar = {
         orderedAt: 'تم الطلب في {{date}} الساعة {{time}}',
         deliveryFee: 'رسوم التوصيل',
         partPrice: 'سعر القطعة',
+        loyaltyDiscount: 'خصم الولاء',
         haveYouReceived: 'هل استلمت هذا الطلب؟',
         confirmReceived: 'تأكيد الاستلام',
         confirmDelivery: 'تأكيد التوصيل',

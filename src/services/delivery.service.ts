@@ -512,7 +512,7 @@ export class DeliveryService {
             });
         }
 
-        // Notify customer
+        // Notify customer (in-app + socket)
         await createNotification({
             userId: order.customer_id as string,
             type: 'order_in_transit',
@@ -527,6 +527,20 @@ export class DeliveryService {
             new_status: 'in_transit',
             driver_name: driver.full_name
         });
+
+        // CRITICAL: Send PUSH notification so customer gets notified even with app closed
+        try {
+            const { pushService } = await import('./push.service');
+            await pushService.sendOrderStatusNotification(
+                order.customer_id as string,
+                order.order_number as string,
+                'in_transit',
+                order.order_id as string,
+                { driverName: driver.full_name as string }
+            );
+        } catch (pushErr) {
+            console.error('[Delivery] Push notification for transit failed:', pushErr);
+        }
 
         // Notify operations
         emitToOperations('order_in_transit', {
