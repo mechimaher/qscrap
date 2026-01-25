@@ -871,11 +871,11 @@ export default function RequestDetailScreen() {
         Alert.alert(
             t('alerts.acceptBidTitle'),
             t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }) +
-            `\n\nDelivery fee (${deliveryFee} QAR) will be paid now by card.\nPart price (${priceToShow} QAR) is Cash on Delivery.`,
+            `\n\nTotal: ${priceToShow + deliveryFee} QAR\n(Part: ${priceToShow} QAR + Delivery: ${deliveryFee} QAR)\n\nYou can choose payment method on the next screen.`,
             [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: `Pay ${deliveryFee} QAR`,
+                    text: 'Continue to Payment',
                     onPress: () => {
                         // Navigate to Payment screen with bid details
                         navigation.navigate('Payment', {
