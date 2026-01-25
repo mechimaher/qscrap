@@ -213,12 +213,17 @@ export default function PaymentScreen() {
 
             if (status === 'succeeded') {
                 // Confirm payment on backend to update order status
+                console.log('[Payment] ✅ Stripe payment succeeded, confirming with backend...');
+                console.log('[Payment] Payment Intent ID:', paymentIntent.id);
                 try {
                     const confirmResult = await api.confirmDeliveryFeePayment(paymentIntent.id);
-                    console.log('[Payment] Backend confirmed:', confirmResult);
-                } catch (confirmError) {
-                    console.error('[Payment] Backend confirm error:', confirmError);
-                    // Continue anyway - webhook can handle it
+                    console.log('[Payment] ✅ Backend confirmed successfully:', confirmResult);
+                } catch (confirmError: any) {
+                    console.error('[Payment] ⚠️ Backend confirm FAILED (webhook will retry):', confirmError);
+                    console.error('[Payment] Backend error type:', typeof confirmError);
+                    console.error('[Payment] Backend error message:', confirmError?.message);
+                    console.error('[Payment] Backend error details:', JSON.stringify(confirmError));
+                    // Continue anyway - Stripe webhook will handle it as fallback
                 }
 
                 // Payment successful - order is now confirmed
@@ -272,9 +277,29 @@ export default function PaymentScreen() {
                 }, 1000);
             }
         } catch (error: any) {
-            console.error('Payment error:', error);
+            console.error('[Payment] ❌ PAYMENT ERROR:', error);
+            console.error('[Payment] Error type:', typeof error);
+            console.error('[Payment] Error keys:', error ? Object.keys(error) : 'null');
+            console.error('[Payment] Error message:', error?.message);
+            console.error('[Payment] Error code:', error?.code);
+            console.error('[Payment] Full error:', JSON.stringify(error, null, 2));
+
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            toast.error(t('common.error'), error.message || 'Payment failed');
+
+            // Extract meaningful error message
+            let errorMessage = 'Payment failed';
+            if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error?.message) {
+                errorMessage = error.message;
+            } else if (error?.error?.message) {
+                errorMessage = error.error.message;
+            } else if (error?.localizedDescription) {
+                errorMessage = error.localizedDescription;
+            }
+
+            console.error('[Payment] Displaying error:', errorMessage);
+            toast.error(t('common.error'), errorMessage);
         } finally {
             setIsLoading(false);
         }
