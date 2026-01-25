@@ -467,6 +467,15 @@ async function loadStats() {
         });
         const data = await res.json();
 
+        // DEBUG: Log loyalty stats to console
+        console.log('[DEBUG] Stats API response:', data);
+        console.log('[DEBUG] Loyalty fields:', {
+            loyalty_discounts_today: data.stats?.loyalty_discounts_today,
+            loyalty_discounts_count_today: data.stats?.loyalty_discounts_count_today,
+            loyalty_discounts_week: data.stats?.loyalty_discounts_week,
+            loyalty_discounts_month: data.stats?.loyalty_discounts_month
+        });
+
         if (data.stats) {
             const s = data.stats;
             document.getElementById('statActiveOrders').textContent = s.active_orders;
