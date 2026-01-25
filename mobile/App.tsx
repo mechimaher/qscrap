@@ -44,6 +44,7 @@ import VINScannerScreen from './src/screens/VINScannerScreen';
 import ManualVINEntryScreen from './src/screens/ManualVINEntryScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
 import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
+import DeliveryTrackingScreen from './src/screens/DeliveryTrackingScreen';
 import MyVehiclesScreen from './src/screens/MyVehiclesScreen';
 
 // Navigation Types
@@ -89,6 +90,7 @@ export type RootStackParamList = {
     deliveryFee: number;
     partDescription: string;
   };
+  DeliveryTracking: { orderId: string };
   DeliveryConfirmation: { order?: any; escrow?: any };
   // Vehicles
   MyVehicles: undefined;
@@ -311,6 +313,11 @@ function RootNavigator() {
               name="Payment"
               component={PaymentScreen}
               options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="DeliveryTracking"
+              component={DeliveryTrackingScreen}
+              options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
             />
             <RootStack.Screen
               name="DeliveryConfirmation"
