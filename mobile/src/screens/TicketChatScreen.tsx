@@ -74,9 +74,16 @@ export default function TicketChatScreen() {
             ]);
             setTicket(ticketData.ticket || ticketData);
             setMessages((messagesData as any).messages || messagesData || []);
-        } catch (error) {
+        } catch (error: any) {
             console.log('Failed to load ticket:', error);
-            Alert.alert(t('common.error'), 'Failed to load ticket details');
+            Alert.alert(
+                t('common.error'),
+                error.message || t('support.loadFailed'),
+                [
+                    { text: t('common.cancel'), style: 'cancel', onPress: () => navigation.goBack() },
+                    { text: t('common.retry'), onPress: () => loadTicketAndMessages() }
+                ]
+            );
         } finally {
             setIsLoading(false);
         }

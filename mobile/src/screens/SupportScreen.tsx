@@ -111,25 +111,60 @@ export default function SupportScreen() {
 
     const handleAddPhoto = async () => {
         if (attachments.length >= 5) {
-            Alert.alert(t('common.error'), 'Maximum 5 photos allowed');
+            Alert.alert(t('common.error'), t('support.maxPhotos'));
             return;
         }
 
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(t('common.permissionRequired'), 'Gallery access is needed');
-            return;
-        }
+        // Show action sheet for camera or gallery
+        Alert.alert(
+            t('support.addPhoto'),
+            t('support.selectSource'),
+            [
+                { text: t('support.takePhoto'), onPress: () => pickImage('camera') },
+                { text: t('support.chooseFromGallery'), onPress: () => pickImage('gallery') },
+                { text: t('common.cancel'), style: 'cancel' }
+            ]
+        );
+    };
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            quality: 0.8,
-            allowsMultipleSelection: false,
-        });
+    const pickImage = async (source: 'camera' | 'gallery') => {
+        try {
+            // Request appropriate permission
+            const permission = source === 'camera'
+                ? await ImagePicker.requestCameraPermissionsAsync()
+                : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        if (!result.canceled && result.assets[0]) {
-            setAttachments([...attachments, result.assets[0].uri]);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (permission.status !== 'granted') {
+                Alert.alert(
+                    t('common.permissionRequired'),
+                    source === 'camera'
+                        ? t('support.cameraPermission')
+                        : t('support.galleryPermission')
+                );
+                return;
+            }
+
+            // Launch camera or gallery
+            const result = source === 'camera'
+                ? await ImagePicker.launchCameraAsync({
+                    mediaTypes: ['images'],
+                    quality: 0.8,
+                    allowsEditing: true,
+                    aspect: [4, 3],
+                })
+                : await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ['images'],
+                    quality: 0.8,
+                    allowsMultipleSelection: false,
+                });
+
+            if (!result.canceled && result.assets[0]) {
+                setAttachments([...attachments, result.assets[0].uri]);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+        } catch (error) {
+            console.error('Image picker error:', error);
+            Alert.alert(t('common.error'), t('support.imagePickerFailed'));
         }
     };
 
