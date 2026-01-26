@@ -452,6 +452,7 @@ function switchSection(section) {
     // Load section data
     if (section === 'orders') loadOrders();
     if (section === 'disputes') loadDisputes();
+    if (section === 'escalations') loadEscalations();
     if (section === 'users') loadUsers();
     if (section === 'finance') loadFinance();
     if (section === 'delivery') { loadDeliveryData(); loadDeliveryHistory(); }
@@ -499,6 +500,12 @@ async function loadStats() {
             updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
             updateBadge('ordersBadge', s.active_orders);
             updateBadge('deliveryBadge', s.in_transit || 0); // Correctly update Delivery badge
+
+            // Escalations stats and badge
+            const pendingEscalations = parseInt(s.pending_escalations) || 0;
+            const pendingEscalationsEl = document.getElementById('statPendingEscalations');
+            if (pendingEscalationsEl) pendingEscalationsEl.textContent = pendingEscalations;
+            updateBadge('escalationsBadge', pendingEscalations);
         }
 
         // Also load review badge and finance badge
@@ -949,6 +956,131 @@ async function loadDisputes(page = 1) {
     } catch (err) {
         console.error('Failed to load disputes:', err);
     }
+}
+
+// ============================================
+// ESCALATIONS (from Support Dashboard)
+// ============================================
+
+async function loadEscalations() {
+    try {
+        const res = await fetch(`${API_URL}/operations/escalations?status=pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        // Update stats
+        const pendingEl = document.getElementById('escalationsPending');
+        const urgentEl = document.getElementById('escalationsUrgent');
+
+        if (data.escalations) {
+            const pending = data.escalations.filter(e => e.status === 'pending').length;
+            const urgent = data.escalations.filter(e => e.priority === 'urgent').length;
+            if (pendingEl) pendingEl.textContent = pending;
+            if (urgentEl) urgentEl.textContent = urgent;
+        }
+
+        const priorityColors = {
+            'urgent': 'danger',
+            'high': 'warning',
+            'normal': 'info'
+        };
+
+        if (data.escalations && data.escalations.length) {
+            document.getElementById('escalationsTable').innerHTML = data.escalations.map(e => {
+                const priorityClass = priorityColors[e.priority] || 'info';
+                const timeAgo = formatTimeAgo(e.created_at);
+
+                return `
+                    <tr>
+                        <td>
+                            <span class="status-badge ${priorityClass}">${e.priority?.toUpperCase() || 'NORMAL'}</span>
+                        </td>
+                        <td><strong>#${e.order_number || 'N/A'}</strong></td>
+                        <td>
+                            ${escapeHTML(e.customer_name || 'Unknown')}
+                            <br><small style="color: var(--text-muted);">${e.customer_phone || ''}</small>
+                        </td>
+                        <td style="max-width: 200px;">
+                            <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(e.reason || '')}">
+                                ${escapeHTML(e.reason || 'No reason provided')}
+                            </div>
+                            ${e.ticket_subject ? `<small style="color: var(--text-muted);">Ticket: ${escapeHTML(e.ticket_subject)}</small>` : ''}
+                        </td>
+                        <td>${escapeHTML(e.escalated_by_name || 'Support')}</td>
+                        <td><small>${timeAgo}</small></td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn btn-success btn-sm" onclick="resolveEscalation('${e.escalation_id}')" title="Resolve">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                                ${e.ticket_id ? `
+                                    <button class="btn btn-ghost btn-sm" onclick="viewTicket('${e.ticket_id}')" title="View Ticket">
+                                        <i class="bi bi-chat-dots"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            document.getElementById('escalationsTable').innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h4>No pending escalations</h4>
+                        <p>All escalations have been resolved</p>
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (err) {
+        console.error('Failed to load escalations:', err);
+        showToast('Failed to load escalations', 'error');
+    }
+}
+
+async function resolveEscalation(escalationId) {
+    const notes = prompt('Resolution notes (optional):');
+
+    try {
+        const res = await fetch(`${API_URL}/operations/escalations/${escalationId}/resolve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ resolution_notes: notes || 'Resolved by operations' })
+        });
+
+        if (res.ok) {
+            showToast('Escalation resolved', 'success');
+            loadEscalations();
+            loadStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to resolve', 'error');
+        }
+    } catch (err) {
+        console.error('Resolve escalation error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+function formatTimeAgo(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
 }
 
 // Pagination state for users
