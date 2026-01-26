@@ -84,7 +84,7 @@ export const getTicketMessages = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const messages = await supportService.getTicketMessages(ticketId);
+        const messages = await supportService.getTicketMessages(ticketId, req.user!.userType);
         res.json(messages);
     } catch (err) {
         console.error('[SUPPORT] getTicketMessages error:', getErrorMessage(err));
@@ -143,8 +143,8 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);
-        const ticket = await supportService.updateTicketStatus(req.params.ticket_id, req.body.status);
-        getIO()?.to(`ticket_${req.params.ticket_id}`).emit('ticket_updated', { status: req.body.status });
+        const ticket = await supportService.updateTicketStatus(req.params.ticketId, req.body.status);
+        getIO()?.to(`ticket_${req.params.ticketId}`).emit('ticket_updated', { status: req.body.status });
         res.json(ticket);
     } catch (err: any) {
         console.error('[SUPPORT] updateTicketStatus error:', getErrorMessage(err));
@@ -189,7 +189,7 @@ export const getActivity = async (req: AuthRequest, res: Response) => {
 export const getTicketDetail = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);
-        const detail = await supportService.getTicketDetail(req.params.ticket_id);
+        const detail = await supportService.getTicketDetail(req.params.ticketId);
         if (!detail) return res.status(404).json({ error: 'Ticket not found' });
         res.json(detail);
     } catch (err: any) {
@@ -210,8 +210,8 @@ export const getSLAStats = async (req: AuthRequest, res: Response) => {
 export const assignTicket = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);
-        const ticket = await supportService.assignTicket(req.params.ticket_id, req.body.assignee_id);
-        getIO()?.to(`ticket_${req.params.ticket_id}`).emit('ticket_assigned', { assigned_to: req.body.assignee_id });
+        const ticket = await supportService.assignTicket(req.params.ticketId, req.body.assignee_id);
+        getIO()?.to(`ticket_${req.params.ticketId}`).emit('ticket_assigned', { assigned_to: req.body.assignee_id });
         res.json(ticket);
     } catch (err: any) {
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
@@ -224,7 +224,7 @@ export const reopenTicket = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ error: 'Only customers can reopen tickets' });
         }
 
-        const result = await supportService.reopenTicket(req.params.ticket_id, req.user!.userId, req.body.message);
+        const result = await supportService.reopenTicket(req.params.ticketId, req.user!.userId, req.body.message);
         if (!result.success) return res.status(400).json({ error: result.error });
 
         getIO()?.to('operations').emit('ticket_reopened', result.ticket);
