@@ -328,153 +328,152 @@
                         </div>
                     </div>
                 </div>
-    </div>
-    </section>
+            </section>
 
-    <!-- In Progress Tickets Section -->
-    <section class="section" id="sectionInProgress">
-        <div class="page-header">
-            <h1 class="page-title"><i class="bi bi-hourglass-split"></i> In Progress Tickets</h1>
-        </div>
-        <div class="content-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Customer</th>
-                        <th>Order</th>
-                        <th>Updated</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="inProgressTicketList">
-                    <tr>
-                        <td colspan="5" class="empty-state">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <!-- In Progress Tickets Section -->
+            <section class="section" id="sectionInProgress">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-hourglass-split"></i> In Progress Tickets</h1>
+                </div>
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Customer</th>
+                                <th>Order</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inProgressTicketList">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    <!-- Resolved Tickets Section -->
-    <section class="section" id="sectionResolved">
-        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h1 class="page-title"><i class="bi bi-check-circle"></i> Resolved Tickets</h1>
-            <button class="btn btn-outline" onclick="exportTickets()" style="font-size: 13px;">
-                <i class="bi bi-download"></i> Export CSV
-            </button>
-        </div>
-        <div class="content-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Customer</th>
-                        <th>Order</th>
-                        <th>Resolved</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="resolvedTicketList">
-                    <tr>
-                        <td colspan="5" class="empty-state">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <!-- Resolved Tickets Section -->
+            <section class="section" id="sectionResolved">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 class="page-title"><i class="bi bi-check-circle"></i> Resolved Tickets</h1>
+                    <button class="btn btn-outline" onclick="exportTickets()" style="font-size: 13px;">
+                        <i class="bi bi-download"></i> Export CSV
+                    </button>
+                </div>
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Customer</th>
+                                <th>Order</th>
+                                <th>Resolved</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resolvedTicketList">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    <!-- Order Disputes Section -->
-    <section class="section" id="sectionOrderDisputes">
-        <div class="page-header">
-            <h1 class="page-title"><i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i> Order
-                Disputes</h1>
-            <p style="color: var(--text-secondary);">Customer complaints about orders</p>
-        </div>
-        <div class="content-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Part</th>
-                        <th>Reason</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="orderDisputesTable">
-                    <tr>
-                        <td colspan="6" class="empty-state">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <!-- Order Disputes Section -->
+            <section class="section" id="sectionOrderDisputes">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i> Order
+                        Disputes</h1>
+                    <p style="color: var(--text-secondary);">Customer complaints about orders</p>
+                </div>
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Part</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderDisputesTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    <!-- Payment Disputes Section -->
-    <section class="section" id="sectionPaymentDisputes">
-        <div class="page-header">
-            <h1 class="page-title"><i class="bi bi-currency-dollar" style="color: #ef4444;"></i> Payment
-                Disputes</h1>
-            <p style="color: var(--text-secondary);">Garage payout issues</p>
-        </div>
-        <div class="content-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Garage</th>
-                        <th>Order</th>
-                        <th>Amount</th>
-                        <th>Reason</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="paymentDisputesTable">
-                    <tr>
-                        <td colspan="6" class="empty-state">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <!-- Payment Disputes Section -->
+            <section class="section" id="sectionPaymentDisputes">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-currency-dollar" style="color: #ef4444;"></i> Payment
+                        Disputes</h1>
+                    <p style="color: var(--text-secondary);">Garage payout issues</p>
+                </div>
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentDisputesTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    <!-- Reviews Moderation Section -->
-    <section class="section" id="sectionReviews">
-        <div class="page-header">
-            <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
-            </h1>
-            <p style="color: var(--text-secondary);">Approve or reject customer reviews</p>
-        </div>
+            <!-- Reviews Moderation Section -->
+            <section class="section" id="sectionReviews">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
+                    </h1>
+                    <p style="color: var(--text-secondary);">Approve or reject customer reviews</p>
+                </div>
 
-        <div class="tabs" id="reviewTabs">
-            <div class="tab active" data-status="pending">Pending</div>
-            <div class="tab" data-status="approved">Approved</div>
-            <div class="tab" data-status="rejected">Rejected</div>
-        </div>
+                <div class="tabs" id="reviewTabs">
+                    <div class="tab active" data-status="pending">Pending</div>
+                    <div class="tab" data-status="approved">Approved</div>
+                    <div class="tab" data-status="rejected">Rejected</div>
+                </div>
 
-        <div class="content-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Customer</th>
-                        <th>Garage</th>
-                        <th>Rating</th>
-                        <th>Review</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="reviewsTable">
-                    <tr>
-                        <td colspan="6" class="empty-state">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-    </main>
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Garage</th>
+                                <th>Rating</th>
+                                <th>Review</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
     </div>
 
     <!-- Toast Container -->
