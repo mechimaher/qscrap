@@ -258,6 +258,8 @@ function renderOrders(orders) {
     let html = '';
     orders.forEach(o => {
         const hasIssue = o.dispute_id;
+        const hasPayout = o.payout_status && o.payout_status !== 'pending';
+        const hasWarranty = o.warranty_days_remaining !== null && o.warranty_days_remaining > 0;
         const isActive = ['pending', 'confirmed', 'in_transit', 'out_for_delivery'].includes(o.order_status);
         const cardClass = hasIssue ? 'has-issue' : (isActive ? 'in-transit' : 'completed');
 
@@ -269,12 +271,24 @@ function renderOrders(orders) {
                         ${o.order_status.replace(/_/g, ' ')}
                     </span>
                 </div>
-                <div class="order-part">${escapeHTML(o.part_description)}</div>
+                <div class="order-part">${escapeHTML(o.part_description || 'Part request')}</div>
                 <div class="order-meta">
-                    ${o.car_make} ${o.car_model} ${o.car_year} • ${formatCurrency(o.total_amount)} • ${timeAgo(o.created_at)}
+                    ${o.car_make || ''} ${o.car_model || ''} ${o.car_year || ''} • ${formatCurrency(o.total_amount)} • ${timeAgo(o.created_at)}
                 </div>
                 ${o.garage_name ? `<div class="order-meta">🏭 ${escapeHTML(o.garage_name)}</div>` : ''}
                 ${o.driver_name ? `<div class="order-meta">🚗 ${escapeHTML(o.driver_name)}</div>` : ''}
+                
+                ${hasWarranty ? `
+                    <div class="order-meta" style="color: #10b981; font-weight: 600;">
+                        🛡️ Warranty: ${o.warranty_days_remaining} days left
+                    </div>
+                ` : ''}
+                
+                ${hasPayout ? `
+                    <div class="order-meta" style="color: ${o.payout_status === 'confirmed' ? '#10b981' : '#f59e0b'};">
+                        💰 Payout: ${o.payout_status}
+                    </div>
+                ` : ''}
                 
                 ${hasIssue ? `
                     <div class="order-issue">
@@ -284,9 +298,10 @@ function renderOrders(orders) {
                 
                 <div class="order-actions">
                     ${isActive ? `<button class="order-action-btn" onclick="event.stopPropagation(); trackOrder('${o.order_id}')">📍 Track</button>` : ''}
+                    ${isActive ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('cancel_order', '${o.order_id}')">❌ Cancel</button>` : ''}
                     ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')">🏭 Garage</button>` : ''}
                     ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
-                    <button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('full_refund', '${o.order_id}')">💰 Refund</button>
+                    ${hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('full_refund', '${o.order_id}')">💰 Refund</button>` : ''}
                 </div>
             </div>
         `;
@@ -483,15 +498,21 @@ function renderTickets(tickets) {
     tickets.forEach(t => {
         const statusColor = t.status === 'open' ? '#f59e0b' : (t.status === 'in_progress' ? '#3b82f6' : '#10b981');
         const slaBadge = t.sla_breached ? '<span class="sla-breach">⏰ SLA!</span>' : '';
+        const priorityColors = { urgent: '#ef4444', high: '#f59e0b', normal: '#3b82f6', low: '#6b7280' };
+        const priorityColor = priorityColors[t.priority] || '#6b7280';
+        const priorityBadge = t.priority ? `<span style="background:${priorityColor};color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">${(t.priority || 'normal').toUpperCase()}</span>` : '';
 
         html += `
-            <div class="ticket-card ${t.status}" onclick="openTicketChat('${t.ticket_id}')">
+            <div class="ticket-card ${t.status} ${t.sla_breached ? 'has-issue' : ''}" onclick="openTicketChat('${t.ticket_id}')">
                 <div class="ticket-header">
                     <span class="ticket-subject">${escapeHTML(t.subject)}</span>
-                    ${slaBadge}
+                    <div style="display:flex;gap:4px;align-items:center;">
+                        ${slaBadge}
+                        ${priorityBadge}
+                    </div>
                 </div>
                 <div class="ticket-meta">
-                    <span class="ticket-status" style="background: ${statusColor};">${t.status}</span>
+                    <span class="ticket-status" style="background: ${statusColor};">${t.status.replace('_', ' ')}</span>
                     ${t.order_number ? `<span class="ticket-order">#${t.order_number}</span>` : ''}
                     <span class="ticket-msgs">${t.message_count || 0} msgs</span>
                 </div>
