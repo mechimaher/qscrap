@@ -1,7 +1,7 @@
-// QScrap Driver App - Auth Context
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, Driver } from '../services/api';
 import { locationService } from '../services/LocationService';
+import { clearActiveOrders } from '../services/socket';
 
 interface AuthContextType {
     driver: Driver | null;
@@ -140,6 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch (e) {
                 // Ignore if fails
             }
+
+            // Clear active orders (chat rooms)
+            await clearActiveOrders();
 
             await api.clearToken();
             setDriver(null);
