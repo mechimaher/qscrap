@@ -179,12 +179,6 @@ export const verifyEmailOTP = catchAsync(async (req: Request, res: Response) => 
             email: email.toLowerCase().trim()
         });
 
-        // Mark email as verified
-        await pool.query(
-            'UPDATE users SET email_verified = TRUE WHERE id = $1',
-            [result.userId]
-        );
-
         // Invalidate all other OTPs for this email
         await otpService.invalidateOTPs(email, 'registration');
 

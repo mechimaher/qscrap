@@ -7,6 +7,9 @@ import {
     ScrollView,
     Switch,
     Alert,
+    TextInput,
+    Modal,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -15,6 +18,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron, rtlMarginHorizontal } from '../utils/rtl';
 import { APP_VERSION } from '../config/api';
 
@@ -44,7 +49,13 @@ export default function SettingsScreen() {
     const navigation = useNavigation();
     const { isDarkMode, toggleTheme, colors } = useTheme();
     const { t, language, setLanguage, isRTL } = useLanguage();
+    const { logout } = useAuth();
     const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode, language });
+
+    // Delete account state
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadSettings();
@@ -107,6 +118,47 @@ export default function SettingsScreen() {
                 },
             ]
         );
+    };
+
+    // GOOGLE PLAY 2026 REQUIREMENT: Delete Account
+    const handleDeleteAccount = async () => {
+        if (!deletePassword.trim()) {
+            Alert.alert(t('common.error'), t('settings.enterPasswordToDelete') || 'Please enter your password to confirm');
+            return;
+        }
+
+        setIsDeleting(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+        try {
+            // Call backend to delete account
+            await api.request('/users/me', {
+                method: 'DELETE',
+                body: JSON.stringify({ password: deletePassword }),
+            });
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setShowDeleteModal(false);
+
+            // Clear all local data
+            await AsyncStorage.clear();
+
+            // Log out and redirect to login
+            Alert.alert(
+                t('settings.accountDeleted') || 'Account Deleted',
+                t('settings.accountDeletedMessage') || 'Your account and data have been permanently deleted.',
+                [{ text: t('common.ok'), onPress: () => logout() }]
+            );
+        } catch (error: any) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                t('common.error'),
+                error.message || t('settings.deleteAccountFailed') || 'Failed to delete account. Please try again.'
+            );
+        } finally {
+            setIsDeleting(false);
+            setDeletePassword('');
+        }
     };
 
     const SettingRow = ({

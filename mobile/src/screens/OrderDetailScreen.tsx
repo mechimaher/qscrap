@@ -706,7 +706,7 @@ export default function OrderDetailScreen() {
                                 onPress={handleDownloadInvoice}
                                 disabled={isDownloadingInvoice}
                             >
-                                <LinearGradient colors={['#6366f1', '#4f46e5']} style={styles.invoiceGradient}>
+                                <LinearGradient colors={['#8D1B3D', '#6B1530']} style={styles.invoiceGradient}>
                                     {isDownloadingInvoice ? (
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (

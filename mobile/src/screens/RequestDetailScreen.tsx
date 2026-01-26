@@ -1130,7 +1130,7 @@ const styles = StyleSheet.create({
     heroCarEmoji: { fontSize: 48, marginRight: Spacing.md },
     heroCarDetails: { flex: 1 },
     heroCarName: { fontSize: FontSizes.xxl, fontWeight: '800', color: '#fff' },
-    heroCarYear: { fontSize: FontSizes.lg, color: '#6366f1', fontWeight: '600' },
+    heroCarYear: { fontSize: FontSizes.lg, color: '#C9A227', fontWeight: '600' },
     heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: Spacing.lg },
     heroSection: { marginBottom: Spacing.md },
     heroLabel: {

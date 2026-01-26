@@ -1,0 +1,73 @@
+/**
+ * QScrap Enterprise Contact Constants
+ * 
+ * VVIP Premium App - Qatar's Largest Auto Parts Marketplace
+ * Production-grade contact information for customer support
+ */
+
+// Enterprise Support Contacts
+export const CONTACT = {
+    // Primary enterprise support line (WhatsApp Business verified)
+    SUPPORT_PHONE: '+97430007227',
+    SUPPORT_PHONE_RAW: '97430007227',
+
+    // Email support
+    SUPPORT_EMAIL: 'support@qscrap.qa',
+    SALES_EMAIL: 'sales@qscrap.qa',
+    PARTNERSHIPS_EMAIL: 'partnerships@qscrap.qa',
+
+    // WhatsApp Business
+    WHATSAPP_URL: 'https://wa.me/97430007227',
+    WHATSAPP_GREETING: 'Hello QScrap Support',
+
+    // Social Media (Production)
+    INSTAGRAM: 'https://instagram.com/qscrap.qa',
+    FACEBOOK: 'https://facebook.com/qscrap.qa',
+    TWITTER: 'https://twitter.com/qscrap_qa',
+    LINKEDIN: 'https://linkedin.com/company/qscrap',
+
+    // Corporate Info
+    COMPANY_NAME: 'QScrap Qatar',
+    COMPANY_NAME_AR: 'كيو سكراب قطر',
+    TAGLINE: 'Qatar\'s Premium Auto Parts Marketplace',
+    TAGLINE_AR: 'أفضل سوق لقطع غيار السيارات في قطر',
+} as const;
+
+// Business Hours
+export const BUSINESS_HOURS = {
+    WEEKDAY_OPEN: '08:00',
+    WEEKDAY_CLOSE: '22:00',
+    WEEKEND_OPEN: '09:00',
+    WEEKEND_CLOSE: '21:00',
+    TIMEZONE: 'Asia/Qatar',
+} as const;
+
+// Emergency/Priority Support
+export const PRIORITY_SUPPORT = {
+    ENABLED: true,
+    PHONE: '+97430007227',
+    EMAIL: 'urgent@qscrap.qa',
+    RESPONSE_TIME_MINUTES: 15,
+} as const;
+
+// Legal URLs
+export const LEGAL = {
+    PRIVACY_POLICY: 'https://qscrap.qa/privacy',
+    TERMS_OF_SERVICE: 'https://qscrap.qa/terms',
+    COOKIE_POLICY: 'https://qscrap.qa/cookies',
+    REFUND_POLICY: 'https://qscrap.qa/refunds',
+} as const;
+
+// App Store Links
+export const APP_LINKS = {
+    GOOGLE_PLAY: 'https://play.google.com/store/apps/details?id=qa.qscrap.app',
+    APP_STORE: 'https://apps.apple.com/qa/app/qscrap/id123456789',
+    WEBSITE: 'https://qscrap.qa',
+} as const;
+
+// Quality Badges (for premium branding)
+export const CERTIFICATIONS = {
+    ISO_CERTIFIED: true,
+    QATAR_CHAMBER: true,
+    VERIFIED_BUSINESS: true,
+} as const;

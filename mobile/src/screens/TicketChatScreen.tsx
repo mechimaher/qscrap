@@ -116,7 +116,7 @@ export default function TicketChatScreen() {
         try {
             // If there's an attachment, we'd need to upload it first
             // For now, send message with optional attachment reference
-            await api.sendTicketMessage(ticketId, tempMessage, tempAttachment ? [tempAttachment] : undefined);
+            await api.sendTicketMessage(ticketId, tempMessage);
             await loadMessages();
             // Scroll to bottom
             setTimeout(() => {

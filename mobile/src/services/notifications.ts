@@ -76,7 +76,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 name: 'QScrap Notifications',
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 400, 200, 400],
-                lightColor: '#6366f1',
+                lightColor: '#8D1B3D',
                 enableLights: true,
                 enableVibrate: true,
             });

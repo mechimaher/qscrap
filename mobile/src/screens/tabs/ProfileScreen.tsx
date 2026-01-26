@@ -221,21 +221,12 @@ export default function ProfileScreen() {
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.support')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem icon="🎫" label={t('profile.supportTickets')} onPress={() => navigation.navigate('Support')} />
-                        <MenuItem icon="💬" label={t('profile.helpCenter')} onPress={() => Alert.alert(
-                            t('profile.helpCenter'),
-                            t('profile.howCanWeHelp'),
-                            [
-                                { text: t('alerts.faqs'), onPress: () => Alert.alert(t('alerts.faqs'), t('profile.faqs')) },
-                                { text: t('alerts.contactSupport'), onPress: () => Linking.openURL('https://wa.me/97412345678?text=Hi%20QScrap%20Support') },
-                                { text: t('common.cancel'), style: 'cancel' }
-                            ]
-                        )} />
                         <MenuItem icon="📞" label={t('profile.contactUs')} onPress={() => Alert.alert(
                             t('profile.contactUs'),
                             t('profile.chooseContact'),
                             [
-                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL('https://wa.me/97412345678') },
-                                { text: t('alerts.callUs'), onPress: () => Linking.openURL('tel:+97412345678') },
+                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL('https://wa.me/97430007227?text=Hello%20QScrap%20Support') },
+                                { text: t('alerts.callUs'), onPress: () => Linking.openURL('tel:+97430007227') },
                                 { text: t('alerts.emailUs'), onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
                                 { text: t('common.cancel'), style: 'cancel' }
                             ]
