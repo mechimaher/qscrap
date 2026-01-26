@@ -185,6 +185,7 @@ async function searchCustomer() {
         currentCustomer = data.customer;
         renderCustomerProfile(data);
         renderOrders(data.orders);
+        renderTickets(data.tickets || []);
         renderNotes(data.notes);
         renderResolutionLog(data.resolutions);
 
@@ -452,6 +453,182 @@ async function addNote() {
     } catch (err) {
         showToast('Failed to add note', 'error');
     }
+}
+
+// ==========================================
+// TICKETS & CHAT (Phase 2 - Unified Workspace)
+// ==========================================
+
+let currentTicket = null;
+
+function renderTickets(tickets) {
+    const container = document.getElementById('ticketsPanel');
+    if (!container) return; // Panel not yet in HTML
+
+    if (!tickets || tickets.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-mini">
+                <i class="bi bi-chat-dots"></i>
+                <p>No support tickets</p>
+                <button class="btn btn-sm" onclick="createNewTicket()">+ New Ticket</button>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `<button class="btn btn-sm" style="margin-bottom: 10px; width: 100%;" onclick="createNewTicket()">
+        <i class="bi bi-plus-circle"></i> New Ticket
+    </button>`;
+
+    tickets.forEach(t => {
+        const statusColor = t.status === 'open' ? '#f59e0b' : (t.status === 'in_progress' ? '#3b82f6' : '#10b981');
+        const slaBadge = t.sla_breached ? '<span class="sla-breach">⏰ SLA!</span>' : '';
+
+        html += `
+            <div class="ticket-card ${t.status}" onclick="openTicketChat('${t.ticket_id}')">
+                <div class="ticket-header">
+                    <span class="ticket-subject">${escapeHTML(t.subject)}</span>
+                    ${slaBadge}
+                </div>
+                <div class="ticket-meta">
+                    <span class="ticket-status" style="background: ${statusColor};">${t.status}</span>
+                    ${t.order_number ? `<span class="ticket-order">#${t.order_number}</span>` : ''}
+                    <span class="ticket-msgs">${t.message_count || 0} msgs</span>
+                </div>
+                <div class="ticket-preview">${escapeHTML(t.last_message || 'No messages')}</div>
+                <div class="ticket-time">${timeAgo(t.last_message_at || t.created_at)}</div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+async function openTicketChat(ticketId) {
+    currentTicket = ticketId;
+    const chatContainer = document.getElementById('chatPanel');
+    if (!chatContainer) return;
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Failed to load messages');
+
+        const messages = await res.json();
+        renderChatMessages(messages);
+
+        // Show chat panel
+        chatContainer.classList.add('active');
+
+    } catch (err) {
+        console.error('Failed to load chat:', err);
+        showToast('Failed to load messages', 'error');
+    }
+}
+
+function renderChatMessages(messages) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div class="empty-state-mini"><p>No messages yet</p></div>';
+        return;
+    }
+
+    let html = '';
+    messages.forEach(m => {
+        const isAgent = m.sender_type === 'admin';
+        html += `
+            <div class="chat-message ${isAgent ? 'agent' : 'customer'}">
+                <div class="chat-bubble">
+                    ${escapeHTML(m.message_text)}
+                </div>
+                <div class="chat-meta">${m.sender_name} • ${timeAgo(m.created_at)}</div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendTicketMessage() {
+    if (!currentTicket) {
+        showToast('No ticket selected', 'error');
+        return;
+    }
+
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${currentTicket}/messages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message })
+        });
+
+        if (res.ok) {
+            input.value = '';
+            await openTicketChat(currentTicket); // Refresh messages
+            showToast('Message sent', 'success');
+        } else {
+            showToast('Failed to send message', 'error');
+        }
+    } catch (err) {
+        showToast('Failed to send message', 'error');
+    }
+}
+
+async function createNewTicket() {
+    if (!currentCustomer) {
+        showToast('Please select a customer first', 'error');
+        return;
+    }
+
+    const subject = prompt('Ticket subject:');
+    if (!subject) return;
+
+    const message = prompt('Initial message:');
+    if (!message) return;
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/create-for-customer`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: currentCustomer.user_id,
+                subject,
+                message,
+                order_id: currentOrder || null
+            })
+        });
+
+        if (res.ok) {
+            showToast('Ticket created', 'success');
+            // Refresh customer data
+            searchCustomer();
+        } else {
+            showToast('Failed to create ticket', 'error');
+        }
+    } catch (err) {
+        showToast('Failed to create ticket', 'error');
+    }
+}
+
+function closeChat() {
+    const chatContainer = document.getElementById('chatPanel');
+    if (chatContainer) chatContainer.classList.remove('active');
+    currentTicket = null;
 }
 
 // ==========================================
