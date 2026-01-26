@@ -168,8 +168,8 @@ const TermsScreen: React.FC = () => {
                     </Text>
                     <Text style={[styles.contactInfo, { color: colors.primary, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('terms.email')}: legal@qscrap.qa{'\n'}
-                        {t('terms.phone')}: +974 XXXX XXXX{'\n'}
-                        {t('terms.address')}: {t('terms.dohaQatar')}
+                        {t('terms.phone')}: +974 4455 4444{'\n'}
+                        {t('terms.address')}: Industrial Area, St 10, P.O. Box 32544, Doha, Qatar
                     </Text>
                 </Section>
 
