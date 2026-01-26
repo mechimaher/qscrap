@@ -341,7 +341,7 @@ function trackOrder(orderId) {
 // Calls: POST /api/support/quick-action
 // ==========================================
 
-async function quickAction(actionType, orderId = null) {
+function quickAction(actionType, orderId = null) {
     if (!currentCustomer) {
         showToast('Please search for a customer first', 'error');
         return;
@@ -356,59 +356,176 @@ async function quickAction(actionType, orderId = null) {
         return;
     }
 
-    // Confirmation
-    const actionLabels = {
-        'full_refund': 'Full Refund',
-        'partial_refund': 'Partial Refund',
-        'goodwill_credit': 'Goodwill Credit',
-        'cancel_order': 'Cancel Order',
-        'reassign_driver': 'Reassign Driver',
-        'rush_delivery': 'Rush Delivery',
-        'escalate_to_ops': 'Escalate to Operations'
+    // Action configurations
+    const actionConfig = {
+        'full_refund': {
+            title: 'Full Refund',
+            icon: 'bi-arrow-counterclockwise',
+            color: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            confirmText: 'Process Refund',
+            needsAmount: false,
+            message: 'This will refund the entire order amount to the customer.'
+        },
+        'partial_refund': {
+            title: 'Partial Refund',
+            icon: 'bi-percent',
+            color: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            confirmText: 'Process Refund',
+            needsAmount: true,
+            amountLabel: 'Refund Amount (QAR)',
+            message: 'Enter the amount to refund to the customer.'
+        },
+        'goodwill_credit': {
+            title: 'Goodwill Credit',
+            icon: 'bi-gift',
+            color: 'linear-gradient(135deg, #10b981, #059669)',
+            confirmText: 'Grant Credit',
+            needsAmount: true,
+            amountLabel: 'Credit Amount (QAR)',
+            message: 'This credit will be applied to the customer\'s next order.'
+        },
+        'cancel_order': {
+            title: 'Cancel Order',
+            icon: 'bi-x-circle',
+            color: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            confirmText: 'Cancel Order',
+            needsAmount: false,
+            message: 'This will cancel the order and initiate any applicable refunds.'
+        },
+        'reassign_driver': {
+            title: 'Reassign Driver',
+            icon: 'bi-arrow-repeat',
+            color: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            confirmText: 'Reassign',
+            needsAmount: false,
+            message: 'The order will be returned to the driver pool for reassignment.'
+        },
+        'rush_delivery': {
+            title: 'Rush Delivery',
+            icon: 'bi-lightning',
+            color: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+            confirmText: 'Mark as Rush',
+            needsAmount: false,
+            message: 'This order will be prioritized for immediate delivery.'
+        },
+        'escalate_to_ops': {
+            title: 'Escalate to Operations',
+            icon: 'bi-exclamation-triangle',
+            color: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            confirmText: 'Escalate',
+            needsAmount: false,
+            message: 'This will create an urgent escalation for the operations team.'
+        }
     };
 
-    const notes = prompt(`Confirm: ${actionLabels[actionType]}\n\nAdd notes (optional):`);
-    if (notes === null) return; // Cancelled
-
-    let actionDetails = {};
-    if (actionType === 'partial_refund') {
-        const amount = prompt('Enter refund amount (QAR):');
-        if (!amount || isNaN(amount)) return;
-        actionDetails.amount = parseFloat(amount);
-    }
-    if (actionType === 'goodwill_credit') {
-        const amount = prompt('Enter credit amount (QAR):');
-        if (!amount || isNaN(amount)) return;
-        actionDetails.amount = parseFloat(amount);
+    const config = actionConfig[actionType];
+    if (!config) {
+        showToast('Unknown action', 'error');
+        return;
     }
 
-    try {
-        const res = await fetch(`${API_URL}/support/quick-action`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+    // Build modal content
+    let formContent = `
+        <div style="margin-bottom: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+            <p style="margin: 0; color: var(--text-secondary);">${config.message}</p>
+        </div>
+    `;
+
+    if (config.needsAmount) {
+        formContent += `
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">${config.amountLabel}</label>
+                <input type="number" id="actionAmount" class="form-control" 
+                    min="1" step="0.01" placeholder="0.00" required
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+            </div>
+        `;
+    }
+
+    formContent += `
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Notes (optional)</label>
+            <textarea id="actionNotes" class="form-control" rows="3" 
+                placeholder="Add any relevant notes..."
+                style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;"></textarea>
+        </div>
+    `;
+
+    // Create modal
+    QScrapModal.create({
+        id: 'quick-action-modal',
+        title: config.title,
+        headerIcon: config.icon,
+        headerClass: config.color,
+        content: formContent,
+        size: 'sm',
+        actions: [
+            {
+                id: 'action-cancel-btn',
+                text: 'Cancel',
+                class: 'btn btn-ghost',
+                onclick: () => QScrapModal.close('quick-action-modal')
             },
-            body: JSON.stringify({
-                customer_id: currentCustomer.user_id,
-                order_id: orderId,
-                action_type: actionType,
-                action_details: actionDetails,
-                notes: notes || undefined
-            })
-        });
+            {
+                id: 'action-confirm-btn',
+                text: config.confirmText,
+                class: 'btn btn-primary',
+                onclick: async () => {
+                    // Validate amount if needed
+                    let actionDetails = {};
+                    if (config.needsAmount) {
+                        const amountInput = document.getElementById('actionAmount');
+                        const amount = parseFloat(amountInput.value);
+                        if (!amount || amount <= 0) {
+                            showToast('Please enter a valid amount', 'error');
+                            amountInput.focus();
+                            return;
+                        }
+                        actionDetails.amount = amount;
+                    }
 
-        const data = await res.json();
-        if (data.success) {
-            showToast(`${actionLabels[actionType]} completed!`, 'success');
-            // Refresh customer data
-            searchCustomer();
-        } else {
-            showToast(data.error || 'Action failed', 'error');
-        }
-    } catch (err) {
-        console.error('Quick action error:', err);
-        showToast('Action failed', 'error');
+                    const notes = document.getElementById('actionNotes').value.trim();
+
+                    // Close modal and show loading
+                    QScrapModal.close('quick-action-modal');
+                    showToast('Processing...', 'info');
+
+                    // Execute action
+                    try {
+                        const res = await fetch(`${API_URL}/support/quick-action`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                customer_id: currentCustomer.user_id,
+                                order_id: orderId,
+                                action_type: actionType,
+                                action_details: actionDetails,
+                                notes: notes || undefined
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast(`${config.title} completed!`, 'success');
+                            searchCustomer(); // Refresh
+                        } else {
+                            showToast(data.error || data.message || 'Action failed', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Quick action error:', err);
+                        showToast('Action failed - please try again', 'error');
+                    }
+                }
+            }
+        ]
+    });
+
+    // Focus amount input if present
+    if (config.needsAmount) {
+        setTimeout(() => document.getElementById('actionAmount')?.focus(), 100);
     }
 }
 
