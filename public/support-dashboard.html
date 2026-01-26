@@ -272,8 +272,10 @@
                                                 style="display: none; background: #f59e0b; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">URGENT</span>
                                         </div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">
-                                            Order: <span id="ticketOrder">#123</span> • <span
-                                                id="ticketCustomer">Customer</span>
+                                            Order: <span id="ticketOrder">#123</span> •
+                                            <span id="ticketCustomer">Customer</span>
+                                            <span id="ticketContactInfo"
+                                                style="margin-left: 8px; color: var(--text-muted);"></span>
                                         </div>
                                     </div>
                                     <div style="display: flex; gap: 8px; align-items: center;">
@@ -297,158 +299,182 @@
                                 <!-- Messages -->
                             </div>
                             <div class="chat-input-area" style="padding: 16px; border-top: 1px solid var(--border);">
+                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                    <select id="cannedResponses" onchange="insertCannedResponse(this.value)"
+                                        class="form-control" style="flex: 1; font-size: 12px;">
+                                        <option value="">📋 Quick Replies...</option>
+                                        <option value="thank_contact">Thank you for contacting QScrap support. How can I
+                                            help you today?</option>
+                                        <option value="order_checking">I'm checking your order status now. Please hold
+                                            on a moment.</option>
+                                        <option value="refund_process">Your refund request is being processed. It
+                                            typically takes 3-5 business days.</option>
+                                        <option value="more_details">Could you please provide more details about the
+                                            issue you're experiencing?</option>
+                                        <option value="escalate_team">I'm escalating this to our specialized team. They
+                                            will contact you within 24 hours.</option>
+                                        <option value="resolved_close">Great! I'm glad we could resolve this. Is there
+                                            anything else I can help you with?</option>
+                                        <option value="apology">I sincerely apologize for the inconvenience. Let me make
+                                            this right for you.</option>
+                                    </select>
+                                </div>
                                 <textarea id="chatInput" class="form-control" rows="2"
                                     placeholder="Type your reply..."></textarea>
-                                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                                <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 8px;">
                                     <button class="btn btn-primary" onclick="sendReply()">Send Reply</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
+    </div>
+    </section>
 
-            <!-- In Progress Tickets Section -->
-            <section class="section" id="sectionInProgress">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-hourglass-split"></i> In Progress Tickets</h1>
-                </div>
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Customer</th>
-                                <th>Order</th>
-                                <th>Updated</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inProgressTicketList">
-                            <tr>
-                                <td colspan="5" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+    <!-- In Progress Tickets Section -->
+    <section class="section" id="sectionInProgress">
+        <div class="page-header">
+            <h1 class="page-title"><i class="bi bi-hourglass-split"></i> In Progress Tickets</h1>
+        </div>
+        <div class="content-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Customer</th>
+                        <th>Order</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inProgressTicketList">
+                    <tr>
+                        <td colspan="5" class="empty-state">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-            <!-- Resolved Tickets Section -->
-            <section class="section" id="sectionResolved">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-check-circle"></i> Resolved Tickets</h1>
-                </div>
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Customer</th>
-                                <th>Order</th>
-                                <th>Resolved</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resolvedTicketList">
-                            <tr>
-                                <td colspan="5" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+    <!-- Resolved Tickets Section -->
+    <section class="section" id="sectionResolved">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h1 class="page-title"><i class="bi bi-check-circle"></i> Resolved Tickets</h1>
+            <button class="btn btn-outline" onclick="exportTickets()" style="font-size: 13px;">
+                <i class="bi bi-download"></i> Export CSV
+            </button>
+        </div>
+        <div class="content-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Customer</th>
+                        <th>Order</th>
+                        <th>Resolved</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="resolvedTicketList">
+                    <tr>
+                        <td colspan="5" class="empty-state">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-            <!-- Order Disputes Section -->
-            <section class="section" id="sectionOrderDisputes">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i> Order
-                        Disputes</h1>
-                    <p style="color: var(--text-secondary);">Customer complaints about orders</p>
-                </div>
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Order</th>
-                                <th>Customer</th>
-                                <th>Part</th>
-                                <th>Reason</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderDisputesTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+    <!-- Order Disputes Section -->
+    <section class="section" id="sectionOrderDisputes">
+        <div class="page-header">
+            <h1 class="page-title"><i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i> Order
+                Disputes</h1>
+            <p style="color: var(--text-secondary);">Customer complaints about orders</p>
+        </div>
+        <div class="content-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Part</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orderDisputesTable">
+                    <tr>
+                        <td colspan="6" class="empty-state">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-            <!-- Payment Disputes Section -->
-            <section class="section" id="sectionPaymentDisputes">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-currency-dollar" style="color: #ef4444;"></i> Payment
-                        Disputes</h1>
-                    <p style="color: var(--text-secondary);">Garage payout issues</p>
-                </div>
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Garage</th>
-                                <th>Order</th>
-                                <th>Amount</th>
-                                <th>Reason</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="paymentDisputesTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+    <!-- Payment Disputes Section -->
+    <section class="section" id="sectionPaymentDisputes">
+        <div class="page-header">
+            <h1 class="page-title"><i class="bi bi-currency-dollar" style="color: #ef4444;"></i> Payment
+                Disputes</h1>
+            <p style="color: var(--text-secondary);">Garage payout issues</p>
+        </div>
+        <div class="content-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Garage</th>
+                        <th>Order</th>
+                        <th>Amount</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentDisputesTable">
+                    <tr>
+                        <td colspan="6" class="empty-state">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-            <!-- Reviews Moderation Section -->
-            <section class="section" id="sectionReviews">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
-                    </h1>
-                    <p style="color: var(--text-secondary);">Approve or reject customer reviews</p>
-                </div>
+    <!-- Reviews Moderation Section -->
+    <section class="section" id="sectionReviews">
+        <div class="page-header">
+            <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
+            </h1>
+            <p style="color: var(--text-secondary);">Approve or reject customer reviews</p>
+        </div>
 
-                <div class="tabs" id="reviewTabs">
-                    <div class="tab active" data-status="pending">Pending</div>
-                    <div class="tab" data-status="approved">Approved</div>
-                    <div class="tab" data-status="rejected">Rejected</div>
-                </div>
+        <div class="tabs" id="reviewTabs">
+            <div class="tab active" data-status="pending">Pending</div>
+            <div class="tab" data-status="approved">Approved</div>
+            <div class="tab" data-status="rejected">Rejected</div>
+        </div>
 
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>Garage</th>
-                                <th>Rating</th>
-                                <th>Review</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reviewsTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+        <div class="content-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Garage</th>
+                        <th>Rating</th>
+                        <th>Review</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reviewsTable">
+                    <tr>
+                        <td colspan="6" class="empty-state">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    </main>
     </div>
 
     <!-- Toast Container -->
@@ -459,7 +485,7 @@
     <script src="js/shared/toast.js?v=20260115c"></script>
     <script src="js/shared/modal.js?v=20260115c"></script>
     <script src="js/pagination-utils.js?v=20260115c"></script>
-    <script src="js/support-dashboard.js?v=20260126c"></script>
+    <script src="js/support-dashboard.js?v=20260126d"></script>
 </body>
 
 </html>

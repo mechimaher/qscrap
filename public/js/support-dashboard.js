@@ -454,6 +454,12 @@ async function selectTicket(ticketId) {
         await loadSupportAgents();
         document.getElementById('ticketAssign').value = data.ticket.assigned_to || '';
 
+        // Show customer contact info
+        const contactParts = [];
+        if (data.ticket.customer_phone) contactParts.push(`📞 ${data.ticket.customer_phone}`);
+        if (data.ticket.customer_email) contactParts.push(`✉️ ${data.ticket.customer_email}`);
+        document.getElementById('ticketContactInfo').textContent = contactParts.join(' | ');
+
         // Load messages
         const chatContainer = document.getElementById('chatMessages');
         const messages = data.messages || [];
@@ -745,5 +751,70 @@ function handleUrgentItem(id, type) {
         setTimeout(() => selectTicket(id), 300);
     } else if (type === 'dispute') {
         switchSection('orderDisputes');
+    }
+}
+
+// ==========================================
+// CANNED RESPONSES
+// ==========================================
+
+function insertCannedResponse(value) {
+    if (!value) return;
+    const select = document.getElementById('cannedResponses');
+    const textarea = document.getElementById('chatInput');
+    const selectedOption = select.options[select.selectedIndex];
+    textarea.value = selectedOption.text;
+    textarea.focus();
+    select.value = ''; // Reset dropdown
+}
+
+// ==========================================
+// EXPORT
+// ==========================================
+
+async function exportTickets() {
+    showToast('Generating export...', 'info');
+
+    try {
+        // Fetch all resolved tickets
+        const res = await fetch(`${API_URL}/support/tickets?status=resolved&limit=500`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const tickets = data.tickets || [];
+
+        if (tickets.length === 0) {
+            showToast('No tickets to export', 'error');
+            return;
+        }
+
+        // Create CSV content
+        const headers = ['Ticket ID', 'Subject', 'Customer', 'Order #', 'Status', 'Priority', 'Created', 'Resolved'];
+        const rows = tickets.map(t => [
+            t.ticket_id,
+            `"${(t.subject || '').replace(/"/g, '""')}"`,
+            `"${(t.customer_name || '').replace(/"/g, '""')}"`,
+            t.order_number || 'N/A',
+            t.status,
+            t.priority || 'normal',
+            new Date(t.created_at).toISOString().split('T')[0],
+            new Date(t.updated_at).toISOString().split('T')[0]
+        ]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+        // Download file
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `qscrap_tickets_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast(`Exported ${tickets.length} tickets`, 'success');
+    } catch (err) {
+        console.error('Export failed:', err);
+        showToast('Export failed', 'error');
     }
 }

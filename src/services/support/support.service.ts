@@ -171,7 +171,13 @@ export class SupportService {
     }
 
     async getTicketDetail(ticketId: string) {
-        const ticketResult = await this.pool.query(`SELECT t.*, u.full_name as customer_name, o.order_number FROM support_tickets t JOIN users u ON t.customer_id = u.user_id LEFT JOIN orders o ON t.order_id = o.order_id WHERE t.ticket_id = $1`, [ticketId]);
+        const ticketResult = await this.pool.query(`
+            SELECT t.*, u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email, o.order_number 
+            FROM support_tickets t 
+            JOIN users u ON t.customer_id = u.user_id 
+            LEFT JOIN orders o ON t.order_id = o.order_id 
+            WHERE t.ticket_id = $1
+        `, [ticketId]);
         if (ticketResult.rows.length === 0) return null;
         const messagesResult = await this.pool.query(`SELECT m.*, u.full_name as sender_name FROM chat_messages m JOIN users u ON m.sender_id = u.user_id WHERE m.ticket_id = $1 ORDER BY m.created_at ASC`, [ticketId]);
         return { ticket: ticketResult.rows[0], messages: messagesResult.rows };
