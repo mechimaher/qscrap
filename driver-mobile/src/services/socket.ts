@@ -46,6 +46,22 @@ export const initSocket = async (): Promise<Socket | null> => {
                 console.error('[Socket] Failed to parse driver:', e);
             }
         }
+
+        // Auto-join chat rooms for active assignments (FIX: receive messages when chat closed)
+        const activeOrdersJson = await SecureStore.getItemAsync('qscrap_active_orders');
+        if (activeOrdersJson) {
+            try {
+                const activeOrders = JSON.parse(activeOrdersJson);
+                if (Array.isArray(activeOrders)) {
+                    activeOrders.forEach((orderId: string) => {
+                        socket?.emit('join_room', `order_${orderId}`);
+                        console.log('[Socket] Auto-joined chat room: order_' + orderId);
+                    });
+                }
+            } catch (e) {
+                console.error('[Socket] Failed to parse active orders:', e);
+            }
+        }
     });
 
     socket.on('disconnect', (reason) => {
@@ -230,3 +246,36 @@ export const emitLocationUpdate = (lat: number, lng: number, orderId?: string) =
     socket?.emit('driver_location', { lat, lng, order_id: orderId });
 };
 
+// ==============================
+// ACTIVE ORDERS MANAGEMENT (for real-time chat)
+// ==============================
+
+/**
+ * Update and save active order IDs, then join their chat rooms
+ * Call this when assignments are loaded or updated
+ */
+export const updateActiveOrders = async (orderIds: string[]) => {
+    try {
+        // Save to secure storage for reconnection
+        await SecureStore.setItemAsync('qscrap_active_orders', JSON.stringify(orderIds));
+
+        // Join chat rooms for each order
+        orderIds.forEach((orderId) => {
+            socket?.emit('join_room', `order_${orderId}`);
+            console.log('[Socket] Joined chat room for active order:', orderId);
+        });
+    } catch (e) {
+        console.error('[Socket] Failed to update active orders:', e);
+    }
+};
+
+/**
+ * Clear active orders on logout
+ */
+export const clearActiveOrders = async () => {
+    try {
+        await SecureStore.deleteItemAsync('qscrap_active_orders');
+    } catch (e) {
+        console.error('[Socket] Failed to clear active orders:', e);
+    }
+};

@@ -26,7 +26,7 @@ import { useLocation } from '../../hooks/useLocation';
 import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
 import { useJobStore } from '../../stores/useJobStore';
-import { getSocket } from '../../services/socket';
+import { getSocket, updateActiveOrders } from '../../services/socket';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating, LiveMapView, AssignmentPopup } from '../../components';
 import { GlassCard } from '../../components/common/GlassCard';
@@ -169,6 +169,12 @@ export default function HomeScreen() {
                 setActiveAssignments(assignments);
                 setStoreAssignments(assignments);
                 console.log('[Home] Assignments synced:', assignments.length);
+
+                // FIX: Auto-join chat rooms for all active orders (real-time messages)
+                const activeOrderIds = assignments.map((a: Assignment) => a.order_id).filter(Boolean);
+                if (activeOrderIds.length > 0) {
+                    await updateActiveOrders(activeOrderIds);
+                }
             } catch (assignErr) {
                 console.error('[Home] Failed to fetch assignments:', assignErr);
                 // We do NOT clear assignments on error to support offline mode
