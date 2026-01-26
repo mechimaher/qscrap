@@ -451,7 +451,6 @@ function switchSection(section) {
 
     // Load section data
     if (section === 'orders') loadOrders();
-    if (section === 'disputes') loadDisputes();
     if (section === 'escalations') loadEscalations();
     if (section === 'users') loadUsers();
     if (section === 'finance') loadFinance();
