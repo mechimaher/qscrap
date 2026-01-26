@@ -7,16 +7,66 @@ import { Pool, PoolClient } from 'pg';
 export class SupportService {
     constructor(private pool: Pool) { }
 
-    async createTicket(userId: string, data: { subject: string; message: string; priority?: string; order_id?: string; attachments?: string[] }) {
+    async createTicket(
+        userId: string,
+        data: {
+            subject: string;
+            message: string;
+            priority?: string;
+            category?: string;
+            subcategory?: string;
+            order_id?: string;
+            attachments?: string[];
+            requester_type?: 'customer' | 'garage' | 'driver';
+        }
+    ) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            const ticketResult = await client.query(`INSERT INTO support_tickets (customer_id, subject, priority, order_id) VALUES ($1, $2, $3, $4) RETURNING *`, [userId, data.subject, data.priority || 'normal', data.order_id || null]);
+
+            const priority = data.priority || 'normal';
+            const category = data.category || 'general';
+            const requesterType = data.requester_type || 'customer';
+
+            // Calculate SLA deadline based on priority and category
+            const slaHoursMap: Record<string, number> = {
+                urgent: 4,
+                high: 12,
+                normal: 24,
+                low: 72,
+            };
+            const categoryAdjust: Record<string, number> = {
+                payout: 4,
+                billing: 8,
+                delivery: 12,
+            };
+            const slaHours = categoryAdjust[category] || slaHoursMap[priority] || 24;
+
+            const ticketResult = await client.query(`
+                INSERT INTO support_tickets (
+                    customer_id, requester_id, requester_type, subject, priority, 
+                    category, subcategory, order_id, sla_deadline
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '${slaHours} hours') 
+                RETURNING *
+            `, [
+                requesterType === 'customer' ? userId : null, // keep customer_id for backward compat
+                userId,
+                requesterType,
+                data.subject,
+                priority,
+                category,
+                data.subcategory || null,
+                data.order_id || null
+            ]);
+
             const ticket = ticketResult.rows[0];
+
             const messageResult = await client.query(
-                `INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, attachments) VALUES ($1, $2, 'customer', $3, $4) RETURNING *`,
-                [ticket.ticket_id, userId, data.message, data.attachments || []]
+                `INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, attachments) 
+                 VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                [ticket.ticket_id, userId, requesterType, data.message, data.attachments || []]
             );
+
             await client.query('COMMIT');
             return { ticket, message: messageResult.rows[0] };
         } catch (err) {
@@ -566,6 +616,83 @@ export class SupportService {
             ORDER BY r.created_at DESC
             LIMIT 50
         `, queryParams);
+
+        return result.rows;
+    }
+
+    /**
+     * Add internal note to ticket (not visible to customer)
+     */
+    async addInternalNote(ticketId: string, agentId: string, noteText: string): Promise<any> {
+        const result = await this.pool.query(`
+            INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
+            VALUES ($1, $2, 'admin', $3, true)
+            RETURNING *
+        `, [ticketId, agentId, noteText]);
+        return result.rows[0];
+    }
+
+    /**
+     * Get canned responses (filtered by category if provided)
+     */
+    async getCannedResponses(category?: string): Promise<any[]> {
+        let query = `SELECT * FROM canned_responses WHERE is_active = true`;
+        const params: any[] = [];
+
+        if (category) {
+            query += ` AND (category = $1 OR category IS NULL)`;
+            params.push(category);
+        }
+
+        query += ` ORDER BY title ASC`;
+        const result = await this.pool.query(query, params);
+        return result.rows;
+    }
+
+    /**
+     * Grant goodwill credit to customer
+     */
+    async grantGoodwillCredit(params: {
+        customerId: string;
+        amount: number;
+        reason: string;
+        grantedBy: string;
+        ticketId?: string;
+        orderId?: string;
+        expiresInDays?: number;
+    }): Promise<any> {
+        const expiresAt = params.expiresInDays
+            ? `NOW() + INTERVAL '${params.expiresInDays} days'`
+            : `NOW() + INTERVAL '90 days'`;
+
+        const result = await this.pool.query(`
+            INSERT INTO customer_credits 
+            (customer_id, amount, reason, granted_by, ticket_id, order_id, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6, ${expiresAt})
+            RETURNING *
+        `, [
+            params.customerId,
+            params.amount,
+            params.reason,
+            params.grantedBy,
+            params.ticketId || null,
+            params.orderId || null
+        ]);
+
+        return result.rows[0];
+    }
+
+    /**
+     * Get active credits for a customer
+     */
+    async getCustomerCredits(customerId: string): Promise<any[]> {
+        const result = await this.pool.query(`
+            SELECT * FROM customer_credits
+            WHERE customer_id = $1 
+            AND status = 'active'
+            AND (expires_at IS NULL OR expires_at > NOW())
+            ORDER BY created_at DESC
+        `, [customerId]);
 
         return result.rows;
     }
