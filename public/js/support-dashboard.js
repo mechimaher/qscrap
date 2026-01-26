@@ -454,11 +454,15 @@ async function selectTicket(ticketId) {
         await loadSupportAgents();
         document.getElementById('ticketAssign').value = data.ticket.assigned_to || '';
 
-        // Show customer contact info
+        // Show customer contact info (clickable)
         const contactParts = [];
-        if (data.ticket.customer_phone) contactParts.push(`📞 ${data.ticket.customer_phone}`);
-        if (data.ticket.customer_email) contactParts.push(`✉️ ${data.ticket.customer_email}`);
-        document.getElementById('ticketContactInfo').textContent = contactParts.join(' | ');
+        if (data.ticket.customer_phone) {
+            contactParts.push(`<a href="tel:${data.ticket.customer_phone}" style="color: var(--primary); text-decoration: none;">📞 ${data.ticket.customer_phone}</a>`);
+        }
+        if (data.ticket.customer_email) {
+            contactParts.push(`<a href="mailto:${data.ticket.customer_email}" style="color: var(--primary); text-decoration: none;">✉️ ${data.ticket.customer_email}</a>`);
+        }
+        document.getElementById('ticketContactInfo').innerHTML = contactParts.join(' | ');
 
         // Load messages
         const chatContainer = document.getElementById('chatMessages');
