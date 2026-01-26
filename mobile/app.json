@@ -19,11 +19,11 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#8D1B3D"
     },
     "notification": {
       "icon": "./assets/notification-icon.png",
-      "color": "#6366f1",
+      "color": "#8D1B3D",
       "androidMode": "default",
       "androidCollapsedTitle": "QScrap"
     },
@@ -58,7 +58,7 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.INTERNET",
@@ -83,7 +83,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#6366f1",
+          "color": "#8D1B3D",
           "defaultChannel": "default"
         }
       ],

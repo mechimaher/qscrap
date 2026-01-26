@@ -36,7 +36,7 @@ import { DeliveryLocationWidget } from '../../components/DeliveryLocationWidget'
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
-const SUPPORT_PHONE = '97412345678'; // Should be in constants
+const SUPPORT_PHONE = '97430007227'; // QScrap Enterprise Support
 
 // ============================================
 // ANIMATED COUNT-UP COMPONENT

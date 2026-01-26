@@ -158,7 +158,7 @@ export default function RegisterScreen() {
                             <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📧 Email Address</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder="your@email.com"
+                                placeholder="name@company.qa"
                                 placeholderTextColor="#999"
                                 value={email}
                                 onChangeText={setEmail}

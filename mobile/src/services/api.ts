@@ -184,27 +184,46 @@ class ApiService {
             ...options.headers,
         };
 
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers,
-        });
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                ...options,
+                headers,
+            });
 
-        const data = await response.json();
+            // Try to parse JSON response
+            let data: any;
+            const contentType = response.headers.get('content-type');
 
-        if (!response.ok) {
-            // Properly extract error message from various response formats
-            let errorMessage = 'Request failed';
-            if (typeof data.error === 'string') {
-                errorMessage = data.error;
-            } else if (typeof data.error?.message === 'string') {
-                errorMessage = data.error.message;
-            } else if (typeof data.message === 'string') {
-                errorMessage = data.message;
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Non-JSON response (likely HTML error page or plain text)
+                const text = await response.text();
+                console.error('[API] Non-JSON response:', text.substring(0, 200));
+                throw new Error('Server returned invalid response. Please try again later.');
             }
-            throw new Error(errorMessage);
-        }
 
-        return data;
+            if (!response.ok) {
+                // Properly extract error message from various response formats
+                let errorMessage = 'Request failed';
+                if (typeof data.error === 'string') {
+                    errorMessage = data.error;
+                } else if (typeof data.error?.message === 'string') {
+                    errorMessage = data.error.message;
+                } else if (typeof data.message === 'string') {
+                    errorMessage = data.message;
+                }
+                throw new Error(errorMessage);
+            }
+
+            return data;
+        } catch (error: any) {
+            // Handle JSON parse errors explicitly
+            if (error.message?.includes('JSON')) {
+                throw new Error('Invalid server response. Please check your connection and try again.');
+            }
+            throw error;
+        }
     }
 
     // Auth
