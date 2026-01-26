@@ -1,4 +1,3 @@
-// QScrap Settings Screen - App Preferences and Notifications with Full i18n Support
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -8,7 +7,6 @@ import {
     ScrollView,
     Switch,
     Alert,
-    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -18,7 +16,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron, rtlMarginHorizontal } from '../utils/rtl';
-import { APP_VERSION, TERMS_URL, PRIVACY_URL } from '../config/api';
+import { APP_VERSION } from '../config/api';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -211,41 +209,9 @@ export default function SettingsScreen() {
                     />
                 </View>
 
-                {/* Sound & Haptics */}
+                {/* Language */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.soundHaptics')}</Text>
-
-                    <SettingRow
-                        icon="🔊"
-                        title={t('settings.soundEffects')}
-                        subtitle={t('settings.soundEffectsDesc')}
-                        value={settings.soundEnabled}
-                        onToggle={() => updateSetting('soundEnabled', !settings.soundEnabled)}
-                    />
-
-                    <SettingRow
-                        icon="📳"
-                        title={t('settings.vibration')}
-                        subtitle={t('settings.vibrationDesc')}
-                        value={settings.vibrationEnabled}
-                        onToggle={() => updateSetting('vibrationEnabled', !settings.vibrationEnabled)}
-                    />
-                </View>
-
-                {/* Appearance */}
-                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.appearance')}</Text>
-
-                    <SettingRow
-                        icon="🌙"
-                        title={t('settings.darkMode')}
-                        subtitle={t('settings.darkModeDesc')}
-                        value={isDarkMode}
-                        onToggle={() => {
-                            toggleTheme();
-                            updateSetting('darkMode', !isDarkMode);
-                        }}
-                    />
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.language')}</Text>
 
                     <ActionRow
                         icon="🌐"
@@ -280,13 +246,13 @@ export default function SettingsScreen() {
                     <ActionRow
                         icon="📄"
                         title={t('settings.termsOfService')}
-                        onPress={() => Linking.openURL(TERMS_URL)}
+                        onPress={() => (navigation as any).navigate('Terms')}
                     />
 
                     <ActionRow
                         icon="🔒"
                         title={t('settings.privacyPolicy')}
-                        onPress={() => Linking.openURL(PRIVACY_URL)}
+                        onPress={() => (navigation as any).navigate('PrivacyPolicy')}
                     />
 
                     <ActionRow
