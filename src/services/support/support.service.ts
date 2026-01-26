@@ -159,7 +159,14 @@ export class SupportService {
     }
 
     async getRecentActivity() {
-        const result = await this.pool.query(`SELECT t.ticket_id, 'ticket' as type, t.subject, t.status, t.created_at, u.full_name as customer_name FROM support_tickets t JOIN users u ON t.customer_id = u.user_id ORDER BY t.last_message_at DESC LIMIT 10`);
+        const result = await this.pool.query(`
+            SELECT t.ticket_id, 'ticket' as type, t.subject, t.status, t.created_at, 
+                   u.full_name as customer_name, o.order_number
+            FROM support_tickets t 
+            JOIN users u ON t.customer_id = u.user_id 
+            LEFT JOIN orders o ON t.order_id = o.order_id
+            ORDER BY t.last_message_at DESC LIMIT 10
+        `);
         return result.rows;
     }
 

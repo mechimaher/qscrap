@@ -319,7 +319,7 @@ async function loadRecentActivity() {
         const activities = data.activities || [];
 
         if (activities.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No recent activity</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No recent activity</td></tr>';
             return;
         }
 
@@ -327,6 +327,7 @@ async function loadRecentActivity() {
             <tr>
                 <td><span class="status-badge ${a.type}">${a.type}</span></td>
                 <td>${escapeHTML(a.subject)}</td>
+                <td>#${a.order_number || 'N/A'}</td>
                 <td>${escapeHTML(a.customer_name)}</td>
                 <td><span class="status-badge ${a.status}">${a.status}</span></td>
                 <td>${timeAgo(a.created_at)}</td>
