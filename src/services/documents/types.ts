@@ -80,6 +80,16 @@ export interface DocumentData {
         status: string;
     };
 
+    // Company support info (Qatar commercial compliance)
+    company?: {
+        name: { en: string; ar: string };
+        support_phone: string;
+        support_email: string;
+        website: string;
+        address: { en: string; ar: string };
+        cr_number: string;
+    };
+
     [key: string]: unknown;
 }
 
