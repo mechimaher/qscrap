@@ -361,14 +361,15 @@ export const getEscalations = async (req: AuthRequest, res: Response) => {
         const result = await pool.query(`
             SELECT e.*,
                    t.ticket_id, t.subject as ticket_subject, t.status as ticket_status,
-                   t.category, t.order_id,
-                   o.order_number,
+                   t.category,
+                   COALESCE(o.order_number, o2.order_number) as order_number,
                    u.full_name as customer_name, u.phone_number as customer_phone,
                    eu.full_name as escalated_by_name,
                    au.full_name as assigned_to_name
             FROM support_escalations e
-            JOIN support_tickets t ON e.ticket_id = t.ticket_id
+            LEFT JOIN support_tickets t ON e.ticket_id = t.ticket_id
             LEFT JOIN orders o ON t.order_id = o.order_id
+            LEFT JOIN orders o2 ON e.order_id = o2.order_id
             LEFT JOIN users u ON e.customer_id = u.user_id
             LEFT JOIN users eu ON e.escalated_by = eu.user_id
             LEFT JOIN users au ON e.assigned_to = au.user_id
