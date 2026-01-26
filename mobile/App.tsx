@@ -45,6 +45,8 @@ import PaymentScreen from './src/screens/PaymentScreen';
 import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
 import DeliveryTrackingScreen from './src/screens/DeliveryTrackingScreen';
 import MyVehiclesScreen from './src/screens/MyVehiclesScreen';
+import TermsScreen from './src/screens/TermsScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 
 // Navigation Types
 export type RootStackParamList = {
@@ -294,6 +296,18 @@ function RootNavigator() {
             />
 
             {/* VIN Scanner Flow - removed (unused) */}
+
+            {/* Legal Screens */}
+            <RootStack.Screen
+              name="Terms"
+              component={TermsScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <RootStack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
 
             {/* Payment & Escrow Flow */}
             <RootStack.Screen
