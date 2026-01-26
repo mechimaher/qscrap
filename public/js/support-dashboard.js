@@ -151,9 +151,47 @@ function setupSocket() {
         socket.on('connect', () => console.log('Socket connected'));
         socket.emit('join_room', 'operations');
         socket.emit('join_room', 'support');
+
+        // Real-time event listeners
+        socket.on('new_ticket', (data) => {
+            showToast(`New ticket: ${data.ticket?.subject || 'Support request'}`, 'info');
+            // Refresh if viewing the same customer
+            if (currentCustomer && data.ticket?.customer_id === currentCustomer.user_id) {
+                searchCustomer();
+            }
+        });
+
+        socket.on('new_message', (data) => {
+            // Refresh chat if viewing this ticket
+            if (currentTicket && data.ticket_id === currentTicket) {
+                openTicketChat(currentTicket);
+            }
+        });
+
+        socket.on('ticket_updated', (data) => {
+            // Refresh customer view if relevant
+            if (currentCustomer) {
+                searchCustomer();
+            }
+        });
+
+        socket.on('resolution_action', (data) => {
+            showToast(`Action: ${data.action_type} completed`, 'info');
+            if (currentCustomer && data.customer_id === currentCustomer.user_id) {
+                searchCustomer();
+            }
+        });
+
+        socket.on('ticket_reopened', (data) => {
+            showToast(`Ticket reopened: ${data.ticket?.subject || 'Support request'}`, 'warning');
+        });
+
     } catch (e) {
         console.log('Socket not available');
     }
+
+    // Load canned responses for chat templates
+    loadCannedResponses();
 }
 
 // ==========================================
@@ -702,6 +740,9 @@ async function sendTicketMessage() {
     const message = input.value.trim();
     if (!message) return;
 
+    // Check internal note toggle
+    const isInternal = document.getElementById('internalNoteToggle')?.checked || false;
+
     try {
         const res = await fetch(`${API_URL}/support/tickets/${currentTicket}/messages`, {
             method: 'POST',
@@ -709,13 +750,19 @@ async function sendTicketMessage() {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({
+                message_text: message,
+                is_internal: isInternal
+            })
         });
 
         if (res.ok) {
             input.value = '';
+            if (document.getElementById('internalNoteToggle')) {
+                document.getElementById('internalNoteToggle').checked = false;
+            }
             await openTicketChat(currentTicket); // Refresh messages
-            showToast('Message sent', 'success');
+            showToast(isInternal ? 'Internal note added' : 'Message sent', 'success');
         } else {
             showToast('Failed to send message', 'error');
         }
@@ -724,43 +771,194 @@ async function sendTicketMessage() {
     }
 }
 
-async function createNewTicket() {
+// Canned responses cache
+let cannedResponses = [];
+
+async function loadCannedResponses() {
+    try {
+        const res = await fetch(`${API_URL}/support/canned-responses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            cannedResponses = await res.json();
+        }
+    } catch (err) {
+        console.error('Failed to load canned responses:', err);
+    }
+}
+
+function showCannedResponsesDropdown() {
+    if (cannedResponses.length === 0) {
+        showToast('No templates available', 'info');
+        return;
+    }
+
+    let html = '<div style="max-height: 300px; overflow-y: auto;">';
+    cannedResponses.forEach((r, i) => {
+        html += `
+            <div class="canned-item" onclick="insertCannedResponse(${i})" 
+                style="padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
+                onmouseover="this.style.background='var(--bg-secondary)'" 
+                onmouseout="this.style.background='transparent'">
+                <div style="font-weight: 600; font-size: 12px;">${escapeHTML(r.title)}</div>
+                <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${escapeHTML(r.message_text.substring(0, 80))}...
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    QScrapModal.create({
+        id: 'canned-responses-modal',
+        title: 'Quick Responses',
+        headerIcon: 'bi-lightning',
+        content: html,
+        size: 'sm',
+        actions: [{
+            id: 'canned-cancel',
+            text: 'Cancel',
+            class: 'btn btn-ghost',
+            onclick: () => QScrapModal.close('canned-responses-modal')
+        }]
+    });
+}
+
+function insertCannedResponse(index) {
+    const response = cannedResponses[index];
+    if (response) {
+        const input = document.getElementById('chatInput');
+        if (input) {
+            input.value = response.message_text;
+            input.focus();
+        }
+    }
+    QScrapModal.close('canned-responses-modal');
+}
+
+function createNewTicket() {
     if (!currentCustomer) {
         showToast('Please select a customer first', 'error');
         return;
     }
 
-    const subject = prompt('Ticket subject:');
-    if (!subject) return;
+    const categoryOptions = `
+        <option value="general">General</option>
+        <option value="delivery">Delivery Issue</option>
+        <option value="part_quality">Part Quality</option>
+        <option value="billing">Billing</option>
+        <option value="bid_dispute">Bid Dispute</option>
+        <option value="payout">Payout Issue</option>
+        <option value="account">Account</option>
+        <option value="other">Other</option>
+    `;
 
-    const message = prompt('Initial message:');
-    if (!message) return;
+    const priorityOptions = `
+        <option value="normal">Normal</option>
+        <option value="low">Low</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+    `;
 
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/create-for-customer`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+    const formContent = `
+        <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Subject</label>
+            <input type="text" id="ticketSubject" class="form-control" placeholder="Brief description of issue"
+                style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        </div>
+        <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Category</label>
+                <select id="ticketCategory" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    ${categoryOptions}
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Priority</label>
+                <select id="ticketPriority" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    ${priorityOptions}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Initial Message</label>
+            <textarea id="ticketMessage" class="form-control" rows="4" placeholder="Describe the customer's issue..."
+                style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;"></textarea>
+        </div>
+        ${currentOrder ? `<p style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">📦 Linked to selected order</p>` : ''}
+    `;
+
+    QScrapModal.create({
+        id: 'new-ticket-modal',
+        title: 'Create Support Ticket',
+        headerIcon: 'bi-plus-circle',
+        headerClass: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+        content: formContent,
+        size: 'md',
+        actions: [
+            {
+                id: 'ticket-cancel-btn',
+                text: 'Cancel',
+                class: 'btn btn-ghost',
+                onclick: () => QScrapModal.close('new-ticket-modal')
             },
-            body: JSON.stringify({
-                customer_id: currentCustomer.user_id,
-                subject,
-                message,
-                order_id: currentOrder || null
-            })
-        });
+            {
+                id: 'ticket-create-btn',
+                text: 'Create Ticket',
+                class: 'btn btn-primary',
+                onclick: async () => {
+                    const subject = document.getElementById('ticketSubject').value.trim();
+                    const message = document.getElementById('ticketMessage').value.trim();
+                    const category = document.getElementById('ticketCategory').value;
+                    const priority = document.getElementById('ticketPriority').value;
 
-        if (res.ok) {
-            showToast('Ticket created', 'success');
-            // Refresh customer data
-            searchCustomer();
-        } else {
-            showToast('Failed to create ticket', 'error');
-        }
-    } catch (err) {
-        showToast('Failed to create ticket', 'error');
-    }
+                    if (!subject) {
+                        showToast('Subject is required', 'error');
+                        document.getElementById('ticketSubject').focus();
+                        return;
+                    }
+                    if (!message) {
+                        showToast('Message is required', 'error');
+                        document.getElementById('ticketMessage').focus();
+                        return;
+                    }
+
+                    QScrapModal.close('new-ticket-modal');
+                    showToast('Creating ticket...', 'info');
+
+                    try {
+                        const res = await fetch(`${API_URL}/support/tickets/create-for-customer`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                customer_id: currentCustomer.user_id,
+                                subject,
+                                message,
+                                category,
+                                priority,
+                                order_id: currentOrder || null
+                            })
+                        });
+
+                        if (res.ok) {
+                            showToast('Ticket created!', 'success');
+                            searchCustomer(); // Refresh
+                        } else {
+                            const data = await res.json();
+                            showToast(data.error || 'Failed to create ticket', 'error');
+                        }
+                    } catch (err) {
+                        showToast('Failed to create ticket', 'error');
+                    }
+                }
+            }
+        ]
+    });
+
+    setTimeout(() => document.getElementById('ticketSubject')?.focus(), 100);
 }
 
 function closeChat() {

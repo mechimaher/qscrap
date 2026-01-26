@@ -925,6 +925,17 @@
             <button class="chat-close" onclick="closeChat()">×</button>
         </div>
         <div id="chatMessages"></div>
+        <div
+            style="padding: 8px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 11px;">
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--text-muted);">
+                <input type="checkbox" id="internalNoteToggle" style="cursor: pointer;">
+                🔒 Internal note
+            </label>
+            <button onclick="showCannedResponsesDropdown()"
+                style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 11px; font-weight: 600;">
+                ⚡ Templates
+            </button>
+        </div>
         <div class="chat-input-area">
             <input type="text" id="chatInput" placeholder="Type a message..."
                 onkeydown="if(event.key==='Enter') sendTicketMessage()">
