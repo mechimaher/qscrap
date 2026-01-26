@@ -1,8 +1,10 @@
 -- 20260127_support_audit_fixes.sql
 -- Fixes critical issues identified in enterprise audit
+-- V2: Added DROP IF EXISTS to handle partial creation
 
 -- 1. Create refunds table (CRITICAL - SupportActionsService depends on this)
-CREATE TABLE IF NOT EXISTS refunds (
+DROP TABLE IF EXISTS refunds CASCADE;
+CREATE TABLE refunds (
     refund_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES orders(order_id),
     customer_id UUID NOT NULL,
@@ -12,18 +14,18 @@ CREATE TABLE IF NOT EXISTS refunds (
     processed_by TEXT,
     payment_intent_id TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    processed_at TIMESTAMP
+    processed_at TIMESTAMP,
+    CONSTRAINT unique_order_refund UNIQUE (order_id)
 );
 
--- Unique constraint to prevent double refunds
-CREATE UNIQUE INDEX IF NOT EXISTS idx_refunds_order_unique ON refunds(order_id);
-CREATE INDEX IF NOT EXISTS idx_refunds_customer ON refunds(customer_id);
-CREATE INDEX IF NOT EXISTS idx_refunds_status ON refunds(status);
+CREATE INDEX idx_refunds_customer ON refunds(customer_id);
+CREATE INDEX idx_refunds_status ON refunds(status);
 
 COMMENT ON TABLE refunds IS 'Customer refund records with race condition protection';
 
 -- 2. Create payout_reversals table (CRITICAL - handlePayoutForRefund depends on this)
-CREATE TABLE IF NOT EXISTS payout_reversals (
+DROP TABLE IF EXISTS payout_reversals CASCADE;
+CREATE TABLE payout_reversals (
     reversal_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     garage_id UUID NOT NULL,
     original_payout_id UUID NOT NULL,
@@ -34,8 +36,8 @@ CREATE TABLE IF NOT EXISTS payout_reversals (
     processed_at TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_payout_reversals_garage ON payout_reversals(garage_id);
-CREATE INDEX IF NOT EXISTS idx_payout_reversals_payout ON payout_reversals(original_payout_id);
+CREATE INDEX idx_payout_reversals_garage ON payout_reversals(garage_id);
+CREATE INDEX idx_payout_reversals_payout ON payout_reversals(original_payout_id);
 
 COMMENT ON TABLE payout_reversals IS 'Tracks reversals for garage payouts that were already sent';
 
@@ -99,20 +101,7 @@ INSERT INTO canned_responses (title, message_text, category) VALUES
  'account')
 ON CONFLICT DO NOTHING;
 
--- 6. Add priority/category constraints (optional but recommended)
-DO $$ BEGIN
-    ALTER TABLE support_tickets 
-    ADD CONSTRAINT check_valid_priority 
-    CHECK (priority IN ('low', 'normal', 'high', 'urgent'));
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE support_tickets 
-    ADD CONSTRAINT check_valid_category 
-    CHECK (category IN ('general', 'delivery', 'part_quality', 'billing', 'bid_dispute', 'payout', 'account', 'other'));
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
--- 7. Index for efficient internal message filtering
+-- 6. Index for efficient internal message filtering
 CREATE INDEX IF NOT EXISTS idx_chat_messages_public 
 ON chat_messages(ticket_id, created_at) 
 WHERE is_internal = false;
