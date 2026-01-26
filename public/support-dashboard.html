@@ -261,13 +261,26 @@
                             <div class="chat-header" style="padding: 16px; border-bottom: 1px solid var(--border);">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
-                                        <h3 id="ticketSubject" style="font-size: 16px; font-weight: 600;">Subject</h3>
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                            <h3 id="ticketSubject"
+                                                style="font-size: 16px; font-weight: 600; margin: 0;">Subject</h3>
+                                            <span id="ticketSlaBadge"
+                                                style="display: none; background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">SLA
+                                                BREACH</span>
+                                            <span id="ticketPriorityBadge"
+                                                style="display: none; background: #f59e0b; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">URGENT</span>
+                                        </div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">
                                             Order: <span id="ticketOrder">#123</span> • <span
                                                 id="ticketCustomer">Customer</span>
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 8px;">
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <select id="ticketAssign" onchange="assignTicket(this.value)"
+                                            class="form-control" style="width: auto; font-size: 12px;"
+                                            title="Assign to agent">
+                                            <option value="">Unassigned</option>
+                                        </select>
                                         <select id="ticketStatus" onchange="updateTicketStatus(this.value)"
                                             class="form-control" style="width: auto; font-size: 13px;">
                                             <option value="open">Open</option>
@@ -445,7 +458,7 @@
     <script src="js/shared/toast.js?v=20260115c"></script>
     <script src="js/shared/modal.js?v=20260115c"></script>
     <script src="js/pagination-utils.js?v=20260115c"></script>
-    <script src="js/support-dashboard.js?v=20260126a"></script>
+    <script src="js/support-dashboard.js?v=20260126b"></script>
 </body>
 
 </html>
