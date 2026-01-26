@@ -352,14 +352,14 @@ export class SupportService {
         // Get recent orders with issues highlighted
         const orders = await this.pool.query(`
             SELECT 
-                o.order_id, o.order_number, o.order_status, o.delivery_status,
+                o.order_id, o.order_number, o.order_status,
                 o.total_amount, o.created_at, o.delivery_address,
                 r.part_description, r.car_make, r.car_model, r.car_year,
                 g.garage_name, gu.phone_number as garage_phone,
                 d.dispute_id, d.reason as dispute_reason, d.status as dispute_status,
                 dr.full_name as driver_name, dru.phone_number as driver_phone
             FROM orders o
-            JOIN part_requests r ON o.request_id = r.request_id
+            LEFT JOIN part_requests r ON o.request_id = r.request_id
             LEFT JOIN garages g ON o.garage_id = g.garage_id
             LEFT JOIN users gu ON g.garage_id = gu.user_id
             LEFT JOIN disputes d ON o.order_id = d.order_id AND d.status IN ('pending', 'contested')
