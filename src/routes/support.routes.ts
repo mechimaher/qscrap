@@ -11,7 +11,12 @@ import {
     getTicketDetail,
     getSLAStats,
     assignTicket,
-    reopenTicket
+    reopenTicket,
+    // Customer Resolution Center
+    getCustomer360,
+    addCustomerNote,
+    executeQuickAction,
+    getResolutionLogs
 } from '../controllers/support.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
@@ -62,5 +67,22 @@ router.patch('/tickets/:ticket_id/assign', authenticate, authorizeOperations, as
 
 // SLA statistics (30-day rolling)
 router.get('/sla-stats', authenticate, authorizeOperations, getSLAStats);
+
+// ==========================================
+// CUSTOMER RESOLUTION CENTER
+// ==========================================
+
+// Customer 360 lookup - search by phone, name, email, order#
+router.get('/customer-360/:query', authenticate, authorizeOperations, getCustomer360);
+router.get('/customer-360', authenticate, authorizeOperations, getCustomer360);
+
+// Add internal note about customer
+router.post('/notes', authenticate, authorizeOperations, addCustomerNote);
+
+// Execute quick action (refund, reassign, escalate, etc.)
+router.post('/quick-action', authenticate, authorizeOperations, executeQuickAction);
+
+// Get resolution logs
+router.get('/resolution-logs', authenticate, authorizeOperations, getResolutionLogs);
 
 export default router;

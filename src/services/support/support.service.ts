@@ -310,4 +310,257 @@ export class SupportService {
             client.release();
         }
     }
+
+    // ==========================================
+    // CUSTOMER RESOLUTION CENTER - NEW METHODS
+    // ==========================================
+
+    /**
+     * Get complete customer 360 view by phone, name, email, or order#
+     */
+    async getCustomer360(searchQuery: string): Promise<any> {
+        // Normalize search query
+        const query = searchQuery.trim();
+
+        // Try to find customer by different identifiers
+        const result = await this.pool.query(`
+            SELECT 
+                u.user_id, u.full_name, u.phone_number, u.email, u.created_at as member_since,
+                (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id) as total_orders,
+                (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE customer_id = u.user_id AND order_status = 'completed') as total_spent,
+                (SELECT tier FROM customer_loyalty WHERE customer_id = u.user_id) as loyalty_tier,
+                (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id AND order_status IN ('pending', 'confirmed', 'in_transit')) as active_orders,
+                (SELECT COUNT(*) FROM disputes WHERE customer_id = u.user_id AND status IN ('pending', 'contested')) as open_issues
+            FROM users u
+            WHERE u.role = 'customer'
+            AND (
+                u.phone_number ILIKE $1 
+                OR u.full_name ILIKE $1 
+                OR u.email ILIKE $1
+                OR u.user_id::text = $2
+                OR u.user_id IN (SELECT customer_id FROM orders WHERE order_number ILIKE $1)
+            )
+            LIMIT 1
+        `, [`%${query}%`, query]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        const customer = result.rows[0];
+
+        // Get recent orders with issues highlighted
+        const orders = await this.pool.query(`
+            SELECT 
+                o.order_id, o.order_number, o.order_status, o.delivery_status,
+                o.total_amount, o.created_at, o.delivery_address,
+                r.part_description, r.car_make, r.car_model, r.car_year,
+                g.garage_name, gu.phone_number as garage_phone,
+                d.dispute_id, d.reason as dispute_reason, d.status as dispute_status,
+                dr.full_name as driver_name, dru.phone_number as driver_phone
+            FROM orders o
+            JOIN part_requests r ON o.request_id = r.request_id
+            LEFT JOIN garages g ON o.garage_id = g.garage_id
+            LEFT JOIN users gu ON g.garage_id = gu.user_id
+            LEFT JOIN disputes d ON o.order_id = d.order_id AND d.status IN ('pending', 'contested')
+            LEFT JOIN drivers dr ON o.driver_id = dr.driver_id
+            LEFT JOIN users dru ON dr.driver_id = dru.user_id
+            WHERE o.customer_id = $1
+            ORDER BY 
+                CASE WHEN d.dispute_id IS NOT NULL THEN 0 ELSE 1 END,
+                o.created_at DESC
+            LIMIT 10
+        `, [customer.user_id]);
+
+        // Get internal notes
+        const notes = await this.pool.query(`
+            SELECT n.*, u.full_name as agent_name
+            FROM customer_notes n
+            JOIN users u ON n.agent_id = u.user_id
+            WHERE n.customer_id = $1
+            ORDER BY n.created_at DESC
+            LIMIT 10
+        `, [customer.user_id]);
+
+        // Get resolution history
+        const resolutions = await this.pool.query(`
+            SELECT r.*, u.full_name as agent_name, o.order_number
+            FROM resolution_logs r
+            JOIN users u ON r.agent_id = u.user_id
+            LEFT JOIN orders o ON r.order_id = o.order_id
+            WHERE r.customer_id = $1
+            ORDER BY r.created_at DESC
+            LIMIT 10
+        `, [customer.user_id]);
+
+        return {
+            customer,
+            orders: orders.rows,
+            notes: notes.rows,
+            resolutions: resolutions.rows
+        };
+    }
+
+    /**
+     * Add internal note about customer
+     */
+    async addCustomerNote(customerId: string, agentId: string, noteText: string): Promise<any> {
+        const result = await this.pool.query(`
+            INSERT INTO customer_notes (customer_id, agent_id, note_text)
+            VALUES ($1, $2, $3)
+            RETURNING *
+        `, [customerId, agentId, noteText]);
+        return result.rows[0];
+    }
+
+    /**
+     * Execute quick action and log resolution
+     */
+    async executeQuickAction(params: {
+        orderId?: string;
+        customerId: string;
+        agentId: string;
+        actionType: string;
+        actionDetails?: any;
+        notes?: string;
+    }): Promise<{ success: boolean; result?: any; error?: string }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            let result: any = null;
+
+            switch (params.actionType) {
+                case 'full_refund':
+                    if (!params.orderId) throw new Error('Order ID required for refund');
+                    // Mark order for refund
+                    await client.query(`
+                        UPDATE orders SET 
+                            order_status = 'refunded',
+                            refund_reason = $2,
+                            refunded_at = NOW()
+                        WHERE order_id = $1
+                    `, [params.orderId, params.notes || 'Customer requested refund']);
+                    result = { action: 'full_refund', orderId: params.orderId };
+                    break;
+
+                case 'partial_refund':
+                    if (!params.orderId || !params.actionDetails?.amount) throw new Error('Order ID and amount required');
+                    await client.query(`
+                        UPDATE orders SET 
+                            partial_refund_amount = $2,
+                            refund_reason = $3,
+                            refunded_at = NOW()
+                        WHERE order_id = $1
+                    `, [params.orderId, params.actionDetails.amount, params.notes || 'Partial refund']);
+                    result = { action: 'partial_refund', amount: params.actionDetails.amount };
+                    break;
+
+                case 'goodwill_credit':
+                    const creditAmount = params.actionDetails?.amount || 10;
+                    await client.query(`
+                        UPDATE customer_loyalty 
+                        SET points = points + $2
+                        WHERE customer_id = $1
+                    `, [params.customerId, creditAmount * 10]); // 10 points per QAR
+                    result = { action: 'goodwill_credit', points: creditAmount * 10 };
+                    break;
+
+                case 'cancel_order':
+                    if (!params.orderId) throw new Error('Order ID required');
+                    await client.query(`
+                        UPDATE orders SET 
+                            order_status = 'cancelled',
+                            cancellation_reason = $2,
+                            cancelled_at = NOW()
+                        WHERE order_id = $1
+                    `, [params.orderId, params.notes || 'Cancelled by support']);
+                    result = { action: 'cancel_order', orderId: params.orderId };
+                    break;
+
+                case 'reassign_driver':
+                    if (!params.orderId) throw new Error('Order ID required');
+                    // Clear current driver assignment so operations can reassign
+                    await client.query(`
+                        UPDATE orders SET 
+                            driver_id = NULL,
+                            delivery_status = 'pending_pickup',
+                            driver_reassignment_reason = $2
+                        WHERE order_id = $1
+                    `, [params.orderId, params.notes || 'Reassigned by support']);
+                    result = { action: 'reassign_driver', orderId: params.orderId };
+                    break;
+
+                case 'rush_delivery':
+                    if (!params.orderId) throw new Error('Order ID required');
+                    await client.query(`
+                        UPDATE orders SET 
+                            priority = 'urgent',
+                            priority_notes = $2
+                        WHERE order_id = $1
+                    `, [params.orderId, params.notes || 'Rush delivery requested']);
+                    result = { action: 'rush_delivery', orderId: params.orderId };
+                    break;
+
+                case 'escalate_to_ops':
+                    if (!params.orderId) throw new Error('Order ID required');
+                    await client.query(`
+                        UPDATE orders SET 
+                            escalated_to_ops = true,
+                            escalation_reason = $2,
+                            escalated_at = NOW()
+                        WHERE order_id = $1
+                    `, [params.orderId, params.notes || 'Escalated by support']);
+                    result = { action: 'escalate_to_ops', orderId: params.orderId };
+                    break;
+
+                default:
+                    throw new Error(`Unknown action type: ${params.actionType}`);
+            }
+
+            // Log the resolution action
+            await client.query(`
+                INSERT INTO resolution_logs (order_id, customer_id, agent_id, action_type, action_details, notes)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `, [params.orderId || null, params.customerId, params.agentId, params.actionType,
+            JSON.stringify(params.actionDetails || {}), params.notes || null]);
+
+            await client.query('COMMIT');
+            return { success: true, result };
+
+        } catch (err: any) {
+            await client.query('ROLLBACK');
+            return { success: false, error: err.message };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Get resolution logs for an order or customer
+     */
+    async getResolutionLogs(params: { orderId?: string; customerId?: string }): Promise<any[]> {
+        let whereClause = '';
+        const queryParams: any[] = [];
+
+        if (params.orderId) {
+            whereClause = 'WHERE r.order_id = $1';
+            queryParams.push(params.orderId);
+        } else if (params.customerId) {
+            whereClause = 'WHERE r.customer_id = $1';
+            queryParams.push(params.customerId);
+        }
+
+        const result = await this.pool.query(`
+            SELECT r.*, u.full_name as agent_name, o.order_number
+            FROM resolution_logs r
+            JOIN users u ON r.agent_id = u.user_id
+            LEFT JOIN orders o ON r.order_id = o.order_id
+            ${whereClause}
+            ORDER BY r.created_at DESC
+            LIMIT 50
+        `, queryParams);
+
+        return result.rows;
+    }
 }

@@ -213,3 +213,97 @@ export const reopenTicket = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+// ==========================================
+// CUSTOMER RESOLUTION CENTER - NEW ENDPOINTS
+// ==========================================
+
+// Customer 360 lookup - search by phone, name, email, order#
+export const getCustomer360 = async (req: AuthRequest, res: Response) => {
+    try {
+        const searchQuery = req.params.query || req.query.q as string;
+        if (!searchQuery) {
+            return res.status(400).json({ error: 'Search query required' });
+        }
+
+        const result = await supportService.getCustomer360(searchQuery);
+        if (!result) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error('[SUPPORT] getCustomer360 error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Add internal note about customer
+export const addCustomerNote = async (req: AuthRequest, res: Response) => {
+    try {
+        const { customer_id, note_text } = req.body;
+        if (!customer_id || !note_text) {
+            return res.status(400).json({ error: 'customer_id and note_text required' });
+        }
+
+        const note = await supportService.addCustomerNote(customer_id, req.user!.userId, note_text);
+        res.status(201).json(note);
+    } catch (err) {
+        console.error('[SUPPORT] addCustomerNote error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Execute quick action (refund, reassign, escalate, etc.)
+export const executeQuickAction = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id, customer_id, action_type, action_details, notes } = req.body;
+
+        if (!customer_id || !action_type) {
+            return res.status(400).json({ error: 'customer_id and action_type required' });
+        }
+
+        const result = await supportService.executeQuickAction({
+            orderId: order_id,
+            customerId: customer_id,
+            agentId: req.user!.userId,
+            actionType: action_type,
+            actionDetails: action_details,
+            notes
+        });
+
+        if (!result.success) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        // Emit real-time update
+        getIO()?.to('operations').emit('resolution_action', {
+            action_type,
+            order_id,
+            customer_id,
+            agent: req.user!.userId
+        });
+
+        res.json({ success: true, result: result.result });
+    } catch (err) {
+        console.error('[SUPPORT] executeQuickAction error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// Get resolution logs for order or customer
+export const getResolutionLogs = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id, customer_id } = req.query;
+
+        const logs = await supportService.getResolutionLogs({
+            orderId: order_id as string,
+            customerId: customer_id as string
+        });
+
+        res.json({ logs });
+    } catch (err) {
+        console.error('[SUPPORT] getResolutionLogs error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
