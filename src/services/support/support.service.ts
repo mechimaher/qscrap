@@ -171,11 +171,26 @@ export class SupportService {
     }
 
     async getTicketDetail(ticketId: string) {
+        // Enhanced query with order/garage context for support team
         const ticketResult = await this.pool.query(`
-            SELECT t.*, u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email, o.order_number 
+            SELECT t.*, 
+                   u.full_name as customer_name, 
+                   u.phone_number as customer_phone, 
+                   u.email as customer_email,
+                   o.order_number,
+                   o.status as order_status,
+                   o.delivery_status,
+                   o.delivery_address,
+                   o.created_at as order_created_at,
+                   o.total_amount,
+                   g.garage_name,
+                   gu.phone_number as garage_phone,
+                   g.address as garage_address
             FROM support_tickets t 
             JOIN users u ON t.customer_id = u.user_id 
             LEFT JOIN orders o ON t.order_id = o.order_id 
+            LEFT JOIN garages g ON o.garage_id = g.garage_id
+            LEFT JOIN users gu ON g.garage_id = gu.user_id
             WHERE t.ticket_id = $1
         `, [ticketId]);
         if (ticketResult.rows.length === 0) return null;
