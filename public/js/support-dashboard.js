@@ -464,6 +464,24 @@ async function selectTicket(ticketId) {
         }
         document.getElementById('ticketContactInfo').innerHTML = contactParts.join(' | ');
 
+        // Show order context if ticket is linked to an order
+        const orderPanel = document.getElementById('orderContextPanel');
+        if (data.ticket.order_number) {
+            orderPanel.style.display = 'block';
+            document.getElementById('orderStatusValue').textContent = data.ticket.order_status || 'N/A';
+            document.getElementById('deliveryStatusValue').textContent = data.ticket.delivery_status || 'N/A';
+            document.getElementById('orderAmountValue').textContent = data.ticket.total_amount
+                ? `${parseFloat(data.ticket.total_amount).toFixed(2)} QAR`
+                : 'N/A';
+            document.getElementById('garageNameValue').textContent = data.ticket.garage_name || 'N/A';
+            document.getElementById('garagePhoneValue').innerHTML = data.ticket.garage_phone
+                ? `<a href="tel:${data.ticket.garage_phone}" style="color: var(--primary);">${data.ticket.garage_phone}</a>`
+                : 'N/A';
+            document.getElementById('garageAddressValue').textContent = data.ticket.garage_address || 'N/A';
+        } else {
+            orderPanel.style.display = 'none';
+        }
+
         // Load messages
         const chatContainer = document.getElementById('chatMessages');
         const messages = data.messages || [];

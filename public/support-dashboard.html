@@ -294,6 +294,28 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Order Context Panel (shown when ticket is linked to order) -->
+                            <div id="orderContextPanel" style="display: none; padding: 10px 16px; 
+                                 background: var(--bg-secondary); border-bottom: 1px solid var(--border);">
+                                <div
+                                    style="font-size: 11px; font-weight: 700; margin-bottom: 8px; color: var(--primary);">
+                                    📦 Order Details
+                                </div>
+                                <div
+                                    style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 11px;">
+                                    <div><strong>Status:</strong> <span id="orderStatusValue"
+                                            class="status-badge">-</span></div>
+                                    <div><strong>Delivery:</strong> <span id="deliveryStatusValue"
+                                            class="status-badge">-</span></div>
+                                    <div><strong>Amount:</strong> <span id="orderAmountValue">-</span></div>
+                                    <div><strong>Garage:</strong> <span id="garageNameValue">-</span></div>
+                                    <div><strong>Garage Tel:</strong> <span id="garagePhoneValue">-</span></div>
+                                    <div><strong>Address:</strong> <span id="garageAddressValue"
+                                            style="font-size: 10px;">-</span></div>
+                                </div>
+                            </div>
+
                             <div class="chat-messages" id="chatMessages"
                                 style="flex: 1; overflow-y: auto; padding: 20px;">
                                 <!-- Messages -->
@@ -484,7 +506,7 @@
     <script src="js/shared/toast.js?v=20260115c"></script>
     <script src="js/shared/modal.js?v=20260115c"></script>
     <script src="js/pagination-utils.js?v=20260115c"></script>
-    <script src="js/support-dashboard.js?v=20260126e"></script>
+    <script src="js/support-dashboard.js?v=20260126f"></script>
 </body>
 
 </html>
