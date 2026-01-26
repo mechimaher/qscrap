@@ -5,6 +5,7 @@
  */
 
 import { DocumentData } from '../services/documents/types';
+import { COMPANY_INFO } from '../services/documents/bilingual-labels';
 
 // ============================================
 // BILINGUAL LABELS (ENGLISH / ARABIC)
@@ -178,6 +179,25 @@ export function generateBilingualCustomerInvoiceHTML(
             </div>
         </div>
         
+        <!-- Support Contact Section (Always uses current company info) -->
+        <div style="margin-top: 12px; padding: 8px 10px; border: 1px solid #999; background: #fafafa;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 9px; font-weight: 700; margin-bottom: 4px;">Need Help? <span class="arabic">تحتاج مساعدة؟</span></div>
+                    <div style="font-size: 8px; color: #333;">
+                        📞 ${COMPANY_INFO.support_phone} | ✉️ ${COMPANY_INFO.support_email}<br>
+                        🌐 ${COMPANY_INFO.website}<br>
+                        📍 ${COMPANY_INFO.address.en}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 8px; color: #333;" class="arabic">
+                        📍 ${COMPANY_INFO.address.ar}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="footer">
             <div class="verify-section">
                 <strong>Verify:</strong> qscrap.qa/verify<br>
@@ -335,6 +355,25 @@ export function generateGaragePayoutStatementHTML(
                 <div class="price-row payout">
                     <div>${L.your_earnings?.en || 'Your Earnings'} <span class="arabic">${L.your_earnings?.ar || 'أرباحك'}</span></div>
                     <span>${formatMoney(data.pricing?.net_payout || 0)} QAR</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Support Contact Section (Always uses current company info) -->
+        <div style="margin-top: 12px; padding: 8px 10px; border: 1px solid #999; background: #fafafa;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 9px; font-weight: 700; margin-bottom: 4px;">Need Help? <span class="arabic">تحتاج مساعدة؟</span></div>
+                    <div style="font-size: 8px; color: #333;">
+                        📞 ${COMPANY_INFO.support_phone} | ✉️ ${COMPANY_INFO.support_email}<br>
+                        🌐 ${COMPANY_INFO.website}<br>
+                        📍 ${COMPANY_INFO.address.en}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 8px; color: #333;" class="arabic">
+                        📍 ${COMPANY_INFO.address.ar}
+                    </div>
                 </div>
             </div>
         </div>
