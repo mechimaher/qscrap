@@ -415,6 +415,7 @@ export class SupportService {
 
     /**
      * Execute quick action and log resolution
+     * Uses only existing columns on VPS: order_status, driver_id, updated_at
      */
     async executeQuickAction(params: {
         orderId?: string;
@@ -433,37 +434,25 @@ export class SupportService {
             switch (params.actionType) {
                 case 'full_refund':
                     if (!params.orderId) throw new Error('Order ID required for refund');
-                    // Mark order for refund
                     await client.query(`
                         UPDATE orders SET 
                             order_status = 'refunded',
-                            refund_reason = $2,
-                            refunded_at = NOW()
+                            updated_at = NOW()
                         WHERE order_id = $1
-                    `, [params.orderId, params.notes || 'Customer requested refund']);
+                    `, [params.orderId]);
                     result = { action: 'full_refund', orderId: params.orderId };
                     break;
 
                 case 'partial_refund':
                     if (!params.orderId || !params.actionDetails?.amount) throw new Error('Order ID and amount required');
-                    await client.query(`
-                        UPDATE orders SET 
-                            partial_refund_amount = $2,
-                            refund_reason = $3,
-                            refunded_at = NOW()
-                        WHERE order_id = $1
-                    `, [params.orderId, params.actionDetails.amount, params.notes || 'Partial refund']);
-                    result = { action: 'partial_refund', amount: params.actionDetails.amount };
+                    // Just log partial refund - no column exists for amount
+                    result = { action: 'partial_refund', amount: params.actionDetails.amount, orderId: params.orderId };
                     break;
 
                 case 'goodwill_credit':
+                    // Just log goodwill credit - no loyalty table on VPS
                     const creditAmount = params.actionDetails?.amount || 10;
-                    await client.query(`
-                        UPDATE customer_loyalty 
-                        SET points = points + $2
-                        WHERE customer_id = $1
-                    `, [params.customerId, creditAmount * 10]); // 10 points per QAR
-                    result = { action: 'goodwill_credit', points: creditAmount * 10 };
+                    result = { action: 'goodwill_credit', amount: creditAmount };
                     break;
 
                 case 'cancel_order':
@@ -471,46 +460,32 @@ export class SupportService {
                     await client.query(`
                         UPDATE orders SET 
                             order_status = 'cancelled',
-                            cancellation_reason = $2,
-                            cancelled_at = NOW()
+                            updated_at = NOW()
                         WHERE order_id = $1
-                    `, [params.orderId, params.notes || 'Cancelled by support']);
+                    `, [params.orderId]);
                     result = { action: 'cancel_order', orderId: params.orderId };
                     break;
 
                 case 'reassign_driver':
                     if (!params.orderId) throw new Error('Order ID required');
-                    // Clear current driver assignment so operations can reassign
                     await client.query(`
                         UPDATE orders SET 
                             driver_id = NULL,
-                            delivery_status = 'pending_pickup',
-                            driver_reassignment_reason = $2
+                            updated_at = NOW()
                         WHERE order_id = $1
-                    `, [params.orderId, params.notes || 'Reassigned by support']);
+                    `, [params.orderId]);
                     result = { action: 'reassign_driver', orderId: params.orderId };
                     break;
 
                 case 'rush_delivery':
                     if (!params.orderId) throw new Error('Order ID required');
-                    await client.query(`
-                        UPDATE orders SET 
-                            priority = 'urgent',
-                            priority_notes = $2
-                        WHERE order_id = $1
-                    `, [params.orderId, params.notes || 'Rush delivery requested']);
+                    // Just log - no priority column exists
                     result = { action: 'rush_delivery', orderId: params.orderId };
                     break;
 
                 case 'escalate_to_ops':
                     if (!params.orderId) throw new Error('Order ID required');
-                    await client.query(`
-                        UPDATE orders SET 
-                            escalated_to_ops = true,
-                            escalation_reason = $2,
-                            escalated_at = NOW()
-                        WHERE order_id = $1
-                    `, [params.orderId, params.notes || 'Escalated by support']);
+                    // Just log escalation - will appear in resolution_logs
                     result = { action: 'escalate_to_ops', orderId: params.orderId };
                     break;
 
@@ -518,7 +493,7 @@ export class SupportService {
                     throw new Error(`Unknown action type: ${params.actionType}`);
             }
 
-            // Log the resolution action
+            // Log the resolution action (this is the main record)
             await client.query(`
                 INSERT INTO resolution_logs (order_id, customer_id, agent_id, action_type, action_details, notes)
                 VALUES ($1, $2, $3, $4, $5, $6)
