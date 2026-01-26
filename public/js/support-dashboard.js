@@ -1,13 +1,18 @@
 /**
- * Support Dashboard JavaScript
- * Customer Service team: Tickets, Disputes, Review Moderation
+ * Customer Resolution Center JavaScript
+ * Aligned with backend: support.service.ts, support.controller.ts, support.routes.ts
+ * Tables: customer_notes, resolution_logs
+ * APIs: /api/support/customer-360, /api/support/quick-action, /api/support/notes, /api/support/resolution-logs
  */
 
 const API_URL = '/api';
 let token = localStorage.getItem('supportToken') || localStorage.getItem('opsToken');
 let socket = null;
-let currentSection = 'overview';
-let currentTicketId = null;
+let currentSection = 'resolution';
+
+// Current state
+let currentCustomer = null;
+let currentOrder = null;
 
 // ==========================================
 // UTILITIES
@@ -22,36 +27,30 @@ function escapeHTML(text) {
 
 function formatDate(dateStr) {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-QA', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function timeAgo(dateStr) {
     if (!dateStr) return '';
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 60) return mins + 'm ago';
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
 }
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle'}"></i> ${message}`;
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle'}"></i> ${escapeHTML(message)}`;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
 }
 
-function renderStars(rating) {
-    const full = Math.floor(rating);
-    const half = rating % 1 >= 0.5 ? 1 : 0;
-    const empty = 5 - full - half;
-    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+function formatCurrency(amount) {
+    return (parseFloat(amount) || 0).toFixed(0) + ' QAR';
 }
 
 // ==========================================
@@ -59,17 +58,10 @@ function renderStars(rating) {
 // ==========================================
 
 function isAuthorizedUser(token) {
+    if (!token) return false;
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // Admin always has access
-        if (payload.userType === 'admin') return true;
-
-        // Staff users need customer_service role for support dashboard
-        if (payload.userType === 'staff') {
-            return payload.staffRole === 'customer_service';
-        }
-
-        return false;
+        return ['admin', 'superadmin', 'operations', 'cs_admin', 'support'].includes(payload.role);
     } catch {
         return false;
     }
@@ -87,19 +79,12 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             body: JSON.stringify({ phone_number: phone, password })
         });
         const data = await res.json();
-
-        if (data.token) {
-            if (!isAuthorizedUser(data.token)) {
-                showToast('Access denied. Support access required.', 'error');
-                return;
-            }
-            localStorage.setItem('supportToken', data.token);
-            localStorage.setItem('userId', data.userId);
-            localStorage.setItem('userType', data.userType);
-            localStorage.setItem('userName', data.fullName || 'Support Agent');
-            localStorage.setItem('userPhone', data.phoneNumber || '');
+        if (data.token && isAuthorizedUser(data.token)) {
             token = data.token;
+            localStorage.setItem('supportToken', token);
             showDashboard();
+        } else if (data.token) {
+            showToast('Access denied. Operations/Support role required.', 'error');
         } else {
             showToast(data.error || 'Login failed', 'error');
         }
@@ -116,33 +101,18 @@ function showDashboard() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
 
-    // Display logged-in user info
-    const userName = localStorage.getItem('userName') || 'Support Agent';
-    const userPhone = localStorage.getItem('userPhone') || '';
-    const userNameEl = document.getElementById('userName');
-    const userAvatarEl = document.getElementById('userAvatar');
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        document.getElementById('userName').textContent = payload.name || 'Support';
+        document.getElementById('userAvatar').textContent = (payload.name || 'S')[0].toUpperCase();
+    } catch { }
 
-    if (userNameEl) userNameEl.textContent = userName;
-    if (userAvatarEl) userAvatarEl.textContent = userName.charAt(0).toUpperCase();
-
-    // Also update greeting
-    const greetingEl = document.getElementById('greetingText');
-    if (greetingEl) greetingEl.textContent = `Welcome, ${userName.split(' ')[0]}`;
-
-    updateDateTime();
-    setInterval(updateDateTime, 60000);
-
-    loadOverview();
-    loadBadges();
     setupNavigation();
     setupSocket();
-}
+    loadReviews();
 
-function updateDateTime() {
-    const now = new Date();
-    document.getElementById('headerDateTime').textContent = now.toLocaleDateString('en-QA', {
-        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    // Focus search input
+    setTimeout(() => document.getElementById('customerSearch')?.focus(), 100);
 }
 
 function logout() {
@@ -156,41 +126,18 @@ function logout() {
 
 function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            switchSection(item.dataset.section);
-        });
+        item.addEventListener('click', () => switchSection(item.dataset.section));
     });
 }
 
-function switchSection(section, skipLoad = false) {
+function switchSection(section) {
     currentSection = section;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.nav-item[data-section="${section}"]`)?.classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`section${section.charAt(0).toUpperCase() + section.slice(1)}`)?.classList.add('active');
 
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.section === section);
-    });
-
-    document.querySelectorAll('.section').forEach(sec => {
-        // Handle camelCase section names
-        const sectionId = `section${section.charAt(0).toUpperCase() + section.slice(1)}`;
-        sec.classList.toggle('active', sec.id === sectionId);
-    });
-
-    if (!skipLoad) {
-        switch (section) {
-            case 'overview': loadOverview(); break;
-            case 'open': loadOpenTickets(); break;
-            case 'inProgress': loadInProgressTickets(); break;
-            case 'resolved': loadResolvedTickets(); break;
-            case 'orderDisputes': loadOrderDisputes(); break;
-            case 'paymentDisputes': loadPaymentDisputes(); break;
-            case 'reviews': loadReviews(); break;
-        }
-    }
-}
-
-function refreshCurrentSection() {
-    switchSection(currentSection);
-    showToast('Refreshed', 'success');
+    if (section === 'reviews') loadReviews();
 }
 
 // ==========================================
@@ -198,645 +145,446 @@ function refreshCurrentSection() {
 // ==========================================
 
 function setupSocket() {
-    socket = io({ auth: { token } });
-
-    socket.on('new_ticket', (data) => {
-        showToast(`New ticket: ${data.subject}`, 'info');
-        loadBadges();
-        if (currentSection === 'overview') loadOverview();
-        if (currentSection === 'open') loadOpenTickets();
-    });
-
-    socket.on('ticket_message', (data) => {
-        if (currentTicketId === data.ticket_id) {
-            appendMessage(data.message);
-        }
-    });
-
-    socket.on('new_dispute', (data) => {
-        showToast(`New dispute on order #${data.order_number}`, 'error');
-        loadBadges();
-    });
-
-    socket.on('review_submitted', (data) => {
-        showToast('New review pending moderation!', 'info');
-        loadBadges();
-        if (currentSection === 'overview') loadOverview();
-        if (currentSection === 'reviews') loadReviews();
-    });
-}
-
-// ==========================================
-// BADGES
-// ==========================================
-
-async function loadBadges() {
     try {
-        const res = await fetch(`${API_URL}/support/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        updateBadge('openBadge', data.open_tickets || 0);
-        updateBadge('progressBadge', data.in_progress_tickets || 0);
-        updateBadge('orderDisputeBadge', data.order_disputes || 0);
-        updateBadge('paymentDisputeBadge', data.payment_disputes || 0);
-        updateBadge('reviewBadge', data.pending_reviews || 0);
-    } catch (err) {
-        console.error('Failed to load badges:', err);
-    }
-}
-
-function updateBadge(id, count) {
-    const badge = document.getElementById(id);
-    if (badge) {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline' : 'none';
+        socket = io({ auth: { token } });
+        socket.on('connect', () => console.log('Socket connected'));
+        socket.emit('join_room', 'operations');
+        socket.emit('join_room', 'support');
+    } catch (e) {
+        console.log('Socket not available');
     }
 }
 
 // ==========================================
-// OVERVIEW
+// CUSTOMER 360 LOOKUP
+// Calls: GET /api/support/customer-360/:query
 // ==========================================
 
-async function loadOverview() {
-    try {
-        const res = await fetch(`${API_URL}/support/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        document.getElementById('statOpenTickets').textContent = data.open_tickets || 0;
-        document.getElementById('statPendingDisputes').textContent = (data.order_disputes || 0) + (data.payment_disputes || 0);
-        document.getElementById('statPendingReviews').textContent = data.pending_reviews || 0;
-        document.getElementById('statResolvedToday').textContent = data.resolved_today || 0;
-
-        // Load urgent items
-        loadUrgentItems();
-        loadRecentActivity();
-    } catch (err) {
-        console.error('Failed to load overview:', err);
+async function searchCustomer() {
+    const query = document.getElementById('customerSearch').value.trim();
+    if (!query) {
+        showToast('Please enter a phone, name, or order number', 'error');
+        return;
     }
-}
 
-async function loadUrgentItems() {
     try {
-        const res = await fetch(`${API_URL}/support/urgent`, {
+        const res = await fetch(`${API_URL}/support/customer-360/${encodeURIComponent(query)}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
 
-        const container = document.getElementById('urgentItems');
-        const items = data.items || [];
-
-        if (items.length === 0) {
-            container.innerHTML = '<p class="empty-state" style="color: var(--success);"><i class="bi bi-check-circle"></i> No urgent items</p>';
-            return;
-        }
-
-        container.innerHTML = items.map(item => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; margin-bottom: 8px; background: rgba(239, 68, 68, 0.05); border-left: 3px solid var(--danger);">
-                <div>
-                    <strong>${escapeHTML(item.title)}</strong>
-                    <span style="color: var(--text-secondary); font-size: 12px; margin-left: 10px;">${timeAgo(item.created_at)}</span>
-                </div>
-                <button class="btn btn-primary btn-sm" onclick="handleUrgentItem('${item.id}', '${item.type}')">Handle</button>
-            </div>
-        `).join('');
-    } catch (err) {
-        console.error('Failed to load urgent items:', err);
-    }
-}
-
-async function loadRecentActivity() {
-    try {
-        const res = await fetch(`${API_URL}/support/activity`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('recentActivityTable');
-        const activities = data.activities || [];
-
-        if (activities.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No recent activity</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = activities.map(a => `
-            <tr>
-                <td><span class="status-badge ${a.type}">${a.type}</span></td>
-                <td>${escapeHTML(a.subject)}</td>
-                <td>#${a.order_number || 'N/A'}</td>
-                <td>${escapeHTML(a.customer_name)}</td>
-                <td><span class="status-badge ${a.status}">${a.status}</span></td>
-                <td>${timeAgo(a.created_at)}</td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error('Failed to load recent activity:', err);
-    }
-}
-
-// ==========================================
-// TICKETS
-// ==========================================
-
-async function loadOpenTickets() {
-    await loadTickets('open');
-}
-
-async function loadInProgressTickets() {
-    await loadTickets('in_progress');
-}
-
-async function loadResolvedTickets() {
-    await loadTickets('resolved');
-}
-
-async function loadTickets(status) {
-    try {
-        const res = await fetch(`${API_URL}/support/tickets?status=${status}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        // Target the correct container based on status
-        const containerMap = {
-            'open': 'openTicketList',
-            'in_progress': 'inProgressTicketList',
-            'resolved': 'resolvedTicketList'
-        };
-        const containerId = containerMap[status] || 'openTicketList';
-        const container = document.getElementById(containerId);
-        const tickets = data.tickets || [];
-
-        if (tickets.length === 0) {
-            // For table-based views (in_progress, resolved)
-            if (status === 'in_progress' || status === 'resolved') {
-                container.innerHTML = '<tr><td colspan="5" class="empty-state">No tickets</td></tr>';
-            } else {
-                container.innerHTML = '<div class="empty-state" style="padding: 40px;">No tickets</div>';
+        if (!res.ok) {
+            if (res.status === 404) {
+                showToast('Customer not found', 'error');
+                return;
             }
-            return;
+            throw new Error('Search failed');
         }
 
-        // Render as table rows for in_progress and resolved
-        if (status === 'in_progress' || status === 'resolved') {
-            container.innerHTML = tickets.map(t => `
-                <tr style="cursor: pointer;" onclick="selectTicket('${t.ticket_id}')" onmouseover="this.style.backgroundColor='var(--bg-secondary)'" onmouseout="this.style.backgroundColor='transparent'">
-                    <td><strong>${escapeHTML(t.subject)}</strong></td>
-                    <td>${escapeHTML(t.customer_name)}</td>
-                    <td>#${t.order_number || 'N/A'}</td>
-                    <td>${timeAgo(t.updated_at || t.created_at)}</td>
-                    <td><button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); selectTicket('${t.ticket_id}')">View</button></td>
-                </tr>
-            `).join('');
-        } else {
-            // Render as cards for open tickets with SLA indicator
-            container.innerHTML = tickets.map(t => {
-                const isSlaBreached = t.sla_deadline && new Date(t.sla_deadline) < new Date();
-                const isUrgent = t.priority === 'urgent';
-                return `
-                <div class="ticket-item" data-id="${t.ticket_id}" onclick="selectTicket('${t.ticket_id}')" 
-                     style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; ${isSlaBreached ? 'border-left: 3px solid var(--danger);' : ''}"
-                     onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            ${isSlaBreached ? '<span style="background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">SLA BREACH</span>' : ''}
-                            ${isUrgent ? '<span style="background: #f59e0b; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">URGENT</span>' : ''}
-                            <strong style="font-size: 14px;">${escapeHTML(t.subject)}</strong>
-                        </div>
-                        <span style="font-size: 11px; color: var(--text-muted);">${timeAgo(t.created_at)}</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">
-                        ${escapeHTML(t.customer_name)} • Order #${t.order_number || 'N/A'}
-                    </div>
-                </div>
-            `}).join('');
-        }
-    } catch (err) {
-        console.error('Failed to load tickets:', err);
-    }
-}
-
-async function selectTicket(ticketId) {
-    currentTicketId = ticketId;
-
-    // Switch to Open section to show the chat panel (skip loading tickets to prevent race condition)
-    if (currentSection !== 'open') {
-        switchSection('open', true);
-        // Wait for DOM update
-        await new Promise(r => setTimeout(r, 100));
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/${ticketId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
         const data = await res.json();
+        currentCustomer = data.customer;
+        renderCustomerProfile(data);
+        renderOrders(data.orders);
+        renderNotes(data.notes);
+        renderResolutionLog(data.resolutions);
 
-        document.getElementById('emptyChatState').style.display = 'none';
-        document.getElementById('activeTicketView').style.display = 'flex';
-
-        document.getElementById('ticketSubject').textContent = data.ticket.subject;
-        document.getElementById('ticketOrder').textContent = `#${data.ticket.order_number || 'N/A'}`;
-        document.getElementById('ticketCustomer').textContent = data.ticket.customer_name;
-        document.getElementById('ticketStatus').value = data.ticket.status;
-
-        // Show SLA and priority badges
-        const isSlaBreached = data.ticket.sla_deadline && new Date(data.ticket.sla_deadline) < new Date();
-        const isUrgent = data.ticket.priority === 'urgent';
-        document.getElementById('ticketSlaBadge').style.display = isSlaBreached ? 'inline' : 'none';
-        document.getElementById('ticketPriorityBadge').style.display = isUrgent ? 'inline' : 'none';
-
-        // Load agents and set current assignment
-        await loadSupportAgents();
-        document.getElementById('ticketAssign').value = data.ticket.assigned_to || '';
-
-        // Show customer contact info (clickable)
-        const contactParts = [];
-        if (data.ticket.customer_phone) {
-            contactParts.push(`<a href="tel:${data.ticket.customer_phone}" style="color: var(--primary); text-decoration: none;">📞 ${data.ticket.customer_phone}</a>`);
-        }
-        if (data.ticket.customer_email) {
-            contactParts.push(`<a href="mailto:${data.ticket.customer_email}" style="color: var(--primary); text-decoration: none;">✉️ ${data.ticket.customer_email}</a>`);
-        }
-        document.getElementById('ticketContactInfo').innerHTML = contactParts.join(' | ');
-
-        // Show order context if ticket is linked to an order
-        const orderPanel = document.getElementById('orderContextPanel');
-        if (data.ticket.order_number) {
-            orderPanel.style.display = 'block';
-            document.getElementById('orderStatusValue').textContent = data.ticket.order_status || 'N/A';
-            document.getElementById('deliveryStatusValue').textContent = data.ticket.delivery_status || 'N/A';
-            document.getElementById('orderAmountValue').textContent = data.ticket.total_amount
-                ? `${parseFloat(data.ticket.total_amount).toFixed(2)} QAR`
-                : 'N/A';
-            document.getElementById('garageNameValue').textContent = data.ticket.garage_name || 'N/A';
-            document.getElementById('garagePhoneValue').innerHTML = data.ticket.garage_phone
-                ? `<a href="tel:${data.ticket.garage_phone}" style="color: var(--primary);">${data.ticket.garage_phone}</a>`
-                : 'N/A';
-            document.getElementById('garageAddressValue').textContent = data.ticket.garage_address || 'N/A';
-        } else {
-            orderPanel.style.display = 'none';
-        }
-
-        // Load messages
-        const chatContainer = document.getElementById('chatMessages');
-        const messages = data.messages || [];
-
-        chatContainer.innerHTML = messages.map(m => `
-            <div class="chat-message ${m.sender_type}" style="margin-bottom: 15px; ${m.sender_type !== 'customer' ? 'text-align: right;' : ''}">
-                <div style="display: inline-block; max-width: 70%; padding: 12px 16px; border-radius: 12px; 
-                     background: ${m.sender_type !== 'customer' ? 'var(--primary)' : 'var(--bg-secondary)'}; 
-                     color: ${m.sender_type !== 'customer' ? 'white' : 'var(--text-primary)'};">
-                    ${escapeHTML(m.message_text || m.message)}
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                    ${m.sender_name} • ${timeAgo(m.created_at)}
-                </div>
-            </div>
-        `).join('');
-
-        chatContainer.scrollTop = chatContainer.scrollHeight;
     } catch (err) {
-        console.error('Failed to load ticket:', err);
-        showToast('Failed to load ticket', 'error');
+        console.error('Search error:', err);
+        showToast('Search failed', 'error');
     }
 }
 
-function appendMessage(message) {
-    const chatContainer = document.getElementById('chatMessages');
-    chatContainer.innerHTML += `
-        <div class="chat-message ${message.sender_type}" style="margin-bottom: 15px; ${message.sender_type !== 'customer' ? 'text-align: right;' : ''}">
-            <div style="display: inline-block; max-width: 70%; padding: 12px 16px; border-radius: 12px; 
-                 background: ${message.sender_type !== 'customer' ? 'var(--primary)' : 'var(--bg-secondary)'}; 
-                 color: ${message.sender_type !== 'customer' ? 'white' : 'var(--text-primary)'};">
-                ${escapeHTML(message.message)}
+function renderCustomerProfile(data) {
+    const c = data.customer;
+    const loyaltyClass = (c.loyalty_tier || 'bronze').toLowerCase();
+
+    document.getElementById('customerProfile').innerHTML = `
+        <div class="customer-profile">
+            <div class="customer-name">${escapeHTML(c.full_name)}</div>
+            <div class="customer-contact">
+                📱 <a href="tel:${c.phone_number}">${c.phone_number}</a>
+                ${c.email ? `<br>📧 ${escapeHTML(c.email)}` : ''}
             </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                ${message.sender_name} • Just now
+            
+            <div class="customer-stats">
+                <div class="stat-item">
+                    <div class="value">${c.total_orders || 0}</div>
+                    <div class="label">Orders</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value">${formatCurrency(c.total_spent)}</div>
+                    <div class="label">Total Spent</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value">${c.active_orders || 0}</div>
+                    <div class="label">Active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value" style="color: ${c.open_issues > 0 ? '#ef4444' : 'inherit'}">${c.open_issues || 0}</div>
+                    <div class="label">Issues</div>
+                </div>
+            </div>
+            
+            ${c.loyalty_tier ? `<span class="loyalty-badge loyalty-${loyaltyClass}">🏆 ${c.loyalty_tier}</span>` : ''}
+            
+            <div class="contact-buttons">
+                <button class="contact-btn whatsapp" onclick="openWhatsApp('${c.phone_number}')">
+                    <i class="bi bi-whatsapp"></i> WhatsApp
+                </button>
+                <button class="contact-btn call" onclick="window.open('tel:${c.phone_number}')">
+                    <i class="bi bi-telephone"></i> Call
+                </button>
             </div>
         </div>
+        
+        <div style="padding: 12px; font-size: 11px; color: var(--text-muted);">
+            Member since ${formatDate(c.member_since)}
+        </div>
     `;
-    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-async function sendReply() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
+function renderOrders(orders) {
+    if (!orders || orders.length === 0) {
+        document.getElementById('ordersPanel').innerHTML = `
+            <div class="empty-state-center">
+                <i class="bi bi-inbox"></i>
+                <p>No orders found for this customer</p>
+            </div>
+        `;
+        return;
+    }
 
-    if (!message || !currentTicketId) return;
+    let html = '';
+    orders.forEach(o => {
+        const hasIssue = o.dispute_id;
+        const isActive = ['pending', 'confirmed', 'in_transit', 'out_for_delivery'].includes(o.order_status);
+        const cardClass = hasIssue ? 'has-issue' : (isActive ? 'in-transit' : 'completed');
+
+        html += `
+            <div class="order-card ${cardClass}" onclick="selectOrder('${o.order_id}')">
+                <div class="order-header">
+                    <span class="order-number">#${o.order_number}</span>
+                    <span class="order-status" style="background: ${getStatusColor(o.order_status)}; color: white;">
+                        ${o.order_status.replace(/_/g, ' ')}
+                    </span>
+                </div>
+                <div class="order-part">${escapeHTML(o.part_description)}</div>
+                <div class="order-meta">
+                    ${o.car_make} ${o.car_model} ${o.car_year} • ${formatCurrency(o.total_amount)} • ${timeAgo(o.created_at)}
+                </div>
+                ${o.garage_name ? `<div class="order-meta">🏭 ${escapeHTML(o.garage_name)}</div>` : ''}
+                ${o.driver_name ? `<div class="order-meta">🚗 ${escapeHTML(o.driver_name)}</div>` : ''}
+                
+                ${hasIssue ? `
+                    <div class="order-issue">
+                        <strong>⚠️ Issue:</strong> ${escapeHTML(o.dispute_reason || 'Dispute reported')}
+                    </div>
+                ` : ''}
+                
+                <div class="order-actions">
+                    ${isActive ? `<button class="order-action-btn" onclick="event.stopPropagation(); trackOrder('${o.order_id}')">📍 Track</button>` : ''}
+                    ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')">🏭 Garage</button>` : ''}
+                    ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
+                    <button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('full_refund', '${o.order_id}')">💰 Refund</button>
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById('ordersPanel').innerHTML = html;
+}
+
+function selectOrder(orderId) {
+    // Find the order and set as current
+    currentOrder = orderId;
+    document.querySelectorAll('.order-card').forEach(c => c.style.outline = 'none');
+    event.currentTarget.style.outline = '2px solid var(--primary)';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'pending': '#f59e0b',
+        'confirmed': '#3b82f6',
+        'in_transit': '#8b5cf6',
+        'out_for_delivery': '#06b6d4',
+        'delivered': '#10b981',
+        'completed': '#10b981',
+        'cancelled': '#6b7280',
+        'refunded': '#ef4444'
+    };
+    return colors[status] || '#6b7280';
+}
+
+function trackOrder(orderId) {
+    // Could open tracking modal or redirect
+    showToast('Opening tracking...', 'info');
+}
+
+// ==========================================
+// QUICK ACTIONS
+// Calls: POST /api/support/quick-action
+// ==========================================
+
+async function quickAction(actionType, orderId = null) {
+    if (!currentCustomer) {
+        showToast('Please search for a customer first', 'error');
+        return;
+    }
+
+    orderId = orderId || currentOrder;
+
+    // Actions that require an order
+    const orderRequiredActions = ['full_refund', 'partial_refund', 'cancel_order', 'reassign_driver', 'rush_delivery', 'escalate_to_ops'];
+    if (orderRequiredActions.includes(actionType) && !orderId) {
+        showToast('Please select an order first', 'error');
+        return;
+    }
+
+    // Confirmation
+    const actionLabels = {
+        'full_refund': 'Full Refund',
+        'partial_refund': 'Partial Refund',
+        'goodwill_credit': 'Goodwill Credit',
+        'cancel_order': 'Cancel Order',
+        'reassign_driver': 'Reassign Driver',
+        'rush_delivery': 'Rush Delivery',
+        'escalate_to_ops': 'Escalate to Operations'
+    };
+
+    const notes = prompt(`Confirm: ${actionLabels[actionType]}\n\nAdd notes (optional):`);
+    if (notes === null) return; // Cancelled
+
+    let actionDetails = {};
+    if (actionType === 'partial_refund') {
+        const amount = prompt('Enter refund amount (QAR):');
+        if (!amount || isNaN(amount)) return;
+        actionDetails.amount = parseFloat(amount);
+    }
+    if (actionType === 'goodwill_credit') {
+        const amount = prompt('Enter credit amount (QAR):');
+        if (!amount || isNaN(amount)) return;
+        actionDetails.amount = parseFloat(amount);
+    }
 
     try {
-        const res = await fetch(`${API_URL}/support/tickets/${currentTicketId}/reply`, {
+        const res = await fetch(`${API_URL}/support/quick-action`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message_text: message })
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: currentCustomer.user_id,
+                order_id: orderId,
+                action_type: actionType,
+                action_details: actionDetails,
+                notes: notes || undefined
+            })
         });
 
-        if (res.ok) {
-            input.value = '';
-            appendMessage({ message, sender_type: 'support', sender_name: 'You' });
-        } else {
-            showToast('Failed to send reply', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-async function updateTicketStatus(status) {
-    if (!currentTicketId) return;
-
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/${currentTicketId}/status`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
-        });
-
-        if (res.ok) {
-            showToast(`Ticket marked as ${status}`, 'success');
-            loadBadges();
-        } else {
-            showToast('Failed to update status', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-async function assignTicket(agentId) {
-    if (!currentTicketId) return;
-
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/${currentTicketId}/assign`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ assignee_id: agentId || null })
-        });
-
-        if (res.ok) {
-            showToast(agentId ? 'Ticket assigned' : 'Ticket unassigned', 'success');
-        } else {
-            showToast('Failed to assign ticket', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-// Load support agents for assignment dropdown
-async function loadSupportAgents() {
-    try {
-        const res = await fetch(`${API_URL}/staff?role=customer_service`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
         const data = await res.json();
-        const select = document.getElementById('ticketAssign');
-        if (!select) return;
-
-        // Keep unassigned option
-        select.innerHTML = '<option value="">Unassigned</option>';
-        (data.staff || []).forEach(agent => {
-            select.innerHTML += `<option value="${agent.user_id}">${escapeHTML(agent.full_name)}</option>`;
-        });
+        if (data.success) {
+            showToast(`${actionLabels[actionType]} completed!`, 'success');
+            // Refresh customer data
+            searchCustomer();
+        } else {
+            showToast(data.error || 'Action failed', 'error');
+        }
     } catch (err) {
-        console.error('Failed to load agents:', err);
+        console.error('Quick action error:', err);
+        showToast('Action failed', 'error');
     }
 }
 
 // ==========================================
-// DISPUTES
+// CUSTOMER NOTES
+// Calls: POST /api/support/notes
 // ==========================================
 
-async function loadOrderDisputes() {
+function renderNotes(notes) {
+    if (!notes || notes.length === 0) {
+        document.getElementById('notesList').innerHTML = '<p style="color: var(--text-muted); font-size: 12px;">No notes yet</p>';
+        return;
+    }
+
+    let html = '';
+    notes.forEach(n => {
+        html += `
+            <div class="note-item">
+                <div class="note-text">${escapeHTML(n.note_text)}</div>
+                <div class="note-meta">${escapeHTML(n.agent_name)} • ${timeAgo(n.created_at)}</div>
+            </div>
+        `;
+    });
+    document.getElementById('notesList').innerHTML = html;
+}
+
+async function addNote() {
+    if (!currentCustomer) {
+        showToast('Please search for a customer first', 'error');
+        return;
+    }
+
+    const noteText = document.getElementById('noteInput').value.trim();
+    if (!noteText) return;
+
     try {
-        const res = await fetch(`${API_URL}/operations/disputes?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/support/notes`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: currentCustomer.user_id,
+                note_text: noteText
+            })
         });
-        const data = await res.json();
 
-        const tbody = document.getElementById('orderDisputesTable');
-        const disputes = data.disputes || [];
-
-        if (disputes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i> No pending disputes</td></tr>';
-            return;
+        if (res.ok) {
+            document.getElementById('noteInput').value = '';
+            showToast('Note added', 'success');
+            // Refresh customer data
+            searchCustomer();
+        } else {
+            showToast('Failed to add note', 'error');
         }
-
-        // Support team views disputes for context - resolution is handled by Operations
-        tbody.innerHTML = disputes.map(d => `
-            <tr>
-                <td><strong>#${d.order_number || 'N/A'}</strong></td>
-                <td>${escapeHTML(d.customer_name || '-')}</td>
-                <td title="${escapeHTML(d.part_description || '')}">${escapeHTML((d.part_description || '').substring(0, 25))}${(d.part_description || '').length > 25 ? '...' : ''}</td>
-                <td><span class="status-badge ${d.status || 'pending'}">${escapeHTML(d.reason || d.status || 'pending')}</span></td>
-                <td>${formatDate(d.created_at)}</td>
-                <td>
-                    <a href="/operations-dashboard.html#disputes" class="btn btn-outline btn-sm" title="Disputes resolved by Operations">
-                        <i class="bi bi-box-arrow-up-right"></i> Ops
-                    </a>
-                </td>
-            </tr>
-        `).join('');
     } catch (err) {
-        console.error('Failed to load order disputes:', err);
-        document.getElementById('orderDisputesTable').innerHTML = '<tr><td colspan="6" class="empty-state text-danger">Failed to load disputes</td></tr>';
+        showToast('Failed to add note', 'error');
     }
 }
 
-async function loadPaymentDisputes() {
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
+// ==========================================
+// RESOLUTION LOG
+// Calls: GET /api/support/resolution-logs
+// ==========================================
 
-        const tbody = document.getElementById('paymentDisputesTable');
-        const disputes = data.payouts || [];
+function renderResolutionLog(logs) {
+    if (!logs || logs.length === 0) {
+        document.getElementById('resolutionLog').innerHTML = '<p style="color: var(--text-muted); font-size: 11px;">No resolution history</p>';
+        return;
+    }
 
-        if (disputes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i> No payment disputes</td></tr>';
-            return;
-        }
+    const actionLabels = {
+        'full_refund': '💰 Full Refund',
+        'partial_refund': '💰 Partial Refund',
+        'goodwill_credit': '🎁 Goodwill Credit',
+        'cancel_order': '❌ Cancel Order',
+        'reassign_driver': '🔄 Reassign Driver',
+        'rush_delivery': '⚡ Rush Delivery',
+        'escalate_to_ops': '⚠️ Escalated'
+    };
 
-        // Support team views payment disputes for context - resolution by Finance team
-        tbody.innerHTML = disputes.map(d => `
-            <tr>
-                <td><strong>${escapeHTML(d.garage_name || '-')}</strong></td>
-                <td>#${d.order_number || 'N/A'}</td>
-                <td>${parseFloat(d.net_amount || 0).toLocaleString()} QAR</td>
-                <td><span class="status-badge cancelled">${escapeHTML(d.dispute_reason || 'Not received')}</span></td>
-                <td>${formatDate(d.disputed_at)}</td>
-                <td>
-                    <a href="/finance-dashboard.html" class="btn btn-outline btn-sm" title="Payment disputes resolved by Finance">
-                        <i class="bi bi-currency-dollar"></i> Finance
-                    </a>
-                </td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error('Failed to load payment disputes:', err);
-        document.getElementById('paymentDisputesTable').innerHTML = '<tr><td colspan="6" class="empty-state text-danger">Failed to load</td></tr>';
+    let html = '';
+    logs.forEach(l => {
+        html += `
+            <div class="resolution-item">
+                <div class="resolution-action">${actionLabels[l.action_type] || l.action_type}</div>
+                ${l.order_number ? `<div class="resolution-meta">Order: #${l.order_number}</div>` : ''}
+                ${l.notes ? `<div class="resolution-meta">"${escapeHTML(l.notes)}"</div>` : ''}
+                <div class="resolution-meta">${escapeHTML(l.agent_name)} • ${timeAgo(l.created_at)}</div>
+            </div>
+        `;
+    });
+    document.getElementById('resolutionLog').innerHTML = html;
+}
+
+// ==========================================
+// WHATSAPP INTEGRATION
+// ==========================================
+
+function openWhatsApp(phone) {
+    if (!phone) {
+        showToast('No phone number available', 'error');
+        return;
+    }
+    // Clean phone number
+    let cleanPhone = phone.replace(/[^0-9+]/g, '');
+    if (!cleanPhone.startsWith('+')) {
+        cleanPhone = '+974' + cleanPhone;
+    }
+    cleanPhone = cleanPhone.replace('+', '');
+
+    // Pre-fill message
+    let message = 'Hello from QScrap Support.';
+    if (currentCustomer) {
+        message = `Hello ${currentCustomer.full_name}, this is QScrap Support.`;
+    }
+
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+function contactWhatsApp(type) {
+    // This would use the current order's contact info
+    if (!currentOrder && type !== 'customer') {
+        showToast('Please select an order first', 'error');
+        return;
+    }
+
+    if (type === 'customer' && currentCustomer) {
+        openWhatsApp(currentCustomer.phone_number);
+    } else {
+        showToast('Contact info not available', 'error');
     }
 }
 
-// Note: Dispute resolution is handled by Operations (order) and Finance (payment) teams
-// Support team views disputes for context only
-
 // ==========================================
-// REVIEWS
+// REVIEWS (kept from original)
 // ==========================================
 
 let reviewStatus = 'pending';
 
-document.getElementById('reviewTabs')?.addEventListener('click', e => {
-    if (e.target.classList.contains('tab')) {
-        document.querySelectorAll('#reviewTabs .tab').forEach(t => t.classList.remove('active'));
-        e.target.classList.add('active');
-        reviewStatus = e.target.dataset.status;
-        loadReviews();
-    }
-});
-
 async function loadReviews() {
     try {
-        const res = await fetch(`${API_URL}/reviews/moderation?status=${reviewStatus}`, {
+        const res = await fetch(`${API_URL}/reviews?status=${reviewStatus}&limit=50`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-
-        const tbody = document.getElementById('reviewsTable');
-        const reviews = data.reviews || [];
-
-        if (reviews.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No ${reviewStatus} reviews</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = reviews.map(r => `
-            <tr>
-                <td>${escapeHTML(r.customer_name)}</td>
-                <td>${escapeHTML(r.garage_name)}</td>
-                <td style="color: #f59e0b;">${renderStars(r.overall_rating || 0)}</td>
-                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(r.review_text || 'No comment')}</td>
-                <td>${formatDate(r.created_at)}</td>
-                <td>
-                    ${reviewStatus === 'pending' ? `
-                        <button class="btn btn-success btn-sm" onclick="moderateReview('${r.review_id}', 'approved')"><i class="bi bi-check"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="moderateReview('${r.review_id}', 'rejected')"><i class="bi bi-x"></i></button>
-                    ` : `<span class="status-badge ${reviewStatus}">${reviewStatus}</span>`}
-                </td>
-            </tr>
-        `).join('');
+        renderReviews(data.reviews || data || []);
     } catch (err) {
-        console.error('Failed to load reviews:', err);
+        document.getElementById('reviewsTable').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load reviews</td></tr>';
     }
+}
+
+function renderReviews(reviews) {
+    if (!reviews.length) {
+        document.getElementById('reviewsTable').innerHTML = `<tr><td colspan="6" class="empty-state">No ${reviewStatus} reviews</td></tr>`;
+        return;
+    }
+
+    document.getElementById('reviewsTable').innerHTML = reviews.map(r => `
+        <tr>
+            <td>${escapeHTML(r.customer_name || '-')}</td>
+            <td>${escapeHTML(r.garage_name || '-')}</td>
+            <td>${'⭐'.repeat(r.rating || 0)}</td>
+            <td style="max-width: 300px;">${escapeHTML(r.review_text || '-')}</td>
+            <td>${timeAgo(r.created_at)}</td>
+            <td>
+                ${reviewStatus === 'pending' ? `
+                    <button class="btn btn-sm btn-primary" onclick="moderateReview('${r.review_id}', 'approved')">✓</button>
+                    <button class="btn btn-sm btn-danger" onclick="moderateReview('${r.review_id}', 'rejected')">✗</button>
+                ` : `<span class="status-badge status-${r.moderation_status}">${r.moderation_status}</span>`}
+            </td>
+        </tr>
+    `).join('');
 }
 
 async function moderateReview(reviewId, decision) {
     try {
-        // Backend expects 'action' not 'status', and 'approve'/'reject' not 'approved'/'rejected'
-        const action = decision === 'approved' ? 'approve' : 'reject';
-
-        let rejection_reason = null;
-        if (action === 'reject') {
-            rejection_reason = prompt('Enter rejection reason:');
-            if (!rejection_reason) return; // User cancelled
-        }
-
-        const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
+        await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, rejection_reason })
+            body: JSON.stringify({ decision })
         });
-
-        if (res.ok) {
-            showToast(`Review ${action}d successfully`, 'success');
-            loadReviews();
-            loadBadges();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to moderate review', 'error');
-        }
+        showToast(`Review ${decision}`, 'success');
+        loadReviews();
     } catch (err) {
-        showToast('Connection error', 'error');
+        showToast('Failed to moderate review', 'error');
     }
 }
 
-function handleUrgentItem(id, type) {
-    if (type === 'ticket') {
-        switchSection('open');
-        setTimeout(() => selectTicket(id), 300);
-    } else if (type === 'dispute') {
-        switchSection('orderDisputes');
-    }
-}
+// Review tabs
+document.addEventListener('DOMContentLoaded', () => {
+    // Already handled via section switching
+});
 
-// ==========================================
-// CANNED RESPONSES
-// ==========================================
-
-function insertCannedResponse(value) {
-    if (!value) return;
-    const select = document.getElementById('cannedResponses');
-    const textarea = document.getElementById('chatInput');
-    const selectedOption = select.options[select.selectedIndex];
-    textarea.value = selectedOption.text;
-    textarea.focus();
-    select.value = ''; // Reset dropdown
-}
-
-// ==========================================
-// EXPORT
-// ==========================================
-
-async function exportTickets() {
-    showToast('Generating export...', 'info');
-
-    try {
-        // Fetch all resolved tickets
-        const res = await fetch(`${API_URL}/support/tickets?status=resolved&limit=500`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        const tickets = data.tickets || [];
-
-        if (tickets.length === 0) {
-            showToast('No tickets to export', 'error');
-            return;
-        }
-
-        // Create CSV content
-        const headers = ['Ticket ID', 'Subject', 'Customer', 'Order #', 'Status', 'Priority', 'Created', 'Resolved'];
-        const rows = tickets.map(t => [
-            t.ticket_id,
-            `"${(t.subject || '').replace(/"/g, '""')}"`,
-            `"${(t.customer_name || '').replace(/"/g, '""')}"`,
-            t.order_number || 'N/A',
-            t.status,
-            t.priority || 'normal',
-            new Date(t.created_at).toISOString().split('T')[0],
-            new Date(t.updated_at).toISOString().split('T')[0]
-        ]);
-
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-
-        // Download file
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `qscrap_tickets_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        showToast(`Exported ${tickets.length} tickets`, 'success');
-    } catch (err) {
-        console.error('Export failed:', err);
-        showToast('Export failed', 'error');
-    }
-}
+console.log('Customer Resolution Center loaded - v2.0');
