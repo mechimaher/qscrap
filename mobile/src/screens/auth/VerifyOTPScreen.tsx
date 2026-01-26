@@ -151,7 +151,7 @@ export default function VerifyOTPScreen() {
 
     return (
         <LinearGradient
-            colors={['#0f0c29', '#302b63', '#24243e']}
+            colors={[Colors.primary, Colors.primaryDark, '#4A0D1F']}
             style={styles.container}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}

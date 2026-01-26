@@ -10,6 +10,7 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -100,7 +101,7 @@ export default function RegisterScreen() {
 
     return (
         <LinearGradient
-            colors={['#0f0c29', '#302b63', '#24243e']}
+            colors={[Colors.primary, Colors.primaryDark, '#4A0D1F']}
             style={styles.container}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -123,7 +124,11 @@ export default function RegisterScreen() {
 
                     {/* Title Section */}
                     <View style={styles.titleSection}>
-                        <Text style={styles.titleEmoji}>🚀</Text>
+                        <Image
+                            source={require('../../../assets/logo.png')}
+                            style={styles.logo}
+                            resizeMode="contain"
+                        />
                         <Text style={[styles.titleText, { textAlign: 'center' }]}>{t('auth.joinQScrap')}</Text>
                         <Text style={[styles.subtitleText, { textAlign: 'center' }]}>{t('auth.createAccountInSeconds')}</Text>
                     </View>
@@ -245,7 +250,7 @@ export default function RegisterScreen() {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </LinearGradient>
+        </ LinearGradient>
     );
 }
 
@@ -277,9 +282,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.lg,
     },
-    titleEmoji: {
-        fontSize: 48,
-        marginBottom: Spacing.sm,
+    logo: {
+        width: 80,
+        height: 80,
+        borderRadius: 20,
+        marginBottom: Spacing.md,
     },
     titleText: {
         fontSize: FontSizes.xxl + 4,
