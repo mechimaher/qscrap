@@ -585,13 +585,14 @@ export class SupportActionsService {
         reason: string,
         client: PoolClient
     ): Promise<{ refund_id: string; amount: number }> {
-        // Record the refund in our database
+        // Record the refund in our database using the same schema as RefundService
         const refundResult = await client.query(`
             INSERT INTO refunds 
-            (order_id, customer_id, amount, reason, status, processed_by)
-            VALUES ($1, $2, $3, $4, 'approved', 'support')
+            (order_id, customer_id, original_amount, refund_amount, refund_reason, 
+             refund_status, initiated_by, refund_type)
+            VALUES ($1, $2, $3, $4, $5, 'pending', 'support', 'support_refund')
             RETURNING refund_id
-        `, [order.order_id, order.customer_id, amount, reason]);
+        `, [order.order_id, order.customer_id, order.total_amount, amount, reason]);
 
         // TODO: Call actual payment gateway when Stripe is integrated
         // For now, log that a refund should be processed
