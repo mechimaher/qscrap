@@ -416,6 +416,7 @@ export class SupportActionsService {
         customerId: string;
         agentId: string;
         reason: string;
+        ticketId?: string;
         priority?: 'normal' | 'high' | 'urgent';
     }): Promise<ActionResult> {
         const client = await this.pool.connect();
@@ -425,18 +426,19 @@ export class SupportActionsService {
 
             const context = await this.getActionContextInternal(params.orderId, client);
 
-            // Create escalation record
+            // Create escalation record with optional ticket link
             await client.query(`
                 INSERT INTO support_escalations 
-                (order_id, customer_id, escalated_by, reason, priority, status)
-                VALUES ($1, $2, $3, $4, $5, 'pending')
+                (order_id, customer_id, escalated_by, reason, priority, status, ticket_id)
+                VALUES ($1, $2, $3, $4, $5, 'pending', $6)
                 ON CONFLICT DO NOTHING
             `, [
                 params.orderId,
                 params.customerId,
                 params.agentId,
                 params.reason,
-                params.priority || 'normal'
+                params.priority || 'normal',
+                params.ticketId || null
             ]);
 
             // Log
