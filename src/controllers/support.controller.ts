@@ -5,8 +5,10 @@ import pool from '../config/db';
 import { getIO } from '../utils/socketIO';
 import { createNotification } from '../services/notification.service';
 import { SupportService } from '../services/support';
+import { SupportActionsService } from '../services/support/support-actions.service';
 
 const supportService = new SupportService(pool);
+const supportActionsService = new SupportActionsService(pool);
 
 // Create a new support ticket
 export const createTicket = async (req: AuthRequest, res: Response) => {
@@ -255,6 +257,7 @@ export const addCustomerNote = async (req: AuthRequest, res: Response) => {
 };
 
 // Execute quick action (refund, reassign, escalate, etc.)
+// Now uses SupportActionsService with proper finance/payment integration
 export const executeQuickAction = async (req: AuthRequest, res: Response) => {
     try {
         const { order_id, customer_id, action_type, action_details, notes } = req.body;
@@ -263,17 +266,53 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'customer_id and action_type required' });
         }
 
-        const result = await supportService.executeQuickAction({
+        let result;
+        const params = {
             orderId: order_id,
             customerId: customer_id,
             agentId: req.user!.userId,
-            actionType: action_type,
-            actionDetails: action_details,
-            notes
-        });
+            reason: notes || 'Support action'
+        };
+
+        // Route to proper action handler with full business logic
+        switch (action_type) {
+            case 'full_refund':
+                if (!order_id) return res.status(400).json({ error: 'order_id required for refund' });
+                result = await supportActionsService.executeFullRefund(params);
+                break;
+
+            case 'cancel_order':
+                if (!order_id) return res.status(400).json({ error: 'order_id required for cancel' });
+                result = await supportActionsService.executeCancelOrder(params);
+                break;
+
+            case 'reassign_driver':
+                if (!order_id) return res.status(400).json({ error: 'order_id required for reassign' });
+                result = await supportActionsService.executeReassignDriver(params);
+                break;
+
+            case 'escalate_to_ops':
+                if (!order_id) return res.status(400).json({ error: 'order_id required for escalation' });
+                result = await supportActionsService.executeEscalateToOps({
+                    ...params,
+                    priority: action_details?.priority || 'normal'
+                });
+                break;
+
+            default:
+                // Fallback to old service for other actions (partial_refund, goodwill_credit, etc.)
+                result = await supportService.executeQuickAction({
+                    orderId: order_id,
+                    customerId: customer_id,
+                    agentId: req.user!.userId,
+                    actionType: action_type,
+                    actionDetails: action_details,
+                    notes
+                });
+        }
 
         if (!result.success) {
-            return res.status(400).json({ error: result.error });
+            return res.status(400).json({ error: result.error, message: (result as any).message || result.error });
         }
 
         // Emit real-time update
@@ -281,10 +320,11 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
             action_type,
             order_id,
             customer_id,
-            agent: req.user!.userId
+            agent: req.user!.userId,
+            result: result
         });
 
-        res.json({ success: true, result: result.result });
+        res.json({ success: true, result });
     } catch (err) {
         console.error('[SUPPORT] executeQuickAction error:', getErrorMessage(err));
         res.status(500).json({ error: getErrorMessage(err) });

@@ -349,15 +349,21 @@ export class SupportService {
 
         const customer = result.rows[0];
 
-        // Get recent orders with issues highlighted
+        // Get recent orders with issues highlighted + payout status + warranty info
         const orders = await this.pool.query(`
             SELECT 
-                o.order_id, o.order_number, o.order_status,
-                o.total_amount, o.created_at, o.delivery_address,
+                o.order_id, o.order_number, o.order_status, o.payment_status,
+                o.total_amount, o.created_at, o.completed_at, o.delivered_at, o.delivery_address,
                 r.part_description, r.car_make, r.car_model, r.car_year,
                 g.garage_name, gu.phone_number as garage_phone,
                 d.dispute_id, d.reason as dispute_reason, d.status as dispute_status,
-                dr.full_name as driver_name, dru.phone_number as driver_phone
+                dr.full_name as driver_name, dru.phone_number as driver_phone,
+                gp.payout_id, gp.payout_status, gp.net_amount as payout_amount,
+                CASE 
+                    WHEN o.completed_at IS NOT NULL OR o.delivered_at IS NOT NULL 
+                    THEN GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at)))
+                    ELSE NULL 
+                END as warranty_days_remaining
             FROM orders o
             LEFT JOIN part_requests r ON o.request_id = r.request_id
             LEFT JOIN garages g ON o.garage_id = g.garage_id
@@ -365,6 +371,7 @@ export class SupportService {
             LEFT JOIN disputes d ON o.order_id = d.order_id AND d.status IN ('pending', 'contested')
             LEFT JOIN drivers dr ON o.driver_id = dr.driver_id
             LEFT JOIN users dru ON dr.driver_id = dru.user_id
+            LEFT JOIN garage_payouts gp ON o.order_id = gp.order_id
             WHERE o.customer_id = $1
             ORDER BY 
                 CASE WHEN d.dispute_id IS NOT NULL THEN 0 ELSE 1 END,
