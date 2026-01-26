@@ -110,6 +110,11 @@
                         Disputes
                         <span class="nav-badge" id="disputesBadge" style="display: none;">0</span>
                     </a>
+                    <a class="nav-item" data-section="escalations">
+                        <i class="bi bi-arrow-up-circle-fill"></i>
+                        Escalations
+                        <span class="nav-badge" id="escalationsBadge" style="display: none;">0</span>
+                    </a>
                     <a class="nav-item" data-section="reports">
                         <i class="bi bi-file-earmark-bar-graph"></i>
                         Reports
@@ -246,6 +251,14 @@
                         </div>
                         <div class="stat-value" id="statContestedDisputes">0</div>
                         <div class="stat-label">Contested Disputes</div>
+                    </div>
+                    <div class="stat-card" onclick="switchSection('escalations')" style="cursor: pointer;">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i
+                                    class="bi bi-arrow-up-circle"></i></div>
+                        </div>
+                        <div class="stat-value" id="statPendingEscalations">0</div>
+                        <div class="stat-label">Support Escalations</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-header">
@@ -560,6 +573,79 @@
                         <tbody id="paymentDisputesTable">
                             <tr>
                                 <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Escalations Section (Support → Operations) -->
+            <section class="section" id="sectionEscalations">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-arrow-up-circle-fill" style="color: #f59e0b;"></i>
+                        Support Escalations</h1>
+                    <p style="color: var(--text-secondary);">Tickets escalated by support agents requiring operations
+                        attention</p>
+                </div>
+
+                <!-- Escalation Stats -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="escalationsPending">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <i class="bi bi-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="escalationsUrgent">0</div>
+                            <div class="stat-label">Urgent</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="escalationsResolved">0</div>
+                            <div class="stat-label">Resolved Today</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escalations Table -->
+                <div class="content-card">
+                    <div class="content-header">
+                        <h3 class="content-title"><i class="bi bi-list-task"></i> Escalation Queue</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="loadEscalations()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Priority</th>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Reason</th>
+                                <th>Escalated By</th>
+                                <th>Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="escalationsTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <i class="bi bi-inbox"></i>
+                                    <h4>No pending escalations</h4>
+                                    <p>All escalations have been resolved</p>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
