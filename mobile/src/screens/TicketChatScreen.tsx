@@ -12,11 +12,13 @@ import {
     ActivityIndicator,
     Image,
     Alert,
+    Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { api } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -54,6 +56,8 @@ export default function TicketChatScreen() {
     const [messageText, setMessageText] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
+    const [pendingAttachment, setPendingAttachment] = useState<string | null>(null);
+    const [viewingImage, setViewingImage] = useState<string | null>(null);
     const flatListRef = useRef<FlatList>(null);
     const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -98,26 +102,74 @@ export default function TicketChatScreen() {
         }
     };
 
+
     const sendMessage = async () => {
-        if (!messageText.trim()) return;
+        if (!messageText.trim() && !pendingAttachment) return;
 
         const tempMessage = messageText.trim();
+        const tempAttachment = pendingAttachment;
         setMessageText('');
+        setPendingAttachment(null);
         setIsSending(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         try {
-            await api.sendTicketMessage(ticketId, tempMessage);
+            // If there's an attachment, we'd need to upload it first
+            // For now, send message with optional attachment reference
+            await api.sendTicketMessage(ticketId, tempMessage, tempAttachment ? [tempAttachment] : undefined);
             await loadMessages();
             // Scroll to bottom
             setTimeout(() => {
                 flatListRef.current?.scrollToEnd({ animated: true });
             }, 100);
         } catch (error: any) {
-            Alert.alert(t('common.error'), error.message || 'Failed to send message');
+            Alert.alert(t('common.error'), error.message || t('support.sendFailed'));
             setMessageText(tempMessage); // Restore message on error
+            setPendingAttachment(tempAttachment); // Restore attachment on error
         } finally {
             setIsSending(false);
+        }
+    };
+
+    const handleAttachPhoto = async () => {
+        if (ticket?.status === 'closed') {
+            Alert.alert(t('common.error'), t('support.ticketClosed'));
+            return;
+        }
+
+        Alert.alert(
+            t('support.addPhoto'),
+            t('support.selectSource'),
+            [
+                { text: t('support.takePhoto'), onPress: () => pickImage('camera') },
+                { text: t('support.chooseFromGallery'), onPress: () => pickImage('gallery') },
+                { text: t('common.cancel'), style: 'cancel' }
+            ]
+        );
+    };
+
+    const pickImage = async (source: 'camera' | 'gallery') => {
+        try {
+            const permission = source === 'camera'
+                ? await ImagePicker.requestCameraPermissionsAsync()
+                : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (permission.status !== 'granted') {
+                Alert.alert(t('common.permissionRequired'), t('support.cameraPermission'));
+                return;
+            }
+
+            const result = source === 'camera'
+                ? await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true })
+                : await ImagePicker.launchImageLibraryAsync({ quality: 0.8 });
+
+            if (!result.canceled && result.assets[0]) {
+                setPendingAttachment(result.assets[0].uri);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+        } catch (error) {
+            console.error('Image picker error:', error);
+            Alert.alert(t('common.error'), t('support.imagePickerFailed'));
         }
     };
 
@@ -252,7 +304,24 @@ export default function TicketChatScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
+                {/* Pending attachment preview */}
+                {pendingAttachment && (
+                    <View style={[styles.attachmentPreview, { backgroundColor: colors.surface }]}>
+                        <Image source={{ uri: pendingAttachment }} style={styles.previewImage} />
+                        <TouchableOpacity onPress={() => setPendingAttachment(null)} style={styles.removePreview}>
+                            <Text style={{ color: '#fff', fontSize: 12 }}>✕</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
                 <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+                    {/* Photo button */}
+                    <TouchableOpacity
+                        onPress={handleAttachPhoto}
+                        style={styles.attachButton}
+                        disabled={ticket?.status === 'closed'}
+                    >
+                        <Text style={{ fontSize: 20 }}>📷</Text>
+                    </TouchableOpacity>
                     <TextInput
                         style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                         placeholder={t('chat.typeMessage')}
@@ -265,12 +334,12 @@ export default function TicketChatScreen() {
                     />
                     <TouchableOpacity
                         onPress={sendMessage}
-                        disabled={!messageText.trim() || isSending || ticket?.status === 'closed'}
+                        disabled={(!messageText.trim() && !pendingAttachment) || isSending || ticket?.status === 'closed'}
                         activeOpacity={0.8}
                     >
                         <LinearGradient
                             colors={Colors.gradients.primary}
-                            style={[styles.sendButton, (!messageText.trim() || isSending) && styles.sendButtonDisabled]}
+                            style={[styles.sendButton, ((!messageText.trim() && !pendingAttachment) || isSending) && styles.sendButtonDisabled]}
                         >
                             {isSending ? (
                                 <ActivityIndicator color="#fff" size="small" />
@@ -347,6 +416,31 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#E8E8E8',
+    },
+    attachButton: {
+        padding: Spacing.sm,
+        marginRight: Spacing.sm,
+    },
+    attachmentPreview: {
+        padding: Spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: '#E8E8E8',
+    },
+    previewImage: {
+        width: 60,
+        height: 60,
+        borderRadius: BorderRadius.md,
+    },
+    removePreview: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     input: {
         flex: 1,
