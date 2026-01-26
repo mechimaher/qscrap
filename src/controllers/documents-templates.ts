@@ -185,14 +185,14 @@ export function generateBilingualCustomerInvoiceHTML(
                 <div>
                     <div style="font-size: 9px; font-weight: 700; margin-bottom: 4px;">Need Help? <span class="arabic">تحتاج مساعدة؟</span></div>
                     <div style="font-size: 8px; color: #333;">
-                        📞 ${COMPANY_INFO.support_phone} | ✉️ ${COMPANY_INFO.support_email}<br>
-                        🌐 ${COMPANY_INFO.website}<br>
-                        📍 ${COMPANY_INFO.address.en}
+                        <strong>Tel:</strong> ${COMPANY_INFO.support_phone} | <strong>Email:</strong> ${COMPANY_INFO.support_email}<br>
+                        <strong>Web:</strong> ${COMPANY_INFO.website}<br>
+                        <strong>Address:</strong> ${COMPANY_INFO.address.en}
                     </div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 8px; color: #333;" class="arabic">
-                        📍 ${COMPANY_INFO.address.ar}
+                        <strong>العنوان:</strong> ${COMPANY_INFO.address.ar}
                     </div>
                 </div>
             </div>
@@ -365,14 +365,14 @@ export function generateGaragePayoutStatementHTML(
                 <div>
                     <div style="font-size: 9px; font-weight: 700; margin-bottom: 4px;">Need Help? <span class="arabic">تحتاج مساعدة؟</span></div>
                     <div style="font-size: 8px; color: #333;">
-                        📞 ${COMPANY_INFO.support_phone} | ✉️ ${COMPANY_INFO.support_email}<br>
-                        🌐 ${COMPANY_INFO.website}<br>
-                        📍 ${COMPANY_INFO.address.en}
+                        <strong>Tel:</strong> ${COMPANY_INFO.support_phone} | <strong>Email:</strong> ${COMPANY_INFO.support_email}<br>
+                        <strong>Web:</strong> ${COMPANY_INFO.website}<br>
+                        <strong>Address:</strong> ${COMPANY_INFO.address.en}
                     </div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 8px; color: #333;" class="arabic">
-                        📍 ${COMPANY_INFO.address.ar}
+                        <strong>العنوان:</strong> ${COMPANY_INFO.address.ar}
                     </div>
                 </div>
             </div>
