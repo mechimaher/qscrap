@@ -44,11 +44,21 @@ export class DriverService {
     }
 
     async getWallet(userId: string) {
-        return await walletService.getWallet(userId);
+        // Lookup driver_id first - wallet is keyed by driver_id, not user_id
+        const driver = await driverRepository.findDriverByUserId(userId);
+        if (!driver) {
+            throw new Error('Driver profile not found');
+        }
+        return await walletService.getWallet(driver.driver_id);
     }
 
     async getWalletHistory(userId: string) {
-        return await walletService.getHistory(userId);
+        // Lookup driver_id first - wallet history is keyed by driver_id, not user_id
+        const driver = await driverRepository.findDriverByUserId(userId);
+        if (!driver) {
+            throw new Error('Driver profile not found');
+        }
+        return await walletService.getHistory(driver.driver_id);
     }
 
     async updateMyLocation(userId: string, lat: number, lng: number, accuracy: any, heading: any, speed: any) {
