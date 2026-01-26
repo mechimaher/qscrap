@@ -22,6 +22,7 @@ export class OperationsDashboardService {
                         (SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURRENT_DATE) as orders_today,
                         (SELECT COUNT(*) FROM disputes WHERE status = 'pending') as pending_disputes,
                         (SELECT COUNT(*) FROM disputes WHERE status = 'contested') as contested_disputes,
+                        (SELECT COUNT(*) FROM support_escalations WHERE status IN ('pending', 'acknowledged')) as pending_escalations,
                         (SELECT COUNT(*) FROM orders WHERE order_status = 'in_transit') as in_transit,
                         (SELECT COUNT(*) FROM orders WHERE order_status = 'delivered') as awaiting_confirmation,
                         (SELECT COUNT(*) FROM orders WHERE order_status = 'ready_for_pickup') as ready_for_pickup,
@@ -33,7 +34,9 @@ export class OperationsDashboardService {
                         (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops')) as loyalty_discounts_today,
                         (SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURRENT_DATE AND COALESCE(loyalty_discount, 0) > 0 AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops')) as loyalty_discounts_count_today,
                         (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE) AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops')) as loyalty_discounts_week,
-                        (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops')) as loyalty_discounts_month
+                        (SELECT COALESCE(SUM(COALESCE(loyalty_discount, 0)), 0) FROM orders WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) AND order_status NOT IN ('cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops')) as loyalty_discounts_month,
+                        -- REFUNDS STATS
+                        (SELECT COUNT(*) FROM refunds WHERE refund_status = 'pending') as pending_refunds
                 `);
                 return result.rows[0];
             },

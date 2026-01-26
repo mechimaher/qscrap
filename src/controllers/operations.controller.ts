@@ -329,6 +329,107 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
 };
 
 // ============================================
+// SUPPORT ESCALATIONS (from Support Dashboard)
+// ============================================
+
+export const getEscalations = async (req: AuthRequest, res: Response) => {
+    const { status, page = '1', limit = '20' } = req.query;
+
+    try {
+        const pool = getReadPool();
+        const pageNum = Math.max(1, parseInt(page as string, 10));
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
+        const offset = (pageNum - 1) * limitNum;
+
+        let whereClause = '';
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (status && status !== 'all') {
+            whereClause = `WHERE e.status = $${paramIndex++}`;
+            params.push(status);
+        }
+
+        // Count total
+        const countResult = await pool.query(
+            `SELECT COUNT(*) FROM support_escalations e ${whereClause}`,
+            params
+        );
+        const total = parseInt(countResult.rows[0].count);
+
+        // Get escalations with ticket and customer info
+        const result = await pool.query(`
+            SELECT e.*,
+                   t.ticket_id, t.subject as ticket_subject, t.status as ticket_status,
+                   t.category, t.order_id,
+                   o.order_number,
+                   u.full_name as customer_name, u.phone_number as customer_phone,
+                   eu.full_name as escalated_by_name,
+                   au.full_name as assigned_to_name
+            FROM support_escalations e
+            JOIN support_tickets t ON e.ticket_id = t.ticket_id
+            LEFT JOIN orders o ON t.order_id = o.order_id
+            LEFT JOIN users u ON e.customer_id = u.user_id
+            LEFT JOIN users eu ON e.escalated_by = eu.user_id
+            LEFT JOIN users au ON e.assigned_to = au.user_id
+            ${whereClause}
+            ORDER BY 
+                CASE WHEN e.priority = 'urgent' THEN 0 WHEN e.priority = 'high' THEN 1 ELSE 2 END,
+                e.created_at DESC
+            LIMIT $${paramIndex++} OFFSET $${paramIndex}
+        `, [...params, limitNum, offset]);
+
+        res.json({
+            escalations: result.rows,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                total,
+                pages: Math.ceil(total / limitNum)
+            }
+        });
+    } catch (err) {
+        logger.error('[OPERATIONS] getEscalations error:', { error: getErrorMessage(err) } as any);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const resolveEscalation = async (req: AuthRequest, res: Response) => {
+    const { escalation_id } = req.params;
+    const { resolution_notes } = req.body;
+    const staffId = req.user!.userId;
+
+    try {
+        const pool = getWritePool();
+
+        const result = await pool.query(`
+            UPDATE support_escalations 
+            SET status = 'resolved',
+                resolved_at = NOW(),
+                resolved_by = $2,
+                resolution_notes = $3
+            WHERE escalation_id = $1
+            RETURNING *
+        `, [escalation_id, staffId, resolution_notes || 'Resolved by Operations']);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Escalation not found' });
+        }
+
+        // Invalidate dashboard stats cache
+        await dashboardService.invalidateCache();
+
+        res.json({
+            message: 'Escalation resolved',
+            escalation: result.rows[0]
+        });
+    } catch (err) {
+        logger.error('[OPERATIONS] resolveEscalation error:', { error: getErrorMessage(err) } as any);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+// ============================================
 // USER MANAGEMENT
 // ============================================
 
