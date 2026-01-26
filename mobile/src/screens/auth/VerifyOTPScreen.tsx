@@ -16,11 +16,13 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 
 export default function VerifyOTPScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { refreshUser } = useAuth();
 
     const { email, full_name, phone_number, password } = route.params;
 
@@ -93,6 +95,9 @@ export default function VerifyOTPScreen() {
             setIsVerifying(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+            // Refresh user state to trigger navigation to home
+            await refreshUser();
+
             Alert.alert(
                 '✅ Success!',
                 'Your account has been created successfully!',
@@ -100,8 +105,7 @@ export default function VerifyOTPScreen() {
                     {
                         text: 'Get Started',
                         onPress: () => {
-                            // Navigation is handled automatically by AuthContext
-                            // when token is set in verifyEmailOTP
+                            // Navigation is now automatic via AuthContext
                         }
                     }
                 ]
