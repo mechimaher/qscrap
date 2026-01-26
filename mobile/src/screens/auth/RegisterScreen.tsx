@@ -184,7 +184,7 @@ export default function RegisterScreen() {
                             <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>🔒 {t('auth.password')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder={t('auth.minCharacters')}
+                                placeholder={t('auth.minCharacters', { count: 6 })}
                                 placeholderTextColor="#999"
                                 value={password}
                                 onChangeText={setPassword}
