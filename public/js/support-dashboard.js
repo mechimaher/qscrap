@@ -61,8 +61,8 @@ function isAuthorizedUser(token) {
     if (!token) return false;
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // JWT uses userType not role
-        return ['admin', 'superadmin', 'operations', 'cs_admin', 'support'].includes(payload.userType);
+        // JWT uses userType not role - allow staff too
+        return ['admin', 'superadmin', 'operations', 'cs_admin', 'support', 'staff'].includes(payload.userType);
     } catch {
         return false;
     }
