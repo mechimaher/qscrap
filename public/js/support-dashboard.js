@@ -392,20 +392,27 @@ async function loadTickets(status) {
                 </tr>
             `).join('');
         } else {
-            // Render as cards for open tickets
-            container.innerHTML = tickets.map(t => `
+            // Render as cards for open tickets with SLA indicator
+            container.innerHTML = tickets.map(t => {
+                const isSlaBreached = t.sla_deadline && new Date(t.sla_deadline) < new Date();
+                const isUrgent = t.priority === 'urgent';
+                return `
                 <div class="ticket-item" data-id="${t.ticket_id}" onclick="selectTicket('${t.ticket_id}')" 
-                     style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
+                     style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; ${isSlaBreached ? 'border-left: 3px solid var(--danger);' : ''}"
                      onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <strong style="font-size: 14px;">${escapeHTML(t.subject)}</strong>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${isSlaBreached ? '<span style="background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">SLA BREACH</span>' : ''}
+                            ${isUrgent ? '<span style="background: #f59e0b; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">URGENT</span>' : ''}
+                            <strong style="font-size: 14px;">${escapeHTML(t.subject)}</strong>
+                        </div>
                         <span style="font-size: 11px; color: var(--text-muted);">${timeAgo(t.created_at)}</span>
                     </div>
                     <div style="font-size: 12px; color: var(--text-secondary);">
                         ${escapeHTML(t.customer_name)} • Order #${t.order_number || 'N/A'}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     } catch (err) {
         console.error('Failed to load tickets:', err);
@@ -435,6 +442,16 @@ async function selectTicket(ticketId) {
         document.getElementById('ticketOrder').textContent = `#${data.ticket.order_number || 'N/A'}`;
         document.getElementById('ticketCustomer').textContent = data.ticket.customer_name;
         document.getElementById('ticketStatus').value = data.ticket.status;
+
+        // Show SLA and priority badges
+        const isSlaBreached = data.ticket.sla_deadline && new Date(data.ticket.sla_deadline) < new Date();
+        const isUrgent = data.ticket.priority === 'urgent';
+        document.getElementById('ticketSlaBadge').style.display = isSlaBreached ? 'inline' : 'none';
+        document.getElementById('ticketPriorityBadge').style.display = isUrgent ? 'inline' : 'none';
+
+        // Load agents and set current assignment
+        await loadSupportAgents();
+        document.getElementById('ticketAssign').value = data.ticket.assigned_to || '';
 
         // Load messages
         const chatContainer = document.getElementById('chatMessages');
@@ -519,6 +536,46 @@ async function updateTicketStatus(status) {
         }
     } catch (err) {
         showToast('Connection error', 'error');
+    }
+}
+
+async function assignTicket(agentId) {
+    if (!currentTicketId) return;
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${currentTicketId}/assign`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignee_id: agentId || null })
+        });
+
+        if (res.ok) {
+            showToast(agentId ? 'Ticket assigned' : 'Ticket unassigned', 'success');
+        } else {
+            showToast('Failed to assign ticket', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Load support agents for assignment dropdown
+async function loadSupportAgents() {
+    try {
+        const res = await fetch(`${API_URL}/staff?role=customer_service`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const select = document.getElementById('ticketAssign');
+        if (!select) return;
+
+        // Keep unassigned option
+        select.innerHTML = '<option value="">Unassigned</option>';
+        (data.staff || []).forEach(agent => {
+            select.innerHTML += `<option value="${agent.user_id}">${escapeHTML(agent.full_name)}</option>`;
+        });
+    } catch (err) {
+        console.error('Failed to load agents:', err);
     }
 }
 
