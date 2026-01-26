@@ -3995,6 +3995,11 @@ async function loadAwaitingConfirmation() {
                             <span><i class="bi bi-bank"></i> ${(p.payout_method || 'unknown').replace(/_/g, ' ')}</span>
                             ${p.payout_reference ? `<span style="margin-left: 15px;"><i class="bi bi-hash"></i> Ref: ${p.payout_reference}</span>` : ''}
                         </div>
+                        ${p.notes ? `
+                        <div style="margin-bottom: 10px; padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border-left: 3px solid #6366f1;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;"><i class="bi bi-chat-left-text"></i> Note from Finance:</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">${escapeHTML(p.notes)}</div>
+                        </div>` : ''}
                         <div style="display: flex; gap: 10px;">
                             <button class="btn btn-success" onclick="confirmPaymentReceipt('${p.payout_id}')">
                                 <i class="bi bi-check-lg"></i> I Received This Payment
