@@ -111,7 +111,7 @@ export const registerWithEmail = catchAsync(async (req: Request, res: Response) 
 
     // Check if email already in use
     const emailCheck = await pool.query(
-        'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+        'SELECT user_id FROM users WHERE LOWER(email) = LOWER($1)',
         [email]
     );
     if (emailCheck.rows.length > 0) {
