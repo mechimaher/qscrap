@@ -685,6 +685,11 @@ async function openTicketChat(ticketId) {
     const chatContainer = document.getElementById('chatPanel');
     if (!chatContainer) return;
 
+    // Join socket room for real-time updates
+    if (socket && socket.connected) {
+        socket.emit('join_room', `ticket_${ticketId}`);
+    }
+
     try {
         const res = await fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -716,12 +721,22 @@ function renderChatMessages(messages) {
     let html = '';
     messages.forEach(m => {
         const isAgent = m.sender_type === 'admin';
+        const isInternal = m.is_internal === true;
+
+        // Internal notes get special styling
+        const internalStyle = isInternal
+            ? 'background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px dashed #f59e0b;'
+            : '';
+        const internalBadge = isInternal
+            ? '<span style="font-size:9px;background:#f59e0b;color:white;padding:1px 5px;border-radius:3px;margin-left:4px;">🔒 Internal</span>'
+            : '';
+
         html += `
-            <div class="chat-message ${isAgent ? 'agent' : 'customer'}">
+            <div class="chat-message ${isAgent ? 'agent' : 'customer'}" style="${internalStyle}">
                 <div class="chat-bubble">
                     ${escapeHTML(m.message_text)}
                 </div>
-                <div class="chat-meta">${m.sender_name} • ${timeAgo(m.created_at)}</div>
+                <div class="chat-meta">${m.sender_name} • ${timeAgo(m.created_at)}${internalBadge}</div>
             </div>
         `;
     });

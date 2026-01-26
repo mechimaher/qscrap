@@ -116,8 +116,18 @@ export class SupportService {
         return { tickets: result.rows, pagination: { page: pageNum, limit: limitNum, total, pages: totalPages } };
     }
 
-    async getTicketMessages(ticketId: string) {
-        const result = await this.pool.query(`SELECT m.*, u.full_name as sender_name FROM chat_messages m JOIN users u ON m.sender_id = u.user_id WHERE m.ticket_id = $1 ORDER BY m.created_at ASC`, [ticketId]);
+    async getTicketMessages(ticketId: string, userType: string = 'customer') {
+        // CRITICAL: Filter out internal notes for customers
+        const isAgent = ['admin', 'superadmin', 'operations', 'cs_admin', 'support', 'staff'].includes(userType);
+
+        const result = await this.pool.query(`
+            SELECT m.*, u.full_name as sender_name 
+            FROM chat_messages m 
+            JOIN users u ON m.sender_id = u.user_id 
+            WHERE m.ticket_id = $1 
+            AND (m.is_internal = false OR $2 = true)
+            ORDER BY m.created_at ASC
+        `, [ticketId, isAgent]);
         return result.rows;
     }
 
@@ -211,9 +221,10 @@ export class SupportService {
     async getRecentActivity() {
         const result = await this.pool.query(`
             SELECT t.ticket_id, 'ticket' as type, t.subject, t.status, t.created_at, 
-                   u.full_name as customer_name, o.order_number
+                   t.requester_type,
+                   u.full_name as requester_name, o.order_number
             FROM support_tickets t 
-            JOIN users u ON t.customer_id = u.user_id 
+            JOIN users u ON t.requester_id = u.user_id 
             LEFT JOIN orders o ON t.order_id = o.order_id
             ORDER BY t.last_message_at DESC LIMIT 10
         `);
@@ -222,11 +233,16 @@ export class SupportService {
 
     async getTicketDetail(ticketId: string) {
         // Enhanced query with order/garage context for support team
+        // Uses requester_id for multi-party support (customer/garage/driver)
         const ticketResult = await this.pool.query(`
             SELECT t.*, 
-                   u.full_name as customer_name, 
-                   u.phone_number as customer_phone, 
-                   u.email as customer_email,
+                   t.requester_type,
+                   u.full_name as requester_name, 
+                   u.phone_number as requester_phone, 
+                   u.email as requester_email,
+                   -- Also get customer info if order exists
+                   cu.full_name as customer_name,
+                   cu.phone_number as customer_phone,
                    o.order_number,
                    o.order_status,
                    o.delivery_status,
@@ -237,14 +253,24 @@ export class SupportService {
                    gu.phone_number as garage_phone,
                    g.address as garage_address
             FROM support_tickets t 
-            JOIN users u ON t.customer_id = u.user_id 
+            JOIN users u ON t.requester_id = u.user_id 
+            LEFT JOIN users cu ON t.customer_id = cu.user_id
             LEFT JOIN orders o ON t.order_id = o.order_id 
             LEFT JOIN garages g ON o.garage_id = g.garage_id
             LEFT JOIN users gu ON g.garage_id = gu.user_id
             WHERE t.ticket_id = $1
         `, [ticketId]);
         if (ticketResult.rows.length === 0) return null;
-        const messagesResult = await this.pool.query(`SELECT m.*, u.full_name as sender_name FROM chat_messages m JOIN users u ON m.sender_id = u.user_id WHERE m.ticket_id = $1 ORDER BY m.created_at ASC`, [ticketId]);
+
+        // Get messages with internal notes visible for agents
+        const messagesResult = await this.pool.query(`
+            SELECT m.*, u.full_name as sender_name 
+            FROM chat_messages m 
+            JOIN users u ON m.sender_id = u.user_id 
+            WHERE m.ticket_id = $1 
+            ORDER BY m.created_at ASC
+        `, [ticketId]);
+
         return { ticket: ticketResult.rows[0], messages: messagesResult.rows };
     }
 
