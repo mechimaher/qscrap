@@ -162,7 +162,7 @@ function setupNavigation() {
     });
 }
 
-function switchSection(section) {
+function switchSection(section, skipLoad = false) {
     currentSection = section;
 
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -175,14 +175,16 @@ function switchSection(section) {
         sec.classList.toggle('active', sec.id === sectionId);
     });
 
-    switch (section) {
-        case 'overview': loadOverview(); break;
-        case 'open': loadOpenTickets(); break;
-        case 'inProgress': loadInProgressTickets(); break;
-        case 'resolved': loadResolvedTickets(); break;
-        case 'orderDisputes': loadOrderDisputes(); break;
-        case 'paymentDisputes': loadPaymentDisputes(); break;
-        case 'reviews': loadReviews(); break;
+    if (!skipLoad) {
+        switch (section) {
+            case 'overview': loadOverview(); break;
+            case 'open': loadOpenTickets(); break;
+            case 'inProgress': loadInProgressTickets(); break;
+            case 'resolved': loadResolvedTickets(); break;
+            case 'orderDisputes': loadOrderDisputes(); break;
+            case 'paymentDisputes': loadPaymentDisputes(); break;
+            case 'reviews': loadReviews(); break;
+        }
     }
 }
 
@@ -413,9 +415,9 @@ async function loadTickets(status) {
 async function selectTicket(ticketId) {
     currentTicketId = ticketId;
 
-    // Switch to Open section to show the chat panel
+    // Switch to Open section to show the chat panel (skip loading tickets to prevent race condition)
     if (currentSection !== 'open') {
-        switchSection('open');
+        switchSection('open', true);
         // Wait for DOM update
         await new Promise(r => setTimeout(r, 100));
     }
