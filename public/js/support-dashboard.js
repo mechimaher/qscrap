@@ -413,6 +413,13 @@ async function loadTickets(status) {
 async function selectTicket(ticketId) {
     currentTicketId = ticketId;
 
+    // Switch to Open section to show the chat panel
+    if (currentSection !== 'open') {
+        switchSection('open');
+        // Wait for DOM update
+        await new Promise(r => setTimeout(r, 100));
+    }
+
     try {
         const res = await fetch(`${API_URL}/support/tickets/${ticketId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -432,11 +439,11 @@ async function selectTicket(ticketId) {
         const messages = data.messages || [];
 
         chatContainer.innerHTML = messages.map(m => `
-            <div class="chat-message ${m.sender_type}" style="margin-bottom: 15px; ${m.sender_type === 'support' ? 'text-align: right;' : ''}">
+            <div class="chat-message ${m.sender_type}" style="margin-bottom: 15px; ${m.sender_type !== 'customer' ? 'text-align: right;' : ''}">
                 <div style="display: inline-block; max-width: 70%; padding: 12px 16px; border-radius: 12px; 
-                     background: ${m.sender_type === 'support' ? 'var(--primary)' : 'var(--bg-secondary)'}; 
-                     color: ${m.sender_type === 'support' ? 'white' : 'var(--text-primary)'};">
-                    ${escapeHTML(m.message)}
+                     background: ${m.sender_type !== 'customer' ? 'var(--primary)' : 'var(--bg-secondary)'}; 
+                     color: ${m.sender_type !== 'customer' ? 'white' : 'var(--text-primary)'};">
+                    ${escapeHTML(m.message_text || m.message)}
                 </div>
                 <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
                     ${m.sender_name} • ${timeAgo(m.created_at)}
@@ -454,10 +461,10 @@ async function selectTicket(ticketId) {
 function appendMessage(message) {
     const chatContainer = document.getElementById('chatMessages');
     chatContainer.innerHTML += `
-        <div class="chat-message ${message.sender_type}" style="margin-bottom: 15px; ${message.sender_type === 'support' ? 'text-align: right;' : ''}">
+        <div class="chat-message ${message.sender_type}" style="margin-bottom: 15px; ${message.sender_type !== 'customer' ? 'text-align: right;' : ''}">
             <div style="display: inline-block; max-width: 70%; padding: 12px 16px; border-radius: 12px; 
-                 background: ${message.sender_type === 'support' ? 'var(--primary)' : 'var(--bg-secondary)'}; 
-                 color: ${message.sender_type === 'support' ? 'white' : 'var(--text-primary)'};">
+                 background: ${message.sender_type !== 'customer' ? 'var(--primary)' : 'var(--bg-secondary)'}; 
+                 color: ${message.sender_type !== 'customer' ? 'white' : 'var(--text-primary)'};">
                 ${escapeHTML(message.message)}
             </div>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">

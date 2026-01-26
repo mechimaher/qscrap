@@ -53,8 +53,14 @@ export class SupportService {
         const totalPages = Math.ceil(total / limitNum);
 
         const result = await this.pool.query(`
-            SELECT t.*, (SELECT message_text FROM chat_messages WHERE ticket_id = t.ticket_id ORDER BY created_at DESC LIMIT 1) as last_message, u.full_name as customer_name
-            FROM support_tickets t JOIN users u ON t.customer_id = u.user_id ${whereClause}
+            SELECT t.*, 
+                   (SELECT message_text FROM chat_messages WHERE ticket_id = t.ticket_id ORDER BY created_at DESC LIMIT 1) as last_message, 
+                   u.full_name as customer_name,
+                   o.order_number
+            FROM support_tickets t 
+            JOIN users u ON t.customer_id = u.user_id 
+            LEFT JOIN orders o ON t.order_id = o.order_id
+            ${whereClause}
             ORDER BY t.last_message_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`, [...queryParams, limitNum, offset]);
 
         return { tickets: result.rows, pagination: { page: pageNum, limit: limitNum, total, pages: totalPages } };
