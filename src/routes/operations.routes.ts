@@ -10,6 +10,8 @@ import {
     getDisputes,
     getDisputeDetails,
     resolveDispute,
+    getEscalations,
+    resolveEscalation,
     getUsers,
     cancelOrderByOperations,
     getOrphanOrders,
@@ -39,6 +41,10 @@ router.post('/orders/:order_id/cancel', cancelOrderByOperations); // Cancel orde
 router.get('/disputes', getDisputes);
 router.get('/disputes/:dispute_id', getDisputeDetails);
 router.post('/disputes/:dispute_id/resolve', resolveDispute);
+
+// Support Escalations (from Support Dashboard)
+router.get('/escalations', getEscalations);
+router.post('/escalations/:escalation_id/resolve', resolveEscalation);
 
 // Return Assignments
 router.get('/returns', (req, res) => res.json({ returns: [] })); // Stub endpoint - returns empty array
