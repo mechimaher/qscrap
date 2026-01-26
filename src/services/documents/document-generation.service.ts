@@ -8,7 +8,7 @@ import path from 'path';
 import fs from 'fs';
 import { DocumentData, GenerateInvoiceParams, DocumentRecord } from './types';
 import { DocumentGenerationError, PDFGenerationError } from './errors';
-import { BILINGUAL_LABELS, formatConditionBilingual } from './bilingual-labels';
+import { BILINGUAL_LABELS, COMPANY_INFO, formatConditionBilingual } from './bilingual-labels';
 
 // Lazy load optional dependencies
 let puppeteer: any;
@@ -218,6 +218,9 @@ export class DocumentGenerationService {
                     method: order.payment_method || 'Cash',
                     status: order.payment_status || 'Completed',
                 },
+
+                // Company support info for Qatar commercial compliance
+                company: COMPANY_INFO,
             };
         } else {
             // Customer invoice (B2C)
@@ -278,6 +281,9 @@ export class DocumentGenerationService {
                     method: order.payment_method || 'Cash',
                     status: order.payment_status || 'Paid',
                 },
+
+                // Company support info for Qatar commercial compliance
+                company: COMPANY_INFO,
             };
         }
     }

@@ -57,6 +57,21 @@ export const BILINGUAL_LABELS = {
     // Footer
     generated_via: { en: 'Generated via QScrap Platform', ar: 'صدرت عبر منصة كيو سكراب' },
     customer_info: { en: 'Customer', ar: 'العميل' },
+    support_info: { en: 'Customer Support', ar: 'خدمة العملاء' },
+    need_help: { en: 'Need Help?', ar: 'تحتاج مساعدة؟' },
+};
+
+// Company official contact information (Qatar Commercial Registration)
+export const COMPANY_INFO = {
+    name: { en: 'QScrap', ar: 'كيو سكراب' },
+    support_phone: '+974 4455 4444',
+    support_email: 'support@qscrap.qa',
+    website: 'www.qscrap.qa',
+    address: {
+        en: 'Industrial Area, St 10, P.O. Box 32544, Doha, Qatar',
+        ar: 'المنطقة الصناعية، شارع 10، ص.ب 32544، الدوحة، قطر'
+    },
+    cr_number: '', // Will be added when CR is obtained
 };
 
 export function formatConditionBilingual(condition: string): { en: string; ar: string } {
