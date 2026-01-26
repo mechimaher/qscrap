@@ -54,28 +54,28 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
             icon: 'search-outline',
             title: t('onboarding.slide1Title'),
             description: t('onboarding.slide1Desc'),
-            color: '#6366f1',
+            color: '#8D1B3D', // Maroon
         },
         {
             id: '2',
             icon: 'pricetags-outline',
             title: t('onboarding.slide2Title'),
             description: t('onboarding.slide2Desc'),
-            color: '#8b5cf6',
+            color: '#C9A227', // Gold
         },
         {
             id: '3',
             icon: 'shield-checkmark-outline',
             title: t('onboarding.slide3Title'),
             description: t('onboarding.slide3Desc'),
-            color: '#10b981',
+            color: '#059669', // Green (success)
         },
         {
             id: '4',
             icon: 'bicycle-outline',
             title: t('onboarding.slide4Title'),
             description: t('onboarding.slide4Desc'),
-            color: '#f59e0b',
+            color: '#8D1B3D', // Maroon
         },
     ];
     const flatListRef = useRef<FlatList>(null);
