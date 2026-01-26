@@ -178,7 +178,7 @@ export class SupportService {
                    u.phone_number as customer_phone, 
                    u.email as customer_email,
                    o.order_number,
-                   o.status as order_status,
+                   o.order_status,
                    o.delivery_status,
                    o.delivery_address,
                    o.created_at as order_created_at,
