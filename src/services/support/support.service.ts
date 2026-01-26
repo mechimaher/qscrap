@@ -328,11 +328,11 @@ export class SupportService {
                 u.user_id, u.full_name, u.phone_number, u.email, u.created_at as member_since,
                 (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id) as total_orders,
                 (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE customer_id = u.user_id AND order_status = 'completed') as total_spent,
-                (SELECT tier FROM customer_loyalty WHERE customer_id = u.user_id) as loyalty_tier,
+                NULL as loyalty_tier,
                 (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id AND order_status IN ('pending', 'confirmed', 'in_transit')) as active_orders,
                 (SELECT COUNT(*) FROM disputes WHERE customer_id = u.user_id AND status IN ('pending', 'contested')) as open_issues
             FROM users u
-            WHERE u.role = 'customer'
+            WHERE u.user_type = 'customer'
             AND (
                 u.phone_number ILIKE $1 
                 OR u.full_name ILIKE $1 
