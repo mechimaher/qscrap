@@ -1147,7 +1147,7 @@ function exportCompletedPayouts() {
 // =========================================
 
 /**
- * Load garages with pending payouts for filter dropdown
+ * Load all garages for filter dropdown
  */
 async function loadGaragesForFilter() {
     try {
@@ -1161,7 +1161,11 @@ async function loadGaragesForFilter() {
 
         select.innerHTML = '<option value="">All Garages</option>';
         (data.garages || []).forEach(g => {
-            select.innerHTML += `<option value="${g.garage_id}">${escapeHTML(g.garage_name)} (${g.pending_count} - ${formatCurrency(g.pending_total)})</option>`;
+            // Only show count if there are pending payouts
+            const label = g.pending_count > 0
+                ? `${escapeHTML(g.garage_name)} (${g.pending_count} - ${formatCurrency(g.pending_total)})`
+                : escapeHTML(g.garage_name);
+            select.innerHTML += `<option value="${g.garage_id}">${label}</option>`;
         });
     } catch (err) {
         console.error('Failed to load garages for filter:', err);
