@@ -737,6 +737,16 @@ export const ar = {
         addReply: 'إضافة رد',
         replyPlaceholder: 'اكتب ردك...',
         sendReply: 'إرسال',
+        // مفاتيح إرفاق الصور
+        addPhoto: 'إضافة صورة',
+        selectSource: 'اختر مصدراً',
+        takePhoto: 'التقاط صورة',
+        chooseFromGallery: 'اختيار من المعرض',
+        ticketClosed: 'هذه التذكرة مغلقة',
+        cameraPermission: 'يلزم إذن الكاميرا لالتقاط الصور',
+        imagePickerFailed: 'فشل اختيار الصورة',
+        sendFailed: 'فشل إرسال الرسالة',
+        loadFailed: 'فشل تحميل التذكرة',
     },
 
     // =============================================

@@ -736,6 +736,16 @@ export const en = {
         addReply: 'Add Reply',
         replyPlaceholder: 'Type your reply...',
         sendReply: 'Send',
+        // Photo attachment keys
+        addPhoto: 'Add Photo',
+        selectSource: 'Select a source',
+        takePhoto: 'Take Photo',
+        chooseFromGallery: 'Choose from Gallery',
+        ticketClosed: 'This ticket is closed',
+        cameraPermission: 'Camera permission is required to take photos',
+        imagePickerFailed: 'Failed to select image',
+        sendFailed: 'Failed to send message',
+        loadFailed: 'Failed to load ticket',
     },
 
     // =============================================
