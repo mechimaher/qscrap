@@ -400,7 +400,15 @@ export class PayoutAdminService {
                 gp.payout_id,
                 gp.order_id,
                 o.order_number,
-                COALESCE(r.part_description, b.part_number, 'Auto Part') as part_name,
+                CASE 
+                    WHEN r.part_category IS NOT NULL AND r.part_subcategory IS NOT NULL 
+                        THEN r.part_category || ' - ' || r.part_subcategory
+                    WHEN r.part_category IS NOT NULL 
+                        THEN r.part_category
+                    WHEN r.part_subcategory IS NOT NULL 
+                        THEN r.part_subcategory
+                    ELSE 'Car Part'
+                END as part_name,
                 o.delivered_at,
                 gp.confirmed_at,
                 gp.gross_amount,
