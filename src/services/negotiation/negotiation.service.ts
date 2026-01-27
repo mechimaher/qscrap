@@ -416,6 +416,20 @@ export class NegotiationService {
                 target_role: 'customer'
             });
 
+            // PUSH: Customer - garage counter-offer received
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    customerId,
+                    title,
+                    message,
+                    { type: notificationType, bid_id: offer.bid_id, counter_offer_id: counterOfferId },
+                    { channelId: 'bids', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[NEGOTIATION] Push to customer failed:', pushErr);
+            }
+
             // Emit real-time WebSocket event
             const { emitToUser } = await import('../../utils/socketIO');
             emitToUser(customerId, 'counter_offer_received', {
@@ -478,6 +492,20 @@ export class NegotiationService {
             data: { counter_offer_id: counterOfferId, bid_id: bidId, proposed_amount: proposed, round },
             target_role: 'garage'
         });
+
+        // PUSH: Garage - counter-offer received
+        try {
+            const { pushService } = await import('../push.service');
+            await pushService.sendToUser(
+                garageId,
+                'Counter-Offer Received 💰',
+                `Customer offered ${proposed} QAR (was ${original} QAR)`,
+                { type: 'counter_offer_received', bid_id: bidId, counter_offer_id: counterOfferId },
+                { channelId: 'bids', sound: true }
+            );
+        } catch (pushErr) {
+            console.error('[NEGOTIATION] Push to garage failed:', pushErr);
+        }
 
         // Emit real-time WebSocket event to garage dashboard
         const { emitToGarage } = await import('../../utils/socketIO');

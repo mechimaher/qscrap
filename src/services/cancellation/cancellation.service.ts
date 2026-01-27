@@ -410,6 +410,20 @@ export class CancellationService {
                 target_role: 'garage'
             });
 
+            // PUSH: Garage - order cancelled by customer
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    order.garage_id,
+                    'Order Cancelled 🚫',
+                    `Customer cancelled Order #${order.order_number}`,
+                    { type: 'order_cancelled', order_id: orderId, order_number: order.order_number },
+                    { channelId: 'orders', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[CANCEL] Push to garage failed:', pushErr);
+            }
+
             (global as any).io?.to(`garage_${order.garage_id}`).emit('order_cancelled', {
                 order_id: orderId,
                 order_number: order.order_number,
@@ -569,6 +583,20 @@ export class CancellationService {
                 },
                 target_role: 'customer'
             });
+
+            // PUSH: Customer - order cancelled by garage
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    order.customer_id,
+                    'Order Cancelled 🚫',
+                    `Garage cancelled Order #${order.order_number}. Full refund incoming.`,
+                    { type: 'order_cancelled', order_id: orderId, order_number: order.order_number },
+                    { channelId: 'orders', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[CANCEL] Push to customer failed:', pushErr);
+            }
 
             (global as any).io?.to(`user_${order.customer_id}`).emit('order_cancelled', {
                 order_id: orderId,
