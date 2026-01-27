@@ -2121,66 +2121,58 @@ async function loadProfile() {
                     </button>
                 </form>
             </div>
-            
-            <!-- GPS Location Picker (for driver navigation) -->
-            <div class="stat-card" style="margin-top: 24px;">
-                <h3 style="margin: 0 0 8px; display: flex; align-items: center; gap: 10px;">
-                    <i class="bi bi-geo-alt-fill" style="color: var(--accent);"></i> Garage Location
-                    ${(profile.location_lat && profile.location_lng) ? '<span style="background: var(--success); color: white; font-size: 10px; padding: 4px 8px; border-radius: 12px;">GPS Set</span>' : '<span style="background: #f59e0b; color: white; font-size: 10px; padding: 4px 8px; border-radius: 12px;">Required</span>'}
-                </h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
-                    <i class="bi bi-info-circle"></i> Set your garage location for accurate driver navigation. Drivers will use this to pick up orders.
-                </p>
-                
-                ${(!profile.location_lat || !profile.location_lng) ? `
-                <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.1)); border: 1px solid #f59e0b; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                    <div style="display: flex; align-items: center; gap: 8px; color: #f59e0b; font-weight: 600;">
-                        <i class="bi bi-exclamation-triangle-fill"></i> GPS Location Required
+            <!-- GPS Location Picker - Chic Modern Card System (Jan 27, 2026) -->
+            <div class="gmap-card" style="margin-top: 24px;">
+                <div class="gmap-header">
+                    <div class="gmap-header-left">
+                        <div class="gmap-icon">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <div>
+                            <div class="gmap-title">Garage Location</div>
+                            <div class="gmap-subtitle">Set your location for driver navigation</div>
+                        </div>
                     </div>
-                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
-                        Please set your location so drivers can navigate to your garage with one click.
-                    </div>
+                    ${(profile.location_lat && profile.location_lng)
+                ? '<span class="gmap-badge set"><i class="bi bi-check-circle-fill"></i> GPS Set</span>'
+                : '<span class="gmap-badge required"><i class="bi bi-exclamation-circle-fill"></i> Required</span>'}
                 </div>
-                ` : ''}
                 
-                <div id="locationMapContainer" style="height: 300px; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 2px solid var(--border);"></div>
+                <div class="gmap-container" id="locationMapContainer"></div>
                 
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
-                    <button type="button" class="btn btn-outline" onclick="useMyLocation()">
+                <div class="gmap-controls">
+                    <div class="gmap-search-wrapper">
+                        <i class="bi bi-search gmap-search-icon"></i>
+                        <input type="text" 
+                            class="gmap-search-input" 
+                            id="locationAddressInput"
+                            value="${profile.address || ''}"
+                            placeholder="Search for an address in Qatar...">
+                    </div>
+                    <button type="button" class="gmap-btn gmap-btn-locate" onclick="useMyLocation()">
                         <i class="bi bi-crosshairs"></i> Use My Location
                     </button>
-                    <div style="flex: 1; min-width: 200px;">
-                        <input type="text" class="form-control" id="locationAddressInput" 
-                            value="${profile.address || ''}"
-                            placeholder="Enter address description"
-                            style="font-size: 14px;">
-                    </div>
+                    <button type="button" class="gmap-btn gmap-btn-save" onclick="saveGarageLocation()">
+                        <i class="bi bi-check-lg"></i> Save Location
+                    </button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-muted);">Latitude</label>
-                        <input type="text" class="form-control" id="locationLatInput" 
-                            value="${profile.location_lat || ''}"
-                            placeholder="25.2854" readonly 
-                            style="background: var(--bg-secondary); font-family: monospace;">
+                <div class="gmap-coords">
+                    <div class="gmap-coord-item">
+                        <div class="gmap-coord-label">Latitude</div>
+                        <div class="gmap-coord-value" id="locationLatDisplay">${profile.location_lat || '—'}</div>
+                        <input type="hidden" id="locationLatInput" value="${profile.location_lat || ''}">
                     </div>
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-muted);">Longitude</label>
-                        <input type="text" class="form-control" id="locationLngInput" 
-                            value="${profile.location_lng || ''}"
-                            placeholder="51.5310" readonly 
-                            style="background: var(--bg-secondary); font-family: monospace;">
+                    <div class="gmap-coord-item">
+                        <div class="gmap-coord-label">Longitude</div>
+                        <div class="gmap-coord-value" id="locationLngDisplay">${profile.location_lng || '—'}</div>
+                        <input type="hidden" id="locationLngInput" value="${profile.location_lng || ''}">
                     </div>
                 </div>
-                
-                <button type="button" class="btn btn-primary" onclick="saveGarageLocation()">
-                    <i class="bi bi-geo-alt-fill"></i> Save Location
-                </button>
             </div>
         `;
 
-        // Initialize Leaflet map after DOM is updated
+        // Initialize Google Maps after DOM is updated
         setTimeout(() => initLocationMap(profile.location_lat, profile.location_lng), 100);
         // Initialize Supplier Settings (Brands)
         setTimeout(() => initSupplierSettings(profile), 100);
@@ -2412,93 +2404,218 @@ async function saveBusinessDetails(event) {
     }
 }
 
-// ===== LEAFLET GPS LOCATION PICKER (Free, No Billing) =====
+// ===== GOOGLE MAPS SDK LOCATION PICKER (Jan 27, 2026) =====
+// Upgraded from Leaflet to Google Maps for enterprise-grade mapping
 let locationMap = null;
 let locationMarker = null;
+let placesAutocomplete = null;
+let geocoder = null;
+
+// Qatar Premium Dark Theme for Google Maps
+const QATAR_MAP_STYLE = [
+    { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#8e8ea0' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2d2d44' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#A82050' }] },
+    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#8D1B3D' }] },
+    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f0f1a' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#515c6d' }] },
+    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] },
+    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#1e3a2e' }] },
+    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] }
+];
 
 function initLocationMap(lat, lng) {
     const container = document.getElementById('locationMapContainer');
     if (!container) return;
 
+    // Wait for Google Maps SDK to load
+    if (!window.googleMapsReady) {
+        console.log('[Google Maps] SDK not ready, queuing map init...');
+        window.pendingMapInit = { lat, lng };
+        return;
+    }
+
     // Default to Doha, Qatar if no coordinates
     const defaultLat = lat ? parseFloat(lat) : 25.2854;
     const defaultLng = lng ? parseFloat(lng) : 51.5310;
+    const hasLocation = lat && lng;
 
-    // Destroy existing map if any
+    // Destroy existing map
     if (locationMap) {
-        locationMap.remove();
         locationMap = null;
+        locationMarker = null;
+        container.innerHTML = '';
     }
 
-    // Create map
-    locationMap = L.map('locationMapContainer').setView([defaultLat, defaultLng], lat && lng ? 16 : 12);
-
-    // Add premium light tile layer (CartoDB Voyager - clean, modern, readable)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
-        maxZoom: 19
-    }).addTo(locationMap);
-
-    // Custom marker icon (Qatar Maroon/Gold)
-    const maroonIcon = L.divIcon({
-        className: 'custom-marker',
-        html: `<div style="
-            width: 32px; height: 40px;
-            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
-            border: 3px solid #D4AF37;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        "><div style="
-            width: 12px; height: 12px;
-            background: #D4AF37;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-        "></div></div>`,
-        iconSize: [32, 40],
-        iconAnchor: [16, 40],
-        popupAnchor: [0, -40]
+    // Create Google Map
+    locationMap = new google.maps.Map(container, {
+        center: { lat: defaultLat, lng: defaultLng },
+        zoom: hasLocation ? 16 : 12,
+        styles: QATAR_MAP_STYLE,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        gestureHandling: 'greedy'
     });
 
+    // Initialize Geocoder
+    geocoder = new google.maps.Geocoder();
+
+    // Custom marker (SVG)
+    const markerSvg = {
+        path: 'M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12zm0 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z',
+        fillColor: '#A82050',
+        fillOpacity: 1,
+        strokeColor: '#D4AF37',
+        strokeWeight: 2,
+        scale: 1.5,
+        anchor: new google.maps.Point(12, 36)
+    };
+
     // Add marker if coordinates exist
-    if (lat && lng) {
-        locationMarker = L.marker([defaultLat, defaultLng], {
+    if (hasLocation) {
+        locationMarker = new google.maps.Marker({
+            position: { lat: defaultLat, lng: defaultLng },
+            map: locationMap,
             draggable: true,
-            icon: maroonIcon
-        }).addTo(locationMap);
-        locationMarker.on('dragend', onMarkerDragEnd);
+            icon: markerSvg,
+            animation: google.maps.Animation.DROP
+        });
+
+        // Marker drag handler
+        locationMarker.addListener('dragend', () => {
+            const pos = locationMarker.getPosition();
+            updateLocationInputs(pos.lat(), pos.lng());
+            reverseGeocode(pos.lat(), pos.lng());
+        });
     }
 
     // Click to place marker
-    locationMap.on('click', (e) => {
-        const { lat, lng } = e.latlng;
+    locationMap.addListener('click', (e) => {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
 
         if (locationMarker) {
-            locationMarker.setLatLng(e.latlng);
+            locationMarker.setPosition(e.latLng);
         } else {
-            locationMarker = L.marker([lat, lng], {
+            locationMarker = new google.maps.Marker({
+                position: e.latLng,
+                map: locationMap,
                 draggable: true,
-                icon: maroonIcon
-            }).addTo(locationMap);
-            locationMarker.on('dragend', onMarkerDragEnd);
+                icon: markerSvg,
+                animation: google.maps.Animation.DROP
+            });
+
+            locationMarker.addListener('dragend', () => {
+                const pos = locationMarker.getPosition();
+                updateLocationInputs(pos.lat(), pos.lng());
+                reverseGeocode(pos.lat(), pos.lng());
+            });
         }
 
         updateLocationInputs(lat, lng);
+        reverseGeocode(lat, lng);
+    });
+
+    // Initialize Places Autocomplete
+    initPlacesAutocomplete();
+
+    console.log('[Google Maps] Map initialized for Garage Dashboard');
+}
+
+function initPlacesAutocomplete() {
+    const input = document.getElementById('locationAddressInput');
+    if (!input || !window.google?.maps?.places) return;
+
+    placesAutocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: 'qa' },
+        fields: ['geometry', 'formatted_address', 'name'],
+        types: ['establishment', 'geocode']
+    });
+
+    placesAutocomplete.addListener('place_changed', () => {
+        const place = placesAutocomplete.getPlace();
+
+        if (!place.geometry) {
+            showToast('Could not find that location', 'warning');
+            return;
+        }
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        // Update map
+        locationMap.setCenter(place.geometry.location);
+        locationMap.setZoom(17);
+
+        // Update or create marker
+        if (locationMarker) {
+            locationMarker.setPosition(place.geometry.location);
+        } else {
+            const markerSvg = {
+                path: 'M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12zm0 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z',
+                fillColor: '#A82050',
+                fillOpacity: 1,
+                strokeColor: '#D4AF37',
+                strokeWeight: 2,
+                scale: 1.5,
+                anchor: new google.maps.Point(12, 36)
+            };
+
+            locationMarker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: locationMap,
+                draggable: true,
+                icon: markerSvg,
+                animation: google.maps.Animation.DROP
+            });
+
+            locationMarker.addListener('dragend', () => {
+                const pos = locationMarker.getPosition();
+                updateLocationInputs(pos.lat(), pos.lng());
+                reverseGeocode(pos.lat(), pos.lng());
+            });
+        }
+
+        updateLocationInputs(lat, lng);
+        showToast('✓ Location selected! Click Save Location to confirm.', 'success');
     });
 }
 
-function onMarkerDragEnd(e) {
-    const pos = e.target.getLatLng();
-    updateLocationInputs(pos.lat, pos.lng);
+function reverseGeocode(lat, lng) {
+    if (!geocoder) return;
+
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            let address = results[0].formatted_address;
+            // Clean up address (remove ", Qatar" suffix for brevity)
+            address = address.replace(/, Qatar$/, '');
+
+            const input = document.getElementById('locationAddressInput');
+            if (input) input.value = address;
+        }
+    });
 }
 
 function updateLocationInputs(lat, lng) {
     const latInput = document.getElementById('locationLatInput');
     const lngInput = document.getElementById('locationLngInput');
-    if (latInput) latInput.value = lat.toFixed(8);
-    if (lngInput) lngInput.value = lng.toFixed(8);
+    const latDisplay = document.getElementById('locationLatDisplay');
+    const lngDisplay = document.getElementById('locationLngDisplay');
+
+    const latStr = lat.toFixed(8);
+    const lngStr = lng.toFixed(8);
+
+    if (latInput) latInput.value = latStr;
+    if (lngInput) lngInput.value = lngStr;
+    if (latDisplay) latDisplay.textContent = latStr;
+    if (lngDisplay) lngDisplay.textContent = lngStr;
 }
 
 function useMyLocation() {
@@ -2508,28 +2625,6 @@ function useMyLocation() {
     }
 
     showToast('📍 Getting your location...', 'info');
-
-    // Custom marker icon
-    const maroonIcon = L.divIcon({
-        className: 'custom-marker',
-        html: `<div style="
-            width: 32px; height: 40px;
-            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
-            border: 3px solid #D4AF37;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        "><div style="
-            width: 12px; height: 12px;
-            background: #D4AF37;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-        "></div></div>`,
-        iconSize: [32, 40],
-        iconAnchor: [16, 40]
-    });
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -2541,19 +2636,40 @@ function useMyLocation() {
 
             // Update map
             if (locationMap) {
-                locationMap.setView([lat, lng], 16);
+                locationMap.setCenter({ lat, lng });
+                locationMap.setZoom(17);
+
+                const markerSvg = {
+                    path: 'M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12zm0 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z',
+                    fillColor: '#A82050',
+                    fillOpacity: 1,
+                    strokeColor: '#D4AF37',
+                    strokeWeight: 2,
+                    scale: 1.5,
+                    anchor: new google.maps.Point(12, 36)
+                };
 
                 if (locationMarker) {
-                    locationMarker.setLatLng([lat, lng]);
+                    locationMarker.setPosition({ lat, lng });
                 } else {
-                    locationMarker = L.marker([lat, lng], {
+                    locationMarker = new google.maps.Marker({
+                        position: { lat, lng },
+                        map: locationMap,
                         draggable: true,
-                        icon: maroonIcon
-                    }).addTo(locationMap);
-                    locationMarker.on('dragend', onMarkerDragEnd);
+                        icon: markerSvg,
+                        animation: google.maps.Animation.DROP
+                    });
+
+                    locationMarker.addListener('dragend', () => {
+                        const pos = locationMarker.getPosition();
+                        updateLocationInputs(pos.lat(), pos.lng());
+                        reverseGeocode(pos.lat(), pos.lng());
+                    });
                 }
             }
 
+            // Reverse geocode to get address
+            reverseGeocode(lat, lng);
             showToast('✓ Location detected! Click Save Location to confirm.', 'success');
         },
         (error) => {
@@ -2578,7 +2694,7 @@ async function saveGarageLocation() {
         return;
     }
 
-    const btn = document.querySelector('button[onclick="saveGarageLocation()"]');
+    const btn = document.querySelector('.gmap-btn-save');
     const originalContent = btn ? btn.innerHTML : 'Save Location';
     if (btn) {
         btn.disabled = true;
@@ -2604,7 +2720,7 @@ async function saveGarageLocation() {
         if (res.ok) {
             if (btn) {
                 btn.innerHTML = '<i class="bi bi-check-lg"></i> Saved!';
-                btn.className = 'btn btn-success';
+                btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
             }
             showToast('📍 Location saved! Drivers can now navigate to your garage.', 'success');
 
