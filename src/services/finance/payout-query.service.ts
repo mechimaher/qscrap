@@ -186,7 +186,9 @@ export class PayoutQueryService {
         const offset = ((filters.page || 1) - 1) * (filters.limit || 20);
 
         const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM garage_payouts gp ${whereClause}`,
+            `SELECT COUNT(*) FROM garage_payouts gp 
+             LEFT JOIN orders o ON gp.order_id = o.order_id
+             ${whereClause}`,
             params
         );
 
