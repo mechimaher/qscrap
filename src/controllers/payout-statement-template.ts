@@ -261,9 +261,11 @@ export function generatePayoutStatementHTML(
             <div class="verify">Scan to verify / امسح للتحقق</div>
         </div>
         <div class="company-info">
-            <div class="line"><strong>${COMPANY_INFO?.name?.en || 'QScrap Trading LLC'}</strong></div>
-            <div class="line">CR: ${COMPANY_INFO?.cr_number || '12345'}</div>
+            <div class="line"><strong>${COMPANY_INFO?.name?.en || 'QScrap'}</strong> | <span style="direction:rtl;">${COMPANY_INFO?.name?.ar || 'كيو سكراب'}</span></div>
+            ${COMPANY_INFO?.cr_number ? `<div class="line">CR / السجل التجاري: ${COMPANY_INFO.cr_number}</div>` : ''}
             <div class="line">Tel: ${COMPANY_INFO?.support_phone || '+974 4455 4444'}</div>
+            <div class="line">Email: ${COMPANY_INFO?.support_email || 'support@qscrap.qa'}</div>
+            <div class="line">Web: ${COMPANY_INFO?.website || 'www.qscrap.qa'}</div>
             <div class="line">${COMPANY_INFO?.address?.en || 'Industrial Area, St 10, P.O. Box 32544, Doha, Qatar'}</div>
         </div>
     </div>
