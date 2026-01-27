@@ -1068,6 +1068,82 @@ async function resolveEscalation(escalationId) {
     }
 }
 
+// View ticket details from escalation
+async function viewTicket(ticketId) {
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${ticketId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showToast(data.error || 'Failed to load ticket', 'error');
+            return;
+        }
+
+        const t = data.ticket;
+        const statusColors = {
+            'open': 'warning',
+            'in_progress': 'info',
+            'pending_customer': 'pending',
+            'resolved': 'completed',
+            'closed': 'cancelled'
+        };
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'ticketDetailModal';
+        modal.className = 'modal-overlay active';
+        modal.innerHTML = `
+            <div class="modal-container" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h2><i class="bi bi-ticket-detailed"></i> Ticket #${t.ticket_number || ticketId.slice(0, 8)}</h2>
+                    <button class="modal-close" onclick="document.getElementById('ticketDetailModal').remove()"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="info-card" style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">${escapeHTML(t.subject)}</h3>
+                            <span class="status-badge ${statusColors[t.status] || 'info'}">${t.status?.replace(/_/g, ' ').toUpperCase()}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <p style="color: var(--text-muted); margin-bottom: 5px;">Customer</p>
+                                <p style="font-weight: 500;">${escapeHTML(t.customer_name || 'Unknown')}</p>
+                            </div>
+                            <div>
+                                <p style="color: var(--text-muted); margin-bottom: 5px;">Category</p>
+                                <p style="font-weight: 500;">${escapeHTML(t.category || 'General')}</p>
+                            </div>
+                            <div>
+                                <p style="color: var(--text-muted); margin-bottom: 5px;">Order</p>
+                                <p style="font-weight: 500;">${t.order_number ? '#' + t.order_number : 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p style="color: var(--text-muted); margin-bottom: 5px;">Created</p>
+                                <p style="font-weight: 500;">${new Date(t.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        ${t.description ? `
+                            <div style="margin-top: 15px; padding: 15px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <p style="color: var(--text-muted); margin-bottom: 5px;">Description</p>
+                                <p style="white-space: pre-wrap;">${escapeHTML(t.description)}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
+                    <button class="btn btn-ghost" onclick="document.getElementById('ticketDetailModal').remove()">Close</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } catch (err) {
+        console.error('View ticket error:', err);
+        showToast('Failed to load ticket', 'error');
+    }
+}
+
 function formatTimeAgo(dateStr) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
