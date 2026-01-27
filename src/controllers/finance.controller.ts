@@ -317,6 +317,90 @@ export const forceProcessPayout = async (req: AuthRequest, res: Response) => {
 };
 
 // ============================================
+// BATCH PAYMENT OPERATIONS
+// ============================================
+
+/**
+ * Get list of garages with pending payouts (for filter dropdown)
+ */
+export const getGaragesWithPendingPayouts = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await payoutService.getGaragesWithPendingPayouts();
+        res.json(result);
+    } catch (err) {
+        console.error('getGaragesWithPendingPayouts Error:', err);
+        res.status(500).json({ error: 'Failed to load garages' });
+    }
+};
+
+/**
+ * Get preview of batch payouts before processing
+ */
+export const getBatchPayoutPreview = async (req: AuthRequest, res: Response) => {
+    try {
+        const { payout_ids, garage_id, all_pending } = req.body;
+
+        const result = await payoutService.getBatchPayoutPreview({
+            payout_ids,
+            garage_id,
+            all_pending
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('getBatchPayoutPreview Error:', err);
+        res.status(500).json({ error: 'Failed to get batch preview' });
+    }
+};
+
+/**
+ * Send batch payments efficiently
+ * Single API call to process many payouts
+ */
+export const sendBatchPayments = async (req: AuthRequest, res: Response) => {
+    try {
+        const { payout_ids, garage_id, all_pending, reference_number, notes } = req.body;
+        const sentBy = req.user?.userId;
+
+        if (!sentBy) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        if (!reference_number) {
+            return res.status(400).json({ error: 'Reference number is required' });
+        }
+
+        // Safety check - require confirmation for large batches
+        if (all_pending && !payout_ids && !garage_id) {
+            const preview = await payoutService.getBatchPayoutPreview({ all_pending: true });
+            if (preview.count > 100 && !req.body.confirmed) {
+                return res.status(400).json({
+                    error: 'Large batch requires confirmation',
+                    preview,
+                    requires_confirmation: true
+                });
+            }
+        }
+
+        const result = await payoutService.sendBatchPayments({
+            payout_ids,
+            garage_id,
+            all_pending,
+            reference_number,
+            notes
+        }, sentBy);
+
+        res.json(result);
+    } catch (err) {
+        console.error('sendBatchPayments Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to process batch payments' });
+    }
+};
+
+// ============================================
 // REFUND OPERATIONS
 // ============================================
 

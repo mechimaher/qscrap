@@ -106,6 +106,44 @@ export interface BulkConfirmResult {
     errors?: string[];
 }
 
+// ============================================
+// BATCH PAYMENT TYPES
+// ============================================
+
+export interface BatchPaymentDto {
+    payout_ids?: string[];
+    garage_id?: string;
+    all_pending?: boolean;
+    reference_number: string;
+    notes?: string;
+}
+
+export interface BatchPaymentResult {
+    success: boolean;
+    processed_count: number;
+    failed_count: number;
+    total_amount: number;
+    garages_notified: number;
+}
+
+export interface BatchPaymentPreview {
+    count: number;
+    total_amount: number;
+    garages: Array<{
+        garage_id: string;
+        garage_name: string;
+        payout_count: number;
+        total: number;
+    }>;
+}
+
+export interface GarageWithPendingPayouts {
+    garage_id: string;
+    garage_name: string;
+    pending_count: number;
+    pending_total: number;
+}
+
 export interface PayoutStatusDetail extends Payout {
     garage_name: string;
     order_number?: string;

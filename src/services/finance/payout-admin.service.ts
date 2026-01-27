@@ -1,11 +1,19 @@
 /**
  * PayoutAdminService - Admin/Operations Payout Management
  * Handles processPayout, holdPayout, releasePayout, forceProcessPayout, autoConfirmPayouts
+ * And batch payment operations
  */
 
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { createNotification } from '../notification.service';
-import { PayoutResult } from './types';
+import { emitToGarage, emitToOperations } from '../../utils/socketIO';
+import {
+    PayoutResult,
+    BatchPaymentDto,
+    BatchPaymentResult,
+    BatchPaymentPreview,
+    GarageWithPendingPayouts
+} from './types';
 import { PayoutNotFoundError } from './errors';
 import { PayoutHelpers } from './payout-helpers';
 
@@ -145,5 +153,206 @@ export class PayoutAdminService {
         }
 
         return { confirmed, failed };
+    }
+
+    // ============================================
+    // BATCH PAYMENT OPERATIONS
+    // ============================================
+
+    /**
+     * Get preview of batch payouts before processing
+     * Returns count and total amount for confirmation dialog
+     */
+    async getBatchPayoutPreview(params: {
+        payout_ids?: string[];
+        garage_id?: string;
+        all_pending?: boolean;
+    }): Promise<BatchPaymentPreview> {
+        const { payout_ids, garage_id } = params;
+
+        let whereClause = "WHERE gp.payout_status = 'pending'";
+        const queryParams: unknown[] = [];
+        let paramIndex = 1;
+
+        if (payout_ids && payout_ids.length > 0) {
+            whereClause += ` AND gp.payout_id = ANY($${paramIndex++})`;
+            queryParams.push(payout_ids);
+        } else if (garage_id) {
+            whereClause += ` AND gp.garage_id = $${paramIndex++}`;
+            queryParams.push(garage_id);
+        }
+
+        const result = await this.pool.query(`
+            SELECT 
+                g.garage_id,
+                g.garage_name,
+                COUNT(*)::int as payout_count,
+                COALESCE(SUM(gp.net_amount), 0)::numeric as total
+            FROM garage_payouts gp
+            JOIN garages g ON gp.garage_id = g.garage_id
+            ${whereClause}
+            GROUP BY g.garage_id, g.garage_name
+            ORDER BY total DESC
+        `, queryParams);
+
+        const garages = result.rows.map(r => ({
+            garage_id: r.garage_id,
+            garage_name: r.garage_name,
+            payout_count: r.payout_count,
+            total: parseFloat(r.total)
+        }));
+
+        const count = garages.reduce((sum, g) => sum + g.payout_count, 0);
+        const total_amount = garages.reduce((sum, g) => sum + g.total, 0);
+
+        return { count, total_amount, garages };
+    }
+
+    /**
+     * Send batch payments efficiently
+     * Processes all matching payouts in a single transaction
+     * Uses bulk UPDATE for performance (not a loop)
+     */
+    async sendBatchPayments(
+        dto: BatchPaymentDto,
+        sentBy: string
+    ): Promise<BatchPaymentResult> {
+        const { payout_ids, garage_id, all_pending, reference_number, notes } = dto;
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // Build WHERE clause based on filter mode
+            let whereClause = "payout_status = 'pending'";
+            const queryParams: unknown[] = [sentBy, reference_number, notes || 'Batch payment'];
+            let paramIndex = 4;
+
+            if (payout_ids && payout_ids.length > 0) {
+                whereClause += ` AND payout_id = ANY($${paramIndex++})`;
+                queryParams.push(payout_ids);
+            } else if (garage_id) {
+                whereClause += ` AND garage_id = $${paramIndex++}`;
+                queryParams.push(garage_id);
+            }
+            // all_pending = true processes everything with status = 'pending'
+
+            // Single bulk UPDATE for efficiency
+            const updateResult = await client.query(`
+                UPDATE garage_payouts SET
+                    payout_status = 'awaiting_confirmation',
+                    sent_at = NOW(),
+                    sent_by = $1,
+                    payout_reference = $2,
+                    notes = COALESCE(notes || E'\n', '') || $3,
+                    updated_at = NOW()
+                WHERE ${whereClause}
+                RETURNING payout_id, garage_id, net_amount
+            `, queryParams);
+
+            const processedPayouts = updateResult.rows;
+            const processed_count = processedPayouts.length;
+
+            if (processed_count === 0) {
+                await client.query('ROLLBACK');
+                return {
+                    success: false,
+                    processed_count: 0,
+                    failed_count: 0,
+                    total_amount: 0,
+                    garages_notified: 0
+                };
+            }
+
+            // Calculate totals
+            const total_amount = processedPayouts.reduce(
+                (sum, p) => sum + parseFloat(p.net_amount),
+                0
+            );
+
+            // Group by garage for summarized notifications
+            const garagePayouts = new Map<string, { count: number; total: number }>();
+            for (const p of processedPayouts) {
+                const existing = garagePayouts.get(p.garage_id) || { count: 0, total: 0 };
+                existing.count++;
+                existing.total += parseFloat(p.net_amount);
+                garagePayouts.set(p.garage_id, existing);
+            }
+
+            // Send notifications to each garage (summarized, not per-payout)
+            for (const [garageId, data] of garagePayouts) {
+                await createNotification({
+                    userId: garageId,
+                    type: 'payment_sent',
+                    title: 'Payments Sent 💰',
+                    message: data.count === 1
+                        ? `Payment of ${data.total.toFixed(2)} QAR has been sent`
+                        : `${data.count} payments totaling ${data.total.toFixed(2)} QAR have been sent`,
+                    data: {
+                        batch: true,
+                        count: data.count,
+                        total: data.total,
+                        reference_number
+                    },
+                    target_role: 'garage'
+                });
+
+                emitToGarage(garageId, 'payments_sent', {
+                    count: data.count,
+                    total: data.total,
+                    reference_number
+                });
+            }
+
+            await client.query('COMMIT');
+
+            // Notify operations dashboard
+            emitToOperations('batch_payments_sent', {
+                processed_count,
+                total_amount,
+                garages_count: garagePayouts.size,
+                reference_number
+            });
+
+            return {
+                success: true,
+                processed_count,
+                failed_count: 0,
+                total_amount,
+                garages_notified: garagePayouts.size
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Get list of garages with pending payouts (for filter dropdown)
+     */
+    async getGaragesWithPendingPayouts(): Promise<{ garages: GarageWithPendingPayouts[] }> {
+        const result = await this.pool.query(`
+            SELECT 
+                g.garage_id,
+                g.garage_name,
+                COUNT(*)::int as pending_count,
+                COALESCE(SUM(gp.net_amount), 0)::numeric as pending_total
+            FROM garage_payouts gp
+            JOIN garages g ON gp.garage_id = g.garage_id
+            WHERE gp.payout_status = 'pending'
+            GROUP BY g.garage_id, g.garage_name
+            ORDER BY pending_count DESC
+        `);
+
+        return {
+            garages: result.rows.map(r => ({
+                garage_id: r.garage_id,
+                garage_name: r.garage_name,
+                pending_count: r.pending_count,
+                pending_total: parseFloat(r.pending_total)
+            }))
+        };
     }
 }
