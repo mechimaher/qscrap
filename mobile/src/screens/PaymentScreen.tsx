@@ -27,6 +27,9 @@ import { API_BASE_URL } from '../config/api';
 
 const STRIPE_PUBLISHABLE_KEY = 'pk_test_51St6AI39lYR0XT69rqWSeL7KgzTodXnECkPed1CAsZ7KsqhJOB4W3VD6QvhWyUhrVsTfADxh33p6DIJOTH30q4dK00dnPzwcBt';
 
+// Version for cache-busting diagnostics
+const SCREEN_VERSION = 'v2.0.0-2026-01-27';
+
 interface RouteParams {
     bidId: string;
     garageName: string;
@@ -34,6 +37,7 @@ interface RouteParams {
     deliveryFee: number;
     partDescription: string;
     orderId?: string; // Optional: For resuming payment on existing order
+    _cacheKey?: string; // Cache-busting key for navigation
 }
 
 export default function PaymentScreen() {
@@ -46,6 +50,18 @@ export default function PaymentScreen() {
 
     const params = route.params as RouteParams;
     const { bidId, garageName, partDescription, orderId: existingOrderId } = params;
+
+    // 🔍 CRITICAL DEBUG: Log screen mount to diagnose cache issues
+    useEffect(() => {
+        console.log('========================================');
+        console.log(`🏦 PAYMENT SCREEN MOUNTED - ${SCREEN_VERSION}`);
+        console.log(`📦 Params: bidId=${bidId}, garageName=${garageName}`);
+        console.log(`💰 partPrice=${params.partPrice}, deliveryFee=${params.deliveryFee}`);
+        console.log('========================================');
+        return () => {
+            console.log(`🏦 PAYMENT SCREEN UNMOUNTED - ${SCREEN_VERSION}`);
+        };
+    }, []);
 
     // CRITICAL: Parse prices as numbers to prevent string concatenation
     const partPrice = parseFloat(String(params.partPrice)) || 0;

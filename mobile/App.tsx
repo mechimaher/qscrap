@@ -88,6 +88,7 @@ export type RootStackParamList = {
     partPrice: number;
     deliveryFee: number;
     partDescription: string;
+    _cacheKey?: string; // Cache-busting key
   };
   DeliveryTracking: { orderId: string };
   DeliveryConfirmation: { order?: any; escrow?: any };
