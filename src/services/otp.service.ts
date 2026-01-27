@@ -26,7 +26,7 @@ export class OTPService {
     private readonly OTP_LENGTH = 6;
     private readonly OTP_EXPIRY_MINUTES = 10;
     private readonly RESEND_COOLDOWN_SECONDS = 30;
-    private readonly MAX_ATTEMPTS = 5;
+    private readonly MAX_ATTEMPTS = 10;  // Increased from 5 for better UX
 
     /**
      * Generate a secure 6-digit OTP
@@ -83,20 +83,18 @@ export class OTPService {
 
     /**
      * Verify OTP code
+     * ROBUST: Allows many attempts without requiring new OTP
      */
     async verifyOTP(
         email: string,
         otpCode: string,
         purpose: string = 'registration'
     ): Promise<VerifyResult> {
-        const client = await pool.connect();
         try {
-            await client.query('BEGIN');
-
             email = email.toLowerCase().trim();
 
-            // Find the most recent valid OTP
-            const result = await client.query(
+            // Find the most recent valid OTP (no transaction needed for read)
+            const result = await pool.query(
                 `SELECT * FROM email_otps
                  WHERE email = $1 
                  AND purpose = $2
@@ -108,7 +106,6 @@ export class OTPService {
             );
 
             if (result.rows.length === 0) {
-                await client.query('ROLLBACK');
                 return {
                     success: false,
                     error: 'No valid OTP found. Please request a new code.'
@@ -117,40 +114,40 @@ export class OTPService {
 
             const otpRecord = result.rows[0];
 
-            // Check if max attempts exceeded
-            if (otpRecord.attempts >= otpRecord.max_attempts) {
-                await client.query('ROLLBACK');
+            // Check if max attempts exceeded (use larger limit for robustness)
+            const effectiveMaxAttempts = Math.max(otpRecord.max_attempts || this.MAX_ATTEMPTS, 10);
+            if (otpRecord.attempts >= effectiveMaxAttempts) {
                 return {
                     success: false,
-                    error: 'Maximum verification attempts exceeded. Please request a new code.'
+                    error: 'Maximum verification attempts exceeded. Please request a new code.',
+                    attemptsRemaining: 0
                 };
             }
 
-            // Increment attempts
-            await client.query(
-                `UPDATE email_otps SET attempts = attempts + 1 WHERE id = $1`,
-                [otpRecord.id]
-            );
-
-            // Verify the OTP code
+            // Verify the OTP code FIRST before incrementing attempts
             if (otpRecord.otp_code !== otpCode.trim()) {
-                const attemptsRemaining = otpRecord.max_attempts - (otpRecord.attempts + 1);
-                await client.query('ROLLBACK');
+                // Increment attempts OUTSIDE transaction so it persists
+                await pool.query(
+                    `UPDATE email_otps SET attempts = attempts + 1 WHERE id = $1`,
+                    [otpRecord.id]
+                );
+
+                const attemptsRemaining = effectiveMaxAttempts - (otpRecord.attempts + 1);
 
                 return {
                     success: false,
-                    error: `Invalid code. ${attemptsRemaining} attempts remaining.`,
-                    attemptsRemaining
+                    error: attemptsRemaining > 0
+                        ? `Invalid code. ${attemptsRemaining} attempts remaining.`
+                        : 'Invalid code. Please request a new code.',
+                    attemptsRemaining: Math.max(0, attemptsRemaining)
                 };
             }
 
-            // Mark OTP as used
-            await client.query(
+            // OTP is correct - mark as used
+            await pool.query(
                 `UPDATE email_otps SET is_used = TRUE WHERE id = $1`,
                 [otpRecord.id]
             );
-
-            await client.query('COMMIT');
 
             console.log(`[OTP] Successfully verified OTP for ${email}`);
 
@@ -158,14 +155,11 @@ export class OTPService {
                 success: true
             };
         } catch (error: any) {
-            await client.query('ROLLBACK');
             console.error('[OTP] Verify error:', error);
             return {
                 success: false,
                 error: 'Verification failed. Please try again.'
             };
-        } finally {
-            client.release();
         }
     }
 
