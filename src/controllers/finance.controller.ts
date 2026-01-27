@@ -485,21 +485,11 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
 
         // Return based on format
         if (format === 'pdf') {
-            // Try to use Puppeteer for PDF
+            // Use existing DocumentGenerationService for PDF
             try {
-                const puppeteer = require('puppeteer');
-                const browser = await puppeteer.launch({
-                    headless: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox']
-                });
-                const page = await browser.newPage();
-                await page.setContent(html, { waitUntil: 'networkidle0' });
-                const pdfBuffer = await page.pdf({
-                    format: 'A4',
-                    printBackground: true,
-                    margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
-                });
-                await browser.close();
+                const { DocumentGenerationService } = await import('../services/documents/document-generation.service');
+                const docService = new DocumentGenerationService(pool);
+                const pdfBuffer = await docService.generatePDF(html);
 
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition',
