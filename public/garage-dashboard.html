@@ -11,9 +11,306 @@
     <script src="/js/chart.min.js"></script>
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
-    <link rel="stylesheet" href="css/garage-dashboard.css?v=2.3">
-    <!-- Leaflet CSS for GPS Location Picker (Free, No Billing) -->
-    <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="css/garage-dashboard.css?v=2.4">
+    <!-- Google Maps Location Picker - Upgraded from Leaflet Jan 27, 2026 -->
+    <style>
+        /* Modern Map Card System - Chic Driver-Style Design */
+        .gmap-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            border: 1px solid rgba(168, 32, 80, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(212, 175, 55, 0.1);
+        }
+
+        .gmap-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #A82050, #D4AF37, #A82050);
+            z-index: 10;
+        }
+
+        .gmap-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gmap-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .gmap-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(168, 32, 80, 0.4);
+        }
+
+        .gmap-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .gmap-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .gmap-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .gmap-badge.set {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .gmap-badge.required {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            animation: pulse-badge 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-badge {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .gmap-container {
+            height: 350px;
+            position: relative;
+        }
+
+        .gmap-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to top, rgba(26, 26, 46, 0.9), transparent);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .gmap-controls {
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .gmap-search-wrapper {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .gmap-search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .gmap-search-input:focus {
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            outline: none;
+        }
+
+        .gmap-search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .gmap-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .gmap-btn-locate {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .gmap-btn-locate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .gmap-btn-save {
+            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
+            color: white;
+        }
+
+        .gmap-btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 32, 80, 0.4);
+        }
+
+        .gmap-coords {
+            display: flex;
+            gap: 16px;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gmap-coord-item {
+            flex: 1;
+        }
+
+        .gmap-coord-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .gmap-coord-value {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 14px;
+            color: #D4AF37;
+            font-weight: 600;
+        }
+
+        /* Google Maps custom marker styling */
+        .qscrap-marker {
+            width: 40px;
+            height: 50px;
+            position: relative;
+        }
+
+        .qscrap-marker-pin {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #A82050 0%, #8D1B3D 100%);
+            border: 3px solid #D4AF37;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qscrap-marker-dot {
+            width: 14px;
+            height: 14px;
+            background: #D4AF37;
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+
+        .qscrap-marker-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(168, 32, 80, 0.3);
+            border-radius: 50%;
+            animation: marker-pulse 2s ease-out infinite;
+        }
+
+        @keyframes marker-pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Autocomplete dropdown styling */
+        .pac-container {
+            background: #1a1a2e !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            border-radius: 12px !important;
+            margin-top: 8px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        .pac-item {
+            padding: 12px 16px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-primary) !important;
+            cursor: pointer !important;
+        }
+
+        .pac-item:hover {
+            background: rgba(168, 32, 80, 0.2) !important;
+        }
+
+        .pac-item-query {
+            color: #D4AF37 !important;
+            font-weight: 600 !important;
+        }
+
+        .pac-icon {
+            filter: invert(1) !important;
+        }
+
+        .pac-matched {
+            font-weight: 600 !important;
+        }
+    </style>
     <script>
         // Critical UI Interaction - Inlined for robustness
         window.toggleSidebar = function () {
@@ -1450,8 +1747,27 @@
     </div>
 
     <script src="/lib/socket.io/socket.io.min.js"></script>
-    <!-- Leaflet JS for GPS Location Picker -->
-    <script src="/lib/leaflet/leaflet.js"></script>
+    <!-- Google Maps SDK with Places for Location Picker (Jan 27, 2026) -->
+    <script>
+        // Google Maps Async Loader with callback
+        window.googleMapsReady = false;
+        window.initGoogleMapsCallback = function () {
+            window.googleMapsReady = true;
+            console.log('[Google Maps] SDK Ready');
+            // If profile was already loaded, reinitialize the map
+            if (window.pendingMapInit) {
+                const { lat, lng } = window.pendingMapInit;
+                window.initLocationMap(lat, lng);
+            }
+        };
+        (function () {
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw&libraries=places&callback=initGoogleMapsCallback';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        })();
+    </script>
     <!-- Shared JS utilities (must come before module JS) -->
     <script src="js/shared/utils.js"></script>
     <script src="js/shared/toast.js"></script>
