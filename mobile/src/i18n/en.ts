@@ -327,6 +327,18 @@ export const en = {
         helpGaragesIdentify: 'Help garages identify your car',
         frontView: '🚗 Front View (License Plate)',
         rearView: '🚙 Rear View (Model ID)',
+        // Part Specifications
+        partSpecs: 'Part Specifications',
+        quantity: 'Quantity',
+        pcs: 'pcs',
+        side: 'Position / Side',
+        leftSide: 'Left',
+        rightSide: 'Right',
+        bothSides: 'Both',
+        notApplicable: 'N/A',
+        leftDriver: 'Left (Driver)',
+        rightPassenger: 'Right (Passenger)',
+        position: 'Position',
 
         submitting: 'Submitting...',
         missingVehicle: 'Missing Vehicle',

@@ -76,6 +76,10 @@ export default function NewRequestScreen() {
     const [condition, setCondition] = useState('any');
     const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
 
+    // Part Specifications - Quantity and Side
+    const [quantity, setQuantity] = useState<number>(1);
+    const [side, setSide] = useState<'left' | 'right' | 'both' | 'na'>('na');
+
     // Photos - Split into Part Damage and Vehicle ID
     const [images, setImages] = useState<string[]>([]);  // Part damage photos
     const [carFrontImage, setCarFrontImage] = useState<string | null>(null);  // Vehicle front ID
@@ -345,8 +349,25 @@ export default function NewRequestScreen() {
                 formData.append('vin_number', selectedVehicle.vin_number);
             }
 
-            // Part data
-            formData.append('part_description', partDescription.trim());
+            // Part data - Build final description with specs
+            let finalDescription = partDescription.trim();
+
+            // Append quantity if more than 1
+            if (quantity > 1) {
+                finalDescription += `\n\n📦 ${t('newRequest.quantity')}: ${quantity} ${t('newRequest.pcs')}`;
+            }
+
+            // Append side/position if specified
+            if (side !== 'na') {
+                const sideLabels: Record<string, string> = {
+                    left: t('newRequest.leftDriver'),
+                    right: t('newRequest.rightPassenger'),
+                    both: t('newRequest.bothSides')
+                };
+                finalDescription += `\n📍 ${t('newRequest.position')}: ${sideLabels[side]}`;
+            }
+
+            formData.append('part_description', finalDescription);
             if (partCategory) formData.append('part_category', partCategory);
             if (partSubCategory) formData.append('part_subcategory', partSubCategory);
             if (partNumber.trim()) formData.append('part_number', partNumber.trim());
@@ -579,6 +600,84 @@ export default function NewRequestScreen() {
                                 <Text style={[styles.charCount, { color: colors.textMuted }]}>
                                     {partDescription.length}/500
                                 </Text>
+                            </View>
+
+                            {/* Part Specifications Card */}
+                            <View style={[styles.specsCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                                <View style={[styles.specsHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <Text style={styles.specsIcon}>📋</Text>
+                                    <Text style={[styles.specsTitle, { color: colors.text }]}>{t('newRequest.partSpecs')}</Text>
+                                </View>
+
+                                {/* Quantity Stepper */}
+                                <View style={styles.specsRow}>
+                                    <Text style={[styles.specsLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.quantity')}
+                                    </Text>
+                                    <View style={[styles.quantityStepper, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                if (quantity > 1) {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                    setQuantity(q => Math.max(1, q - 1));
+                                                }
+                                            }}
+                                            style={[styles.stepperBtn, { backgroundColor: quantity > 1 ? Colors.primary + '15' : colors.border }]}
+                                        >
+                                            <Text style={[styles.stepperBtnText, { color: quantity > 1 ? Colors.primary : colors.textMuted }]}>−</Text>
+                                        </TouchableOpacity>
+                                        <View style={[styles.stepperValue, { backgroundColor: colors.surface }]}>
+                                            <Text style={[styles.stepperValueText, { color: colors.text }]}>{quantity}</Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                if (quantity < 10) {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                    setQuantity(q => Math.min(10, q + 1));
+                                                }
+                                            }}
+                                            style={[styles.stepperBtn, { backgroundColor: quantity < 10 ? Colors.primary + '15' : colors.border }]}
+                                        >
+                                            <Text style={[styles.stepperBtnText, { color: quantity < 10 ? Colors.primary : colors.textMuted }]}>+</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+
+                                {/* Side Selection */}
+                                <View style={styles.specsRow}>
+                                    <Text style={[styles.specsLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('newRequest.side')}
+                                    </Text>
+                                </View>
+                                <View style={[styles.sideGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    {[
+                                        { value: 'left', label: t('newRequest.leftSide'), icon: '◀️' },
+                                        { value: 'right', label: t('newRequest.rightSide'), icon: '▶️' },
+                                        { value: 'both', label: t('newRequest.bothSides'), icon: '⇆' },
+                                        { value: 'na', label: t('newRequest.notApplicable'), icon: '⚙️' },
+                                    ].map((opt) => (
+                                        <TouchableOpacity
+                                            key={opt.value}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setSide(opt.value as typeof side);
+                                            }}
+                                            style={[
+                                                styles.sideCard,
+                                                {
+                                                    backgroundColor: side === opt.value ? Colors.primary + '15' : colors.surface,
+                                                    borderColor: side === opt.value ? Colors.primary : colors.border,
+                                                    borderWidth: side === opt.value ? 2 : 1,
+                                                },
+                                            ]}
+                                        >
+                                            <Text style={styles.sideIcon}>{opt.icon}</Text>
+                                            <Text style={[styles.sideLabel, { color: side === opt.value ? Colors.primary : colors.text }]}>
+                                                {opt.label}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             </View>
 
                             {/* Part Number (Optional) */}
@@ -1045,5 +1144,84 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         textAlign: 'center',
         marginTop: Spacing.sm,
+    },
+    // Part Specifications Card Styles
+    specsCard: {
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        padding: Spacing.md,
+        marginTop: Spacing.md,
+    },
+    specsHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    specsIcon: {
+        fontSize: 18,
+        marginRight: Spacing.sm,
+    },
+    specsTitle: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
+    specsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.sm,
+    },
+    specsLabel: {
+        fontSize: FontSizes.sm,
+        fontWeight: '500',
+    },
+    quantityStepper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
+    },
+    stepperBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: BorderRadius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    stepperBtnText: {
+        fontSize: 24,
+        fontWeight: '600',
+    },
+    stepperValue: {
+        minWidth: 50,
+        height: 40,
+        borderRadius: BorderRadius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: Spacing.md,
+    },
+    stepperValueText: {
+        fontSize: FontSizes.lg,
+        fontWeight: '700',
+    },
+    sideGrid: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    sideCard: {
+        flex: 1,
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.xs,
+        borderRadius: BorderRadius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    sideIcon: {
+        fontSize: 18,
+        marginBottom: 4,
+    },
+    sideLabel: {
+        fontSize: FontSizes.xs,
+        fontWeight: '600',
+        textAlign: 'center',
     },
 });
