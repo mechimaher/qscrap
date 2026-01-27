@@ -6056,3 +6056,96 @@ function previewFullImage(url) {
 // End of garage-dashboard.js
 // Supplier specialization logic at lines 2160-2340
 
+// ============================================
+// TAX INVOICE DOWNLOAD (Garage Portal)
+// ============================================
+
+/**
+ * Initialize invoice date pickers with default values (last 30 days)
+ */
+function initInvoiceDatePickers() {
+    const fromInput = document.getElementById('invoiceFromDate');
+    const toInput = document.getElementById('invoiceToDate');
+
+    if (fromInput && toInput) {
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        fromInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        toInput.value = today.toISOString().split('T')[0];
+    }
+}
+
+/**
+ * Download consolidated Tax Invoice for selected date range
+ * @param {string} format - 'pdf' or 'html'
+ */
+async function downloadMyTaxInvoice(format = 'pdf') {
+    const fromDate = document.getElementById('invoiceFromDate')?.value;
+    const toDate = document.getElementById('invoiceToDate')?.value;
+
+    if (!fromDate || !toDate) {
+        showToast('Please select From and To dates', 'warning');
+        return;
+    }
+
+    if (new Date(fromDate) > new Date(toDate)) {
+        showToast('From date cannot be after To date', 'error');
+        return;
+    }
+
+    showToast(`Generating ${format.toUpperCase()} invoice...`, 'info');
+
+    try {
+        const url = `${API_URL}/dashboard/garage/my-payout-statement?from_date=${fromDate}&to_date=${toDate}&format=${format}`;
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}`);
+        }
+
+        if (format === 'pdf') {
+            // Download PDF as blob
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `tax-invoice-${fromDate}-to-${toDate}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+            showToast('PDF Invoice downloaded!', 'success');
+        } else {
+            // Open HTML in new tab
+            const html = await res.text();
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+                newWindow.document.write(html);
+                newWindow.document.close();
+                showToast('Invoice opened in new tab', 'success');
+            } else {
+                showToast('Pop-up blocked. Please allow pop-ups.', 'warning');
+            }
+        }
+    } catch (err) {
+        console.error('Invoice download error:', err);
+        showToast(err.message || 'Failed to generate invoice', 'error');
+    }
+}
+
+// Initialize date pickers when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initInvoiceDatePickers();
+});
+
+// Also try init immediately in case DOM already loaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(initInvoiceDatePickers, 100);
+}
+

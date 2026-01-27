@@ -529,6 +529,34 @@
                             style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Cancelled</button>
                     </div>
                 </div>
+
+                <!-- Tax Invoice Download Toolbar -->
+                <div
+                    style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-file-earmark-pdf" style="font-size: 20px; color: #10b981;"></i>
+                        <span style="font-weight: 600; color: var(--text-primary);">Tax Invoice / فاتورة ضريبية</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+                        <label style="font-size: 12px; color: var(--text-secondary);">From:</label>
+                        <input type="date" id="invoiceFromDate"
+                            style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-primary); font-size: 12px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-size: 12px; color: var(--text-secondary);">To:</label>
+                        <input type="date" id="invoiceToDate"
+                            style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-primary); font-size: 12px;">
+                    </div>
+                    <button onclick="downloadMyTaxInvoice('pdf')"
+                        style="padding: 8px 16px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <i class="bi bi-file-pdf"></i> PDF
+                    </button>
+                    <button onclick="downloadMyTaxInvoice('html')"
+                        style="padding: 8px 16px; background: transparent; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        <i class="bi bi-code-slash"></i> HTML
+                    </button>
+                </div>
+
                 <div id="ordersList"></div>
                 <div id="ordersPagination" style="margin-top: 20px;"></div>
             </section>
@@ -1224,7 +1252,8 @@
                         <div><strong>Vehicle:</strong> <span id="orderModalVehicle"></span></div>
                         <div><strong>Price:</strong> <span id="orderModalPrice"
                                 style="color: var(--success); font-weight: 600;"></span></div>
-                        <div style="grid-column: 1/-1;"><strong>Category:</strong> <span id="orderModalCategory"></span></div>
+                        <div style="grid-column: 1/-1;"><strong>Category:</strong> <span id="orderModalCategory"></span>
+                        </div>
                         <div style="grid-column: 1/-1;"><strong>Part:</strong> <span id="orderModalPart"></span></div>
                         <div><strong>Condition:</strong> <span id="orderModalCondition"></span></div>
                         <div><strong>Warranty:</strong> <span id="orderModalWarranty"></span></div>
