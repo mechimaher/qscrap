@@ -1,72 +1,99 @@
-// QScrap Theme Context - Single unified premium theme
-// No dark mode - Qatar Premium Edition
-import React, { createContext, useContext, ReactNode } from 'react';
+// QScrap Theme Context - VVIP 2026 with Dark Mode
+// Qatar Premium Edition with System Preference Support
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { lightTheme, darkTheme, ThemeColors } from '../constants/theme';
 
-export interface ThemeColors {
-    background: string;
-    surface: string;
-    surfaceElevated: string;
-    surfaceSecondary: string;
-    card: string;
-    border: string;
-    text: string;
-    textSecondary: string;
-    textMuted: string;
-    primary: string;
+const THEME_STORAGE_KEY = '@qscrap_theme_preference';
+
+// Extended colors with additional computed values for backward compatibility
+export interface ExtendedThemeColors extends ThemeColors {
     primaryDark: string;
     primaryLight: string;
-    secondary: string;
-    success: string;
-    warning: string;
-    error: string;
-    danger: string;
-    info: string;
     gold: string;
 }
-
-// Qatar Premium Theme - Single unified theme
-const qatarPremiumColors: ThemeColors = {
-    background: '#FAFAFA',
-    surface: '#FFFFFF',
-    surfaceElevated: '#FFFFFF',
-    surfaceSecondary: '#F5F5F5',
-    card: '#FFFFFF',
-    border: '#E5E5E5',
-    text: '#1A1A1A',
-    textSecondary: '#4A4A4A',
-    textMuted: '#6A6A6A',
-    primary: '#8D1B3D',
-    primaryDark: '#6B1530',
-    primaryLight: '#A82050',
-    secondary: '#C9A227',
-    success: '#059669',
-    warning: '#d97706',
-    error: '#dc2626',
-    danger: '#dc2626',
-    info: '#C9A227',
-    gold: '#C9A227',
-};
 
 export interface ThemeContextType {
     isDarkMode: boolean;
     isDark: boolean;  // Alias for backward compatibility
     toggleTheme: () => void;
-    colors: ThemeColors;
+    setTheme: (mode: 'light' | 'dark' | 'system') => void;
+    themeMode: 'light' | 'dark' | 'system';
+    colors: ExtendedThemeColors;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    // Fixed to light mode - no dark mode toggle
-    const isDarkMode = false;
-    const isDark = false;
-    const toggleTheme = () => {
-        // No-op - single theme only
-        console.log('Theme toggle disabled - Qatar Premium single theme');
+    const systemColorScheme = useColorScheme();
+    const [themeMode, setThemeModeState] = useState<'light' | 'dark' | 'system'>('system');
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Load saved theme preference
+    useEffect(() => {
+        loadThemePreference();
+    }, []);
+
+    const loadThemePreference = async () => {
+        try {
+            const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+            if (saved && (saved === 'light' || saved === 'dark' || saved === 'system')) {
+                setThemeModeState(saved);
+            }
+        } catch (e) {
+            console.log('Failed to load theme preference');
+        } finally {
+            setIsLoaded(true);
+        }
     };
 
+    const setTheme = async (mode: 'light' | 'dark' | 'system') => {
+        setThemeModeState(mode);
+        try {
+            await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
+        } catch (e) {
+            console.log('Failed to save theme preference');
+        }
+    };
+
+    const toggleTheme = () => {
+        const newMode = isDarkMode ? 'light' : 'dark';
+        setTheme(newMode);
+    };
+
+    // Determine actual dark mode based on preference
+    const isDarkMode = themeMode === 'system'
+        ? systemColorScheme === 'dark'
+        : themeMode === 'dark';
+
+    const isDark = isDarkMode; // Alias
+
+    // Select theme colors
+    const baseColors = isDarkMode ? darkTheme : lightTheme;
+
+    // Extend with computed values for backward compatibility
+    const colors: ExtendedThemeColors = {
+        ...baseColors,
+        primaryDark: '#6B1530',
+        primaryLight: '#A82050',
+        gold: '#C9A227',
+    };
+
+    // Don't render until theme is loaded to prevent flash
+    if (!isLoaded) {
+        return null;
+    }
+
     return (
-        <ThemeContext.Provider value={{ isDarkMode, isDark, toggleTheme, colors: qatarPremiumColors }}>
+        <ThemeContext.Provider value={{
+            isDarkMode,
+            isDark,
+            toggleTheme,
+            setTheme,
+            themeMode,
+            colors
+        }}>
             {children}
         </ThemeContext.Provider>
     );
@@ -81,4 +108,5 @@ export function useTheme(): ThemeContextType {
 }
 
 // Export colors for static usage
-export { qatarPremiumColors as lightColors, qatarPremiumColors as darkColors };
+export const lightColors = lightTheme;
+export const darkColors = darkTheme;

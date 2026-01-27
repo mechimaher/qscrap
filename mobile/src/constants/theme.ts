@@ -1,8 +1,11 @@
 // QScrap Premium Theme - Qatar National Colors Edition
-// Single unified theme - No dark mode
+// VVIP 2026 - Dark Mode Support with Qatar Branding
+// Brain Compliant: #8D1B3D (Maroon) + #C9A227 (Gold)
 
-// Theme colors object (used by both light and dark for compatibility)
-const themeColors = {
+// ============================================
+// LIGHT THEME - Classic Qatar Premium
+// ============================================
+export const lightTheme = {
     background: '#FAFAFA',
     surface: '#FFFFFF',
     surfaceSecondary: '#F5F5F5',
@@ -15,6 +18,7 @@ const themeColors = {
     text: '#1A1A1A',
     textSecondary: '#4A4A4A',
     textMuted: '#6A6A6A',
+    textInverse: '#FFFFFF',
 
     primary: '#8D1B3D',
     secondary: '#C9A227', // Gold accent
@@ -26,7 +30,82 @@ const themeColors = {
     danger: '#dc2626',
     error: '#dc2626',
     info: '#C9A227',
+
+    // Input fields
+    inputBackground: '#FFFFFF',
+    inputBorder: '#E5E5E5',
+    inputText: '#1A1A1A',
+    placeholder: '#9CA3AF',
 };
+
+// ============================================
+// DARK THEME - Qatar Night Premium
+// ============================================
+export const darkTheme = {
+    background: '#0A0A0B',
+    surface: '#141416',
+    surfaceSecondary: '#1C1C1F',
+    surfaceElevated: '#1F1F23',
+    card: '#1C1C1F',
+    cardHover: '#252529',
+    border: '#2C2C30',
+    borderLight: '#252529',
+
+    text: '#FAFAFA',
+    textSecondary: '#A1A1AA',
+    textMuted: '#71717A',
+    textInverse: '#1A1A1A',
+
+    primary: '#8D1B3D', // Same Qatar Maroon
+    secondary: '#C9A227', // Same Gold accent
+    statusBar: 'light' as const,
+
+    // Additional colors for components
+    success: '#10B981',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    error: '#EF4444',
+    info: '#C9A227',
+
+    // Input fields
+    inputBackground: '#1C1C1F',
+    inputBorder: '#2C2C30',
+    inputText: '#FAFAFA',
+    placeholder: '#71717A',
+};
+
+// Proper type that supports both light and dark themes
+export interface ThemeColors {
+    background: string;
+    surface: string;
+    surfaceSecondary: string;
+    surfaceElevated: string;
+    card: string;
+    cardHover: string;
+    border: string;
+    borderLight: string;
+    text: string;
+    textSecondary: string;
+    textMuted: string;
+    textInverse: string;
+    primary: string;
+    secondary: string;
+    statusBar: 'light' | 'dark';
+    success: string;
+    warning: string;
+    danger: string;
+    error: string;
+    info: string;
+    inputBackground: string;
+    inputBorder: string;
+    inputText: string;
+    placeholder: string;
+}
+
+// ============================================
+// BACKWARD COMPATIBILITY
+// ============================================
+const themeColors = lightTheme;
 
 export const Colors = {
     // Primary Brand - Qatar Maroon
@@ -45,22 +124,23 @@ export const Colors = {
     error: '#dc2626',
     info: '#C9A227',
 
-    // BACKWARD COMPATIBILITY: Both light and dark point to same theme
-    light: themeColors,
-    dark: themeColors,
-
-    // New unified theme reference
-    theme: themeColors,
+    // Theme references
+    light: lightTheme,
+    dark: darkTheme,
+    theme: themeColors, // Default to light
 
     // Gradients (use with LinearGradient) - Qatar theme
     gradients: {
         primary: ['#8D1B3D', '#6B1530'] as const,
         primaryDark: ['#6B1530', '#8D1B3D'] as const,
         card: ['#FFFFFF', '#F8F8F8'] as const,
+        cardDark: ['#1C1C1F', '#141416'] as const,
         premium: ['#8D1B3D', '#C9A227'] as const,
         gold: ['#C9A227', '#A68520'] as const,
         champagne: ['#FFFFFF', '#FFF9E6'] as const, // Warm premium light
+        champagneDark: ['#1C1C1F', '#1F1A10'] as const, // Warm premium dark
         pearl: ['#FFFFFF', '#F5F5F7'] as const, // Cool premium light
+        pearlDark: ['#141416', '#1C1C1F'] as const, // Cool premium dark
     }
 };
 
@@ -71,7 +151,7 @@ export const Spacing = {
     lg: 24,
     xl: 32,
     xxl: 48,
-    xxxl: 64, // Added for components that need extra large spacing
+    xxxl: 64,
 };
 
 export const BorderRadius = {
@@ -94,7 +174,7 @@ export const FontSizes = {
     display: 40,
 };
 
-// Alias for backward compatibility (some components use singular form)
+// Alias for backward compatibility
 export const FontSize = FontSizes;
 
 export const FontWeights = {
@@ -103,6 +183,15 @@ export const FontWeights = {
     semibold: '600' as const,
     bold: '700' as const,
     heavy: '800' as const,
+};
+
+// VVIP 2026 - Inter Font Family
+export const FontFamily = {
+    regular: 'Inter_400Regular',
+    medium: 'Inter_500Medium',
+    semibold: 'Inter_600SemiBold',
+    bold: 'Inter_700Bold',
+    heavy: 'Inter_800ExtraBold',
 };
 
 export const Shadows = {

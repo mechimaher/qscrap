@@ -500,4 +500,17 @@ This document overrides opinions, speed pressure, and assumptions.
 > **Compliance**: Qatar MOC, PDPPL, Law No. 8 of 2008
 
 ---
+
+## 22. As part of this task, please focus on delivering a high-quality implementation by adhering to best practices throughout the stack:
+
+Frontend – maintain clean and modular code.
+
+Backend & DB – ensure stability, optimize performance, and handle errors robustly.
+
+Sockets / Epo notifications – implement with reliability in mind, catching errors to prevent crashes.
+
+JS & General Code – write maintainable, readable code and cover edge cases for stability.
+
+Overall – prioritize robustness, clean architecture, and application stability.
+
 *Frozen: Jan 27, 2026 - v2.0 Platinum | Institutional Memory*
