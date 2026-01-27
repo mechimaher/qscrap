@@ -245,7 +245,6 @@ export class SupportService {
                    cu.phone_number as customer_phone,
                    o.order_number,
                    o.order_status,
-                   o.delivery_status,
                    o.delivery_address,
                    o.created_at as order_created_at,
                    o.total_amount,
