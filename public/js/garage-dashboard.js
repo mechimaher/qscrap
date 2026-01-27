@@ -2453,12 +2453,17 @@ function initLocationMap(lat, lng) {
         container.innerHTML = '';
     }
 
-    // Create Google Map
+    // Create Google Map - Light theme with satellite toggle
     locationMap = new google.maps.Map(container, {
         center: { lat: defaultLat, lng: defaultLng },
         zoom: hasLocation ? 16 : 12,
-        styles: QATAR_MAP_STYLE,
-        mapTypeControl: false,
+        // No custom styles - use default light theme for readability
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: google.maps.ControlPosition.TOP_RIGHT,
+            mapTypeIds: ['roadmap', 'satellite', 'hybrid']
+        },
         streetViewControl: false,
         fullscreenControl: true,
         gestureHandling: 'greedy'
