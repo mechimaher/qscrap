@@ -18,7 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useToast } from '../../components/Toast';
 import AccountDeletionModal from '../../components/AccountDeletionModal';
-import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
+import { APP_VERSION } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -240,8 +240,8 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.legal')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="🔒" label={t('settings.privacyPolicy')} onPress={() => Linking.openURL(PRIVACY_URL)} />
-                        <MenuItem icon="📄" label={t('settings.termsOfService')} onPress={() => Linking.openURL(TERMS_URL)} />
+                        <MenuItem icon="🔒" label={t('settings.privacyPolicy')} onPress={() => navigation.navigate('PrivacyPolicy')} />
+                        <MenuItem icon="📄" label={t('settings.termsOfService')} onPress={() => navigation.navigate('Terms')} />
                     </View>
                 </View>
 

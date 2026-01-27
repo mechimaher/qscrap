@@ -152,7 +152,7 @@ export class AuthService {
             if (userType === 'customer') {
                 // Cancel all active requests
                 await client.query(
-                    `UPDATE requests SET status = 'cancelled' 
+                    `UPDATE part_requests SET status = 'cancelled' 
                      WHERE customer_id = $1 AND status IN ('active', 'pending')`,
                     [userId]
                 );
@@ -186,8 +186,8 @@ export class AuthService {
 
                 // Cancel active bids
                 await client.query(
-                    `UPDATE bids SET bid_status = 'withdrawn' 
-                     WHERE garage_id = $1 AND bid_status = 'active'`,
+                    `UPDATE bids SET status = 'withdrawn' 
+                     WHERE garage_id = $1 AND status = 'pending'`,
                     [userId]
                 );
             }
