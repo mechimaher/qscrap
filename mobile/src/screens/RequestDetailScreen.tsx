@@ -949,7 +949,7 @@ export default function RequestDetailScreen() {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Requests' as never)} style={[styles.backButton, { backgroundColor: colors.background }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                         <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
@@ -985,7 +985,7 @@ export default function RequestDetailScreen() {
 
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.navigate('Requests' as never)} style={[styles.backButton, { backgroundColor: colors.background }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
                     <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
