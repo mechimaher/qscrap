@@ -229,6 +229,9 @@ export const en = {
         enterprise: 'ENTERPRISE',
         featuredParts: 'Featured Parts',
         premiumGarages: 'From Premium Enterprise Garages',
+        welcomeNewUser: 'Welcome to QScrap!',
+        startFirstRequest: 'Find your first car part from verified Qatar suppliers',
+        getStarted: 'Get Started',
         step: 'STEP',
         of: 'OF',
         swipeNext: 'Swipe to see next step',
@@ -657,6 +660,12 @@ export const en = {
         termsOfService: 'Terms of Service',
         contactSupport: 'Contact Support',
         privacyPolicy: 'Privacy Policy',
+        // VVIP 2026 - Dark Mode
+        theme: 'Theme',
+        light: 'Light',
+        dark: 'Dark',
+        system: 'System',
+        chooseTheme: 'Choose your preferred theme',
     },
 
     // =============================================
@@ -1429,6 +1438,20 @@ export const en = {
         // Section 10 - Contact
         section10Title: '10. Contact Us',
         section10Content: 'For questions about this Privacy Policy, please contact us at:',
+    },
+
+    // =============================================
+    // ACCESSIBILITY - Screen Reader Labels
+    // =============================================
+    accessibility: {
+        notifications: 'Notifications',
+        viewNotifications: 'View your notifications',
+        loyaltyBadge: 'Your loyalty status',
+        viewRewards: 'View your rewards',
+        deliveryLocation: 'Delivery location',
+        changeLocation: 'Change your delivery address',
+        newRequest: 'Create new part request',
+        newRequestHint: 'Tap to request a car part',
     },
 };
 

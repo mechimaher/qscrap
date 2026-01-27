@@ -230,6 +230,9 @@ export const ar = {
         enterprise: 'مؤسسة معتمدة',
         featuredParts: 'قطع مميزة',
         premiumGarages: 'من كراجات النخبة',
+        welcomeNewUser: 'مرحباً بك في كيو سكراب!',
+        startFirstRequest: 'ابحث عن قطعة سيارتك الأولى من موردين معتمدين في قطر',
+        getStarted: 'ابدأ الآن',
         step: 'خطوة',
         of: 'من',
         swipeNext: 'اسحب لرؤية الخطوة التالية',
@@ -658,6 +661,12 @@ export const ar = {
         termsOfService: 'شروط الخدمة',
         contactSupport: 'التواصل مع الدعم',
         privacyPolicy: 'سياسة الخصوصية',
+        // VVIP 2026 - الوضع الداكن
+        theme: 'السمة',
+        light: 'فاتح',
+        dark: 'داكن',
+        system: 'النظام',
+        chooseTheme: 'اختر السمة المفضلة لديك',
     },
 
     // =============================================
@@ -1436,6 +1445,20 @@ export const ar = {
         // القسم 10 - التواصل
         section10Title: '10. تواصل معنا',
         section10Content: 'للأسئلة حول سياسة الخصوصية، يرجى التواصل معنا على:',
+    },
+
+    // =============================================
+    // ACCESSIBILITY - تسميات قارئ الشاشة
+    // =============================================
+    accessibility: {
+        notifications: 'الإشعارات',
+        viewNotifications: 'عرض الإشعارات',
+        loyaltyBadge: 'حالة الولاء',
+        viewRewards: 'عرض المكافآت',
+        deliveryLocation: 'موقع التوصيل',
+        changeLocation: 'تغيير عنوان التوصيل',
+        newRequest: 'إنشاء طلب قطعة جديد',
+        newRequestHint: 'اضغط لطلب قطعة سيارة',
     },
 };
 

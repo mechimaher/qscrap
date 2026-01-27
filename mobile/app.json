@@ -129,7 +129,8 @@
           "merchantIdentifier": "merchant.qa.qscrap.app",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "privacyPolicyUrl": "https://qscrap.qa/privacy",

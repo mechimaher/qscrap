@@ -1,5 +1,5 @@
 // QScrap Home Screen - Premium 2026 Brand Experience
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import {
     View,
     Text,
@@ -25,7 +25,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron } from '../../utils/rtl';
 import { api, Stats } from '../../services/api';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, FontFamily, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
 import { useToast } from '../../components/Toast';
@@ -36,7 +36,7 @@ import { DeliveryLocationWidget } from '../../components/DeliveryLocationWidget'
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
-const SUPPORT_PHONE = '97430007227'; // QScrap Enterprise Support
+const SUPPORT_PHONE = '97444554444'; // QScrap Enterprise Support per QSCRAP_BRAIN.md
 
 // ============================================
 // ANIMATED COUNT-UP COMPONENT
@@ -171,6 +171,9 @@ const HeroWelcome = ({
                     <TouchableOpacity
                         style={styles.notificationBtn}
                         onPress={onNotificationPress}
+                        accessibilityLabel={t('accessibility.notifications') || 'Notifications'}
+                        accessibilityHint={t('accessibility.viewNotifications') || 'View your notifications'}
+                        accessibilityRole="button"
                     >
                         <Text style={styles.notificationIcon}>🔔</Text>
                         {unreadCount > 0 && (
@@ -190,7 +193,13 @@ const HeroWelcome = ({
 
                 {/* Compact Loyalty Badge - VIP Status Display */}
                 {loyalty && (
-                    <TouchableOpacity onPress={onLoyaltyPress} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        onPress={onLoyaltyPress}
+                        activeOpacity={0.7}
+                        accessibilityLabel={t('accessibility.loyaltyBadge') || 'Your loyalty status'}
+                        accessibilityHint={t('accessibility.viewRewards') || 'View your rewards'}
+                        accessibilityRole="button"
+                    >
                         <Animated.View style={[styles.heroLoyaltyBadge, { opacity: loyaltyGlow, alignSelf: isRTL ? 'flex-end' : 'flex-start', marginLeft: isRTL ? 0 : Spacing.lg, marginRight: isRTL ? Spacing.lg : 0, flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.heroLoyaltyEmoji}>{getTierEmoji(loyalty.tier)}</Text>
                             <Text style={styles.heroLoyaltyTier}>{t('loyalty.tierLabel', { tier: t(`loyalty.${loyalty.tier.toLowerCase()}`) })}</Text>
@@ -208,6 +217,9 @@ const HeroWelcome = ({
                     style={styles.locationSection}
                     onPress={onLocationPress}
                     activeOpacity={0.7}
+                    accessibilityLabel={t('accessibility.deliveryLocation') || 'Delivery location'}
+                    accessibilityHint={t('accessibility.changeLocation') || 'Change your delivery address'}
+                    accessibilityRole="button"
                 >
                     <View style={[styles.locationContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <View style={styles.locationIconContainer}>
@@ -295,6 +307,9 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={1}
+                accessibilityLabel={t('accessibility.newRequest') || 'Create new part request'}
+                accessibilityHint={t('accessibility.newRequestHint') || 'Tap to request a car part'}
+                accessibilityRole="button"
             >
                 <View style={[styles.ctaCard, { backgroundColor: colors.surface }]}>
                     {/* Glow effect */}
@@ -309,12 +324,22 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                         <View style={styles.ctaContent}>
                             <Text style={[styles.ctaTitle, { color: colors.primary }]}>{t('home.findYourPart')}</Text>
 
-                            {/* Request Button - Center */}
+                            {/* Request Button - Center with Premium Shadow */}
                             <Animated.View style={[
                                 styles.ctaButton,
-                                { transform: [{ scale: plusScale }], marginTop: Spacing.md, alignSelf: 'center', backgroundColor: colors.primary }
+                                {
+                                    transform: [{ scale: plusScale }],
+                                    marginTop: Spacing.md,
+                                    alignSelf: 'center',
+                                    backgroundColor: colors.primary,
+                                    shadowColor: colors.primary,
+                                    shadowOffset: { width: 0, height: 4 },
+                                    shadowOpacity: 0.4,
+                                    shadowRadius: 8,
+                                    elevation: 8,
+                                }
                             ]}>
-                                <Text style={[styles.ctaButtonText, { color: '#FFFFFF' }]}>{t('home.requestPart')}</Text>
+                                <Text style={[styles.ctaButtonText, { color: '#FFFFFF' }]}>{t('home.requestPart')} ✨</Text>
                             </Animated.View>
 
                             {/* 3-Tier Supplier Badges */}
@@ -430,6 +455,8 @@ const AnimatedStats = ({
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
                     activeOpacity={1}
+                    accessibilityLabel={`${value} ${label}`}
+                    accessibilityRole="button"
                 >
                     <LinearGradient colors={cardColors} style={styles.statCardInner}>
                         <Text style={styles.statEmoji}>{emoji}</Text>
@@ -537,6 +564,8 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                 onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.9, useNativeDriver: true }).start()}
                 onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
                 activeOpacity={1}
+                accessibilityLabel={label}
+                accessibilityRole="button"
             >
                 <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }], backgroundColor: colors.surface }]}>
                     <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
@@ -749,6 +778,58 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                     </View>
                 </LinearGradient>
             </TouchableOpacity>
+        </Animated.View>
+    );
+};
+
+// ============================================
+// WELCOME NEW USER - Empty State
+// Per QSCRAP_BRAIN Section 12.1: Handle empty states
+// ============================================
+const WelcomeNewUser = ({ onGetStarted }: { onGetStarted: () => void }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(0.9)).current;
+    const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }),
+        ]).start();
+    }, []);
+
+    return (
+        <Animated.View style={[
+            styles.welcomeCard,
+            {
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+                backgroundColor: colors.surface,
+            }
+        ]}>
+            <LinearGradient
+                colors={['rgba(141, 27, 61, 0.05)', 'rgba(201, 162, 39, 0.1)']}
+                style={styles.welcomeGradient}
+            >
+                <Text style={styles.welcomeEmoji}>🎉</Text>
+                <Text style={[styles.welcomeTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('home.welcomeNewUser') || 'Welcome to QScrap!'}
+                </Text>
+                <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('home.startFirstRequest') || 'Find your first car part from verified Qatar suppliers'}
+                </Text>
+                <TouchableOpacity
+                    style={[styles.welcomeButton, { backgroundColor: Colors.primary }]}
+                    onPress={onGetStarted}
+                    accessibilityLabel={t('home.getStarted') || 'Get Started'}
+                    accessibilityRole="button"
+                >
+                    <Text style={styles.welcomeButtonText}>
+                        {t('home.getStarted') || 'Get Started'} 🚀
+                    </Text>
+                </TouchableOpacity>
+            </LinearGradient>
         </Animated.View>
     );
 };
@@ -1039,12 +1120,16 @@ export default function HomeScreen() {
                     }}
                 />
 
-                {/* Animated Stats */}
-                <AnimatedStats
-                    stats={stats}
-                    onRequestsPress={() => navigation.navigate('Requests')}
-                    onOrdersPress={() => navigation.navigate('Orders')}
-                />
+                {/* Animated Stats OR Welcome for New Users */}
+                {stats && (stats.active_requests === 0 && stats.pending_deliveries === 0 && stats.total_orders === 0) ? (
+                    <WelcomeNewUser onGetStarted={handleNewRequest} />
+                ) : (
+                    <AnimatedStats
+                        stats={stats}
+                        onRequestsPress={() => navigation.navigate('Requests')}
+                        onOrdersPress={() => navigation.navigate('Orders')}
+                    />
+                )}
 
                 {/* Quick Actions */}
                 <QuickActions navigation={navigation} />
@@ -1357,6 +1442,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.md,
         fontWeight: '600',
+        fontFamily: FontFamily.semibold,
         marginBottom: Spacing.sm,
     },
     statsRow: {
@@ -1373,8 +1459,8 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
     },
     statEmoji: { fontSize: 20, marginBottom: 2 },
-    statValue: { fontSize: 24, fontWeight: '700' },
-    statLabel: { fontSize: FontSizes.xs, marginTop: 1 },
+    statValue: { fontSize: 24, fontWeight: '700', fontFamily: FontFamily.bold },
+    statLabel: { fontSize: FontSizes.xs, marginTop: 1, fontFamily: FontFamily.medium },
     statCardWide: {
         borderRadius: BorderRadius.md,
         overflow: 'hidden',
@@ -1447,4 +1533,48 @@ const styles = StyleSheet.create({
     skeletonCTA: { height: 120, marginBottom: Spacing.lg },
     skeletonStatsRow: { flexDirection: 'row', justifyContent: 'space-between' },
     skeletonStatCard: { width: cardWidth, height: 130 },
+
+    // Welcome New User - Empty State
+    welcomeCard: {
+        marginHorizontal: Spacing.md,
+        marginBottom: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        ...Shadows.md,
+    },
+    welcomeGradient: {
+        padding: Spacing.lg,
+        alignItems: 'center',
+    },
+    welcomeEmoji: {
+        fontSize: 48,
+        marginBottom: Spacing.sm,
+    },
+    welcomeTitle: {
+        fontSize: FontSizes.xl,
+        fontWeight: '700',
+        marginBottom: Spacing.xs,
+        textAlign: 'center',
+    },
+    welcomeSubtitle: {
+        fontSize: FontSizes.sm,
+        textAlign: 'center',
+        marginBottom: Spacing.md,
+        lineHeight: 20,
+    },
+    welcomeButton: {
+        paddingHorizontal: Spacing.xl,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    welcomeButtonText: {
+        color: '#FFFFFF',
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
 });

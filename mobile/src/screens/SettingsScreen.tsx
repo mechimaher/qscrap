@@ -47,7 +47,7 @@ const defaultSettings: SettingsState = {
 
 export default function SettingsScreen() {
     const navigation = useNavigation();
-    const { isDarkMode, toggleTheme, colors } = useTheme();
+    const { isDarkMode, toggleTheme, setTheme, themeMode, colors } = useTheme();
     const { t, language, setLanguage, isRTL } = useLanguage();
     const { logout } = useAuth();
     const [settings, setSettings] = useState<SettingsState>({ ...defaultSettings, darkMode: isDarkMode, language });
@@ -100,6 +100,38 @@ export default function SettingsScreen() {
                 { text: t('common.cancel'), style: 'cancel' },
             ]
         );
+    };
+
+    const handleAppearanceChange = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            t('settings.appearance') || 'Appearance',
+            t('settings.chooseTheme') || 'Choose your preferred theme',
+            [
+                {
+                    text: `☀️ ${t('settings.light') || 'Light'}`,
+                    onPress: () => setTheme('light')
+                },
+                {
+                    text: `🌙 ${t('settings.dark') || 'Dark'}`,
+                    onPress: () => setTheme('dark')
+                },
+                {
+                    text: `🔄 ${t('settings.system') || 'System'}`,
+                    onPress: () => setTheme('system')
+                },
+                { text: t('common.cancel'), style: 'cancel' },
+            ]
+        );
+    };
+
+    const getAppearanceLabel = () => {
+        switch (themeMode) {
+            case 'light': return `☀️ ${t('settings.light') || 'Light'}`;
+            case 'dark': return `🌙 ${t('settings.dark') || 'Dark'}`;
+            case 'system': return `🔄 ${t('settings.system') || 'System'}`;
+            default: return t('settings.system') || 'System';
+        }
     };
 
     const handleClearCache = () => {
@@ -270,6 +302,18 @@ export default function SettingsScreen() {
                         title={t('settings.language')}
                         value={language === 'en' ? 'English' : 'العربية'}
                         onPress={handleLanguageChange}
+                    />
+                </View>
+
+                {/* Appearance - VVIP 2026 Dark Mode */}
+                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.appearance') || 'Appearance'}</Text>
+
+                    <ActionRow
+                        icon="🎨"
+                        title={t('settings.theme') || 'Theme'}
+                        value={getAppearanceLabel()}
+                        onPress={handleAppearanceChange}
                     />
                 </View>
 
