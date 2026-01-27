@@ -330,20 +330,22 @@ export class PayoutAdminService {
     }
 
     /**
-     * Get list of garages with pending payouts (for filter dropdown)
+     * Get list of all active garages for filter dropdown
+     * Shows all garages with their pending payout counts (if any)
      */
     async getGaragesWithPendingPayouts(): Promise<{ garages: GarageWithPendingPayouts[] }> {
         const result = await this.pool.query(`
             SELECT 
                 g.garage_id,
                 g.garage_name,
-                COUNT(*)::int as pending_count,
+                COUNT(gp.payout_id)::int as pending_count,
                 COALESCE(SUM(gp.net_amount), 0)::numeric as pending_total
-            FROM garage_payouts gp
-            JOIN garages g ON gp.garage_id = g.garage_id
-            WHERE gp.payout_status = 'pending'
+            FROM garages g
+            LEFT JOIN garage_payouts gp ON g.garage_id = gp.garage_id 
+                AND gp.payout_status = 'pending'
+            WHERE g.is_active = true OR g.is_active IS NULL
             GROUP BY g.garage_id, g.garage_name
-            ORDER BY pending_count DESC
+            ORDER BY pending_count DESC, g.garage_name ASC
         `);
 
         return {
