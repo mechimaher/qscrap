@@ -25,7 +25,11 @@ import {
     PaginatedPayouts,
     PayoutStatusDetail,
     PaymentStats,
-    Payout
+    Payout,
+    BatchPaymentDto,
+    BatchPaymentResult,
+    BatchPaymentPreview,
+    GarageWithPendingPayouts
 } from './types';
 
 /**
@@ -128,6 +132,29 @@ export class PayoutService {
 
     async forceProcessPayout(payoutId: string, reason: string): Promise<PayoutResult> {
         return this.admin.forceProcessPayout(payoutId, reason);
+    }
+
+    // ============================================
+    // BATCH OPERATIONS
+    // ============================================
+
+    async getBatchPayoutPreview(params: {
+        payout_ids?: string[];
+        garage_id?: string;
+        all_pending?: boolean;
+    }): Promise<BatchPaymentPreview> {
+        return this.admin.getBatchPayoutPreview(params);
+    }
+
+    async sendBatchPayments(
+        dto: BatchPaymentDto,
+        sentBy: string
+    ): Promise<BatchPaymentResult> {
+        return this.admin.sendBatchPayments(dto, sentBy);
+    }
+
+    async getGaragesWithPendingPayouts(): Promise<{ garages: GarageWithPendingPayouts[] }> {
+        return this.admin.getGaragesWithPendingPayouts();
     }
 
     // ============================================

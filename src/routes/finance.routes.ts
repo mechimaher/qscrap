@@ -27,7 +27,11 @@ import {
     resolvePaymentDispute,
     sendPaymentReminder,
     getPaymentStats,
-    confirmAllPayouts
+    confirmAllPayouts,
+    // Batch payment operations
+    getGaragesWithPendingPayouts,
+    getBatchPayoutPreview,
+    sendBatchPayments
 } from '../controllers/finance.controller';
 
 const router = Router();
@@ -85,6 +89,19 @@ router.post('/payouts/:payout_id/process', authorizeOperations, processPayout);
 router.post('/payouts/:payout_id/force-process', authorizeOperations, forceProcessPayout);
 router.post('/payouts/:payout_id/hold', authorizeOperations, holdPayout);
 router.post('/payouts/:payout_id/release', authorizeOperations, releasePayout);
+
+// ==========================================
+// BATCH PAYMENT OPERATIONS (Operations Only)
+// ==========================================
+
+// Get list of garages with pending payouts (for filter dropdown)
+router.get('/payouts/garages-pending', authorizeOperations, getGaragesWithPendingPayouts);
+
+// Get preview of batch payouts before processing
+router.post('/payouts/batch-preview', authorizeOperations, getBatchPayoutPreview);
+
+// Send batch payments (efficient single-API-call processing)
+router.post('/payouts/batch-send', authorizeOperations, sendBatchPayments);
 
 // Transactions (Accessible by Admin, Operations, Garage)
 router.get('/transactions', getTransactions);

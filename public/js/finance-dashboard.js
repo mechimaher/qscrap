@@ -9,6 +9,11 @@ let socket = null;
 let currentSection = 'overview';
 let currentPeriod = '30d';
 
+// Batch payment state
+let currentGarageFilter = '';
+let pendingPayoutsData = [];
+let selectedPayoutIds = new Set();
+
 // ==========================================
 // UTILITIES
 // ==========================================
@@ -313,7 +318,13 @@ let pendingPage = 1;
 async function loadPendingPayouts(page = 1) {
     pendingPage = page;
     try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=pending&page=${page}&limit=20`, {
+        // Build URL with optional garage filter
+        let url = `${API_URL}/finance/payouts?status=pending&page=${page}&limit=20`;
+        if (currentGarageFilter) {
+            url += `&garage_id=${currentGarageFilter}`;
+        }
+
+        const res = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -321,13 +332,29 @@ async function loadPendingPayouts(page = 1) {
         const tbody = document.getElementById('pendingPayoutsTable');
         const payouts = data.payouts || [];
 
+        // Store for later use
+        pendingPayoutsData = payouts;
+
+        // Update totals display
+        updatePendingTotals(payouts);
+
+        // Clear selection
+        selectedPayoutIds.clear();
+        const selectAll = document.getElementById('selectAllPending');
+        if (selectAll) selectAll.checked = false;
+
         if (payouts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle"></i> No pending payouts</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="bi bi-check-circle"></i> No pending payouts</td></tr>';
             return;
         }
 
         tbody.innerHTML = payouts.map(p => `
             <tr>
+                <td>
+                    <input type="checkbox" class="payout-checkbox" 
+                           data-payout-id="${p.payout_id}"
+                           onchange="handlePayoutCheckbox('${p.payout_id}', this.checked)">
+                </td>
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
                 <td>#${escapeHTML(p.order_number)}</td>
                 <td>${formatCurrency(p.gross_amount || p.amount)}</td>
@@ -1114,3 +1141,266 @@ async function exportPayouts() {
 function exportCompletedPayouts() {
     exportPayouts();
 }
+
+// ==========================================
+// BATCH PAYMENT OPERATIONS
+// =========================================
+
+/**
+ * Load garages with pending payouts for filter dropdown
+ */
+async function loadGaragesForFilter() {
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/garages-pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const select = document.getElementById('garageFilter');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">All Garages</option>';
+        (data.garages || []).forEach(g => {
+            select.innerHTML += `<option value="${g.garage_id}">${escapeHTML(g.garage_name)} (${g.pending_count} - ${formatCurrency(g.pending_total)})</option>`;
+        });
+    } catch (err) {
+        console.error('Failed to load garages for filter:', err);
+    }
+}
+
+/**
+ * Apply garage filter and reload pending payouts
+ */
+function applyGarageFilter() {
+    currentGarageFilter = document.getElementById('garageFilter').value;
+    loadPendingPayouts(1);
+}
+
+/**
+ * Clear garage filter
+ */
+function clearGarageFilter() {
+    document.getElementById('garageFilter').value = '';
+    currentGarageFilter = '';
+    loadPendingPayouts(1);
+}
+
+/**
+ * Toggle select all pending payouts checkbox
+ */
+function toggleSelectAllPending() {
+    const selectAll = document.getElementById('selectAllPending');
+    const checkboxes = document.querySelectorAll('.payout-checkbox');
+
+    selectedPayoutIds.clear();
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+        if (selectAll.checked) {
+            selectedPayoutIds.add(cb.dataset.payoutId);
+        }
+    });
+
+    updateSelectedCount();
+}
+
+/**
+ * Handle individual payout checkbox change
+ */
+function handlePayoutCheckbox(payoutId, checked) {
+    if (checked) {
+        selectedPayoutIds.add(payoutId);
+    } else {
+        selectedPayoutIds.delete(payoutId);
+    }
+
+    // Update select all checkbox state
+    const checkboxes = document.querySelectorAll('.payout-checkbox');
+    const selectAll = document.getElementById('selectAllPending');
+    if (selectAll) {
+        selectAll.checked = checkboxes.length > 0 && selectedPayoutIds.size === checkboxes.length;
+    }
+
+    updateSelectedCount();
+}
+
+/**
+ * Update selected count display
+ */
+function updateSelectedCount() {
+    const count = selectedPayoutIds.size;
+    // Could show a "Send X Selected" button if needed
+}
+
+/**
+ * Update pending totals display
+ */
+function updatePendingTotals(payouts) {
+    const count = payouts.length;
+    const total = payouts.reduce((sum, p) => sum + parseFloat(p.net_amount || 0), 0);
+
+    const countEl = document.getElementById('pendingCountDisplay');
+    const amountEl = document.getElementById('pendingAmountDisplay');
+
+    if (countEl) countEl.textContent = count;
+    if (amountEl) amountEl.textContent = formatCurrency(total);
+}
+
+/**
+ * Open batch payment flow
+ * Fetches preview from server and opens modal
+ */
+async function openBatchPaymentFlow() {
+    try {
+        showToast('Loading batch preview...', 'info');
+
+        // Build request based on current filter
+        const body = {};
+        if (currentGarageFilter) {
+            body.garage_id = currentGarageFilter;
+        } else {
+            body.all_pending = true;
+        }
+
+        const res = await fetch(`${API_URL}/finance/payouts/batch-preview`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const preview = await res.json();
+
+        if (!res.ok || preview.error) {
+            showToast(preview.error || 'Failed to load preview', 'error');
+            return;
+        }
+
+        if (preview.count === 0) {
+            showToast('No pending payouts to process', 'error');
+            return;
+        }
+
+        // Populate modal with preview data
+        document.getElementById('bpPayoutCount').textContent = preview.count;
+        document.getElementById('bpTotalAmount').textContent = formatCurrency(preview.total_amount);
+        document.getElementById('bpGarageCount').textContent = preview.garages.length;
+        document.getElementById('bpCountWarning').textContent = preview.count;
+
+        // Build garage breakdown list
+        const garageList = document.getElementById('bpGarageList');
+        garageList.innerHTML = preview.garages.map(g => `
+            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <strong>${escapeHTML(g.garage_name)}</strong>
+                    <span style="color: var(--text-secondary); font-size: 12px; margin-left: 8px;">${g.payout_count} payouts</span>
+                </div>
+                <div style="font-weight: 600; color: var(--accent);">${formatCurrency(g.total)}</div>
+            </div>
+        `).join('');
+
+        // Set hidden fields
+        document.getElementById('bpMode').value = currentGarageFilter ? 'garage' : 'all';
+        document.getElementById('bpGarageId').value = currentGarageFilter || '';
+        document.getElementById('bpPayoutIds').value = '';
+
+        // Auto-generate reference
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('bpReference').value = `BATCH-${today}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+        document.getElementById('bpNotes').value = '';
+
+        // Show modal
+        document.getElementById('batchPaymentModal').style.display = 'flex';
+
+    } catch (err) {
+        console.error('Failed to open batch payment flow:', err);
+        showToast('Failed to load batch info', 'error');
+    }
+}
+
+/**
+ * Close batch payment modal
+ */
+function closeBatchPaymentModal() {
+    document.getElementById('batchPaymentModal').style.display = 'none';
+}
+
+/**
+ * Submit batch payment
+ */
+async function submitBatchPayment() {
+    const reference = document.getElementById('bpReference').value.trim();
+    const notes = document.getElementById('bpNotes').value.trim();
+    const mode = document.getElementById('bpMode').value;
+    const garageId = document.getElementById('bpGarageId').value;
+
+    if (!reference) {
+        showToast('Reference number is required', 'error');
+        document.getElementById('bpReference').focus();
+        return;
+    }
+
+    // Build request body
+    const body = {
+        reference_number: reference,
+        notes: notes || undefined,
+        confirmed: true  // We're confirming from the modal
+    };
+
+    if (mode === 'garage' && garageId) {
+        body.garage_id = garageId;
+    } else {
+        body.all_pending = true;
+    }
+
+    // Disable button and show progress
+    const submitBtn = document.getElementById('btnSubmitBatch');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+    try {
+        showToast('Processing batch payments...', 'info');
+
+        const res = await fetch(`${API_URL}/finance/payouts/batch-send`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            showToast(`✅ ${result.processed_count} payments sent! Total: ${formatCurrency(result.total_amount)}`, 'success');
+            closeBatchPaymentModal();
+
+            // Refresh data
+            loadPendingPayouts(1);
+            loadDashboardStats();
+            loadGaragesForFilter();
+
+            // Update badges
+            loadAwaitingConfirmation();
+        } else {
+            showToast(result.error || 'Batch processing failed', 'error');
+        }
+    } catch (err) {
+        console.error('Batch payment failed:', err);
+        showToast('Failed to process batch payments', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Initialize garage filter on section load
+document.addEventListener('DOMContentLoaded', () => {
+    // Load garages when dashboard shows
+    if (token) {
+        loadGaragesForFilter();
+    }
+});
