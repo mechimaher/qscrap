@@ -343,7 +343,7 @@ export class PayoutAdminService {
             FROM garages g
             LEFT JOIN garage_payouts gp ON g.garage_id = gp.garage_id 
                 AND gp.payout_status = 'pending'
-            WHERE g.is_active = true OR g.is_active IS NULL
+            WHERE g.approval_status = 'approved' OR g.approval_status = 'demo'
             GROUP BY g.garage_id, g.garage_name
             ORDER BY pending_count DESC, g.garage_name ASC
         `);
