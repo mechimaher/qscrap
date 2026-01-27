@@ -144,6 +144,53 @@ export interface GarageWithPendingPayouts {
     pending_total: number;
 }
 
+// ============================================
+// PAYOUT STATEMENT TYPES (Consolidated Reports)
+// ============================================
+
+export interface PayoutStatementParams {
+    garage_id: string;
+    from_date: string;  // ISO date YYYY-MM-DD
+    to_date: string;    // ISO date YYYY-MM-DD
+}
+
+export interface PayoutStatementOrderItem {
+    order_id: string;
+    order_number: string;
+    part_name: string;
+    delivered_at: Date;
+    confirmed_at: Date;
+    gross_amount: number;
+    platform_fee: number;
+    net_amount: number;
+    payout_reference?: string;
+}
+
+export interface PayoutStatementData {
+    statement_number: string;
+    period: {
+        from_date: string;
+        to_date: string;
+    };
+    garage: {
+        garage_id: string;
+        garage_name: string;
+        garage_name_ar?: string;
+        cr_number?: string;
+        iban?: string;
+        bank_name?: string;
+    };
+    summary: {
+        total_orders: number;
+        gross_amount: number;
+        total_platform_fee: number;
+        net_payout: number;
+        platform_fee_percentage: number;
+    };
+    orders: PayoutStatementOrderItem[];
+    generated_at: Date;
+}
+
 export interface PayoutStatusDetail extends Payout {
     garage_name: string;
     order_number?: string;

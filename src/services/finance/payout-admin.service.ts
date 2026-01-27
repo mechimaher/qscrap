@@ -12,7 +12,9 @@ import {
     BatchPaymentDto,
     BatchPaymentResult,
     BatchPaymentPreview,
-    GarageWithPendingPayouts
+    GarageWithPendingPayouts,
+    PayoutStatementParams,
+    PayoutStatementData
 } from './types';
 import { PayoutNotFoundError } from './errors';
 import { PayoutHelpers } from './payout-helpers';
@@ -355,6 +357,112 @@ export class PayoutAdminService {
                 pending_count: r.pending_count,
                 pending_total: parseFloat(r.pending_total)
             }))
+        };
+    }
+
+    // ============================================
+    // CONSOLIDATED PAYOUT STATEMENTS
+    // ============================================
+
+    /**
+     * Generate consolidated payout statement for a garage within a date range
+     * Returns data for PDF generation with order-by-order breakdown
+     */
+    async generatePayoutStatement(params: PayoutStatementParams): Promise<PayoutStatementData> {
+        const { garage_id, from_date, to_date } = params;
+
+        // 1. Get garage details
+        const garageResult = await this.pool.query(`
+            SELECT 
+                g.garage_id,
+                g.garage_name,
+                g.garage_name_ar,
+                g.cr_number,
+                g.iban,
+                g.bank_name
+            FROM garages g
+            WHERE g.garage_id = $1
+        `, [garage_id]);
+
+        if (garageResult.rows.length === 0) {
+            throw new Error(`Garage not found: ${garage_id}`);
+        }
+
+        const garage = garageResult.rows[0];
+
+        // 2. Generate invoice number (INV-YYYYMM-XXXX)
+        const datePrefix = new Date().toISOString().slice(0, 7).replace('-', '');
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const statement_number = `INV-${datePrefix}-${randomSuffix}`;
+
+        // 3. Get all confirmed/completed payouts within date range
+        const ordersResult = await this.pool.query(`
+            SELECT 
+                gp.payout_id,
+                gp.order_id,
+                o.order_number,
+                COALESCE(b.part_name, r.part_name, 'Part') as part_name,
+                o.delivered_at,
+                gp.confirmed_at,
+                (gp.net_amount + COALESCE(gp.platform_fee_amount, 0)) as gross_amount,
+                COALESCE(gp.platform_fee_amount, 0) as platform_fee,
+                gp.net_amount,
+                gp.payout_reference
+            FROM garage_payouts gp
+            LEFT JOIN orders o ON gp.order_id = o.order_id
+            LEFT JOIN bids b ON o.winning_bid_id = b.bid_id
+            LEFT JOIN requests r ON o.request_id = r.request_id
+            WHERE gp.garage_id = $1
+            AND gp.payout_status IN ('confirmed', 'completed')
+            AND gp.confirmed_at::date >= $2::date
+            AND gp.confirmed_at::date <= $3::date
+            ORDER BY gp.confirmed_at ASC
+        `, [garage_id, from_date, to_date]);
+
+        const orders = ordersResult.rows.map(row => ({
+            order_id: row.order_id,
+            order_number: row.order_number || 'N/A',
+            part_name: row.part_name || 'Auto Part',
+            delivered_at: row.delivered_at,
+            confirmed_at: row.confirmed_at,
+            gross_amount: parseFloat(row.gross_amount) || 0,
+            platform_fee: parseFloat(row.platform_fee) || 0,
+            net_amount: parseFloat(row.net_amount) || 0,
+            payout_reference: row.payout_reference
+        }));
+
+        // 4. Calculate summary totals
+        const total_orders = orders.length;
+        const gross_amount = orders.reduce((sum, o) => sum + o.gross_amount, 0);
+        const total_platform_fee = orders.reduce((sum, o) => sum + o.platform_fee, 0);
+        const net_payout = orders.reduce((sum, o) => sum + o.net_amount, 0);
+        const platform_fee_percentage = gross_amount > 0
+            ? Math.round((total_platform_fee / gross_amount) * 100)
+            : 10; // Default 10%
+
+        return {
+            statement_number,
+            period: {
+                from_date,
+                to_date
+            },
+            garage: {
+                garage_id: garage.garage_id,
+                garage_name: garage.garage_name,
+                garage_name_ar: garage.garage_name_ar || undefined,
+                cr_number: garage.cr_number || undefined,
+                iban: garage.iban || undefined,
+                bank_name: garage.bank_name || undefined
+            },
+            summary: {
+                total_orders,
+                gross_amount,
+                total_platform_fee,
+                net_payout,
+                platform_fee_percentage
+            },
+            orders,
+            generated_at: new Date()
         };
     }
 }

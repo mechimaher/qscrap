@@ -401,6 +401,130 @@ export const sendBatchPayments = async (req: AuthRequest, res: Response) => {
 };
 
 // ============================================
+// PAYOUT STATEMENTS / TAX INVOICES
+// ============================================
+
+/**
+ * Generate consolidated payout statement (Tax Invoice) for a garage
+ * Returns HTML or PDF based on format query param
+ */
+export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
+    try {
+        const { garageId } = req.params;
+        const { from_date, to_date, format = 'html' } = req.query;
+
+        // Validate required params
+        if (!from_date || !to_date) {
+            return res.status(400).json({
+                error: 'Date range required',
+                message: 'Please provide from_date and to_date query parameters (YYYY-MM-DD)'
+            });
+        }
+
+        // Validate date range (max 3 months)
+        const fromDate = new Date(from_date as string);
+        const toDate = new Date(to_date as string);
+        const diffDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 93) {
+            return res.status(400).json({
+                error: 'Date range too large',
+                message: 'Maximum date range is 3 months (93 days)'
+            });
+        }
+
+        if (diffDays < 0) {
+            return res.status(400).json({
+                error: 'Invalid date range',
+                message: 'from_date must be before to_date'
+            });
+        }
+
+        // Generate statement data
+        const statementData = await payoutService.generatePayoutStatement({
+            garage_id: garageId,
+            from_date: from_date as string,
+            to_date: to_date as string
+        });
+
+        // If no orders found
+        if (statementData.orders.length === 0) {
+            return res.status(404).json({
+                error: 'No confirmed payouts found',
+                message: `No confirmed payouts found for this garage between ${from_date} and ${to_date}`
+            });
+        }
+
+        // Generate HTML
+        const { generatePayoutStatementHTML } = await import('./payout-statement-template');
+
+        // Generate QR code
+        let qrCode = '';
+        try {
+            const QRCode = require('qrcode');
+            const verifyUrl = `https://theqscrap.com/verify/${statementData.statement_number}`;
+            qrCode = await QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
+        } catch (e) {
+            console.warn('QR code generation failed:', e);
+        }
+
+        // Get logo base64
+        const fs = require('fs');
+        const path = require('path');
+        let logoBase64 = '';
+        try {
+            const logoPath = path.join(__dirname, '../../public/images/qscrap-logo.png');
+            if (fs.existsSync(logoPath)) {
+                logoBase64 = fs.readFileSync(logoPath).toString('base64');
+            }
+        } catch (e) {
+            console.warn('Logo loading failed:', e);
+        }
+
+        const html = generatePayoutStatementHTML(statementData, qrCode, logoBase64);
+
+        // Return based on format
+        if (format === 'pdf') {
+            // Try to use Puppeteer for PDF
+            try {
+                const puppeteer = require('puppeteer');
+                const browser = await puppeteer.launch({
+                    headless: true,
+                    args: ['--no-sandbox', '--disable-setuid-sandbox']
+                });
+                const page = await browser.newPage();
+                await page.setContent(html, { waitUntil: 'networkidle0' });
+                const pdfBuffer = await page.pdf({
+                    format: 'A4',
+                    printBackground: true,
+                    margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+                });
+                await browser.close();
+
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition',
+                    `attachment; filename="invoice-${statementData.statement_number}.pdf"`);
+                return res.send(pdfBuffer);
+            } catch (pdfErr) {
+                console.warn('PDF generation failed, falling back to HTML:', pdfErr);
+                // Fall through to HTML
+            }
+        }
+
+        // Return HTML
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+
+    } catch (err) {
+        console.error('getPayoutStatement Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to generate payout statement' });
+    }
+};
+
+// ============================================
 // REFUND OPERATIONS
 // ============================================
 

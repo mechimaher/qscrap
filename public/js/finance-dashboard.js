@@ -1406,5 +1406,122 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load garages when dashboard shows
     if (token) {
         loadGaragesForFilter();
+        loadGaragesForInvoice();
+
+        // Set default dates for invoice (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+
+        const invoiceFrom = document.getElementById('invoiceFromDate');
+        const invoiceTo = document.getElementById('invoiceToDate');
+        if (invoiceFrom) invoiceFrom.value = thirtyDaysAgo.toISOString().split('T')[0];
+        if (invoiceTo) invoiceTo.value = today.toISOString().split('T')[0];
     }
 });
+
+// ============================================
+// TAX INVOICE / PAYOUT STATEMENT
+// ============================================
+
+/**
+ * Load garages into the invoice dropdown
+ */
+async function loadGaragesForInvoice() {
+    const select = document.getElementById('invoiceGarageSelect');
+    if (!select) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/garages-pending`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Failed to load garages');
+
+        const data = await res.json();
+
+        // Clear and repopulate
+        select.innerHTML = '<option value="">Select Garage</option>';
+
+        // Get all garages (not just with pending)
+        for (const g of data.garages) {
+            const option = document.createElement('option');
+            option.value = g.garage_id;
+            option.textContent = g.garage_name;
+            select.appendChild(option);
+        }
+    } catch (err) {
+        console.error('Failed to load garages for invoice:', err);
+    }
+}
+
+/**
+ * Download Tax Invoice for a garage within date range
+ * @param {string} format - 'pdf' or 'html'
+ */
+function downloadTaxInvoice(format) {
+    const garageId = document.getElementById('invoiceGarageSelect')?.value;
+    const fromDate = document.getElementById('invoiceFromDate')?.value;
+    const toDate = document.getElementById('invoiceToDate')?.value;
+
+    // Validation
+    if (!garageId) {
+        showToast('Please select a garage', 'error');
+        return;
+    }
+
+    if (!fromDate || !toDate) {
+        showToast('Please select a date range', 'error');
+        return;
+    }
+
+    if (new Date(fromDate) > new Date(toDate)) {
+        showToast('From date must be before To date', 'error');
+        return;
+    }
+
+    // Build URL and open in new tab (token will be validated by backend)
+    const url = `${API_URL}/finance/payouts/statement/${garageId}?from_date=${fromDate}&to_date=${toDate}&format=${format}`;
+
+    // For authenticated request, we need to fetch and handle response
+    showToast('Generating Tax Invoice...', 'info');
+
+    fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(data => {
+                    throw new Error(data.message || data.error || 'Failed to generate invoice');
+                });
+            }
+
+            const contentType = res.headers.get('content-type');
+
+            if (contentType.includes('application/pdf')) {
+                return res.blob().then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = `tax-invoice-${fromDate}-${toDate}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
+                    showToast('✅ Tax Invoice downloaded!', 'success');
+                });
+            } else {
+                // HTML - open in new tab
+                return res.text().then(html => {
+                    const newWindow = window.open('', '_blank');
+                    newWindow.document.write(html);
+                    newWindow.document.close();
+                    showToast('✅ Tax Invoice opened in new tab', 'success');
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Invoice download failed:', err);
+            showToast(err.message || 'Failed to download invoice', 'error');
+        });
+}

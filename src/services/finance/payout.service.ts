@@ -29,7 +29,9 @@ import {
     BatchPaymentDto,
     BatchPaymentResult,
     BatchPaymentPreview,
-    GarageWithPendingPayouts
+    GarageWithPendingPayouts,
+    PayoutStatementParams,
+    PayoutStatementData
 } from './types';
 
 /**
@@ -155,6 +157,14 @@ export class PayoutService {
 
     async getGaragesWithPendingPayouts(): Promise<{ garages: GarageWithPendingPayouts[] }> {
         return this.admin.getGaragesWithPendingPayouts();
+    }
+
+    // ============================================
+    // PAYOUT STATEMENTS
+    // ============================================
+
+    async generatePayoutStatement(params: PayoutStatementParams): Promise<PayoutStatementData> {
+        return this.admin.generatePayoutStatement(params);
     }
 
     // ============================================
