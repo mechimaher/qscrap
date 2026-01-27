@@ -376,7 +376,6 @@ export class PayoutAdminService {
             SELECT 
                 g.garage_id,
                 g.garage_name,
-                g.garage_name_ar,
                 g.cr_number,
                 g.iban,
                 g.bank_name
@@ -449,7 +448,7 @@ export class PayoutAdminService {
             garage: {
                 garage_id: garage.garage_id,
                 garage_name: garage.garage_name,
-                garage_name_ar: garage.garage_name_ar || undefined,
+                garage_name_ar: undefined, // Column doesn't exist in production
                 cr_number: garage.cr_number || undefined,
                 iban: garage.iban || undefined,
                 bank_name: garage.bank_name || undefined
