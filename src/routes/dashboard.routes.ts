@@ -132,4 +132,77 @@ router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (r
     }
 });
 
+// Garage: Self-service consolidated Tax Invoice (for garage portal)
+router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), async (req, res) => {
+    try {
+        const garageId = (req as any).user?.userId;
+        if (!garageId) return res.status(403).json({ error: 'Garage not found' });
+
+        const from_date = req.query.from_date as string;
+        const to_date = req.query.to_date as string;
+        const format = (req.query.format as string) || 'html';
+
+        if (!from_date || !to_date) {
+            return res.status(400).json({ error: 'from_date and to_date are required' });
+        }
+
+        const pool = (await import('../config/db')).default;
+        const { PayoutService } = await import('../services/finance/payout.service');
+        const payoutService = new PayoutService(pool);
+
+        const statementData = await payoutService.generatePayoutStatement(garageId, from_date, to_date);
+
+        if (!statementData) {
+            return res.status(404).json({ error: 'No confirmed payouts found for this period' });
+        }
+
+        // Generate QR code
+        let qrCode = '';
+        try {
+            const QRCode = require('qrcode');
+            const verifyUrl = `https://qscrap.qa/verify/${statementData.statement_number}`;
+            qrCode = await QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
+        } catch (e) {
+            console.warn('QR generation failed:', e);
+        }
+
+        // Get logo
+        const fs = require('fs');
+        const path = require('path');
+        let logoBase64 = '';
+        try {
+            const logoPath = path.join(__dirname, '../../public/images/qscrap-logo.png');
+            if (fs.existsSync(logoPath)) {
+                logoBase64 = fs.readFileSync(logoPath).toString('base64');
+            }
+        } catch (e) {
+            console.warn('Logo loading failed:', e);
+        }
+
+        const { generatePayoutStatementHTML } = await import('../controllers/payout-statement-template');
+        const html = generatePayoutStatementHTML(statementData, qrCode, logoBase64);
+
+        if (format === 'pdf') {
+            try {
+                const { DocumentGenerationService } = await import('../services/documents/document-generation.service');
+                const docService = new DocumentGenerationService(pool);
+                const pdfBuffer = await docService.generatePDF(html);
+
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition',
+                    `attachment; filename="invoice-${statementData.statement_number}.pdf"`);
+                return res.send(pdfBuffer);
+            } catch (pdfErr) {
+                console.warn('PDF generation failed, falling back to HTML:', pdfErr);
+            }
+        }
+
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+    } catch (err) {
+        console.error('[Dashboard] Garage payout statement error:', err);
+        res.status(500).json({ error: 'Failed to generate statement' });
+    }
+});
+
 export default router;
