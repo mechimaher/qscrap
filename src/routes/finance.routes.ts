@@ -31,7 +31,9 @@ import {
     // Batch payment operations
     getGaragesWithPendingPayouts,
     getBatchPayoutPreview,
-    sendBatchPayments
+    sendBatchPayments,
+    // Payout statements / Tax invoices
+    getPayoutStatement
 } from '../controllers/finance.controller';
 
 const router = Router();
@@ -102,6 +104,14 @@ router.post('/payouts/batch-preview', authorizeOperations, getBatchPayoutPreview
 
 // Send batch payments (efficient single-API-call processing)
 router.post('/payouts/batch-send', authorizeOperations, sendBatchPayments);
+
+// ==========================================
+// PAYOUT STATEMENTS / TAX INVOICES
+// ==========================================
+
+// Generate consolidated payout statement (Tax Invoice) for a garage
+// Query: ?from_date=YYYY-MM-DD&to_date=YYYY-MM-DD&format=pdf|html
+router.get('/payouts/statement/:garageId', authorizeOperations, getPayoutStatement);
 
 // Transactions (Accessible by Admin, Operations, Garage)
 router.get('/transactions', getTransactions);
