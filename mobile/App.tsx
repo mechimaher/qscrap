@@ -47,7 +47,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import CounterOfferScreen from './src/screens/CounterOfferScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import SupportScreen from './src/screens/SupportScreen';
-import TicketChatScreen from './src/screens/TicketChatScreen';
+// TicketChatScreen removed - replaced with WhatsApp-first support
 // VIN screens removed - not used
 import PaymentScreen from './src/screens/PaymentScreen';
 import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
@@ -298,11 +298,7 @@ function RootNavigator() {
               component={SupportScreen}
               options={{ animation: 'slide_from_right' }}
             />
-            <RootStack.Screen
-              name="TicketChat"
-              component={TicketChatScreen}
-              options={{ animation: 'slide_from_right' }}
-            />
+            {/* TicketChat removed - using WhatsApp-first support */}
 
             {/* VIN Scanner Flow - removed (unused) */}
 
