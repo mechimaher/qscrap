@@ -269,6 +269,20 @@ export class OrderLifecycleService {
                 target_role: 'customer'
             });
 
+            // PUSH: Customer - order delivered
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    order.customer_id,
+                    'Order Delivered! 📦',
+                    `Order #${order.order_number} has arrived! Please confirm receipt.`,
+                    { type: 'order_delivered', order_id: orderId, order_number: order.order_number },
+                    { channelId: 'orders', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[ORDER] Push to customer failed:', pushErr);
+            }
+
             // Notify garage
             await createNotification({
                 userId: order.garage_id,
@@ -278,6 +292,20 @@ export class OrderLifecycleService {
                 data: { order_id: orderId, order_number: order.order_number },
                 target_role: 'garage'
             });
+
+            // PUSH: Garage - order delivered
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    order.garage_id,
+                    'Order Delivered 📦',
+                    `Order #${order.order_number} delivered! Awaiting customer confirmation.`,
+                    { type: 'order_delivered', order_id: orderId, order_number: order.order_number },
+                    { channelId: 'orders', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[ORDER] Push to garage failed:', pushErr);
+            }
 
             // Socket emit for real-time update
             const io = (global as any).io;
@@ -491,6 +519,20 @@ export class OrderLifecycleService {
             },
             target_role: 'customer'
         });
+
+        // PUSH NOTIFICATION - Works when phone locked/background
+        try {
+            const { pushService } = await import('../push.service');
+            await pushService.sendToUser(
+                order.customer_id,
+                pushTitles[newStatus] || 'Order Update 🔔',
+                `Order #${order.order_number}: ${statusMessages[newStatus] || `Status: ${newStatus}`}`,
+                { type: 'order_status_updated', order_id: order.order_id, order_number: order.order_number, new_status: newStatus },
+                { channelId: 'orders', sound: true }
+            );
+        } catch (pushErr) {
+            console.error('[ORDER] Push notification failed:', pushErr);
+        }
 
         // Socket events
         const io = (global as any).io;

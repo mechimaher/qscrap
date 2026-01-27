@@ -30,9 +30,27 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
         if (!assignment) return res.status(403).json({ error: 'Access denied to this chat' });
         if (!['assigned', 'picked_up', 'in_transit'].includes(assignment.status)) return res.status(400).json({ error: 'Chat is only available during active delivery', status: assignment.status });
         const senderType = assignment.customer_id === req.user!.userId ? 'customer' : 'driver';
+        const recipientId = senderType === 'customer' ? assignment.driver_user_id : assignment.customer_id;
         const newMessage = await chatService.sendMessage(req.params.assignment_id, assignment.order_id, senderType, req.user!.userId, message.trim());
         const io = (global as any).io;
         io.to(`chat_${req.params.assignment_id}`).emit('chat_message', { assignment_id: req.params.assignment_id, ...newMessage });
+
+        // PUSH: Send push notification to recipient
+        if (recipientId) {
+            try {
+                const senderName = senderType === 'customer' ? 'Customer' : 'Driver';
+                await pushService.sendToUser(
+                    recipientId,
+                    `New Message from ${senderName} 💬`,
+                    message.trim().substring(0, 100),
+                    { type: 'chat_message', assignment_id: req.params.assignment_id },
+                    { channelId: 'chat', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[Chat] Push notification failed:', pushErr);
+            }
+        }
+
         res.status(201).json({ message: newMessage });
     } catch (err) {
         console.error('sendChatMessage Error:', err);
