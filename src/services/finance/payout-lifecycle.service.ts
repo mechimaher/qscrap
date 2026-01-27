@@ -56,6 +56,29 @@ export class PayoutLifecycleService {
                         `Dispute reason: ${dispute.reason}. Resolve dispute first.`
                     );
                 }
+
+                // CRITICAL: 7-day warranty window check (Qatar B2B business rule)
+                // Customer has 7 days from delivery to report issues/request refund
+                const warrantyCheck = await client.query(`
+                    SELECT o.order_number, o.delivered_at, o.completed_at,
+                           EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at)) as days_since_delivery,
+                           GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at)))::int as days_remaining
+                    FROM orders o
+                    WHERE o.order_id = $1
+                `, [payout.order_id]);
+
+                if (warrantyCheck.rows.length > 0) {
+                    const order = warrantyCheck.rows[0];
+                    const daysRemaining = parseInt(order.days_remaining) || 0;
+
+                    if (daysRemaining > 0) {
+                        throw new Error(
+                            `Cannot send payout: Order #${order.order_number} is still within the 7-day warranty window. ` +
+                            `${daysRemaining} day${daysRemaining > 1 ? 's' : ''} remaining until payout eligible. ` +
+                            `Customer may still request refund or report issues.`
+                        );
+                    }
+                }
             }
 
             const updated = await this.helpers.markAsSent(payout, details, client);

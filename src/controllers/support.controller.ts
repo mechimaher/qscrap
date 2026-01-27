@@ -166,6 +166,44 @@ export const getStats = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getMyEscalations = async (req: AuthRequest, res: Response) => {
+    try {
+        requireAgent(req);
+        const agentId = req.user!.userId;
+        const status = req.query.status as string || 'all';
+
+        const result = await pool.query(`
+            SELECT e.escalation_id, e.order_id, e.ticket_id, e.priority, e.reason,
+                   e.status, e.created_at, e.resolved_at, e.resolution_notes, e.resolution_action,
+                   o.order_number,
+                   u.full_name as customer_name,
+                   CASE 
+                       WHEN e.status = 'pending' THEN 'Awaiting Operations Review'
+                       WHEN e.status = 'in_progress' THEN 'Under Review by Ops'
+                       WHEN e.status = 'resolved' THEN 'Resolved'
+                       ELSE e.status
+                   END as status_label
+            FROM support_escalations e
+            LEFT JOIN orders o ON e.order_id = o.order_id
+            LEFT JOIN users u ON o.customer_id = u.user_id
+            WHERE e.escalated_by = $1
+            ${status !== 'all' ? 'AND e.status = $2' : ''}
+            ORDER BY e.created_at DESC
+            LIMIT 50
+        `, status !== 'all' ? [agentId, status] : [agentId]);
+
+        res.json({
+            escalations: result.rows,
+            count: result.rows.length,
+            pending_count: result.rows.filter((e: any) => e.status === 'pending').length,
+            resolved_count: result.rows.filter((e: any) => e.status === 'resolved').length
+        });
+    } catch (err: any) {
+        console.error('[SUPPORT] getMyEscalations error:', getErrorMessage(err));
+        res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
+    }
+};
+
 export const getUrgent = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);

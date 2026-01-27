@@ -42,8 +42,9 @@ export class RevenueService {
         const toDate = filters?.to_date || new Date();
 
         let whereClause = `WHERE o.order_status IN ('delivered', 'completed') 
-                           AND o.created_at >= $1 
-                           AND o.created_at <= $2`;
+                       AND o.order_status != 'refunded'
+                       AND o.created_at >= $1 
+                       AND o.created_at <= $2`;
         const params: unknown[] = [fromDate, toDate];
         let paramIndex = 3;
 
@@ -52,31 +53,50 @@ export class RevenueService {
             params.push(filters.garage_id);
         }
 
-        // Get overall metrics
+        // Get overall metrics (excluding fully refunded orders)
         const metricsResult = await this.pool.query(
             `SELECT 
-                COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as total_revenue,
-                COALESCE(SUM(o.platform_fee), 0) as platform_fees,
-                COALESCE(SUM(o.delivery_fee), 0) as delivery_fees,
-                COUNT(*) as orders_completed,
-                COALESCE(AVG(o.total_amount), 0) as average_order_value
-             FROM orders o
-             ${whereClause}`,
+            COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as gross_revenue,
+            COALESCE(SUM(o.platform_fee), 0) as platform_fees,
+            COALESCE(SUM(o.delivery_fee), 0) as delivery_fees,
+            COUNT(*) as orders_completed,
+            COALESCE(AVG(o.total_amount), 0) as average_order_value
+         FROM orders o
+         ${whereClause}
+         AND o.order_id NOT IN (
+             SELECT order_id FROM refunds 
+             WHERE refund_status = 'processed' 
+             AND refund_amount >= (SELECT total_amount FROM orders WHERE order_id = refunds.order_id)
+         )`,
             params
         );
 
+        // Get total refunds processed in period
+        const refundResult = await this.pool.query(
+            `SELECT COALESCE(SUM(refund_amount), 0) as total_refunds,
+                COUNT(*) as refund_count
+         FROM refunds 
+         WHERE refund_status = 'processed'
+         AND created_at >= $1 AND created_at <= $2`,
+            [fromDate, toDate]
+        );
+
         const metrics = metricsResult.rows[0];
+        const refunds = refundResult.rows[0];
+        const grossRevenue = parseFloat(metrics.gross_revenue);
+        const totalRefunds = parseFloat(refunds.total_refunds);
+        const netRevenue = Math.max(0, grossRevenue - totalRefunds);
 
         // Get daily breakdown
         const dailyResult = await this.pool.query(
             `SELECT 
-                DATE(o.created_at) as date,
-                COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as revenue,
-                COUNT(*) as orders
-             FROM orders o
-             ${whereClause}
-             GROUP BY DATE(o.created_at)
-             ORDER BY date ASC`,
+            DATE(o.created_at) as date,
+            COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as revenue,
+            COUNT(*) as orders
+         FROM orders o
+         ${whereClause}
+         GROUP BY DATE(o.created_at)
+         ORDER BY date ASC`,
             params
         );
 
@@ -85,16 +105,16 @@ export class RevenueService {
         if (!filters?.garage_id) {
             const garageResult = await this.pool.query(
                 `SELECT 
-                    o.garage_id,
-                    g.garage_name,
-                    COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as revenue,
-                    COUNT(*) as orders
-                 FROM orders o
-                 JOIN garages g ON o.garage_id = g.garage_id
-                 ${whereClause}
-                 GROUP BY o.garage_id, g.garage_name
-                 ORDER BY revenue DESC
-                 LIMIT 20`,
+                o.garage_id,
+                g.garage_name,
+                COALESCE(SUM(o.platform_fee + o.delivery_fee), 0) as revenue,
+                COUNT(*) as orders
+             FROM orders o
+             JOIN garages g ON o.garage_id = g.garage_id
+             ${whereClause}
+             GROUP BY o.garage_id, g.garage_name
+             ORDER BY revenue DESC
+             LIMIT 20`,
                 params
             );
 
@@ -108,7 +128,10 @@ export class RevenueService {
                 to: toDate
             },
             metrics: {
-                total_revenue: parseFloat(metrics.total_revenue),
+                gross_revenue: grossRevenue,
+                total_refunds: totalRefunds,
+                refund_count: parseInt(refunds.refund_count),
+                total_revenue: netRevenue, // NET after refunds
                 platform_fees: parseFloat(metrics.platform_fees),
                 delivery_fees: parseFloat(metrics.delivery_fees),
                 orders_completed: parseInt(metrics.orders_completed),

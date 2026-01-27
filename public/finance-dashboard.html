@@ -77,6 +77,11 @@
                         <i class="bi bi-clock-history"></i> Pending
                         <span class="nav-badge" id="pendingBadge" style="display: none;">0</span>
                     </a>
+                    <a class="nav-item" data-section="inwarranty">
+                        <i class="bi bi-shield-exclamation"></i> In Warranty
+                        <span class="nav-badge" id="inWarrantyBadge"
+                            style="display: none; background: #f59e0b;">0</span>
+                    </a>
                     <a class="nav-item" data-section="awaiting">
                         <i class="bi bi-hourglass-split"></i> Awaiting Confirmation
                         <span class="nav-badge" id="awaitingBadge" style="display: none;">0</span>
@@ -321,6 +326,57 @@
                     </table>
                 </div>
                 <div id="pendingPagination"></div>
+            </section>
+
+            <!-- In Warranty Section (Orders < 7 days from delivery) -->
+            <section class="section" id="sectionInwarranty">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-shield-exclamation" style="color: #f59e0b;"></i> In Warranty
+                        Period</h1>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        <i class="bi bi-info-circle"></i> Orders within 7-day warranty window - customer may still
+                        request refund
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div
+                            style="width: 50px; height: 50px; border-radius: 12px; background: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-shield-exclamation" style="color: white; font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #92400e; font-size: 18px;">Business Rule: 7-Day Payout
+                                Hold</div>
+                            <div style="color: #b45309; font-size: 13px;">
+                                Garages receive payment <strong>7 days after delivery</strong> to allow customer
+                                return/refund window.<br>
+                                This is aligned with QScrap invoice warranty terms and Qatar B2B standards.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Delivered</th>
+                                <th>Days Until Eligible</th>
+                                <th>Net Payout</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inWarrantyPayoutsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <!-- Awaiting Confirmation Section -->

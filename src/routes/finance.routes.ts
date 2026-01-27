@@ -5,6 +5,7 @@ import { passwordRateLimiter } from '../middleware/rateLimiter';
 import {
     getPayoutSummary,
     getPayouts,
+    getInWarrantyPayouts,
     processPayout,
     holdPayout,
     getTransactionDetails,
@@ -49,6 +50,7 @@ router.get('/payouts/config', authorizeOperations, getPayoutConfig);
 // Payouts (Read access for Garage, Full access for Ops)
 router.get('/payouts', getPayouts);
 router.get('/payouts/summary', getPayoutSummary);
+router.get('/payouts/in-warranty', getInWarrantyPayouts);
 router.get('/payouts/:payout_id/status', getPayoutStatus);
 
 // ==========================================

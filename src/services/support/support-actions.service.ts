@@ -569,11 +569,38 @@ export class SupportActionsService {
                 RETURNING reversal_id
             `, [garageId, payout.payout_id, payout.amount, `Refund: ${reason}`]);
 
+            const reversalId = reversalResult.rows[0].reversal_id;
             console.log(`[SupportActions] Created reversal for payout ${payout.payout_id}`);
+
+            // Notify garage about the pending deduction
+            try {
+                await createNotification({
+                    userId: garageId,
+                    type: 'payout_reversal',
+                    title: '⚠️ Payout Deduction Pending',
+                    message: `${payout.amount} QAR will be deducted from your next payout. Reason: ${reason}`,
+                    data: { reversal_id: reversalId, original_payout_id: payout.payout_id, amount: payout.amount },
+                    target_role: 'garage'
+                });
+
+                // Socket.IO notification to garage portal
+                const io = (global as any).io;
+                if (io) {
+                    io.to(`garage_${garageId}`).emit('payout_reversal', {
+                        reversal_id: reversalId,
+                        amount: payout.amount,
+                        reason: reason,
+                        type: 'deduction_pending'
+                    });
+                }
+            } catch (notifyErr) {
+                console.error('[SupportActions] Failed to notify garage about reversal:', notifyErr);
+            }
+
             return {
                 action: 'reversal_created',
                 payout_id: payout.payout_id,
-                reversal_id: reversalResult.rows[0].reversal_id
+                reversal_id: reversalId
             };
         }
 

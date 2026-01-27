@@ -191,7 +191,10 @@ export interface RevenueReport {
         to: Date;
     };
     metrics: {
-        total_revenue: number;
+        gross_revenue: number;
+        total_refunds: number;
+        refund_count: number;
+        total_revenue: number; // NET after refunds
         platform_fees: number;
         delivery_fees: number;
         orders_completed: number;
