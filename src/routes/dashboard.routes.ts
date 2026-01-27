@@ -150,7 +150,11 @@ router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), a
         const { PayoutService } = await import('../services/finance/payout.service');
         const payoutService = new PayoutService(pool);
 
-        const statementData = await payoutService.generatePayoutStatement(garageId, from_date, to_date);
+        const statementData = await payoutService.generatePayoutStatement({
+            garage_id: garageId,
+            from_date,
+            to_date
+        });
 
         if (!statementData) {
             return res.status(404).json({ error: 'No confirmed payouts found for this period' });
