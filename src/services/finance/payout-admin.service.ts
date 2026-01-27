@@ -403,8 +403,8 @@ export class PayoutAdminService {
                 COALESCE(r.part_description, b.part_number, 'Auto Part') as part_name,
                 o.delivered_at,
                 gp.confirmed_at,
-                (gp.net_amount + COALESCE(gp.platform_fee_amount, 0)) as gross_amount,
-                COALESCE(gp.platform_fee_amount, 0) as platform_fee,
+                gp.gross_amount,
+                COALESCE(gp.commission_amount, 0) as platform_fee,
                 gp.net_amount,
                 gp.payout_reference
             FROM garage_payouts gp
