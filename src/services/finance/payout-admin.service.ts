@@ -409,7 +409,7 @@ export class PayoutAdminService {
                 gp.payout_reference
             FROM garage_payouts gp
             LEFT JOIN orders o ON gp.order_id = o.order_id
-            LEFT JOIN bids b ON o.winning_bid_id = b.bid_id
+            LEFT JOIN bids b ON o.bid_id = b.bid_id
             LEFT JOIN requests r ON o.request_id = r.request_id
             WHERE gp.garage_id = $1
             AND gp.payout_status IN ('confirmed', 'completed')
