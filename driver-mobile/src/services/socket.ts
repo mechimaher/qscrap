@@ -4,6 +4,7 @@
 import { io, Socket } from 'socket.io-client';
 import * as SecureStore from 'expo-secure-store';
 import * as Haptics from 'expo-haptics';
+import { Vibration } from 'react-native';
 import { API_BASE_URL } from '../config/api';
 import { scheduleLocalNotification } from './notifications';
 
@@ -80,15 +81,27 @@ export const initSocket = async (): Promise<Socket | null> => {
     // ASSIGNMENT EVENTS WITH NOTIFICATIONS
     // ==============================
 
-    socket.on('new_assignment', (data: any) => {
-        console.log('[Socket] New assignment received:', data.order_number);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    socket.on('new_assignment', async (data: any) => {
+        console.log('========================================');
+        console.log('🚨 NEW ASSIGNMENT RECEIVED VIA SOCKET!');
+        console.log('📦 Data:', JSON.stringify(data, null, 2));
+        console.log('========================================');
 
+        // Strong haptic feedback - triple notification pattern
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 200);
+        setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 400);
+
+        // 🔊 Play loud vibration pattern for urgent alert
+        // On Android with the 'assignments' channel, the notification will also play system sound
+        Vibration.vibrate([0, 500, 200, 500, 200, 500]); // Three long vibrations
+
+        // Schedule notification with high priority sound
         scheduleLocalNotification(
-            '🚚 New Delivery Assignment!',
+            '🚨 NEW DELIVERY ASSIGNMENT!',
             data.pickup_address
                 ? `Pickup from: ${data.pickup_address}`
-                : `Order #${data.order_number || 'New'} - Tap to view details`,
+                : `Order #${data.order_number || 'New'} - URGENT: Tap to view!`,
             {
                 type: 'new_assignment',
                 assignmentId: data.assignment_id,
