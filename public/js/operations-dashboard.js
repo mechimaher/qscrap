@@ -469,14 +469,22 @@ async function loadStats() {
 
         if (data.stats) {
             const s = data.stats;
-            document.getElementById('statActiveOrders').textContent = s.active_orders;
-            document.getElementById('statPendingDisputes').textContent = s.pending_disputes;
-            document.getElementById('statContestedDisputes').textContent = s.contested_disputes;
-            document.getElementById('statInTransit').textContent = s.in_transit;
-            document.getElementById('statRevenueToday').textContent = Math.round(s.revenue_today) + ' QAR';
-            document.getElementById('statReadyPickup').textContent = s.ready_for_pickup;
-            document.getElementById('statTotalCustomers').textContent = s.total_customers;
-            document.getElementById('statTotalGarages').textContent = s.total_garages;
+
+            // Helper function to safely set element text
+            const setStatText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+
+            // Update stat cards (defensive - elements may not exist)
+            setStatText('statActiveOrders', s.active_orders);
+            setStatText('statPendingDisputes', s.pending_disputes);
+            setStatText('statContestedDisputes', s.contested_disputes);
+            setStatText('statInTransit', s.in_transit);
+            setStatText('statRevenueToday', Math.round(s.revenue_today) + ' QAR');
+            setStatText('statReadyPickup', s.ready_for_pickup);
+            setStatText('statTotalCustomers', s.total_customers);
+            setStatText('statTotalGarages', s.total_garages);
 
             // LOYALTY PROGRAM TRANSPARENCY
             const loyaltyToday = parseFloat(s.loyalty_discounts_today) || 0;
@@ -484,26 +492,19 @@ async function loadStats() {
             const loyaltyWeek = parseFloat(s.loyalty_discounts_week) || 0;
             const loyaltyMonth = parseFloat(s.loyalty_discounts_month) || 0;
 
-            // Update loyalty stats if elements exist
-            const loyaltyTodayEl = document.getElementById('statLoyaltyToday');
-            const loyaltyCountEl = document.getElementById('statLoyaltyCount');
-            const loyaltyWeekEl = document.getElementById('statLoyaltyWeek');
-            const loyaltyMonthEl = document.getElementById('statLoyaltyMonth');
-
-            if (loyaltyTodayEl) loyaltyTodayEl.textContent = Math.round(loyaltyToday) + ' QAR';
-            if (loyaltyCountEl) loyaltyCountEl.textContent = loyaltyCountToday + ' orders';
-            if (loyaltyWeekEl) loyaltyWeekEl.textContent = Math.round(loyaltyWeek) + ' QAR';
-            if (loyaltyMonthEl) loyaltyMonthEl.textContent = Math.round(loyaltyMonth) + ' QAR';
+            setStatText('statLoyaltyToday', Math.round(loyaltyToday) + ' QAR');
+            setStatText('statLoyaltyCount', loyaltyCountToday + ' orders');
+            setStatText('statLoyaltyWeek', Math.round(loyaltyWeek) + ' QAR');
+            setStatText('statLoyaltyMonth', Math.round(loyaltyMonth) + ' QAR');
 
             // Update badges
             updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
             updateBadge('ordersBadge', s.active_orders);
-            updateBadge('deliveryBadge', s.in_transit || 0); // Correctly update Delivery badge
+            updateBadge('deliveryBadge', s.in_transit || 0);
 
             // Escalations stats and badge
             const pendingEscalations = parseInt(s.pending_escalations) || 0;
-            const pendingEscalationsEl = document.getElementById('statPendingEscalations');
-            if (pendingEscalationsEl) pendingEscalationsEl.textContent = pendingEscalations;
+            setStatText('statPendingEscalations', pendingEscalations);
             updateBadge('escalationsBadge', pendingEscalations);
         }
 
