@@ -154,8 +154,10 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
 
         await client.query('COMMIT');
 
-        // 9. Notifications (Async)
-        notifyOrderCreation(order, bid.garage_id, customerId, bid.request_id, request.part_description, totalAmount);
+        // 9. Notifications (Async) - CRITICAL FIX: Only notify customer at order creation
+        // Garage is notified by Stripe webhook AFTER payment succeeds (stripe-webhook.routes.ts:130)
+        // This prevents garage from starting work before payment is confirmed
+        notifyCustomerOrderPending(order, customerId, totalAmount);
 
         // Notify Rejected Bidders
         notifyRejectedBidders(bid.request_id, bidId);
@@ -225,6 +227,35 @@ async function notifyOrderCreation(order: any, garageId: string, customerId: str
         },
         target_role: 'customer'
     }));
+}
+
+/**
+ * CRITICAL FIX: Customer-only notification for order creation
+ * Garage is NOT notified here - they are notified by Stripe webhook after payment
+ * See: stripe-webhook.routes.ts -> notifyGarageAsync()
+ */
+async function notifyCustomerOrderPending(order: any, customerId: string, totalAmount: number) {
+    // Create in-app notification for customer only
+    await import('../services/notification.service').then(ns => ns.createNotification({
+        userId: customerId,
+        type: 'order_pending_payment',
+        title: 'Order Reserved ⏳',
+        message: `Order #${order.order_number} reserved. Complete payment to confirm your order.`,
+        data: {
+            order_id: order.order_id,
+            order_number: order.order_number,
+            total_amount: totalAmount
+        },
+        target_role: 'customer'
+    }));
+
+    // Emit socket event to customer
+    emitToUser(customerId, 'order_reserved', {
+        order_id: order.order_id,
+        order_number: order.order_number,
+        total_amount: totalAmount,
+        notification: `Order #${order.order_number} reserved. Please complete payment.`
+    });
 }
 
 async function notifyRejectedBidders(requestId: string, winningBidId: string) {
