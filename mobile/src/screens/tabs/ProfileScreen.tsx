@@ -17,6 +17,7 @@ import { api } from '../../services/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useToast } from '../../components/Toast';
+import AccountDeletionModal from '../../components/AccountDeletionModal';
 import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -32,6 +33,7 @@ export default function ProfileScreen() {
     const toast = useToast();
     const [profile, setProfile] = useState<any>(null);
     const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+    const [showDeletionModal, setShowDeletionModal] = useState(false);
 
     // Reload profile when screen comes into focus (e.g., after editing)
     useEffect(() => {
@@ -82,27 +84,26 @@ export default function ProfileScreen() {
     };
 
     const handleDeleteAccount = () => {
-        Alert.alert(
-            t('profile.deleteAccount'),
-            t('profile.confirmDelete'),
-            [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                    text: t('common.delete'),
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await api.deleteAccount();
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            await logout();
-                            toast.success(t('profile.accountDeleted'), t('profile.accountDeletedMsg'));
-                        } catch (error: any) {
-                            toast.error(t('common.error'), error.message || t('errors.unknown'));
-                        }
-                    },
-                },
-            ]
-        );
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setShowDeletionModal(true);
+    };
+
+    const handleDeletionNavigate = (screen: string) => {
+        // Navigate to the appropriate screen from the deletion modal
+        switch (screen) {
+            case 'Orders':
+                navigation.navigate('Orders');
+                break;
+            case 'SupportTickets':
+            case 'Support':
+                navigation.navigate('Support');
+                break;
+            case 'Requests':
+                navigation.navigate('Main', { screen: 'Requests' });
+                break;
+            default:
+                navigation.navigate('Support');
+        }
     };
 
     const MenuItem = ({
@@ -275,6 +276,13 @@ export default function ProfileScreen() {
 
                 <View style={{ height: 100 }} />
             </ScrollView>
+
+            {/* Account Deletion Modal */}
+            <AccountDeletionModal
+                visible={showDeletionModal}
+                onClose={() => setShowDeletionModal(false)}
+                onNavigate={handleDeletionNavigate}
+            />
         </SafeAreaView>
     );
 }

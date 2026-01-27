@@ -298,17 +298,6 @@ export default function EditProfileScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Danger Zone */}
-                <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: Colors.error, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.dangerZone')}</Text>
-
-                    <TouchableOpacity style={styles.deleteAccountButton}>
-                        <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
-                    </TouchableOpacity>
-                    <Text style={[styles.deleteHint, { textAlign: rtlTextAlign(isRTL) }]}>
-                        {t('profile.deleteAccountWarning')}
-                    </Text>
-                </View>
 
                 <View style={{ height: 100 }} />
             </ScrollView>

@@ -735,7 +735,7 @@ export default function TrackingScreen() {
                 {/* Share Location Button - Premium UX */}
                 <TouchableOpacity style={styles.shareLocationCard} onPress={handleShareLocation}>
                     <LinearGradient
-                        colors={['#3b82f6', '#2563eb']}
+                        colors={Colors.gradients.premium}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={styles.shareLocationGradient}

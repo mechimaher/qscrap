@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     REGISTER: '/auth/register',
     CHANGE_PASSWORD: '/auth/change-password',
     DELETE_ACCOUNT: '/auth/delete-account',
+    DELETION_ELIGIBILITY: '/auth/deletion-eligibility',
 
     // Requests
     REQUESTS: '/requests',

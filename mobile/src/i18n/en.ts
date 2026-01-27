@@ -586,6 +586,33 @@ export const en = {
     },
 
     // =============================================
+    // ACCOUNT DELETION - Enterprise deletion flow
+    // =============================================
+    deletion: {
+        checking: 'Checking account status...',
+        cannotDelete: 'Cannot Delete Account',
+        resolveBlockers: 'Please resolve the following items before deleting your account:',
+        confirmTitle: 'Delete Your Account?',
+        confirmMessage: 'This action is permanent and cannot be undone. All your data will be removed.',
+        deleting: 'Deleting your account...',
+        // Blocker messages
+        active_orders: 'You have {{count}} order(s) in progress',
+        open_tickets: 'You have {{count}} open support ticket(s)',
+        active_disputes: 'You have {{count}} pending dispute(s)',
+        pending_refunds: 'You have {{count}} pending refund(s)',
+        active_requests: 'You have {{count}} active request(s) with bids',
+        // Action buttons
+        viewOrders: 'View Orders',
+        viewTickets: 'View Tickets',
+        viewRequests: 'View Requests',
+        contactSupport: 'Contact Us',
+        // Warnings
+        warning1: '• All your personal data will be permanently deleted',
+        warning2: '• Your order history will be anonymized',
+        warning3: '• You will not be able to recover your account',
+    },
+
+    // =============================================
     // SETTINGS SCREEN - App settings
     // =============================================
     settings: {
@@ -1249,6 +1276,147 @@ export const en = {
         dohaQatar: 'Doha, Qatar',
         phone: 'Phone',
         email: 'Email',
+        // Section 1 - Agreement
+        section1Title: '1. Agreement to Terms',
+        section1Content: 'By accessing or using the QScrap mobile application, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.',
+        // Section 2 - Eligibility
+        section2Title: '2. Eligibility',
+        section2Content: 'You must be at least 18 years old and a resident of Qatar to use QScrap. By using our services, you represent and warrant that you meet these requirements.',
+        // Section 3 - User Accounts
+        section3Title: '3. User Accounts',
+        section3Content: 'To access certain features, you must create an account. You agree to:',
+        section3Item1: 'Provide accurate and complete information',
+        section3Item2: 'Maintain the security of your account credentials',
+        section3Item3: 'Notify us immediately of unauthorized access',
+        section3Item4: 'Accept responsibility for all activities under your account',
+        section3Item5: 'Keep your contact information up to date',
+        // Section 4 - Services
+        section4Title: '4. Services Description',
+        subheading1: 'For Customers',
+        section4Content1: 'QScrap provides a platform to request and purchase auto parts from verified garages across Qatar. We facilitate the connection between customers and suppliers but are not the seller of parts.',
+        subheading2: 'For Garages',
+        section4Content2: 'Registered garages can list parts, respond to requests, and fulfill orders through our platform. All garages must comply with Qatar commercial regulations.',
+        // Section 5 - Payments
+        section5Title: '5. Payments & Fees',
+        section5Content: 'All transactions are processed securely through our payment partners. By making a purchase, you agree to:',
+        section5Item1: 'Pay all fees and charges at the prices in effect',
+        section5Item2: 'Provide valid payment information',
+        section5Item3: 'Authorize charges to your payment method',
+        section5Item4: 'Accept our refund and cancellation policies',
+        section5Item5: 'Pay applicable VAT as required by Qatar law',
+        // Section 6 - Delivery
+        section6Title: '6. Delivery',
+        section6Content: 'Delivery is provided by QScrap-verified drivers. Delivery times are estimates and may vary based on location, availability, and traffic conditions. QScrap is not liable for delays beyond our control.',
+        // Section 7 - Warranties
+        section7Title: '7. Warranties & Returns',
+        section7Content: 'All parts sold through QScrap are subject to our warranty policy:',
+        section7Item1: '7-day warranty period from delivery date',
+        section7Item2: 'Warranty covers defects in materials and workmanship',
+        section7Item3: 'Returns must include original packaging when possible',
+        section7Item4: 'Refunds processed within 5-7 business days',
+        section7Item5: 'Custom or special order items may not be returnable',
+        // Section 8 - Prohibited Activities
+        section8Title: '8. Prohibited Activities',
+        section8Content: 'Users may not:',
+        section8Item1: 'Use the service for any illegal purpose',
+        section8Item2: 'Harass, abuse, or harm other users',
+        section8Item3: 'Submit false or misleading information',
+        section8Item4: 'Attempt to circumvent security measures',
+        section8Item5: 'Resell parts purchased through QScrap commercially',
+        section8Item6: 'Violate any applicable laws or regulations',
+        // Section 9 - Intellectual Property
+        section9Title: '9. Intellectual Property',
+        section9Content: 'All content, trademarks, and intellectual property on QScrap are owned by QScrap Trading Co. W.L.L. You may not:',
+        section9Item1: 'Copy, modify, or distribute our content',
+        section9Item2: 'Use our trademarks without permission',
+        section9Item3: 'Reverse engineer our application',
+        section9Item4: 'Create derivative works based on our services',
+        section9Item5: 'Remove any proprietary notices',
+        // Section 10 - Limitation of Liability
+        section10Title: '10. Limitation of Liability',
+        section10Content: 'QScrap and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of our services. Our total liability shall not exceed the amount you paid for the specific transaction in question.',
+        // Section 11 - Indemnification
+        section11Title: '11. Indemnification',
+        section11Content: 'You agree to indemnify and hold harmless QScrap, its officers, directors, employees, and agents from any claims, damages, or expenses arising from your use of our services or violation of these terms.',
+        // Section 12 - Governing Law
+        section12Title: '12. Governing Law',
+        section12Content: 'These terms shall be governed by the laws of the State of Qatar. Any disputes shall be resolved in the courts of Qatar. By using QScrap, you consent to this jurisdiction.',
+        // Section 13 - Changes to Terms
+        section13Title: '13. Changes to Terms',
+        section13Content: 'We reserve the right to modify these terms at any time. Continued use of QScrap after changes constitutes acceptance of the new terms. We will notify users of significant changes via email or in-app notification.',
+        // Section 14 - Contact
+        section14Title: '14. Contact Information',
+        section14Content: 'For questions about these Terms of Service, please contact us at:',
+    },
+
+    privacy: {
+        title: 'Privacy Policy',
+        lastUpdated: 'Last Updated: {{date}}',
+        email: 'Email',
+        phone: 'Phone',
+        address: 'Address',
+        // Section 1 - Introduction
+        section1Title: '1. Introduction',
+        section1Content1: 'QScrap Trading Co. W.L.L. ("QScrap," "we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.',
+        section1Content2: 'By using QScrap, you consent to the data practices described in this policy. If you do not agree with our policies, please do not use our services.',
+        // Section 2 - Information We Collect
+        section2Title: '2. Information We Collect',
+        personalInfo: 'Personal Information',
+        section2Content1: 'We collect information that you provide directly to us:',
+        section2Item1: 'Name and contact information (phone, email)',
+        section2Item2: 'Account credentials (phone number, password)',
+        section2Item3: 'Vehicle information (make, model, year, VIN)',
+        section2Item4: 'Delivery addresses',
+        section2Item5: 'Payment information (processed securely by Stripe)',
+        section2Item6: 'Communications with support and garages',
+        autoCollectedInfo: 'Automatically Collected Information',
+        section2Content2: 'When you use our app, we automatically collect:',
+        section2Item7: 'Device information (type, OS version, unique identifiers)',
+        section2Item8: 'Location data (with your permission)',
+        section2Item9: 'App usage data and analytics',
+        section2Item10: 'IP address and network information',
+        section2Item11: 'Crash reports and performance data',
+        // Section 3 - How We Use Information
+        section3Title: '3. How We Use Your Information',
+        section3Content: 'We use the collected information to:',
+        section3Item1: 'Provide and improve our services',
+        section3Item2: 'Process transactions and send related information',
+        section3Item3: 'Send notifications about orders and bids',
+        section3Item4: 'Provide customer support',
+        section3Item5: 'Personalize your experience',
+        section3Item6: 'Analyze usage patterns to improve the app',
+        section3Item7: 'Comply with legal obligations',
+        // Section 4 - Information Sharing
+        section4Title: '4. Information Sharing',
+        section4Content: 'We may share your information with:',
+        section4Item1: 'Garages - to fulfill your part requests',
+        section4Item2: 'Delivery drivers - to complete deliveries',
+        section4Item3: 'Payment processors - to process transactions',
+        section4Item4: 'Analytics providers - to improve our services',
+        section4Item5: 'Legal authorities - when required by law',
+        // Section 5 - Data Security
+        section5Title: '5. Data Security',
+        section5Content: 'We implement industry-standard security measures to protect your data, including encryption, secure servers, and access controls. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.',
+        // Section 6 - Your Rights
+        section6Title: '6. Your Rights',
+        section6Content: 'You have the right to:',
+        section6Item1: 'Access your personal data',
+        section6Item2: 'Correct inaccurate information',
+        section6Item3: 'Request deletion of your account',
+        section6Item4: 'Opt-out of marketing communications',
+        section6Item5: 'Withdraw consent for data processing',
+        // Section 7 - Data Retention
+        section7Title: '7. Data Retention',
+        section7Content: 'We retain your information for as long as your account is active or as needed to provide services. We may retain certain information as required by law or for legitimate business purposes.',
+        // Section 8 - Children
+        section8Title: '8. Children\'s Privacy',
+        section8Content: 'QScrap is not intended for users under 18 years of age. We do not knowingly collect personal information from children. If we discover that we have collected data from a child, we will delete it immediately.',
+        // Section 9 - Changes
+        section9Title: '9. Changes to This Policy',
+        section9Content: 'We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.',
+        // Section 10 - Contact
+        section10Title: '10. Contact Us',
+        section10Content: 'For questions about this Privacy Policy, please contact us at:',
     },
 };
 
