@@ -152,9 +152,29 @@ export function generatePayoutStatementHTML(
         
         .generated { font-size: 8px; color: #999; margin-top: 10px; }
 
+        /* PDF page-break rules */
+        .totals-box {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .footer {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .summary-row {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
         @media print {
             body { padding: 10px; }
             .no-print { display: none; }
+            .totals-box, .footer, .summary-row {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
         }
     </style>
 </head>
