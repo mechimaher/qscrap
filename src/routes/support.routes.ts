@@ -49,8 +49,8 @@ router.post('/tickets', authenticate, createTicket);
 // Agent: Create ticket on behalf of customer
 router.post('/tickets/create-for-customer', authenticate, authorizeOperations, createTicketForCustomer);
 
-// Ticket detail (full context - agents only for now)
-router.get('/tickets/:ticketId', authenticate, authorizeOperations, getTicketDetail);
+// Ticket detail (customers can view their own, agents can view all)
+router.get('/tickets/:ticketId', authenticate, getTicketDetail);
 
 // Messages: Get
 router.get('/tickets/:ticketId/messages', authenticate, getTicketMessages);

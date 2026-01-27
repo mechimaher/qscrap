@@ -162,7 +162,7 @@ class PushService {
         const allMessages: PushMessage[] = [];
         const messageUserMap: string[] = []; // Track which user each message belongs to
 
-        for (const [userId, tokens] of tokensByUser) {
+        for (const [userId, tokens] of Array.from(tokensByUser.entries())) {
             for (const token of tokens) {
                 allMessages.push({
                     to: token,
