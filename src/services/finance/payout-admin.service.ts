@@ -400,7 +400,7 @@ export class PayoutAdminService {
                 gp.payout_id,
                 gp.order_id,
                 o.order_number,
-                COALESCE(b.part_name, r.part_name, 'Part') as part_name,
+                COALESCE(r.part_description, b.part_number, 'Auto Part') as part_name,
                 o.delivered_at,
                 gp.confirmed_at,
                 (gp.net_amount + COALESCE(gp.platform_fee_amount, 0)) as gross_amount,
