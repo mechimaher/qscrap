@@ -5,10 +5,12 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import logger from '../utils/logger';
 import { catchAsync } from '../utils/catchAsync';
 import { AuthService } from '../services/auth';
+import { AccountDeletionService } from '../services/auth/account-deletion.service';
 import { otpService } from '../services/otp.service';
 import { emailService } from '../services/email.service';
 
 const authService = new AuthService(pool);
+const accountDeletionService = new AccountDeletionService(pool);
 
 // Qatar phone number validation
 const isValidPhoneNumber = (phone: string): boolean => {
@@ -70,6 +72,17 @@ export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) 
         if (getErrorMessage(err) === 'User not found') return res.status(404).json({ error: 'User not found' });
         throw err;
     }
+});
+
+/**
+ * Check if user account can be deleted
+ * Returns blockers if there are pending business items (orders, tickets, disputes)
+ */
+export const checkDeletionEligibility = catchAsync(async (req: AuthRequest, res: Response) => {
+    if (!req.user?.userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const result = await accountDeletionService.checkDeletionEligibility(req.user.userId);
+    res.json(result);
 });
 
 /**

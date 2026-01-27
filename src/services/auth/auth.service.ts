@@ -138,7 +138,7 @@ export class AuthService {
             await client.query('BEGIN');
 
             // Check user exists
-            const userResult = await client.query('SELECT user_type, email FROM users WHERE user_id = $1', [userId]);
+            const userResult = await client.query('SELECT user_type, email, phone_number FROM users WHERE user_id = $1', [userId]);
             if (userResult.rows.length === 0) throw new Error('User not found');
 
             const userType = userResult.rows[0].user_type;
@@ -157,9 +157,16 @@ export class AuthService {
                     [userId]
                 );
 
-                // Anonymize support tickets
+                // Anonymize support tickets - set customer_id to NULL (allowed by schema)
                 await client.query(
                     `UPDATE support_tickets SET customer_id = NULL 
+                     WHERE customer_id = $1`,
+                    [userId]
+                );
+
+                // Clear reviews customer reference
+                await client.query(
+                    `UPDATE reviews SET customer_id = NULL 
                      WHERE customer_id = $1`,
                     [userId]
                 );
@@ -205,8 +212,15 @@ export class AuthService {
             // - push_tokens, notifications, addresses, loyalty_balance, loyalty_history, vehicles
 
             await client.query('COMMIT');
-        } catch (err) {
+        } catch (err: any) {
             await client.query('ROLLBACK');
+            // Log the detailed error for server debugging
+            console.error('[AuthService] deleteAccount failed:', {
+                userId,
+                error: err.message,
+                code: err.code,
+                detail: err.detail
+            });
             throw err;
         } finally {
             client.release();

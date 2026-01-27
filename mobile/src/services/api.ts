@@ -537,6 +537,19 @@ class ApiService {
         });
     }
 
+    // Account Deletion Eligibility Check
+    async checkDeletionEligibility(): Promise<{
+        canDelete: boolean;
+        blockers: Array<{
+            type: string;
+            count: number;
+            message: string;
+            action: string;
+        }>;
+    }> {
+        return this.request(API_ENDPOINTS.DELETION_ELIGIBILITY);
+    }
+
     // Account Deletion
     async deleteAccount(): Promise<any> {
         return this.request(API_ENDPOINTS.DELETE_ACCOUNT, {
