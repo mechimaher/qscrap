@@ -11,7 +11,7 @@
  * @module config/security
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 // ============================================
 // CONFIGURATION CONSTANTS

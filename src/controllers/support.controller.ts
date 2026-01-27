@@ -188,12 +188,20 @@ export const getActivity = async (req: AuthRequest, res: Response) => {
 
 export const getTicketDetail = async (req: AuthRequest, res: Response) => {
     try {
-        requireAgent(req);
-        const detail = await supportService.getTicketDetail(req.params.ticketId);
+        const { ticketId } = req.params;
+
+        // Allow agents OR the ticket owner to view
+        const access = await supportService.verifyTicketAccess(ticketId, req.user!.userId, req.user!.userType);
+        if (!access.hasAccess) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const detail = await supportService.getTicketDetail(ticketId);
         if (!detail) return res.status(404).json({ error: 'Ticket not found' });
         res.json(detail);
     } catch (err: any) {
-        res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
+        console.error('[SUPPORT] getTicketDetail error:', getErrorMessage(err));
+        res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 

@@ -431,7 +431,6 @@ export class SupportActionsService {
                 INSERT INTO support_escalations 
                 (order_id, customer_id, escalated_by, reason, priority, status, ticket_id)
                 VALUES ($1, $2, $3, $4, $5, 'pending', $6)
-                ON CONFLICT DO NOTHING
             `, [
                 params.orderId,
                 params.customerId,
