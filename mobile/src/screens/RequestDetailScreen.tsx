@@ -877,13 +877,25 @@ export default function RequestDetailScreen() {
                 {
                     text: 'Continue to Payment',
                     onPress: () => {
-                        // Navigate to Payment screen with bid details
-                        navigation.navigate('Payment', {
+                        // CRITICAL: Navigate to Payment screen with bid details
+                        // Using unique key to force fresh screen instance (cache-busting)
+                        const navigationParams = {
                             bidId: bid.bid_id,
                             garageName: bid.garage_name,
                             partPrice: priceToShow,
                             deliveryFee: deliveryFee,
                             partDescription: request?.part_description || 'Part',
+                        };
+
+                        console.log('========================================');
+                        console.log('🚀 NAVIGATING TO PAYMENT SCREEN');
+                        console.log('📦 Params:', JSON.stringify(navigationParams, null, 2));
+                        console.log('========================================');
+
+                        navigation.navigate('Payment', {
+                            ...navigationParams,
+                            // Unique key forces new screen instance, bypassing cache
+                            _cacheKey: `payment_${bid.bid_id}_${Date.now()}`,
                         });
                     },
                 },
