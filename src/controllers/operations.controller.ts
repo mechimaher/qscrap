@@ -397,13 +397,37 @@ export const getEscalations = async (req: AuthRequest, res: Response) => {
 
 export const resolveEscalation = async (req: AuthRequest, res: Response) => {
     const { escalation_id } = req.params;
-    const { resolution_notes } = req.body;
+    const { resolution_notes, resolution_action } = req.body;
     const staffId = req.user!.userId;
 
     try {
         const pool = getWritePool();
+        const readPool = getReadPool();
 
-        const result = await pool.query(`
+        // 1. Get escalation with related ticket, order, customer, garage info
+        const escalationResult = await readPool.query(`
+            SELECT e.*,
+                   t.ticket_id, t.customer_id as ticket_customer_id,
+                   COALESCE(o.order_number, o2.order_number) as order_number,
+                   COALESCE(o.customer_id, o2.customer_id, e.customer_id) as customer_id,
+                   COALESCE(o.garage_id, o2.garage_id) as garage_id,
+                   eu.full_name as escalated_by_name
+            FROM support_escalations e
+            LEFT JOIN support_tickets t ON e.ticket_id = t.ticket_id
+            LEFT JOIN orders o ON t.order_id = o.order_id
+            LEFT JOIN orders o2 ON e.order_id = o2.order_id
+            LEFT JOIN users eu ON e.escalated_by = eu.user_id
+            WHERE e.escalation_id = $1
+        `, [escalation_id]);
+
+        if (escalationResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Escalation not found' });
+        }
+
+        const escalation = escalationResult.rows[0];
+
+        // 2. Update escalation with resolution
+        const updateResult = await pool.query(`
             UPDATE support_escalations 
             SET status = 'resolved',
                 resolved_at = NOW(),
@@ -413,16 +437,107 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             RETURNING *
         `, [escalation_id, staffId, resolution_notes || 'Resolved by Operations']);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Escalation not found' });
+        // 3. Update linked ticket if exists - add resolution message
+        if (escalation.ticket_id) {
+            await pool.query(`
+                INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
+                VALUES ($1, $2, 'admin', $3, false)
+            `, [
+                escalation.ticket_id,
+                staffId,
+                `📋 **Escalation Resolved by Operations**\n\n${resolution_notes || 'Your concern has been addressed.'}`
+            ]);
+
+            // Update ticket status to resolved if still open
+            await pool.query(`
+                UPDATE support_tickets 
+                SET status = 'resolved', resolved_at = NOW()
+                WHERE ticket_id = $1 AND status NOT IN ('resolved', 'closed')
+            `, [escalation.ticket_id]);
         }
+
+        // 4. Notifications
+        const io = (global as any).io;
+        const orderRef = escalation.order_number ? `Order #${escalation.order_number}` : 'your escalated issue';
+
+        // 4a. Notify support agent who escalated
+        if (escalation.escalated_by) {
+            await createNotification({
+                userId: escalation.escalated_by,
+                type: 'escalation_resolved',
+                title: 'Escalation Resolved ✅',
+                message: `Your escalation for ${orderRef} has been resolved by Operations.`,
+                data: {
+                    escalation_id,
+                    order_number: escalation.order_number,
+                    resolution_action: resolution_action || 'resolved',
+                    resolution_notes
+                },
+                target_role: 'operations'
+            });
+
+            io.to(`support_${escalation.escalated_by}`).emit('escalation_resolved', {
+                escalation_id,
+                order_number: escalation.order_number,
+                resolution_notes,
+                resolution_action: resolution_action || 'resolved'
+            });
+        }
+
+        // 4b. Notify customer (generic message - no internal details)
+        if (escalation.customer_id) {
+            await createNotification({
+                userId: escalation.customer_id,
+                type: 'issue_resolved',
+                title: 'Issue Resolved',
+                message: `Your issue regarding ${orderRef} has been reviewed and resolved by our team.`,
+                data: { order_number: escalation.order_number },
+                target_role: 'customer'
+            });
+
+            io.to(`user_${escalation.customer_id}`).emit('order_update', {
+                order_number: escalation.order_number,
+                type: 'escalation_resolved',
+                notification: `Your issue regarding ${orderRef} has been resolved.`
+            });
+        }
+
+        // 4c. Notify garage if relevant
+        if (escalation.garage_id) {
+            io.to(`garage_${escalation.garage_id}`).emit('escalation_update', {
+                order_number: escalation.order_number,
+                type: 'resolved',
+                notification: `Escalation for ${orderRef} has been resolved by Operations.`
+            });
+        }
+
+        // 4d. Notify operations room
+        io.to('operations').emit('escalation_resolved', {
+            escalation_id,
+            order_number: escalation.order_number,
+            resolved_by: staffId,
+            notification: `Escalation ${escalation.order_number ? `for Order #${escalation.order_number}` : escalation_id} has been resolved`
+        });
 
         // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
+        logger.info('[OPERATIONS] Escalation resolved with notifications', {
+            escalation_id,
+            order_number: escalation.order_number,
+            customer_notified: !!escalation.customer_id,
+            support_notified: !!escalation.escalated_by,
+            garage_notified: !!escalation.garage_id
+        });
+
         res.json({
             message: 'Escalation resolved',
-            escalation: result.rows[0]
+            escalation: updateResult.rows[0],
+            notifications_sent: {
+                support: !!escalation.escalated_by,
+                customer: !!escalation.customer_id,
+                garage: !!escalation.garage_id
+            }
         });
     } catch (err) {
         logger.error('[OPERATIONS] resolveEscalation error:', { error: getErrorMessage(err) } as any);

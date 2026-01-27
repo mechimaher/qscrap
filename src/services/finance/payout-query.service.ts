@@ -44,7 +44,17 @@ export class PayoutQueryService {
                     AND (payout_type IS NULL OR payout_type != 'reversal')
                     AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
                     AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
-                ), 0) as this_month_completed
+                ), 0) as this_month_completed,
+                -- Count payouts still in warranty window (not yet eligible)
+                COUNT(*) FILTER (
+                    WHERE payout_status = 'pending' 
+                    AND (payout_type IS NULL OR payout_type != 'reversal')
+                ) as total_pending_count,
+                COUNT(*) FILTER (
+                    WHERE payout_status = 'pending' 
+                    AND (payout_type IS NULL OR payout_type != 'reversal')
+                    AND created_at > NOW() - INTERVAL '7 days'
+                ) as in_warranty_count
             FROM garage_payouts
             ${whereClause}
         `, params);
@@ -68,13 +78,18 @@ export class PayoutQueryService {
             totalRevenue = revenueResult.rows[0].total_revenue;
         }
 
+        // CRITICAL: Only show payouts for orders delivered 7+ days ago (warranty window)
+        // This is a Qatar B2B business rule - no early payouts
         const pendingResult = await this.pool.query(`
-            SELECT gp.*, g.garage_name, o.order_number
+            SELECT gp.*, g.garage_name, o.order_number, o.delivered_at,
+                   EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)) as days_since_delivery,
+                   GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)))::int as days_until_eligible
             FROM garage_payouts gp
             JOIN garages g ON gp.garage_id = g.garage_id
             LEFT JOIN orders o ON gp.order_id = o.order_id
             WHERE gp.payout_status = 'pending' 
             AND (gp.payout_type IS NULL OR gp.payout_type != 'reversal')
+            AND COALESCE(o.delivered_at, o.completed_at, gp.created_at) <= NOW() - INTERVAL '7 days'
             ${userType === 'garage' ? 'AND gp.garage_id = $1' : ''}
             ORDER BY gp.created_at ASC
             LIMIT 20
@@ -87,6 +102,33 @@ export class PayoutQueryService {
             },
             pending_payouts: pendingResult.rows
         };
+    }
+
+    // Get payouts still within 7-day warranty window (not yet eligible for processing)
+    async getInWarrantyPayouts(userType: string, userId?: string): Promise<Payout[]> {
+        let whereClause = `WHERE gp.payout_status = 'pending' 
+            AND (gp.payout_type IS NULL OR gp.payout_type != 'reversal')
+            AND COALESCE(o.delivered_at, o.completed_at, gp.created_at) > NOW() - INTERVAL '7 days'`;
+        const params: unknown[] = [];
+
+        if (userType === 'garage') {
+            whereClause += ` AND gp.garage_id = $1`;
+            params.push(userId);
+        }
+
+        const result = await this.pool.query(`
+            SELECT gp.*, g.garage_name, o.order_number, o.delivered_at,
+                   EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)) as days_since_delivery,
+                   GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)))::int as days_until_eligible
+            FROM garage_payouts gp
+            JOIN garages g ON gp.garage_id = g.garage_id
+            LEFT JOIN orders o ON gp.order_id = o.order_id
+            ${whereClause}
+            ORDER BY o.delivered_at ASC
+            LIMIT 50
+        `, params);
+
+        return result.rows;
     }
 
     async getAwaitingConfirmation(garageId: string): Promise<Payout[]> {
@@ -114,6 +156,12 @@ export class PayoutQueryService {
         if (filters.status) {
             whereClause += ` AND gp.payout_status = $${paramIndex++}`;
             params.push(filters.status);
+
+            // CRITICAL: For pending payouts, only show those past 7-day warranty window
+            // This is a Qatar B2B business rule - no payouts before customer can return
+            if (filters.status === 'pending') {
+                whereClause += ` AND COALESCE(o.delivered_at, o.completed_at, gp.created_at) <= NOW() - INTERVAL '7 days'`;
+            }
         }
 
         if (filters.garage_id) {

@@ -6,6 +6,7 @@ import {
     sendMessage,
     updateTicketStatus,
     getStats,
+    getMyEscalations,
     getUrgent,
     getActivity,
     getTicketDetail,
@@ -32,6 +33,7 @@ const router = Router();
 // ==========================================
 
 router.get('/stats', authenticate, authorizeOperations, getStats);
+router.get('/my-escalations', authenticate, authorizeOperations, getMyEscalations);
 router.get('/urgent', authenticate, authorizeOperations, getUrgent);
 router.get('/activity', authenticate, authorizeOperations, getActivity);
 router.get('/sla-stats', authenticate, authorizeOperations, getSLAStats);

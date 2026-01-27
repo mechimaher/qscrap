@@ -91,6 +91,23 @@ export const getPaymentStats = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// Get payouts still within 7-day warranty window
+export const getInWarrantyPayouts = async (req: AuthRequest, res: Response) => {
+    try {
+        const payouts = await payoutService.getInWarrantyPayouts(
+            req.user!.userType,
+            req.user!.userId
+        );
+        res.json({ in_warranty_payouts: payouts, count: payouts.length });
+    } catch (err) {
+        console.error('getInWarrantyPayouts Error:', err);
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to fetch in-warranty payouts' });
+    }
+};
+
 export const getPayoutConfig = async (_req: AuthRequest, res: Response) => {
     res.json({
         auto_confirm_days: 7,

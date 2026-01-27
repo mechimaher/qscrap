@@ -5,6 +5,7 @@
 import { Pool, PoolClient } from 'pg';
 import { DisputeFilters, DisputeResolution, PaginationMetadata } from './types';
 import { DisputeNotFoundError } from './errors';
+import { createNotification } from '../notification.service';
 
 export class DisputeService {
     constructor(private pool: Pool) { }
@@ -225,9 +226,10 @@ export class DisputeService {
 
                     if (confirmedPayout.rows.length > 0) {
                         const payout = confirmedPayout.rows[0];
-                        await client.query(`
+                        const reversalResult = await client.query(`
                             INSERT INTO payout_reversals (garage_id, original_payout_id, order_id, amount, reason, status)
                             VALUES ($1, $2, $3, $4, $5, 'pending')
+                            RETURNING reversal_id
                         `, [
                             dispute.garage_id,
                             payout.payout_id,
@@ -235,7 +237,33 @@ export class DisputeService {
                             finalRefundAmount,
                             `Refund approved after payout confirmed - Dispute: ${resolution.notes || dispute.description}`
                         ]);
+
+                        const reversalId = reversalResult.rows[0].reversal_id;
                         payoutAction = { action: 'reversal_created', payout_id: payout.payout_id, reversal_amount: finalRefundAmount };
+
+                        // Notify garage about pending deduction
+                        try {
+                            await createNotification({
+                                userId: dispute.garage_id,
+                                type: 'payout_reversal',
+                                title: '⚠️ Payout Deduction Pending',
+                                message: `${finalRefundAmount} QAR will be deducted from your next payout due to dispute resolution.`,
+                                data: { reversal_id: reversalId, order_number: dispute.order_number },
+                                target_role: 'garage'
+                            });
+
+                            const io = (global as any).io;
+                            if (io) {
+                                io.to(`garage_${dispute.garage_id}`).emit('payout_reversal', {
+                                    reversal_id: reversalId,
+                                    amount: finalRefundAmount,
+                                    order_number: dispute.order_number,
+                                    type: 'deduction_pending'
+                                });
+                            }
+                        } catch (notifyErr) {
+                            console.error('[DisputeService] Failed to notify garage about reversal:', notifyErr);
+                        }
                     }
                 }
             } else {

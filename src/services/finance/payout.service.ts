@@ -106,6 +106,10 @@ export class PayoutService {
         return this.query.getPaymentStats();
     }
 
+    async getInWarrantyPayouts(userType: string, userId?: string): Promise<Payout[]> {
+        return this.query.getInWarrantyPayouts(userType, userId);
+    }
+
     // ============================================
     // ADMIN OPERATIONS
     // ============================================

@@ -174,6 +174,7 @@ function switchSection(section) {
     switch (section) {
         case 'overview': loadOverview(); break;
         case 'pending': loadPendingPayouts(); break;
+        case 'inwarranty': loadInWarrantyPayouts(); break;
         case 'awaiting': loadAwaitingPayouts(); break;
         case 'disputed': loadDisputedPayouts(); break;
         case 'completed': loadCompletedPayouts(); break;
@@ -362,6 +363,57 @@ async function loadPendingPayouts(page = 1) {
         });
     } catch (err) {
         console.error('Failed to load pending payouts:', err);
+    }
+}
+
+// ==========================================
+// IN-WARRANTY PAYOUTS (7-Day Hold)
+// ==========================================
+
+async function loadInWarrantyPayouts() {
+    try {
+        const res = await fetch(`${API_URL}/finance/payouts/in-warranty`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('inWarrantyPayoutsTable');
+        const payouts = data.in_warranty_payouts || [];
+
+        // Update badge
+        const badge = document.getElementById('inWarrantyCount');
+        if (badge) badge.textContent = payouts.length;
+
+        if (payouts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-shield-check"></i> No orders currently in warranty period</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = payouts.map(p => {
+            const daysRemaining = parseInt(p.days_until_eligible) || 0;
+            const badgeClass = daysRemaining <= 2 ? 'badge-warning' : 'badge-info';
+            return `
+            <tr>
+                <td><strong>${escapeHTML(p.garage_name)}</strong></td>
+                <td>#${escapeHTML(p.order_number)}</td>
+                <td>${formatDate(p.delivered_at)}</td>
+                <td>
+                    <span class="badge ${badgeClass}">
+                        <i class="bi bi-hourglass-split"></i> ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}
+                    </span>
+                </td>
+                <td style="color: var(--success); font-weight: 600;">${formatCurrency(p.net_amount)}</td>
+                <td>
+                    <span class="badge badge-warning">
+                        <i class="bi bi-shield-lock"></i> In Warranty
+                    </span>
+                </td>
+            </tr>
+        `;
+        }).join('');
+    } catch (err) {
+        console.error('Failed to load in-warranty payouts:', err);
+        showToast('Failed to load in-warranty payouts', 'error');
     }
 }
 
