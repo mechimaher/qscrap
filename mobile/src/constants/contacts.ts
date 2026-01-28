@@ -27,8 +27,10 @@ export const CONTACT = {
     LINKEDIN: 'https://linkedin.com/company/qscrap',
 
     // Corporate Info
-    COMPANY_NAME: 'QScrap Qatar',
-    COMPANY_NAME_AR: 'كيو سكراب قطر',
+    COMPANY_NAME: 'QScrap Services & Trading L.L.C',
+    COMPANY_NAME_AR: 'كيوسكراب للخدمات والتجارة ذ.م.م',
+    COMPANY_BRAND: 'QScrap',
+    LANDLINE: '+974 4455 4444',
     TAGLINE: 'Qatar\'s Premium Auto Parts Marketplace',
     TAGLINE_AR: 'أفضل سوق لقطع غيار السيارات في قطر',
 } as const;
