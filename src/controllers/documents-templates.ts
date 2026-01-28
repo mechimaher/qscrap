@@ -317,7 +317,7 @@ export function generateGaragePayoutStatementHTML(
             </div>
             <div class="info-card">
                 <div class="info-header">${L.platform?.en || 'Platform'} / ${L.platform?.ar || 'المنصة'}</div>
-                <div class="info-name">${data.platform?.name || 'QScrap'} <span class="arabic">${data.platform?.name_ar || 'كيو سكراب'}</span></div>
+                <div class="info-name">${data.platform?.name || COMPANY_INFO.brand.en} <span class="arabic">${data.platform?.name_ar || COMPANY_INFO.brand.ar}</span></div>
                 <div class="info-detail">Order: ${data.customer_ref?.order_number || data.order_number}</div>
                 <div class="info-detail">Customer: ${data.customer_ref?.name || 'N/A'}</div>
                 <div class="info-detail"><strong>Mobile:</strong> ${data.customer_ref?.phone || 'N/A'}</div>

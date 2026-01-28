@@ -181,8 +181,8 @@ export class DocumentGenerationService {
                 },
 
                 platform: {
-                    name: 'QScrap',
-                    name_ar: 'كيو سكراب',
+                    name: COMPANY_INFO.brand.en,
+                    name_ar: COMPANY_INFO.brand.ar,
                 },
 
                 customer_ref: {

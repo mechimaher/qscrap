@@ -62,15 +62,20 @@ export const BILINGUAL_LABELS = {
 };
 
 // Company official contact information (Qatar Commercial Registration)
+// Authority: Identity-Brand-BRAIN.md
 export const COMPANY_INFO = {
-    name: { en: 'QScrap', ar: 'كيو سكراب' },
+    // Legal Name (for invoices, contracts, PDFs)
+    name: { en: 'QScrap Services & Trading L.L.C', ar: 'كيوسكراب للخدمات والتجارة ذ.م.م' },
+    // Brand Name (for logos, marketing)
+    brand: { en: 'QScrap', ar: 'كيو سكراب' },
     support_phone: '+974 4455 4444',
     support_email: 'support@qscrap.qa',
     website: 'www.qscrap.qa',
     address: {
-        en: 'Industrial Area, St 10, P.O. Box 32544, Doha, Qatar',
+        en: 'Industrial Area, Street 10, P.O. Box 32544, Doha, Qatar',
         ar: 'المنطقة الصناعية، شارع 10، ص.ب 32544، الدوحة، قطر'
     },
+    country: { en: 'State of Qatar', ar: 'دولة قطر' },
     cr_number: '', // Will be added when CR is obtained
 };
 
