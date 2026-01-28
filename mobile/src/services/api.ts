@@ -838,7 +838,7 @@ class ApiService {
         days_remaining: number;
         reason?: string;
     }> {
-        return this.request(`/cancellation/orders/${orderId}/return-preview`);
+        return this.request(`/cancellations/orders/${orderId}/return-preview`);
     }
 
     async createReturnRequest(orderId: string, data: {
@@ -851,7 +851,7 @@ class ApiService {
         refund_amount?: number;
         message: string;
     }> {
-        return this.request(`/cancellation/orders/${orderId}/return`, {
+        return this.request(`/cancellations/orders/${orderId}/return`, {
             method: 'POST',
             body: JSON.stringify(data)
         });
@@ -866,7 +866,7 @@ class ApiService {
         can_make_return: boolean;
         can_make_defective_claim: boolean;
     }> {
-        return this.request('/cancellation/abuse-status');
+        return this.request('/cancellations/abuse-status');
     }
 
 }

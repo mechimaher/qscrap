@@ -295,6 +295,19 @@ async function showDashboard() {
         console.log('Could not sync ignored requests from server:', err);
     }
 
+    // Connection handlers for data freshness
+    socket.on('connect', () => {
+        console.log('[Socket] Connected - refreshing data');
+        loadStats();
+        loadRequests();
+        loadBids();
+        loadOrders();
+    });
+
+    socket.on('disconnect', () => {
+        console.log('[Socket] Disconnected');
+    });
+
     socket.on('new_request', (data) => {
         playNotificationSound('newRequest');
         prependRequest(data);
@@ -414,6 +427,13 @@ async function showDashboard() {
         loadOrders();
         loadStats();
         loadBadgeCounts(); // Update orders badge
+    });
+
+    // Payment received notification
+    socket.on('payments_sent', (data) => {
+        playNotificationSound('success');
+        showToast(`💰 Payment received! Check your Payouts section.`, 'success');
+        loadStats(); // Update earnings display
     });
 
     // Order completed - Customer confirmed delivery

@@ -148,7 +148,13 @@ function switchSection(section) {
 function setupSocket() {
     try {
         socket = io({ auth: { token } });
-        socket.on('connect', () => console.log('Socket connected'));
+        socket.on('connect', () => {
+            console.log('[Socket] Connected - refreshing data');
+            loadStats();
+        });
+        socket.on('disconnect', () => {
+            console.log('[Socket] Disconnected');
+        });
         socket.emit('join_room', 'operations');
         socket.emit('join_room', 'support');
 
@@ -1116,4 +1122,402 @@ document.addEventListener('DOMContentLoaded', () => {
     // Already handled via section switching
 });
 
-console.log('Customer Resolution Center loaded - v2.0');
+// ==========================================
+// BRAIN v3.0 CANCELLATION & RETURN HANDLING
+// ==========================================
+
+/**
+ * Show BRAIN v3.0 compliant cancellation preview with fee breakdown
+ * Calls: GET /api/cancellation/orders/:orderId/cancel-preview
+ */
+async function showCancellationPreview(orderId) {
+    if (!orderId) {
+        showToast('Please select an order', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/orders/${orderId}/cancel-preview`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.error || 'Cannot cancel this order', 'error');
+            return;
+        }
+
+        const preview = await res.json();
+
+        // Stage descriptions per BRAIN v3.0
+        const stageDescriptions = {
+            'before_payment': 'No fee - Order not yet paid',
+            'after_payment': '5% fee - Order confirmed but not started',
+            'during_preparation': '10% fee - Garage started preparation',
+            'in_transit': '10% + Delivery fee retained - Part dispatched',
+            'after_delivery': '20% + Delivery fee retained - Use return instead'
+        };
+
+        const stageDesc = stageDescriptions[preview.cancellation_stage] || preview.cancellation_stage;
+
+        let content = `
+            <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 12px 0; color: var(--text-primary);">📊 Fee Breakdown (BRAIN v3.0)</h4>
+                
+                <div style="display: grid; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <span>Part Price</span>
+                        <strong>${formatCurrency(preview.part_price || preview.total_amount)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <span>Delivery Fee</span>
+                        <strong>${formatCurrency(preview.delivery_fee || 0)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #ef4444;">
+                        <span>❌ Cancellation Fee (${(preview.fee_percentage || 0)}%)</span>
+                        <strong>-${formatCurrency(preview.cancellation_fee)}</strong>
+                    </div>
+                    ${preview.delivery_fee_retained ? `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #f59e0b;">
+                        <span>⚠️ Delivery Fee (Non-refundable)</span>
+                        <strong>-${formatCurrency(preview.delivery_fee_retained)}</strong>
+                    </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; color: #10b981;">
+                        <span>💰 Customer Refund</span>
+                        <strong>${formatCurrency(preview.refund_amount)}</strong>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 12px; padding: 10px; background: var(--bg-primary); border-radius: 8px; font-size: 12px; color: var(--text-secondary);">
+                    <strong>Stage:</strong> ${stageDesc}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Reason for Cancellation</label>
+                <select id="cancelReason" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="customer_request">Customer Request</option>
+                    <option value="found_elsewhere">Found Elsewhere</option>
+                    <option value="price_issue">Price Issue</option>
+                    <option value="taking_too_long">Taking Too Long</option>
+                    <option value="changed_mind">Changed Mind</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-top: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Notes (optional)</label>
+                <textarea id="cancelNotes" class="form-control" rows="2" 
+                    placeholder="Add cancellation notes..."
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;"></textarea>
+            </div>
+        `;
+
+        QScrapModal.create({
+            id: 'cancel-preview-modal',
+            title: 'Cancel Order - BRAIN v3.0',
+            headerIcon: 'bi-x-circle',
+            headerClass: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            content: content,
+            size: 'md',
+            actions: [
+                {
+                    id: 'cancel-modal-btn',
+                    text: 'Cancel',
+                    class: 'btn btn-ghost',
+                    onclick: () => QScrapModal.close('cancel-preview-modal')
+                },
+                {
+                    id: 'confirm-cancel-btn',
+                    text: `Confirm Cancellation (Refund ${formatCurrency(preview.refund_amount)})`,
+                    class: 'btn btn-danger',
+                    onclick: async () => {
+                        const reason = document.getElementById('cancelReason').value;
+                        const notes = document.getElementById('cancelNotes').value.trim();
+
+                        QScrapModal.close('cancel-preview-modal');
+                        await processCancellation(orderId, reason, notes);
+                    }
+                }
+            ]
+        });
+
+    } catch (err) {
+        console.error('Cancellation preview error:', err);
+        showToast('Failed to load cancellation preview', 'error');
+    }
+}
+
+/**
+ * Process cancellation via support quick-action endpoint
+ */
+async function processCancellation(orderId, reason, notes) {
+    showToast('Processing cancellation...', 'info');
+
+    try {
+        const res = await fetch(`${API_URL}/support/quick-action`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: currentCustomer?.user_id,
+                order_id: orderId,
+                action_type: 'cancel_order',
+                action_details: { reason },
+                notes: notes || undefined
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            showToast('Order cancelled - Refund processing', 'success');
+            searchCustomer(); // Refresh
+        } else {
+            showToast(data.error || 'Cancellation failed', 'error');
+        }
+    } catch (err) {
+        console.error('Cancellation error:', err);
+        showToast('Cancellation failed', 'error');
+    }
+}
+
+/**
+ * Show return request form for 7-day warranty returns
+ * Calls: GET /api/cancellation/orders/:orderId/return-preview
+ */
+async function showReturnRequest(orderId) {
+    if (!orderId) {
+        showToast('Please select an order', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/orders/${orderId}/return-preview`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.error || 'Cannot return this order', 'error');
+            return;
+        }
+
+        const preview = await res.json();
+
+        if (!preview.can_return) {
+            showToast(preview.reason || 'Return window expired', 'error');
+            return;
+        }
+
+        let content = `
+            <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                <i class="bi bi-clock" style="font-size: 24px;"></i>
+                <div style="font-size: 18px; font-weight: 700; margin-top: 8px;">${preview.days_remaining} Days Remaining</div>
+                <div style="font-size: 12px; opacity: 0.9;">7-Day Return Window (Qatar Law)</div>
+            </div>
+            
+            <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 12px 0;">💰 Return Fee Breakdown</h4>
+                
+                <div style="display: grid; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #ef4444;">
+                        <span>Return Fee (20%)</span>
+                        <strong>-${formatCurrency(preview.return_fee)}</strong>
+                    </div>
+                    ${preview.delivery_fee_retained ? `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #f59e0b;">
+                        <span>Delivery Fee (Non-refundable)</span>
+                        <strong>-${formatCurrency(preview.delivery_fee_retained)}</strong>
+                    </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; color: #10b981;">
+                        <span>Customer Refund</span>
+                        <strong>${formatCurrency(preview.refund_amount)}</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Return Reason *</label>
+                <select id="returnReason" class="form-control" required style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="">Select reason...</option>
+                    <option value="unused">Unused / Changed Mind</option>
+                    <option value="defective">Defective Part</option>
+                    <option value="wrong_part">Wrong Part Received</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-top: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">Condition Notes</label>
+                <textarea id="returnNotes" class="form-control" rows="2" 
+                    placeholder="Describe the part condition..."
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;"></textarea>
+            </div>
+            
+            <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-radius: 8px; font-size: 11px; color: #92400e;">
+                <strong>⚠️ Note:</strong> Customer must provide 3+ photos of the part. This request will be reviewed by Operations.
+            </div>
+        `;
+
+        QScrapModal.create({
+            id: 'return-request-modal',
+            title: '7-Day Return Request',
+            headerIcon: 'bi-arrow-return-left',
+            headerClass: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+            content: content,
+            size: 'md',
+            actions: [
+                {
+                    id: 'return-cancel-btn',
+                    text: 'Cancel',
+                    class: 'btn btn-ghost',
+                    onclick: () => QScrapModal.close('return-request-modal')
+                },
+                {
+                    id: 'return-submit-btn',
+                    text: 'Submit Return Request',
+                    class: 'btn btn-primary',
+                    onclick: async () => {
+                        const reason = document.getElementById('returnReason').value;
+                        const notes = document.getElementById('returnNotes').value.trim();
+
+                        if (!reason) {
+                            showToast('Please select a return reason', 'error');
+                            return;
+                        }
+
+                        QScrapModal.close('return-request-modal');
+                        await processReturnRequest(orderId, reason, notes);
+                    }
+                }
+            ]
+        });
+
+    } catch (err) {
+        console.error('Return preview error:', err);
+        showToast('Failed to load return options', 'error');
+    }
+}
+
+/**
+ * Process return request via API
+ */
+async function processReturnRequest(orderId, reason, notes) {
+    showToast('Submitting return request...', 'info');
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/orders/${orderId}/return`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                reason,
+                condition_description: notes,
+                photo_urls: [] // Support agent can mark as pending photos
+            })
+        });
+
+        const data = await res.json();
+        if (data.success || data.return_request) {
+            showToast('Return request submitted - Pending review', 'success');
+            searchCustomer(); // Refresh
+        } else {
+            showToast(data.error || 'Return request failed', 'error');
+        }
+    } catch (err) {
+        console.error('Return request error:', err);
+        showToast('Return request failed', 'error');
+    }
+}
+
+/**
+ * Show customer abuse status (fraud prevention)
+ * Calls: GET /api/cancellation/abuse-status
+ */
+async function showCustomerAbuseStatus() {
+    if (!currentCustomer) {
+        showToast('Please search for a customer first', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/abuse-status?customer_id=${currentCustomer.user_id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            showToast('Failed to load abuse status', 'error');
+            return;
+        }
+
+        const status = await res.json();
+
+        const flagColors = {
+            'none': '#10b981',
+            'watchlist': '#f59e0b',
+            'high_risk': '#ef4444',
+            'blocked': '#991b1b'
+        };
+
+        const flagColor = flagColors[status.fraud_flag] || '#6b7280';
+
+        let content = `
+            <div style="background: ${flagColor}20; border: 2px solid ${flagColor}; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 16px;">
+                <div style="font-size: 40px; margin-bottom: 8px;">${status.fraud_flag === 'none' ? '✅' : status.fraud_flag === 'blocked' ? '🚫' : '⚠️'}</div>
+                <div style="font-size: 20px; font-weight: 700; color: ${flagColor}; text-transform: uppercase;">${status.fraud_flag || 'Unknown'}</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.returns_this_month || 0}/3</div>
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Returns This Month</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.defective_claims_this_month || 0}/3</div>
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Defective Claims</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.cancellations_this_month || 0}</div>
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Cancellations</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 700; color: ${status.can_make_return ? '#10b981' : '#ef4444'};">${status.can_make_return ? '✓' : '✗'}</div>
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Can Return</div>
+                </div>
+            </div>
+            
+            ${status.fraud_flag !== 'none' ? `
+            <div style="padding: 12px; background: #fef2f2; border-radius: 8px; color: #991b1b; font-size: 12px;">
+                <strong>⚠️ Warning:</strong> This customer has elevated fraud flags. Exercise caution with refunds and returns.
+            </div>
+            ` : ''}
+        `;
+
+        QScrapModal.create({
+            id: 'abuse-status-modal',
+            title: 'Customer Abuse Status',
+            headerIcon: 'bi-shield-exclamation',
+            headerClass: `background: ${flagColor}`,
+            content: content,
+            size: 'sm',
+            actions: [{
+                id: 'abuse-close-btn',
+                text: 'Close',
+                class: 'btn btn-primary',
+                onclick: () => QScrapModal.close('abuse-status-modal')
+            }]
+        });
+
+    } catch (err) {
+        console.error('Abuse status error:', err);
+        showToast('Failed to load abuse status', 'error');
+    }
+}
+
+console.log('Customer Resolution Center loaded - v3.0 BRAIN Compliant');
+

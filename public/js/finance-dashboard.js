@@ -200,6 +200,16 @@ function refreshCurrentSection() {
 function setupSocket() {
     socket = io({ auth: { token } });
 
+    // Connection handlers for data freshness
+    socket.on('connect', () => {
+        console.log('[Socket] Connected - refreshing data');
+        loadBadges();
+    });
+
+    socket.on('disconnect', () => {
+        console.log('[Socket] Disconnected');
+    });
+
     socket.on('payout_confirmed', (data) => {
         showToast(`Payment confirmed by ${data.garage_name}`, 'success');
         loadBadges();
