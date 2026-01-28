@@ -164,12 +164,8 @@ export class AuthService {
                     [userId]
                 );
 
-                // Clear reviews customer reference
-                await client.query(
-                    `UPDATE reviews SET customer_id = NULL 
-                     WHERE customer_id = $1`,
-                    [userId]
-                );
+                // Note: order_reviews references orders (not customers directly)
+                // Orders are preserved for financial/audit purposes
 
                 // Keep order history but anonymize personal details in orders if needed
                 // (orders have foreign keys that need the user to exist)
