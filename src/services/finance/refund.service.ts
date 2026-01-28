@@ -385,12 +385,13 @@ export class RefundService {
                 target_role: 'customer'
             });
 
-            console.log(`[RefundService] Stripe refund ${stripeRefund.id} processed for ${refund.refund_amount} QAR`);
+            console.log(`[RefundService] Refund ${stripeRefundId || 'MANUAL'} processed for ${refund.refund_amount} QAR`);
 
             return {
                 success: true,
-                stripe_refund_id: stripeRefund.id,
-                message: `Refund of ${refund.refund_amount} QAR processed successfully`
+                stripe_refund_id: stripeRefundId,
+                refund_method: refundMethod,
+                message: `Refund of ${refund.refund_amount} QAR processed successfully${refundMethod === 'manual' ? ' (manual)' : ''}`
             };
         } catch (err: any) {
             await client.query('ROLLBACK');
