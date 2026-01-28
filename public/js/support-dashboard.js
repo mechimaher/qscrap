@@ -110,6 +110,7 @@ function showDashboard() {
 
     setupNavigation();
     setupSocket();
+    loadStats();
     loadReviews();
 
     // Focus search input
@@ -198,6 +199,36 @@ function setupSocket() {
 
     // Load canned responses for chat templates
     loadCannedResponses();
+}
+
+// ==========================================
+// DASHBOARD STATS
+// ==========================================
+
+async function loadStats() {
+    try {
+        const [statsRes, slaRes] = await Promise.all([
+            fetch(`${API_URL}/support/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch(`${API_URL}/support/sla-stats`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+
+        const stats = await statsRes.json();
+        const sla = await slaRes.json();
+
+        document.getElementById('statOpenTickets').textContent = stats.open_tickets || 0;
+        document.getElementById('statTodayResolved').textContent = stats.resolved_today || 0;
+
+        // Calculate average response time from SLA stats
+        if (sla.avg_resolution_mins) {
+            const hours = Math.floor(sla.avg_resolution_mins / 60);
+            const mins = Math.round(sla.avg_resolution_mins % 60);
+            document.getElementById('statAvgTime').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+        } else {
+            document.getElementById('statAvgTime').textContent = '--';
+        }
+    } catch (err) {
+        console.error('Failed to load stats:', err);
+    }
 }
 
 // ==========================================
