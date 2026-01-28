@@ -11,7 +11,7 @@ import {
     getCustomerAbuseStatus,
     getCustomerAbuseStatusByAgent
 } from '../controllers/cancellation.controller';
-import { authenticate, requireRole, requireAgent } from '../middleware/auth.middleware';
+import { authenticate, requireRole } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -56,7 +56,7 @@ router.post('/orders/:order_id/return', authenticate, requireRole('customer'), c
 router.get('/abuse-status', authenticate, requireRole('customer'), getCustomerAbuseStatus);
 
 // Support Agent: Lookup customer abuse status
-router.get('/abuse-status/lookup', authenticate, requireAgent, getCustomerAbuseStatusByAgent);
+router.get('/abuse-status/lookup', authenticate, requireRole('agent'), getCustomerAbuseStatusByAgent);
 
 // ============================================
 // HISTORY
