@@ -1225,13 +1225,13 @@ export const en = {
     // bidCard already defined above - duplicate removed
 
     // =============================================
-    // CANCEL - Order Cancellation
+    // CANCEL - Order Cancellation (BRAIN v3.0)
     // =============================================
     cancel: {
         title: 'Cancel Order',
         confirmTitle: 'Cancel Order?',
-        confirmMessage: 'Are you sure you want to cancel this order?',
-        confirmAction: 'This action cannot be undone',
+        confirmMessage: 'You will be refunded {{refund}} QAR (Fee: {{fee}} QAR)',
+        confirmAction: 'Confirm Cancellation',
         reasonTitle: 'Reason for Cancellation',
         selectReason: 'Select a reason',
         provideReason: 'Please provide a reason',
@@ -1249,16 +1249,56 @@ export const en = {
         loadFailed: 'Failed to load order',
         orderSummary: 'Order Summary',
         orderTotal: 'Order Total',
-        feeWarning: 'A cancellation fee may apply',
+        feeWarning: 'A cancellation fee may apply based on order stage',
         cancellationFee: 'Cancellation Fee',
-        refundAmount: 'Refund Amount',
-        refundDetails: 'Refund will be processed within 3-5 business days',
-        refundProcessed: 'Refund processed',
-        feeConfirmed: 'Free within 1 hour, 10% fee after',
-        feePreparing: '25% cancellation fee applies (part being prepared)',
+        refundAmount: 'Your Refund',
+        refundDetails: 'Refund Breakdown',
+        refundProcessed: 'Refund processed to your payment method',
+        // BRAIN v3.0 new keys
+        partPrice: 'Part Price',
+        deliveryFee: 'Delivery Fee',
+        deliveryFeeRetained: 'Delivery Fee (Non-refundable)',
         success: 'Order Cancelled',
         successMessage: 'Your order has been cancelled. Refund will be processed if applicable.',
         failed: 'Failed to cancel order',
+        // Cancellation stage messages
+        stage: {
+            before_payment: 'No fee - Order not paid yet',
+            after_payment: '5% fee - Order was confirmed',
+            during_preparation: '10% fee - Garage started preparing',
+            in_transit: '10% + Delivery fee - Part already dispatched',
+            after_delivery: '20% + Delivery fee - Use 7-day return instead',
+        },
+    },
+
+    // =============================================
+    // RETURN - 7-Day Return Window (BRAIN v3.0)
+    // =============================================
+    return: {
+        title: 'Request Return',
+        subtitle: '7-Day Return Window',
+        daysRemaining: '{{days}} days remaining to return',
+        expired: 'Return window has expired',
+        reasonTitle: 'Reason for Return',
+        unused: 'Unused / Changed Mind',
+        defective: 'Defective Part',
+        wrongPart: 'Wrong Part Received',
+        photoRequired: 'Photos Required',
+        photoHint: 'Please upload at least 3 photos of the part',
+        addPhoto: 'Add Photo',
+        photosAdded: '{{count}}/3 photos added',
+        conditionDescription: 'Describe the condition',
+        conditionPlaceholder: 'Describe the part condition...',
+        feeBreakdown: 'Return Fee Breakdown',
+        returnFee: 'Return Fee (20%)',
+        deliveryNonRefundable: 'Delivery (Non-refundable)',
+        refundAmount: 'Your Refund',
+        submitReturn: 'Submit Return Request',
+        submitting: 'Submitting...',
+        submitted: 'Return Request Submitted',
+        submittedMessage: 'Our team will review your request within 24 hours',
+        abuseWarning: 'You have reached your monthly return limit (3/month)',
+        cannotReturn: 'This order cannot be returned',
     },
 
     // =============================================

@@ -132,26 +132,52 @@ const CancellationPreviewScreen: React.FC = () => {
                     <Text style={[styles.price, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{preview?.total_amount} {t('common.currency')}</Text>
                 </View>
 
-                {/* Fee Breakdown */}
+                {/* Fee Breakdown - BRAIN v3.0 Enhanced */}
                 <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('cancel.refundDetails')}</Text>
 
+                    {/* Part Price */}
                     <View style={[styles.feeRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={{ color: colors.textSecondary }}>{t('cancel.orderTotal')}</Text>
-                        <Text style={{ color: colors.text, fontWeight: '600' }}>{preview?.total_amount} {t('common.currency')}</Text>
+                        <Text style={{ color: colors.textSecondary }}>{t('cancel.partPrice')}</Text>
+                        <Text style={{ color: colors.text, fontWeight: '600' }}>{preview?.part_price || (preview?.total_amount - (preview?.delivery_fee || 0))} {t('common.currency')}</Text>
                     </View>
 
-                    {preview?.fee > 0 && (
+                    {/* Delivery Fee */}
+                    {preview?.delivery_fee > 0 && (
                         <View style={[styles.feeRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={{ color: colors.danger }}>{t('cancel.cancellationFee')} ({preview?.feeRate}%)</Text>
-                            <Text style={{ color: colors.danger, fontWeight: '600' }}>-{preview?.fee} {t('common.currency')}</Text>
+                            <Text style={{ color: colors.textSecondary }}>{t('cancel.deliveryFee')}</Text>
+                            <Text style={{ color: colors.text, fontWeight: '600' }}>{preview?.delivery_fee} {t('common.currency')}</Text>
                         </View>
                     )}
 
+                    {/* Cancellation Fee */}
+                    {(preview?.cancellation_fee || preview?.fee) > 0 && (
+                        <View style={[styles.feeRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={{ color: colors.danger }}>{t('cancel.cancellationFee')} ({Math.round((preview?.cancellation_fee_rate || preview?.feeRate || 0) * 100)}%)</Text>
+                            <Text style={{ color: colors.danger, fontWeight: '600' }}>-{preview?.cancellation_fee || preview?.fee} {t('common.currency')}</Text>
+                        </View>
+                    )}
+
+                    {/* Delivery Fee Retained - New BRAIN v3.0 field */}
+                    {preview?.delivery_fee_retained > 0 && (
+                        <View style={[styles.feeRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={{ color: colors.warning }}>{t('cancel.deliveryFeeRetained')}</Text>
+                            <Text style={{ color: colors.warning, fontWeight: '600' }}>-{preview?.delivery_fee_retained} {t('common.currency')}</Text>
+                        </View>
+                    )}
+
+                    {/* Refund Total */}
                     <View style={[styles.feeRow, styles.totalRow, { borderTopColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={{ color: colors.text, fontWeight: '700', fontSize: FontSize.lg }}>{t('cancel.refundAmount')}</Text>
-                        <Text style={{ color: colors.success, fontWeight: '700', fontSize: FontSize.xl }}>{preview?.refundAmount} {t('common.currency')}</Text>
+                        <Text style={{ color: colors.success, fontWeight: '700', fontSize: FontSize.xl }}>{preview?.refund_amount || preview?.refundAmount || 0} {t('common.currency')}</Text>
                     </View>
+
+                    {/* Cancellation Stage Info */}
+                    {preview?.cancellation_stage && (
+                        <Text style={[styles.stageInfo, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t(`cancel.stage.${preview.cancellation_stage.toLowerCase()}`, { defaultValue: preview.cancellation_stage })}
+                        </Text>
+                    )}
                 </View>
 
                 {/* Reason Selection */}
@@ -267,6 +293,7 @@ const styles = StyleSheet.create({
     cancelBtnText: { color: '#fff', fontSize: FontSize.md, fontWeight: '600' },
     keepBtn: { alignItems: 'center', padding: Spacing.lg, borderRadius: BorderRadius.lg, borderWidth: 1 },
     keepBtnText: { fontSize: FontSize.md, fontWeight: '600' },
+    stageInfo: { fontSize: FontSize.sm, fontStyle: 'italic', marginTop: Spacing.sm },
 });
 
 export default CancellationPreviewScreen;

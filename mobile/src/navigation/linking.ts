@@ -61,6 +61,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
                         },
                     },
                     CancellationPreview: 'cancel/:orderId',
+                    ReturnRequest: 'return/:orderId',
                     Dispute: 'dispute/:orderId',
                 },
             },
