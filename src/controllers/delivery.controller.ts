@@ -204,7 +204,7 @@ export const getOrdersForDelivery = async (req: AuthRequest, res: Response) => {
 };
 
 export const reassignDriver = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
+    const { assignment_id } = req.params;
     const { new_driver_id, reason } = req.body;
 
     if (!new_driver_id) {
@@ -215,13 +215,14 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
     try {
         await client.query('BEGIN');
 
-        // Get current assignment
+        // Get current assignment by assignment_id
         const currentResult = await client.query(
-            `SELECT da.*, d.full_name as old_driver_name
+            `SELECT da.*, d.full_name as old_driver_name, o.order_id, o.order_number
              FROM delivery_assignments da
              JOIN drivers d ON da.driver_id = d.driver_id
-             WHERE da.order_id = $1 AND da.status IN ('assigned', 'picked_up', 'in_transit')`,
-            [order_id]
+             JOIN orders o ON da.order_id = o.order_id
+             WHERE da.assignment_id = $1 AND da.status IN ('assigned', 'picked_up', 'in_transit')`,
+            [assignment_id]
         );
 
         if (currentResult.rows.length === 0) {
@@ -267,7 +268,7 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
         // Update order
         await client.query(
             'UPDATE orders SET driver_id = $1 WHERE order_id = $2',
-            [newDriver.user_id, order_id]
+            [newDriver.user_id, oldAssignment.order_id]
         );
 
         await client.query('COMMIT');

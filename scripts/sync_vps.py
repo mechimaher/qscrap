@@ -1,6 +1,6 @@
 import paramiko
 
-host = "77.37.54.219"
+host = "147.93.89.153"
 user = "root"
 password = "QScrap@2026byMaher"
 
