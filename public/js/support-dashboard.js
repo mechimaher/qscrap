@@ -209,8 +209,20 @@ let searchDebounceTimer = null;
 function debounceSearch() {
     clearTimeout(searchDebounceTimer);
     const query = document.getElementById('customerSearch').value.trim();
+
+    // Clear results if query is empty
+    if (query.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('customerProfile').style.display = 'none';
+        document.getElementById('actionsEmpty').style.display = 'block';
+        document.getElementById('actionsPanel').style.display = 'none';
+        currentCustomer = null;
+        currentOrder = null;
+        return;
+    }
+
     if (query.length < 2) return; // Minimum 2 characters
-    searchDebounceTimer = setTimeout(() => searchCustomer(), 500);
+    searchDebounceTimer = setTimeout(() => searchCustomer(), 400);
 }
 
 async function searchCustomer() {
@@ -297,12 +309,36 @@ function renderCustomerProfile(data) {
         <div style="padding: 12px; font-size: 11px; color: var(--text-muted);">
             Member since ${formatDate(c.member_since)}
         </div>
+        
+        <!-- Orders Section -->
+        <div style="margin-top: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase;">
+                Recent Orders
+            </div>
+            <div class="orders-list" id="ordersList"></div>
+        </div>
+        
+        <!-- Tickets Section -->
+        <div style="margin-top: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase;">
+                Open Tickets
+            </div>
+            <div id="ticketsList"></div>
+        </div>
+        
+        <!-- Resolution Log Section -->
+        <div style="margin-top: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase;">
+                Resolution History
+            </div>
+            <div id="resolutionLog"></div>
+        </div>
     `;
 }
 
 function renderOrders(orders) {
     if (!orders || orders.length === 0) {
-        document.getElementById('ordersPanel').innerHTML = `
+        document.getElementById('ordersList').innerHTML = `
             <div class="empty-state-center">
                 <i class="bi bi-inbox"></i>
                 <p>No orders found for this customer</p>
@@ -363,7 +399,7 @@ function renderOrders(orders) {
         `;
     });
 
-    document.getElementById('ordersPanel').innerHTML = html;
+    document.getElementById('ordersList').innerHTML = html;
 }
 
 function selectOrder(orderId) {
@@ -650,7 +686,7 @@ async function addNote() {
 let currentTicket = null;
 
 function renderTickets(tickets) {
-    const container = document.getElementById('ticketsPanel');
+    const container = document.getElementById('ticketsList');
     if (!container) return; // Panel not yet in HTML
 
     if (!tickets || tickets.length === 0) {
