@@ -934,6 +934,25 @@
             <h3><i class="bi bi-chat-left-text"></i> Ticket Chat</h3>
             <button class="chat-close" onclick="closeChat()">×</button>
         </div>
+        <!-- Ticket Action Buttons -->
+        <div id="ticketActions"
+            style="display: none; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button onclick="updateTicketStatus('resolved')" class="btn btn-sm"
+                    style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <i class="bi bi-check-circle"></i> Mark as Resolved
+                </button>
+                <button onclick="updateTicketStatus('closed')" class="btn btn-sm"
+                    style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <i class="bi bi-x-circle"></i> Close Ticket
+                </button>
+                <button onclick="updateTicketStatus('in_progress')" class="btn btn-sm"
+                    style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <i class="bi bi-arrow-repeat"></i> In Progress
+                </button>
+            </div>
+            <div id="ticketStatusBadge" style="margin-top: 6px; font-size: 11px; color: var(--text-muted);"></div>
+        </div>
         <div id="chatMessages"></div>
         <div
             style="padding: 8px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 11px;">
