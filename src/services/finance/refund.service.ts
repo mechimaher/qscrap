@@ -372,6 +372,31 @@ export class RefundService {
                 [refund.order_id]
             );
 
+            // CRITICAL: Cancel or reverse the garage payout to maintain data consistency
+            // This ensures Finance Dashboard and Support Dashboard show consistent data
+            const payoutResult = await client.query(
+                `SELECT payout_id, payout_status, net_amount FROM garage_payouts WHERE order_id = $1`,
+                [refund.order_id]
+            );
+
+            if (payoutResult.rows.length > 0) {
+                const payout = payoutResult.rows[0];
+
+                // Cancel the payout - 'cancelled' is the valid status for refunded orders
+                // This works for both pending payouts and already-confirmed payouts
+                const newPayoutStatus = 'cancelled';
+
+                await client.query(
+                    `UPDATE garage_payouts SET 
+                        payout_status = $2,
+                        updated_at = NOW()
+                     WHERE payout_id = $1`,
+                    [payout.payout_id, newPayoutStatus]
+                );
+
+                console.log(`[RefundService] Payout ${payout.payout_id} ${newPayoutStatus} due to refund (was: ${payout.payout_status})`);
+            }
+
             await client.query('COMMIT');
 
             // Notify customer (import would be at top of file)
