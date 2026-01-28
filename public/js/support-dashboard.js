@@ -13,6 +13,7 @@ let currentSection = 'resolution';
 // Current state
 let currentCustomer = null;
 let currentOrder = null;
+let reviewStatus = 'pending';  // For reviews filter
 
 // ==========================================
 // UTILITIES
@@ -1311,8 +1312,6 @@ document.addEventListener('click', (e) => {
 // REVIEWS (kept from original)
 // ==========================================
 
-let reviewStatus = 'pending';
-
 async function loadReviews() {
     try {
         // Use /moderation endpoint which supports status filter
@@ -1701,7 +1700,7 @@ async function showCustomerAbuseStatus() {
     }
 
     try {
-        const res = await fetch(`${API_URL}/cancellation/abuse-status/lookup?customer_id=${currentCustomer.user_id}`, {
+        const res = await fetch(`${API_URL}/cancellations/abuse-status/lookup?customer_id=${currentCustomer.user_id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
