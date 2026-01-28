@@ -654,11 +654,14 @@ function quickAction(actionType, orderId = null) {
                             showToast(`${config.title} completed!`, 'success');
                             searchCustomer(); // Refresh
                         } else {
-                            showToast(data.error || data.message || 'Action failed', 'error');
+                            // Handle error message properly
+                            const errorMsg = typeof data.error === 'string' ? data.error
+                                : (data.message || JSON.stringify(data.error) || 'Action failed');
+                            showToast(errorMsg, 'error');
                         }
                     } catch (err) {
                         console.error('Quick action error:', err);
-                        showToast('Action failed - please try again', 'error');
+                        showToast(err.message || 'Action failed - please try again', 'error');
                     }
                 }
             }
