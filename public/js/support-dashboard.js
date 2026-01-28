@@ -251,6 +251,10 @@ function renderCustomerProfile(data) {
     const c = data.customer;
     const loyaltyClass = (c.loyalty_tier || 'bronze').toLowerCase();
 
+    // Toggle visibility: hide empty state, show customer profile
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('customerProfile').style.display = 'block';
+
     document.getElementById('customerProfile').innerHTML = `
         <div class="customer-profile">
             <div class="customer-name">${escapeHTML(c.full_name)}</div>
