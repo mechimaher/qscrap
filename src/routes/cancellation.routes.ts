@@ -8,9 +8,10 @@ import {
     getCancellationHistory,
     getReturnPreview,
     createReturnRequest,
-    getCustomerAbuseStatus
+    getCustomerAbuseStatus,
+    getCustomerAbuseStatusByAgent
 } from '../controllers/cancellation.controller';
-import { authenticate, requireRole } from '../middleware/auth.middleware';
+import { authenticate, requireRole, requireAgent } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -51,8 +52,11 @@ router.post('/orders/:order_id/return', authenticate, requireRole('customer'), c
 // CUSTOMER ABUSE STATUS (BRAIN v3.0)
 // ============================================
 
-// Customer: Get abuse status (remaining returns/claims)
+// Customer: Get own abuse status (remaining returns/claims)
 router.get('/abuse-status', authenticate, requireRole('customer'), getCustomerAbuseStatus);
+
+// Support Agent: Lookup customer abuse status
+router.get('/abuse-status/lookup', authenticate, requireAgent, getCustomerAbuseStatusByAgent);
 
 // ============================================
 // HISTORY

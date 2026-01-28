@@ -185,3 +185,20 @@ export const getCustomerAbuseStatus = async (req: AuthRequest, res: Response) =>
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
+
+// Support Agent: Lookup customer abuse status by customer_id
+export const getCustomerAbuseStatusByAgent = async (req: AuthRequest, res: Response) => {
+    const { customer_id } = req.query;
+
+    if (!customer_id || typeof customer_id !== 'string') {
+        return res.status(400).json({ error: 'customer_id query parameter required' });
+    }
+
+    try {
+        const fraudService = getFraudDetectionService(pool);
+        const status = await fraudService.getCustomerAbuseStatus(customer_id);
+        res.json(status);
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
