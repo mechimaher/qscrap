@@ -108,8 +108,8 @@ export class AccountDeletionService {
         // 5. Check for active requests with bids (customer should respond or cancel)
         const activeRequestsResult = await this.pool.query(
             `SELECT COUNT(DISTINCT r.request_id) as count 
-             FROM requests r
-             LEFT JOIN bids b ON r.request_id = b.request_id AND b.bid_status = 'active'
+             FROM part_requests r
+             LEFT JOIN bids b ON r.request_id = b.request_id AND b.status = 'pending'
              WHERE r.customer_id = $1 
              AND r.status = 'active'
              AND b.bid_id IS NOT NULL`,
