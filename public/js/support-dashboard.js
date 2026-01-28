@@ -1692,7 +1692,7 @@ async function processReturnRequest(orderId, reason, notes) {
 
 /**
  * Show customer abuse status (fraud prevention)
- * Calls: GET /api/cancellation/abuse-status
+ * Calls: GET /api/cancellation/abuse-status/lookup
  */
 async function showCustomerAbuseStatus() {
     if (!currentCustomer) {
@@ -1701,7 +1701,7 @@ async function showCustomerAbuseStatus() {
     }
 
     try {
-        const res = await fetch(`${API_URL}/cancellation/abuse-status?customer_id=${currentCustomer.user_id}`, {
+        const res = await fetch(`${API_URL}/cancellation/abuse-status/lookup?customer_id=${currentCustomer.user_id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
