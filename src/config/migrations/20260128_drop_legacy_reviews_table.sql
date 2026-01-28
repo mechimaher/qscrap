@@ -5,8 +5,3 @@
 
 -- Drop the legacy table (safe if already dropped)
 DROP TABLE IF EXISTS reviews CASCADE;
-
--- Log the change
-INSERT INTO applied_migrations (migration_name) 
-VALUES ('20260128_drop_legacy_reviews_table.sql')
-ON CONFLICT (migration_name) DO NOTHING;
