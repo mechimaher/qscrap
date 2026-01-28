@@ -523,109 +523,6 @@
             padding: 20px;
         }
 
-        /* Login Overlay */
-        .login-overlay {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, #1a0a12 0%, #2d1520 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .login-card {
-            background: var(--bg-primary);
-            border-radius: 24px;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Login overlay - override external CSS */
-        .login-overlay .login-logo {
-            width: auto !important;
-            height: auto !important;
-            text-align: center !important;
-            margin-bottom: 30px !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            animation: none !important;
-            display: block !important;
-        }
-
-        .login-overlay .login-logo img {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-            margin: 0 auto;
-            display: block;
-        }
-
-        .login-overlay .login-logo h1 {
-            font-size: 24px;
-            font-weight: 800;
-            margin: 12px 0 4px;
-            color: var(--text-primary);
-        }
-
-        .login-overlay .login-logo p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin: 0;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 14px;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            transition: all 0.2s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 16px;
-            background: var(--vvip-gradient);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(141, 27, 61, 0.4);
-        }
-
         /* Sidebar compact */
         .sidebar-compact {
             width: 70px !important;
@@ -655,22 +552,24 @@
 </head>
 
 <body>
-    <!-- Login Screen -->
-    <div class="login-overlay" id="loginOverlay">
+    <!-- Login Screen (matches operations-dashboard exactly) -->
+    <div class="login-screen" id="loginScreen">
         <div class="login-card">
-            <div class="login-logo">
-                <img src="assets/images/qscrap-logo.png" alt="QScrap">
-                <h1>Support Hub</h1>
-                <p>WhatsApp-First Customer Resolution</p>
+            <div class="login-header">
+                <img src="assets/images/qscrap-logo.png" alt="QScrap" class="login-logo">
+                <h1 class="login-title">Support Hub</h1>
+                <p class="login-subtitle">QScrap Customer Resolution</p>
             </div>
-            <form id="loginForm" onsubmit="event.preventDefault(); login();">
+            <form id="loginForm" autocomplete="off">
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="support@qscrap.com" required>
+                    <label>Phone Number</label>
+                    <input type="text" class="form-control" id="loginEmail" placeholder="+974 5000 0002" required
+                        autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required
+                        autocomplete="new-password">
                 </div>
                 <button type="submit" class="btn-login">
                     <i class="bi bi-box-arrow-in-right"></i> Sign In
