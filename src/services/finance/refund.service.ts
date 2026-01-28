@@ -180,7 +180,7 @@ export class RefundService {
                     g.garage_name
              FROM refunds r
              JOIN orders o ON r.order_id = o.order_id
-             LEFT JOIN users u ON o.customer_id = u.user_id
+             LEFT JOIN users u ON o.customer_id::uuid = u.user_id
              LEFT JOIN garages g ON o.garage_id = g.garage_id
              WHERE r.refund_id = $1`,
             [refundId]
@@ -241,9 +241,9 @@ export class RefundService {
                     staff.full_name as processed_by_name
              FROM refunds r
              JOIN orders o ON r.order_id = o.order_id
-             LEFT JOIN users u ON o.customer_id = u.user_id
+             LEFT JOIN users u ON o.customer_id::uuid = u.user_id
              LEFT JOIN garages g ON o.garage_id = g.garage_id
-             LEFT JOIN users staff ON r.processed_by = staff.user_id
+             LEFT JOIN users staff ON r.processed_by::uuid = staff.user_id
              ${whereClause}
              ORDER BY r.created_at DESC
              LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -275,7 +275,7 @@ export class RefundService {
                     pi.provider_intent_id as stripe_payment_intent_id
              FROM refunds r
              JOIN orders o ON r.order_id = o.order_id
-             LEFT JOIN users u ON o.customer_id = u.user_id
+             LEFT JOIN users u ON o.customer_id::uuid = u.user_id
              LEFT JOIN garages g ON o.garage_id = g.garage_id
              LEFT JOIN payment_intents pi ON o.order_id = pi.order_id AND pi.status = 'succeeded'
              WHERE r.refund_status = 'pending'
