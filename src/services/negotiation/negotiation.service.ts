@@ -430,16 +430,23 @@ export class NegotiationService {
                 console.error('[NEGOTIATION] Push to customer failed:', pushErr);
             }
 
-            // Emit real-time WebSocket event
+            // Emit real-time WebSocket event - emit BOTH event names for mobile compatibility
             const { emitToUser } = await import('../../utils/socketIO');
-            emitToUser(customerId, 'counter_offer_received', {
+            const eventData = {
                 counter_offer_id: counterOfferId,
                 bid_id: offer.bid_id,
+                request_id: offer.request_id,
                 proposed_amount: counterPrice,
                 previous_amount: offer.proposed_amount,
                 round,
                 notification: message
-            });
+            };
+            // Primary event for mobile app (RequestDetailScreen listens for this)
+            emitToUser(customerId, 'garage_counter_offer', eventData);
+            // Also emit bid_updated for any screens tracking bid changes
+            emitToUser(customerId, 'bid_updated', { bid_id: offer.bid_id, request_id: offer.request_id });
+            // Keep legacy event for backward compatibility
+            emitToUser(customerId, 'counter_offer_received', eventData);
         }
     }
 

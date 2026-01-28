@@ -825,13 +825,20 @@ export default function RequestDetailScreen() {
 
     useEffect(() => {
         if (!socket) return;
-        const handleEvent = () => loadRequestDetails();
+        const handleEvent = () => {
+            console.log('[RequestDetail] Socket event received, refreshing...');
+            loadRequestDetails();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        };
+        // Listen for all counter-offer related events
         socket.on('garage_counter_offer', handleEvent);
+        socket.on('counter_offer_received', handleEvent); // Backend also emits this
         socket.on('counter_offer_accepted', handleEvent);
         socket.on('counter_offer_rejected', handleEvent);
         socket.on('bid_updated', handleEvent);
         return () => {
             socket.off('garage_counter_offer', handleEvent);
+            socket.off('counter_offer_received', handleEvent);
             socket.off('counter_offer_accepted', handleEvent);
             socket.off('counter_offer_rejected', handleEvent);
             socket.off('bid_updated', handleEvent);
