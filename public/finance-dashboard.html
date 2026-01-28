@@ -100,8 +100,13 @@
                     <a class="nav-item" data-section="revenue">
                         <i class="bi bi-graph-up-arrow"></i> Revenue
                     </a>
+                    <a class="nav-item" data-section="pendingRefunds">
+                        <i class="bi bi-hourglass-bottom"></i> Pending Refunds
+                        <span class="nav-badge" id="pendingRefundsBadge"
+                            style="display: none; background: #ef4444;">0</span>
+                    </a>
                     <a class="nav-item" data-section="refunds">
-                        <i class="bi bi-arrow-return-left"></i> Refunds
+                        <i class="bi bi-arrow-return-left"></i> Refund History
                     </a>
                 </div>
             </nav>
@@ -570,6 +575,55 @@
                         <div class="stat-value" id="revNetRevenue">0 QAR</div>
                         <div class="stat-label">Net Revenue</div>
                     </div>
+                </div>
+            </section>
+
+            <!-- Pending Refunds Section (Finance Approval Queue) -->
+            <section class="section" id="sectionPendingRefunds">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-hourglass-bottom" style="color: #ef4444;"></i> Pending Refund
+                        Requests</h1>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        <i class="bi bi-info-circle"></i> Refunds submitted by Support team - pending Finance approval
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 1px solid #fca5a5; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div
+                            style="width: 50px; height: 50px; border-radius: 12px; background: #ef4444; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-shield-check" style="color: white; font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #991b1b; font-size: 18px;">Finance Approval Required
+                            </div>
+                            <div style="color: #b91c1c; font-size: 13px;">
+                                Review each refund request and approve to process via Stripe, or reject with reason.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Requested By</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingRefundsTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 

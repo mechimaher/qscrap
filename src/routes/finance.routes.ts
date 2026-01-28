@@ -13,6 +13,7 @@ import {
     getRefunds,
     getPendingRefunds,
     processStripeRefund,
+    rejectRefund,
     getRevenueReport,
     getTransactions,
     forceProcessPayout,
@@ -121,6 +122,8 @@ router.get('/transaction/:order_id', getTransactionDetails);
 router.get('/refunds', authorizeOperations, getRefunds);
 router.get('/refunds/pending', authorizeOperations, getPendingRefunds);
 router.post('/refunds/:refund_id/process', authorizeOperations, processStripeRefund);
+router.post('/refunds/:refund_id/approve', authorizeOperations, processStripeRefund); // Alias for approve
+router.post('/refunds/:refund_id/reject', authorizeOperations, rejectRefund);
 router.post('/refund/:order_id', authorizeOperations, createRefund);
 
 export default router;
