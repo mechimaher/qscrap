@@ -6180,12 +6180,12 @@ async function loadGaragePenalties() {
     }
 }
 
-// Add fraud section to section switching
-const originalSwitchSection = typeof switchSection === 'function' ? switchSection : null;
+// Add fraud section to section switching (extend the existing switchSection)
+const fraudSwitchHandler = window.switchSection;
 window.switchSection = function (section) {
-    // Call original if exists
-    if (originalSwitchSection && section !== 'fraud') {
-        originalSwitchSection(section);
+    // Call existing handler for non-fraud sections
+    if (fraudSwitchHandler && section !== 'fraud') {
+        fraudSwitchHandler(section);
     }
 
     // Handle fraud section
