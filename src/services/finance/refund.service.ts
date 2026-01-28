@@ -334,7 +334,7 @@ export class RefundService {
             }
 
             const Stripe = require('stripe');
-            const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.acacia' });
+            const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
 
             // Execute Stripe refund
             const refundAmountCents = Math.round(parseFloat(refund.refund_amount) * 100);
