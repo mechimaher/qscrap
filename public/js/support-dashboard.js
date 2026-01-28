@@ -1107,14 +1107,22 @@ function renderReviews(reviews) {
 
 async function moderateReview(reviewId, decision) {
     try {
-        await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
+        // Backend expects 'action' with values 'approve' or 'reject'
+        const action = decision === 'approved' ? 'approve' : 'reject';
+        const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ decision })
+            body: JSON.stringify({ action })
         });
-        showToast(`Review ${decision}`, 'success');
-        loadReviews();
+        const data = await res.json();
+        if (res.ok) {
+            showToast(data.message || `Review ${action}d!`, 'success');
+            loadReviews();
+        } else {
+            showToast(data.error || 'Failed to moderate review', 'error');
+        }
     } catch (err) {
+        console.error('Moderate review error:', err);
         showToast('Failed to moderate review', 'error');
     }
 }
