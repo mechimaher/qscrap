@@ -826,6 +826,49 @@ class ApiService {
         });
     }
 
+    // ============================================
+    // RETURN REQUESTS (7-Day Window) - BRAIN v3.0
+    // ============================================
+    async getReturnPreview(orderId: string): Promise<{
+        order_id: string;
+        can_return: boolean;
+        return_fee: number;
+        delivery_fee_retained: number;
+        refund_amount: number;
+        days_remaining: number;
+        reason?: string;
+    }> {
+        return this.request(`/cancellation/orders/${orderId}/return-preview`);
+    }
+
+    async createReturnRequest(orderId: string, data: {
+        reason: 'unused' | 'defective' | 'wrong_part';
+        photo_urls: string[];
+        condition_description?: string;
+    }): Promise<{
+        success: boolean;
+        return_id?: string;
+        refund_amount?: number;
+        message: string;
+    }> {
+        return this.request(`/cancellation/orders/${orderId}/return`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async getCustomerAbuseStatus(): Promise<{
+        returns_this_month: number;
+        returns_remaining: number;
+        defective_claims_this_month: number;
+        defective_claims_remaining: number;
+        flag_level: 'none' | 'yellow' | 'orange' | 'red' | 'black';
+        can_make_return: boolean;
+        can_make_defective_claim: boolean;
+    }> {
+        return this.request('/cancellation/abuse-status');
+    }
+
 }
 
 export const api = new ApiService();

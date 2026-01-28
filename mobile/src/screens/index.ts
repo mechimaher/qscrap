@@ -22,6 +22,7 @@ export { default as CounterOfferScreen } from './CounterOfferScreen';
 export { default as DeliveryTrackingScreen } from './DeliveryTrackingScreen';
 export { default as TrackingScreen } from './TrackingScreen';
 export { default as CancellationPreviewScreen } from './CancellationPreviewScreen';
+export { default as ReturnRequestScreen } from './ReturnRequestScreen';
 export { default as SupportScreen } from './SupportScreen';
 export { default as NotificationsScreen } from './NotificationsScreen';
 export { default as AddressesScreen } from './AddressesScreen';
