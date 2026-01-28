@@ -407,11 +407,15 @@ function renderOrders(orders) {
                 ${o.garage_name ? `<div class="order-meta">🏭 ${escapeHTML(o.garage_name)}</div>` : ''}
                 ${o.driver_name ? `<div class="order-meta">🚗 ${escapeHTML(o.driver_name)}</div>` : ''}
                 
-                ${hasWarranty ? `
+                ${o.order_status === 'refunded' || o.order_status === 'cancelled' ? `
+                    <div class="order-meta" style="color: #6b7280; text-decoration: line-through;">
+                        🛡️ Warranty: Void (${o.order_status})
+                    </div>
+                ` : (hasWarranty ? `
                     <div class="order-meta" style="color: #10b981; font-weight: 600;">
                         🛡️ Warranty: ${o.warranty_days_remaining} days left
                     </div>
-                ` : ''}
+                ` : '')}
                 
                 ${hasPayout ? `
                     <div class="order-meta" style="color: ${o.payout_status === 'confirmed' ? '#10b981' : '#f59e0b'};">
