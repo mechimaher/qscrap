@@ -697,14 +697,43 @@ async function openTicketChat(ticketId) {
     }
 
     try {
-        const res = await fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        // Fetch ticket details AND messages in parallel
+        const [ticketRes, messagesRes] = await Promise.all([
+            fetch(`${API_URL}/support/tickets/${ticketId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }),
+            fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+        ]);
 
-        if (!res.ok) throw new Error('Failed to load messages');
+        if (!messagesRes.ok) throw new Error('Failed to load messages');
 
-        const messages = await res.json();
+        const messages = await messagesRes.json();
         renderChatMessages(messages);
+
+        // Show ticket actions if we got ticket details
+        const ticketActions = document.getElementById('ticketActions');
+        const ticketStatusBadge = document.getElementById('ticketStatusBadge');
+
+        if (ticketRes.ok && ticketActions) {
+            const ticketData = await ticketRes.json();
+            const ticket = ticketData.ticket || ticketData;
+
+            ticketActions.style.display = 'block';
+
+            // Show current status
+            if (ticketStatusBadge) {
+                const statusColors = {
+                    'open': '#ef4444',
+                    'in_progress': '#3b82f6',
+                    'resolved': '#10b981',
+                    'closed': '#6b7280'
+                };
+                const statusColor = statusColors[ticket.status] || '#6b7280';
+                ticketStatusBadge.innerHTML = `Current status: <span style="color: ${statusColor}; font-weight: 600;">${(ticket.status || 'unknown').replace('_', ' ').toUpperCase()}</span>`;
+            }
+        }
 
         // Show chat panel
         chatContainer.classList.add('active');
@@ -714,6 +743,61 @@ async function openTicketChat(ticketId) {
         showToast('Failed to load messages', 'error');
     }
 }
+
+// Update ticket status (resolve, close, etc.)
+async function updateTicketStatus(newStatus) {
+    if (!currentTicket) {
+        showToast('No ticket selected', 'error');
+        return;
+    }
+
+    const statusLabels = {
+        'resolved': 'Resolved',
+        'closed': 'Closed',
+        'in_progress': 'In Progress',
+        'open': 'Open'
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/support/tickets/${currentTicket}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+            showToast(`Ticket marked as ${statusLabels[newStatus] || newStatus}`, 'success');
+
+            // Update the badge
+            const ticketStatusBadge = document.getElementById('ticketStatusBadge');
+            if (ticketStatusBadge) {
+                const statusColors = {
+                    'open': '#ef4444',
+                    'in_progress': '#3b82f6',
+                    'resolved': '#10b981',
+                    'closed': '#6b7280'
+                };
+                const statusColor = statusColors[newStatus] || '#6b7280';
+                ticketStatusBadge.innerHTML = `Current status: <span style="color: ${statusColor}; font-weight: 600;">${newStatus.replace('_', ' ').toUpperCase()}</span>`;
+            }
+
+            // Refresh customer data if we have one loaded (to update ticket list)
+            if (currentCustomer) {
+                searchCustomer();
+            }
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to update ticket status', 'error');
+        }
+    } catch (err) {
+        console.error('Failed to update ticket status:', err);
+        showToast('Failed to update ticket status', 'error');
+    }
+}
+
 
 function renderChatMessages(messages) {
     const container = document.getElementById('chatMessages');

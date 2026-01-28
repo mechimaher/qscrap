@@ -540,19 +540,70 @@ export class SupportService {
             switch (params.actionType) {
                 case 'full_refund':
                     if (!params.orderId) throw new Error('Order ID required for refund');
+
+                    // Get order details for refund amount
+                    const orderResult = await client.query(
+                        `SELECT total_amount, customer_id FROM orders WHERE order_id = $1`,
+                        [params.orderId]
+                    );
+
+                    if (orderResult.rows.length === 0) throw new Error('Order not found');
+                    const order = orderResult.rows[0];
+
+                    // Update order status
                     await client.query(`
                         UPDATE orders SET 
                             order_status = 'refunded',
                             updated_at = NOW()
                         WHERE order_id = $1
                     `, [params.orderId]);
-                    result = { action: 'full_refund', orderId: params.orderId };
+
+                    // Create refund record with completed status
+                    await client.query(`
+                        INSERT INTO refunds (
+                            order_id, customer_id, original_amount, refund_amount, 
+                            refund_status, refund_reason, initiated_by, processed_by, processed_at
+                        ) VALUES ($1, $2, $3, $3, 'completed', $4, 'support', $5, NOW())
+                    `, [
+                        params.orderId,
+                        order.customer_id,
+                        order.total_amount,
+                        params.notes || 'Full refund via support dashboard',
+                        params.agentId
+                    ]);
+
+                    result = { action: 'full_refund', orderId: params.orderId, amount: order.total_amount };
                     break;
 
                 case 'partial_refund':
                     if (!params.orderId || !params.actionDetails?.amount) throw new Error('Order ID and amount required');
-                    // Just log partial refund - no column exists for amount
-                    result = { action: 'partial_refund', amount: params.actionDetails.amount, orderId: params.orderId };
+
+                    // Get order details
+                    const partialOrderResult = await client.query(
+                        `SELECT total_amount, customer_id FROM orders WHERE order_id = $1`,
+                        [params.orderId]
+                    );
+
+                    if (partialOrderResult.rows.length === 0) throw new Error('Order not found');
+                    const partialOrder = partialOrderResult.rows[0];
+                    const refundAmount = params.actionDetails.amount;
+
+                    // Create refund record with completed status
+                    await client.query(`
+                        INSERT INTO refunds (
+                            order_id, customer_id, original_amount, refund_amount, 
+                            refund_status, refund_reason, initiated_by, processed_by, processed_at
+                        ) VALUES ($1, $2, $3, $4, 'completed', $5, 'support', $6, NOW())
+                    `, [
+                        params.orderId,
+                        partialOrder.customer_id,
+                        partialOrder.total_amount,
+                        refundAmount,
+                        params.notes || 'Partial refund via support dashboard',
+                        params.agentId
+                    ]);
+
+                    result = { action: 'partial_refund', amount: refundAmount, orderId: params.orderId };
                     break;
 
                 case 'goodwill_credit':
