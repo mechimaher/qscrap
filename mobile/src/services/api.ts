@@ -776,6 +776,18 @@ class ApiService {
         });
     }
 
+    // Confirm FREE order (when loyalty discount covers entire amount)
+    async confirmFreeOrder(orderId: string, loyaltyDiscount: number): Promise<{
+        success: boolean;
+        message: string;
+        order_id: string;
+    }> {
+        return this.request(`/payments/free/${orderId}`, {
+            method: 'POST',
+            body: JSON.stringify({ loyaltyDiscount }),
+        });
+    }
+
     // ============================================
     // DASHBOARD - Smart HomeScreen
     // ============================================
