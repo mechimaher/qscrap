@@ -1133,18 +1133,66 @@ function openWhatsApp(phone) {
 }
 
 function contactWhatsApp(type) {
-    // This would use the current order's contact info
+    if (!currentCustomer && type === 'customer') {
+        showToast('Please search for a customer first', 'error');
+        return;
+    }
+
     if (!currentOrder && type !== 'customer') {
         showToast('Please select an order first', 'error');
         return;
     }
 
+    let phone = null;
+    let name = '';
+
     if (type === 'customer' && currentCustomer) {
-        openWhatsApp(currentCustomer.phone_number);
+        phone = currentCustomer.phone_number;
+        name = currentCustomer.name || 'Customer';
+    } else if (type === 'garage' && currentOrder) {
+        phone = currentOrder.garage_phone || currentOrder.garage_contact;
+        name = currentOrder.garage_name || 'Garage';
+    } else if (type === 'driver' && currentOrder) {
+        phone = currentOrder.driver_phone || currentOrder.driver_contact;
+        name = currentOrder.driver_name || 'Driver';
+    }
+
+    if (phone) {
+        openWhatsApp(phone, `Hi ${name}, regarding order #${currentOrder?.order_number || 'N/A'}: `);
+        showToast(`Opening WhatsApp for ${name}`, 'success');
     } else {
-        showToast('Contact info not available', 'error');
+        showToast(`${type} contact not available`, 'error');
     }
 }
+
+// Open WhatsApp Business with customer phone pre-loaded
+function openWhatsAppBusiness() {
+    if (!currentCustomer) {
+        showToast('Please search for a customer first', 'info');
+        return;
+    }
+
+    // Copy phone to clipboard for easy paste in WhatsApp Business
+    const phone = currentCustomer.phone_number;
+    if (phone) {
+        navigator.clipboard.writeText(phone.replace(/[^0-9+]/g, '')).then(() => {
+            showToast('Phone copied! Opening WhatsApp Business...', 'success');
+        }).catch(() => { });
+
+        // Open WhatsApp with the customer
+        openWhatsApp(phone);
+    }
+}
+
+// Handle click on wa-contact chips
+document.addEventListener('click', (e) => {
+    const waContact = e.target.closest('.wa-contact');
+    if (waContact) {
+        e.stopPropagation();
+        const type = waContact.dataset.type;
+        contactWhatsApp(type);
+    }
+});
 
 // ==========================================
 // REVIEWS (kept from original)

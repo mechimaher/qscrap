@@ -4,55 +4,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QScrap Customer Resolution Center</title>
+    <title>QScrap Support Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/operations-dashboard.css?v=2.3">
     <style>
-        /* Customer Resolution Center Specific Styles */
-        .resolution-layout {
+        /* ===== VVIP Premium Support Hub Styles ===== */
+        :root {
+            --vvip-gradient: linear-gradient(135deg, #8D1B3D 0%, #C41E3A 50%, #A51D37 100%);
+            --vvip-gold: linear-gradient(135deg, #FFD700, #FFA500);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Hero Header */
+        .support-hero {
+            background: var(--vvip-gradient);
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 8px 32px rgba(141, 27, 61, 0.3);
+        }
+
+        .hero-title {
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-title i {
+            font-size: 26px;
+        }
+
+        .hero-subtitle {
+            font-size: 12px;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .hero-stat {
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .hero-stat-value {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .hero-stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        /* Main Layout - Simple 2-column */
+        .support-layout {
             display: grid;
-            grid-template-columns: 280px 300px 1fr 280px;
-            gap: 12px;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            padding: 20px;
             height: calc(100vh - 140px);
-            padding: 16px;
         }
 
-        @media (max-width: 1400px) {
-            .resolution-layout {
-                grid-template-columns: 260px 280px 1fr;
-            }
-
-            .actions-panel {
-                display: none;
-            }
-        }
-
-        @media (max-width: 1000px) {
-            .resolution-layout {
+        @media (max-width: 1200px) {
+            .support-layout {
                 grid-template-columns: 1fr;
             }
         }
 
-        .panel {
+        /* Premium Card Style */
+        .premium-card {
             background: var(--bg-primary);
-            border-radius: 16px;
+            border-radius: 20px;
             border: 1px solid var(--border);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
-        .panel-header {
-            padding: 16px;
+        .premium-card-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
             border-bottom: 1px solid var(--border);
-            background: var(--bg-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .panel-title {
-            font-size: 14px;
+        .premium-card-title {
+            font-size: 15px;
             font-weight: 700;
             color: var(--text-primary);
             display: flex;
@@ -60,186 +118,261 @@
             gap: 8px;
         }
 
-        .panel-content {
+        .premium-card-title i {
+            color: var(--primary);
+        }
+
+        .premium-card-body {
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 20px;
         }
 
-        /* Search Panel */
-        .search-panel .search-input-wrapper {
+        /* Search Box - Premium */
+        .search-box {
             position: relative;
+            margin-bottom: 20px;
         }
 
-        .search-panel .search-input-wrapper i {
+        .search-box input {
+            width: 100%;
+            padding: 16px 16px 16px 50px;
+            font-size: 15px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(141, 27, 61, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .search-box i {
             position: absolute;
-            left: 14px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
+            font-size: 18px;
         }
 
-        .search-panel input {
-            width: 100%;
-            padding: 12px 12px 12px 42px;
-            font-size: 14px;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            transition: all 0.2s;
+        /* Customer 360 Profile */
+        .customer-360 {
+            display: none;
         }
 
-        .search-panel input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(141, 27, 61, 0.1);
+        .customer-360.active {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
         }
 
-        /* Customer Profile */
-        .customer-profile {
-            padding: 16px;
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .customer-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
             border-bottom: 1px solid var(--border);
         }
 
-        .customer-name {
-            font-size: 18px;
+        .customer-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--vvip-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(141, 27, 61, 0.3);
+        }
+
+        .customer-info h2 {
+            font-size: 20px;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin: 0 0 4px 0;
             color: var(--text-primary);
         }
 
-        .customer-contact {
-            font-size: 13px;
+        .customer-info .phone {
+            font-size: 14px;
             color: var(--text-secondary);
-            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .customer-contact a {
+        .customer-info .phone a {
             color: var(--primary);
             text-decoration: none;
+            font-weight: 600;
         }
 
-        .customer-stats {
+        /* Customer Stats Grid */
+        .stats-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .stat-item {
+        .stat-box {
             background: var(--bg-secondary);
-            padding: 10px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 12px;
             text-align: center;
+            border: 1px solid var(--border);
         }
 
-        .stat-item .value {
-            font-size: 18px;
-            font-weight: 700;
+        .stat-box .value {
+            font-size: 22px;
+            font-weight: 800;
             color: var(--text-primary);
         }
 
-        .stat-item .label {
+        .stat-box .label {
             font-size: 10px;
             color: var(--text-muted);
             text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
+        .stat-box.highlight {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border-color: #10b981;
+        }
+
+        .stat-box.highlight .value {
+            color: #10b981;
+        }
+
+        /* Loyalty Badge */
         .loyalty-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
+            gap: 6px;
+            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-
-        .loyalty-gold {
-            background: linear-gradient(135deg, #FFD700, #B8860B);
-            color: #000;
-        }
-
-        .loyalty-silver {
-            background: linear-gradient(135deg, #C0C0C0, #808080);
-            color: #000;
-        }
-
-        .loyalty-bronze {
-            background: linear-gradient(135deg, #CD7F32, #8B4513);
-            color: #fff;
-        }
-
-        .loyalty-platinum {
-            background: linear-gradient(135deg, #E5E4E2, #C0C0C0);
-            color: #000;
-        }
-
-        /* Contact Buttons */
-        .contact-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .contact-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .loyalty-badge.platinum {
+            background: linear-gradient(135deg, #E5E4E2, #C0C0C0);
+            color: #1a1a1a;
+        }
+
+        .loyalty-badge.gold {
+            background: var(--vvip-gold);
+            color: #1a1a1a;
+        }
+
+        .loyalty-badge.silver {
+            background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+            color: #1a1a1a;
+        }
+
+        .loyalty-badge.bronze {
+            background: linear-gradient(135deg, #CD7F32, #B8860B);
+            color: white;
+        }
+
+        /* WhatsApp Quick Actions */
+        .whatsapp-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .whatsapp-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             transition: all 0.2s;
         }
 
-        .contact-btn.whatsapp {
-            background: #25D366;
+        .whatsapp-btn.customer {
+            background: linear-gradient(135deg, #25D366, #128C7E);
             color: white;
         }
 
-        .contact-btn.call {
-            background: var(--primary);
+        .whatsapp-btn.garage {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
         }
 
-        /* Orders Panel */
-        .order-card {
+        .whatsapp-btn.driver {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .whatsapp-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Recent Orders List */
+        .orders-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            padding: 14px;
             background: var(--bg-secondary);
             border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--border);
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer;
             transition: all 0.2s;
         }
 
-        .order-card:hover {
+        .order-item:hover {
+            border-color: var(--primary);
             transform: translateX(4px);
         }
 
-        .order-card.has-issue {
-            border-left-color: #ef4444;
-            background: rgba(239, 68, 68, 0.05);
+        .order-item.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(141, 27, 61, 0.05), rgba(141, 27, 61, 0.02));
+            box-shadow: 0 0 0 3px rgba(141, 27, 61, 0.1);
         }
 
-        .order-card.in-transit {
-            border-left-color: #f59e0b;
-        }
-
-        .order-card.completed {
-            border-left-color: #10b981;
-        }
-
-        .order-header {
+        .order-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
+            align-items: center;
+            margin-bottom: 6px;
         }
 
         .order-number {
@@ -250,453 +383,284 @@
 
         .order-status {
             font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 600;
         }
 
-        .order-part {
-            font-size: 13px;
-            color: var(--text-primary);
-            margin-bottom: 4px;
+        .order-status.delivered {
+            background: #dcfce7;
+            color: #16a34a;
         }
 
-        .order-meta {
-            font-size: 11px;
-            color: var(--text-muted);
+        .order-status.pending {
+            background: #fef3c7;
+            color: #d97706;
         }
 
-        .order-issue {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-top: 8px;
+        .order-status.cancelled {
+            background: #fee2e2;
+            color: #dc2626;
         }
 
-        .order-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .order-action-btn {
-            padding: 6px 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            background: var(--bg-primary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-        }
-
-        .order-action-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .order-action-btn.danger:hover {
-            background: #ef4444;
-            border-color: #ef4444;
-        }
-
-        /* Actions Panel */
-        .action-section {
-            margin-bottom: 16px;
-        }
-
-        .action-section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            padding-left: 4px;
-        }
-
-        .action-btn {
-            width: 100%;
-            padding: 10px 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            text-align: left;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .action-btn.danger:hover {
-            background: #ef4444;
-        }
-
-        /* Notes Section */
-        .notes-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .note-item {
-            padding: 10px;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 12px;
-        }
-
-        .note-text {
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .note-meta {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-
-        .add-note-form {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .add-note-form input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 12px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-        }
-
-        .add-note-form button {
-            padding: 8px 12px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        /* Resolution Log */
-        .resolution-item {
-            padding: 8px 10px;
-            background: var(--bg-secondary);
-            border-radius: 6px;
-            margin-bottom: 6px;
-            font-size: 11px;
-            border-left: 3px solid var(--primary);
-        }
-
-        .resolution-action {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .resolution-meta {
-            color: var(--text-muted);
-            font-size: 10px;
-        }
-
-        /* Empty State */
-        .empty-state-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 40px;
-        }
-
-        .empty-state-center i {
-            font-size: 48px;
-            opacity: 0.3;
-            margin-bottom: 16px;
-        }
-
-        .empty-state-center p {
-            font-size: 14px;
-        }
-
-        /* Ticket Cards */
-        .ticket-card {
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .ticket-card:hover {
-            transform: translateX(4px);
-        }
-
-        .ticket-card.open {
-            border-left-color: #f59e0b;
-        }
-
-        .ticket-card.in_progress {
-            border-left-color: #3b82f6;
-        }
-
-        .ticket-card.resolved {
-            border-left-color: #10b981;
-        }
-
-        .ticket-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .ticket-subject {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
-
-        .sla-breach {
-            background: #ef4444;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .ticket-meta {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .ticket-status {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: white;
-            font-weight: 600;
-        }
-
-        .ticket-order {
-            font-size: 10px;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .ticket-msgs {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-
-        .ticket-preview {
+        .order-details {
             font-size: 12px;
             color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
-        .ticket-time {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* Chat Panel */
-        #chatPanel {
-            position: fixed;
-            right: -400px;
-            top: 0;
-            width: 380px;
-            height: 100vh;
-            background: var(--bg-primary);
-            border-left: 1px solid var(--border);
-            transition: right 0.3s;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #chatPanel.active {
-            right: 0;
-        }
-
-        .chat-header {
-            padding: 16px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header h3 {
-            font-size: 14px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .chat-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-
-        #chatMessages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
+        /* Quick Actions Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .chat-message {
-            max-width: 85%;
-        }
-
-        .chat-message.customer {
-            align-self: flex-start;
-        }
-
-        .chat-message.agent {
-            align-self: flex-end;
-        }
-
-        .chat-bubble {
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 13px;
-        }
-
-        .chat-message.customer .chat-bubble {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .chat-message.agent .chat-bubble {
-            background: var(--primary);
-            color: white;
-        }
-
-        .chat-meta {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .chat-input-area {
-            padding: 12px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 8px;
-        }
-
-        .chat-input-area input {
-            flex: 1;
-            padding: 10px 14px;
+        .action-btn-premium {
+            padding: 16px;
             border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 13px;
+            border-radius: 14px;
             background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .chat-input-area button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 20px;
             cursor: pointer;
-            font-weight: 600;
-        }
-
-        .empty-state-mini {
+            transition: all 0.2s;
             text-align: center;
-            padding: 20px;
-            color: var(--text-muted);
         }
 
-        .empty-state-mini i {
+        .action-btn-premium:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(141, 27, 61, 0.05), transparent);
+            transform: translateY(-2px);
+        }
+
+        .action-btn-premium i {
             font-size: 24px;
-            opacity: 0.4;
+            color: var(--primary);
             margin-bottom: 8px;
             display: block;
         }
 
-        .empty-state-mini p {
+        .action-btn-premium span {
             font-size: 12px;
-            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
-        .btn-sm {
-            padding: 6px 12px;
+        .action-btn-premium.danger i {
+            color: #ef4444;
+        }
+
+        .action-btn-premium.danger:hover {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
+        }
+
+        /* Ticket Tracker */
+        .ticket-tracker {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .ticket-mini {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .ticket-mini .subject {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .ticket-mini .meta {
             font-size: 11px;
-            background: var(--primary);
+            color: var(--text-muted);
+        }
+
+        .ticket-status {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .ticket-status.open {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .ticket-status.resolved {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* ===== Reviews Section Styles ===== */
+        .reviews-section {
+            padding: 20px;
+        }
+
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1a0a12 0%, #2d1520 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: var(--bg-primary);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+        }
+
+        .login-logo h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 12px 0 4px;
+            color: var(--text-primary);
+        }
+
+        .login-logo p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: var(--vvip-gradient);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(141, 27, 61, 0.4);
+        }
+
+        /* Sidebar compact */
+        .sidebar-compact {
+            width: 70px !important;
+            transition: all 0.3s;
+        }
+
+        .sidebar-compact:hover {
+            width: 220px !important;
+        }
+
+        .sidebar-compact .logo-text,
+        .sidebar-compact .logo-subtitle,
+        .sidebar-compact .nav-item span,
+        .sidebar-compact .user-name,
+        .sidebar-compact .user-role {
+            display: none;
+        }
+
+        .sidebar-compact:hover .logo-text,
+        .sidebar-compact:hover .logo-subtitle,
+        .sidebar-compact:hover .nav-item span,
+        .sidebar-compact:hover .user-name,
+        .sidebar-compact:hover .user-role {
+            display: block;
         }
     </style>
-    <script>
-        window.toggleSidebar = function () {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.getElementById('appOverlay');
-            if (sidebar) sidebar.classList.toggle('active');
-            if (overlay) overlay.classList.toggle('is-visible');
-        };
-    </script>
 </head>
 
 <body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-
     <!-- Login Screen -->
-    <div class="login-screen" id="loginScreen">
+    <div class="login-overlay" id="loginOverlay">
         <div class="login-card">
-            <div class="login-header">
-                <img src="assets/images/qscrap-logo.png" alt="QScrap" class="login-logo">
-                <h1 class="login-title">Resolution Center</h1>
-                <p class="login-subtitle">Customer Service Dashboard</p>
+            <div class="login-logo">
+                <img src="assets/images/qscrap-logo.png" alt="QScrap">
+                <h1>Support Hub</h1>
+                <p>WhatsApp-First Customer Resolution</p>
             </div>
-            <form id="loginForm" autocomplete="off">
+            <form id="loginForm" onsubmit="event.preventDefault(); login();">
                 <div class="form-group">
-                    <label for="loginEmail">Email / Phone</label>
-                    <input type="text" class="form-control" id="loginEmail" placeholder="Enter credentials" required>
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="support@qscrap.com" required>
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn-login">
                     <i class="bi bi-box-arrow-in-right"></i> Sign In
@@ -710,13 +674,13 @@
         <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
 
         <!-- Minimal Sidebar -->
-        <aside class="sidebar" style="width: 220px;">
+        <aside class="sidebar sidebar-compact">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
                     <img src="assets/images/qscrap-logo.png" alt="QScrap" class="sidebar-logo-img">
                     <div>
                         <div class="logo-text">QScrap</div>
-                        <div class="logo-subtitle">Resolution</div>
+                        <div class="logo-subtitle">Support</div>
                     </div>
                 </div>
             </div>
@@ -724,10 +688,10 @@
             <nav class="nav-menu">
                 <div class="nav-section">
                     <a class="nav-item active" data-section="resolution">
-                        <i class="bi bi-search"></i> Customer Lookup
+                        <i class="bi bi-search"></i> <span>Customer Lookup</span>
                     </a>
                     <a class="nav-item" data-section="reviews">
-                        <i class="bi bi-star-half"></i> Reviews
+                        <i class="bi bi-star-half"></i> <span>Reviews</span>
                         <span class="nav-badge" id="reviewBadge" style="display: none;">0</span>
                     </a>
                 </div>
@@ -742,233 +706,404 @@
                     </div>
                 </div>
                 <button class="btn btn-logout" onclick="logout()">
-                    <i class="bi bi-box-arrow-right"></i> Logout
+                    <i class="bi bi-box-arrow-right"></i>
                 </button>
             </div>
         </aside>
 
-        <!-- Top Header -->
-        <header class="top-header">
-            <div class="header-left" style="display: flex; align-items: center;">
-                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
-                    <i class="bi bi-list"></i>
-                </button>
-                <div class="header-greeting">
-                    <span>🎯 Customer Resolution Center</span>
+        <!-- Hero Header -->
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div class="support-hero">
+                <div>
+                    <div class="hero-title">
+                        <i class="bi bi-headset"></i>
+                        Support Hub
+                    </div>
+                    <div class="hero-subtitle">WhatsApp-First Customer Resolution</div>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-value" id="statOpenTickets">0</div>
+                        <div class="hero-stat-label">Open Tickets</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value" id="statTodayResolved">0</div>
+                        <div class="hero-stat-label">Resolved Today</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value" id="statAvgTime">--</div>
+                        <div class="hero-stat-label">Avg Response</div>
+                    </div>
                 </div>
             </div>
-            <div class="header-right">
-                <div class="header-status">
-                    <span class="status-dot"></span>
-                    <span>Online</span>
-                </div>
-            </div>
-        </header>
 
-        <!-- Main Content: 3-Panel Resolution Center -->
-        <main class="main-content" id="main-content">
-            <section class="section active" id="sectionResolution">
-                <div class="resolution-layout">
-                    <!-- Panel 1: Customer Profile -->
-                    <div class="panel search-panel">
-                        <div class="panel-header">
-                            <div class="panel-title"><i class="bi bi-person-circle"></i> Customer</div>
-                        </div>
-                        <div class="panel-content">
-                            <div class="search-input-wrapper">
-                                <i class="bi bi-search"></i>
-                                <input type="text" id="customerSearch" placeholder="Phone, name, order#..."
-                                    onkeydown="if(event.key==='Enter') searchCustomer()">
+            <!-- Main Content -->
+            <main style="flex: 1; overflow: hidden; padding: 0;">
+                <section class="section active" id="sectionResolution">
+                    <div class="support-layout">
+                        <!-- Left Panel: Customer 360 -->
+                        <div class="premium-card">
+                            <div class="premium-card-header">
+                                <div class="premium-card-title">
+                                    <i class="bi bi-person-circle"></i> Customer 360
+                                </div>
                             </div>
+                            <div class="premium-card-body">
+                                <div class="search-box">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" id="customerSearch" placeholder="Phone, name, or order#..."
+                                        onkeydown="if(event.key==='Enter') searchCustomer()">
+                                </div>
 
-                            <div id="customerProfile" style="margin-top: 16px;">
-                                <div class="empty-state-center">
-                                    <i class="bi bi-telephone-inbound"></i>
-                                    <p>Search for a customer<br>by phone, name, or order#</p>
+                                <div id="emptyState">
+                                    <div class="empty-state">
+                                        <i class="bi bi-telephone-inbound"></i>
+                                        <p>Search a customer by phone,<br>name, or order number</p>
+                                    </div>
+                                </div>
+
+                                <div class="customer-360" id="customerProfile">
+                                    <!-- Customer Header -->
+                                    <div class="customer-header">
+                                        <div class="customer-avatar" id="custAvatar">A</div>
+                                        <div class="customer-info">
+                                            <h2 id="custName">Customer Name</h2>
+                                            <div class="phone">
+                                                <i class="bi bi-telephone"></i>
+                                                <a href="tel:" id="custPhone">+974 XXXX XXXX</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Loyalty Badge -->
+                                    <div id="loyaltyBadgeContainer"></div>
+
+                                    <!-- Stats -->
+                                    <div class="stats-grid">
+                                        <div class="stat-box">
+                                            <div class="value" id="custOrders">0</div>
+                                            <div class="label">Orders</div>
+                                        </div>
+                                        <div class="stat-box highlight">
+                                            <div class="value" id="custSpent">0</div>
+                                            <div class="label">Total Spent</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="value" id="custRefunds">0</div>
+                                            <div class="label">Refunds</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Premium WhatsApp Business Card -->
+                                    <div class="whatsapp-business-card" onclick="openWhatsAppBusiness()">
+                                        <div class="wa-card-glow"></div>
+                                        <div class="wa-card-content">
+                                            <div class="wa-card-icon">
+                                                <i class="bi bi-whatsapp"></i>
+                                            </div>
+                                            <div class="wa-card-info">
+                                                <div class="wa-card-title">Continue on WhatsApp Business</div>
+                                                <div class="wa-card-subtitle">Chat, photos, voice — all in one place
+                                                </div>
+                                            </div>
+                                            <i class="bi bi-arrow-right wa-card-arrow"></i>
+                                        </div>
+                                        <div class="wa-card-contacts">
+                                            <span class="wa-contact" id="waContactCustomer" data-type="customer">
+                                                <i class="bi bi-person"></i> Customer
+                                            </span>
+                                            <span class="wa-contact" id="waContactGarage" data-type="garage">
+                                                <i class="bi bi-shop"></i> Garage
+                                            </span>
+                                            <span class="wa-contact" id="waContactDriver" data-type="driver">
+                                                <i class="bi bi-truck"></i> Driver
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <style>
+                                        .whatsapp-business-card {
+                                            position: relative;
+                                            background: linear-gradient(135deg, #25D366 0%, #128C7E 50%, #075E54 100%);
+                                            border-radius: 16px;
+                                            padding: 20px;
+                                            margin-bottom: 20px;
+                                            cursor: pointer;
+                                            overflow: hidden;
+                                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                                            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.25);
+                                        }
+
+                                        .whatsapp-business-card:hover {
+                                            transform: translateY(-4px);
+                                            box-shadow: 0 16px 48px rgba(37, 211, 102, 0.35);
+                                        }
+
+                                        .wa-card-glow {
+                                            position: absolute;
+                                            top: -50%;
+                                            right: -50%;
+                                            width: 200%;
+                                            height: 200%;
+                                            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+                                            animation: waGlow 3s ease-in-out infinite;
+                                        }
+
+                                        @keyframes waGlow {
+
+                                            0%,
+                                            100% {
+                                                opacity: 0.3;
+                                                transform: scale(1);
+                                            }
+
+                                            50% {
+                                                opacity: 0.6;
+                                                transform: scale(1.1);
+                                            }
+                                        }
+
+                                        .wa-card-content {
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 16px;
+                                            color: white;
+                                            position: relative;
+                                            z-index: 1;
+                                        }
+
+                                        .wa-card-icon {
+                                            width: 56px;
+                                            height: 56px;
+                                            background: rgba(255, 255, 255, 0.2);
+                                            backdrop-filter: blur(10px);
+                                            border-radius: 14px;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            font-size: 28px;
+                                        }
+
+                                        .wa-card-info {
+                                            flex: 1;
+                                        }
+
+                                        .wa-card-title {
+                                            font-size: 16px;
+                                            font-weight: 700;
+                                        }
+
+                                        .wa-card-subtitle {
+                                            font-size: 12px;
+                                            opacity: 0.85;
+                                            margin-top: 2px;
+                                        }
+
+                                        .wa-card-arrow {
+                                            font-size: 20px;
+                                            transition: transform 0.2s;
+                                        }
+
+                                        .whatsapp-business-card:hover .wa-card-arrow {
+                                            transform: translateX(4px);
+                                        }
+
+                                        .wa-card-contacts {
+                                            display: flex;
+                                            gap: 12px;
+                                            margin-top: 14px;
+                                            position: relative;
+                                            z-index: 1;
+                                        }
+
+                                        .wa-contact {
+                                            flex: 1;
+                                            padding: 10px;
+                                            background: rgba(255, 255, 255, 0.15);
+                                            backdrop-filter: blur(5px);
+                                            border-radius: 10px;
+                                            text-align: center;
+                                            color: white;
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                            cursor: pointer;
+                                            transition: all 0.2s;
+                                            border: 1px solid rgba(255, 255, 255, 0.1);
+                                        }
+
+                                        .wa-contact:hover {
+                                            background: rgba(255, 255, 255, 0.3);
+                                            transform: scale(1.02);
+                                        }
+
+                                        .wa-contact i {
+                                            display: block;
+                                            font-size: 18px;
+                                            margin-bottom: 4px;
+                                        }
+                                    </style>
+
+                                    <!-- Recent Orders -->
+                                    <div style="margin-bottom: 16px;">
+                                        <div
+                                            style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Recent Orders
+                                        </div>
+                                        <div class="orders-list" id="ordersList"></div>
+                                    </div>
+
+                                    <!-- Open Tickets -->
+                                    <div class="ticket-tracker" id="ticketTracker">
+                                        <div
+                                            style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Open Tickets
+                                        </div>
+                                        <div id="ticketsList"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Quick Actions -->
+                        <div class="premium-card">
+                            <div class="premium-card-header">
+                                <div class="premium-card-title">
+                                    <i class="bi bi-lightning-charge"></i> Quick Actions
+                                </div>
+                                <div id="selectedOrderBadge" style="font-size: 11px; color: var(--text-muted);"></div>
+                            </div>
+                            <div class="premium-card-body">
+                                <div id="actionsEmpty">
+                                    <div class="empty-state">
+                                        <i class="bi bi-cursor-fill"></i>
+                                        <p>Select a customer and order<br>to see available actions</p>
+                                    </div>
+                                </div>
+
+                                <div id="actionsPanel" style="display: none;">
+                                    <!-- Refund Actions -->
+                                    <div
+                                        style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">
+                                        💰 Refund Actions
+                                    </div>
+                                    <div class="actions-grid">
+                                        <div class="action-btn-premium" onclick="quickAction('full_refund')">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                            <span>Full Refund</span>
+                                        </div>
+                                        <div class="action-btn-premium" onclick="quickAction('partial_refund')">
+                                            <i class="bi bi-percent"></i>
+                                            <span>Partial Refund</span>
+                                        </div>
+                                        <div class="action-btn-premium" onclick="quickAction('goodwill_credit')">
+                                            <i class="bi bi-gift"></i>
+                                            <span>Goodwill Credit</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Order Actions -->
+                                    <div
+                                        style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
+                                        📦 Order Actions
+                                    </div>
+                                    <div class="actions-grid">
+                                        <div class="action-btn-premium" onclick="showCancellationPreview(currentOrder)">
+                                            <i class="bi bi-x-circle"></i>
+                                            <span>Cancel Order</span>
+                                        </div>
+                                        <div class="action-btn-premium" onclick="showReturnRequest(currentOrder)">
+                                            <i class="bi bi-arrow-return-left"></i>
+                                            <span>7-Day Return</span>
+                                        </div>
+                                        <div class="action-btn-premium" onclick="quickAction('reassign_driver')">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                            <span>Reassign Driver</span>
+                                        </div>
+                                        <div class="action-btn-premium" onclick="quickAction('rush_delivery')">
+                                            <i class="bi bi-lightning"></i>
+                                            <span>Rush Delivery</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Escalation -->
+                                    <div
+                                        style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
+                                        ⚠️ Escalation
+                                    </div>
+                                    <div class="actions-grid">
+                                        <div class="action-btn-premium danger" onclick="quickAction('escalate_to_ops')">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <span>Escalate to Ops</span>
+                                        </div>
+                                        <div class="action-btn-premium" onclick="showCustomerAbuseStatus()">
+                                            <i class="bi bi-shield-exclamation"></i>
+                                            <span>Fraud Check</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Internal Notes -->
+                                    <div
+                                        style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
+                                        📝 Internal Notes
+                                    </div>
+                                    <div id="notesList" style="margin-bottom: 12px;"></div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" id="noteInput" placeholder="Add a note..."
+                                            style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--bg-secondary);">
+                                        <button onclick="addNote()"
+                                            style="padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                                            Add
+                                        </button>
+                                    </div>
+
+                                    <!-- Resolution Log -->
+                                    <div
+                                        style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
+                                        📊 Resolution Log
+                                    </div>
+                                    <div id="resolutionLog"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Panel 2: Support Tickets -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div class="panel-title"><i class="bi bi-chat-dots"></i> Support Tickets</div>
+                <!-- Reviews Section -->
+                <section class="section" id="sectionReviews">
+                    <div class="reviews-section">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h1
+                                style="font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                                <i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
+                            </h1>
                         </div>
-                        <div class="panel-content" id="ticketsPanel">
-                            <div class="empty-state-center">
-                                <i class="bi bi-chat-square-text"></i>
-                                <p>Select a customer to view tickets</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Panel 3: Orders & Issues -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div class="panel-title"><i class="bi bi-box-seam"></i> Orders & Issues</div>
-                        </div>
-                        <div class="panel-content" id="ordersPanel">
-                            <div class="empty-state-center">
-                                <i class="bi bi-inbox"></i>
-                                <p>Select a customer to view their orders</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Panel 3: Quick Actions -->
-                    <div class="panel actions-panel">
-                        <div class="panel-header">
-                            <div class="panel-title"><i class="bi bi-lightning-charge"></i> Quick Actions</div>
-                        </div>
-                        <div class="panel-content" id="actionsPanel">
-                            <div class="action-section">
-                                <div class="action-section-title">💰 Refunds</div>
-                                <button class="action-btn" onclick="quickAction('full_refund')">
-                                    <i class="bi bi-arrow-counterclockwise"></i> Full Refund
-                                </button>
-                                <button class="action-btn" onclick="quickAction('partial_refund')">
-                                    <i class="bi bi-percent"></i> Partial Refund
-                                </button>
-                                <button class="action-btn" onclick="quickAction('goodwill_credit')">
-                                    <i class="bi bi-gift"></i> Goodwill Credit
-                                </button>
-                            </div>
-
-                            <div class="action-section">
-                                <div class="action-section-title">📦 Order Actions (BRAIN v3.0)</div>
-                                <button class="action-btn" onclick="showCancellationPreview(currentOrder)">
-                                    <i class="bi bi-x-circle"></i> Cancel Order (Preview)
-                                </button>
-                                <button class="action-btn" onclick="showReturnRequest(currentOrder)">
-                                    <i class="bi bi-arrow-return-left"></i> 7-Day Return
-                                </button>
-                                <button class="action-btn" onclick="quickAction('reassign_driver')">
-                                    <i class="bi bi-arrow-repeat"></i> Reassign Driver
-                                </button>
-                                <button class="action-btn" onclick="quickAction('rush_delivery')">
-                                    <i class="bi bi-lightning"></i> Rush Delivery
-                                </button>
-                            </div>
-
-                            <div class="action-section">
-                                <div class="action-section-title">🛡️ Fraud Prevention</div>
-                                <button class="action-btn" onclick="showCustomerAbuseStatus()">
-                                    <i class="bi bi-shield-exclamation"></i> Customer Abuse Status
-                                </button>
-                            </div>
-
-                            <div class="action-section">
-                                <div class="action-section-title">📞 Contact</div>
-                                <button class="action-btn" id="whatsappCustomerBtn"
-                                    onclick="contactWhatsApp('customer')">
-                                    <i class="bi bi-whatsapp"></i> WhatsApp Customer
-                                </button>
-                                <button class="action-btn" id="whatsappGarageBtn" onclick="contactWhatsApp('garage')">
-                                    <i class="bi bi-shop"></i> WhatsApp Garage
-                                </button>
-                                <button class="action-btn" id="whatsappDriverBtn" onclick="contactWhatsApp('driver')">
-                                    <i class="bi bi-truck"></i> WhatsApp Driver
-                                </button>
-                            </div>
-
-                            <div class="action-section">
-                                <div class="action-section-title">⚠️ Escalate</div>
-                                <button class="action-btn danger" onclick="quickAction('escalate_to_ops')">
-                                    <i class="bi bi-exclamation-triangle"></i> Escalate to Operations
-                                </button>
-                            </div>
-
-                            <!-- Notes Section -->
-                            <div class="action-section" style="margin-top: 20px;">
-                                <div class="action-section-title">📝 Internal Notes</div>
-                                <div class="notes-list" id="notesList"></div>
-                                <div class="add-note-form">
-                                    <input type="text" id="noteInput" placeholder="Add a note...">
-                                    <button onclick="addNote()">Add</button>
-                                </div>
-                            </div>
-
-                            <!-- Resolution Log -->
-                            <div class="action-section" style="margin-top: 20px;">
-                                <div class="action-section-title">📊 Resolution Log</div>
-                                <div id="resolutionLog"></div>
+                        <div class="premium-card">
+                            <div class="premium-card-body">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Garage</th>
+                                            <th>Rating</th>
+                                            <th>Review</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reviewsTable">
+                                        <tr>
+                                            <td colspan="6"
+                                                style="text-align: center; color: var(--text-muted); padding: 40px;">
+                                                Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <!-- Reviews Section -->
-            <section class="section" id="sectionReviews">
-                <div class="page-header">
-                    <h1 class="page-title"><i class="bi bi-star-half" style="color: #f59e0b;"></i> Review Moderation
-                    </h1>
-                </div>
-                <div class="content-card">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>Garage</th>
-                                <th>Rating</th>
-                                <th>Review</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reviewsTable">
-                            <tr>
-                                <td colspan="6" class="empty-state">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Sliding Chat Panel (Phase 2) -->
-    <div id="chatPanel">
-        <div class="chat-header">
-            <h3><i class="bi bi-chat-left-text"></i> Ticket Chat</h3>
-            <button class="chat-close" onclick="closeChat()">×</button>
-        </div>
-        <!-- Ticket Action Buttons -->
-        <div id="ticketActions"
-            style="display: none; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); gap: 8px;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button onclick="updateTicketStatus('resolved')" class="btn btn-sm"
-                    style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                    <i class="bi bi-check-circle"></i> Mark as Resolved
-                </button>
-                <button onclick="updateTicketStatus('closed')" class="btn btn-sm"
-                    style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                    <i class="bi bi-x-circle"></i> Close Ticket
-                </button>
-                <button onclick="updateTicketStatus('in_progress')" class="btn btn-sm"
-                    style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                    <i class="bi bi-arrow-repeat"></i> In Progress
-                </button>
-            </div>
-            <div id="ticketStatusBadge" style="margin-top: 6px; font-size: 11px; color: var(--text-muted);"></div>
-        </div>
-        <div id="chatMessages"></div>
-        <div
-            style="padding: 8px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 11px;">
-            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--text-muted);">
-                <input type="checkbox" id="internalNoteToggle" style="cursor: pointer;">
-                🔒 Internal note
-            </label>
-            <button onclick="showCannedResponsesDropdown()"
-                style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 11px; font-weight: 600;">
-                ⚡ Templates
-            </button>
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Type a message..."
-                onkeydown="if(event.key==='Enter') sendTicketMessage()">
-            <button onclick="sendTicketMessage()">Send</button>
+                </section>
+            </main>
         </div>
     </div>
 
@@ -976,7 +1111,6 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-    <!-- Scripts with nginx-controlled caching -->
     <script src="js/shared/utils.js"></script>
     <script src="js/shared/toast.js"></script>
     <script src="js/shared/modal.js"></script>
