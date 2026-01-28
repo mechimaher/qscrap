@@ -32,7 +32,7 @@ export class AccountDeletionService {
         const activeOrdersResult = await this.pool.query(
             `SELECT COUNT(*) as count FROM orders 
              WHERE customer_id = $1 
-             AND status IN ('paid', 'confirmed', 'processing', 'ready_for_pickup', 
+             AND order_status IN ('paid', 'confirmed', 'processing', 'ready_for_pickup', 
                            'picked_up', 'in_transit', 'out_for_delivery')`,
             [userId]
         );
@@ -90,7 +90,7 @@ export class AccountDeletionService {
         const pendingRefundsResult = await this.pool.query(
             `SELECT COUNT(*) as count FROM refunds 
              WHERE order_id IN (SELECT order_id FROM orders WHERE customer_id = $1)
-             AND status IN ('pending', 'processing')`,
+             AND refund_status IN ('pending', 'processing')`,
             [userId]
         );
         const pendingRefundsCount = parseInt(pendingRefundsResult.rows[0].count, 10);
