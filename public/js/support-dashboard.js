@@ -1711,41 +1711,54 @@ async function showCustomerAbuseStatus() {
 
         const status = await res.json();
 
+        // Map flag levels to colors (backend uses: none, yellow, orange, red, black)
         const flagColors = {
-            'none': '#10b981',
-            'watchlist': '#f59e0b',
-            'high_risk': '#ef4444',
-            'blocked': '#991b1b'
+            'none': '#10b981',    // Green - good standing
+            'yellow': '#f59e0b',  // Frequent returns
+            'orange': '#f97316',  // Frequent defective claims
+            'red': '#ef4444',     // Under investigation
+            'black': '#991b1b'    // Suspended
         };
 
-        const flagColor = flagColors[status.fraud_flag] || '#6b7280';
+        const flagLabels = {
+            'none': '🟢 Good Standing',
+            'yellow': '🟡 Watch List',
+            'orange': '🟠 High Risk',
+            'red': '🔴 Under Review',
+            'black': '⚫ Suspended'
+        };
+
+        const flagLevel = status.flag_level || 'none';
+        const flagColor = flagColors[flagLevel] || '#6b7280';
+        const flagLabel = flagLabels[flagLevel] || 'Unknown';
+        const flagIcon = flagLevel === 'none' ? '✅' : flagLevel === 'black' ? '🚫' : '⚠️';
 
         let content = `
             <div style="background: ${flagColor}20; border: 2px solid ${flagColor}; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 16px;">
-                <div style="font-size: 40px; margin-bottom: 8px;">${status.fraud_flag === 'none' ? '✅' : status.fraud_flag === 'blocked' ? '🚫' : '⚠️'}</div>
-                <div style="font-size: 20px; font-weight: 700; color: ${flagColor}; text-transform: uppercase;">${status.fraud_flag || 'Unknown'}</div>
+                <div style="font-size: 40px; margin-bottom: 8px;">${flagIcon}</div>
+                <div style="font-size: 20px; font-weight: 700; color: ${flagColor};">${flagLabel}</div>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                 <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.returns_this_month || 0}/3</div>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.returns_count || 0}/5</div>
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Returns This Month</div>
                 </div>
                 <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.defective_claims_this_month || 0}/3</div>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.defective_claims_count || 0}/5</div>
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Defective Claims</div>
                 </div>
                 <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.cancellations_this_month || 0}</div>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">${status.cancellations_count || 0}</div>
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Cancellations</div>
                 </div>
                 <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 28px; font-weight: 700; color: ${status.can_make_return ? '#10b981' : '#ef4444'};">${status.can_make_return ? '✓' : '✗'}</div>
+                    <div style="font-size: 28px; font-weight: 700; color: ${status.can_return ? '#10b981' : '#ef4444'};">${status.can_return ? '✓' : '✗'}</div>
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Can Return</div>
                 </div>
             </div>
             
-            ${status.fraud_flag !== 'none' ? `
+            ${flagLevel !== 'none' ? `
             <div style="padding: 12px; background: #fef2f2; border-radius: 8px; color: #991b1b; font-size: 12px;">
                 <strong>⚠️ Warning:</strong> This customer has elevated fraud flags. Exercise caution with refunds and returns.
             </div>
