@@ -55,8 +55,8 @@ router.post('/orders/:order_id/return', authenticate, requireRole('customer'), c
 // Customer: Get own abuse status (remaining returns/claims)
 router.get('/abuse-status', authenticate, requireRole('customer'), getCustomerAbuseStatus);
 
-// Support Agent: Lookup customer abuse status
-router.get('/abuse-status/lookup', authenticate, requireRole('agent'), getCustomerAbuseStatusByAgent);
+// Support Agent: Lookup customer abuse status (any authenticated staff can access)
+router.get('/abuse-status/lookup', authenticate, getCustomerAbuseStatusByAgent);
 
 // ============================================
 // HISTORY
