@@ -393,7 +393,7 @@ function renderOrders(orders) {
         const cardClass = hasIssue ? 'has-issue' : (isActive ? 'in-transit' : 'completed');
 
         html += `
-            <div class="order-card ${cardClass}" onclick="selectOrder('${o.order_id}')">
+            <div class="order-card ${cardClass}" onclick="selectOrder(event, '${o.order_id}', '${o.order_number}')"  data-order-id="${o.order_id}" data-order-number="${o.order_number}">
                 <div class="order-header">
                     <span class="order-number">#${o.order_number}</span>
                     <span class="order-status" style="background: ${getStatusColor(o.order_status)}; color: white;">
@@ -439,7 +439,7 @@ function renderOrders(orders) {
     document.getElementById('ordersList').innerHTML = html;
 }
 
-function selectOrder(orderId) {
+function selectOrder(evt, orderId, orderNumber) {
     // Find the order and set as current
     currentOrder = orderId;
 
@@ -447,8 +447,8 @@ function selectOrder(orderId) {
     document.querySelectorAll('.order-card').forEach(c => c.classList.remove('selected'));
 
     // Add selected class to clicked order
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('selected');
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add('selected');
     }
 
     // Show Quick Actions panel
@@ -456,8 +456,7 @@ function selectOrder(orderId) {
     document.getElementById('actionsPanel').style.display = 'block';
 
     // Update selected order badge
-    const orderNumber = event.currentTarget.querySelector('.order-number')?.textContent || orderId;
-    document.getElementById('selectedOrderBadge').textContent = `Selected: ${orderNumber}`;
+    document.getElementById('selectedOrderBadge').textContent = `Selected: #${orderNumber}`;
 }
 
 function getStatusColor(status) {
