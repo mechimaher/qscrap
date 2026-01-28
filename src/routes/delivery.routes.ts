@@ -67,7 +67,7 @@ router.get('/orders', getOrdersForDelivery);
 router.post('/assign/:order_id', assignDriver);
 router.post('/reassign/:assignment_id', reassignDriver);  // Emergency driver reassignment
 router.patch('/assignment/:assignment_id/status', updateDeliveryStatus);
-router.post('/assignment/:assignment_id/location', updateDriverLocation);
+router.post('/drivers/:driver_id/location', updateDriverLocation);  // Update driver GPS location
 
 export default router;
 
