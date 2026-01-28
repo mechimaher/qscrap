@@ -323,7 +323,7 @@ export class RefundService {
                 throw new RefundAlreadyProcessedError(refund.order_id);
             }
 
-            let stripeRefundId: string | null = null;
+            let stripeRefundId: string | undefined = undefined;
             let refundMethod = 'stripe';
 
             if (!refund.stripe_payment_intent_id) {
