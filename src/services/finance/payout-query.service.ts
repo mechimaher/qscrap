@@ -36,7 +36,14 @@ export class PayoutQueryService {
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('completed', 'confirmed') AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as total_paid,
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'pending' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as pending_payouts,
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('processing', 'awaiting_confirmation') AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as processing_payouts,
-                COUNT(*) FILTER (WHERE payout_status = 'pending' AND (payout_type IS NULL OR payout_type != 'reversal')) as pending_count,
+                -- CRITICAL: Only count payouts past 7-day warranty window (eligible for processing)
+                (SELECT COUNT(*) FROM garage_payouts gp2
+                 LEFT JOIN orders o2 ON gp2.order_id = o2.order_id
+                 WHERE gp2.payout_status = 'pending' 
+                 AND (gp2.payout_type IS NULL OR gp2.payout_type != 'reversal')
+                 AND COALESCE(o2.delivered_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
+                 ${whereClause ? whereClause.replace('garage_id', 'gp2.garage_id') : ''}
+                ) as pending_count,
                 COUNT(*) FILTER (WHERE payout_status = 'awaiting_confirmation') as awaiting_count,
                 COUNT(*) FILTER (WHERE payout_status = 'disputed') as disputed_count,
                 COALESCE(SUM(net_amount) FILTER (
