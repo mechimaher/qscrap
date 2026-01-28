@@ -390,7 +390,6 @@ export class RefundService {
             return {
                 success: true,
                 stripe_refund_id: stripeRefundId,
-                refund_method: refundMethod,
                 message: `Refund of ${refund.refund_amount} QAR processed successfully${refundMethod === 'manual' ? ' (manual)' : ''}`
             };
         } catch (err: any) {
