@@ -323,30 +323,36 @@ export class RefundService {
                 throw new RefundAlreadyProcessedError(refund.order_id);
             }
 
+            let stripeRefundId: string | null = null;
+            let refundMethod = 'stripe';
+
             if (!refund.stripe_payment_intent_id) {
-                throw new Error('No Stripe payment found for this order - manual refund required');
-            }
-
-            // Initialize Stripe
-            const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-            if (!stripeSecretKey) {
-                throw new Error('Stripe not configured');
-            }
-
-            const Stripe = require('stripe');
-            const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
-
-            // Execute Stripe refund
-            const refundAmountCents = Math.round(parseFloat(refund.refund_amount) * 100);
-            const stripeRefund = await stripe.refunds.create({
-                payment_intent: refund.stripe_payment_intent_id,
-                amount: refundAmountCents,
-                metadata: {
-                    refund_id: refundId,
-                    order_number: refund.order_number,
-                    processed_by: processedBy
+                // No Stripe payment found - mark as manual refund (COD, test order, etc.)
+                console.log(`[RefundService] No Stripe payment for order ${refund.order_number} - processing as manual refund`);
+                refundMethod = 'manual';
+            } else {
+                // Initialize Stripe and process refund
+                const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+                if (!stripeSecretKey) {
+                    throw new Error('Stripe not configured');
                 }
-            });
+
+                const Stripe = require('stripe');
+                const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
+
+                // Execute Stripe refund
+                const refundAmountCents = Math.round(parseFloat(refund.refund_amount) * 100);
+                const stripeRefund = await stripe.refunds.create({
+                    payment_intent: refund.stripe_payment_intent_id,
+                    amount: refundAmountCents,
+                    metadata: {
+                        refund_id: refundId,
+                        order_number: refund.order_number,
+                        processed_by: processedBy
+                    }
+                });
+                stripeRefundId = stripeRefund.id;
+            }
 
             // Update refund record
             await client.query(
@@ -354,9 +360,10 @@ export class RefundService {
                     refund_status = 'completed',
                     stripe_refund_id = $2,
                     processed_by = $3,
-                    processed_at = NOW()
+                    processed_at = NOW(),
+                    notes = COALESCE(notes, '') || $4
                  WHERE refund_id = $1`,
-                [refundId, stripeRefund.id, processedBy]
+                [refundId, stripeRefundId, processedBy, refundMethod === 'manual' ? ' [Manual refund - no Stripe payment]' : '']
             );
 
             // Update order payment status
