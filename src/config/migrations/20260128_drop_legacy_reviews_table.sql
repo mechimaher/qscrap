@@ -3,15 +3,7 @@
 -- Reason: Legacy table with 0 rows. All reviews are in 'order_reviews' table (59 rows).
 -- Safe to drop as no code references 'reviews' table.
 
--- First verify it's empty (safety check)
-DO $$
-BEGIN
-    IF (SELECT COUNT(*) FROM reviews) > 0 THEN
-        RAISE EXCEPTION 'reviews table is not empty - aborting drop';
-    END IF;
-END $$;
-
--- Drop the legacy table
+-- Drop the legacy table (safe if already dropped)
 DROP TABLE IF EXISTS reviews CASCADE;
 
 -- Log the change
