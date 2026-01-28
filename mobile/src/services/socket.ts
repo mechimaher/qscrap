@@ -105,3 +105,14 @@ export const joinUserRoom = (userId: string) => {
 export const leaveTicketRoom = (ticketId: string) => {
     socket?.emit('leave_ticket', ticketId);
 };
+
+// Expiration events
+export const onRequestExpired = (callback: (data: any) => void) => {
+    socket?.on('request_expired', callback);
+    return () => socket?.off('request_expired', callback);
+};
+
+export const onCounterOfferExpired = (callback: (data: any) => void) => {
+    socket?.on('counter_offer_expired', callback);
+    return () => socket?.off('counter_offer_expired', callback);
+};

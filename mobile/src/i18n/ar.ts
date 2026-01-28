@@ -1441,6 +1441,141 @@ export const ar = {
     },
 
     // =============================================
+    // CANCELLATION & RETURN - BRAIN v3.0 (الإلغاء والإرجاع)
+    // =============================================
+    cancellation: {
+        // General
+        title: 'إلغاء الطلب',
+        subtitle: 'مراجعة رسوم الإلغاء قبل التأكيد',
+        previewTitle: 'معاينة الإلغاء',
+        confirmCancel: 'تأكيد الإلغاء',
+        cancelOrder: 'إلغاء الطلب',
+        processingCancel: 'جاري معالجة الإلغاء...',
+        cancelSuccess: 'تم إلغاء الطلب بنجاح',
+        cancelFailed: 'فشل إلغاء الطلب',
+
+        // Fee breakdown
+        feeBreakdown: 'تفصيل الرسوم',
+        partPrice: 'سعر القطعة',
+        platformFee: 'رسوم المنصة',
+        deliveryFee: 'رسوم التوصيل',
+        cancellationFee: 'رسوم الإلغاء',
+        totalDeductions: 'إجمالي الخصومات',
+        refundAmount: 'مبلغ الاسترداد',
+
+        // Stages
+        stage: 'المرحلة',
+        stagePending: 'قبل الدفع',
+        stageAfterPayment: 'بعد الدفع',
+        stagePreparing: 'قيد التحضير',
+        stageInTransit: 'أثناء التوصيل',
+        stageDelivered: 'بعد التوصيل',
+
+        // Fee percentages
+        feeZeroPercent: '0٪ رسوم - استرداد كامل',
+        feeFivePercent: '5٪ رسوم إلغاء',
+        feeTenPercent: '10٪ رسوم إلغاء',
+        feeTwentyPercent: '20٪ رسوم إلغاء',
+        deliveryRetained: 'يتم الاحتفاظ برسوم التوصيل',
+        deliveryRefunded: 'يتم استرداد رسوم التوصيل',
+
+        // Reasons
+        selectReason: 'اختر سبب الإلغاء',
+        reasonRequired: 'السبب مطلوب',
+        reasons: {
+            changed_mind: 'غيرت رأيي',
+            found_elsewhere: 'وجدتها في مكان آخر',
+            too_expensive: 'السعر مرتفع',
+            wrong_part: 'طلبت قطعة خاطئة',
+            no_longer_needed: 'لم أعد بحاجة إليها',
+            other: 'سبب آخر',
+        },
+        additionalNotes: 'ملاحظات إضافية (اختياري)',
+
+        // Warnings
+        cannotCancel: 'لا يمكن إلغاء هذا الطلب',
+        irreversible: 'هذا الإجراء لا يمكن التراجع عنه',
+        qaatarLaw: 'وفقاً لقانون حماية المستهلك القطري',
+    },
+
+    // Return Request - 7-day window
+    returnRequest: {
+        title: 'طلب إرجاع',
+        subtitle: 'إرجاع خلال 7 أيام',
+        windowTitle: 'نافذة الإرجاع',
+        daysRemaining: '{{days}} يوم متبقي',
+        daysRemainingLabel: 'أيام متبقية لتقديم طلب الإرجاع',
+        qatarLawNote: 'نافذة الإرجاع 7 أيام (قانون قطر)',
+
+        // Eligibility
+        eligible: 'مؤهل للإرجاع',
+        notEligible: 'غير مؤهل للإرجاع',
+        windowExpired: 'انتهت فترة الإرجاع',
+        alreadyReturned: 'تم تقديم طلب إرجاع بالفعل',
+
+        // Fees
+        returnFee: 'رسوم الإرجاع (20٪)',
+        deliveryRetained: 'رسوم التوصيل (يتم الاحتفاظ بها)',
+        returnRefund: 'مبلغ الاسترداد',
+
+        // Reasons
+        selectReason: 'اختر سبب الإرجاع',
+        reasons: {
+            defective: 'القطعة معيبة',
+            wrong_part: 'استلمت قطعة خاطئة',
+            not_as_described: 'لا تطابق الوصف',
+            changed_mind: 'غيرت رأيي',
+            damaged_delivery: 'تضررت أثناء التوصيل',
+        },
+
+        // Photos
+        photosRequired: 'الصور مطلوبة',
+        photosRequiredDesc: '3 صور واضحة للقطعة',
+        uploadPhotos: 'رفع الصور',
+        addPhoto: 'إضافة صورة',
+        photoCount: '{{current}}/{{required}} صور',
+        minPhotosRequired: 'مطلوب 3 صور على الأقل',
+
+        // Condition
+        conditionNotes: 'ملاحظات حالة القطعة',
+        conditionPlaceholder: 'صف حالة القطعة المراد إرجاعها...',
+
+        // Actions
+        submitReturn: 'تقديم طلب الإرجاع',
+        processingReturn: 'جاري تقديم الطلب...',
+        returnSubmitted: 'تم تقديم طلب الإرجاع',
+        returnSubmittedDesc: 'سيتم مراجعة طلبك والرد خلال 24 ساعة',
+        returnFailed: 'فشل تقديم طلب الإرجاع',
+
+        // Status
+        status: {
+            pending: 'قيد المراجعة',
+            approved: 'تمت الموافقة',
+            rejected: 'مرفوض',
+            completed: 'مكتمل',
+        },
+    },
+
+    // Fraud Prevention
+    fraud: {
+        abuseWarning: 'تحذير: حسابك تحت المراقبة',
+        abuseBlocked: 'تم تقييد حسابك بسبب الاستخدام المفرط',
+        monthlyLimit: 'الحد الشهري',
+        returnsThisMonth: 'طلبات الإرجاع هذا الشهر',
+        cancellationsThisMonth: 'الإلغاءات هذا الشهر',
+        defectiveClaimsThisMonth: 'مطالبات العيوب هذا الشهر',
+        limitReached: 'تم الوصول للحد الأقصى',
+        limitWarning: 'أنت قريب من الحد الأقصى الشهري',
+        flags: {
+            none: 'حالة طبيعية',
+            watchlist: 'تحت المراقبة',
+            high_risk: 'خطر عالي',
+            blocked: 'محظور',
+        },
+        contactSupport: 'تواصل مع الدعم لمزيد من المعلومات',
+    },
+
+    // =============================================
     // ACCESSIBILITY - تسميات قارئ الشاشة
     // =============================================
     accessibility: {

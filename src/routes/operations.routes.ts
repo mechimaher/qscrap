@@ -47,7 +47,18 @@ router.get('/escalations', getEscalations);
 router.post('/escalations/:escalation_id/resolve', resolveEscalation);
 
 // Return Assignments
-router.get('/returns', (req, res) => res.json({ returns: [] })); // Stub endpoint - returns empty array
+router.get('/returns', async (req, res) => {
+    try {
+        const { getReturnService } = await import('../services/cancellation/return.service');
+        const pool = (global as any).pool;
+        const returnService = getReturnService(pool);
+        const returns = await returnService.getPendingReturns();
+        res.json({ returns });
+    } catch (error) {
+        console.error('[Operations] Get returns error:', error);
+        res.json({ returns: [] });
+    }
+});
 // router.get('/returns/stats', getReturnStats); // TODO: Implement getReturnStats
 // router.post('/returns/:assignment_id/assign-driver', assignDriverToReturn); // TODO: Implement assignDriverToReturn
 

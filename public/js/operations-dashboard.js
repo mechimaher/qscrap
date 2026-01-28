@@ -261,6 +261,19 @@ function setupSocketListeners() {
     socket.off('new_review_pending');
     socket.off('order_collected');
     socket.off('qc_completed');
+    socket.off('order_cancelled');
+    socket.off('new_return_request');
+
+    // Connection handlers for data freshness
+    socket.on('connect', () => {
+        console.log('[Socket] Connected - refreshing data');
+        loadStats();
+        loadOrders();
+    });
+
+    socket.on('disconnect', () => {
+        console.log('[Socket] Disconnected');
+    });
 
     // Bind listeners
     socket.on('order_status_updated', () => { loadStats(); loadOrders(); });
@@ -274,6 +287,21 @@ function setupSocketListeners() {
     socket.on('dispute_created', () => { loadStats(); loadDisputes(); });
     socket.on('dispute_resolved', () => { loadStats(); loadDisputes(); });
     socket.on('new_order', () => { loadStats(); loadOrders(); });
+
+    // Order cancelled by customer/garage - CRITICAL for ops awareness
+    socket.on('order_cancelled', (data) => {
+        const by = data.cancelled_by === 'customer' ? '👤 Customer' : data.cancelled_by === 'garage' ? '🔧 Garage' : '⚙️ System';
+        showToast(`❌ Order #${data.order_number || ''} cancelled by ${by}`, 'warning');
+        loadStats();
+        loadOrders();
+    });
+
+    // New return request - needs ops review
+    socket.on('new_return_request', (data) => {
+        showToast(`🔄 Return request for Order #${data.order_number || ''}`, 'warning');
+        loadStats();
+        loadReturns();
+    });
 
     // Order collected - ready for driver assignment
     socket.on('order_collected', (data) => {
@@ -5822,3 +5850,357 @@ document.addEventListener('click', (e) => {
         modal.classList.remove('active');
     }
 });
+
+// ==========================================
+// FRAUD PREVENTION CENTER (BRAIN v3.0)
+// ==========================================
+
+/**
+ * Load fraud section stats and data
+ */
+async function loadFraudSection() {
+    loadFraudStats();
+    loadReturnRequests();
+    loadAbuseTracking();
+    loadGaragePenalties();
+}
+
+/**
+ * Load fraud prevention statistics
+ */
+async function loadFraudStats() {
+    try {
+        const res = await fetch(`${API_URL}/cancellation/fraud-stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('fraudWatchlistCount').textContent = data.watchlist_count || 0;
+            document.getElementById('fraudPendingReturns').textContent = data.pending_returns || 0;
+            document.getElementById('fraudPenaltiesMonth').textContent = formatCurrency(data.penalties_this_month || 0);
+            document.getElementById('fraudPreventedAmount').textContent = formatCurrency(data.prevented_amount || 0);
+
+            // Update badge
+            const badge = document.getElementById('fraudBadge');
+            if (badge) {
+                const pendingCount = (data.pending_returns || 0) + (data.watchlist_count || 0);
+                badge.textContent = pendingCount;
+                badge.style.display = pendingCount > 0 ? 'flex' : 'none';
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load fraud stats:', err);
+    }
+}
+
+/**
+ * Load return requests pending review
+ */
+async function loadReturnRequests() {
+    const tbody = document.getElementById('returnRequestsTable');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/return-requests?status=pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);"><i class="bi bi-exclamation-triangle"></i> Failed to load</td></tr>';
+            return;
+        }
+
+        const data = await res.json();
+        const requests = data.return_requests || [];
+
+        if (requests.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle" style="font-size: 24px; color: var(--success);"></i><p>No pending return requests</p></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = requests.map(r => `
+            <tr>
+                <td>
+                    <strong>${escapeHTML(r.customer_name || 'Customer')}</strong>
+                    <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(r.customer_phone || '')}</div>
+                </td>
+                <td><a href="#" onclick="viewOrder('${r.order_id}'); return false;" style="color: var(--accent);">#${escapeHTML(r.order_number || r.order_id?.slice(0, 8))}</a></td>
+                <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(r.part_description || 'Part')}</td>
+                <td>
+                    <span class="badge badge-${r.reason === 'defective' ? 'warning' : 'secondary'}">${escapeHTML(r.reason || 'N/A')}</span>
+                </td>
+                <td>
+                    ${r.photo_urls?.length > 0 ?
+                `<button class="btn-sm btn-ghost" onclick="viewReturnPhotos('${r.return_id}')" title="View ${r.photo_urls.length} photos">
+                            <i class="bi bi-images"></i> ${r.photo_urls.length}
+                        </button>` :
+                '<span style="color: #ef4444;"><i class="bi bi-x-circle"></i> None</span>'
+            }
+                </td>
+                <td>${getTimeAgo(r.created_at)}</td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn-sm btn-success" onclick="approveReturn('${r.return_id}')" title="Approve Return">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button class="btn-sm btn-danger" onclick="rejectReturn('${r.return_id}')" title="Reject Return">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load return requests:', err);
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Connection error</td></tr>';
+    }
+}
+
+/**
+ * Approve a return request
+ */
+async function approveReturn(returnId) {
+    if (!confirm('Approve this return request? Customer will receive refund minus 20% fee + delivery.')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (res.ok) {
+            showToast('Return approved - Refund processing', 'success');
+            loadReturnRequests();
+            loadFraudStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to approve return', 'error');
+        }
+    } catch (err) {
+        console.error('Approve return error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+/**
+ * Reject a return request
+ */
+async function rejectReturn(returnId) {
+    const reason = prompt('Enter rejection reason (required):');
+    if (!reason || reason.trim().length < 5) {
+        showToast('Please provide a reason (min 5 characters)', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rejection_reason: reason.trim() })
+        });
+
+        if (res.ok) {
+            showToast('Return rejected', 'success');
+            loadReturnRequests();
+            loadFraudStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to reject return', 'error');
+        }
+    } catch (err) {
+        console.error('Reject return error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+/**
+ * View return photos in modal
+ */
+function viewReturnPhotos(returnId) {
+    // Open modal with photos - simple implementation
+    showToast('Photo viewer not implemented yet', 'info');
+}
+
+/**
+ * Load customer abuse tracking data
+ */
+async function loadAbuseTracking() {
+    const tbody = document.getElementById('abuseTrackingTable');
+    if (!tbody) return;
+
+    const flagFilter = document.getElementById('fraudFlagFilter')?.value || '';
+
+    try {
+        let url = `${API_URL}/cancellation/abuse-tracking`;
+        if (flagFilter) url += `?flag=${flagFilter}`;
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Failed to load</td></tr>';
+            return;
+        }
+
+        const data = await res.json();
+        const customers = data.customers || [];
+
+        if (customers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle" style="color: var(--success);"></i> No flagged customers</td></tr>';
+            return;
+        }
+
+        const flagColors = {
+            'none': '#10b981',
+            'watchlist': '#f59e0b',
+            'high_risk': '#ef4444',
+            'blocked': '#991b1b'
+        };
+
+        tbody.innerHTML = customers.map(c => {
+            const flagColor = flagColors[c.fraud_flag] || '#6b7280';
+            return `
+                <tr>
+                    <td>
+                        <strong>${escapeHTML(c.full_name || 'Customer')}</strong>
+                        <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(c.phone_number || '')}</div>
+                    </td>
+                    <td>
+                        <span style="background: ${flagColor}20; color: ${flagColor}; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                            ${c.fraud_flag || 'none'}
+                        </span>
+                    </td>
+                    <td style="text-align: center; font-weight: 600; ${c.returns_this_month >= 3 ? 'color: #ef4444;' : ''}">${c.returns_this_month || 0}/3</td>
+                    <td style="text-align: center; font-weight: 600; ${c.defective_claims_this_month >= 3 ? 'color: #ef4444;' : ''}">${c.defective_claims_this_month || 0}/3</td>
+                    <td style="text-align: center;">${c.cancellations_this_month || 0}</td>
+                    <td>${getTimeAgo(c.updated_at || c.created_at)}</td>
+                    <td>
+                        <button class="btn-sm btn-ghost" onclick="editCustomerFlag('${c.customer_id}', '${c.fraud_flag}')" title="Change Flag">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Failed to load abuse tracking:', err);
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Connection error</td></tr>';
+    }
+}
+
+/**
+ * Edit customer fraud flag
+ */
+async function editCustomerFlag(customerId, currentFlag) {
+    const flags = ['none', 'watchlist', 'high_risk', 'blocked'];
+    const newFlag = prompt(`Change fraud flag from "${currentFlag}" to:\n\nOptions: ${flags.join(', ')}`);
+
+    if (!newFlag || !flags.includes(newFlag.toLowerCase())) {
+        if (newFlag !== null) showToast('Invalid flag. Use: ' + flags.join(', '), 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/abuse-flag`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: customerId,
+                fraud_flag: newFlag.toLowerCase()
+            })
+        });
+
+        if (res.ok) {
+            showToast(`Customer flag updated to ${newFlag}`, 'success');
+            loadAbuseTracking();
+            loadFraudStats();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to update flag', 'error');
+        }
+    } catch (err) {
+        console.error('Edit flag error:', err);
+        showToast('Connection error', 'error');
+    }
+}
+
+/**
+ * Load garage penalties
+ */
+async function loadGaragePenalties() {
+    const tbody = document.getElementById('garagePenaltiesTable');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch(`${API_URL}/cancellation/garage-penalties`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Failed to load</td></tr>';
+            return;
+        }
+
+        const data = await res.json();
+        const penalties = data.penalties || [];
+
+        if (penalties.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle" style="font-size: 24px; color: var(--success);"></i><p>No penalties issued</p></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = penalties.map(p => `
+            <tr>
+                <td><strong>${escapeHTML(p.garage_name || 'Garage')}</strong></td>
+                <td><a href="#" onclick="viewOrder('${p.order_id}'); return false;" style="color: var(--accent);">#${escapeHTML(p.order_number || p.order_id?.slice(0, 8))}</a></td>
+                <td>${escapeHTML(p.reason || 'N/A')}</td>
+                <td style="color: #ef4444; font-weight: 600;">${formatCurrency(p.penalty_amount)}</td>
+                <td>
+                    <span class="status-badge status-${p.status === 'paid' ? 'completed' : p.status === 'deducted' ? 'confirmed' : 'pending'}">
+                        ${p.status || 'pending'}
+                    </span>
+                </td>
+                <td>${formatDate(p.created_at)}</td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load garage penalties:', err);
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Connection error</td></tr>';
+    }
+}
+
+// Add fraud section to section switching
+const originalSwitchSection = typeof switchSection === 'function' ? switchSection : null;
+window.switchSection = function (section) {
+    // Call original if exists
+    if (originalSwitchSection && section !== 'fraud') {
+        originalSwitchSection(section);
+    }
+
+    // Handle fraud section
+    if (section === 'fraud') {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+        const fraudSection = document.getElementById('sectionFraud');
+        if (fraudSection) fraudSection.classList.add('active');
+
+        const fraudNav = document.querySelector('[data-section="fraud"]');
+        if (fraudNav) fraudNav.classList.add('active');
+
+        loadFraudSection();
+    }
+};
+
+console.log('Operations Dashboard - v4.0 BRAIN Compliant (Fraud Prevention)');

@@ -836,15 +836,25 @@
                             </div>
 
                             <div class="action-section">
-                                <div class="action-section-title">📦 Order Actions</div>
-                                <button class="action-btn" onclick="quickAction('cancel_order')">
-                                    <i class="bi bi-x-circle"></i> Cancel Order
+                                <div class="action-section-title">📦 Order Actions (BRAIN v3.0)</div>
+                                <button class="action-btn" onclick="showCancellationPreview(currentOrder)">
+                                    <i class="bi bi-x-circle"></i> Cancel Order (Preview)
+                                </button>
+                                <button class="action-btn" onclick="showReturnRequest(currentOrder)">
+                                    <i class="bi bi-arrow-return-left"></i> 7-Day Return
                                 </button>
                                 <button class="action-btn" onclick="quickAction('reassign_driver')">
                                     <i class="bi bi-arrow-repeat"></i> Reassign Driver
                                 </button>
                                 <button class="action-btn" onclick="quickAction('rush_delivery')">
                                     <i class="bi bi-lightning"></i> Rush Delivery
+                                </button>
+                            </div>
+
+                            <div class="action-section">
+                                <div class="action-section-title">🛡️ Fraud Prevention</div>
+                                <button class="action-btn" onclick="showCustomerAbuseStatus()">
+                                    <i class="bi bi-shield-exclamation"></i> Customer Abuse Status
                                 </button>
                             </div>
 
