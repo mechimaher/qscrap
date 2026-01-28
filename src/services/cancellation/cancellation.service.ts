@@ -439,9 +439,8 @@ export class CancellationService {
                 if (piResult.rows.length > 0 && piResult.rows[0].provider_intent_id) {
                     try {
                         // Execute Stripe refund immediately
-                        const Stripe = require('stripe');
                         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-                            apiVersion: '2025-12-15.acacia'
+                            apiVersion: '2025-12-15.clover'
                         });
 
                         const stripeRefund = await stripe.refunds.create({
@@ -839,9 +838,8 @@ export class CancellationService {
                         : parseFloat(order.total_amount);
 
                     try {
-                        const Stripe = require('stripe');
                         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-                            apiVersion: '2025-12-15.acacia'
+                            apiVersion: '2025-12-15.clover'
                         });
 
                         const stripeRefund = await stripe.refunds.create({
