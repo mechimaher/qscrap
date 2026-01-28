@@ -601,6 +601,37 @@ export const processStripeRefund = async (req: AuthRequest, res: Response) => {
     }
 };
 
+/**
+ * Reject a pending refund request
+ * Updates status to 'rejected' with reason
+ */
+export const rejectRefund = async (req: AuthRequest, res: Response) => {
+    try {
+        const { refund_id } = req.params;
+        const { reason } = req.body;
+        const rejectedBy = req.user!.userId;
+
+        if (!reason) {
+            return res.status(400).json({ error: 'Rejection reason required' });
+        }
+
+        // Update refund status to rejected
+        await pool.query(`
+            UPDATE refunds SET
+                refund_status = 'rejected',
+                processed_by = $2,
+                processed_at = NOW(),
+                refund_reason = refund_reason || ' | REJECTED: ' || $3
+            WHERE refund_id = $1
+        `, [refund_id, rejectedBy, reason]);
+
+        res.json({ success: true, message: 'Refund request rejected' });
+    } catch (err: any) {
+        console.error('rejectRefund Error:', err);
+        res.status(500).json({ error: err.message || 'Failed to reject refund' });
+    }
+};
+
 // ============================================
 // REVENUE & TRANSACTIONS
 // ============================================

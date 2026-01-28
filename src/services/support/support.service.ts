@@ -558,18 +558,17 @@ export class SupportService {
                         WHERE order_id = $1
                     `, [params.orderId]);
 
-                    // Create refund record with completed status
+                    // Create refund record with PENDING status for Finance approval
                     await client.query(`
                         INSERT INTO refunds (
                             order_id, customer_id, original_amount, refund_amount, 
-                            refund_status, refund_reason, initiated_by, processed_by, processed_at
-                        ) VALUES ($1, $2, $3, $3, 'completed', $4, 'support', $5, NOW())
+                            refund_status, refund_reason, initiated_by
+                        ) VALUES ($1, $2, $3, $3, 'pending', $4, 'support')
                     `, [
                         params.orderId,
                         order.customer_id,
                         order.total_amount,
-                        params.notes || 'Full refund via support dashboard',
-                        params.agentId
+                        params.notes || 'Full refund requested by support'
                     ]);
 
                     result = { action: 'full_refund', orderId: params.orderId, amount: order.total_amount };
@@ -588,19 +587,18 @@ export class SupportService {
                     const partialOrder = partialOrderResult.rows[0];
                     const refundAmount = params.actionDetails.amount;
 
-                    // Create refund record with completed status
+                    // Create refund record with PENDING status for Finance approval
                     await client.query(`
                         INSERT INTO refunds (
                             order_id, customer_id, original_amount, refund_amount, 
-                            refund_status, refund_reason, initiated_by, processed_by, processed_at
-                        ) VALUES ($1, $2, $3, $4, 'completed', $5, 'support', $6, NOW())
+                            refund_status, refund_reason, initiated_by
+                        ) VALUES ($1, $2, $3, $4, 'pending', $5, 'support')
                     `, [
                         params.orderId,
                         partialOrder.customer_id,
                         partialOrder.total_amount,
                         refundAmount,
-                        params.notes || 'Partial refund via support dashboard',
-                        params.agentId
+                        params.notes || 'Partial refund requested by support'
                     ]);
 
                     result = { action: 'partial_refund', amount: refundAmount, orderId: params.orderId };

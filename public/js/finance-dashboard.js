@@ -184,6 +184,7 @@ function switchSection(section) {
         case 'disputed': loadDisputedPayouts(); break;
         case 'completed': loadCompletedPayouts(); break;
         case 'revenue': loadRevenue(); break;
+        case 'pendingRefunds': loadPendingRefunds(); break;
         case 'refunds': loadRefunds(); break;
     }
 }
@@ -920,6 +921,114 @@ document.getElementById('periodTabs')?.addEventListener('click', e => {
         loadRevenue();
     }
 });
+
+// ==========================================
+// PENDING REFUNDS (Approval Queue)
+// ==========================================
+
+async function loadPendingRefunds() {
+    try {
+        const res = await fetch(`${API_URL}/finance/refunds/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('pendingRefundsTable');
+        const refunds = data.refunds || [];
+
+        // Update badge
+        updateBadge('pendingRefundsBadge', refunds.length);
+
+        if (refunds.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle" style="color: var(--success);"></i> No pending refund requests</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = refunds.map(r => `
+            <tr>
+                <td><strong>#${escapeHTML(r.order_number || r.order_id?.slice(0, 8))}</strong></td>
+                <td>${escapeHTML(r.customer_name || '-')}</td>
+                <td style="color: var(--danger); font-weight: 600;">-${formatCurrency(r.refund_amount)}</td>
+                <td>${escapeHTML(r.refund_reason || '-')}</td>
+                <td><span class="status-badge status-pending">Support</span></td>
+                <td>${formatDate(r.created_at)}</td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-success btn-sm" onclick="approveRefund('${r.refund_id}')" 
+                            style="padding: 6px 12px; font-size: 11px;">
+                            <i class="bi bi-check-lg"></i> Approve
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="rejectRefund('${r.refund_id}')"
+                            style="padding: 6px 12px; font-size: 11px; color: var(--danger);">
+                            <i class="bi bi-x-lg"></i> Reject
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load pending refunds:', err);
+        document.getElementById('pendingRefundsTable').innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);"><i class="bi bi-exclamation-triangle"></i> Failed to load</td></tr>';
+    }
+}
+
+async function approveRefund(refundId) {
+    if (!confirm('Approve this refund? This will process the refund via Stripe.')) return;
+
+    try {
+        showToast('Processing refund...', 'info');
+
+        const res = await fetch(`${API_URL}/finance/refunds/${refundId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('Refund approved and processed!', 'success');
+            loadPendingRefunds();
+            loadBadges();
+        } else {
+            showToast(data.error || data.message || 'Failed to approve refund', 'error');
+        }
+    } catch (err) {
+        console.error('Approve refund error:', err);
+        showToast('Failed to process refund', 'error');
+    }
+}
+
+async function rejectRefund(refundId) {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/refunds/${refundId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('Refund rejected', 'success');
+            loadPendingRefunds();
+            loadBadges();
+        } else {
+            showToast(data.error || 'Failed to reject refund', 'error');
+        }
+    } catch (err) {
+        console.error('Reject refund error:', err);
+        showToast('Failed to reject refund', 'error');
+    }
+}
 
 // ==========================================
 // REFUNDS
