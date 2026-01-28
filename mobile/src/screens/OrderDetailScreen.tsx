@@ -822,8 +822,8 @@ export default function OrderDetailScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Cancel Order - Only for confirmed/preparing */}
-                {['confirmed', 'preparing'].includes(order.order_status) && (
+                {/* Cancel Order - Stage 4-5 per BRAIN v3.0 (confirmed, preparing, ready_for_pickup) */}
+                {['confirmed', 'preparing', 'ready_for_pickup'].includes(order.order_status) && (
                     <TouchableOpacity
                         style={[styles.cancelOrderButton, isCancelling && { opacity: 0.7 }]}
                         onPress={handleCancelOrder}
