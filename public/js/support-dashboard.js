@@ -1070,12 +1070,14 @@ let reviewStatus = 'pending';
 
 async function loadReviews() {
     try {
-        const res = await fetch(`${API_URL}/reviews?status=${reviewStatus}&limit=50`, {
+        // Use /moderation endpoint which supports status filter
+        const res = await fetch(`${API_URL}/reviews/moderation?status=${reviewStatus}&limit=50`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        renderReviews(data.reviews || data || []);
+        renderReviews(data.reviews || []);
     } catch (err) {
+        console.error('Failed to load reviews:', err);
         document.getElementById('reviewsTable').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load reviews</td></tr>';
     }
 }
