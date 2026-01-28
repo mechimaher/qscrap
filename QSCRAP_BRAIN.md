@@ -273,13 +273,57 @@ If customer doesn't confirm within 48h of delivery:
 - Garage payout becomes eligible (after 7-day window)
 ```
 
-### 9.3 Refund & Reversal Rules
+### 9.3 Cancellation & Refund Rules (Qatar Compliant)
+
+#### 9.3.1 Cancellation Fee Structure
+| Stage | Customer Fee | Customer Refund |
+|-------|--------------|-----------------|
+| Before payment | **0%** | 100% (N/A) |
+| After payment, before prep | **5%** | 95% |
+| During preparation | **10%** | 90% |
+| Delivery assigned/in transit | **10% + 100% Delivery** | 90% Part only |
+| After delivery (7-day return) | **20% + 100% Delivery** | 80% Part only |
+| Defective/wrong part | **0%** | 100% + replacement |
+
+> **Legal Basis:** Law No. 8/2008, MOCI Decision 25/2024
+> **Fee Cap:** Only actual costs allowed (not punitive)
+
+#### 9.3.2 Delivery Fee Retention (MOCI 25/2024 Article 18)
 | Scenario | Delivery Fee | Platform Fee |
 |----------|--------------|--------------|
-| Cancelled before dispatch | Refunded | Refunded |
-| Cancelled after driver assigned | **Retained** | Refunded |
-| Customer refusal at door | **Retained** | Refunded |
-| Defective part (warranty) | Refunded | Refunded |
+| Cancelled before driver assigned | **Refunded** | Refunded |
+| Cancelled after driver assigned | **Retained** | 5% retained |
+| Customer refusal at door | **Retained** | 5% retained |
+| Defective part (warranty) | **Refunded** | Refunded |
+
+#### 9.3.3 7-Day Return Window (MANDATORY)
+```
+Customer has 7 days from delivery to return unused parts.
+Return fee: 20% of part price + 100% of delivery fee.
+Condition: Unused, original packaging, no damage.
+```
+> **Legal Basis:** Law No. 8/2008 Article 26 - Non-negotiable
+
+#### 9.3.4 Garage Cancellation Penalty (B2B Contract)
+| Penalty | Amount | Trigger |
+|---------|--------|---------|
+| Standard cancellation | **30 QAR** | Any cancel after payment |
+| Repeat offender | **50 QAR** | 2+ cancels in 30 days |
+| Wrong/damaged part | **100 QAR** | Customer complaint verified |
+
+> Penalties deducted from next garage payout. Must be in signed Garage T&C.
+
+#### 9.3.5 Customer Abuse Limits
+| Limit | Value | Consequence |
+|-------|-------|-------------|
+| Max returns/month | **3** | 4th blocked |
+| Max defective claims/month | **3** | 4th requires investigation |
+| Photo proof for defective | **3 photos** | Mandatory |
+
+> **Legal Basis:** Law No. 8/2008 Article 28 - Bad faith clause
+
+#### 9.3.6 Full Policy Reference
+See: `.gemini/Cancellation-Refund-BRAIN.md` for complete implementation details.
 
 ### 9.4 Payout Reversal Protocol
 If a refund is issued **after** garage payout was completed:
@@ -494,10 +538,11 @@ This document overrides opinions, speed pressure, and assumptions.
 |---------|------|---------|
 | v1.0 | Initial | Basic structure |
 | v2.0 Platinum | Jan 27, 2026 | Comprehensive update from 17 audits, ENUM strategy, UTC timezone, breaking change protocol |
+| v2.1 | Jan 28, 2026 | Added Section 9.3 Cancellation & Refund Rules (Qatar Expert Board Approved) |
 
 > **Schema**: 63 tables | 105 FKs | 301 indexes  
-> **Business Rules**: 7-Day Hold, 48h Auto-Complete, Batch Payments  
-> **Compliance**: Qatar MOC, PDPPL, Law No. 8 of 2008
+> **Business Rules**: 7-Day Hold, 48h Auto-Complete, Batch Payments, Tiered Cancellation Fees  
+> **Compliance**: Qatar MOC, PDPPL, Law No. 8 of 2008, MOCI Decision 25/2024
 
 ---
 
