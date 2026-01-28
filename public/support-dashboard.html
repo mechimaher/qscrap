@@ -523,10 +523,19 @@
             padding: 20px;
         }
 
-        /* Sidebar compact */
+        /* Sidebar compact - fixed position with proper main content offset */
         .sidebar-compact {
             width: 70px !important;
             transition: all 0.3s;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        /* Main content needs margin-left to not be hidden under sidebar */
+        .sidebar-compact+div,
+        .app-container>div:not(.sidebar):not(.app-overlay) {
+            margin-left: 70px;
         }
 
         .sidebar-compact:hover {
@@ -661,7 +670,7 @@
                                 <div class="search-box">
                                     <i class="bi bi-search"></i>
                                     <input type="text" id="customerSearch" placeholder="Phone, name, or order#..."
-                                        onkeydown="if(event.key==='Enter') searchCustomer()">
+                                        oninput="debounceSearch()" onkeydown="if(event.key==='Enter') searchCustomer()">
                                 </div>
 
                                 <div id="emptyState">

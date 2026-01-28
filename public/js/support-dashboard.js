@@ -205,6 +205,14 @@ function setupSocket() {
 // Calls: GET /api/support/customer-360/:query
 // ==========================================
 
+let searchDebounceTimer = null;
+function debounceSearch() {
+    clearTimeout(searchDebounceTimer);
+    const query = document.getElementById('customerSearch').value.trim();
+    if (query.length < 2) return; // Minimum 2 characters
+    searchDebounceTimer = setTimeout(() => searchCustomer(), 500);
+}
+
 async function searchCustomer() {
     const query = document.getElementById('customerSearch').value.trim();
     if (!query) {
