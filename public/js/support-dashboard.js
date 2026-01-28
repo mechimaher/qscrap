@@ -253,6 +253,12 @@ async function searchCustomer() {
         renderNotes(data.notes);
         renderResolutionLog(data.resolutions);
 
+        // Show Quick Actions panel when customer is loaded
+        if (currentCustomer) {
+            document.getElementById('actionsEmpty').style.display = 'none';
+            document.getElementById('actionsPanel').style.display = 'block';
+        }
+
     } catch (err) {
         console.error('Search error:', err);
         showToast('Search failed', 'error');
@@ -405,8 +411,22 @@ function renderOrders(orders) {
 function selectOrder(orderId) {
     // Find the order and set as current
     currentOrder = orderId;
-    document.querySelectorAll('.order-card').forEach(c => c.style.outline = 'none');
-    event.currentTarget.style.outline = '2px solid var(--primary)';
+
+    // Remove selected class from all orders
+    document.querySelectorAll('.order-card').forEach(c => c.classList.remove('selected'));
+
+    // Add selected class to clicked order
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('selected');
+    }
+
+    // Show Quick Actions panel
+    document.getElementById('actionsEmpty').style.display = 'none';
+    document.getElementById('actionsPanel').style.display = 'block';
+
+    // Update selected order badge
+    const orderNumber = event.currentTarget.querySelector('.order-number')?.textContent || orderId;
+    document.getElementById('selectedOrderBadge').textContent = `Selected: ${orderNumber}`;
 }
 
 function getStatusColor(status) {

@@ -523,6 +523,228 @@
             padding: 20px;
         }
 
+        /* ===== Customer 360 Styles ===== */
+        .customer-profile {
+            padding: 16px;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .customer-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .customer-contact {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .customer-contact a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .customer-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px 8px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .stat-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-item .label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .contact-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .contact-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .contact-btn.whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .contact-btn.call {
+            background: var(--primary);
+            color: white;
+        }
+
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Order Cards */
+        .order-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .order-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(141, 27, 61, 0.1);
+        }
+
+        .order-card.selected {
+            border-color: var(--primary);
+            background: var(--glass-bg);
+            box-shadow: 0 0 0 2px rgba(141, 27, 61, 0.2);
+        }
+
+        .order-card.has-issue {
+            border-left: 3px solid #ef4444;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .order-number {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--primary);
+        }
+
+        .order-status {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .order-part {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .order-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .order-issue {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #991b1b;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .order-action-btn {
+            font-size: 11px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .order-action-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .order-action-btn.danger:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Ticket Cards */
+        .ticket-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ticket-card:hover {
+            border-color: var(--primary);
+        }
+
+        .empty-state-mini {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-mini i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.3;
+        }
+
+        .empty-state-center {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-center i {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
         /* Sidebar compact - fixed position with proper main content offset */
         .sidebar-compact {
             width: 70px !important;
