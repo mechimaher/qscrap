@@ -361,9 +361,9 @@ export class RefundService {
                     stripe_refund_id = $2,
                     processed_by = $3,
                     processed_at = NOW(),
-                    notes = COALESCE(notes, '') || $4
+                    refund_reason = COALESCE(refund_reason, '') || $4
                  WHERE refund_id = $1`,
-                [refundId, stripeRefundId, processedBy, refundMethod === 'manual' ? ' [Manual refund - no Stripe payment]' : '']
+                [refundId, stripeRefundId, processedBy, refundMethod === 'manual' ? ' [Manual refund]' : '']
             );
 
             // Update order payment status
