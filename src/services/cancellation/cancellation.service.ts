@@ -1,11 +1,32 @@
 /**
- * Cancellation Service
+ * Cancellation Service - BRAIN v3.0 Compliant
  * Handles all cancellation workflows: requests, bids, and orders
+ * 
+ * Fee Structure (Cancellation-Refund-BRAIN.md v3.0):
+ * - Before payment: 0%
+ * - After payment (confirmed): 5%
+ * - During preparation: 10%
+ * - In delivery: 10% + 100% delivery fee
+ * - After delivery: Use return.service.ts (20% + 100% delivery)
  */
 import { Pool, PoolClient } from 'pg';
 import { createNotification } from '../notification.service';
 import { emitToOperations } from '../../utils/socketIO';
-import { CancellationFeeResult, CancellationPreview, CancelRequestResult, WithdrawBidResult, CancelOrderResult } from './types';
+import {
+    CancellationFeeResult,
+    CancellationPreview,
+    CancelRequestResult,
+    WithdrawBidResult,
+    CancelOrderResult,
+    EnhancedCancellationPreview
+} from './types';
+import {
+    CANCELLATION_FEES,
+    STATUS_TO_STAGE,
+    GARAGE_PENALTIES,
+    CancellationStage
+} from './cancellation.constants';
+import { getFraudDetectionService } from './fraud-detection.service';
 
 export class CancellationService {
     constructor(private pool: Pool) { }
@@ -168,28 +189,26 @@ export class CancellationService {
     }
 
     /**
-     * Calculate cancellation fee based on order status and time
+     * Calculate cancellation fee based on order status
+     * BRAIN v3.0 Compliant - See Cancellation-Refund-BRAIN.md
+     * 
+     * Fee Structure:
+     * - BEFORE_PAYMENT: 0%
+     * - AFTER_PAYMENT (confirmed): 5% (covers 2% tx + 1% refund + 2% admin)
+     * - DURING_PREPARATION: 10% (5% platform + 5% garage compensation)
+     * - IN_DELIVERY: 10% + 100% delivery fee
+     * - AFTER_DELIVERY: Not cancellable - use return flow
      */
     private calculateCancellationFee(order: {
-        created_at: Date;
         total_amount: number;
-        order_status: string
-    }): CancellationFeeResult {
-        const orderCreatedAt = new Date(order.created_at);
-        const now = new Date();
-        const minutesSinceOrder = Math.floor((now.getTime() - orderCreatedAt.getTime()) / 60000);
-
+        part_price?: number;
+        delivery_fee?: number;
+        order_status: string;
+    }): CancellationFeeResult & { deliveryFeeRetained: number; stage: string } {
         const status = order.order_status;
-
-        // Cannot cancel these statuses
-        if (['ready_for_pickup', 'in_transit', 'delivered', 'completed', 'refunded'].includes(status)) {
-            return {
-                feeRate: 0,
-                fee: 0,
-                canCancel: false,
-                reason: `Cannot cancel order with status: ${status}`
-            };
-        }
+        const totalAmount = parseFloat(String(order.total_amount));
+        const deliveryFee = parseFloat(String(order.delivery_fee || 0));
+        const partPrice = order.part_price ? parseFloat(String(order.part_price)) : totalAmount - deliveryFee;
 
         // Already cancelled
         if (status.startsWith('cancelled')) {
@@ -197,40 +216,93 @@ export class CancellationService {
                 feeRate: 0,
                 fee: 0,
                 canCancel: false,
+                deliveryFeeRetained: 0,
+                stage: 'CANCELLED',
                 reason: 'Order already cancelled'
             };
         }
 
-        let feeRate = 0;
-
-        if (status === 'confirmed') {
-            // Within 1 hour: free cancellation
-            if (minutesSinceOrder <= 60) {
-                feeRate = 0;
-            } else {
-                // After 1 hour: 10% fee
-                feeRate = 0.10;
-            }
-        } else if (status === 'preparing') {
-            // 25% fee during preparation
-            feeRate = 0.25;
+        // After delivery - use return flow instead
+        if (['delivered', 'completed'].includes(status)) {
+            return {
+                feeRate: 0,
+                fee: 0,
+                canCancel: false,
+                deliveryFeeRetained: 0,
+                stage: 'AFTER_DELIVERY',
+                reason: 'Order delivered. Use return request within 7 days.'
+            };
         }
 
-        const fee = parseFloat(String(order.total_amount)) * feeRate;
+        // Refunded already
+        if (status === 'refunded') {
+            return {
+                feeRate: 0,
+                fee: 0,
+                canCancel: false,
+                deliveryFeeRetained: 0,
+                stage: 'REFUNDED',
+                reason: 'Order already refunded'
+            };
+        }
+
+        // Map status to cancellation stage
+        const stage = (STATUS_TO_STAGE as Record<string, CancellationStage>)[status] || 'BEFORE_PAYMENT';
+
+        let feeRate = 0;
+        let deliveryFeeRetained = 0;
+
+        switch (stage) {
+            case 'BEFORE_PAYMENT':
+                // Stage 1-3: Pre-payment - FREE cancellation
+                feeRate = CANCELLATION_FEES.BEFORE_PAYMENT; // 0%
+                break;
+
+            case 'AFTER_PAYMENT':
+                // Stage 4: After payment, before prep - 5% fee
+                feeRate = CANCELLATION_FEES.AFTER_PAYMENT; // 5%
+                break;
+
+            case 'DURING_PREPARATION':
+                // Stage 5: During preparation - 10% fee
+                feeRate = CANCELLATION_FEES.DURING_PREPARATION; // 10%
+                break;
+
+            case 'IN_DELIVERY':
+                // Stage 6: In delivery - 10% + 100% delivery fee
+                feeRate = CANCELLATION_FEES.IN_DELIVERY; // 10%
+                deliveryFeeRetained = deliveryFee; // 100% delivery fee retained
+                break;
+
+            default:
+                feeRate = 0;
+        }
+
+        // Calculate fee on PART PRICE only (not delivery)
+        const fee = partPrice * feeRate;
 
         return {
             feeRate,
             fee: Math.round(fee * 100) / 100,
-            canCancel: true
+            canCancel: true,
+            deliveryFeeRetained: Math.round(deliveryFeeRetained * 100) / 100,
+            stage
         };
     }
 
     /**
      * Get cancellation preview (for UI)
+     * Returns enhanced preview with fee breakdown per BRAIN spec
      */
-    async getCancellationPreview(orderId: string, userId: string): Promise<CancellationPreview> {
+    async getCancellationPreview(orderId: string, userId: string): Promise<EnhancedCancellationPreview> {
         const orderResult = await this.pool.query(
-            `SELECT * FROM orders WHERE order_id = $1 AND (customer_id = $2 OR garage_id = $2)`,
+            `SELECT o.*, 
+                    COALESCE(pr.part_description, 'Part') as part_description,
+                    o.order_number
+             FROM orders o
+             LEFT JOIN bids b ON o.bid_id = b.bid_id
+             LEFT JOIN part_requests pr ON b.request_id = pr.request_id
+             WHERE o.order_id = $1 AND (o.customer_id = $2 OR o.garage_id = $2)`,
             [orderId, userId]
         );
 
@@ -241,15 +313,35 @@ export class CancellationService {
         const order = orderResult.rows[0];
         const feeInfo = this.calculateCancellationFee(order);
 
+        const totalAmount = parseFloat(String(order.total_amount));
+        const deliveryFee = parseFloat(String(order.delivery_fee || 0));
+        const partPrice = parseFloat(String(order.part_price || (totalAmount - deliveryFee)));
+
+        // Calculate refund: Part price - fee - retained delivery fee
+        const refundAmount = feeInfo.canCancel
+            ? partPrice - feeInfo.fee - feeInfo.deliveryFeeRetained
+            : 0;
+
         return {
             order_id: orderId,
+            order_number: order.order_number,
             order_status: order.order_status,
-            total_amount: order.total_amount,
+            total_amount: totalAmount,
+            part_description: order.part_description,
+            part_price: partPrice,
+            delivery_fee: deliveryFee,
+            delivery_fee_retained: feeInfo.deliveryFeeRetained,
             can_cancel: feeInfo.canCancel,
             cancellation_fee_rate: feeInfo.feeRate,
             cancellation_fee: feeInfo.fee,
-            refund_amount: feeInfo.canCancel ? parseFloat(String(order.total_amount)) - feeInfo.fee : 0,
-            reason: feeInfo.reason
+            cancellation_stage: feeInfo.stage,
+            refund_amount: Math.round(refundAmount * 100) / 100,
+            reason: feeInfo.reason,
+            fee_breakdown: {
+                platform_fee: Math.round(feeInfo.fee * 0.5 * 100) / 100,  // 50% of fee to platform
+                garage_compensation: Math.round(feeInfo.fee * 0.5 * 100) / 100,  // 50% to garage
+                delivery_fee: feeInfo.deliveryFeeRetained
+            }
         };
     }
 
