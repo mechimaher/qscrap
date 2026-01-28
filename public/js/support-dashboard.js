@@ -430,7 +430,9 @@ function renderOrders(orders) {
                     ${isActive ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('cancel_order', '${o.order_id}')">❌ Cancel</button>` : ''}
                     ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')">🏭 Garage</button>` : ''}
                     ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
-                    ${hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('full_refund', '${o.order_id}')">💰 Refund</button>` : ''}
+                    ${o.order_status === 'refunded' || o.payment_status === 'refunded'
+                ? `<button class="order-action-btn danger" disabled title="Already refunded">💰 Refunded</button>`
+                : (hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('full_refund', '${o.order_id}')">💰 Request Refund</button>` : '')}
                 </div>
             </div>
         `;
