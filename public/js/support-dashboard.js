@@ -1176,6 +1176,12 @@ function closeChat() {
 // Calls: GET /api/support/resolution-logs
 // ==========================================
 
+function renderNotes(notes) {
+    // Notes are internal and not displayed in current UI
+    // Future: Add a notes panel in HTML for agent-only internal notes
+    console.log(`Loaded ${notes?.length || 0} internal notes`);
+}
+
 function renderResolutionLog(logs) {
     if (!logs || logs.length === 0) {
         document.getElementById('resolutionLog').innerHTML = '<p style="color: var(--text-muted); font-size: 11px;">No resolution history</p>';
