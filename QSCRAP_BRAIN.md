@@ -67,7 +67,7 @@ customer_rewards
 staff_profiles
 ```
 
-### 4.2 Core Marketplace (12 tables)
+### 4.2 Core Marketplace (16 tables)
 ```
 part_requests
 bids
@@ -81,6 +81,10 @@ refunds
 cancellation_requests
 chat_messages
 reviews
+return_requests          # Added Jan 28, 2026 - 7-day return window
+garage_penalties         # Added Jan 28, 2026 - Garage accountability
+customer_abuse_tracking  # Added Jan 28, 2026 - Fraud prevention
+delivery_vouchers        # Added Jan 28, 2026 - Garage cancellation compensation
 ```
 
 ### 4.3 Garage Partners (10 tables)

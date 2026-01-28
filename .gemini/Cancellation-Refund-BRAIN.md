@@ -258,6 +258,61 @@ Distribution:
 
 ---
 
+## 🗄️ DATABASE TABLES (Required)
+
+The following tables are required to implement the cancellation/refund system:
+
+### 1. return_requests
+Tracks 7-day return window requests (Qatar Law mandated).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| return_id | UUID PK | Unique identifier |
+| order_id | UUID FK | Reference to orders |
+| customer_id | UUID FK | Reference to users |
+| reason | VARCHAR | 'unused', 'defective', 'wrong_part' |
+| photo_urls | TEXT[] | Minimum 3 photos required |
+| return_fee | NUMERIC | 20% of part price |
+| delivery_fee_retained | NUMERIC | 100% of delivery |
+| refund_amount | NUMERIC | Part price - fees |
+| status | VARCHAR | pending → approved/rejected → completed |
+
+### 2. garage_penalties
+Tracks garage accountability ladder (B2B signed agreement).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| penalty_id | UUID PK | Unique identifier |
+| garage_id | UUID FK | Reference to garages |
+| order_id | UUID FK | Related order (optional) |
+| penalty_type | VARCHAR | 'cancellation', 'repeat_cancellation', 'wrong_part', 'damaged_part' |
+| amount | NUMERIC | 30/50/100 QAR per type |
+| status | VARCHAR | pending → deducted/waived |
+
+### 3. customer_abuse_tracking
+Enforces Law 8/2008 Article 28 (bad faith clause).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| tracking_id | UUID PK | Unique identifier |
+| customer_id | UUID FK | Reference to users |
+| month_year | VARCHAR | e.g., '2026-01' |
+| returns_count | INTEGER | Max 3/month |
+| defective_claims_count | INTEGER | Max 3/month |
+| flag_level | VARCHAR | none → yellow → orange → red → black |
+
+### 4. delivery_vouchers
+Compensation for garage cancellations.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| voucher_id | UUID PK | Unique identifier |
+| customer_id | UUID FK | Reference to users |
+| amount | NUMERIC | Max 50 QAR |
+| expires_at | TIMESTAMP | 30-day validity |
+
+---
+
 ## 💻 IMPLEMENTATION CONSTANTS
 
 ```typescript
