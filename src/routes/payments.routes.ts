@@ -370,6 +370,85 @@ router.post('/full/:orderId',
 );
 
 /**
+ * POST /api/payments/free/:orderId
+ * Confirm a FREE order (when loyalty discount covers entire amount)
+ * No Stripe payment needed - just confirm order and update status
+ */
+router.post('/free/:orderId',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { orderId } = req.params;
+            const { loyaltyDiscount } = req.body;
+
+            // Get order details
+            const pool = getWritePool();
+            const orderResult = await pool.query(
+                'SELECT part_price, delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
+                [orderId]
+            );
+
+            if (orderResult.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Order not found' });
+            }
+
+            const order = orderResult.rows[0];
+
+            // Verify ownership
+            if (order.customer_id !== userId) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+
+            const partPrice = parseFloat(order.part_price) || 0;
+            const deliveryFee = parseFloat(order.delivery_fee) || 0;
+            const totalAmount = partPrice + deliveryFee;
+            const discount = parseFloat(loyaltyDiscount) || 0;
+
+            // Verify discount covers the entire amount
+            if (discount < totalAmount) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Loyalty discount does not cover entire order amount'
+                });
+            }
+
+            // Update order as confirmed with full loyalty discount
+            await pool.query(`
+                UPDATE orders SET 
+                    order_status = 'confirmed',
+                    loyalty_discount = $2,
+                    total_amount = 0,
+                    payment_status = 'paid',
+                    payment_method = 'loyalty',
+                    deposit_paid_at = NOW()
+                WHERE order_id = $1
+            `, [orderId, discount]);
+
+            // Log free order event
+            console.log(`[Payment] 🎊 FREE ORDER confirmed: ${orderId}. Discount: ${discount} QAR covers total: ${totalAmount} QAR`);
+
+            // TODO: Award loyalty points for the order (even though it was free)
+            // TODO: Notify garage of new order
+
+            res.json({
+                success: true,
+                message: '🎊 Free order confirmed! Your loyalty discount covered the entire amount.',
+                order_id: orderId,
+                breakdown: {
+                    originalTotal: totalAmount,
+                    loyaltyDiscount: discount,
+                    chargedAmount: 0
+                }
+            });
+        } catch (error: any) {
+            console.error('[Payment API] Free order error:', error);
+            res.status(500).json({ success: false, error: error.message || 'Free order confirmation failed' });
+        }
+    }
+);
+
+/**
  * POST /api/payments/deposit/confirm/:intentId
  * Confirm deposit payment was successful
  */
