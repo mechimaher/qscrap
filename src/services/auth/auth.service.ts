@@ -142,9 +142,9 @@ export class AuthService {
             if (userResult.rows.length === 0) throw new Error('User not found');
 
             const userType = userResult.rows[0].user_type;
-            const timestamp = Date.now();
-            const anonymizedPhone = `deleted_${userId}_${timestamp}`;
-            const anonymizedEmail = `deleted_${userId}_${timestamp}@deleted.local`;
+            const shortId = userId.slice(-8); // Last 8 chars of UUID for uniqueness
+            const anonymizedPhone = `del${shortId}`; // Max 11 chars, fits varchar(20)
+            const anonymizedEmail = `deleted_${userId}@deleted.local`;
 
             // GOOGLE PLAY 2026: Proper account deletion handling
             // Soft delete approach: anonymize user data while keeping referential integrity
