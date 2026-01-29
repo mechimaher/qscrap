@@ -1,6 +1,6 @@
 // QScrap Support Screen - WhatsApp-First Support (Qatar Market Optimized)
-// Removed ticket system in favor of direct WhatsApp Business communication
-import React from 'react';
+// Now includes "My Tickets" section for customer ticket visibility
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -9,15 +9,18 @@ import {
     Linking,
     ScrollView,
     Alert,
+    ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import api from '../services/api';
 
 // QScrap WhatsApp Business Number (Qatar)
 const WHATSAPP_NUMBER = '+97433557700';
@@ -28,6 +31,16 @@ interface SupportOption {
     titleKey: string;
     descriptionKey: string;
     messagePrefix: string;
+}
+
+interface Ticket {
+    ticket_id: string;
+    subject: string;
+    status: 'open' | 'in_progress' | 'resolved' | 'closed';
+    category?: string;
+    priority?: string;
+    created_at: string;
+    last_message_at?: string;
 }
 
 const SUPPORT_OPTIONS: SupportOption[] = [
@@ -61,10 +74,70 @@ const SUPPORT_OPTIONS: SupportOption[] = [
     },
 ];
 
+const getStatusColor = (status: string): string => {
+    switch (status) {
+        case 'open': return '#f59e0b';
+        case 'in_progress': return '#3b82f6';
+        case 'resolved': return '#10b981';
+        case 'closed': return '#6b7280';
+        default: return '#6b7280';
+    }
+};
+
+const formatTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+};
+
 export default function SupportScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+
+    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [loadingTickets, setLoadingTickets] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [ticketsExpanded, setTicketsExpanded] = useState(true);
+
+    const fetchTickets = useCallback(async (isRefresh = false) => {
+        try {
+            if (isRefresh) setRefreshing(true);
+            const response = await api.getTickets();
+            // Filter to show only open/in_progress tickets prominently
+            const allTickets = response.tickets || [];
+            setTickets(allTickets);
+        } catch (error) {
+            console.error('[Support] Failed to load tickets:', error);
+        } finally {
+            setLoadingTickets(false);
+            setRefreshing(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTickets();
+    }, [fetchTickets]);
+
+    // Refresh when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchTickets();
+        }, [fetchTickets])
+    );
+
+    const onRefresh = () => {
+        fetchTickets(true);
+    };
 
     const openWhatsApp = (messagePrefix: string) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -90,6 +163,112 @@ export default function SupportScreen() {
                     [{ text: t('common.ok') }]
                 );
             });
+    };
+
+    const openTicketWhatsApp = (ticket: Ticket) => {
+        const message = `Hi QScrap! I have a follow-up on my support ticket "${ticket.subject}" (ID: ${ticket.ticket_id.slice(0, 8)}): `;
+        openWhatsApp(message);
+    };
+
+    const renderTicketCard = (ticket: Ticket) => {
+        const statusColor = getStatusColor(ticket.status);
+        const statusLabel = ticket.status.replace('_', ' ').toUpperCase();
+        const isActive = ticket.status === 'open' || ticket.status === 'in_progress';
+
+        return (
+            <TouchableOpacity
+                key={ticket.ticket_id}
+                style={[
+                    styles.ticketCard,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: isActive ? statusColor : colors.border,
+                        borderLeftWidth: isActive ? 4 : 1,
+                    }
+                ]}
+                onPress={() => openTicketWhatsApp(ticket)}
+                activeOpacity={0.7}
+            >
+                <View style={[styles.ticketHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text
+                        style={[styles.ticketSubject, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                        numberOfLines={1}
+                    >
+                        {ticket.subject}
+                    </Text>
+                    <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
+                        <Text style={[styles.statusText, { color: statusColor }]}>
+                            {statusLabel}
+                        </Text>
+                    </View>
+                </View>
+                <View style={[styles.ticketMeta, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={[styles.ticketTime, { color: colors.textSecondary }]}>
+                        {formatTimeAgo(ticket.last_message_at || ticket.created_at)}
+                    </Text>
+                    {ticket.category && (
+                        <Text style={[styles.ticketCategory, { color: colors.textSecondary }]}>
+                            • {ticket.category}
+                        </Text>
+                    )}
+                </View>
+                <View style={[styles.ticketAction, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={styles.whatsappIcon}>💬</Text>
+                    <Text style={[styles.ticketActionText, { color: Colors.primary }]}>
+                        {t('support.followUpWhatsApp') || 'Follow up on WhatsApp'}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+    const renderTicketsSection = () => {
+        const activeTickets = tickets.filter(t => t.status === 'open' || t.status === 'in_progress');
+        const hasActiveTickets = activeTickets.length > 0;
+
+        if (loadingTickets) {
+            return (
+                <View style={[styles.ticketsSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                </View>
+            );
+        }
+
+        if (!hasActiveTickets) {
+            return null; // Don't show section if no active tickets
+        }
+
+        return (
+            <View style={[styles.ticketsSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <TouchableOpacity
+                    style={[styles.ticketsSectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}
+                    onPress={() => setTicketsExpanded(!ticketsExpanded)}
+                    activeOpacity={0.7}
+                >
+                    <View style={[styles.ticketsSectionTitleRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={styles.ticketsSectionIcon}>🎫</Text>
+                        <Text style={[styles.ticketsSectionTitle, { color: colors.text }]}>
+                            {t('support.myTickets') || 'My Support Tickets'}
+                        </Text>
+                        <View style={[styles.ticketCountBadge, { backgroundColor: '#f59e0b' }]}>
+                            <Text style={styles.ticketCountText}>{activeTickets.length}</Text>
+                        </View>
+                    </View>
+                    <Text style={[styles.expandIcon, { color: colors.textSecondary }]}>
+                        {ticketsExpanded ? '▼' : (isRTL ? '◀' : '▶')}
+                    </Text>
+                </TouchableOpacity>
+
+                {ticketsExpanded && (
+                    <View style={styles.ticketsList}>
+                        <Text style={[styles.ticketsHint, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('support.ticketsHint') || 'Tap a ticket to follow up on WhatsApp'}
+                        </Text>
+                        {activeTickets.map(renderTicketCard)}
+                    </View>
+                )}
+            </View>
+        );
     };
 
     const renderSupportOption = (option: SupportOption) => (
@@ -127,7 +306,18 @@ export default function SupportScreen() {
                 <View style={{ width: 60 }} />
             </View>
 
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[Colors.primary]}
+                        tintColor={Colors.primary}
+                    />
+                }
+            >
                 {/* Hero Section */}
                 <View style={styles.heroSection}>
                     <LinearGradient
@@ -150,6 +340,9 @@ export default function SupportScreen() {
                         </TouchableOpacity>
                     </LinearGradient>
                 </View>
+
+                {/* My Tickets Section - Shows above Quick Help if customer has open tickets */}
+                {renderTicketsSection()}
 
                 {/* Quick Help Options */}
                 <View style={styles.optionsSection}>
@@ -253,6 +446,114 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#25D366',
     },
+    // Tickets Section
+    ticketsSection: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    ticketsSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: Spacing.lg,
+        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    },
+    ticketsSectionTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    ticketsSectionIcon: {
+        fontSize: 20,
+    },
+    ticketsSectionTitle: {
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
+    ticketCountBadge: {
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+        minWidth: 24,
+        alignItems: 'center',
+    },
+    ticketCountText: {
+        color: '#fff',
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+    },
+    expandIcon: {
+        fontSize: 12,
+    },
+    ticketsList: {
+        padding: Spacing.md,
+        paddingTop: 0,
+    },
+    ticketsHint: {
+        fontSize: FontSizes.xs,
+        marginBottom: Spacing.sm,
+        fontStyle: 'italic',
+    },
+    ticketCard: {
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        marginBottom: Spacing.sm,
+        borderWidth: 1,
+    },
+    ticketHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.xs,
+    },
+    ticketSubject: {
+        fontSize: FontSizes.md,
+        fontWeight: '600',
+        flex: 1,
+        marginRight: Spacing.sm,
+    },
+    statusBadge: {
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.sm,
+    },
+    statusText: {
+        fontSize: FontSizes.xs,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    ticketMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
+    },
+    ticketTime: {
+        fontSize: FontSizes.xs,
+    },
+    ticketCategory: {
+        fontSize: FontSizes.xs,
+        marginLeft: Spacing.xs,
+    },
+    ticketAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: Spacing.xs,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+    },
+    whatsappIcon: {
+        fontSize: 14,
+        marginRight: Spacing.xs,
+    },
+    ticketActionText: {
+        fontSize: FontSizes.sm,
+        fontWeight: '600',
+    },
+    // Existing styles
     optionsSection: {
         paddingHorizontal: Spacing.lg,
         marginBottom: Spacing.lg,

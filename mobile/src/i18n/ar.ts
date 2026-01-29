@@ -778,6 +778,10 @@ export const ar = {
         fastResponse: 'رد سريع',
         responseTime: 'نرد عادةً خلال 15 دقيقة',
         whatsappNotInstalled: 'واتساب غير مثبت على هذا الجهاز',
+        // قسم تذاكري (لعرض التذاكر)
+        myTickets: 'تذاكر الدعم الخاصة بي',
+        ticketsHint: 'اضغط على تذكرة للمتابعة عبر واتساب',
+        followUpWhatsApp: 'متابعة عبر واتساب',
         // مفاتيح قديمة (للتوافق)
         newTicket: 'إنشاء تذكرة جديدة',
         createNew: 'إنشاء تذكرة جديدة',

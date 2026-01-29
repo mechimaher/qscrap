@@ -777,6 +777,10 @@ export const en = {
         fastResponse: 'Fast Response',
         responseTime: 'We typically reply within 15 minutes',
         whatsappNotInstalled: 'WhatsApp is not installed on this device',
+        // My Tickets Section (for ticket visibility)
+        myTickets: 'My Support Tickets',
+        ticketsHint: 'Tap a ticket to follow up on WhatsApp',
+        followUpWhatsApp: 'Follow up on WhatsApp',
         // Legacy keys (kept for compatibility)
         newTicket: 'Create New Ticket',
         createNew: 'Create New Ticket',
