@@ -94,8 +94,10 @@ export class SupportService {
         }
 
         if (params.status) {
-            whereClause += ` AND t.status = $${paramIndex++}`;
-            queryParams.push(params.status);
+            // Support comma-separated status values (e.g., "open,in_progress")
+            const statuses = params.status.split(',').map(s => s.trim());
+            whereClause += ` AND t.status = ANY($${paramIndex++}::text[])`;
+            queryParams.push(statuses);
         }
 
         const countResult = await this.pool.query(`SELECT COUNT(*) FROM support_tickets t ${whereClause}`, queryParams);
