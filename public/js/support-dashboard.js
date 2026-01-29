@@ -2079,6 +2079,8 @@ function renderTicketsQueue(tickets) {
  */
 async function openQueueTicket(ticketId) {
     try {
+        showToast('Loading ticket...', 'info');
+
         // Fetch ticket detail to get customer info
         const res = await fetch(`${API_URL}/support/tickets/${ticketId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -2089,14 +2091,17 @@ async function openQueueTicket(ticketId) {
             return;
         }
 
-        const ticket = await res.json();
+        const data = await res.json();
+        const ticketDetail = data.ticket || data; // Handle both {ticket:...} and direct object
 
         // Switch to resolution section
         switchSection('resolution');
 
-        // If we have customer phone, search for them
-        if (ticket.customer_phone) {
-            document.getElementById('customerSearch').value = ticket.customer_phone;
+        // Try multiple ways to find the customer
+        const searchValue = ticketDetail.customer_phone || ticketDetail.requester_phone || ticketDetail.customer_name;
+
+        if (searchValue) {
+            document.getElementById('customerSearch').value = searchValue;
             await searchCustomer();
 
             // After loading customer, open the ticket chat
@@ -2104,7 +2109,11 @@ async function openQueueTicket(ticketId) {
                 openTicketChat(ticketId);
             }, 500);
         } else {
-            showToast('Ticket loaded - No customer phone available', 'info');
+            // Still open the ticket chat directly even without customer search
+            showToast('Opening ticket chat...', 'info');
+            setTimeout(() => {
+                openTicketChat(ticketId);
+            }, 300);
         }
 
     } catch (err) {
