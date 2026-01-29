@@ -142,12 +142,12 @@ export class BadgeCountService {
             WHERE b.garage_id = $1 AND pr.status = 'active' AND b.status = 'active'
         `, [garageId]);
 
-        // Count pending orders for this garage
+        // Count pending orders for this garage (orders needing garage attention)
         const pendingOrdersResult = await this.pool.query(`
             SELECT COUNT(*) as count
             FROM orders o
             WHERE o.garage_id = $1 
-            AND o.order_status IN ('pending', 'confirmed', 'preparing', 'ready')
+            AND o.order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'ready_for_collection')
         `, [garageId]);
 
         // Count counter offers waiting for garage response (made by customer, pending)
