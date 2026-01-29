@@ -1648,47 +1648,8 @@ function downloadTaxInvoice(format) {
 // ============================================
 // REFUNDS MANAGEMENT (BRAIN v3.0)
 // ============================================
-
-async function loadRefunds() {
-    try {
-        const res = await fetch(`${API_URL}/finance/refunds`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('refundsTable');
-        if (!tbody) return;
-
-        const refunds = data.refunds || [];
-
-        if (refunds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle"></i> No refunds found</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = refunds.map(r => `
-            <tr>
-                <td>#${escapeHTML(r.order_number || '-')}</td>
-                <td>${escapeHTML(r.customer_name || '-')}</td>
-                <td>${formatCurrency(r.original_amount)}</td>
-                <td style="color: var(--success);">${formatCurrency(r.refund_amount)}</td>
-                <td><span class="status-badge ${r.refund_status}">${r.refund_status}</span></td>
-                <td>${formatDate(r.created_at)}</td>
-                <td>${r.refund_status === 'pending' ? `
-                    <button class="btn btn-success btn-sm" onclick="approveRefund('${r.refund_id}')">
-                        <i class="bi bi-check"></i> Approve
-                    </button>
-                    <button class="btn btn-ghost btn-sm" onclick="rejectRefund('${r.refund_id}')">
-                        <i class="bi bi-x"></i>
-                    </button>
-                ` : '-'}</td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error('Failed to load refunds:', err);
-        showToast('Failed to load refunds', 'error');
-    }
-}
+// DUPLICATE REMOVED - loadRefunds is defined at line 1039
+// ============================================
 
 async function loadPendingRefunds() {
     try {
