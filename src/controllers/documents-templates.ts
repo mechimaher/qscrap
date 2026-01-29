@@ -181,6 +181,9 @@ export function generateBilingualCustomerInvoiceHTML(
         
         <!-- Support Contact Section (Always uses current company info) -->
         <div style="margin-top: 12px; padding: 8px 10px; border: 1px solid #999; background: #fafafa;">
+            <div style="font-size: 10px; font-weight: 700; text-align: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #ccc;">
+                ${COMPANY_INFO.name.ar} | ${COMPANY_INFO.name.en}
+            </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-size: 9px; font-weight: 700; margin-bottom: 4px;">Need Help? <span class="arabic">تحتاج مساعدة؟</span></div>
@@ -361,6 +364,9 @@ export function generateGaragePayoutStatementHTML(
         
         <!-- Support Contact Section (Always uses current company info) -->
         <div style="margin-top: 12px; padding: 8px 10px; border: 1px solid #999; background: #fafafa;">
+            <div style="font-size: 10px; font-weight: 700; text-align: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #ccc;">
+                ${COMPANY_INFO.name.ar} | ${COMPANY_INFO.name.en}
+            </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-size: 9px; font-weight: 700; margin-bottom: 4px;">Need Help? <span class="arabic">تحتاج مساعدة؟</span></div>
