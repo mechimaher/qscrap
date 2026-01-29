@@ -208,9 +208,10 @@ function setupSocket() {
 
 async function loadStats() {
     try {
-        const [statsRes, slaRes] = await Promise.all([
+        const [statsRes, slaRes, reviewsRes] = await Promise.all([
             fetch(`${API_URL}/support/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
-            fetch(`${API_URL}/support/sla-stats`, { headers: { 'Authorization': `Bearer ${token}` } })
+            fetch(`${API_URL}/support/sla-stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch(`${API_URL}/reviews/moderation?status=pending&limit=100`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
         const stats = await statsRes.json();
@@ -227,10 +228,22 @@ async function loadStats() {
         } else {
             document.getElementById('statAvgTime').textContent = '--';
         }
+
+        // Update pending reviews badge
+        if (reviewsRes.ok) {
+            const reviewsData = await reviewsRes.json();
+            const pendingCount = (reviewsData.reviews || []).length;
+            const reviewBadge = document.getElementById('reviewBadge');
+            if (reviewBadge) {
+                reviewBadge.textContent = pendingCount;
+                reviewBadge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
+            }
+        }
     } catch (err) {
         console.error('Failed to load stats:', err);
     }
 }
+
 
 // ==========================================
 // CUSTOMER 360 LOOKUP
@@ -508,21 +521,21 @@ function quickAction(actionType, orderId = null) {
     // Action configurations
     const actionConfig = {
         'full_refund': {
-            title: 'Full Refund',
+            title: 'Request Full Refund',
             icon: 'bi-arrow-counterclockwise',
             color: 'linear-gradient(135deg, #ef4444, #dc2626)',
-            confirmText: 'Process Refund',
+            confirmText: 'Send to Finance',
             needsAmount: false,
-            message: 'This will refund the entire order amount to the customer.'
+            message: 'This will escalate a full refund request to the Finance team for processing.'
         },
         'partial_refund': {
-            title: 'Partial Refund',
+            title: 'Request Partial Refund',
             icon: 'bi-percent',
             color: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            confirmText: 'Process Refund',
+            confirmText: 'Send to Finance',
             needsAmount: true,
             amountLabel: 'Refund Amount (QAR)',
-            message: 'Enter the amount to refund to the customer.'
+            message: 'This will escalate a partial refund request to the Finance team for approval.'
         },
         'goodwill_credit': {
             title: 'Goodwill Credit',
@@ -1362,6 +1375,7 @@ async function moderateReview(reviewId, decision) {
         if (res.ok) {
             showToast(data.message || `Review ${action}d!`, 'success');
             loadReviews();
+            loadStats(); // Refresh badge count
         } else {
             showToast(data.error || 'Failed to moderate review', 'error');
         }

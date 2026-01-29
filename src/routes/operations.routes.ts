@@ -59,6 +59,48 @@ router.get('/returns', async (req, res) => {
         res.json({ returns: [] });
     }
 });
+
+// Approve return request (BRAIN v3.0)
+router.post('/returns/:return_id/approve', async (req, res) => {
+    try {
+        const { return_id } = req.params;
+        const { notes } = req.body;
+        const operatorId = (req as any).user?.userId;
+
+        const { getReturnService } = await import('../services/cancellation/return.service');
+        const pool = (global as any).pool;
+        const returnService = getReturnService(pool);
+        const result = await returnService.approveReturn(return_id, operatorId, notes);
+
+        res.json(result);
+    } catch (error: any) {
+        console.error('[Operations] Approve return error:', error);
+        res.status(400).json({ success: false, message: error.message || 'Failed to approve return' });
+    }
+});
+
+// Reject return request
+router.post('/returns/:return_id/reject', async (req, res) => {
+    try {
+        const { return_id } = req.params;
+        const { reason } = req.body;
+        const operatorId = (req as any).user?.userId;
+
+        if (!reason) {
+            return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+        }
+
+        const { getReturnService } = await import('../services/cancellation/return.service');
+        const pool = (global as any).pool;
+        const returnService = getReturnService(pool);
+        const result = await returnService.rejectReturn(return_id, operatorId, reason);
+
+        res.json(result);
+    } catch (error: any) {
+        console.error('[Operations] Reject return error:', error);
+        res.status(400).json({ success: false, message: error.message || 'Failed to reject return' });
+    }
+});
 // router.get('/returns/stats', getReturnStats); // TODO: Implement getReturnStats
 // router.post('/returns/:assignment_id/assign-driver', assignDriverToReturn); // TODO: Implement assignDriverToReturn
 
