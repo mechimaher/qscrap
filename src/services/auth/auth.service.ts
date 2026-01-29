@@ -198,7 +198,6 @@ export class AuthService {
                      is_suspended = true,
                      suspension_reason = 'Account deleted by user',
                      password_hash = 'deleted',
-                     fcm_token = NULL,
                      updated_at = NOW()
                  WHERE user_id = $3`,
                 [anonymizedPhone, anonymizedEmail, userId]
