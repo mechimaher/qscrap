@@ -522,7 +522,7 @@ function quickAction(actionType, orderId = null) {
     orderId = orderId || currentOrder;
 
     // Actions that require an order
-    const orderRequiredActions = ['full_refund', 'partial_refund', 'cancel_order', 'reassign_driver', 'rush_delivery', 'escalate_to_ops'];
+    const orderRequiredActions = ['full_refund', 'cancel_order', 'reassign_driver', 'rush_delivery', 'escalate_to_ops'];
     if (orderRequiredActions.includes(actionType) && !orderId) {
         showToast('Please select an order first', 'error');
         return;
@@ -567,10 +567,7 @@ function quickAction(actionType, orderId = null) {
             blockedStatuses: ['refunded', 'cancelled'],
             errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nThis order has already been refunded or cancelled.`
         },
-        'partial_refund': {
-            blockedStatuses: ['refunded', 'cancelled'],
-            errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nThis order has already been refunded or cancelled.`
-        }
+
     };
 
     const rule = validationRules[actionType];
@@ -635,15 +632,7 @@ function quickAction(actionType, orderId = null) {
             needsAmount: false,
             message: 'This will escalate a full refund request to the Finance team for processing.'
         },
-        'partial_refund': {
-            title: 'Request Partial Refund',
-            icon: 'bi-percent',
-            color: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            confirmText: 'Send to Finance',
-            needsAmount: true,
-            amountLabel: 'Refund Amount (QAR)',
-            message: 'This will escalate a partial refund request to the Finance team for approval.'
-        },
+
         'goodwill_credit': {
             title: 'Goodwill Credit',
             icon: 'bi-gift',
@@ -1319,7 +1308,7 @@ function renderResolutionLog(logs) {
 
     const actionLabels = {
         'full_refund': '💰 Full Refund',
-        'partial_refund': '💰 Partial Refund',
+
         'goodwill_credit': '🎁 Goodwill Credit',
         'cancel_order': '❌ Cancel Order',
         'reassign_driver': '🔄 Reassign Driver',
