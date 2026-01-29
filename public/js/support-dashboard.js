@@ -13,6 +13,7 @@ let currentSection = 'resolution';
 // Current state
 let currentCustomer = null;
 let currentOrder = null;
+let currentOrderData = null;  // Full order context including status
 let reviewStatus = 'pending';  // For reviews filter
 
 // ==========================================
@@ -460,8 +461,17 @@ function renderOrders(orders) {
 }
 
 function selectOrder(evt, orderId, orderNumber) {
-    // Find the order and set as current
+    // Find the order data from the orders list
+    const orderCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+    const orderStatus = orderCard?.querySelector('.order-status')?.textContent?.trim()?.replace(/ /g, '_') || 'unknown';
+
+    // Store full order context
     currentOrder = orderId;
+    currentOrderData = {
+        order_id: orderId,
+        order_number: orderNumber,
+        order_status: orderStatus
+    };
 
     // Remove selected class from all orders
     document.querySelectorAll('.order-card').forEach(c => c.classList.remove('selected'));
@@ -517,6 +527,103 @@ function quickAction(actionType, orderId = null) {
         showToast('Please select an order first', 'error');
         return;
     }
+
+    // ==========================================
+    // ORDER STATUS VALIDATION
+    // Robust validation with action-specific rules
+    // ==========================================
+    const orderStatus = currentOrderData?.order_status?.toLowerCase() || 'unknown';
+    const orderNumber = currentOrderData?.order_number || orderId;
+
+    // Terminal statuses - order has ended
+    const terminalStatuses = ['completed', 'delivered', 'cancelled', 'refunded'];
+    // Active statuses - order is in progress
+    const activeStatuses = ['pending', 'confirmed', 'processing', 'in_transit', 'out_for_delivery', 'awaiting_pickup'];
+    // Statuses where driver can be reassigned
+    const reassignableStatuses = ['pending', 'confirmed', 'awaiting_pickup'];
+    // Statuses where order can be cancelled
+    const cancellableStatuses = ['pending', 'confirmed', 'processing', 'awaiting_pickup'];
+    // Statuses where order can be refunded
+    const refundableStatuses = ['completed', 'delivered'];
+
+    // Friendly status display
+    const statusDisplay = orderStatus.replace(/_/g, ' ').toUpperCase();
+
+    // Validation rules per action
+    const validationRules = {
+        'reassign_driver': {
+            allowedStatuses: reassignableStatuses,
+            errorMessage: `Cannot reassign driver for order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nDriver can only be reassigned for orders that are: Pending, Confirmed, or Awaiting Pickup.`
+        },
+        'cancel_order': {
+            allowedStatuses: cancellableStatuses,
+            errorMessage: `Cannot cancel order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nOrders can only be cancelled before delivery begins.`
+        },
+        'rush_delivery': {
+            allowedStatuses: activeStatuses,
+            errorMessage: `Cannot rush order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nRush delivery only applies to orders in progress.`
+        },
+        'full_refund': {
+            blockedStatuses: ['refunded', 'cancelled'],
+            errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nThis order has already been refunded or cancelled.`
+        },
+        'partial_refund': {
+            blockedStatuses: ['refunded', 'cancelled'],
+            errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nThis order has already been refunded or cancelled.`
+        }
+    };
+
+    const rule = validationRules[actionType];
+    if (rule) {
+        // Check allowed statuses
+        if (rule.allowedStatuses && !rule.allowedStatuses.includes(orderStatus)) {
+            QScrapModal.create({
+                id: 'status-error-modal',
+                title: '⚠️ Action Not Available',
+                headerIcon: 'bi-exclamation-triangle',
+                headerClass: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                content: `
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="bi bi-info-circle" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px; display: block;"></i>
+                        <p style="white-space: pre-line; color: var(--text-secondary); line-height: 1.6;">${rule.errorMessage}</p>
+                    </div>
+                `,
+                size: 'sm',
+                actions: [{
+                    id: 'close-error-btn',
+                    text: 'Got it',
+                    class: 'btn btn-primary',
+                    onclick: () => QScrapModal.close('status-error-modal')
+                }]
+            });
+            return;
+        }
+
+        // Check blocked statuses
+        if (rule.blockedStatuses && rule.blockedStatuses.includes(orderStatus)) {
+            QScrapModal.create({
+                id: 'status-error-modal',
+                title: '⚠️ Action Not Available',
+                headerIcon: 'bi-exclamation-triangle',
+                headerClass: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                content: `
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="bi bi-info-circle" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px; display: block;"></i>
+                        <p style="white-space: pre-line; color: var(--text-secondary); line-height: 1.6;">${rule.errorMessage}</p>
+                    </div>
+                `,
+                size: 'sm',
+                actions: [{
+                    id: 'close-error-btn',
+                    text: 'Got it',
+                    class: 'btn btn-primary',
+                    onclick: () => QScrapModal.close('status-error-modal')
+                }]
+            });
+            return;
+        }
+    }
+
 
     // Action configurations
     const actionConfig = {
