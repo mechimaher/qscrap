@@ -933,13 +933,12 @@ async function openTicketChat(ticketId) {
         const ticketActions = document.getElementById('ticketActions');
         const ticketStatusBadge = document.getElementById('ticketStatusBadge');
 
-        if (ticketRes.ok && ticketActions) {
+        if (ticketRes.ok) {
             const ticketData = await ticketRes.json();
             const ticket = ticketData.ticket || ticketData;
+            const currentStatus = ticket.status || 'open';
 
-            ticketActions.style.display = 'block';
-
-            // Show current status
+            // Show current status badge
             if (ticketStatusBadge) {
                 const statusColors = {
                     'open': '#ef4444',
@@ -947,8 +946,59 @@ async function openTicketChat(ticketId) {
                     'resolved': '#10b981',
                     'closed': '#6b7280'
                 };
-                const statusColor = statusColors[ticket.status] || '#6b7280';
-                ticketStatusBadge.innerHTML = `Current status: <span style="color: ${statusColor}; font-weight: 600;">${(ticket.status || 'unknown').replace('_', ' ').toUpperCase()}</span>`;
+                const statusColor = statusColors[currentStatus] || '#6b7280';
+                ticketStatusBadge.innerHTML = `Current status: <span style="color: ${statusColor}; font-weight: 600;">${currentStatus.replace('_', ' ').toUpperCase()}</span>`;
+            }
+
+            // Create or update status action buttons
+            let statusBtnsContainer = document.getElementById('ticketStatusButtons');
+            if (!statusBtnsContainer) {
+                statusBtnsContainer = document.createElement('div');
+                statusBtnsContainer.id = 'ticketStatusButtons';
+                statusBtnsContainer.style.cssText = 'display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;';
+                ticketStatusBadge?.parentNode?.appendChild(statusBtnsContainer);
+            }
+
+            // Dynamic buttons based on current status
+            let buttonsHtml = '';
+            if (currentStatus === 'open') {
+                buttonsHtml = `
+                    <button onclick="updateTicketStatus('in_progress')" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-play-fill"></i> Start Working
+                    </button>
+                    <button onclick="updateTicketStatus('resolved')" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-check-lg"></i> Resolve
+                    </button>
+                `;
+            } else if (currentStatus === 'in_progress') {
+                buttonsHtml = `
+                    <button onclick="updateTicketStatus('resolved')" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-check-lg"></i> Resolve
+                    </button>
+                    <button onclick="updateTicketStatus('open')" style="padding: 6px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reopen
+                    </button>
+                `;
+            } else if (currentStatus === 'resolved') {
+                buttonsHtml = `
+                    <button onclick="updateTicketStatus('closed')" style="padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-archive"></i> Close
+                    </button>
+                    <button onclick="updateTicketStatus('open')" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reopen
+                    </button>
+                `;
+            } else if (currentStatus === 'closed') {
+                buttonsHtml = `
+                    <button onclick="updateTicketStatus('open')" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reopen
+                    </button>
+                `;
+            }
+            statusBtnsContainer.innerHTML = buttonsHtml;
+
+            if (ticketActions) {
+                ticketActions.style.display = 'block';
             }
         }
 
