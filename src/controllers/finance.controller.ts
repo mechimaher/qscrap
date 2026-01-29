@@ -555,6 +555,10 @@ export const getRefunds = async (req: AuthRequest, res: Response) => {
             offset: page ? (parseInt(page as string) - 1) * (parseInt(limit as string) || 50) : undefined
         });
 
+        // Prevent caching of API response
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.json(result);
     } catch (err) {
         console.error('getRefunds Error:', err);
