@@ -1898,3 +1898,338 @@ async function showCustomerAbuseStatus() {
 
 console.log('Customer Resolution Center loaded - v3.0 BRAIN Compliant');
 
+// ==========================================
+// TICKETS QUEUE (Professional Ticket Management)
+// ==========================================
+
+let ticketsQueueLoaded = false;
+
+/**
+ * Load all tickets (not customer-specific) with filters
+ * Calls: GET /api/support/tickets?status=open,in_progress&limit=50
+ */
+async function loadTicketsQueue() {
+    const statusFilter = document.getElementById('ticketQueueStatus')?.value || 'open,in_progress';
+    const priorityFilter = document.getElementById('ticketQueuePriority')?.value || '';
+
+    const container = document.getElementById('ticketsQueueList');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="empty-state-center">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Loading tickets...</p>
+        </div>
+    `;
+
+    try {
+        let url = `${API_URL}/support/tickets?status=${statusFilter}&limit=50`;
+        if (priorityFilter) {
+            url += `&priority=${priorityFilter}`;
+        }
+
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to load tickets');
+        }
+
+        const data = await res.json();
+        const tickets = data.tickets || [];
+
+        renderTicketsQueue(tickets);
+
+        // Update badge
+        const openCount = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+        const badge = document.getElementById('ticketQueueBadge');
+        if (badge) {
+            badge.textContent = openCount;
+            badge.style.display = openCount > 0 ? 'inline-flex' : 'none';
+        }
+
+        ticketsQueueLoaded = true;
+
+    } catch (err) {
+        console.error('Failed to load tickets queue:', err);
+        container.innerHTML = `
+            <div class="empty-state-center">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Failed to load tickets</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Calculate SLA status based on ticket creation time
+ * @returns {object} { color, label, breached }
+ */
+function calculateSLAStatus(created_at) {
+    const created = new Date(created_at);
+    const now = new Date();
+    const hoursDiff = (now - created) / (1000 * 60 * 60);
+
+    if (hoursDiff < 2) {
+        return { color: '#10b981', label: 'On Track', breached: false };
+    } else if (hoursDiff < 4) {
+        return { color: '#f59e0b', label: 'Warning', breached: false };
+    } else {
+        return { color: '#ef4444', label: 'SLA Breach', breached: true };
+    }
+}
+
+/**
+ * Get priority indicator
+ */
+function getPriorityIndicator(priority) {
+    const indicators = {
+        'urgent': { color: '#ef4444', icon: '🔴', label: 'Urgent' },
+        'high': { color: '#f59e0b', icon: '🟠', label: 'High' },
+        'normal': { color: '#10b981', icon: '🟢', label: 'Normal' },
+        'low': { color: '#6b7280', icon: '⚪', label: 'Low' }
+    };
+    return indicators[priority] || indicators.normal;
+}
+
+/**
+ * Render tickets in the queue list
+ */
+function renderTicketsQueue(tickets) {
+    const container = document.getElementById('ticketsQueueList');
+    if (!container) return;
+
+    if (!tickets || tickets.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-center">
+                <i class="bi bi-inbox"></i>
+                <p>No tickets found</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    tickets.forEach(ticket => {
+        const sla = calculateSLAStatus(ticket.created_at);
+        const priority = getPriorityIndicator(ticket.priority);
+        const statusColors = {
+            'open': { bg: '#dbeafe', color: '#2563eb' },
+            'in_progress': { bg: '#fef3c7', color: '#d97706' },
+            'resolved': { bg: '#dcfce7', color: '#16a34a' },
+            'closed': { bg: '#f3f4f6', color: '#6b7280' }
+        };
+        const statusStyle = statusColors[ticket.status] || statusColors.open;
+
+        html += `
+            <div class="ticket-queue-item" onclick="openQueueTicket('${ticket.id}')" style="
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px 20px;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
+                
+                <!-- SLA Indicator -->
+                <div style="width: 12px; height: 12px; background: ${sla.color}; border-radius: 50%; flex-shrink: 0;" title="${sla.label}"></div>
+                
+                <!-- Main Info -->
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${escapeHTML(ticket.subject || 'No subject')}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                        ${escapeHTML(ticket.customer_name || 'Unknown')} • ${ticket.category || 'General'}
+                    </div>
+                </div>
+                
+                <!-- Priority -->
+                <div style="font-size: 11px; padding: 4px 8px; background: ${priority.color}20; color: ${priority.color}; border-radius: 6px; font-weight: 600;">
+                    ${priority.icon} ${priority.label}
+                </div>
+                
+                <!-- Status -->
+                <div style="font-size: 10px; padding: 4px 10px; background: ${statusStyle.bg}; color: ${statusStyle.color}; border-radius: 12px; font-weight: 600; text-transform: uppercase;">
+                    ${ticket.status.replace('_', ' ')}
+                </div>
+                
+                <!-- Time -->
+                <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">
+                    ${timeAgo(ticket.created_at)}
+                </div>
+                
+                <!-- Assign Button -->
+                <button onclick="event.stopPropagation(); assignTicketModal('${ticket.id}', '${escapeHTML(ticket.subject || '')}')" 
+                    style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; cursor: pointer; font-size: 11px; color: var(--text-secondary);"
+                    title="Assign Ticket">
+                    <i class="bi bi-person-plus"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+/**
+ * Open a ticket from the queue (switch to resolution + load customer)
+ */
+async function openQueueTicket(ticketId) {
+    try {
+        // Fetch ticket detail to get customer info
+        const res = await fetch(`${API_URL}/support/tickets/${ticketId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            showToast('Failed to load ticket', 'error');
+            return;
+        }
+
+        const ticket = await res.json();
+
+        // Switch to resolution section
+        switchSection('resolution');
+
+        // If we have customer phone, search for them
+        if (ticket.customer_phone) {
+            document.getElementById('customerSearch').value = ticket.customer_phone;
+            await searchCustomer();
+
+            // After loading customer, open the ticket chat
+            setTimeout(() => {
+                openTicketChat(ticketId);
+            }, 500);
+        } else {
+            showToast('Ticket loaded - No customer phone available', 'info');
+        }
+
+    } catch (err) {
+        console.error('Failed to open ticket:', err);
+        showToast('Failed to open ticket', 'error');
+    }
+}
+
+/**
+ * Show assignment modal for a ticket
+ */
+function assignTicketModal(ticketId, ticketSubject) {
+    // For now, hardcode support agents (could be fetched from API)
+    const agents = [
+        { id: 'unassigned', name: 'Unassigned' },
+        { id: 'current', name: 'Assign to Me' }
+    ];
+
+    let agentOptions = agents.map(a =>
+        `<option value="${a.id}">${a.name}</option>`
+    ).join('');
+
+    const content = `
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${escapeHTML(ticketSubject)}</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Ticket ID: ${ticketId.substring(0, 8)}...</div>
+        </div>
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Assign to</label>
+            <select id="assignAgent" class="form-control" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                ${agentOptions}
+            </select>
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600;">Internal Note (optional)</label>
+            <textarea id="assignNote" rows="2" placeholder="Add a note about this assignment..." 
+                style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;"></textarea>
+        </div>
+    `;
+
+    QScrapModal.create({
+        id: 'assign-ticket-modal',
+        title: 'Assign Ticket',
+        headerIcon: 'bi-person-plus',
+        content: content,
+        size: 'sm',
+        actions: [
+            {
+                id: 'assign-cancel-btn',
+                text: 'Cancel',
+                class: 'btn btn-ghost',
+                onclick: () => QScrapModal.close('assign-ticket-modal')
+            },
+            {
+                id: 'assign-confirm-btn',
+                text: 'Assign',
+                class: 'btn btn-primary',
+                onclick: async () => {
+                    const agentValue = document.getElementById('assignAgent').value;
+                    const note = document.getElementById('assignNote').value.trim();
+
+                    QScrapModal.close('assign-ticket-modal');
+
+                    if (agentValue === 'current') {
+                        // Assign to current user - use current user's ID from token
+                        try {
+                            const res = await fetch(`${API_URL}/support/tickets/${ticketId}/assign`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ assignee_id: 'self' })
+                            });
+
+                            if (res.ok) {
+                                showToast('Ticket assigned to you', 'success');
+                                loadTicketsQueue();
+                            } else {
+                                showToast('Failed to assign ticket', 'error');
+                            }
+                        } catch (err) {
+                            showToast('Failed to assign ticket', 'error');
+                        }
+                    } else {
+                        showToast('Ticket unassigned', 'info');
+                    }
+                }
+            }
+        ]
+    });
+}
+
+// Update switchSection to load tickets when switching to tickets section
+const originalSwitchSection = switchSection;
+switchSection = function (section) {
+    originalSwitchSection(section);
+
+    if (section === 'tickets' && !ticketsQueueLoaded) {
+        loadTicketsQueue();
+    }
+};
+
+// Load ticket queue badge on dashboard load
+document.addEventListener('DOMContentLoaded', function () {
+    // Pre-load ticket count for badge (without full render)
+    setTimeout(async () => {
+        try {
+            const res = await fetch(`${API_URL}/support/tickets?status=open,in_progress&limit=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const count = (data.tickets || []).length;
+                const badge = document.getElementById('ticketQueueBadge');
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+                }
+            }
+        } catch (err) {
+            console.log('Could not pre-load ticket badge');
+        }
+    }, 2000);
+});
+
+console.log('Tickets Queue Module loaded - v1.0');
+
