@@ -62,7 +62,7 @@ export class OrderLifecycleService {
 
             // Verify ownership and get current status
             const check = await client.query(
-                'SELECT customer_id, order_status, order_number FROM orders WHERE order_id = $1 AND garage_id = $2 FOR UPDATE',
+                'SELECT order_id, customer_id, order_status, order_number FROM orders WHERE order_id = $1 AND garage_id = $2 FOR UPDATE',
                 [orderId, garageId]
             );
 
