@@ -1,11 +1,14 @@
 // QScrap Driver App - Premium VVIP Theme
 // Unified Brand Identity - Qatar Maroon & Gold
-// Single Theme (No Dark Mode) - Matches Customer App
+// VVIP 2026 - Aligned with Customer App Theme
 
-// Unified Theme Definition
-const themeColors = {
+// ============================================
+// LIGHT THEME - Classic Qatar Premium
+// ============================================
+export const lightTheme = {
     background: '#FAFAFA',
     surface: '#FFFFFF',
+    surfaceSecondary: '#F5F5F5',
     surfaceElevated: '#FFFFFF',
     card: '#FFFFFF',
     cardHover: '#F5F5F5',
@@ -15,16 +18,94 @@ const themeColors = {
     text: '#1A1A1A',
     textSecondary: '#4A4A4A',
     textMuted: '#6A6A6A',
+    textInverse: '#FFFFFF',
 
     primary: '#8D1B3D',
+    secondary: '#C9A227', // Gold accent
     statusBar: 'dark' as const,
 
+    // Additional colors for components
     success: '#059669',
     warning: '#d97706',
     danger: '#dc2626',
     error: '#dc2626',
     info: '#C9A227',
+
+    // Input fields
+    inputBackground: '#FFFFFF',
+    inputBorder: '#E5E5E5',
+    inputText: '#1A1A1A',
+    placeholder: '#9CA3AF',
 };
+
+// ============================================
+// DARK THEME - Qatar Night Premium (Future-Ready)
+// ============================================
+export const darkTheme = {
+    background: '#0A0A0B',
+    surface: '#141416',
+    surfaceSecondary: '#1C1C1F',
+    surfaceElevated: '#1F1F23',
+    card: '#1C1C1F',
+    cardHover: '#252529',
+    border: '#2C2C30',
+    borderLight: '#252529',
+
+    text: '#FAFAFA',
+    textSecondary: '#A1A1AA',
+    textMuted: '#71717A',
+    textInverse: '#1A1A1A',
+
+    primary: '#8D1B3D', // Same Qatar Maroon
+    secondary: '#C9A227', // Same Gold accent
+    statusBar: 'light' as const,
+
+    // Additional colors for components
+    success: '#10B981',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    error: '#EF4444',
+    info: '#C9A227',
+
+    // Input fields
+    inputBackground: '#1C1C1F',
+    inputBorder: '#2C2C30',
+    inputText: '#FAFAFA',
+    placeholder: '#71717A',
+};
+
+// Proper type that supports both light and dark themes
+export interface ThemeColors {
+    background: string;
+    surface: string;
+    surfaceSecondary: string;
+    surfaceElevated: string;
+    card: string;
+    cardHover: string;
+    border: string;
+    borderLight: string;
+    text: string;
+    textSecondary: string;
+    textMuted: string;
+    textInverse: string;
+    primary: string;
+    secondary: string;
+    statusBar: 'light' | 'dark';
+    success: string;
+    warning: string;
+    danger: string;
+    error: string;
+    info: string;
+    inputBackground: string;
+    inputBorder: string;
+    inputText: string;
+    placeholder: string;
+}
+
+// ============================================
+// BACKWARD COMPATIBILITY - Use light theme
+// ============================================
+const themeColors = lightTheme;
 
 export const Colors = {
     // Primary Brand - Qatar Maroon
@@ -52,20 +133,23 @@ export const Colors = {
     delivered: '#059669',
     failed: '#dc2626',
 
-    // BACKWARD COMPATIBILITY - Both point to unified light theme
-    light: themeColors,
-    dark: themeColors, // Force light theme even in dark mode
-
-    // Unified reference
-    theme: themeColors,
+    // Theme references
+    light: lightTheme,
+    dark: darkTheme,
+    theme: themeColors, // Default to light
 
     // Gradients (use with LinearGradient) - Qatar theme
     gradients: {
         primary: ['#8D1B3D', '#6B1530'] as const,
         primaryDark: ['#6B1530', '#8D1B3D'] as const,
         card: ['#FFFFFF', '#F8F8F8'] as const,
+        cardDark: ['#1C1C1F', '#141416'] as const,
         premium: ['#8D1B3D', '#C9A227'] as const,
         gold: ['#C9A227', '#A68520'] as const,
+        champagne: ['#FFFFFF', '#FFF9E6'] as const,     // Warm premium light
+        champagneDark: ['#1C1C1F', '#1F1A10'] as const, // Warm premium dark
+        pearl: ['#FFFFFF', '#F5F5F7'] as const,         // Cool premium light
+        pearlDark: ['#141416', '#1C1C1F'] as const,     // Cool premium dark
     },
 };
 
@@ -76,6 +160,7 @@ export const Spacing = {
     lg: 24,
     xl: 32,
     xxl: 48,
+    xxxl: 64,
     // VVIP: Safe bottom padding for floating tab bar
     BOTTOM_NAV_HEIGHT: 120,
 };
@@ -85,6 +170,7 @@ export const BorderRadius = {
     md: 12,
     lg: 16,
     xl: 24,
+    xxl: 48,
     full: 9999,
 };
 
@@ -99,12 +185,24 @@ export const FontSize = {
     display: 40,
 };
 
+// Alias for consistency with customer app
+export const FontSizes = FontSize;
+
 export const FontWeights = {
     regular: '400' as const,
     medium: '500' as const,
     semibold: '600' as const,
     bold: '700' as const,
     heavy: '800' as const,
+};
+
+// VVIP 2026 - Inter Font Family
+export const FontFamily = {
+    regular: 'Inter_400Regular',
+    medium: 'Inter_500Medium',
+    semibold: 'Inter_600SemiBold',
+    bold: 'Inter_700Bold',
+    heavy: 'Inter_800ExtraBold',
 };
 
 export const Shadows = {
@@ -128,6 +226,20 @@ export const Shadows = {
         shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 8,
+    },
+    xl: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 16,
+        elevation: 12,
+    },
+    xxl: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 16 },
+        shadowOpacity: 0.3,
+        shadowRadius: 24,
+        elevation: 16,
     },
     glow: {
         shadowColor: '#8D1B3D',
@@ -192,4 +304,3 @@ export const AssignmentTypeConfig = {
         color: Colors.warning,
     },
 };
-

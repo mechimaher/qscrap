@@ -45,8 +45,10 @@ export default function EarningsScreen() {
             ]);
 
             setStats(statsRes.stats);
+            console.log('[Earnings] Stats received:', JSON.stringify(statsRes.stats));
             setPayouts(payoutsRes.payouts);
             setWallet(walletRes.wallet);
+            console.log('[Earnings] Wallet received:', JSON.stringify(walletRes.wallet));
             setTransactions(historyRes.history);
 
             if (trendRes.trend && trendRes.trend.length > 0) {
