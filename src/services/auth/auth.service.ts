@@ -152,7 +152,7 @@ export class AuthService {
             if (userType === 'customer') {
                 // Cancel all active requests
                 await client.query(
-                    `UPDATE part_requests SET status = 'cancelled' 
+                    `UPDATE part_requests SET status = 'cancelled_by_customer' 
                      WHERE customer_id = $1 AND status IN ('active', 'pending')`,
                     [userId]
                 );
