@@ -2072,6 +2072,46 @@ function renderTicketsQueue(tickets) {
         };
         const statusStyle = statusColors[ticket.status] || statusColors.open;
 
+        // Generate action buttons based on current status
+        let actionBtns = '';
+        if (ticket.status === 'open') {
+            actionBtns = `
+                <button onclick="event.stopPropagation(); quickStatusUpdate('${ticket.ticket_id}', 'in_progress')" 
+                    style="padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Start Working">
+                    <i class="bi bi-play-fill"></i>
+                </button>
+                <button onclick="event.stopPropagation(); quickStatusUpdate('${ticket.ticket_id}', 'resolved')" 
+                    style="padding: 5px 10px; background: #10b981; color: white; border: none; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Resolve">
+                    <i class="bi bi-check-lg"></i>
+                </button>
+            `;
+        } else if (ticket.status === 'in_progress') {
+            actionBtns = `
+                <button onclick="event.stopPropagation(); quickStatusUpdate('${ticket.ticket_id}', 'resolved')" 
+                    style="padding: 5px 10px; background: #10b981; color: white; border: none; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Resolve">
+                    <i class="bi bi-check-lg"></i>
+                </button>
+            `;
+        } else if (ticket.status === 'resolved') {
+            actionBtns = `
+                <button onclick="event.stopPropagation(); quickStatusUpdate('${ticket.ticket_id}', 'closed')" 
+                    style="padding: 5px 10px; background: #6b7280; color: white; border: none; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Close">
+                    <i class="bi bi-archive"></i>
+                </button>
+                <button onclick="event.stopPropagation(); quickStatusUpdate('${ticket.ticket_id}', 'open')" 
+                    style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Reopen">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            `;
+        } else if (ticket.status === 'closed') {
+            actionBtns = `
+                <button onclick="event.stopPropagation(); quickStatusUpdate('${ticket.ticket_id}', 'open')" 
+                    style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 5px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Reopen">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            `;
+        }
+
         html += `
             <div class="ticket-queue-item" onclick="openQueueTicket('${ticket.ticket_id}')" style="
                 display: flex;
@@ -2111,6 +2151,11 @@ function renderTicketsQueue(tickets) {
                     ${timeAgo(ticket.created_at)}
                 </div>
                 
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 4px;">
+                    ${actionBtns}
+                </div>
+                
                 <!-- Assign Button -->
                 <button onclick="event.stopPropagation(); assignTicketModal('${ticket.ticket_id}', '${escapeHTML(ticket.subject || '')}')" 
                     style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; cursor: pointer; font-size: 11px; color: var(--text-secondary);"
@@ -2122,6 +2167,44 @@ function renderTicketsQueue(tickets) {
     });
 
     container.innerHTML = html;
+}
+
+/**
+ * Quick status update from ticket queue (inline buttons)
+ * Calls same API as updateTicketStatus but with specific ticketId
+ */
+async function quickStatusUpdate(ticketId, newStatus) {
+    const statusLabels = {
+        'resolved': 'Resolved',
+        'closed': 'Closed',
+        'in_progress': 'In Progress',
+        'open': 'Reopened'
+    };
+
+    try {
+        showToast('Updating ticket...', 'info');
+
+        const res = await fetch(`${API_URL}/support/tickets/${ticketId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+            showToast(`Ticket ${statusLabels[newStatus] || newStatus}`, 'success');
+            // Refresh the tickets queue
+            loadTicketsQueue();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to update ticket', 'error');
+        }
+    } catch (err) {
+        console.error('Quick status update error:', err);
+        showToast('Failed to update ticket status', 'error');
+    }
 }
 
 /**
