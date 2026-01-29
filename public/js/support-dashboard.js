@@ -2023,7 +2023,7 @@ function renderTicketsQueue(tickets) {
         const statusStyle = statusColors[ticket.status] || statusColors.open;
 
         html += `
-            <div class="ticket-queue-item" onclick="openQueueTicket('${ticket.id}')" style="
+            <div class="ticket-queue-item" onclick="openQueueTicket('${ticket.ticket_id}')" style="
                 display: flex;
                 align-items: center;
                 gap: 16px;
@@ -2062,7 +2062,7 @@ function renderTicketsQueue(tickets) {
                 </div>
                 
                 <!-- Assign Button -->
-                <button onclick="event.stopPropagation(); assignTicketModal('${ticket.id}', '${escapeHTML(ticket.subject || '')}')" 
+                <button onclick="event.stopPropagation(); assignTicketModal('${ticket.ticket_id}', '${escapeHTML(ticket.subject || '')}')" 
                     style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; cursor: pointer; font-size: 11px; color: var(--text-secondary);"
                     title="Assign Ticket">
                     <i class="bi bi-person-plus"></i>
