@@ -1644,3 +1644,143 @@ function downloadTaxInvoice(format) {
             showToast(err.message || 'Failed to download invoice', 'error');
         });
 }
+
+// ============================================
+// REFUNDS MANAGEMENT (BRAIN v3.0)
+// ============================================
+
+async function loadRefunds() {
+    try {
+        const res = await fetch(`${API_URL}/finance/refunds`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('refundsTable');
+        if (!tbody) return;
+
+        const refunds = data.refunds || [];
+
+        if (refunds.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle"></i> No refunds found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = refunds.map(r => `
+            <tr>
+                <td>#${escapeHTML(r.order_number || '-')}</td>
+                <td>${escapeHTML(r.customer_name || '-')}</td>
+                <td>${formatCurrency(r.original_amount)}</td>
+                <td style="color: var(--success);">${formatCurrency(r.refund_amount)}</td>
+                <td><span class="status-badge ${r.refund_status}">${r.refund_status}</span></td>
+                <td>${formatDate(r.created_at)}</td>
+                <td>${r.refund_status === 'pending' ? `
+                    <button class="btn btn-success btn-sm" onclick="approveRefund('${r.refund_id}')">
+                        <i class="bi bi-check"></i> Approve
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="rejectRefund('${r.refund_id}')">
+                        <i class="bi bi-x"></i>
+                    </button>
+                ` : '-'}</td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load refunds:', err);
+        showToast('Failed to load refunds', 'error');
+    }
+}
+
+async function loadPendingRefunds() {
+    try {
+        const res = await fetch(`${API_URL}/finance/refunds/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById('pendingRefundsTable');
+        if (!tbody) return;
+
+        const refunds = data.refunds || [];
+
+        // Update badge
+        const badge = document.getElementById('pendingRefundsBadge');
+        if (badge) {
+            badge.textContent = refunds.length;
+            badge.style.display = refunds.length > 0 ? 'inline' : 'none';
+        }
+
+        if (refunds.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i> No pending refunds</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = refunds.map(r => `
+            <tr>
+                <td>#${escapeHTML(r.order_number || '-')}</td>
+                <td>${escapeHTML(r.customer_name || '-')}</td>
+                <td>${formatCurrency(r.refund_amount)}</td>
+                <td>${escapeHTML(r.refund_reason || '-')}</td>
+                <td>${formatDate(r.created_at)}</td>
+                <td>
+                    <button class="btn btn-success btn-sm" onclick="approveRefund('${r.refund_id}')">
+                        <i class="bi bi-send-check"></i> Process
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="rejectRefund('${r.refund_id}')">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Failed to load pending refunds:', err);
+    }
+}
+
+async function approveRefund(refundId) {
+    if (!confirm('Process this refund via payment gateway?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/refunds/${refundId}/process`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showToast('Refund processed successfully', 'success');
+            loadPendingRefunds();
+            loadRefunds();
+            loadBadges();
+        } else {
+            showToast(data.message || data.error || 'Failed to process refund', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function rejectRefund(refundId) {
+    const reason = prompt('Reason for rejecting this refund:');
+    if (!reason) return;
+
+    try {
+        const res = await fetch(`${API_URL}/finance/refunds/${refundId}/reject`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Refund rejected', 'success');
+            loadPendingRefunds();
+            loadRefunds();
+        } else {
+            showToast(data.error || 'Failed to reject refund', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
