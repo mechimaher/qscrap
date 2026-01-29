@@ -13,6 +13,7 @@ router.use(authenticate);
 
 // Get chat messages for an order (mobile app uses this)
 router.get('/messages/:order_id', getOrderChatMessages);
+router.get('/order/:order_id', getOrderChatMessages); // Alias route for mobile app compatibility
 
 // Send a chat message for an order (mobile app uses this)
 router.post('/messages', sendOrderChatMessage);
