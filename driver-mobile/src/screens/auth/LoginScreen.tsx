@@ -1,7 +1,8 @@
 // QScrap Driver App - Login Screen
 // Premium driver login experience with Qatar VVIP Theme
+// Matching customer app logo styling and effects
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -14,12 +15,16 @@ import {
     Alert,
     Image,
     Linking,
+    Animated,
+    Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Shadows, BorderRadius, FontWeights } from '../../constants/theme';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const { login } = useAuth();
@@ -28,6 +33,52 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Premium Animations (matching customer app)
+    const floatAnim = useRef(new Animated.Value(0)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        // Floating animation
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(floatAnim, {
+                    toValue: -8,
+                    duration: 1500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(floatAnim, {
+                    toValue: 0,
+                    duration: 1500,
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+
+        // Entrance fade
+        Animated.parallel([
+            Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+            Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
+        ]).start();
+
+        // Subtle pulse for gold ring
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.05,
+                    duration: 2000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 2000,
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+    }, []);
 
     const handleLogin = async () => {
         if (!phone.trim() || !password.trim()) {
@@ -62,21 +113,41 @@ export default function LoginScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
-                    {/* Logo Section */}
-                    <View style={styles.logoSection}>
-                        <View style={styles.logoContainer}>
+                    {/* Logo Section with Premium Animation */}
+                    <Animated.View style={[
+                        styles.logoSection,
+                        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+                    ]}>
+                        <Animated.View
+                            style={[
+                                styles.logoContainer,
+                                {
+                                    transform: [
+                                        { translateY: floatAnim },
+                                        { scale: pulseAnim }
+                                    ],
+                                    shadowColor: '#D4AF37',
+                                }
+                            ]}
+                        >
+                            {/* Gold Ring */}
+                            <View style={styles.goldRing} />
                             <Image
                                 source={require('../../../assets/logo.png')}
                                 style={styles.logo}
-                                resizeMode="contain"
+                                resizeMode="cover"
                             />
-                        </View>
-                        <Text style={styles.logoText}>QScrap</Text>
+                        </Animated.View>
+                        <Text style={styles.logoText}>QSCRAP</Text>
                         <View style={styles.driverBadge}>
                             <Text style={styles.driverBadgeText}>DRIVER</Text>
                         </View>
-                        <Text style={styles.tagline}>Delivering Excellence</Text>
-                    </View>
+                        <View style={styles.taglineContainer}>
+                            <View style={styles.goldLine} />
+                            <Text style={styles.tagline}>Delivering Excellence</Text>
+                            <View style={styles.goldLine} />
+                        </View>
+                    </Animated.View>
 
                     {/* Form Section */}
                     <View style={styles.formSection}>
@@ -208,39 +279,67 @@ const styles = StyleSheet.create({
     logoContainer: {
         width: 100,
         height: 100,
-        borderRadius: 50,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: 24,
         marginBottom: 16,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+        elevation: 12,
     },
     logo: {
-        width: 70,
-        height: 70,
+        width: 100,
+        height: 100,
+        borderRadius: 24,
+        overflow: 'hidden',
+    },
+    goldRing: {
+        position: 'absolute',
+        top: -4,
+        left: -4,
+        right: -4,
+        bottom: -4,
+        borderRadius: 28,
+        borderWidth: 3,
+        borderColor: '#D4AF37',
     },
     logoText: {
         fontSize: 42,
-        fontWeight: FontWeights.heavy,
-        color: '#fff',
+        fontWeight: '800',
+        color: '#ffffff',
         letterSpacing: 2,
+        textShadowColor: 'rgba(138, 21, 56, 0.6)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 10,
     },
     driverBadge: {
         backgroundColor: Colors.secondary,
         paddingHorizontal: 16,
         paddingVertical: 6,
-        borderRadius: BorderRadius.full,
+        borderRadius: 9999,
         marginTop: 8,
     },
     driverBadgeText: {
         fontSize: 14,
-        fontWeight: FontWeights.bold,
+        fontWeight: '700',
         color: Colors.primaryDark,
         letterSpacing: 4,
     },
+    taglineContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 16,
+    },
     tagline: {
         fontSize: 14,
-        color: 'rgba(255,255,255,0.7)',
-        marginTop: 16,
+        color: 'rgba(255,255,255,0.9)',
+        fontWeight: '600',
+        marginHorizontal: 12,
+    },
+    goldLine: {
+        width: 30,
+        height: 2,
+        backgroundColor: '#D4AF37',
+        borderRadius: 1,
     },
     formSection: {
         gap: 16,
@@ -249,7 +348,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: BorderRadius.lg,
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.2)',
     },
@@ -284,7 +383,7 @@ const styles = StyleSheet.create({
     },
     loginButton: {
         marginTop: 8,
-        borderRadius: BorderRadius.lg,
+        borderRadius: 16,
         overflow: 'hidden',
         ...Shadows.glow,
     },
@@ -301,12 +400,12 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: Colors.primaryDark,
         fontSize: 18,
-        fontWeight: FontWeights.bold,
+        fontWeight: '700',
     },
     loginButtonIcon: {
         color: Colors.primaryDark,
         fontSize: 20,
-        fontWeight: FontWeights.bold,
+        fontWeight: '700',
     },
     forgotPasswordButton: {
         marginTop: 16,
@@ -346,4 +445,3 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
