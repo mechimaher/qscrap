@@ -29,7 +29,8 @@ export class RefundService {
     async createRefund(details: CreateRefundDto): Promise<RefundResult> {
         const client = await this.pool.connect();
         try {
-            await client.query('BEGIN');
+            // FIX CC-01: Use SERIALIZABLE isolation for strongest double-refund protection
+            await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
 
             // Get order details
             const orderResult = await client.query(
@@ -52,7 +53,26 @@ export class RefundService {
             const driverAssigned = !!order.has_driver_assigned;
 
             // Determine refund type (default to customer_refusal if driver was assigned)
+            // FIX T-02: First validate order status allows refund
+            const refundableStates = [
+                'confirmed', 'processing', 'awaiting_pickup', 'in_delivery',
+                'delivered', 'completed', 'disputed'
+            ];
+            if (!refundableStates.includes(order.order_status)) {
+                throw new Error(`Cannot refund order with status: ${order.order_status}. Order must be in refundable state.`);
+            }
+
+            // FIX SM-01: Check 7-day warranty for post-delivery refunds
+            if (['delivered', 'completed'].includes(order.order_status)) {
+                const deliveredAt = new Date(order.delivered_at || order.completed_at || order.created_at);
+                const daysSince = (Date.now() - deliveredAt.getTime()) / (1000 * 60 * 60 * 24);
+                if (daysSince > 7) {
+                    throw new Error(`Order past 7-day warranty (${Math.ceil(daysSince)} days). Please escalate to operations manager.`);
+                }
+            }
+
             const refundType = details.refund_type ||
+
                 (driverAssigned ? 'customer_refusal' : 'cancelled_before_dispatch');
 
             // Calculate delivery fee to retain based on refund type
@@ -85,17 +105,24 @@ export class RefundService {
                 throw new RefundAlreadyProcessedError(details.order_id);
             }
 
-            // Create refund record with delivery fee retention tracking
+            // FIX CS-01: Include idempotency_key if provided
             const refundResult = await client.query(
                 `INSERT INTO refunds (
                     order_id, original_amount, refund_amount, refund_reason, 
-                    refund_method, initiated_by, refund_status, refund_type, delivery_fee_retained
-                 ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
+                    refund_method, initiated_by, refund_status, refund_type, 
+                    delivery_fee_retained, idempotency_key
+                 ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
+                 ON CONFLICT (order_id, refund_type) DO NOTHING
                  RETURNING *`,
                 [details.order_id, order.total_amount, details.refund_amount, details.refund_reason,
                 details.refund_method || 'original_payment', details.initiated_by,
-                    refundType, deliveryFeeRetained]
+                    refundType, deliveryFeeRetained, (details as any).idempotency_key || null]
             );
+
+            // Handle ON CONFLICT case (duplicate refund attempt)
+            if (refundResult.rows.length === 0) {
+                throw new RefundAlreadyProcessedError(details.order_id);
+            }
 
             const refund = refundResult.rows[0];
             let payoutAdjustment;
