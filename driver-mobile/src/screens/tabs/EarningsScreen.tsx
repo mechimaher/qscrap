@@ -379,16 +379,19 @@ const styles = StyleSheet.create({
     },
     periodCard: {
         flex: 1,
-        padding: 16,
-        borderRadius: 20,
+        padding: 20,
+        borderRadius: 24,
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
+        // VVIP 2026: Glassmorphism effect
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.6)',
+        borderTopColor: 'rgba(255,255,255,0.8)',
+        // Premium shadow with Qatar Maroon
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 4,
     },
     periodIcon: {
         fontSize: 28,
@@ -415,8 +418,11 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     performanceCard: {
-        borderRadius: 16,
+        borderRadius: 24,
         overflow: 'hidden',
+        // VVIP 2026: Subtle border
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
     performanceRow: {
         flexDirection: 'row',

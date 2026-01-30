@@ -632,22 +632,25 @@ const styles = StyleSheet.create({
     completedTitle: { fontSize: 18, fontWeight: '700' },
     completedTime: { fontSize: 14, marginTop: 2 },
 
-    // Type Card
+    // Type Card (VVIP 2026 Enhanced)
     typeCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        borderRadius: 16,
-        gap: 12,
+        padding: 20,
+        borderRadius: 24,
+        gap: 14,
     },
     typeIcon: { fontSize: 32 },
     typeLabel: { fontSize: 16, fontWeight: '700' },
     typeDesc: { fontSize: 13, marginTop: 2 },
 
-    // Section
+    // Section (VVIP 2026 Enhanced)
     section: {
-        padding: 16,
-        borderRadius: 16,
+        padding: 20,
+        borderRadius: 24,
+        // VVIP Glassmorphism
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
     },
     sectionHeader: {
         flexDirection: 'row',

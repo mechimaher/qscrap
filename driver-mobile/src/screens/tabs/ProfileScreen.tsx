@@ -596,10 +596,20 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
     },
     profileCard: {
-        padding: 24,
-        borderRadius: 20,
+        padding: 28,
+        borderRadius: 28,
         alignItems: 'center',
         marginBottom: 16,
+        // VVIP 2026: Glassmorphism effect
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.6)',
+        borderTopColor: 'rgba(255,255,255,0.8)',
+        // Premium shadow
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 6,
     },
     avatarContainer: {
         position: 'relative',
@@ -651,9 +661,17 @@ const styles = StyleSheet.create({
     },
     statItem: {
         flex: 1,
-        padding: 16,
-        borderRadius: 16,
+        padding: 20,
+        borderRadius: 24,
         alignItems: 'center',
+        // VVIP 2026: Glassmorphism
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.6)',
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 3,
     },
     statIcon: {
         fontSize: 28,
@@ -676,8 +694,11 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     infoCard: {
-        borderRadius: 16,
+        borderRadius: 24,
         overflow: 'hidden',
+        // VVIP 2026: Subtle glassmorphism border
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
     },
     infoRow: {
         flexDirection: 'row',
