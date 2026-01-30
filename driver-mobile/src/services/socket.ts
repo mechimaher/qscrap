@@ -240,6 +240,29 @@ export const leaveChatRoom = (orderId: string) => {
     // Note: Socket.IO auto-leaves rooms on disconnect, no need to explicitly leave
 };
 
+// ==============================
+// P2: TYPING INDICATORS
+// ==============================
+
+/**
+ * Emit typing status to other chat participants
+ */
+export const emitTyping = (orderId: string, isTyping: boolean) => {
+    socket?.emit('typing', {
+        order_id: orderId,
+        is_typing: isTyping,
+        sender_type: 'driver'
+    });
+};
+
+/**
+ * Listen for typing events from other participants
+ */
+export const onTypingStatus = (callback: (data: { order_id: string; is_typing: boolean; sender_type: string; sender_name?: string }) => void) => {
+    socket?.on('typing', callback);
+    return () => socket?.off('typing', callback);
+};
+
 // sendChatMessage removed (use REST API)
 
 // ==============================

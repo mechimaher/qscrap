@@ -22,9 +22,11 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api';
+import { useI18n } from '../i18n';
+import { api, API_ENDPOINTS } from '../services/api';
 import { API_BASE_URL } from '../config/api';
-import { getSocket, joinChatRoom, leaveChatRoom, onNewMessage } from '../services/socket';
+import { getSocket, joinChatRoom, leaveChatRoom, onNewMessage, emitTyping, onTypingStatus } from '../services/socket';
+import { offlineQueue } from '../services/OfflineQueue';
 import { Colors, BorderRadius, Spacing, FontSize, Shadows } from '../constants/theme';
 import { QuickReplies, SkeletonLoader } from '../components';
 
@@ -44,6 +46,7 @@ interface Message {
 export default function ChatScreen() {
     const { colors } = useTheme();
     const { driver } = useAuth();
+    const { t, isRTL } = useI18n();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { orderId, orderNumber, recipientName } = route.params || {};
@@ -53,7 +56,10 @@ export default function ChatScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const [showQuickReplies, setShowQuickReplies] = useState(true);
+    const [isOtherTyping, setIsOtherTyping] = useState(false);
+    const [typingUser, setTypingUser] = useState<string>('');
     const flatListRef = useRef<FlatList>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -64,17 +70,41 @@ export default function ChatScreen() {
         joinChatRoom(orderId);
 
         // Listen for new messages
-        const cleanup = onNewMessage((data) => {
+        const cleanupMessages = onNewMessage((data) => {
             if (data.order_id === orderId && data.sender_type !== 'driver') {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 Vibration.vibrate(100);
                 setMessages((prev) => [...prev, data]);
+                // Clear typing indicator when message received
+                setIsOtherTyping(false);
+            }
+        });
+
+        // P2: Listen for typing indicators
+        const cleanupTyping = onTypingStatus((data) => {
+            if (data.order_id === orderId && data.sender_type !== 'driver') {
+                setIsOtherTyping(data.is_typing);
+                setTypingUser(data.sender_name || 'Customer');
+
+                // Auto-clear typing after 3 seconds (in case stop event missed)
+                if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                }
+                if (data.is_typing) {
+                    typingTimeoutRef.current = setTimeout(() => {
+                        setIsOtherTyping(false);
+                    }, 3000);
+                }
             }
         });
 
         return () => {
-            cleanup();
+            cleanupMessages();
+            cleanupTyping();
             leaveChatRoom(orderId);
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
         };
     }, [orderId]);
 
@@ -138,11 +168,18 @@ export default function ChatScreen() {
         setMessages((prev) => [...prev, tempMessage]);
 
         try {
-            // Send via socket
             // Send via REST API (Backend emits socket event)
             await api.sendChatMessage(orderId, messageText);
         } catch (err) {
-            console.error('[Chat] Send error:', err);
+            console.error('[Chat] Send error, queueing for retry:', err);
+            // P0 IMPROVEMENT: Queue message for offline retry
+            // This ensures messages are never lost even in poor network conditions
+            await offlineQueue.enqueue(
+                `/chat/order/${orderId}/message`,
+                'POST',
+                { message: messageText }
+            );
+            console.log('[Chat] Message queued for retry');
         } finally {
             setIsSending(false);
         }
@@ -229,7 +266,7 @@ export default function ChatScreen() {
                             <View style={styles.emptyState}>
                                 <Text style={styles.emptyIcon}>💬</Text>
                                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                                    Start the conversation
+                                    {t('start_conversation')}
                                 </Text>
                             </View>
                         }
@@ -244,14 +281,33 @@ export default function ChatScreen() {
                     />
                 )}
 
+                {/* P2: Typing Indicator */}
+                {isOtherTyping && (
+                    <View style={[styles.typingIndicator, { backgroundColor: colors.surface }]}>
+                        <View style={styles.typingDots}>
+                            <View style={[styles.typingDot, { backgroundColor: Colors.primary }]} />
+                            <View style={[styles.typingDot, styles.typingDotDelayed, { backgroundColor: Colors.primary }]} />
+                            <View style={[styles.typingDot, styles.typingDotDelayed2, { backgroundColor: Colors.primary }]} />
+                        </View>
+                        <Text style={[styles.typingText, { color: colors.textMuted }]}>
+                            {typingUser} is typing...
+                        </Text>
+                    </View>
+                )}
+
                 {/* Input */}
                 <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
                     <TextInput
-                        style={[styles.input, { backgroundColor: colors.background, color: colors.text }]}
-                        placeholder="Type a message..."
+                        style={[styles.input, { backgroundColor: colors.background, color: colors.text, textAlign: isRTL ? 'right' : 'left' }]}
+                        placeholder={t('type_message')}
                         placeholderTextColor={colors.textMuted}
                         value={inputText}
-                        onChangeText={setInputText}
+                        onChangeText={(text) => {
+                            setInputText(text);
+                            // P2: Emit typing status
+                            emitTyping(orderId, text.length > 0);
+                        }}
+                        onBlur={() => emitTyping(orderId, false)}
                         multiline
                         maxLength={500}
                     />
@@ -260,7 +316,10 @@ export default function ChatScreen() {
                             styles.sendButton,
                             { backgroundColor: inputText.trim() ? Colors.primary : colors.border }
                         ]}
-                        onPress={handleSend}
+                        onPress={() => {
+                            emitTyping(orderId, false); // Stop typing when sending
+                            handleSend();
+                        }}
                         disabled={!inputText.trim() || isSending}
                     >
                         <Text style={styles.sendIcon}>➤</Text>
@@ -353,4 +412,33 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     sendIcon: { color: '#fff', fontSize: 18 },
+
+    // P2: Typing indicator styles
+    typingIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        gap: 8,
+    },
+    typingDots: {
+        flexDirection: 'row',
+        gap: 4,
+    },
+    typingDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        opacity: 0.6,
+    },
+    typingDotDelayed: {
+        opacity: 0.4,
+    },
+    typingDotDelayed2: {
+        opacity: 0.2,
+    },
+    typingText: {
+        fontSize: 13,
+        fontStyle: 'italic',
+    },
 });

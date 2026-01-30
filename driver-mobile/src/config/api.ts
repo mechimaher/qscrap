@@ -1,9 +1,9 @@
-// Production: Using Direct IP for testing (bypassing SSL/domain issues)
+// Production: Using api.qscrap.qa subdomain for reliable Cloudflare routing
 
-export const API_BASE_URL = 'http://147.93.89.153:3000/api';
-export const SOCKET_URL = 'http://147.93.89.153:3000';
+export const API_BASE_URL = 'https://api.qscrap.qa/api';
+export const SOCKET_URL = 'https://api.qscrap.qa';
 
-// For local development, update these temporarily:
+// For local development:
 // export const API_BASE_URL = 'http://192.168.1.x:3000/api';
 // export const SOCKET_URL = 'http://192.168.1.x:3000';
 

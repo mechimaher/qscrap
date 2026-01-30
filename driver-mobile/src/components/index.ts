@@ -20,3 +20,9 @@ export { default as AssignmentPopup } from './AssignmentPopup';
 export { default as ETABadge, ETAText } from './ETABadge';
 export { default as AchievementBadges, checkNewAchievements } from './AchievementBadges';
 export { default as SwipeToComplete, SwipeButton } from './SwipeToComplete';
+
+// Home Screen Components (Decomposed)
+export { StatCard, AssignmentCard } from './home';
+
+// Assignment Detail Components (Decomposed)
+export { TimelineItem } from './assignment';

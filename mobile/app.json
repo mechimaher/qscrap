@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "QScrap",
-    "slug": "qscrap",
+    "slug": "qa-qscrap-app",
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -70,7 +70,7 @@
       "useNextNotificationsApi": true,
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw"
+          "apiKey": "${GOOGLE_MAPS_API_KEY}"
         }
       }
     },
@@ -114,7 +114,7 @@
             "minSdkVersion": 24,
             "buildToolsVersion": "35.0.0",
             "kotlinVersion": "2.1.20",
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": false
           },
           "ios": {
             "deploymentTarget": "15.1",

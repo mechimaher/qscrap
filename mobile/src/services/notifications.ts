@@ -64,7 +64,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         });
         const token = tokenData.data;
 
-        console.log('[Notifications] Token:', token);
+        // C4 FIX: Don't log full push token
+        console.log('[Notifications] Token registered');
 
         // Store token locally
         await storage.setItem(storage.StorageKey.PUSH_TOKEN, token);

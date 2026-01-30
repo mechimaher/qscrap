@@ -53,7 +53,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         });
 
         const token = tokenData.data;
-        console.log('[Notifications] Push token:', token);
+        // C4 FIX: Don't log full push token in production
+        console.log('[Notifications] Push token registered successfully');
 
         // Setup Android notification channels
         if (Platform.OS === 'android') {

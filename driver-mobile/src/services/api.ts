@@ -44,12 +44,21 @@ export interface Assignment {
 
     // Order details
     part_description: string;
+    part_category?: string;
+    part_subcategory?: string;
     car_make?: string;
     car_model?: string;
+    car_year?: string;
     garage_name: string;
     garage_phone?: string;
     customer_name: string;
     customer_phone?: string;
+
+    // Payment Info
+    total_amount?: number;
+    part_price?: number;
+    delivery_fee?: number;
+    payment_method?: 'cod' | 'card' | 'wallet' | 'cash' | 'card_full';
 
     // Timing
     created_at: string;
@@ -220,13 +229,24 @@ class DriverApiService {
         const url = `${API_BASE_URL}${endpoint}`;
         console.log('[API] Request:', options.method || 'GET', url);
 
+        // Add timeout to prevent infinite hangs on stalled connections
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
         let response: Response;
         try {
             response = await fetch(url, {
                 ...options,
                 headers,
+                signal: controller.signal,
             });
-        } catch (networkError) {
+            clearTimeout(timeoutId);
+        } catch (networkError: any) {
+            clearTimeout(timeoutId);
+            if (networkError.name === 'AbortError') {
+                console.error('[API] Request timed out');
+                throw new Error('Request timed out - please check your connection');
+            }
             console.error('[API] Network error:', networkError);
             throw new Error('Network error - please check your connection');
         }

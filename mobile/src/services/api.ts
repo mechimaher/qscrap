@@ -184,11 +184,18 @@ class ApiService {
             ...options.headers,
         };
 
+        // Add timeout to prevent infinite hangs on stalled connections
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 ...options,
                 headers,
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             // Try to parse JSON response
             let data: any;
@@ -218,6 +225,11 @@ class ApiService {
 
             return data;
         } catch (error: any) {
+            clearTimeout(timeoutId);
+            // Handle timeout (AbortError)
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please check your connection and try again.');
+            }
             // Handle JSON parse errors explicitly
             if (error.message?.includes('JSON')) {
                 throw new Error('Invalid server response. Please check your connection and try again.');
