@@ -462,8 +462,25 @@ export class DeliveryService {
                 assignment_id: assignment.assignment_id,
                 assignment_type: 'collection',
                 order_id: order.order_id,
-                order_number: order.order_number
+                order_number: order.order_number,
+                pickup_address: order.garage_address,
+                garage_name: order.garage_name,
             });
+
+            // CRITICAL: Send Expo push notification for phone-locked/app-killed scenarios
+            try {
+                const { pushService } = await import('./push.service');
+                await pushService.sendAssignmentNotification(
+                    driver.user_id as string,
+                    order.order_number as string,
+                    order.garage_address as string,
+                    assignment.assignment_id as string
+                );
+                console.log('[Delivery] ✅ Push notification sent to driver for collection');
+            } catch (pushErr) {
+                console.error('[Delivery] ❌ Push notification for collection failed:', pushErr);
+                // Don't throw - socket notification should still work for in-app
+            }
         }
 
         // Notify garage
@@ -508,8 +525,27 @@ export class DeliveryService {
             emitToDriver(driver.user_id as string, 'new_assignment', {
                 assignment_id: assignment.assignment_id,
                 assignment_type: 'delivery',
-                order_id: order.order_id
+                order_id: order.order_id,
+                order_number: order.order_number,
+                pickup_address: order.pickup_address,
+                delivery_address: order.delivery_address,
+                customer_name: order.customer_name,
             });
+
+            // CRITICAL: Send Expo push notification for phone-locked/app-killed scenarios
+            try {
+                const { pushService } = await import('./push.service');
+                await pushService.sendAssignmentNotification(
+                    driver.user_id as string,
+                    order.order_number as string,
+                    order.delivery_address as string,
+                    assignment.assignment_id as string
+                );
+                console.log('[Delivery] ✅ Push notification sent to driver for delivery');
+            } catch (pushErr) {
+                console.error('[Delivery] ❌ Push notification for delivery failed:', pushErr);
+                // Don't throw - socket notification should still work for in-app
+            }
         }
 
         // Notify customer (in-app + socket)

@@ -301,7 +301,7 @@ class PushService {
                 assignmentId,
                 orderNumber,
             },
-            { channelId: 'default' }
+            { channelId: 'assignments' } // CRITICAL: Use high-priority channel for drivers
         );
     }
 
