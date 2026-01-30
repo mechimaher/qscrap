@@ -490,6 +490,13 @@ export class CancellationService {
                 }
             }
 
+            // CR-03: Atomic payout cancellation - prevent paying garage for cancelled orders
+            await client.query(
+                `UPDATE garage_payouts SET payout_status = 'cancelled', updated_at = NOW() 
+                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                [orderId]
+            );
+
             await client.query('COMMIT');
 
             // Notify garage (Persistent + Socket)
@@ -522,6 +529,43 @@ export class CancellationService {
                 cancelled_by: 'customer',
                 message: 'Customer has cancelled this order'
             });
+
+            // CR-02: Notify driver if order was in transit - critical for mid-delivery cancellations
+            if (order.driver_id && ['assigned', 'picked_up', 'in_transit'].includes(order.order_status)) {
+                await createNotification({
+                    userId: order.driver_id,
+                    type: 'order_cancelled',
+                    title: '🚫 Order Cancelled',
+                    message: `Order #${order.order_number} cancelled. Please return part to garage.`,
+                    data: { order_id: orderId, order_number: order.order_number, action: 'return_to_garage' },
+                    target_role: 'driver'
+                });
+
+                // PUSH notification to driver
+                try {
+                    const { pushService } = await import('../push.service');
+                    await pushService.sendToUser(
+                        order.driver_id,
+                        '🚫 Order Cancelled',
+                        `Order #${order.order_number} cancelled. Return part to garage.`,
+                        { type: 'order_cancelled', order_id: orderId, order_number: order.order_number },
+                        { channelId: 'orders', sound: true }
+                    );
+                } catch (pushErr) {
+                    console.error('[CANCEL] Push to driver failed:', pushErr);
+                }
+
+                // Socket to driver
+                (global as any).io?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
+                    order_id: orderId,
+                    order_number: order.order_number,
+                    cancelled_by: 'customer',
+                    message: 'Customer cancelled. Please return part to garage.',
+                    action: 'return_to_garage'
+                });
+
+                console.log(`[Cancellation] Driver ${order.driver_id} notified of cancellation for order ${order.order_number}`);
+            }
 
             // Notify customer about refund (in-app)
             if (stripeRefundResult) {
@@ -658,6 +702,13 @@ export class CancellationService {
                     [orderId, cancelResult.rows[0].cancellation_id, order.total_amount]
                 );
             }
+
+            // CR-03: Atomic payout cancellation - prevent paying garage for cancelled orders
+            await client.query(
+                `UPDATE garage_payouts SET payout_status = 'cancelled', updated_at = NOW() 
+                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                [orderId]
+            );
 
             await client.query('COMMIT');
 
@@ -906,6 +957,13 @@ export class CancellationService {
                     );
                 }
             }
+
+            // CR-03: Atomic payout cancellation - prevent paying garage for cancelled orders
+            await client.query(
+                `UPDATE garage_payouts SET payout_status = 'cancelled', updated_at = NOW() 
+                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                [orderId]
+            );
 
             await client.query('COMMIT');
 
