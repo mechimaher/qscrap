@@ -443,6 +443,10 @@ const PremiumBidCard = ({
     const agreedPrice = isNegotiationAgreed ? customerCounterAmount : null;
     const displayPrice = agreedPrice || currentGaragePrice;
 
+    // TURN VALIDATION: Customer can only accept if they don't have a pending counter-offer
+    // (i.e., it's customer's turn to respond, not garage's)
+    const isCustomersTurn = customerCounterStatus !== 'pending';
+
     const handlePressIn = () => {
         Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start();
     };
@@ -691,28 +695,39 @@ const PremiumBidCard = ({
             {/* Actions */}
             {isActive && !isAccepted && (
                 <View style={[styles.bidActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <TouchableOpacity
-                        style={[styles.acceptBtn, isAccepting && { opacity: 0.7 }]}
-                        onPress={() => onAccept(bid, displayPrice)}
-                        onPressIn={handlePressIn}
-                        onPressOut={handlePressOut}
-                        disabled={isAccepting}
-                    >
-                        <LinearGradient
-                            colors={['#22c55e', '#16a34a']}
-                            style={styles.acceptGradient}
+                    {isCustomersTurn ? (
+                        <TouchableOpacity
+                            style={[styles.acceptBtn, isAccepting && { opacity: 0.7 }]}
+                            onPress={() => onAccept(bid, displayPrice)}
+                            onPressIn={handlePressIn}
+                            onPressOut={handlePressOut}
+                            disabled={isAccepting}
                         >
-                            {isAccepting ? (
-                                <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                                <Text style={styles.acceptBtnText}>
-                                    ✓ {t('common.accept')} {hasNegotiatedPrice ? `${displayPrice}` : ''}
-                                </Text>
-                            )}
-                        </LinearGradient>
-                    </TouchableOpacity>
+                            <LinearGradient
+                                colors={['#22c55e', '#16a34a']}
+                                style={styles.acceptGradient}
+                            >
+                                {isAccepting ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                ) : (
+                                    <Text style={styles.acceptBtnText}>
+                                        ✓ {t('common.accept')} {hasNegotiatedPrice ? `${displayPrice}` : ''}
+                                    </Text>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={[styles.acceptBtn, { opacity: 0.5 }]}>
+                            <LinearGradient
+                                colors={['#9CA3AF', '#6B7280']}
+                                style={styles.acceptGradient}
+                            >
+                                <Text style={styles.acceptBtnText}>⏳ {t('bidCard.waitingForGarage', 'Waiting for garage')}</Text>
+                            </LinearGradient>
+                        </View>
+                    )}
 
-                    {negotiationRounds < 3 && (
+                    {negotiationRounds < 3 && isCustomersTurn && (
                         <TouchableOpacity
                             style={styles.counterBtn}
                             onPress={() => onCounter(bid)}

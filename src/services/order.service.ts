@@ -75,6 +75,18 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
         if (request.customer_id !== customerId) throw new Error('Access denied');
         if (request.status !== 'active') throw new Error('Request already processed');
 
+        // 2b. TURN VALIDATION: Customer cannot accept if they have a pending counter-offer
+        // (meaning it's garage's turn to respond)
+        const pendingCustomerOffer = await client.query(`
+            SELECT counter_offer_id FROM counter_offers 
+            WHERE bid_id = $1 AND offered_by_type = 'customer' AND status = 'pending'
+        `, [bidId]);
+
+        if (pendingCustomerOffer.rows.length > 0) {
+            throw new Error('Cannot accept bid - waiting for garage response to your counter-offer');
+        }
+
+
         // 3. Calculate Commission (Logic moved inline for transaction safety, ideally in GarageService)
         // Check demo/subscription status
         const garageRateResult = await client.query(`
