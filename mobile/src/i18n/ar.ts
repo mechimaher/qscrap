@@ -1262,6 +1262,7 @@ export const ar = {
         refundAmount: 'مبلغ الاسترداد',
         refundDetails: 'سيتم معالجة الاسترداد خلال 3-5 أيام عمل',
         refundProcessed: 'تم معالجة الاسترداد',
+        refundTiming: 'سيتم معالجة استردادك خلال 48 ساعة.',
         feeConfirmed: 'مجاني خلال ساعة، 10% بعد ذلك',
         feePreparing: 'رسوم إلغاء 25% (القطعة قيد التحضير)',
         success: 'تم إلغاء الطلب',

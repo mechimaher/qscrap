@@ -83,7 +83,10 @@ const CancellationPreviewScreen: React.FC = () => {
                         try {
                             setSubmitting(true);
                             await api.cancelOrder(orderId, reason);
-                            Alert.alert(t('cancel.cancelled'), t('cancel.refundProcessed'));
+                            Alert.alert(
+                                t('cancel.cancelled'),
+                                `${t('cancel.refundProcessed')}\n\n${t('cancel.refundTiming', { defaultValue: 'Your refund will be processed within 48 hours.' })}`
+                            );
                             navigation.navigate('MainTabs');
                         } catch (error: any) {
                             Alert.alert(t('common.error'), error.response?.data?.error || t('cancel.cancelFailed'));

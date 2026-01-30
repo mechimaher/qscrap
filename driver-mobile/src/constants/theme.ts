@@ -282,6 +282,12 @@ export const AssignmentStatusConfig = {
         icon: '❌',
         actionLabel: null,
     },
+    cancelled: {
+        label: 'Cancelled',
+        color: '#9CA3AF', // Gray for cancelled
+        icon: '🚫',
+        actionLabel: null,
+    },
 };
 
 export const AssignmentTypeConfig = {
