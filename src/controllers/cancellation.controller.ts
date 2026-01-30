@@ -11,6 +11,38 @@ import { getErrorMessage } from '../types';
 const pool = getWritePool();
 const cancellationService = new CancellationService(pool);
 
+// HR-01: Idempotency cache for cancel requests (prevents double-cancel race condition)
+const idempotencyCache = new Map<string, { result: any; timestamp: number }>();
+const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getIdempotencyKey(req: AuthRequest): string | null {
+    return req.headers['x-idempotency-key'] as string | null;
+}
+
+function getCachedResult(key: string): any | null {
+    const cached = idempotencyCache.get(key);
+    if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
+        return cached.result;
+    }
+    if (cached) {
+        idempotencyCache.delete(key); // Expired
+    }
+    return null;
+}
+
+function cacheResult(key: string, result: any): void {
+    idempotencyCache.set(key, { result, timestamp: Date.now() });
+    // Cleanup old entries periodically
+    if (idempotencyCache.size > 1000) {
+        const now = Date.now();
+        for (const [k, v] of idempotencyCache) {
+            if (now - v.timestamp > IDEMPOTENCY_TTL_MS) {
+                idempotencyCache.delete(k);
+            }
+        }
+    }
+}
+
 // ============================================
 // REQUEST CANCELLATION (by Customer)
 // ============================================
@@ -69,6 +101,17 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
     const { reason_code, reason_text } = req.body;
     const customerId = req.user!.userId;
 
+    // HR-01: Check idempotency cache
+    const idempotencyKey = getIdempotencyKey(req);
+    if (idempotencyKey) {
+        const cacheKey = `cancel_customer:${order_id}:${idempotencyKey}`;
+        const cached = getCachedResult(cacheKey);
+        if (cached) {
+            console.log(`[IDEMPOTENCY] Returning cached result for ${cacheKey}`);
+            return res.json(cached);
+        }
+    }
+
     try {
         const result = await cancellationService.cancelOrderByCustomer(
             order_id,
@@ -76,6 +119,12 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
             reason_code,
             reason_text
         );
+
+        // Cache successful result
+        if (idempotencyKey) {
+            cacheResult(`cancel_customer:${order_id}:${idempotencyKey}`, result);
+        }
+
         res.json(result);
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });

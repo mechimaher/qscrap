@@ -9,3 +9,8 @@ export { autoResolveDisputes } from './dispute.jobs';
 export { schedulePendingPayouts, autoProcessPayouts, autoConfirmPayouts } from './payout.jobs';
 export { autoConfirmDeliveries } from './order.jobs';
 export { cleanupOldData, abandonStaleInspections } from './maintenance.jobs';
+
+// HR-02 & HR-03: Cancellation audit fixes (Jan 30, 2026)
+export { runOrphanCleanup, runOrphanCleanupNow } from './orphan-cleanup.job';
+export { runSLAAutoCancel, runSLAAutoCancelNow } from './sla-auto-cancel.job';
+
