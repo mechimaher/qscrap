@@ -63,6 +63,16 @@ router.post('/webhook',
                     await handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
                     break;
 
+                // FIX PG-02: Handle refund events for status synchronization
+                case 'refund.created':
+                case 'refund.updated':
+                    await handleRefundUpdate(event.data.object as Stripe.Refund);
+                    break;
+
+                case 'charge.refunded':
+                    await handleChargeRefunded(event.data.object as Stripe.Charge);
+                    break;
+
                 default:
                     console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
             }
@@ -199,6 +209,136 @@ async function notifyGarageAsync(orderId: string): Promise<void> {
 
     } catch (error) {
         console.error('[Stripe Webhook] Garage notification error:', error);
+    }
+}
+
+/**
+ * FIX PG-02: Handle refund status updates from Stripe
+ * Syncs Stripe refund status with internal database
+ */
+async function handleRefundUpdate(stripeRefund: Stripe.Refund): Promise<void> {
+    const pool = getWritePool();
+    const { id: stripeRefundId, status, metadata, failure_reason } = stripeRefund;
+
+    console.log(`[Stripe Webhook] Processing refund ${stripeRefundId}, status: ${status}`);
+
+    // Map Stripe status to internal status
+    let internalStatus: string;
+    switch (status) {
+        case 'succeeded':
+            internalStatus = 'completed';
+            break;
+        case 'pending':
+            internalStatus = 'processing';
+            break;
+        case 'failed':
+        case 'canceled':
+            internalStatus = 'failed';
+            break;
+        default:
+            internalStatus = 'processing';
+    }
+
+    const orderId = metadata?.order_id;
+
+    try {
+        // Update refund record by stripe_refund_id or pending refund for order
+        const updateResult = await pool.query(
+            `UPDATE refunds SET 
+                refund_status = $1,
+                stripe_refund_status = $2,
+                stripe_refund_id = COALESCE(stripe_refund_id, $3),
+                last_synced_at = NOW(),
+                processed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE processed_at END,
+                refund_reason = CASE WHEN $4 IS NOT NULL 
+                    THEN COALESCE(refund_reason, '') || ' [Stripe: ' || $4 || ']' 
+                    ELSE refund_reason END
+             WHERE stripe_refund_id = $3 
+                OR (order_id = $5 AND stripe_refund_id IS NULL AND refund_status IN ('pending', 'processing'))
+             RETURNING refund_id, order_id`,
+            [internalStatus, status, stripeRefundId, failure_reason, orderId]
+        );
+
+        if (updateResult.rows.length > 0) {
+            const refund = updateResult.rows[0];
+            console.log(`[Stripe Webhook] Updated refund ${refund.refund_id} to ${internalStatus}`);
+
+            // If completed, update order payment_status
+            if (internalStatus === 'completed') {
+                await pool.query(
+                    `UPDATE orders SET payment_status = 'refunded', updated_at = NOW() 
+                     WHERE order_id = $1 AND payment_status != 'refunded'`,
+                    [refund.order_id]
+                );
+                console.log(`[Stripe Webhook] Marked order ${refund.order_id} as refunded`);
+            }
+        } else {
+            console.warn(`[Stripe Webhook] No matching refund found for Stripe refund ${stripeRefundId}`);
+        }
+    } catch (error) {
+        console.error('[Stripe Webhook] handleRefundUpdate error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Handle charge.refunded event
+ * Updates refund when charge is refunded (alternative to refund.updated)
+ */
+async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
+    const pool = getWritePool();
+
+    const paymentIntentId = typeof charge.payment_intent === 'string'
+        ? charge.payment_intent
+        : charge.payment_intent?.id;
+
+    if (!paymentIntentId) {
+        console.warn('[Stripe Webhook] charge.refunded event without payment_intent');
+        return;
+    }
+
+    console.log(`[Stripe Webhook] Charge refunded for payment intent: ${paymentIntentId}`);
+
+    try {
+        // Find order by payment intent
+        const orderResult = await pool.query(
+            `SELECT o.order_id FROM orders o
+             JOIN payment_intents pi ON o.order_id = pi.order_id
+             WHERE pi.provider_intent_id = $1`,
+            [paymentIntentId]
+        );
+
+        if (orderResult.rows.length === 0) {
+            console.warn(`[Stripe Webhook] No order found for payment intent ${paymentIntentId}`);
+            return;
+        }
+
+        const orderId = orderResult.rows[0].order_id;
+
+        // Mark pending/processing refund as completed
+        const refundResult = await pool.query(
+            `UPDATE refunds SET 
+                refund_status = 'completed',
+                last_synced_at = NOW(),
+                processed_at = NOW()
+             WHERE order_id = $1 
+               AND refund_status IN ('pending', 'processing')
+             RETURNING refund_id`,
+            [orderId]
+        );
+
+        if (refundResult.rows.length > 0) {
+            console.log(`[Stripe Webhook] Marked refund ${refundResult.rows[0].refund_id} as completed via charge.refunded`);
+
+            // Update order payment status
+            await pool.query(
+                `UPDATE orders SET payment_status = 'refunded', updated_at = NOW() WHERE order_id = $1`,
+                [orderId]
+            );
+        }
+    } catch (error) {
+        console.error('[Stripe Webhook] handleChargeRefunded error:', error);
+        throw error;
     }
 }
 
