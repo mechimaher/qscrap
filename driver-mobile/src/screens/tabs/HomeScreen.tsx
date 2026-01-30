@@ -691,10 +691,16 @@ const styles = StyleSheet.create({
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 24,
         gap: 8,
+        // VVIP 2026: Premium glow effect
+        shadowColor: Colors.success,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+        elevation: 8,
     },
     statusDot: {
         width: 8,
@@ -702,8 +708,9 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     statusText: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     scrollView: {
         flex: 1,
@@ -739,17 +746,20 @@ const styles = StyleSheet.create({
     statCard: {
         flex: 1,
         padding: 16,
-        borderRadius: 20,
+        borderRadius: 24,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 100,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
+        minHeight: 110,
+        // VVIP 2026: Glassmorphism effect
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.6)',
+        borderTopColor: 'rgba(255,255,255,0.8)',
+        // Premium shadow
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 4,
     },
     statValueContainer: {
         flexDirection: 'row',

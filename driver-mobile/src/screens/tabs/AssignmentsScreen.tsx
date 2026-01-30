@@ -249,14 +249,21 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     filterTab: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 24,
         backgroundColor: 'transparent',
+        // VVIP 2026: Premium shadow for active state
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0,
+        shadowRadius: 10,
+        elevation: 0,
     },
     filterText: {
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     listContent: {
         padding: 20,
