@@ -1262,6 +1262,8 @@ export const en = {
         partPrice: 'Part Price',
         deliveryFee: 'Delivery Fee',
         deliveryFeeRetained: 'Delivery Fee (Non-refundable)',
+        feeConfirmed: 'Free within 1 hour, 10% after',
+        feePreparing: '25% cancellation fee (Part is being prepared)',
         success: 'Order Cancelled',
         successMessage: 'Your order has been cancelled. Refund will be processed if applicable.',
         failed: 'Failed to cancel order',

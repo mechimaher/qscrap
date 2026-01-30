@@ -1,5 +1,5 @@
 // QScrap Driver App - Profile Screen
-// Driver profile, vehicle info, and settings
+// Enhanced Premium VVIP Design with i18n Support (Aligned with Customer App)
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -15,22 +15,26 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSettings } from '../../contexts/SettingsContext';
+import { useI18n } from '../../i18n';
 import { api } from '../../services/api';
-import { Colors, Spacing } from '../../constants/theme';
+import { Colors, Spacing, BorderRadius, Shadows } from '../../constants/theme';
 import { LEGAL_DOCS } from '../../constants/legal';
+
+const APP_VERSION = '1.2.0';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<any>();
     const { driver, logout, refreshDriver } = useAuth();
     const { colors } = useTheme();
+    const { t, isRTL, language, setLanguage } = useI18n();
     const {
         navApp, setNavApp,
-        language, setLanguage,
         notificationsEnabled, setNotificationsEnabled
     } = useSettings();
 
@@ -75,53 +79,56 @@ export default function ProfileScreen() {
             await refreshDriver();
             setIsEditModalVisible(false);
             setIsBankModalVisible(false);
-            Alert.alert('Success', 'Profile updated successfully');
+            Alert.alert(t('success'), t('profile_updated'));
         } catch (err) {
             console.error('[Profile] Update error:', err);
-            Alert.alert('Error', 'Failed to update profile');
+            Alert.alert(t('error'), t('something_went_wrong'));
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleContactSupport = () => {
-        const whatsappUrl = 'whatsapp://send?phone=97455555555'; // Example support number
-        Linking.canOpenURL(whatsappUrl).then(supported => {
-            if (supported) {
-                Linking.openURL(whatsappUrl);
-            } else {
-                Linking.openURL('mailto:support@qscrap.qa');
-            }
-        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert(
+            t('contact_support'),
+            t('choose_contact'),
+            [
+                { text: t('whatsapp'), onPress: () => Linking.openURL('https://wa.me/97430007227?text=Hello%20QScrap%20Driver%20Support') },
+                { text: t('call_us'), onPress: () => Linking.openURL('tel:+97430007227') },
+                { text: t('email_us'), onPress: () => Linking.openURL('mailto:drivers@qscrap.qa') },
+                { text: t('cancel'), style: 'cancel' }
+            ]
+        );
     };
 
     const handleTerms = () => {
-        navigation.navigate('WebView', { html: LEGAL_DOCS.TERMS, title: 'Terms & Conditions' });
+        navigation.navigate('WebView', { html: LEGAL_DOCS.TERMS, title: t('terms_conditions') });
     };
 
     const handlePrivacyPolicy = () => {
-        navigation.navigate('WebView', { html: LEGAL_DOCS.PRIVACY, title: 'Privacy Policy' });
+        navigation.navigate('WebView', { html: LEGAL_DOCS.PRIVACY, title: t('privacy_policy') });
     };
 
     const handleDeleteAccount = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         Alert.alert(
-            'Delete Account',
-            'This action is PERMANENT. All your data will be anonymized and you will lose access to your account. Are you absolutely sure?',
+            t('delete_account'),
+            t('delete_account_warning'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Delete Forever',
+                    text: t('delete_forever'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             setIsSaving(true);
                             await api.deleteAccount();
                             await logout();
-                            Alert.alert('Success', 'Your account has been deleted.');
+                            Alert.alert(t('success'), t('account_deleted'));
                         } catch (err) {
                             console.error('[Profile] Delete error:', err);
-                            Alert.alert('Error', 'Failed to delete account. Please contact support.');
+                            Alert.alert(t('error'), t('something_went_wrong'));
                         } finally {
                             setIsSaving(false);
                         }
@@ -134,12 +141,12 @@ export default function ProfileScreen() {
     const handleLogout = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Alert.alert(
-            'Logout',
-            'Are you sure you want to logout? You will be set to offline.',
+            t('sign_out'),
+            t('confirm_sign_out'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Logout',
+                    text: t('sign_out'),
                     style: 'destructive',
                     onPress: async () => {
                         await logout();
@@ -152,13 +159,13 @@ export default function ProfileScreen() {
     const handleNavAppChange = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Alert.alert(
-            'Preferred Navigation',
-            'Select your default navigation app:',
+            t('navigation_app'),
+            t('choose_nav_app'),
             [
-                { text: 'In-App Map', onPress: () => setNavApp('in_app'), style: navApp === 'in_app' ? 'default' : 'default' },
-                { text: 'Google Maps', onPress: () => setNavApp('google'), style: navApp === 'google' ? 'default' : 'default' },
-                { text: 'Waze', onPress: () => setNavApp('waze'), style: navApp === 'waze' ? 'default' : 'default' },
-                { text: 'Cancel', style: 'cancel' }
+                { text: t('in_app_map'), onPress: () => setNavApp('in_app') },
+                { text: t('google_maps'), onPress: () => setNavApp('google') },
+                { text: t('waze'), onPress: () => setNavApp('waze') },
+                { text: t('cancel'), style: 'cancel' }
             ]
         );
     };
@@ -166,12 +173,12 @@ export default function ProfileScreen() {
     const handleLanguageChange = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Alert.alert(
-            'Language / اللغة',
-            'Select your preferred language:',
+            t('language'),
+            t('choose_language'),
             [
-                { text: 'English', onPress: () => setLanguage('en'), style: language === 'en' ? 'default' : 'default' },
-                { text: 'العربية (Arabic)', onPress: () => setLanguage('ar'), style: language === 'ar' ? 'default' : 'default' },
-                { text: 'Cancel', style: 'cancel' }
+                { text: t('english'), onPress: () => setLanguage('en') },
+                { text: t('arabic'), onPress: () => setLanguage('ar') },
+                { text: t('cancel'), style: 'cancel' }
             ]
         );
     };
@@ -190,6 +197,78 @@ export default function ProfileScreen() {
         }
     };
 
+    const getStatusText = () => {
+        if (!driver?.status) return t('offline');
+        switch (driver.status) {
+            case 'available': return t('available');
+            case 'busy': return t('on_delivery');
+            default: return t('offline');
+        }
+    };
+
+    const getNavAppName = () => {
+        switch (navApp) {
+            case 'google': return t('google_maps');
+            case 'waze': return t('waze');
+            default: return t('in_app_map');
+        }
+    };
+
+    // Menu Item Component (like customer app)
+    const MenuItem = ({
+        icon,
+        label,
+        onPress,
+        showArrow = true,
+        danger = false,
+        value = '',
+        toggle = false,
+        toggleValue = false,
+    }: {
+        icon: string;
+        label: string;
+        onPress: () => void;
+        showArrow?: boolean;
+        danger?: boolean;
+        value?: string;
+        toggle?: boolean;
+        toggleValue?: boolean;
+    }) => (
+        <TouchableOpacity
+            style={[styles.menuItem, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onPress();
+            }}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger]}>
+                <Text style={styles.menuIcon}>{icon}</Text>
+            </View>
+            <Text style={[
+                styles.menuLabel,
+                { color: danger ? '#EF4444' : colors.text },
+                isRTL && { textAlign: 'right', marginRight: 12, marginLeft: 0 }
+            ]}>{label}</Text>
+            {value ? (
+                <Text style={[styles.menuValue, { color: Colors.primary }]}>{value}</Text>
+            ) : null}
+            {toggle ? (
+                <View style={[
+                    styles.toggle,
+                    { backgroundColor: toggleValue ? Colors.success : colors.border }
+                ]}>
+                    <View style={[
+                        styles.toggleKnob,
+                        { transform: [{ translateX: toggleValue ? 14 : 0 }] }
+                    ]} />
+                </View>
+            ) : showArrow ? (
+                <Text style={styles.menuArrow}>{isRTL ? '‹' : '›'}</Text>
+            ) : null}
+        </TouchableOpacity>
+    );
+
     if (!driver) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
@@ -199,10 +278,19 @@ export default function ProfileScreen() {
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
+            <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile')}</Text>
+                <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setIsEditModalVisible(true);
+                    }}
+                >
+                    <Text style={styles.editButtonText}>{t('edit_profile')}</Text>
+                </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -210,269 +298,205 @@ export default function ProfileScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Profile Card */}
-                <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => setIsEditModalVisible(true)}
+                {/* Premium Profile Card with Gradient */}
+                <View style={styles.profileCard}>
+                    <LinearGradient
+                        colors={[Colors.primary, '#8B1538']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.profileGradient}
                     >
-                        <Text style={styles.editButtonText}>Edit</Text>
-                    </TouchableOpacity>
-                    <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarEmoji}>👨‍✈️</Text>
-                        <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
-                    </View>
-                    <Text style={[styles.driverName, { color: colors.text }]}>
-                        {driver.full_name || 'Driver'}
-                    </Text>
-                    <Text style={[styles.driverPhone, { color: colors.textSecondary }]}>
-                        {driver.phone || ''}
-                    </Text>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
-                        <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-                        <Text style={[styles.statusText, { color: getStatusColor() }]}>
-                            {driver.status === 'available' ? 'Available' :
-                                driver.status === 'busy' ? 'On Delivery' : 'Offline'}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Stats Row */}
-                <View style={styles.statsRow}>
-                    <View style={[styles.statItem, { backgroundColor: colors.surface }]}>
-                        <Text style={styles.statIcon}>📦</Text>
-                        <Text style={[styles.statValue, { color: colors.text }]}>
-                            {String(driver.total_deliveries || 0)}
-                        </Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Deliveries</Text>
-                    </View>
-                    <View style={[styles.statItem, { backgroundColor: colors.surface }]}>
-                        <Text style={styles.statIcon}>⭐</Text>
-                        <Text style={[styles.statValue, { color: colors.text }]}>
-                            {formatRating(driver.rating_average)}
-                        </Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rating</Text>
-                    </View>
-                </View>
-
-                {/* Vehicle Info */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Vehicle Info</Text>
-                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-                        <InfoRow
-                            icon="🚗"
-                            label="Type"
-                            value={driver?.vehicle_type || 'Not set'}
-                            colors={colors}
-                        />
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <InfoRow
-                            icon="🚘"
-                            label="Model"
-                            value={driver?.vehicle_model || 'Not set'}
-                            colors={colors}
-                        />
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <InfoRow
-                            icon="🔢"
-                            label="Plate"
-                            value={driver?.vehicle_plate || 'Not set'}
-                            colors={colors}
-                        />
-                    </View>
-                </View>
-
-                {/* Bank Details */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Bank Details</Text>
-                        <TouchableOpacity onPress={() => setIsBankModalVisible(true)}>
-                            <Text style={[styles.editLink, { color: Colors.primary }]}>Update</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-                        <InfoRow
-                            icon="🏦"
-                            label="Bank"
-                            value={driver?.bank_name || 'Not set'}
-                            colors={colors}
-                        />
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <InfoRow
-                            icon="💳"
-                            label="IBAN"
-                            value={driver?.bank_account_iban ? `***${driver.bank_account_iban.slice(-4)}` : 'Not set'}
-                            colors={colors}
-                        />
-                    </View>
-                </View>
-
-                {/* Documents (VVIP Feature) */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Documents</Text>
-                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-                        <InfoRow
-                            icon="📄"
-                            label="Driver License"
-                            value="Verified"
-                            valueColor={Colors.success}
-                            colors={colors}
-                        />
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <InfoRow
-                            icon="🛡️"
-                            label="Vehicle Insurance"
-                            value="Exp. 12/2026"
-                            valueColor={Colors.warning}
-                            colors={colors}
-                        />
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <InfoRow
-                            icon="🆔"
-                            label="Qatar ID"
-                            value="Verified"
-                            valueColor={Colors.success}
-                            colors={colors}
-                        />
-                    </View>
-                </View>
-
-                {/* Settings */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
-                    <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-                        <TouchableOpacity style={styles.settingRow} onPress={toggleNotifications}>
-                            <Text style={styles.settingIcon}>🔔</Text>
-                            <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                Notifications
+                        {/* Avatar with Status Indicator */}
+                        <View style={styles.avatarContainer}>
+                            <Text style={styles.avatar}>
+                                {driver.full_name?.charAt(0)?.toUpperCase() || '👨‍✈️'}
                             </Text>
-                            <View style={[
-                                styles.toggle,
-                                { backgroundColor: notificationsEnabled ? Colors.success : colors.border }
-                            ]}>
-                                <View style={[
-                                    styles.toggleKnob,
-                                    { transform: [{ translateX: notificationsEnabled ? 12 : 0 }] }
-                                ]} />
+                            <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
+                        </View>
+                        <Text style={styles.userName}>{driver.full_name || 'Driver'}</Text>
+                        <Text style={styles.userPhone}>{driver.phone || ''}</Text>
+
+                        {/* Stats Row */}
+                        <View style={[styles.profileStats, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                            <View style={styles.profileStat}>
+                                <Text style={styles.profileStatNumber}>
+                                    {String(driver.total_deliveries || 0)}
+                                </Text>
+                                <Text style={styles.profileStatLabel}>{t('deliveries')}</Text>
                             </View>
-                        </TouchableOpacity>
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={handleLanguageChange}>
-                            <Text style={styles.settingIcon}>🌐</Text>
-                            <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                Language
-                            </Text>
-                            <Text style={[styles.settingValue, { color: colors.text }]}>
-                                {language === 'en' ? 'English (US)' : 'العربية'}
-                            </Text>
-                        </TouchableOpacity>
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={handleNavAppChange}>
-                            <Text style={styles.settingIcon}>🗺️</Text>
-                            <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                Navigation App
-                            </Text>
-                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                {navApp === 'in_app' ? 'In-App Map' : navApp === 'google' ? 'Google Maps' : 'Waze'}
-                            </Text>
-                        </TouchableOpacity>
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={handleContactSupport}>
-                            <Text style={styles.settingIcon}>📞</Text>
-                            <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                Contact Support
-                            </Text>
-                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                WhatsApp →
-                            </Text>
-                        </TouchableOpacity>
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={handleTerms}>
-                            <Text style={styles.settingIcon}>📄</Text>
-                            <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                Terms & Conditions
-                            </Text>
-                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                View →
-                            </Text>
-                        </TouchableOpacity>
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={handlePrivacyPolicy}>
-                            <Text style={styles.settingIcon}>🔒</Text>
-                            <Text style={[styles.settingLabel, { color: colors.text }]}>
-                                Privacy Policy
-                            </Text>
-                            <Text style={[styles.settingValue, { color: Colors.primary }]}>
-                                View →
-                            </Text>
-                        </TouchableOpacity>
-                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                        <TouchableOpacity style={styles.settingRow} onPress={handleDeleteAccount}>
-                            <Text style={styles.settingIcon}>⚠️</Text>
-                            <Text style={[styles.settingLabel, { color: Colors.danger }]}>
-                                Delete Account
-                            </Text>
-                            <Text style={[styles.settingValue, { color: Colors.danger }]}>
-                                →
-                            </Text>
-                        </TouchableOpacity>
+                            <View style={styles.profileStatDivider} />
+                            <View style={styles.profileStat}>
+                                <Text style={styles.profileStatNumber}>
+                                    {formatRating(driver.rating_average)}
+                                </Text>
+                                <Text style={styles.profileStatLabel}>{t('rating')}</Text>
+                            </View>
+                            <View style={styles.profileStatDivider} />
+                            <View style={styles.profileStat}>
+                                <View style={[styles.statusBadgeSmall, { backgroundColor: getStatusColor() + '30' }]}>
+                                    <View style={[styles.statusDotSmall, { backgroundColor: getStatusColor() }]} />
+                                </View>
+                                <Text style={styles.profileStatLabel}>{getStatusText()}</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                </View>
+
+                {/* Driver Info Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('driver_info')}</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="🚗"
+                            label={t('vehicle_details')}
+                            value={driver.vehicle_type || ''}
+                            onPress={() => setIsEditModalVisible(true)}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="🏦"
+                            label={t('bank_details')}
+                            value={driver.bank_name ? `***${driver.bank_account_iban?.slice(-4) || ''}` : ''}
+                            onPress={() => setIsBankModalVisible(true)}
+                        />
                     </View>
                 </View>
 
-                {/* Logout */}
-                <TouchableOpacity
-                    style={styles.logoutButton}
-                    onPress={handleLogout}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.logoutText}>Logout</Text>
-                </TouchableOpacity>
+                {/* Settings Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('settings')}</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="🔔"
+                            label={t('notifications')}
+                            onPress={toggleNotifications}
+                            showArrow={false}
+                            toggle={true}
+                            toggleValue={notificationsEnabled}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="🌐"
+                            label={t('language')}
+                            value={language === 'en' ? 'English' : 'العربية'}
+                            onPress={handleLanguageChange}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="🗺️"
+                            label={t('navigation_app')}
+                            value={getNavAppName()}
+                            onPress={handleNavAppChange}
+                        />
+                    </View>
+                </View>
 
-                {/* Version */}
-                <Text style={[styles.version, { color: colors.textMuted }]}>
-                    QScrap Driver Enterprise v1.1.0 (Build 5658)
-                </Text>
+                {/* Support Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('support')}</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="📞"
+                            label={t('contact_support')}
+                            onPress={handleContactSupport}
+                        />
+                    </View>
+                </View>
+
+                {/* Legal Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('legal')}</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="📄"
+                            label={t('terms_conditions')}
+                            onPress={handleTerms}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="🔒"
+                            label={t('privacy_policy')}
+                            onPress={handlePrivacyPolicy}
+                        />
+                    </View>
+                </View>
+
+                {/* Danger Zone */}
+                <View style={styles.menuSection}>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="🚪"
+                            label={t('sign_out')}
+                            onPress={handleLogout}
+                            showArrow={false}
+                            danger
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="🗑️"
+                            label={t('delete_account')}
+                            onPress={handleDeleteAccount}
+                            showArrow={false}
+                            danger
+                        />
+                    </View>
+                </View>
+
+                {/* Footer */}
+                <View style={styles.versionContainer}>
+                    <View style={styles.versionBadge}>
+                        <Text style={styles.versionText}>
+                            {t('version_text', { version: APP_VERSION })}
+                        </Text>
+                    </View>
+                    <Text style={styles.copyrightText}>
+                        {t('all_rights_reserved', { year: new Date().getFullYear() })}
+                    </Text>
+                    <Text style={styles.madeWithText}>{t('made_in_qatar')}</Text>
+                </View>
+
+                <View style={{ height: 100 }} />
             </ScrollView>
 
             {/* Edit Profile Modal */}
             <Modal visible={isEditModalVisible} animationType="slide" transparent>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Profile</Text>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>{t('edit_profile')}</Text>
 
                         <ScrollView style={styles.modalForm}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Full Name</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('full_name')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={editForm.full_name}
                                 onChangeText={(val) => setEditForm({ ...editForm, full_name: val })}
-                                placeholder="Enter full name"
+                                placeholder={t('full_name')}
                                 placeholderTextColor={colors.textMuted}
                             />
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Email Address</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('email')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={editForm.email}
                                 onChangeText={(val) => setEditForm({ ...editForm, email: val })}
-                                placeholder="Enter email"
+                                placeholder={t('email')}
                                 placeholderTextColor={colors.textMuted}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                             />
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vehicle Model</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('vehicle_model')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={editForm.vehicle_model}
                                 onChangeText={(val) => setEditForm({ ...editForm, vehicle_model: val })}
                                 placeholder="e.g. Honda Shadow"
                                 placeholderTextColor={colors.textMuted}
                             />
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Plate Number</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('license_plate')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={editForm.vehicle_plate}
                                 onChangeText={(val) => setEditForm({ ...editForm, vehicle_plate: val })}
                                 placeholder="e.g. 12345"
@@ -485,14 +509,14 @@ export default function ProfileScreen() {
                                 style={[styles.modalButton, styles.cancelButton]}
                                 onPress={() => setIsEditModalVisible(false)}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.saveButton]}
                                 onPress={() => handleUpdateProfile(editForm)}
                                 disabled={isSaving}
                             >
-                                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
+                                <Text style={styles.saveButtonText}>{isSaving ? t('loading') : t('save')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -503,30 +527,30 @@ export default function ProfileScreen() {
             <Modal visible={isBankModalVisible} animationType="slide" transparent>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>Bank Details</Text>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>{t('bank_details')}</Text>
 
                         <ScrollView style={styles.modalForm}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Bank Name</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('bank_name')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={bankForm.bank_name}
                                 onChangeText={(val) => setBankForm({ ...bankForm, bank_name: val })}
                                 placeholder="e.g. QNB"
                                 placeholderTextColor={colors.textMuted}
                             />
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Account Name</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('account_name')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={bankForm.bank_account_name}
                                 onChangeText={(val) => setBankForm({ ...bankForm, bank_account_name: val })}
-                                placeholder="Name as per bank record"
+                                placeholder={t('account_name')}
                                 placeholderTextColor={colors.textMuted}
                             />
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>IBAN</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('iban')}</Text>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={bankForm.bank_account_iban}
                                 onChangeText={(val) => setBankForm({ ...bankForm, bank_account_iban: val })}
                                 placeholder="QA..."
@@ -540,14 +564,14 @@ export default function ProfileScreen() {
                                 style={[styles.modalButton, styles.cancelButton]}
                                 onPress={() => setIsBankModalVisible(false)}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.saveButton]}
                                 onPress={() => handleUpdateProfile(bankForm)}
                                 disabled={isSaving}
                             >
-                                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
+                                <Text style={styles.saveButtonText}>{isSaving ? t('loading') : t('save')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -564,59 +588,69 @@ function formatRating(value: any): string {
     return isNaN(num) ? '0.0' : num.toFixed(1);
 }
 
-function InfoRow({ icon, label, value, valueColor, colors }: any) {
-    return (
-        <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>{icon}</Text>
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
-            <Text style={[styles.infoValue, { color: valueColor || colors.text }]}>{value}</Text>
-        </View>
-    );
-}
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
     header: {
-        paddingHorizontal: 20,
-        paddingTop: 16,
-        paddingBottom: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
-    title: {
+    headerTitle: {
         fontSize: 28,
-        fontWeight: '700',
+        fontWeight: '800',
+        letterSpacing: -0.5,
+    },
+    editButton: {
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        backgroundColor: Colors.primary + '15',
+        borderRadius: BorderRadius.full,
+    },
+    editButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: Colors.primary,
     },
     scrollView: {
         flex: 1,
     },
     scrollContent: {
-        padding: 20,
-        paddingTop: 8,
-        paddingBottom: Spacing.BOTTOM_NAV_HEIGHT,
+        paddingBottom: 40,
     },
+    // Profile Card
     profileCard: {
-        padding: 28,
-        borderRadius: 28,
+        marginHorizontal: Spacing.lg,
+        marginTop: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.lg,
+    },
+    profileGradient: {
+        padding: Spacing.xl,
         alignItems: 'center',
-        marginBottom: 16,
-        // VVIP 2026: Glassmorphism effect
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.6)',
-        borderTopColor: 'rgba(255,255,255,0.8)',
-        // Premium shadow
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 6,
     },
     avatarContainer: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+        borderWidth: 3,
+        borderColor: 'rgba(255,255,255,0.5)',
         position: 'relative',
-        marginBottom: 16,
     },
-    avatarEmoji: {
-        fontSize: 72,
+    avatar: {
+        fontSize: 42,
+        color: '#fff',
+        fontWeight: '700',
     },
     statusIndicator: {
         position: 'absolute',
@@ -628,132 +662,154 @@ const styles = StyleSheet.create({
         borderWidth: 3,
         borderColor: '#fff',
     },
-    driverName: {
+    userName: {
         fontSize: 24,
-        fontWeight: '700',
-        marginBottom: 4,
+        fontWeight: '800',
+        color: '#fff',
+        letterSpacing: -0.5,
     },
-    driverPhone: {
-        fontSize: 14,
-        marginBottom: 12,
-    },
-    statusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        gap: 8,
-    },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    statusText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    statsRow: {
-        flexDirection: 'row',
-        gap: 12,
-        marginBottom: 24,
-    },
-    statItem: {
-        flex: 1,
-        padding: 20,
-        borderRadius: 24,
-        alignItems: 'center',
-        // VVIP 2026: Glassmorphism
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.6)',
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-        elevation: 3,
-    },
-    statIcon: {
-        fontSize: 28,
-        marginBottom: 8,
-    },
-    statValue: {
-        fontSize: 24,
-        fontWeight: '700',
-    },
-    statLabel: {
-        fontSize: 12,
+    userPhone: {
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.85)',
         marginTop: 4,
     },
-    section: {
-        marginBottom: 24,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 12,
-    },
-    infoCard: {
-        borderRadius: 24,
-        overflow: 'hidden',
-        // VVIP 2026: Subtle glassmorphism border
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.4)',
-    },
-    infoRow: {
+    profileStats: {
         flexDirection: 'row',
+        marginTop: Spacing.lg,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: BorderRadius.lg,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.lg,
+    },
+    profileStat: {
         alignItems: 'center',
-        padding: 16,
+        paddingHorizontal: Spacing.lg,
     },
-    infoIcon: {
-        fontSize: 20,
-        marginRight: 12,
-    },
-    infoLabel: {
-        flex: 1,
-        fontSize: 14,
-    },
-    infoValue: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    divider: {
-        height: 1,
-        marginHorizontal: 16,
-    },
-    settingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-    },
-    settingIcon: {
-        fontSize: 20,
-        marginRight: 12,
-    },
-    settingLabel: {
-        flex: 1,
-        fontSize: 14,
-    },
-    settingValue: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    logoutButton: {
-        backgroundColor: Colors.danger,
-        padding: 16,
-        borderRadius: 16,
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    logoutText: {
+    profileStatNumber: {
+        fontSize: 24,
+        fontWeight: '800',
         color: '#fff',
-        fontSize: 16,
-        fontWeight: '700',
     },
-    version: {
-        textAlign: 'center',
+    profileStatLabel: {
         fontSize: 12,
-        marginBottom: 20,
+        color: 'rgba(255,255,255,0.8)',
+        marginTop: 2,
+    },
+    profileStatDivider: {
+        width: 1,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+    },
+    statusBadgeSmall: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    statusDotSmall: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    // Menu Sections
+    menuSection: {
+        marginTop: Spacing.lg,
+        paddingHorizontal: Spacing.lg,
+    },
+    menuTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        marginBottom: Spacing.sm,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    menuCard: {
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+    },
+    menuIconBg: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: Spacing.md,
+    },
+    menuIconBgDanger: {
+        backgroundColor: '#FEE2E2',
+    },
+    menuIcon: {
+        fontSize: 18,
+    },
+    menuLabel: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    menuValue: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginRight: 8,
+    },
+    menuArrow: {
+        fontSize: 22,
+        opacity: 0.4,
+    },
+    menuDivider: {
+        height: 1,
+        marginLeft: 68,
+    },
+    toggle: {
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        padding: 2,
+        justifyContent: 'center',
+    },
+    toggleKnob: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    // Footer
+    versionContainer: {
+        alignItems: 'center',
+        marginTop: Spacing.xl,
+        paddingHorizontal: Spacing.lg,
+    },
+    versionBadge: {
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.full,
+        marginBottom: Spacing.sm,
+    },
+    versionText: {
+        fontSize: 14,
+        fontWeight: '600',
+        opacity: 0.7,
+    },
+    copyrightText: {
+        fontSize: 12,
+        opacity: 0.5,
+    },
+    madeWithText: {
+        fontSize: 12,
+        opacity: 0.5,
+        marginTop: 4,
     },
     // Modal Styles
     modalOverlay: {
@@ -785,7 +841,7 @@ const styles = StyleSheet.create({
     input: {
         borderWidth: 1,
         borderRadius: 12,
-        padding: 12,
+        padding: 14,
         fontSize: 16,
         marginBottom: 20,
     },
@@ -806,53 +862,13 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
     },
     cancelButtonText: {
-        color: Colors.textMuted,
+        color: '#666',
         fontWeight: '700',
+        fontSize: 16,
     },
     saveButtonText: {
         color: '#fff',
         fontWeight: '700',
-    },
-    editButton: {
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        backgroundColor: Colors.primary + '15',
-    },
-    editButtonText: {
-        color: Colors.primary,
-        fontWeight: '700',
-        fontSize: 12,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    editLink: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    toggle: {
-        width: 36,
-        height: 20,
-        borderRadius: 12,
-        padding: 2,
-        justifyContent: 'center',
-    },
-    toggleKnob: {
-        width: 16,
-        height: 16,
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        elevation: 2,
+        fontSize: 16,
     },
 });

@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { api } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
 import { API_ENDPOINTS } from '../config/api';
+import { analyzeLocation, getSpoofingAlertLevel } from '../utils/spoofDetector';
 
 interface LocationState {
     latitude: number;
@@ -22,6 +23,7 @@ interface UseLocationResult {
     isTracking: boolean;
     hasPermission: boolean;
     error: string | null;
+    spoofingAlert: 'none' | 'low' | 'medium' | 'high'; // P2: Spoofing detection
     startTracking: () => Promise<boolean>;
     stopTracking: () => Promise<void>;
     requestPermission: () => Promise<boolean>;
@@ -34,6 +36,7 @@ export function useLocation(): UseLocationResult {
     const [isTracking, setIsTracking] = useState(false);
     const [hasPermission, setHasPermission] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [spoofingAlert, setSpoofingAlert] = useState<'none' | 'low' | 'medium' | 'high'>('none');
 
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const isMountedRef = useRef(true);
@@ -81,6 +84,10 @@ export function useLocation(): UseLocationResult {
         }
     };
 
+    // P0 IMPROVEMENT: GPS accuracy threshold to filter unreliable updates
+    // Positions with >100m accuracy are likely GPS drift and should be skipped
+    const GPS_ACCURACY_THRESHOLD = 100; // meters
+
     const updateLocation = useCallback((loc: Location.LocationObject, source: string) => {
         if (!isMountedRef.current) return;
 
@@ -93,6 +100,24 @@ export function useLocation(): UseLocationResult {
             timestamp: loc.timestamp,
         };
 
+        // P0: Filter out low-accuracy GPS readings (drift prevention)
+        if (state.accuracy && state.accuracy > GPS_ACCURACY_THRESHOLD) {
+            console.log(`[Location] Skipping low accuracy update (${state.accuracy?.toFixed(0)}m > ${GPS_ACCURACY_THRESHOLD}m threshold)`);
+            return;
+        }
+
+        // P2: GPS Spoofing Detection
+        const spoofResult = analyzeLocation(state.latitude, state.longitude, state.accuracy ?? undefined);
+        if (spoofResult.isSuspicious) {
+            console.warn(`[Location] 🚨 Spoofing detected: ${spoofResult.reason} (${spoofResult.confidence}% confidence)`);
+            // Update alert level
+            setSpoofingAlert(getSpoofingAlertLevel());
+            // Still allow the update but flag it - the backend can decide to reject
+        } else {
+            // Update alert level (may decrease over time)
+            setSpoofingAlert(getSpoofingAlertLevel());
+        }
+
         // Only update if coordinates actually changed (avoid unnecessary re-renders)
         const prev = locationRef.current;
         if (prev && prev.latitude === state.latitude && prev.longitude === state.longitude) {
@@ -100,7 +125,8 @@ export function useLocation(): UseLocationResult {
         }
 
         setLocation(state);
-        console.log(`[Location] Updated via ${source}:`, state.latitude.toFixed(6), state.longitude.toFixed(6));
+        const accuracyStr = state.accuracy ? ` (±${state.accuracy.toFixed(0)}m)` : '';
+        console.log(`[Location] Updated via ${source}:`, state.latitude.toFixed(6), state.longitude.toFixed(6), accuracyStr);
 
         // Also send to API (fire and forget)
         // Send to OfflineQueue (guaranteed delivery)
@@ -113,7 +139,8 @@ export function useLocation(): UseLocationResult {
                 accuracy: state.accuracy ?? undefined,
                 heading: state.heading ?? undefined,
                 speed: state.speed ?? undefined,
-                timestamp: state.timestamp
+                timestamp: state.timestamp,
+                spoofing_alert: getSpoofingAlertLevel(), // P2: Send spoofing alert to backend
             }
         ).catch((err) => console.log('[Location] Queue failed:', err));
     }, []);
@@ -217,6 +244,7 @@ export function useLocation(): UseLocationResult {
         isTracking,
         hasPermission,
         error,
+        spoofingAlert, // P2: GPS spoofing alert level
         startTracking,
         stopTracking,
         requestPermission

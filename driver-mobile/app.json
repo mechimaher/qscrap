@@ -1,107 +1,140 @@
 {
-    "expo": {
-        "name": "QScrap Driver",
-        "slug": "qscrap",
-        "version": "1.2.3",
-        "extra": {
-            "eas": {
-                "projectId": "47b26c9d-3bd0-4470-8543-dd303a49b287"
-            }
-        },
-        "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "userInterfaceStyle": "light",
-        "newArchEnabled": true,
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#8D1B3D"
-        },
-        "notification": {
-            "icon": "./assets/notification-icon.png",
-            "color": "#C9A227",
-            "androidMode": "default",
-            "androidCollapsedTitle": "QScrap Driver"
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "com.qscrap.driver",
-            "infoPlist": {
-                "NSLocationAlwaysAndWhenInUseUsageDescription": "QScrap Driver needs your location to show customers your position during deliveries.",
-                "NSLocationWhenInUseUsageDescription": "QScrap Driver needs your location for navigation and delivery tracking.",
-                "UIBackgroundModes": [
-                    "location",
-                    "fetch",
-                    "remote-notification"
-                ]
-            }
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#8D1B3D"
-            },
-            "package": "com.qscrapdriver",
-            "permissions": [
-                "INTERNET",
-                "ACCESS_NETWORK_STATE",
-                "ACCESS_COARSE_LOCATION",
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_BACKGROUND_LOCATION",
-                "FOREGROUND_SERVICE",
-                "FOREGROUND_SERVICE_LOCATION",
-                "VIBRATE",
-                "RECEIVE_BOOT_COMPLETED",
-                "POST_NOTIFICATIONS"
-            ],
-            "useNextNotificationsApi": true,
-            "config": {
-                "googleMaps": {
-                    "apiKey": "AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw"
-                }
-            }
-        },
-        "plugins": [
-            "expo-secure-store",
-            [
-                "expo-location",
-                {
-                    "locationAlwaysAndWhenInUsePermission": "QScrap Driver needs your location to show customers your position during deliveries.",
-                    "isAndroidBackgroundLocationEnabled": true,
-                    "isAndroidForegroundServiceEnabled": true
-                }
-            ],
-            [
-                "expo-notifications",
-                {
-                    "icon": "./assets/notification-icon.png",
-                    "color": "#C9A227",
-                    "defaultChannel": "assignments"
-                }
-            ],
-            [
-                "expo-camera",
-                {
-                    "cameraPermission": "QScrap Driver needs access to your camera to capture part condition photos.",
-                    "microphonePermission": "QScrap Driver needs access to microphone for video recording."
-                }
-            ],
-            [
-                "expo-build-properties",
-                {
-                    "android": {
-                        "compileSdkVersion": 35,
-                        "targetSdkVersion": 35,
-                        "minSdkVersion": 24,
-                        "buildToolsVersion": "35.0.0",
-                        "kotlinVersion": "2.1.20",
-                        "usesCleartextTraffic": true
-                    }
-                }
-            ]
+  "expo": {
+    "name": "QScrap Driver",
+    "slug": "qscrapdriver",
+    "version": "1.2.3",
+    "privacy": "public",
+    "privacyUrl": "https://qscrap.qa/privacy",
+    "extra": {
+      "eas": {
+        "projectId": "47b26c9d-3bd0-4470-8543-dd303a49b287"
+      }
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#8D1B3D"
+    },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#C9A227",
+      "androidMode": "default",
+      "androidCollapsedTitle": "QScrap Driver"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.qscrap.driver",
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "QScrap Driver needs your location to show customers your position during deliveries.",
+        "NSLocationWhenInUseUsageDescription": "QScrap Driver needs your location for navigation and delivery tracking.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification",
+          "location",
+          "fetch",
+          "remote-notification"
         ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#8D1B3D"
+      },
+      "package": "com.qscrapdriver",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "useNextNotificationsApi": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "${GOOGLE_MAPS_API_KEY}"
+        }
+      }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "QScrap Driver needs your location to show customers your position during deliveries.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#C9A227",
+          "defaultChannel": "assignments"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "QScrap Driver needs access to your camera to capture part condition photos.",
+          "microphonePermission": "QScrap Driver needs access to microphone for video recording."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24,
+            "buildToolsVersion": "35.0.0",
+            "kotlinVersion": "2.1.20",
+            "usesCleartextTraffic": false
+          }
+        }
+      ]
+    ],
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/47b26c9d-3bd0-4470-8543-dd303a49b287"
     }
+  }
 }

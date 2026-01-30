@@ -201,7 +201,7 @@ export default function ProofOfDeliveryScreen() {
 
             // 4. Extract photo URL from response
             // executeWithOfflineFallback wraps result in { status, data }
-            const responseData = uploadResponse?.data || uploadResponse;
+            const responseData = (uploadResponse as any)?.data || uploadResponse;
             const podPhotoUrl = responseData?.photo_url;
 
             if (!podPhotoUrl) {

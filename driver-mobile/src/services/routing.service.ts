@@ -1,9 +1,11 @@
 // QScrap Driver App - Google Maps Routing Service
 // "First Class" Premium Routing with Live Traffic & High Accuracy
 // Replaces legacy OSRM implementation
+// P1: Circuit Breaker Pattern for API Protection
 
 import { Assignment } from './api';
 import { Platform, Linking } from 'react-native';
+import { googleMapsCircuit } from '../utils/CircuitBreaker';
 
 const GOOGLE_DIRECTIONS_API = 'https://maps.googleapis.com/maps/api/directions/json';
 // VVIP Premium Key
@@ -82,75 +84,102 @@ function decodePolyline(encoded: string): LatLng[] {
 /**
  * Get driving route between two points using Google Directions API
  * Includes Traffic Models (Best Guess)
+ * P1: Protected by Circuit Breaker - fails fast when API is down
  */
 export async function getRoute(from: LatLng, to: LatLng): Promise<RouteResult> {
-    try {
-        const origin = `${from.latitude},${from.longitude}`;
-        const destination = `${to.latitude},${to.longitude}`;
+    // P1: Circuit Breaker Pattern - protects against cascading failures
+    return googleMapsCircuit.execute(
+        'google-directions',
+        async () => {
+            const origin = `${from.latitude},${from.longitude}`;
+            const destination = `${to.latitude},${to.longitude}`;
 
-        const params = new URLSearchParams({
-            origin: origin,
-            destination: destination,
-            mode: 'driving',
-            traffic_model: 'best_guess',
-            departure_time: 'now', // Required for traffic info
-            key: GOOGLE_API_KEY
-        });
+            const params = new URLSearchParams({
+                origin: origin,
+                destination: destination,
+                mode: 'driving',
+                traffic_model: 'best_guess',
+                departure_time: 'now', // Required for traffic info
+                key: GOOGLE_API_KEY
+            });
 
-        const url = `${GOOGLE_DIRECTIONS_API}?${params.toString()}`;
-        console.log('[GoogleMaps] Fetching route...');
+            const url = `${GOOGLE_DIRECTIONS_API}?${params.toString()}`;
+            console.log('[GoogleMaps] Fetching route...');
 
-        const response = await fetch(url);
-        const data = await response.json();
+            const response = await fetch(url);
+            const data = await response.json();
 
-        if (data.status !== 'OK') {
-            const errorMsg = data.error_message || data.status;
-            console.error('[GoogleMaps] API Error:', errorMsg);
+            if (data.status !== 'OK') {
+                const errorMsg = data.error_message || data.status;
+                console.error('[GoogleMaps] API Error:', errorMsg);
+                // Throw to trigger circuit breaker
+                throw new Error(`Google Maps Error: ${errorMsg}`);
+            }
 
-            // Fallback for "OVER_QUERY_LIMIT" or empty key -> Standard OSRM failover? 
-            // For now, return error to prompt user to check key.
+            const routeData = data.routes[0];
+            const leg = routeData.legs[0];
+            const overviewPolyline = routeData.overview_polyline.points;
+            const coordinates = decodePolyline(overviewPolyline);
+
+            // Parse steps
+            const steps: RouteStep[] = leg.steps.map((step: any) => ({
+                instruction: step.html_instructions.replace(/<[^>]*>/g, ''), // Strip HTML
+                html_instructions: step.html_instructions,
+                distance: step.distance.value,
+                duration: step.duration.value,
+                maneuver: {
+                    type: step.maneuver || 'straight',
+                    modifier: undefined // Google maneuvers are simpler strings
+                }
+            }));
+
             return {
-                success: false,
-                error: `Google Maps Error: ${errorMsg}`
+                success: true,
+                route: {
+                    coordinates,
+                    distance: leg.distance.value,
+                    duration: leg.duration.value,
+                    traffic_duration: leg.duration_in_traffic?.value,
+                    steps,
+                    summary: routeData.summary || leg.start_address,
+                }
+            };
+        },
+        // Fallback when circuit is open - return straight line estimate
+        () => {
+            console.log('[GoogleMaps] Using straight-line fallback (circuit open)');
+            const distance = calculateStraightLineDistance(from, to);
+            const duration = Math.round(distance / 10); // Assume ~36 km/h average
+            return {
+                success: true,
+                route: {
+                    coordinates: [from, to],
+                    distance,
+                    duration,
+                    traffic_duration: duration, // Same as duration for fallback
+                    steps: [{
+                        instruction: 'Head towards destination (routing unavailable)',
+                        distance,
+                        duration,
+                        maneuver: { type: 'straight' }
+                    }],
+                    summary: 'Direct route (estimated)',
+                }
             };
         }
+    );
+}
 
-        const routeData = data.routes[0];
-        const leg = routeData.legs[0];
-        const overviewPolyline = routeData.overview_polyline.points;
-        const coordinates = decodePolyline(overviewPolyline);
-
-        // Parse steps
-        const steps: RouteStep[] = leg.steps.map((step: any) => ({
-            instruction: step.html_instructions.replace(/<[^>]*>/g, ''), // Strip HTML
-            html_instructions: step.html_instructions,
-            distance: step.distance.value,
-            duration: step.duration.value,
-            maneuver: {
-                type: step.maneuver || 'straight',
-                modifier: undefined // Google maneuvers are simpler strings
-            }
-        }));
-
-        return {
-            success: true,
-            route: {
-                coordinates,
-                distance: leg.distance.value,
-                duration: leg.duration.value,
-                traffic_duration: leg.duration_in_traffic?.value,
-                steps,
-                summary: routeData.summary || leg.start_address,
-            }
-        };
-
-    } catch (error) {
-        console.error('[GoogleMaps] Network error:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to connect to Google Maps'
-        };
-    }
+// Helper for fallback distance calculation
+function calculateStraightLineDistance(from: LatLng, to: LatLng): number {
+    const R = 6371000; // Earth radius in meters
+    const dLat = (to.latitude - from.latitude) * Math.PI / 180;
+    const dLng = (to.longitude - from.longitude) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(from.latitude * Math.PI / 180) *
+        Math.cos(to.latitude * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /**

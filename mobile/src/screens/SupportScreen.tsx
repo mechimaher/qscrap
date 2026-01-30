@@ -20,7 +20,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
-import api from '../services/api';
+import { api } from '../services/api';
 
 // QScrap WhatsApp Business Number (Qatar)
 const WHATSAPP_NUMBER = '+97433557700';

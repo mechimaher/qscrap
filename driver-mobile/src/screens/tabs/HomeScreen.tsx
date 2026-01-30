@@ -1,6 +1,6 @@
 // QScrap Driver App - Premium Home Screen
 // Live dashboard with assignments, stats, and availability toggle
-// Now with skeleton loading and premium animations
+// REFACTORED: Components extracted to /components/home/
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -27,10 +27,10 @@ import { useSocket } from '../../contexts/SocketContext';
 import { api, Assignment, DriverStats } from '../../services/api';
 import { useJobStore } from '../../stores/useJobStore';
 import { getSocket, updateActiveOrders } from '../../services/socket';
-import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
-import { HomeScreenSkeleton, EmptyState, AnimatedNumber, AnimatedRating, LiveMapView, AssignmentPopup } from '../../components';
-import { GlassCard } from '../../components/common/GlassCard';
+import { Colors, Spacing } from '../../constants/theme';
+import { HomeScreenSkeleton, LiveMapView, AssignmentPopup, StatCard, AssignmentCard } from '../../components';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { startShift, endShift, checkAndShowFatigueAlert, loadShiftData, getFatigueStatus, getFatigueColor } from '../../utils/fatigueMonitor';
 
 export default function HomeScreen() {
     const setStoreAssignments = useJobStore(state => state.setAssignments);
@@ -59,7 +59,13 @@ export default function HomeScreen() {
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [])
+            // P2: Load shift data and check for fatigue alerts
+            loadShiftData().then(() => {
+                if (isAvailable) {
+                    checkAndShowFatigueAlert();
+                }
+            });
+        }, [isAvailable])
     );
 
     // Socket listeners for real-time updates
@@ -244,9 +250,13 @@ export default function HomeScreen() {
                 // Start/stop location tracking
                 if (newStatus === 'available') {
                     await startTracking();
+                    // P2: Start shift for fatigue monitoring
+                    await startShift();
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 } else {
                     await stopTracking();
+                    // P2: End shift for fatigue monitoring
+                    await endShift();
                 }
 
                 await refreshDriver();
@@ -519,143 +529,7 @@ export default function HomeScreen() {
     );
 }
 
-// Helper components
-function StatCard({ icon, value, label, color, colors, delay = 0, isRating = false, isCurrency = false }: any) {
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-
-    const handlePressIn = () => {
-        Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
-    };
-
-    const handlePressOut = () => {
-        Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-    };
-
-    // Format currency with compact notation for large amounts
-    const formatCurrency = (num: number): { value: string; suffix: string } => {
-        if (num >= 10000) {
-            return { value: (num / 1000).toFixed(1), suffix: 'K QAR' };
-        } else if (num >= 1000) {
-            return { value: num.toFixed(0), suffix: ' QAR' };
-        } else {
-            return { value: num.toFixed(num % 1 === 0 ? 0 : 2), suffix: ' QAR' };
-        }
-    };
-
-    // Parse numeric value
-    const numericValue = typeof value === 'number' ? value : parseFloat(value) || 0;
-
-    // Get display values based on type
-    let displayValue = numericValue;
-    let suffix = '';
-
-    if (isCurrency) {
-        const formatted = formatCurrency(numericValue);
-        displayValue = parseFloat(formatted.value);
-        suffix = formatted.suffix;
-    }
-
-    return (
-        <TouchableOpacity
-            activeOpacity={1}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            style={styles.statCardWrapper}
-        >
-            <Animated.View style={[
-                styles.statCard,
-                { backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }
-            ]}>
-                <Text style={styles.statIcon}>{icon}</Text>
-                {isRating ? (
-                    <AnimatedRating value={numericValue} delay={delay} style={{ color: colors.text }} />
-                ) : (
-                    <View style={styles.statValueContainer}>
-                        <AnimatedNumber
-                            value={displayValue}
-                            delay={delay}
-                            suffix={suffix}
-                            style={styles.statValueText}
-                        />
-                    </View>
-                )}
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-            </Animated.View>
-        </TouchableOpacity>
-    );
-}
-
-
-function AssignmentCard({ assignment, colors, onPress }: { assignment: Assignment; colors: any; onPress: () => void }) {
-    const statusConfig = AssignmentStatusConfig[assignment.status as keyof typeof AssignmentStatusConfig];
-    const typeConfig = AssignmentTypeConfig[assignment.assignment_type as keyof typeof AssignmentTypeConfig];
-
-    return (
-        <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onPress}
-            style={{ marginBottom: 12 }} // layout only
-        >
-            <GlassCard style={styles.assignmentCard}>
-                {/* Header */}
-                <View style={styles.assignmentHeader}>
-                    <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '20' }]}>
-                        <Text>{typeConfig?.icon}</Text>
-                        <Text style={[styles.typeText, { color: typeConfig?.color }]}>
-                            {typeConfig?.label}
-                        </Text>
-                    </View>
-                    <View style={[styles.statusBadgeSmall, { backgroundColor: statusConfig?.color + '20' }]}>
-                        <Text style={[styles.statusTextSmall, { color: statusConfig?.color }]}>
-                            {statusConfig?.label}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Order Info */}
-                <Text style={[styles.orderNumber, { color: colors.text }]}>
-                    Order #{assignment.order_number}
-                </Text>
-                {/* Part Category - simplified for drivers */}
-                <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                    📦 {assignment.part_category || 'Auto Part'}
-                </Text>
-
-                {/* Locations */}
-                <View style={styles.locationRow}>
-                    <Text style={styles.locationEmoji}>🏪</Text>
-                    <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
-                        {assignment.pickup_address}
-                    </Text>
-                </View>
-                <View style={styles.locationArrow}>
-                    <Text style={{ color: colors.textMuted }}>↓</Text>
-                </View>
-                <View style={styles.locationRow}>
-                    <Text style={styles.locationEmoji}>📍</Text>
-                    <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
-                        {assignment.delivery_address}
-                    </Text>
-                </View>
-
-                {/* Action Button */}
-                {statusConfig?.actionLabel && (
-                    <LinearGradient
-                        colors={[Colors.primary, Colors.primaryDark]}
-                        style={styles.actionButton}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                    >
-                        <Text style={styles.actionButtonText}>{statusConfig.actionLabel}</Text>
-                        <Text style={styles.actionButtonIcon}>→</Text>
-                    </LinearGradient>
-                )}
-            </GlassCard>
-        </TouchableOpacity>
-    );
-}
-
-// Helper to safely format rating
+// Helper to safely format rating (used in stats grid)
 function formatRating(value: any): string {
     if (value === null || value === undefined) return '0.0';
     const num = Number(value);

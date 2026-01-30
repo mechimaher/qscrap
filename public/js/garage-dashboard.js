@@ -1382,7 +1382,7 @@ function generateOrderTimeline(status) {
         { key: 'delivered', icon: 'house-check', label: 'Delivered' }
     ];
 
-    const statusOrder = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_in_progress', 'qc_passed', 'in_transit', 'delivered', 'completed'];
+    const statusOrder = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit', 'delivered', 'completed'];
     const currentIndex = statusOrder.indexOf(status);
 
     // Map status to display stages
@@ -1393,8 +1393,6 @@ function generateOrderTimeline(status) {
             'preparing': 0,
             'ready_for_pickup': 1,
             'collected': 2,
-            'qc_in_progress': 2,
-            'qc_passed': 2,
             'in_transit': 3,
             'delivered': 4,
             'completed': 4
@@ -1431,15 +1429,12 @@ async function loadOrders() {
         // Handle both old array format and new wrapped format
         const orders = Array.isArray(data) ? data : (data.orders || []);
 
-        const statusFlow = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_in_progress', 'qc_passed', 'qc_failed', 'in_transit', 'delivered'];
+        const statusFlow = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit', 'delivered'];
         const statusLabels = {
             confirmed: 'Confirmed',
             preparing: 'Preparing',
             ready_for_pickup: 'Ready for Collection',
-            collected: 'Collected by QScrap',
-            qc_in_progress: 'QC In Progress',
-            qc_passed: 'QC Passed',
-            qc_failed: 'QC Failed',
+            collected: 'Picked Up by Driver',
             in_transit: 'In Transit',
             delivered: 'Delivered',
             completed: 'Completed',
@@ -1492,12 +1487,9 @@ async function loadOrders() {
             } else if (o.order_status === 'ready_for_pickup') {
                 // Waiting for QScrap collection - no actions for garage
                 actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-hourglass-split"></i> Waiting for QScrap collection</span></div>`;
-            } else if (['collected', 'qc_in_progress'].includes(o.order_status)) {
-                // In QC process
-                actionsHtml = `<div class="order-actions"><span style="color: var(--info);"><i class="bi bi-clipboard-check"></i> Part is with QScrap for inspection</span></div>`;
-            } else if (o.order_status === 'qc_passed') {
-                // QC passed, awaiting delivery
-                actionsHtml = `<div class="order-actions"><span style="color: var(--success);"><i class="bi bi-patch-check-fill"></i> QC Passed - Ready for delivery</span></div>`;
+            } else if (o.order_status === 'collected') {
+                // Part picked up by driver - on the way to customer
+                actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-truck"></i> Part is on its way to customer</span></div>`;
             } else if (o.order_status === 'in_transit') {
                 // In delivery
                 actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-truck"></i> Being delivered to customer</span></div>`;
@@ -1691,7 +1683,7 @@ function filterOrders(filter) {
 function renderFilteredOrders(orders) {
     const statusLabels = {
         confirmed: 'Confirmed', preparing: 'Preparing', ready_for_pickup: 'Ready',
-        collected: 'Collected', qc_passed: 'QC Passed', qc_failed: 'QC Failed',
+        collected: 'Picked Up',
         in_transit: 'In Transit', delivered: 'Delivered', completed: 'Completed',
         disputed: 'Disputed', refunded: 'Refunded',
         cancelled_by_customer: 'Customer Cancelled', cancelled_by_garage: 'Cancelled'
@@ -1732,7 +1724,7 @@ function renderRecentOrders() {
     const count = window.recentOrdersExpanded ? 10 : 1;
     const statusLabels = {
         confirmed: 'Confirmed', preparing: 'Preparing', ready_for_pickup: 'Ready',
-        collected: 'Collected', qc_passed: 'QC Passed', qc_failed: 'QC Failed',
+        collected: 'Picked Up',
         in_transit: 'In Transit', delivered: 'Delivered', completed: 'Completed',
         disputed: 'Disputed', refunded: 'Refunded'
     };
@@ -4708,7 +4700,7 @@ async function viewOrder(orderId) {
         // Status badge
         const statusLabels = {
             confirmed: 'Confirmed', preparing: 'Preparing', ready_for_pickup: 'Ready for Pickup',
-            collected: 'Collected', qc_passed: 'QC Passed', qc_failed: 'QC Failed',
+            collected: 'Picked Up',
             in_transit: 'In Transit', delivered: 'Delivered', completed: 'Completed',
             disputed: 'Disputed', refunded: 'Refunded'
         };

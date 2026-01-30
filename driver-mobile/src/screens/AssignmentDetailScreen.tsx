@@ -28,7 +28,7 @@ import { executeWithOfflineFallback } from '../utils/syncHelper';
 import { useJobStore } from '../stores/useJobStore';
 import { API_ENDPOINTS, SOCKET_URL } from '../config/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Shadows } from '../constants/theme';
-import { LiveMapView, SwipeToComplete } from '../components';
+import { LiveMapView, SwipeToComplete, TimelineItem } from '../components';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -431,34 +431,32 @@ export default function AssignmentDetailScreen() {
                 <View style={[styles.section, { backgroundColor: colors.surface, marginBottom: 24 }, Shadows.sm]}>
                     <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>📅 Assignment Timeline</Text>
 
-                    <View style={styles.timelineItem}>
-                        <View style={[styles.timelineDot, { backgroundColor: Colors.primary }]} />
-                        <View style={styles.timelineContent}>
-                            <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>Driver Assigned</Text>
-                            <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.created_at)}</Text>
-                        </View>
-                    </View>
+                    <TimelineItem
+                        dotColor={Colors.primary}
+                        label="Driver Assigned"
+                        value={formatDate(assignment.created_at)}
+                        textColor={colors.text}
+                        mutedColor={colors.textMuted}
+                    />
 
                     {assignment.pickup_at && (
-                        <View style={styles.timelineItem}>
-                            <View style={[styles.timelineDot, { backgroundColor: Colors.warning }]} />
-                            <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>Part Picked Up</Text>
-                                <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.pickup_at)}</Text>
-                            </View>
-                        </View>
+                        <TimelineItem
+                            dotColor={Colors.warning}
+                            label="Part Picked Up"
+                            value={formatDate(assignment.pickup_at)}
+                            textColor={colors.text}
+                            mutedColor={colors.textMuted}
+                        />
                     )}
 
                     {assignment.delivered_at && (
-                        <View style={styles.timelineItem}>
-                            <View style={[styles.timelineDot, { backgroundColor: isCompleted ? Colors.success : Colors.danger }]} />
-                            <View style={styles.timelineContent}>
-                                <Text style={[styles.timelineLabel, { color: colors.textMuted }]}>
-                                    {isCompleted ? 'Successfully Delivered' : 'Delivery Failed'}
-                                </Text>
-                                <Text style={[styles.timelineValue, { color: colors.text }]}>{formatDate(assignment.delivered_at)}</Text>
-                            </View>
-                        </View>
+                        <TimelineItem
+                            dotColor={isCompleted ? Colors.success : Colors.danger}
+                            label={isCompleted ? 'Successfully Delivered' : 'Delivery Failed'}
+                            value={formatDate(assignment.delivered_at)}
+                            textColor={colors.text}
+                            mutedColor={colors.textMuted}
+                        />
                     )}
                 </View>
 
