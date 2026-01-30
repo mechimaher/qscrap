@@ -1258,6 +1258,7 @@ export const en = {
         refundAmount: 'Your Refund',
         refundDetails: 'Refund Breakdown',
         refundProcessed: 'Refund processed to your payment method',
+        refundTiming: 'Your refund will be processed within 48 hours.',
         // BRAIN v3.0 new keys
         partPrice: 'Part Price',
         deliveryFee: 'Delivery Fee',

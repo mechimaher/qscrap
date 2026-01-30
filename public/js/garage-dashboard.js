@@ -1819,20 +1819,97 @@ async function openUpdateBidModal(bidId, title) {
     }
 }
 
-// Cancel Order Logic
+// Cancel Order Logic - Enhanced with Fee Breakdown
 let cancelOrderId = '';
-function openCancelOrderModal(id) {
+
+async function openCancelOrderModal(id) {
     cancelOrderId = id;
-    document.getElementById('cancelModal').classList.add('active');
+
+    // Find order info from allOrders
+    const order = window.allOrders?.find(o => o.order_id === id);
+    const orderNumber = order?.order_number || id.slice(0, 8);
+    const partPrice = parseFloat(order?.part_price || 0);
+
+    // Create dynamic modal with impact info
+    const existingModal = document.getElementById('cancelModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'cancelModal';
+    modal.className = 'modal-overlay active';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 9999;';
+
+    modal.innerHTML = `
+        <div class="modal" style="background: var(--bg-card, #fff); border-radius: 16px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: fadeIn 0.2s ease;">
+            <div class="modal-header" style="margin-bottom: 16px;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 10px; color: var(--danger, #dc2626);">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Cancel Order #${orderNumber}
+                </h3>
+            </div>
+            
+            <!-- Impact Warning Box -->
+            <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+                <div style="font-weight: 600; color: #d97706; margin-bottom: 8px;">
+                    <i class="bi bi-info-circle"></i> Impact Notice
+                </div>
+                <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary, #666); line-height: 1.6;">
+                    <li>Customer receives <strong>100% refund</strong></li>
+                    <li>No payout issued to you for this order</li>
+                    <li>Affects your fulfillment rate score</li>
+                </ul>
+            </div>
+            
+            <!-- Reason Input -->
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; color: var(--text-muted, #888); margin-bottom: 6px;">
+                    Reason for cancellation *
+                </label>
+                <select id="cancelReason" class="form-control" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border, #ddd); font-size: 14px;">
+                    <option value="">Select a reason...</option>
+                    <option value="out_of_stock">Part out of stock</option>
+                    <option value="wrong_part">Wrong part ordered</option>
+                    <option value="part_damaged">Part is damaged</option>
+                    <option value="price_error">Price was incorrect</option>
+                    <option value="other">Other reason</option>
+                </select>
+                <textarea id="cancelReasonText" class="form-control" placeholder="Additional details (optional)..." 
+                    style="width: 100%; margin-top: 8px; padding: 10px; border-radius: 8px; border: 1px solid var(--border, #ddd); font-size: 13px; resize: vertical; min-height: 60px;"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-ghost" onclick="closeCancelModal()" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; background: transparent; border: 1px solid var(--border, #ddd);">
+                    Go Back
+                </button>
+                <button class="btn btn-danger" onclick="confirmCancelOrder()" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none;">
+                    <i class="bi bi-x-circle"></i> Confirm Cancellation
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeCancelModal();
+    });
 }
 
 function closeCancelModal() {
-    document.getElementById('cancelModal').classList.remove('active');
+    const modal = document.getElementById('cancelModal');
+    if (modal) modal.remove();
     cancelOrderId = '';
 }
 
 async function confirmCancelOrder() {
-    const reason = document.getElementById('cancelReason').value;
+    const reasonCode = document.getElementById('cancelReason').value;
+    const reasonText = document.getElementById('cancelReasonText')?.value || '';
+
+    if (!reasonCode) {
+        showToast('Please select a cancellation reason', 'warning');
+        return;
+    }
+
     try {
         const res = await fetch(`${API_URL}/cancellations/orders/${cancelOrderId}/cancel/garage`, {
             method: 'POST',
@@ -1840,7 +1917,7 @@ async function confirmCancelOrder() {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ reason_code: 'stock_out', reason_text: reason })
+            body: JSON.stringify({ reason_code: reasonCode, reason_text: reasonText })
         });
         const data = await res.json();
 

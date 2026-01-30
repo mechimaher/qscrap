@@ -36,8 +36,8 @@ export default function AssignmentsScreen() {
 
     // Derived state based on filter
     const filteredAssignments = assignments.filter(a => {
-        if (filter === 'active') return !['delivered', 'failed'].includes(a.status);
-        if (filter === 'completed') return ['delivered', 'failed'].includes(a.status);
+        if (filter === 'active') return !['delivered', 'failed', 'cancelled'].includes(a.status);
+        if (filter === 'completed') return ['delivered', 'failed', 'cancelled'].includes(a.status);
         return true;
     });
 
