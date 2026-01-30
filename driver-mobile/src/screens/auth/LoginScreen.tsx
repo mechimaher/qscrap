@@ -65,7 +65,11 @@ export default function LoginScreen() {
                     {/* Logo Section */}
                     <View style={styles.logoSection}>
                         <View style={styles.logoContainer}>
-                            <Text style={styles.logoEmoji}>🚚</Text>
+                            <Image
+                                source={require('../../../assets/logo.png')}
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
                         </View>
                         <Text style={styles.logoText}>QScrap</Text>
                         <View style={styles.driverBadge}>
@@ -210,8 +214,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 16,
     },
-    logoEmoji: {
-        fontSize: 56,
+    logo: {
+        width: 70,
+        height: 70,
     },
     logoText: {
         fontSize: 42,
