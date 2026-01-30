@@ -22,7 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Order } from '../services/api';
-import { SOCKET_URL, API_BASE_URL } from '../config/api';
+import { SOCKET_URL, API_BASE_URL, UPLOAD_BASE_URL } from '../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -771,7 +771,7 @@ export default function OrderDetailScreen() {
                                 source={{
                                     uri: order.pod_photo_url.startsWith('http')
                                         ? order.pod_photo_url
-                                        : `${API_BASE_URL.replace('/api', '')}${order.pod_photo_url}`
+                                        : `${UPLOAD_BASE_URL}${order.pod_photo_url}`
                                 }}
                                 style={{ width: '100%', height: 200, borderRadius: 12, marginTop: 12 }}
                                 resizeMode="cover"

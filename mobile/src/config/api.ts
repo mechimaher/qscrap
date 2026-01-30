@@ -3,6 +3,8 @@
 
 export const API_BASE_URL = 'https://api.qscrap.qa/api';
 export const SOCKET_URL = 'https://api.qscrap.qa';
+// Use main domain for uploads (images) - fixes Cloudflare mobile issues
+export const UPLOAD_BASE_URL = 'https://qscrap.qa';
 
 // For local development:
 // export const API_BASE_URL = 'http://192.168.1.x:3000/api';
