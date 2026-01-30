@@ -23,7 +23,7 @@ import { BidComparisonModal } from '../components/BidComparisonModal';
 import { SocialProofBadges } from '../components/SocialProofBadges';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, UPLOAD_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
 import { useSocketContext } from '../hooks/useSocket';
@@ -236,13 +236,13 @@ const HeroRequestCard = ({
             {request.image_urls && request.image_urls.length > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heroImages}>
                     {request.image_urls.map((url, index) => {
-                        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                        const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
                         return (
                             <TouchableOpacity
                                 key={index}
                                 onPress={() => {
                                     const images = request.image_urls!.map(u =>
-                                        u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
+                                        u.startsWith('http') ? u : `${UPLOAD_BASE_URL}${u}`
                                     );
                                     onImagePress(images, index);
                                 }}
@@ -267,7 +267,7 @@ const HeroRequestCard = ({
                                 <TouchableOpacity
                                     onPress={() => {
                                         const url = (request as any).car_front_image_url;
-                                        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                        const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
                                         onImagePress([fullUrl], 0);
                                     }}
                                     activeOpacity={0.85}
@@ -276,7 +276,7 @@ const HeroRequestCard = ({
                                         source={{
                                             uri: ((request as any).car_front_image_url as string).startsWith('http')
                                                 ? (request as any).car_front_image_url
-                                                : `${API_BASE_URL.replace('/api', '')}${(request as any).car_front_image_url}`
+                                                : `${UPLOAD_BASE_URL}${(request as any).car_front_image_url}`
                                         }}
                                         style={styles.heroImage}
                                     />
@@ -289,7 +289,7 @@ const HeroRequestCard = ({
                                 <TouchableOpacity
                                     onPress={() => {
                                         const url = (request as any).car_rear_image_url;
-                                        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                        const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
                                         onImagePress([fullUrl], 0);
                                     }}
                                     activeOpacity={0.85}
@@ -298,7 +298,7 @@ const HeroRequestCard = ({
                                         source={{
                                             uri: ((request as any).car_rear_image_url as string).startsWith('http')
                                                 ? (request as any).car_rear_image_url
-                                                : `${API_BASE_URL.replace('/api', '')}${(request as any).car_rear_image_url}`
+                                                : `${UPLOAD_BASE_URL}${(request as any).car_rear_image_url}`
                                         }}
                                         style={styles.heroImage}
                                     />
@@ -627,13 +627,13 @@ const PremiumBidCard = ({
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                         <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                             {bid.image_urls.map((url, idx) => {
-                                const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
                                 return (
                                     <TouchableOpacity
                                         key={idx}
                                         onPress={() => {
                                             const images = bid.image_urls!.map(u =>
-                                                u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
+                                                u.startsWith('http') ? u : `${UPLOAD_BASE_URL}${u}`
                                             );
                                             onImagePress(images, idx);
                                         }}
@@ -662,14 +662,14 @@ const PremiumBidCard = ({
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                         <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                             {bid.condition_photos.map((url, idx) => {
-                                const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+                                const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
                                 return (
                                     <TouchableOpacity
                                         key={idx}
                                         onPress={() => {
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                             const images = bid.condition_photos!.map(u =>
-                                                u.startsWith('http') ? u : `${API_BASE_URL.replace('/api', '')}${u}`
+                                                u.startsWith('http') ? u : `${UPLOAD_BASE_URL}${u}`
                                             );
                                             onImagePress(images, idx);
                                         }}

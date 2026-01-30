@@ -20,7 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { api, Product } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, UPLOAD_BASE_URL } from '../config/api';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.7;
@@ -73,7 +73,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
 
     const getImageUrl = (url: string) => {
         if (!url) return 'https://placehold.co/300x200?text=No+Image';
-        return url.startsWith('http') ? url : `${API_BASE_URL.replace('/api', '')}${url}`;
+        return url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
     };
 
     const renderProduct = ({ item }: { item: Product }) => (
