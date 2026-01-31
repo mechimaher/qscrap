@@ -2871,10 +2871,6 @@ function renderActiveDeliveries(deliveries) {
                                         title="Emergency driver reassignment">
                                     <i class="bi bi-arrow-left-right"></i> Reassign
                                 </button>
-                                <button class="btn btn-sm" onclick="openLocationModal('${d.assignment_id}', '${d.order_number}')" 
-                                        style="padding: 4px 8px; font-size: 11px; background: var(--accent);">
-                                    <i class="bi bi-geo-alt"></i> GPS
-                                </button>
                             </div>
                         ` : `
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -3006,35 +3002,9 @@ async function markOrderDelivered(orderId, orderNumber) {
     }
 }
 
-function openLocationModal(assignmentId, orderNumber) {
-    const lat = prompt(`Enter Latitude for ${orderNumber}:`, '25.2854');
-    if (!lat) return;
-    const lng = prompt(`Enter Longitude for ${orderNumber}:`, '51.5310');
-    if (!lng) return;
-    updateDriverLocation(assignmentId, parseFloat(lat), parseFloat(lng));
-}
-
-async function updateDriverLocation(assignmentId, lat, lng) {
-    try {
-        const res = await fetch(`${API_URL}/delivery/assignment/${assignmentId}/location`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ lat, lng })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Driver location updated', 'success');
-            loadActiveDeliveries(); // Refresh
-        } else {
-            showToast(data.error || 'Failed to update location', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
+// NOTE: openLocationModal() and updateDriverLocation() functions removed (2026-02-01)
+// Manual GPS coordinate entry via browser prompts was impractical.
+// Driver app handles GPS tracking automatically via TrackingService.
 
 // Safe element setter helper
 function setElementText(id, value) {
@@ -3100,7 +3070,7 @@ document.getElementById('deliveryTabs')?.addEventListener('click', (e) => {
     // Panel mapping to content sections
     const panelVisibility = {
         'deliveryPanelAll': { show: 'all', hideStats: false },
-        'deliveryPanelCollection': { show: [0], hideStats: true },    // Collection table
+        // Collection panel removed (2026-02-01) - duplicates Orders functionality
         'deliveryPanelDelivery': { show: [1], hideStats: true },      // Delivery table
         'deliveryPanelActive': { show: [2], hideStats: true },        // Active deliveries
         'deliveryPanelDrivers': { show: [3], hideStats: true },       // Drivers list
