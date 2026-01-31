@@ -120,14 +120,16 @@ export class OperationsService {
         // Data
         const result = await pool.query(`
             SELECT o.order_id, o.order_number, o.order_status, o.total_amount,
-                   o.created_at, o.updated_at,
+                   o.created_at, o.updated_at, o.driver_id, o.loyalty_discount,
                    u.full_name as customer_name, u.phone_number as customer_phone,
                    g.garage_name, g.garage_id,
-                   pr.part_description, pr.car_make, pr.car_model
+                   pr.part_description, pr.car_make, pr.car_model,
+                   d.full_name as driver_name
             FROM orders o
             JOIN users u ON o.customer_id = u.user_id
             JOIN garages g ON o.garage_id = g.garage_id
             JOIN part_requests pr ON o.request_id = pr.request_id
+            LEFT JOIN drivers d ON o.driver_id = d.user_id
             ${whereClause}
             ORDER BY o.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}

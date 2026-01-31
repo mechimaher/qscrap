@@ -598,6 +598,10 @@ function getOrderActions(order) {
         case 'preparing':
             return `<span class="text-muted" style="font-size: 12px;">Awaiting garage</span>`;
         case 'ready_for_pickup':
+            // If driver already assigned, show driver name instead of assign button
+            if (o.driver_id) {
+                return `<span class="status-badge in-transit" style="font-size: 11px;"><i class="bi bi-person-check"></i> ${o.driver_name ? escapeHTML(o.driver_name) : 'Driver Assigned'}</span>`;
+            }
             return `<button class="btn btn-primary btn-sm" onclick="openUnifiedAssignmentModal('${o.order_id}', '${o.order_number}', 'collection')" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
         case 'collected':
             return `<span class="status-badge ready" style="font-size: 11px;">Part Collected</span>`;
