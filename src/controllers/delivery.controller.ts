@@ -33,6 +33,22 @@ export const getDrivers = async (req: AuthRequest, res: Response) => {
     }
 };
 
+/**
+ * Get drivers ranked by proximity to order's garage
+ * Returns drivers sorted by distance with distance_km field
+ */
+export const getRankedDriversForOrder = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id } = req.params;
+        const result = await DeliveryService.getRankedDriversForOrder(order_id);
+        res.json(result);
+    } catch (err) {
+        console.error('getRankedDriversForOrder Error:', err);
+        const status = (err as any).statusCode || 500;
+        res.status(status).json({ error: getErrorMessage(err) });
+    }
+};
+
 export const getDriverDetails = async (req: AuthRequest, res: Response) => {
     try {
         const { driver_id } = req.params;

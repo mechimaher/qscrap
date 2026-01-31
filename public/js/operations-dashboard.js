@@ -1736,16 +1736,6 @@ let assignmentContext = {
 };
 
 async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collection') {
-    // 1. Check/Load drivers if needed
-    if (availableDrivers.length === 0) {
-        // Try loading drivers if none cached
-        await loadDrivers();
-        if (availableDrivers.length === 0) {
-            showToast('No available drivers. Please add or free up a driver.', 'error');
-            return;
-        }
-    }
-
     assignmentContext = { orderId, type };
 
     const title = type === 'collection' ? 'Assign Collection Driver' : 'Assign Delivery Driver';
@@ -1754,50 +1744,155 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
         ? `Assign a driver to collect Order <strong>#${orderNumber}</strong> from the garage.`
         : `Assign a driver to deliver Order <strong>#${orderNumber}</strong> to the customer.`;
 
-    // Generate driver options
-    const driverOptions = availableDrivers.map(d =>
-        `<option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'}) - ${d.status}</option>`
-    ).join('');
-
     // Remove existing modal if any
     document.getElementById('unifiedAssignModal')?.remove();
 
+    // Create modal with loading state
     const modal = document.createElement('div');
     modal.id = 'unifiedAssignModal';
     modal.className = 'modal-overlay active';
     modal.innerHTML = `
-        <div class="modal-container" style="max-width: 450px;">
+        <div class="modal-container" style="max-width: 500px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
                 <h2><i class="bi ${icon}"></i> ${title}</h2>
                 <button class="modal-close" onclick="document.getElementById('unifiedAssignModal').remove()" style="color: white;">&times;</button>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <p style="margin-bottom: 20px; color: var(--text-secondary); line-height: 1.5;">${description}</p>
-                
-                <div class="form-group">
-                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver</label>
-                    <select id="unifiedDriverSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <option value="">-- Choose a Driver --</option>
-                        ${driverOptions}
-                    </select>
+                <div id="driverSelectContainer" style="text-align: center; padding: 20px;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 10px; color: var(--text-muted);">Finding nearby drivers...</p>
                 </div>
-
                 ${type === 'collection' ? `
                 <div class="form-group" style="margin-top: 15px;">
                     <label style="font-weight: 600; margin-bottom: 8px; display: block;">Notes (Optional)</label>
                     <input type="text" id="unifiedAssignNotes" class="form-control" placeholder="Instructions for driver..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
                 </div>` : ''}
-
             </div>
             <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
                 <button class="btn btn-ghost" onclick="document.getElementById('unifiedAssignModal').remove()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitUnifiedAssignment()" id="unifiedSubmitBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); min-width: 120px;">
+                <button class="btn btn-primary" onclick="submitUnifiedAssignment()" id="unifiedSubmitBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); min-width: 120px;" disabled>
                     <i class="bi bi-check-lg"></i> Confirm
                 </button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
+
+    // Fetch ranked drivers by distance to order's garage
+    try {
+        const response = await fetch(`${API_URL}/delivery/drivers/ranked/${orderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch drivers');
+        }
+
+        const data = await response.json();
+        const drivers = data.drivers || [];
+        const garage = data.garage;
+
+        if (drivers.length === 0) {
+            document.getElementById('driverSelectContainer').innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    <i class="bi bi-exclamation-circle" style="font-size: 2rem; color: #ef4444;"></i>
+                    <p style="margin-top: 10px;">No available drivers. Please add or free up a driver.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Generate driver options with distance badges
+        const getDistanceBadge = (km) => {
+            if (km === null) return '<span class="badge" style="background: #6b7280; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">📍 No GPS</span>';
+            if (km < 3) return `<span class="badge" style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">🟢 ${km} km</span>`;
+            if (km < 8) return `<span class="badge" style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">🟡 ${km} km</span>`;
+            return `<span class="badge" style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">🔴 ${km} km</span>`;
+        };
+
+        const driverOptions = drivers.map((d, idx) => {
+            const isRecommended = idx === 0 && d.distance_km !== null;
+            const recommendedLabel = isRecommended ? ' ⭐ Recommended' : '';
+            const statusIcon = d.status === 'available' ? '🟢' : '🟡';
+            return `<option value="${d.driver_id}" ${isRecommended ? 'selected' : ''}>
+                ${statusIcon} ${d.full_name} (${d.vehicle_type || 'Car'}) - ${d.distance_km !== null ? d.distance_km + ' km' : 'No GPS'}${recommendedLabel}
+            </option>`;
+        }).join('');
+
+        // Driver cards for visual selection
+        const driverCards = drivers.slice(0, 5).map((d, idx) => {
+            const isFirst = idx === 0;
+            const borderColor = isFirst ? '#22c55e' : 'var(--border-color)';
+            return `
+                <div class="driver-card" onclick="document.getElementById('unifiedDriverSelect').value='${d.driver_id}'" 
+                     style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid ${borderColor}; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; ${isFirst ? 'background: rgba(34, 197, 94, 0.1);' : ''}"
+                     onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='${borderColor}'">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        ${d.full_name.charAt(0)}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(d.full_name)} ${isFirst ? '⭐' : ''}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${d.vehicle_type || 'Car'} • ${d.total_deliveries || 0} deliveries • ⭐ ${d.rating_average?.toFixed(1) || 'N/A'}</div>
+                    </div>
+                    <div>
+                        ${getDistanceBadge(d.distance_km)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('driverSelectContainer').innerHTML = `
+            <div style="margin-bottom: 15px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border-left: 4px solid #22c55e;">
+                <small style="color: var(--text-muted);">📍 Pickup from: <strong>${escapeHTML(garage.garage_name)}</strong></small>
+            </div>
+            <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                ${driverCards}
+            </div>
+            <div class="form-group">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Or select from all drivers:</label>
+                <select id="unifiedDriverSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <option value="">-- Choose a Driver --</option>
+                    ${driverOptions}
+                </select>
+            </div>
+        `;
+
+        // Enable submit button
+        document.getElementById('unifiedSubmitBtn').disabled = false;
+
+    } catch (err) {
+        console.error('Error loading ranked drivers:', err);
+        // Fallback to standard drivers list
+        if (availableDrivers.length === 0) {
+            await loadDrivers();
+        }
+
+        if (availableDrivers.length === 0) {
+            document.getElementById('driverSelectContainer').innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    <i class="bi bi-exclamation-circle" style="font-size: 2rem; color: #ef4444;"></i>
+                    <p style="margin-top: 10px;">No available drivers.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const driverOptions = availableDrivers.map(d =>
+            `<option value="${d.driver_id}">${d.full_name} (${d.vehicle_type || 'Car'}) - ${d.status}</option>`
+        ).join('');
+
+        document.getElementById('driverSelectContainer').innerHTML = `
+            <div class="form-group">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Select Driver</label>
+                <select id="unifiedDriverSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <option value="">-- Choose a Driver --</option>
+                    ${driverOptions}
+                </select>
+            </div>
+        `;
+        document.getElementById('unifiedSubmitBtn').disabled = false;
+    }
 }
 
 async function submitUnifiedAssignment() {
