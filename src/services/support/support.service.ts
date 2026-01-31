@@ -553,13 +553,9 @@ export class SupportService {
                     if (orderResult.rows.length === 0) throw new Error('Order not found');
                     const order = orderResult.rows[0];
 
-                    // Update order status
-                    await client.query(`
-                        UPDATE orders SET 
-                            order_status = 'refunded',
-                            updated_at = NOW()
-                        WHERE order_id = $1
-                    `, [params.orderId]);
+                    // NOTE: Do NOT change order status here!
+                    // Order status only changes to 'refunded' when Finance approves the refund.
+                    // This just creates a pending refund request for Finance team review.
 
                     // Create refund record with PENDING status for Finance approval
                     await client.query(`
@@ -574,7 +570,7 @@ export class SupportService {
                         params.notes || 'Full refund requested by support'
                     ]);
 
-                    result = { action: 'full_refund', orderId: params.orderId, amount: order.total_amount };
+                    result = { action: 'refund_request', orderId: params.orderId, amount: order.total_amount, status: 'pending_finance_approval' };
                     break;
 
                 case 'partial_refund':
