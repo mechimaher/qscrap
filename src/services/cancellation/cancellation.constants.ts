@@ -29,6 +29,15 @@ export const CANCELLATION_FEES = {
 } as const;
 
 /**
+ * Customer-Friendly Fee Policy (Qatar Market Competitive)
+ * Added Jan 31, 2026 - BRAIN v3.1
+ */
+export const FEE_POLICY = {
+    MAX_FEE_QAR: 100,                // Maximum cancellation fee cap
+    FIRST_CANCELLATION_FREE: true,   // First order cancellation per customer = FREE
+} as const;
+
+/**
  * Fee Split Between Platform and Garage
  * 
  * PHILOSOPHY: "Platform NEVER loses, garages get compensated for their time"

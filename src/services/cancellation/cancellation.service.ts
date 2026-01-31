@@ -25,6 +25,7 @@ import {
     STATUS_TO_STAGE,
     GARAGE_PENALTIES,
     FEE_SPLIT,
+    FEE_POLICY,
     CancellationStage
 } from './cancellation.constants';
 import { getFraudDetectionService } from './fraud-detection.service';
@@ -295,6 +296,7 @@ export class CancellationService {
     /**
      * Get cancellation preview (for UI)
      * Returns enhanced preview with fee breakdown per BRAIN spec
+     * BRAIN v3.1 - Includes first-free and max-cap policy
      */
     async getCancellationPreview(orderId: string, userId: string): Promise<EnhancedCancellationPreview> {
         const orderResult = await this.pool.query(
@@ -319,9 +321,34 @@ export class CancellationService {
         const deliveryFee = parseFloat(String(order.delivery_fee || 0));
         const partPrice = parseFloat(String(order.part_price || (totalAmount - deliveryFee)));
 
-        // Calculate refund: Part price - fee - retained delivery fee
+        // BRAIN v3.1: Apply customer-friendly fee policy
+        let finalFee = feeInfo.fee;
+        let feeMessage = '';
+
+        if (feeInfo.canCancel && feeInfo.fee > 0) {
+            // Check first cancellation free policy
+            if (FEE_POLICY.FIRST_CANCELLATION_FREE) {
+                const prevCancellations = await this.pool.query(
+                    `SELECT COUNT(*) as count FROM cancellation_requests 
+                     WHERE requested_by = $1 AND requested_by_type = 'customer'`,
+                    [order.customer_id]
+                );
+                if (parseInt(prevCancellations.rows[0].count) === 0) {
+                    finalFee = 0;
+                    feeMessage = 'First cancellation is FREE! 🎁';
+                }
+            }
+
+            // Apply max fee cap (only if not already free)
+            if (finalFee > 0 && finalFee > FEE_POLICY.MAX_FEE_QAR) {
+                finalFee = FEE_POLICY.MAX_FEE_QAR;
+                feeMessage = `Fee capped at ${FEE_POLICY.MAX_FEE_QAR} QAR (max limit)`;
+            }
+        }
+
+        // Calculate refund with adjusted fee
         const refundAmount = feeInfo.canCancel
-            ? partPrice - feeInfo.fee - feeInfo.deliveryFeeRetained
+            ? totalAmount - finalFee - feeInfo.deliveryFeeRetained
             : 0;
 
         return {
@@ -335,13 +362,13 @@ export class CancellationService {
             delivery_fee_retained: feeInfo.deliveryFeeRetained,
             can_cancel: feeInfo.canCancel,
             cancellation_fee_rate: feeInfo.feeRate,
-            cancellation_fee: feeInfo.fee,
+            cancellation_fee: finalFee,
             cancellation_stage: feeInfo.stage,
             refund_amount: Math.round(refundAmount * 100) / 100,
-            reason: feeInfo.reason,
+            reason: feeMessage || feeInfo.reason,
             fee_breakdown: {
-                platform_fee: Math.round(feeInfo.fee * 0.5 * 100) / 100,  // 50% of fee to platform
-                garage_compensation: Math.round(feeInfo.fee * 0.5 * 100) / 100,  // 50% to garage
+                platform_fee: Math.round(finalFee * 0.5 * 100) / 100,
+                garage_compensation: Math.round(finalFee * 0.5 * 100) / 100,
                 delivery_fee: feeInfo.deliveryFeeRetained
             }
         };
@@ -378,9 +405,32 @@ export class CancellationService {
                 throw new Error(feeInfo.reason || 'Cannot cancel this order');
             }
 
+            // BRAIN v3.1: Apply customer-friendly fee policy
+            let finalFee = feeInfo.fee;
+
+            if (feeInfo.fee > 0) {
+                // Check first cancellation free policy
+                if (FEE_POLICY.FIRST_CANCELLATION_FREE) {
+                    const prevCancellations = await client.query(
+                        `SELECT COUNT(*) as count FROM cancellation_requests 
+                         WHERE requested_by = $1 AND requested_by_type = 'customer'`,
+                        [customerId]
+                    );
+                    if (parseInt(prevCancellations.rows[0].count) === 0) {
+                        finalFee = 0; // First cancellation is FREE!
+                    }
+                }
+
+                // Apply max fee cap
+                if (finalFee > 0 && finalFee > FEE_POLICY.MAX_FEE_QAR) {
+                    finalFee = FEE_POLICY.MAX_FEE_QAR;
+                }
+            }
+
             const orderCreatedAt = new Date(order.created_at);
             const minutesSinceOrder = Math.floor((Date.now() - orderCreatedAt.getTime()) / 60000);
-            const refundAmount = parseFloat(String(order.total_amount)) - feeInfo.fee;
+            const totalAmount = parseFloat(String(order.total_amount));
+            const refundAmount = totalAmount - finalFee - feeInfo.deliveryFeeRetained;
 
             // Create cancellation request
             const cancelResult = await client.query(
@@ -391,7 +441,7 @@ export class CancellationService {
                  VALUES ($1, $2, 'customer', $3, $4, $5, $6, $7, $8, $9, 'processed')
                  RETURNING cancellation_id`,
                 [orderId, customerId, reasonCode || 'changed_mind', reasonText,
-                    order.order_status, minutesSinceOrder, feeInfo.feeRate, feeInfo.fee, refundAmount]
+                    order.order_status, minutesSinceOrder, feeInfo.feeRate, finalFee, refundAmount]
             );
 
             // Update order status
