@@ -1186,6 +1186,10 @@ export const ar = {
         conditionPhotos: 'صور الحالة',
         photoCount: '{{count}} صور',
         waitingForGarage: 'بانتظار الكراج',
+        // Final round and rejection UI
+        finalRoundWarning: 'الجولة الأخيرة - اقبل أو ارفض عرض الكراج',
+        acceptableOffer: 'آخر عرض من الكراج',
+        rejectedStatus: '(مرفوض)',
     },
 
     // =============================================
