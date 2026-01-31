@@ -368,10 +368,10 @@ export class NegotiationService {
     }
 
     private async declineOffer(offer: any, bid: any, client: PoolClient): Promise<void> {
-        // Update counter-offer status to declined
-        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['declined', offer.counter_offer_id]);
-        // Update bid status to declined
-        await client.query('UPDATE bids SET status = $1 WHERE bid_id = $2', ['declined', offer.bid_id]);
+        // Update counter-offer status to rejected (matches DB constraint: pending/accepted/rejected/countered/expired)
+        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['rejected', offer.counter_offer_id]);
+        // Update bid status to rejected
+        await client.query('UPDATE bids SET status = $1 WHERE bid_id = $2', ['rejected', offer.bid_id]);
 
         // Get customer_id from bid to notify them
         const customerId = bid.customer_id;
