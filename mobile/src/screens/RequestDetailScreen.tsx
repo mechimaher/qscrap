@@ -573,6 +573,15 @@ const PremiumBidCard = ({
             {/* Negotiation Summary */}
             {negotiationRounds > 0 && (
                 <View style={[styles.negotiationBox, { borderLeftWidth: isRTL ? 0 : 3, borderRightWidth: isRTL ? 3 : 0, borderRightColor: Colors.primary }]}>
+                    {/* Final Round Warning - Show when round 3/3 is reached */}
+                    {negotiationRounds >= 3 && !isNegotiationAgreed && !isAccepted && (
+                        <View style={styles.finalRoundWarning}>
+                            <Text style={styles.finalRoundWarningText}>
+                                ⚠️ {t('bidCard.finalRoundWarning')}
+                            </Text>
+                        </View>
+                    )}
+
                     {customerCounterAmount && (
                         <View style={[styles.negotiationRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.negotiationLabel}>{t('bidCard.youOffered')}</Text>
@@ -580,17 +589,41 @@ const PremiumBidCard = ({
                                 styles.negotiationValue,
                                 customerCounterStatus === 'accepted' && { color: '#22C55E' },
                                 customerCounterStatus === 'countered' && { color: '#F59E0B' },
+                                customerCounterStatus === 'rejected' && {
+                                    color: '#9CA3AF',
+                                    textDecorationLine: 'line-through',
+                                },
                             ]}>
                                 {customerCounterAmount} {t('common.qar')}
                                 {customerCounterStatus === 'countered' && ` ${t('bidCard.counteredStatus')}`}
+                                {customerCounterStatus === 'rejected' && ` ❌`}
                             </Text>
                         </View>
                     )}
-                    {hasGarageCounterOffer && (
-                        <View style={[styles.negotiationRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.negotiationLabel}>{t('bidCard.garageOffers')}</Text>
-                            <Text style={[styles.negotiationValue, { color: '#F59E0B' }]}>
-                                {garageCounterAmount} {t('common.qar')}
+
+                    {/* Garage's Last Offer - Highlight when customer's is rejected */}
+                    {(hasGarageCounterOffer || (customerCounterStatus === 'rejected' && lastGarageOfferAmount)) && (
+                        <View style={[
+                            styles.negotiationRow,
+                            { flexDirection: rtlFlexDirection(isRTL) },
+                            customerCounterStatus === 'rejected' && styles.garageOfferHighlight
+                        ]}>
+                            <Text style={[
+                                styles.negotiationLabel,
+                                customerCounterStatus === 'rejected' && { fontWeight: '600' }
+                            ]}>
+                                {customerCounterStatus === 'rejected'
+                                    ? t('bidCard.acceptableOffer')
+                                    : t('bidCard.garageOffers')
+                                }
+                            </Text>
+                            <Text style={[
+                                styles.negotiationValue,
+                                { color: customerCounterStatus === 'rejected' ? '#22C55E' : '#F59E0B' },
+                                customerCounterStatus === 'rejected' && { fontWeight: '700', fontSize: 16 }
+                            ]}>
+                                {garageCounterAmount || lastGarageOfferAmount} {t('common.qar')}
+                                {customerCounterStatus === 'rejected' && ` ✓`}
                             </Text>
                         </View>
                     )}
@@ -1345,6 +1378,26 @@ const styles = StyleSheet.create({
     },
     negotiationLabel: { fontSize: FontSizes.sm, color: '#525252' },
     negotiationValue: { fontSize: FontSizes.sm, fontWeight: '600' },
+    finalRoundWarning: {
+        backgroundColor: '#FEF3C7',
+        padding: Spacing.sm,
+        borderRadius: BorderRadius.sm,
+        marginBottom: Spacing.sm,
+        borderWidth: 1,
+        borderColor: '#F59E0B',
+    },
+    finalRoundWarningText: {
+        fontSize: FontSizes.sm,
+        color: '#92400E',
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    garageOfferHighlight: {
+        backgroundColor: '#DCFCE7',
+        padding: Spacing.xs,
+        borderRadius: BorderRadius.sm,
+        marginTop: Spacing.xs,
+    },
 
     bidDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.md },
     detailChip: {

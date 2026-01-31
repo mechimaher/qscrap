@@ -1182,6 +1182,10 @@ export const en = {
         conditionPhotos: 'Condition Photos',
         photoCount: '{{count}} photos',
         waitingForGarage: 'Waiting for garage',
+        // Final round and rejection UI
+        finalRoundWarning: 'Final Round - Accept or reject the garage\'s offer',
+        acceptableOffer: 'Garage\'s Last Offer',
+        rejectedStatus: '(Rejected)',
     },
 
     // =============================================
