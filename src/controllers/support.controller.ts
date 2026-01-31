@@ -520,7 +520,7 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
 
         // Get status history timeline
         const historyResult = await pool.query(`
-            SELECT status, notes, created_at, changed_by
+            SELECT new_status as status, old_status, reason as notes, created_at, changed_by
             FROM order_status_history 
             WHERE order_id = $1 
             ORDER BY created_at ASC
