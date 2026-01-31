@@ -1,13 +1,9 @@
 /**
- * useBadgeCounts Hook
- * Real-time badge counts for tab bar like Talabat/Keeta
- * 
- * Features:
- * - Fetches badge counts on mount
- * - Real-time updates via WebSocket
- * - Auto-refresh on app focus
+ * BadgeCountsContext
+ * Provides shared badge counts across the entire app
+ * Fixes: Profile tab badge not clearing when notifications are read
  */
-import { useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { api } from '../services/api';
 import { useSocketContext } from './useSocket';
@@ -37,7 +33,25 @@ const DEFAULT_COUNTS: BadgeCounts = {
     total_badge: 0,
 };
 
-export function useBadgeCounts() {
+interface BadgeCountsContextValue {
+    counts: BadgeCounts;
+    isLoading: boolean;
+    refresh: () => Promise<void>;
+    requestsBadge: number | undefined;
+    ordersBadge: number | undefined;
+    profileBadge: number | undefined;
+}
+
+const BadgeCountsContext = createContext<BadgeCountsContextValue>({
+    counts: DEFAULT_COUNTS,
+    isLoading: true,
+    refresh: async () => { },
+    requestsBadge: undefined,
+    ordersBadge: undefined,
+    profileBadge: undefined,
+});
+
+export function BadgeCountsProvider({ children }: { children: ReactNode }) {
     const [counts, setCounts] = useState<BadgeCounts>(DEFAULT_COUNTS);
     const [isLoading, setIsLoading] = useState(true);
     const { socket } = useSocketContext();
@@ -82,7 +96,6 @@ export function useBadgeCounts() {
         if (!socket) return;
 
         const handleNewBid = () => {
-            // Increment requests badge
             setCounts(prev => ({
                 ...prev,
                 requests: {
@@ -94,12 +107,10 @@ export function useBadgeCounts() {
         };
 
         const handleOrderUpdate = () => {
-            // Refresh counts on order status change
             fetchBadgeCounts();
         };
 
         const handleCounterOffer = () => {
-            // Increment pending action
             setCounts(prev => ({
                 ...prev,
                 requests: {
@@ -111,7 +122,6 @@ export function useBadgeCounts() {
         };
 
         const handleNotification = () => {
-            // Increment notification badge
             setCounts(prev => ({
                 ...prev,
                 notifications: {
@@ -139,15 +149,25 @@ export function useBadgeCounts() {
     const ordersBadge = counts.orders.pending_payment + counts.orders.pending_confirmation;
     const profileBadge = counts.notifications.unread;
 
-    return {
+    const value: BadgeCountsContextValue = {
         counts,
         isLoading,
         refresh: fetchBadgeCounts,
-        // Tab-specific badges
         requestsBadge: requestsBadge > 0 ? requestsBadge : undefined,
         ordersBadge: ordersBadge > 0 ? ordersBadge : undefined,
         profileBadge: profileBadge > 0 ? profileBadge : undefined,
     };
+
+    return (
+        <BadgeCountsContext.Provider value= { value } >
+        { children }
+        </BadgeCountsContext.Provider>
+    );
+}
+
+// Hook to consume badge counts - now uses shared context
+export function useBadgeCounts() {
+    return useContext(BadgeCountsContext);
 }
 
 export default useBadgeCounts;
