@@ -151,13 +151,10 @@ export class SupportActionsService {
                 );
             }
 
-            // Validate: Must have payment intent
+            // Check for payment intent (warn if missing but don't block - legacy orders may not have it)
             const paymentIntentId = context.order.final_payment_intent_id || context.order.deposit_intent_id;
             if (!paymentIntentId) {
-                throw new Error(
-                    `Cannot request refund: No Stripe payment intent found. ` +
-                    `Please verify payment was processed correctly.`
-                );
+                console.warn(`[SupportActions] WARNING: Order ${context.order.order_number} has no Stripe payment_intent. Finance will need to verify manually.`);
             }
 
             // Check for existing pending refund request
