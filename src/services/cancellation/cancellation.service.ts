@@ -24,6 +24,7 @@ import {
     CANCELLATION_FEES,
     STATUS_TO_STAGE,
     GARAGE_PENALTIES,
+    FEE_SPLIT,
     CancellationStage
 } from './cancellation.constants';
 import { getFraudDetectionService } from './fraud-detection.service';
@@ -494,22 +495,69 @@ export class CancellationService {
                 }
             }
 
-            // CR-03: Atomic payout cancellation - prevent paying garage for cancelled orders
-            await client.query(
-                `UPDATE garage_payouts SET payout_status = 'cancelled', updated_at = NOW() 
-                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
-                [orderId]
-            );
+            // BRAIN v3.0: Calculate garage compensation from cancellation fee
+            // Philosophy: "Platform NEVER loses, garages get compensated for their time"
+            const stage = feeInfo.stage as keyof typeof FEE_SPLIT;
+            const feeSplit = FEE_SPLIT[stage] || { platform: 0, garage: 0 };
+            const garageCompensation = partPrice * feeSplit.garage;
+
+            if (garageCompensation > 0) {
+                // Garage gets partial payout for work done
+                await client.query(
+                    `UPDATE garage_payouts 
+                     SET net_amount = $2,
+                         gross_amount = $2,
+                         commission_amount = 0,
+                         adjustment_reason = 'Customer cancellation - compensation for work done (BRAIN v3.0)',
+                         adjusted_at = NOW(),
+                         payout_status = 'pending',
+                         payout_type = 'cancellation_compensation',
+                         updated_at = NOW()
+                     WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                    [orderId, garageCompensation]
+                );
+
+                // Record garage compensation in cancellation record
+                await client.query(
+                    `UPDATE cancellation_requests 
+                     SET garage_compensation = $2 
+                     WHERE order_id = $1 AND cancellation_id = (
+                         SELECT cancellation_id FROM cancellation_requests 
+                         WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1
+                     )`,
+                    [orderId, garageCompensation]
+                );
+
+                console.log(`[Cancellation] Garage compensation: ${garageCompensation} QAR (${feeSplit.garage * 100}% of ${partPrice} QAR)`);
+            } else {
+                // Before preparation: no compensation, cancel payout entirely
+                await client.query(
+                    `UPDATE garage_payouts SET payout_status = 'cancelled', 
+                     cancellation_reason = 'Customer cancelled before preparation',
+                     cancelled_at = NOW(),
+                     updated_at = NOW() 
+                     WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                    [orderId]
+                );
+            }
 
             await client.query('COMMIT');
 
-            // Notify garage (Persistent + Socket)
+            // Notify garage (Persistent + Socket) - include compensation info
+            const compensationNote = garageCompensation > 0
+                ? ` You will receive ${garageCompensation.toFixed(2)} QAR compensation for your work.`
+                : '';
             await createNotification({
                 userId: order.garage_id,
                 type: 'order_cancelled',
                 title: 'Order Cancelled 🚫',
-                message: `Customer has cancelled Order #${order.order_number}`,
-                data: { order_id: orderId, order_number: order.order_number, cancelled_by: 'customer' },
+                message: `Customer has cancelled Order #${order.order_number}.${compensationNote}`,
+                data: {
+                    order_id: orderId,
+                    order_number: order.order_number,
+                    cancelled_by: 'customer',
+                    garage_compensation: garageCompensation
+                },
                 target_role: 'garage'
             });
 
