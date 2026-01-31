@@ -51,6 +51,27 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 4000);
 }
 
+/**
+ * Get payout type badge HTML
+ * Distinguishes between standard payouts and cancellation compensation
+ */
+function getPayoutTypeBadge(payout) {
+    if (payout.payout_type === 'cancellation_compensation') {
+        return '<span class="badge badge-warning" title="Garage compensation for customer cancellation"><i class="bi bi-shield-exclamation"></i> Compensation</span>';
+    }
+    return '<span class="badge badge-info"><i class="bi bi-cash-stack"></i> Standard</span>';
+}
+
+/**
+ * Get commission display based on payout type
+ */
+function getCommissionDisplay(payout) {
+    if (payout.payout_type === 'cancellation_compensation') {
+        return '<span class="text-muted" title="No commission on compensation payouts">Customer cancelled</span>';
+    }
+    return formatCurrency(payout.commission_amount || payout.platform_fee);
+}
+
 // ==========================================
 // AUTHENTICATION
 // ==========================================
@@ -355,21 +376,22 @@ async function loadPendingPayouts(page = 1) {
         if (selectAll) selectAll.checked = false;
 
         if (payouts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="bi bi-check-circle"></i> No pending payouts</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><i class="bi bi-check-circle"></i> No pending payouts</td></tr>';
             return;
         }
 
         tbody.innerHTML = payouts.map(p => `
-            <tr>
+            <tr class="${p.payout_type === 'cancellation_compensation' ? 'compensation-row' : ''}">
                 <td>
                     <input type="checkbox" class="payout-checkbox" 
                            data-payout-id="${p.payout_id}"
                            onchange="handlePayoutCheckbox('${p.payout_id}', this.checked)">
                 </td>
+                <td>${getPayoutTypeBadge(p)}</td>
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
                 <td>#${escapeHTML(p.order_number)}</td>
                 <td>${formatCurrency(p.gross_amount || p.amount)}</td>
-                <td>${formatCurrency(p.commission_amount || p.platform_fee)}</td>
+                <td>${getCommissionDisplay(p)}</td>
                 <td style="color: var(--success); font-weight: 600;">${formatCurrency(p.net_amount)}</td>
                 <td>${formatDate(p.created_at)}</td>
                 <td>
