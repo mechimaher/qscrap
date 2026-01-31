@@ -1972,25 +1972,36 @@ async function requestReplacement(orderId) {
     }
 }
 
-// Issue refund for failed QC
+// Issue refund for failed QC - Routes through Finance RefundService for proper Stripe execution
 async function issueRefund(orderId) {
-    if (!confirm('Issue a full refund to the customer?')) return;
+    if (!confirm('Issue a full refund to the customer? This will process the refund via Stripe.')) return;
+
     try {
-        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
-            method: 'PATCH',
+        showToast('Processing refund...', 'info');
+
+        // FIXED: Call finance refund endpoint instead of just updating status
+        // This routes through RefundService which executes actual Stripe refund
+        const res = await fetch(`${API_URL}/finance/refund/${orderId}`, {
+            method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ new_status: 'refunded', notes: 'Refund issued due to QC failure' })
+            body: JSON.stringify({
+                refund_reason: 'QC failure - part did not pass quality inspection',
+                refund_method: 'stripe'
+            })
         });
+
+        const data = await res.json();
+
         if (res.ok) {
-            showToast('Refund initiated', 'success');
+            showToast('Refund processed successfully via Stripe!', 'success');
             document.getElementById('qcFailedModal')?.remove();
             loadOrders();
             loadStats();
         } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to issue refund', 'error');
+            showToast(data.error || 'Failed to process refund', 'error');
         }
     } catch (err) {
+        console.error('Refund error:', err);
         showToast('Connection error', 'error');
     }
 }
