@@ -612,29 +612,100 @@ export class SupportActionsService {
         amount: number,
         reason: string,
         client: PoolClient
-    ): Promise<{ refund_id: string; amount: number }> {
+    ): Promise<{ refund_id: string; amount: number; stripe_refund_id?: string }> {
+        // G-02 FIX: Generate idempotency key for this refund
+        const idempotencyKey = `support_refund_${order.order_id}_${Date.now()}`;
+
         // Record the refund in our database using the same schema as RefundService
         const refundResult = await client.query(`
             INSERT INTO refunds 
             (order_id, customer_id, original_amount, refund_amount, refund_reason, 
-             refund_status, initiated_by, refund_type)
-            VALUES ($1, $2, $3, $4, $5, 'pending', 'support', 'support_refund')
+             refund_status, initiated_by, refund_type, idempotency_key)
+            VALUES ($1, $2, $3, $4, $5, 'pending', 'support', 'support_refund', $6)
+            ON CONFLICT (order_id, refund_type) DO NOTHING
             RETURNING refund_id
-        `, [order.order_id, order.customer_id, order.total_amount, amount, reason]);
+        `, [order.order_id, order.customer_id, order.total_amount, amount, reason, idempotencyKey]);
 
-        // TODO: Call actual payment gateway when Stripe is integrated
-        // For now, log that a refund should be processed
-        console.log(`[SupportActions] Customer refund recorded: ${amount} QAR for order ${order.order_number}`);
-        console.log(`[SupportActions] Payment intent to refund: ${order.final_payment_intent_id || order.deposit_intent_id}`);
+        // Handle duplicate refund attempt
+        if (refundResult.rows.length === 0) {
+            throw new Error(`Refund already exists for order ${order.order_number}. Cannot process duplicate.`);
+        }
 
-        // Update payment status
-        await client.query(`
-            UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1
-        `, [order.order_id]);
+        const refundId = refundResult.rows[0].refund_id;
+        let stripeRefundId: string | undefined;
+
+        // G-02 FIX: Execute actual Stripe refund
+        const paymentIntentId = order.final_payment_intent_id || order.deposit_intent_id;
+
+        if (paymentIntentId && order.payment_status === 'paid') {
+            try {
+                const Stripe = require('stripe');
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                    apiVersion: '2025-12-15.clover'
+                });
+
+                const stripeRefund = await stripe.refunds.create({
+                    payment_intent: paymentIntentId,
+                    amount: Math.round(amount * 100), // cents
+                    metadata: {
+                        order_id: order.order_id,
+                        order_number: order.order_number,
+                        reason: 'support_refund',
+                        refund_id: refundId
+                    }
+                }, {
+                    idempotencyKey: idempotencyKey // G-04 FIX: Stripe-level idempotency
+                });
+
+                stripeRefundId = stripeRefund.id;
+                console.log(`[SupportActions] Stripe refund executed: ${stripeRefundId} for ${amount} QAR`);
+
+                // Mark refund as completed
+                await client.query(`
+                    UPDATE refunds SET 
+                        refund_status = 'completed',
+                        stripe_refund_id = $2,
+                        processed_at = NOW()
+                    WHERE refund_id = $1
+                `, [refundId, stripeRefundId]);
+
+                // Update order payment status
+                await client.query(`
+                    UPDATE orders SET payment_status = 'refunded', updated_at = NOW() WHERE order_id = $1
+                `, [order.order_id]);
+
+            } catch (stripeError: any) {
+                console.error(`[SupportActions] Stripe refund failed for order ${order.order_number}:`, stripeError.message);
+
+                // Mark refund as failed but don't throw - let transaction complete
+                await client.query(`
+                    UPDATE refunds SET 
+                        refund_status = 'failed',
+                        refund_reason = refund_reason || ' [Stripe Error: ' || $2 || ']'
+                    WHERE refund_id = $1
+                `, [refundId, stripeError.message]);
+
+                // Still mark order as needing attention
+                await client.query(`
+                    UPDATE orders SET payment_status = 'refund_failed', updated_at = NOW() WHERE order_id = $1
+                `, [order.order_id]);
+            }
+        } else {
+            // No payment intent - mark for manual processing
+            console.warn(`[SupportActions] No payment intent found for order ${order.order_number}. Refund requires manual processing.`);
+
+            await client.query(`
+                UPDATE refunds SET 
+                    refund_status = 'pending',
+                    refund_reason = refund_reason || ' [Manual processing required - no payment intent]'
+                WHERE refund_id = $1
+            `, [refundId]);
+        }
 
         return {
-            refund_id: refundResult.rows[0].refund_id,
-            amount
+            refund_id: refundId,
+            amount,
+            stripe_refund_id: stripeRefundId
         };
     }
 

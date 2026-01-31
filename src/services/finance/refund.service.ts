@@ -368,6 +368,7 @@ export class RefundService {
                 const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
 
                 // Execute Stripe refund
+                // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
                 const refundAmountCents = Math.round(parseFloat(refund.refund_amount) * 100);
                 const stripeRefund = await stripe.refunds.create({
                     payment_intent: refund.stripe_payment_intent_id,
@@ -377,6 +378,8 @@ export class RefundService {
                         order_number: refund.order_number,
                         processed_by: processedBy
                     }
+                }, {
+                    idempotencyKey: `manual_refund_${refundId}`
                 });
                 stripeRefundId = stripeRefund.id;
             }

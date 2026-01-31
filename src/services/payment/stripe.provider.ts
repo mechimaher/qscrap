@@ -155,7 +155,7 @@ export class StripePaymentProvider implements PaymentGateway {
         }
     }
 
-    async refundPayment(intentId: string, amount?: number, reason?: string): Promise<RefundResult> {
+    async refundPayment(intentId: string, amount?: number, reason?: string, idempotencyKey?: string): Promise<RefundResult> {
         try {
             const params: Stripe.RefundCreateParams = {
                 payment_intent: intentId,
@@ -169,7 +169,13 @@ export class StripePaymentProvider implements PaymentGateway {
                 params.metadata = { reason };
             }
 
-            const refund = await this.stripe.refunds.create(params);
+            // G-04 FIX: Support idempotency key for Stripe-level duplicate protection
+            const options: Stripe.RequestOptions = {};
+            if (idempotencyKey) {
+                options.idempotencyKey = idempotencyKey;
+            }
+
+            const refund = await this.stripe.refunds.create(params, options);
 
             console.log(`[Stripe] Refund created: ${refund.id} for ${refund.amount / 100}`);
 
