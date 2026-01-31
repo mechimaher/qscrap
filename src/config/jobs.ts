@@ -16,8 +16,8 @@ import {
     autoProcessPayouts,
     autoConfirmPayouts,
     autoConfirmDeliveries,
-    cleanupOldData,
-    abandonStaleInspections
+    cleanupOldData
+    // abandonStaleInspections removed 2026-02-01 - QC workflow cancelled
 } from '../jobs';
 
 // ============================================
@@ -35,7 +35,7 @@ export async function runAllJobs(): Promise<void> {
         await autoResolveDisputes(pool);
         await autoConfirmDeliveries(pool);
         await autoConfirmPayouts(pool);
-        await abandonStaleInspections(pool);
+        // abandonStaleInspections removed - QC workflow cancelled
         await schedulePendingPayouts(pool);
         await autoProcessPayouts(pool);
         await cleanupOldData(pool);
@@ -57,7 +57,7 @@ export default {
     autoResolveDisputes: () => autoResolveDisputes(pool),
     autoConfirmDeliveries: () => autoConfirmDeliveries(pool),
     autoConfirmPayouts: () => autoConfirmPayouts(pool),
-    abandonStaleInspections: () => abandonStaleInspections(pool),
+    // abandonStaleInspections removed - QC workflow cancelled
     schedulePendingPayouts: () => schedulePendingPayouts(pool),
     autoProcessPayouts: () => autoProcessPayouts(pool),
     cleanupOldData: () => cleanupOldData(pool)
