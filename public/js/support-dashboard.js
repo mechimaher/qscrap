@@ -2836,7 +2836,7 @@ function renderOrderDetailsModal(data) {
                 <div style="display: grid; gap: 8px;">
                     <div><strong>Reason:</strong> ${escapeHTML(order.cancellation_reason)}</div>
                     <div><strong>Cancelled By:</strong> ${escapeHTML(order.cancelled_by_role || 'N/A')}</div>
-                    <div><strong>Refund %:</strong> ${order.refund_percentage || 0}%</div>
+                    <div><strong>Fee Applied:</strong> ${order.refund_percentage ? (order.refund_percentage * 100).toFixed(0) : 0}%</div>
                     <div><strong>Cancelled At:</strong> ${order.cancelled_at ? formatDate(order.cancelled_at) : 'N/A'}</div>
                 </div>
             </div>
