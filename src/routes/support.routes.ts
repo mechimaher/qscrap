@@ -21,7 +21,8 @@ import {
     // Phase 3 Enhancements
     createTicketForCustomer,
     getCannedResponses,
-    grantGoodwillCredit
+    grantGoodwillCredit,
+    getOrderDetailsForSupport
 } from '../controllers/support.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
@@ -96,4 +97,8 @@ router.get('/canned-responses', authenticate, authorizeOperations, getCannedResp
 // Grant goodwill credit
 router.post('/goodwill-credit', authenticate, authorizeOperations, grantGoodwillCredit);
 
+// Full order details for decision-making
+router.get('/order-details/:order_id', authenticate, authorizeOperations, getOrderDetailsForSupport);
+
 export default router;
+
