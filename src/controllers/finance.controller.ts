@@ -736,7 +736,7 @@ export const getPendingCompensationReviews = async (req: AuthRequest, res: Respo
                 g.email as garage_email,
                 o.order_number,
                 o.customer_id,
-                c.full_name as customer_name,
+                u.full_name as customer_name,
                 cr.reason_text,
                 cr.order_status_at_cancel,
                 cr.time_since_order_minutes
@@ -744,7 +744,7 @@ export const getPendingCompensationReviews = async (req: AuthRequest, res: Respo
             JOIN garages g ON gp.garage_id = g.garage_id
             JOIN orders o ON gp.order_id = o.order_id
             LEFT JOIN cancellation_requests cr ON gp.order_id = cr.order_id
-            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            LEFT JOIN users u ON o.customer_id = u.user_id
             WHERE gp.payout_status = 'pending_compensation_review'
             ORDER BY gp.created_at DESC
         `);
