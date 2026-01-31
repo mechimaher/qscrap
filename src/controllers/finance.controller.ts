@@ -450,8 +450,8 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         // If no orders found
         if (statementData.orders.length === 0) {
             return res.status(404).json({
-                error: 'No confirmed payouts found',
-                message: `No confirmed payouts found for this garage between ${from_date} and ${to_date}`
+                error: 'No completed orders found',
+                message: `No completed orders found for this garage between ${from_date} and ${to_date}`
             });
         }
 
