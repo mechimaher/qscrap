@@ -497,9 +497,9 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
                 d.current_lat::float as driver_lat, d.current_lng::float as driver_lng,
                 da.status as delivery_status, da.estimated_delivery,
                 da.pickup_at, da.delivered_at, da.created_at as delivery_assigned_at,
-                r.rating, r.review_text, r.created_at as review_date,
+                r.overall_rating, r.review_text, r.created_at as review_date,
                 cr.reason_code, cr.reason_text as cancellation_reason, 
-                cr.refund_percentage, cr.cancelled_at, cr.cancelled_by_role
+                cr.refund_amount, cr.requested_by_type, cr.created_at as cancelled_at
             FROM orders o
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN bids b ON o.bid_id = b.bid_id
