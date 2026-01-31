@@ -27,6 +27,7 @@ import {
     CancellationStage
 } from './cancellation.constants';
 import { getFraudDetectionService } from './fraud-detection.service';
+import { smsService } from '../sms.service';
 
 export class CancellationService {
     constructor(private pool: Pool) { }
@@ -582,7 +583,22 @@ export class CancellationService {
                     target_role: 'customer'
                 });
 
-                // TODO: Add email notification service call here
+                // SMS notification for refund confirmation (critical financial action)
+                try {
+                    const customerResult = await this.pool.query(
+                        'SELECT phone_number FROM customers WHERE customer_id = $1',
+                        [customerId]
+                    );
+                    if (customerResult.rows[0]?.phone_number) {
+                        await smsService.sendRefundConfirmation(
+                            customerResult.rows[0].phone_number,
+                            order.order_number,
+                            refundableAmount
+                        );
+                    }
+                } catch (smsErr) {
+                    console.error('[Cancellation] SMS notification failed:', smsErr);
+                }
             }
 
             // Notify Operations (for audit trail)
@@ -617,6 +633,7 @@ export class CancellationService {
     /**
      * Cancel order (by garage)
      * Full refund to customer, impacts garage fulfillment rate
+     * Auto-executes Stripe refund immediately
      */
     async cancelOrderByGarage(
         orderId: string,
@@ -640,14 +657,15 @@ export class CancellationService {
 
             const order = orderResult.rows[0];
 
-            // Garage can only cancel if not yet picked up
-            const cancelableStatuses = ['confirmed', 'preparing'];
+            // Garage can cancel up to ready_for_pickup (before driver picks up)
+            const cancelableStatuses = ['confirmed', 'preparing', 'ready_for_pickup'];
             if (!cancelableStatuses.includes(order.order_status)) {
                 throw new Error(`Cannot cancel order with status: ${order.order_status}`);
             }
 
             const orderCreatedAt = new Date(order.created_at);
             const minutesSinceOrder = Math.floor((Date.now() - orderCreatedAt.getTime()) / 60000);
+            const refundAmount = parseFloat(order.total_amount);
 
             // Create cancellation request - garage cancellation = full refund
             const cancelResult = await client.query(
@@ -658,7 +676,7 @@ export class CancellationService {
                  VALUES ($1, $2, 'garage', $3, $4, $5, $6, 0, $7, 'processed')
                  RETURNING cancellation_id`,
                 [orderId, garageId, reasonCode || 'stock_out', reasonText,
-                    order.order_status, minutesSinceOrder, order.total_amount]
+                    order.order_status, minutesSinceOrder, refundAmount]
             );
 
             // Update order status
@@ -693,17 +711,70 @@ export class CancellationService {
                 [garageId]
             );
 
-            // Full refund for customer
+            let stripeRefundResult = null;
+
+            // AUTO-EXECUTE Stripe refund for garage cancellation
             if (order.payment_status === 'paid') {
-                await client.query(
+                const piResult = await client.query(
+                    `SELECT provider_intent_id FROM payment_intents 
+                     WHERE order_id = $1 AND status = 'succeeded' LIMIT 1`,
+                    [orderId]
+                );
+
+                const refundInsert = await client.query(
                     `INSERT INTO refunds 
                      (order_id, cancellation_id, original_amount, refund_amount, fee_retained, refund_status)
-                     VALUES ($1, $2, $3, $3, 0, 'pending')`,
-                    [orderId, cancelResult.rows[0].cancellation_id, order.total_amount]
+                     VALUES ($1, $2, $3, $3, 0, 'processing')
+                     RETURNING refund_id`,
+                    [orderId, cancelResult.rows[0].cancellation_id, refundAmount]
                 );
+
+                if (piResult.rows.length > 0 && piResult.rows[0].provider_intent_id) {
+                    try {
+                        const Stripe = require('stripe');
+                        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                            apiVersion: '2025-12-15.clover'
+                        });
+
+                        const stripeRefund = await stripe.refunds.create({
+                            payment_intent: piResult.rows[0].provider_intent_id,
+                            amount: Math.round(refundAmount * 100),
+                            metadata: {
+                                order_id: orderId,
+                                order_number: order.order_number,
+                                reason: 'garage_cancellation',
+                                cancelled_by: 'garage'
+                            }
+                        });
+
+                        await client.query(
+                            `UPDATE refunds SET 
+                                refund_status = 'completed',
+                                stripe_refund_id = $2,
+                                processed_at = NOW()
+                             WHERE refund_id = $1`,
+                            [refundInsert.rows[0].refund_id, stripeRefund.id]
+                        );
+
+                        await client.query(
+                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
+                            [orderId]
+                        );
+
+                        stripeRefundResult = { refund_id: stripeRefund.id, amount: refundAmount };
+                        console.log(`[Garage-Cancel] Auto-refund ${stripeRefund.id}: ${refundAmount} QAR`);
+                    } catch (stripeErr: any) {
+                        console.error('[Garage-Cancel] Stripe refund failed:', stripeErr.message);
+                        await client.query(
+                            `UPDATE refunds SET refund_status = 'failed', 
+                             refund_reason = $2 WHERE refund_id = $1`,
+                            [refundInsert.rows[0].refund_id, stripeErr.message]
+                        );
+                    }
+                }
             }
 
-            // CR-03: Atomic payout cancellation - prevent paying garage for cancelled orders
+            // CR-03: Atomic payout cancellation
             await client.query(
                 `UPDATE garage_payouts SET payout_status = 'cancelled', updated_at = NOW() 
                  WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
@@ -712,28 +783,50 @@ export class CancellationService {
 
             await client.query('COMMIT');
 
-            // Notify customer (Persistent + Socket)
+            // Notify customer
             await createNotification({
                 userId: order.customer_id,
                 type: 'order_cancelled',
                 title: 'Order Cancelled 🚫',
-                message: `Garage cannot fulfill Order #${order.order_number}. Full refund will be processed.`,
+                message: stripeRefundResult
+                    ? `Garage cannot fulfill Order #${order.order_number}. Refund of ${refundAmount} QAR processed.`
+                    : `Garage cannot fulfill Order #${order.order_number}. Full refund will be processed.`,
                 data: {
                     order_id: orderId,
                     order_number: order.order_number,
                     cancelled_by: 'garage',
-                    refund_amount: order.total_amount
+                    refund_amount: refundAmount,
+                    refund_status: stripeRefundResult ? 'completed' : 'pending'
                 },
                 target_role: 'customer'
             });
 
-            // PUSH: Customer - order cancelled by garage
+            // SMS notification for refund (garage cancellation = full refund)
+            if (stripeRefundResult) {
+                try {
+                    const customerResult = await this.pool.query(
+                        'SELECT phone_number FROM customers WHERE customer_id = $1',
+                        [order.customer_id]
+                    );
+                    if (customerResult.rows[0]?.phone_number) {
+                        await smsService.sendRefundConfirmation(
+                            customerResult.rows[0].phone_number,
+                            order.order_number,
+                            refundAmount
+                        );
+                    }
+                } catch (smsErr) {
+                    console.error('[Garage-Cancel] SMS notification failed:', smsErr);
+                }
+            }
+
+            // PUSH: Customer
             try {
                 const { pushService } = await import('../push.service');
                 await pushService.sendToUser(
                     order.customer_id,
                     'Order Cancelled 🚫',
-                    `Garage cancelled Order #${order.order_number}. Full refund incoming.`,
+                    `Garage cancelled Order #${order.order_number}. Full refund ${stripeRefundResult ? 'processed' : 'incoming'}.`,
                     { type: 'order_cancelled', order_id: orderId, order_number: order.order_number },
                     { channelId: 'orders', sound: true }
                 );
@@ -741,15 +834,48 @@ export class CancellationService {
                 console.error('[CANCEL] Push to customer failed:', pushErr);
             }
 
+            // Notify driver if order was assigned
+            if (order.driver_id) {
+                await createNotification({
+                    userId: order.driver_id,
+                    type: 'order_cancelled',
+                    title: '🚫 Pickup Cancelled',
+                    message: `Order #${order.order_number} cancelled by garage. No pickup needed.`,
+                    data: { order_id: orderId, order_number: order.order_number, action: 'cancel_pickup' },
+                    target_role: 'driver'
+                });
+
+                try {
+                    const { pushService } = await import('../push.service');
+                    await pushService.sendToUser(
+                        order.driver_id,
+                        '🚫 Pickup Cancelled',
+                        `Order #${order.order_number} cancelled. No pickup needed.`,
+                        { type: 'order_cancelled', order_id: orderId },
+                        { channelId: 'orders', sound: true }
+                    );
+                } catch (pushErr) {
+                    console.error('[CANCEL] Push to driver failed:', pushErr);
+                }
+
+                (global as any).io?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
+                    order_id: orderId,
+                    order_number: order.order_number,
+                    cancelled_by: 'garage',
+                    message: 'Pickup cancelled by garage.',
+                    action: 'cancel_pickup'
+                });
+            }
+
             (global as any).io?.to(`user_${order.customer_id}`).emit('order_cancelled', {
                 order_id: orderId,
                 order_number: order.order_number,
                 cancelled_by: 'garage',
                 message: 'Unfortunately, the garage cannot fulfill this order. Full refund will be processed.',
-                refund_amount: order.total_amount
+                refund_amount: refundAmount
             });
 
-            // Notify Operations for urgent refund processing (Garage cancellation = full refund)
+            // Notify Operations
             emitToOperations('order_cancelled', {
                 order_id: orderId,
                 order_number: order.order_number,
@@ -757,14 +883,17 @@ export class CancellationService {
                 customer_id: order.customer_id,
                 garage_id: garageId,
                 cancellation_fee: 0,
-                refund_amount: order.total_amount,
-                requires_refund: order.payment_status === 'paid',
-                urgent: true // Garage-initiated = urgent
+                refund_amount: refundAmount,
+                refund_status: stripeRefundResult ? 'completed' : 'pending',
+                auto_processed: !!stripeRefundResult
             });
 
             return {
-                message: 'Order cancelled. Customer will receive full refund.',
-                impact: 'This cancellation affects your fulfillment rate.'
+                message: stripeRefundResult
+                    ? `Order cancelled. Refund of ${refundAmount} QAR processed.`
+                    : 'Order cancelled. Customer will receive full refund.',
+                impact: 'This cancellation affects your fulfillment rate.',
+                refund_status: stripeRefundResult ? 'completed' : 'pending'
             };
         } catch (err) {
             await client.query('ROLLBACK');
@@ -791,6 +920,285 @@ export class CancellationService {
         );
 
         return result.rows;
+    }
+
+    /**
+     * Cancel order (by driver)
+     * Handles various driver cancellation scenarios with appropriate fee attribution
+     * 
+     * Fee Attribution:
+     * - cant_find_garage: Platform absorbs, reassign order
+     * - part_damaged_at_pickup: Garage fault, full refund to customer
+     * - customer_unreachable_driver: Customer fault, 10% fee applies
+     * - vehicle_issue: Platform absorbs, reassign order
+     */
+    async cancelOrderByDriver(
+        orderId: string,
+        driverId: string,
+        reasonCode: 'cant_find_garage' | 'part_damaged_at_pickup' | 'customer_unreachable_driver' | 'vehicle_issue',
+        reasonText?: string
+    ): Promise<CancelOrderResult> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+
+            // Lock and get order
+            const orderResult = await client.query(
+                `SELECT * FROM orders WHERE order_id = $1 AND driver_id = $2 FOR UPDATE`,
+                [orderId, driverId]
+            );
+
+            if (orderResult.rows.length === 0) {
+                throw new Error('Order not found or not assigned to you');
+            }
+
+            const order = orderResult.rows[0];
+
+            // Driver can only cancel if assigned/picked_up/in_transit
+            const cancelableStatuses = ['assigned', 'picked_up', 'in_transit'];
+            if (!cancelableStatuses.includes(order.order_status)) {
+                throw new Error(`Cannot cancel order with status: ${order.order_status}`);
+            }
+
+            const totalAmount = parseFloat(order.total_amount);
+            const deliveryFee = parseFloat(order.delivery_fee || 0);
+            const partPrice = totalAmount - deliveryFee;
+            const orderCreatedAt = new Date(order.created_at);
+            const minutesSinceOrder = Math.floor((Date.now() - orderCreatedAt.getTime()) / 60000);
+
+            // Determine who pays based on reason
+            let cancellationFee = 0;
+            let refundAmount = totalAmount;
+            let faultParty: 'driver' | 'garage' | 'customer' | 'platform' = 'platform';
+            let newStatus = 'cancelled_by_driver';
+
+            switch (reasonCode) {
+                case 'cant_find_garage':
+                case 'vehicle_issue':
+                    // Platform absorbs - full refund, reassign
+                    faultParty = 'platform';
+                    refundAmount = totalAmount;
+                    cancellationFee = 0;
+                    break;
+
+                case 'part_damaged_at_pickup':
+                    // Garage fault - full refund to customer
+                    faultParty = 'garage';
+                    refundAmount = totalAmount;
+                    cancellationFee = 0;
+                    break;
+
+                case 'customer_unreachable_driver':
+                    // Customer fault - 10% fee applies + delivery retained
+                    faultParty = 'customer';
+                    cancellationFee = partPrice * CANCELLATION_FEES.IN_DELIVERY;
+                    refundAmount = partPrice - cancellationFee; // Delivery fee not refunded
+                    break;
+            }
+
+            // Create cancellation request
+            const cancelResult = await client.query(
+                `INSERT INTO cancellation_requests 
+                 (order_id, requested_by, requested_by_type, reason_code, reason_text, 
+                  order_status_at_cancel, time_since_order_minutes, cancellation_fee, 
+                  refund_amount, status)
+                 VALUES ($1, $2, 'driver', $3, $4, $5, $6, $7, $8, 'processed')
+                 RETURNING cancellation_id`,
+                [orderId, driverId, reasonCode, reasonText,
+                    order.order_status, minutesSinceOrder, cancellationFee, refundAmount]
+            );
+
+            // Update order status
+            await client.query(
+                `UPDATE orders 
+                 SET order_status = $2, 
+                     driver_id = NULL,
+                     updated_at = NOW()
+                 WHERE order_id = $1`,
+                [orderId, newStatus]
+            );
+
+            // Log status change
+            await client.query(
+                `INSERT INTO order_status_history 
+                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                 VALUES ($1, $2, $3, $4, 'driver', $5)`,
+                [orderId, order.order_status, newStatus, driverId, reasonText || reasonCode]
+            );
+
+            let stripeRefundResult = null;
+
+            // Process Stripe refund if order was paid
+            if (order.payment_status === 'paid' && refundAmount > 0) {
+                const piResult = await client.query(
+                    `SELECT provider_intent_id FROM payment_intents 
+                     WHERE order_id = $1 AND status = 'succeeded' LIMIT 1`,
+                    [orderId]
+                );
+
+                const refundInsert = await client.query(
+                    `INSERT INTO refunds 
+                     (order_id, cancellation_id, original_amount, refund_amount, fee_retained, 
+                      delivery_fee_retained, refund_status)
+                     VALUES ($1, $2, $3, $4, $5, $6, 'processing')
+                     RETURNING refund_id`,
+                    [orderId, cancelResult.rows[0].cancellation_id, totalAmount,
+                        refundAmount, cancellationFee, faultParty === 'customer' ? deliveryFee : 0]
+                );
+
+                if (piResult.rows.length > 0 && piResult.rows[0].provider_intent_id) {
+                    try {
+                        const Stripe = require('stripe');
+                        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                            apiVersion: '2025-12-15.clover'
+                        });
+
+                        const stripeRefund = await stripe.refunds.create({
+                            payment_intent: piResult.rows[0].provider_intent_id,
+                            amount: Math.round(refundAmount * 100),
+                            metadata: {
+                                order_id: orderId,
+                                order_number: order.order_number,
+                                reason: `driver_${reasonCode}`,
+                                fault_party: faultParty
+                            }
+                        });
+
+                        await client.query(
+                            `UPDATE refunds SET 
+                                refund_status = 'completed',
+                                stripe_refund_id = $2,
+                                processed_at = NOW()
+                             WHERE refund_id = $1`,
+                            [refundInsert.rows[0].refund_id, stripeRefund.id]
+                        );
+
+                        await client.query(
+                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
+                            [orderId]
+                        );
+
+                        stripeRefundResult = { refund_id: stripeRefund.id, amount: refundAmount };
+                        console.log(`[Driver-Cancel] Refund ${stripeRefund.id}: ${refundAmount} QAR (fault: ${faultParty})`);
+                    } catch (stripeErr: any) {
+                        console.error('[Driver-Cancel] Stripe refund failed:', stripeErr.message);
+                        await client.query(
+                            `UPDATE refunds SET refund_status = 'failed', 
+                             refund_reason = $2 WHERE refund_id = $1`,
+                            [refundInsert.rows[0].refund_id, stripeErr.message]
+                        );
+                    }
+                }
+            }
+
+            // If garage fault, record penalty
+            if (faultParty === 'garage') {
+                await client.query(`
+                    INSERT INTO garage_penalties 
+                    (garage_id, order_id, penalty_type, amount, status, notes)
+                    VALUES ($1, $2, 'driver_reported_damage', $3, 'pending', $4)
+                `, [order.garage_id, orderId, GARAGE_PENALTIES.DAMAGED_PART_PENALTY_QAR,
+                `Driver reported part damaged at pickup: ${reasonText || 'No details'}`]);
+            }
+
+            // Cancel garage payout
+            await client.query(
+                `UPDATE garage_payouts SET payout_status = 'cancelled', updated_at = NOW() 
+                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                [orderId]
+            );
+
+            await client.query('COMMIT');
+
+            // Notify customer
+            await createNotification({
+                userId: order.customer_id,
+                type: 'order_cancelled',
+                title: '🚫 Delivery Cancelled',
+                message: stripeRefundResult
+                    ? `Order #${order.order_number} cancelled. Refund of ${refundAmount.toFixed(2)} QAR processed.`
+                    : `Order #${order.order_number} has been cancelled. Refund will be processed.`,
+                data: {
+                    order_id: orderId,
+                    order_number: order.order_number,
+                    cancelled_by: 'driver',
+                    reason: reasonCode,
+                    refund_amount: refundAmount
+                },
+                target_role: 'customer'
+            });
+
+            // SMS notification for refund (driver cancellation)
+            if (stripeRefundResult) {
+                try {
+                    const customerResult = await this.pool.query(
+                        'SELECT phone_number FROM customers WHERE customer_id = $1',
+                        [order.customer_id]
+                    );
+                    if (customerResult.rows[0]?.phone_number) {
+                        await smsService.sendRefundConfirmation(
+                            customerResult.rows[0].phone_number,
+                            order.order_number,
+                            refundAmount
+                        );
+                    }
+                } catch (smsErr) {
+                    console.error('[Driver-Cancel] SMS notification failed:', smsErr);
+                }
+            }
+
+            // PUSH to customer
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    order.customer_id,
+                    '🚫 Delivery Cancelled',
+                    `Order #${order.order_number} cancelled.`,
+                    { type: 'order_cancelled', order_id: orderId },
+                    { channelId: 'orders', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[Driver-Cancel] Push to customer failed:', pushErr);
+            }
+
+            // Notify garage
+            await createNotification({
+                userId: order.garage_id,
+                type: 'order_cancelled',
+                title: '🚫 Delivery Issue',
+                message: `Order #${order.order_number} cancelled by driver: ${reasonCode.replace(/_/g, ' ')}`,
+                data: { order_id: orderId, reason: reasonCode, fault_party: faultParty },
+                target_role: 'garage'
+            });
+
+            // Notify Operations for re-assignment or investigation
+            emitToOperations('order_cancelled', {
+                order_id: orderId,
+                order_number: order.order_number,
+                cancelled_by: 'driver',
+                driver_id: driverId,
+                customer_id: order.customer_id,
+                garage_id: order.garage_id,
+                reason_code: reasonCode,
+                fault_party: faultParty,
+                cancellation_fee: cancellationFee,
+                refund_amount: refundAmount,
+                refund_status: stripeRefundResult ? 'completed' : 'pending',
+                requires_reassignment: ['cant_find_garage', 'vehicle_issue'].includes(reasonCode)
+            });
+
+            return {
+                message: `Order cancelled (${reasonCode.replace(/_/g, ' ')}).`,
+                fault_party: faultParty,
+                refund_amount: refundAmount,
+                refund_status: stripeRefundResult ? 'completed' : 'pending'
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
     }
 
     /**

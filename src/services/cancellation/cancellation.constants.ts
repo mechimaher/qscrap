@@ -119,6 +119,12 @@ export const CANCELLATION_REASON_CODES = {
     WRONG_PART_IDENTIFIED: 'wrong_part_identified',
     CUSTOMER_UNREACHABLE: 'customer_unreachable',
 
+    // Driver reasons
+    CANT_FIND_GARAGE: 'cant_find_garage',
+    PART_DAMAGED_AT_PICKUP: 'part_damaged_at_pickup',
+    CUSTOMER_UNREACHABLE_DRIVER: 'customer_unreachable_driver',
+    VEHICLE_ISSUE: 'vehicle_issue',
+
     // Defect/issue reasons
     WRONG_PART: 'wrong_part',
     PART_DEFECTIVE: 'part_defective',

@@ -162,6 +162,36 @@ export const getCancellationHistory = async (req: AuthRequest, res: Response) =>
 };
 
 // ============================================
+// DRIVER CANCELLATION
+// ============================================
+
+export const cancelOrderByDriver = async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+    const { reason_code, reason_text } = req.body;
+    const driverId = req.user!.userId;
+
+    // Validate reason code
+    const validReasons = ['cant_find_garage', 'part_damaged_at_pickup', 'customer_unreachable_driver', 'vehicle_issue'];
+    if (!reason_code || !validReasons.includes(reason_code)) {
+        return res.status(400).json({
+            error: `Invalid reason_code. Must be one of: ${validReasons.join(', ')}`
+        });
+    }
+
+    try {
+        const result = await cancellationService.cancelOrderByDriver(
+            order_id,
+            driverId,
+            reason_code,
+            reason_text
+        );
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+// ============================================
 // RETURN REQUESTS (7-Day Window) - BRAIN v3.0
 // ============================================
 
