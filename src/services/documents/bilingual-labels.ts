@@ -76,7 +76,7 @@ export const COMPANY_INFO = {
         ar: 'المنطقة الصناعية، شارع 10، ص.ب 32544، الدوحة، قطر'
     },
     country: { en: 'State of Qatar', ar: 'دولة قطر' },
-    cr_number: '', // Will be added when CR is obtained
+    cr_number: '155892', // QScrap Commercial Registration
 };
 
 export function formatConditionBilingual(condition: string): { en: string; ar: string } {
