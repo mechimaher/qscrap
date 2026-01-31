@@ -1239,7 +1239,7 @@ export const ar = {
     cancel: {
         title: 'إلغاء الطلبية',
         confirmTitle: 'إلغاء الطلبية؟',
-        confirmMessage: 'هل أنت متأكد من إلغاء هذه الطلبية؟',
+        confirmMessage: 'سيتم استرداد {{refund}} ر.ق (رسوم: {{fee}} ر.ق)',
         confirmAction: 'لا يمكن التراجع عن هذا الإجراء',
         reasonTitle: 'سبب الإلغاء',
         selectReason: 'اختر سبباً',

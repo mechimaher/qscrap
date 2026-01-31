@@ -454,16 +454,15 @@ export default function OrderDetailScreen() {
     const handleCancelOrder = async () => {
         if (!order) return;
 
-        // Determine fee based on status
+        // Determine fee based on status (BRAIN v3.0)
         const isConfirmedStatus = order.order_status === 'confirmed';
-        const fee = isConfirmedStatus ? '0-10%' : '25%';
         const feeMessage = isConfirmedStatus
-            ? t('cancel.feeConfirmed') || 'Free within 1 hour, 10% after'
-            : t('cancel.feePreparing') || '25% cancellation fee applies';
+            ? t('cancel.feeConfirmed')
+            : t('cancel.feePreparing');
 
         Alert.alert(
-            t('cancel.confirmTitle') || 'Cancel Order?',
-            `${t('cancel.confirmMessage') || 'Are you sure you want to cancel this order?'}\n\n${feeMessage}`,
+            t('cancel.confirmTitle'),
+            feeMessage,
             [
                 { text: t('common.no'), style: 'cancel' },
                 {
