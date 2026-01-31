@@ -536,7 +536,7 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
 
         // Get refund info if exists
         const refundResult = await pool.query(`
-            SELECT refund_id, refund_amount, refund_status, original_amount, fee_retained, created_at
+            SELECT refund_id, refund_amount, refund_status, refund_reason, original_amount, fee_retained, created_at
             FROM refunds 
             WHERE order_id = $1
         `, [order_id]);
