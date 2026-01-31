@@ -338,6 +338,12 @@ export class FinanceService {
 
     /**
      * Create a refund
+     * 
+     * @deprecated This method does NOT call Stripe. Use RefundService.createRefund() instead.
+     * This is a legacy path that only creates a DB record without executing the actual refund.
+     * Scheduled for removal in Q2 2026.
+     * 
+     * @see src/services/finance/refund.service.ts for the canonical implementation
      */
     static async createRefund(params: {
         order_id: string;
@@ -345,6 +351,12 @@ export class FinanceService {
         reason: string;
         created_by: string;
     }): Promise<{ refund: unknown }> {
+        // G-01 FIX: Deprecation warning - this method doesn't call Stripe!
+        console.warn(
+            `[DEPRECATED] FinanceService.createRefund() called for order ${params.order_id}. ` +
+            `This method does NOT execute Stripe refunds. Use RefundService.createRefund() instead.`
+        );
+
         const { order_id, amount, reason, created_by } = params;
         const client = await pool.connect();
 

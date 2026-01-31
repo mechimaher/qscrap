@@ -445,6 +445,7 @@ export class CancellationService {
                             apiVersion: '2025-12-15.clover'
                         });
 
+                        // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
                         const stripeRefund = await stripe.refunds.create({
                             payment_intent: piResult.rows[0].provider_intent_id,
                             amount: Math.round(refundableAmount * 100), // cents
@@ -454,6 +455,8 @@ export class CancellationService {
                                 reason: 'customer_cancellation',
                                 delivery_fee_retained: deliveryFee.toString()
                             }
+                        }, {
+                            idempotencyKey: `customer_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
                         });
 
                         // Update refund as completed
@@ -736,6 +739,7 @@ export class CancellationService {
                             apiVersion: '2025-12-15.clover'
                         });
 
+                        // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
                         const stripeRefund = await stripe.refunds.create({
                             payment_intent: piResult.rows[0].provider_intent_id,
                             amount: Math.round(refundAmount * 100),
@@ -745,6 +749,8 @@ export class CancellationService {
                                 reason: 'garage_cancellation',
                                 cancelled_by: 'garage'
                             }
+                        }, {
+                            idempotencyKey: `garage_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
                         });
 
                         await client.query(
@@ -1053,6 +1059,7 @@ export class CancellationService {
                             apiVersion: '2025-12-15.clover'
                         });
 
+                        // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
                         const stripeRefund = await stripe.refunds.create({
                             payment_intent: piResult.rows[0].provider_intent_id,
                             amount: Math.round(refundAmount * 100),
@@ -1062,6 +1069,8 @@ export class CancellationService {
                                 reason: `driver_${reasonCode}`,
                                 fault_party: faultParty
                             }
+                        }, {
+                            idempotencyKey: `driver_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
                         });
 
                         await client.query(
