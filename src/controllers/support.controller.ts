@@ -529,7 +529,7 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
         // Get payout info if exists
         const payoutResult = await pool.query(`
             SELECT payout_id, payout_status, gross_amount, commission_amount, net_amount,
-                   created_at, paid_at, payment_method, payment_reference
+                   created_at, sent_at, confirmed_at, notes
             FROM garage_payouts 
             WHERE order_id = $1
         `, [order_id]);
