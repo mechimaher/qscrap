@@ -188,7 +188,7 @@ app.get('/health/jobs', async (req, res) => {
                 autoResolveDisputes: { description: 'Auto-approve disputes after 48h', frequency: 'hourly' },
                 autoConfirmDeliveries: { description: 'Auto-complete orders after 24h delivery', frequency: 'hourly' },
                 autoConfirmPayouts: { description: 'Auto-confirm payout receipt after 7 days', frequency: 'hourly' },
-                abandonStaleInspections: { description: 'Release QC inspections stuck > 4 hours', frequency: 'hourly' },
+                // abandonStaleInspections removed - QC workflow cancelled (2026-02-01)
                 schedulePendingPayouts: { description: 'Create payout records for completed orders', frequency: 'hourly' },
                 autoProcessPayouts: { description: 'Process mature payouts, hold disputed ones', frequency: 'hourly' },
                 cleanupOldData: { description: 'Remove old notifications and history', frequency: 'hourly' }

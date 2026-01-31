@@ -8,7 +8,8 @@ export { checkSubscriptions } from './subscription.jobs';
 export { autoResolveDisputes } from './dispute.jobs';
 export { schedulePendingPayouts, autoProcessPayouts, autoConfirmPayouts } from './payout.jobs';
 export { autoConfirmDeliveries } from './order.jobs';
-export { cleanupOldData, abandonStaleInspections } from './maintenance.jobs';
+export { cleanupOldData } from './maintenance.jobs';
+// abandonStaleInspections removed 2026-02-01 - QC workflow cancelled
 
 // HR-02 & HR-03: Cancellation audit fixes (Jan 30, 2026)
 export { runOrphanCleanup, runOrphanCleanupNow } from './orphan-cleanup.job';
