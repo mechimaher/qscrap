@@ -294,7 +294,7 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
 
         // Get current order state
         const orderResult = await client.query(`
-            SELECT o.order_id, o.order_status, o.customer_id, o.garage_id, o.order_number,
+            SELECT o.order_status, o.customer_id, o.garage_id, o.order_number,
                    o.part_price, o.platform_fee, o.garage_payout_amount, o.driver_id
             FROM orders o WHERE o.order_id = $1 FOR UPDATE
         `, [update.orderId]);
@@ -387,7 +387,7 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
  * Send socket notifications for order status changes
  */
 function notifyOrderStatusChange(
-    order: { order_id: string; customer_id: string; garage_id: string; order_number: string; garage_payout_amount?: number },
+    order: { customer_id: string; garage_id: string; order_number: string; garage_payout_amount?: number },
     oldStatus: string,
     newStatus: string,
     payoutCreated: boolean
@@ -400,7 +400,6 @@ function notifyOrderStatusChange(
         : `Order #${order.order_number} status updated to ${newStatus}`;
 
     emitToUser(order.customer_id, 'order_status_updated', {
-        order_id: order.order_id,
         order_number: order.order_number,
         old_status: oldStatus,
         new_status: newStatus,
