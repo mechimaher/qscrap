@@ -479,7 +479,6 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
             SELECT 
                 o.*,
                 o.pod_photo_url,
-                o.pod_signature_url,
                 pr.car_make, pr.car_model, pr.car_year, pr.car_vin,
                 pr.part_description, pr.part_category, pr.part_subcategory,
                 pr.image_urls as request_images,
