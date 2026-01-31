@@ -954,7 +954,8 @@ async function loadPendingRefunds() {
                 <td>${formatDate(r.created_at)}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-success btn-sm" onclick="approveRefund('${r.refund_id}')" 
+                        <button class="btn btn-success btn-sm" 
+                            onclick="approveRefund('${r.refund_id}', '${escapeHTML(r.order_number || '')}', ${r.refund_amount || 0})" 
                             style="padding: 6px 12px; font-size: 11px;">
                             <i class="bi bi-check-lg"></i> Approve
                         </button>
@@ -972,9 +973,55 @@ async function loadPendingRefunds() {
     }
 }
 
-async function approveRefund(refundId) {
-    if (!confirm('Approve this refund? This will process the refund via Stripe.')) return;
+async function approveRefund(refundId, orderNumber = '', amount = 0) {
+    // Show professional confirmation modal with amount preview (100/100 alignment)
+    const modalContent = `
+        <div style="text-align: center; padding: 20px;">
+            <i class="bi bi-arrow-counterclockwise" style="font-size: 48px; color: var(--success); margin-bottom: 16px; display: block;"></i>
+            <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px;">
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Refund Amount</div>
+                <div style="font-size: 28px; font-weight: 700; color: #10b981;">${formatCurrency(amount)}</div>
+                ${orderNumber ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Order #${orderNumber}</div>` : ''}
+            </div>
+            <p style="color: var(--text-secondary); margin: 0;">This will process the refund via Stripe immediately.</p>
+        </div>
+    `;
 
+    // Create modal if QScrapModal exists, otherwise fallback to confirm
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'approve-refund-modal',
+            title: 'Confirm Refund Approval',
+            headerIcon: 'bi-check-circle',
+            headerClass: 'linear-gradient(135deg, #10b981, #059669)',
+            content: modalContent,
+            size: 'sm',
+            actions: [
+                {
+                    id: 'cancel-approve-btn',
+                    text: 'Cancel',
+                    class: 'btn btn-ghost',
+                    onclick: () => QScrapModal.close('approve-refund-modal')
+                },
+                {
+                    id: 'confirm-approve-btn',
+                    text: 'Approve & Process',
+                    class: 'btn btn-success',
+                    onclick: async () => {
+                        QScrapModal.close('approve-refund-modal');
+                        await executeRefundApproval(refundId);
+                    }
+                }
+            ]
+        });
+    } else {
+        // Fallback for when modal system is not available
+        if (!confirm(`Approve refund of ${formatCurrency(amount)} for Order #${orderNumber}?\n\nThis will process via Stripe immediately.`)) return;
+        await executeRefundApproval(refundId);
+    }
+}
+
+async function executeRefundApproval(refundId) {
     try {
         showToast('Processing refund...', 'info');
 

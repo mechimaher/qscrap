@@ -628,9 +628,10 @@ function quickAction(actionType, orderId = null) {
             title: 'Request Full Refund',
             icon: 'bi-arrow-counterclockwise',
             color: 'linear-gradient(135deg, #ef4444, #dc2626)',
-            confirmText: 'Send to Finance',
+            confirmText: 'Process Refund via Stripe',
             needsAmount: false,
-            message: 'This will escalate a full refund request to the Finance team for processing.'
+            showOrderAmount: true, // Show order amount before confirmation
+            message: 'This will process a full refund via Stripe and notify the Finance team.'
         },
 
         'goodwill_credit': {
@@ -688,6 +689,19 @@ function quickAction(actionType, orderId = null) {
             <p style="margin: 0; color: var(--text-secondary);">${config.message}</p>
         </div>
     `;
+
+    // Show order amount preview for refunds (100/100 alignment)
+    if (config.showOrderAmount && currentOrderData) {
+        const orderCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+        const orderAmount = orderCard?.querySelector('.order-meta')?.textContent?.match(/[\d,]+\.\d{2}|\d+/)?.[0] || 'N/A';
+        formContent += `
+            <div style="margin-bottom: 16px; padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; text-align: center;">
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Refund Amount</div>
+                <div style="font-size: 28px; font-weight: 700; color: #ef4444;">QAR ${orderAmount}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Order #${currentOrderData.order_number}</div>
+            </div>
+        `;
+    }
 
     if (config.needsAmount) {
         formContent += `
