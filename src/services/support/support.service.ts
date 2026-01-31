@@ -3,6 +3,7 @@
  * Handles support tickets, messages, dashboard stats, and urgent items
  */
 import { Pool, PoolClient } from 'pg';
+import { CANCELLATION_FEES, STATUS_TO_STAGE, CancellationStage } from '../cancellation/cancellation.constants';
 
 export class SupportService {
     constructor(private pool: Pool) { }
@@ -553,33 +554,83 @@ export class SupportService {
                         throw new Error('A pending refund request already exists for this order. Please wait for Finance to process it.');
                     }
 
-                    // Get order details for refund amount
+                    // Get order details including status for BRAIN v3.0 fee calculation
                     const orderResult = await client.query(
-                        `SELECT total_amount, customer_id FROM orders WHERE order_id = $1`,
+                        `SELECT total_amount, part_price, delivery_fee, order_status, customer_id FROM orders WHERE order_id = $1`,
                         [params.orderId]
                     );
 
                     if (orderResult.rows.length === 0) throw new Error('Order not found');
                     const order = orderResult.rows[0];
 
+                    // BRAIN v3.0 Fee Calculation based on order status
+                    const totalAmount = parseFloat(String(order.total_amount));
+                    const deliveryFee = parseFloat(String(order.delivery_fee || 0));
+                    const partPrice = parseFloat(String(order.part_price || (totalAmount - deliveryFee)));
+
+                    // Map status to cancellation stage
+                    const stage = (STATUS_TO_STAGE as Record<string, CancellationStage>)[order.order_status] || 'BEFORE_PAYMENT';
+
+                    // Get fee rate based on stage
+                    let feeRate = 0;
+                    let deliveryFeeRetained = 0;
+                    switch (stage) {
+                        case 'BEFORE_PAYMENT':
+                            feeRate = CANCELLATION_FEES.BEFORE_PAYMENT; // 0%
+                            break;
+                        case 'AFTER_PAYMENT':
+                            feeRate = CANCELLATION_FEES.AFTER_PAYMENT; // 5%
+                            break;
+                        case 'DURING_PREPARATION':
+                            feeRate = CANCELLATION_FEES.DURING_PREPARATION; // 10%
+                            break;
+                        case 'IN_DELIVERY':
+                            feeRate = CANCELLATION_FEES.IN_DELIVERY; // 10%
+                            deliveryFeeRetained = deliveryFee; // 100% delivery fee retained
+                            break;
+                        case 'AFTER_DELIVERY':
+                            feeRate = CANCELLATION_FEES.AFTER_DELIVERY; // 20%
+                            deliveryFeeRetained = deliveryFee; // 100% delivery fee retained
+                            break;
+                        default:
+                            feeRate = 0;
+                    }
+
+                    // Calculate fee on PART PRICE only (not delivery)
+                    const cancellationFee = Math.round(partPrice * feeRate * 100) / 100;
+                    const refundAmount = Math.round((totalAmount - cancellationFee - deliveryFeeRetained) * 100) / 100;
+
                     // NOTE: Do NOT change order status here!
                     // Order status only changes to 'refunded' when Finance approves the refund.
                     // This just creates a pending refund request for Finance team review.
 
-                    // Create refund record with PENDING status for Finance approval
+                    // Create refund record with PENDING status and BRAIN v3.0 fee calculation
                     await client.query(`
                         INSERT INTO refunds (
                             order_id, customer_id, original_amount, refund_amount, 
+                            fee_retained, delivery_fee_retained,
                             refund_status, refund_reason, initiated_by
-                        ) VALUES ($1, $2, $3, $3, 'pending', $4, 'support')
+                        ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, 'support')
                     `, [
                         params.orderId,
                         order.customer_id,
-                        order.total_amount,
-                        params.notes || 'Full refund requested by support'
+                        totalAmount,
+                        refundAmount,
+                        cancellationFee,
+                        deliveryFeeRetained,
+                        params.notes || `Refund requested by support (Stage: ${stage}, Fee: ${feeRate * 100}%)`
                     ]);
 
-                    result = { action: 'refund_request', orderId: params.orderId, amount: order.total_amount, status: 'pending_finance_approval' };
+                    result = {
+                        action: 'refund_request',
+                        orderId: params.orderId,
+                        originalAmount: totalAmount,
+                        refundAmount: refundAmount,
+                        cancellationFee: cancellationFee,
+                        deliveryFeeRetained: deliveryFeeRetained,
+                        stage: stage,
+                        status: 'pending_finance_approval'
+                    };
                     break;
 
                 case 'partial_refund':
@@ -593,7 +644,7 @@ export class SupportService {
 
                     if (partialOrderResult.rows.length === 0) throw new Error('Order not found');
                     const partialOrder = partialOrderResult.rows[0];
-                    const refundAmount = params.actionDetails.amount;
+                    const partialRefundAmount = params.actionDetails.amount;
 
                     // Create refund record with PENDING status for Finance approval
                     await client.query(`
@@ -605,11 +656,11 @@ export class SupportService {
                         params.orderId,
                         partialOrder.customer_id,
                         partialOrder.total_amount,
-                        refundAmount,
+                        partialRefundAmount,
                         params.notes || 'Partial refund requested by support'
                     ]);
 
-                    result = { action: 'partial_refund', amount: refundAmount, orderId: params.orderId };
+                    result = { action: 'partial_refund', amount: partialRefundAmount, orderId: params.orderId };
                     break;
 
                 case 'goodwill_credit':
