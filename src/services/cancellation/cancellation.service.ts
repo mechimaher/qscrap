@@ -335,7 +335,7 @@ export class CancellationService {
                 );
                 if (parseInt(prevCancellations.rows[0].count) === 0) {
                     finalFee = 0;
-                    feeMessage = 'First cancellation is FREE! 🎁';
+                    feeMessage = 'No cancellation fee for first order';
                 }
             }
 
