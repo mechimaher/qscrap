@@ -865,13 +865,16 @@ async function loadOrders(page = 1) {
 
         if (data.orders && data.orders.length) {
             // Helper function to determine row highlighting class
-            const getRowClass = (status) => {
+            // Highlights rows that need operator attention (e.g., no driver assigned)
+            const getRowClass = (order) => {
+                const status = order.order_status;
                 switch (status) {
                     case 'pending_payment': return 'needs-attention-red';  // Stuck order, needs cancellation
                     case 'confirmed': return 'needs-attention-amber';  // Awaiting garage action
                     case 'disputed': return 'needs-attention-red';     // Urgent: dispute needs resolution
-                    case 'ready_for_pickup': return 'needs-attention-green';  // Ready for driver assignment
-                    case 'qc_failed': return 'needs-attention-red';    // QC failed, needs attention
+                    case 'ready_for_pickup':
+                        // Only highlight if NO driver assigned yet (same driver does pickup + delivery)
+                        return !order.driver_id ? 'needs-attention-green' : '';
                     default: return '';
                 }
             };
@@ -883,7 +886,7 @@ async function loadOrders(page = 1) {
                     ? `<span style="display:inline-block; background:#10B981; color:white; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px;" title="Loyalty Discount: -${o.loyalty_discount} QAR">🎁 -${o.loyalty_discount}</span>`
                     : '';
                 return `
-                        <tr class="${getRowClass(o.order_status)}">
+                        <tr class="${getRowClass(o)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
                             <td>${escapeHTML(o.customer_name)}<br><small style="color: var(--text-muted);">${escapeHTML(o.customer_phone)}</small></td>
                             <td>${escapeHTML(o.garage_name)}</td>
@@ -902,7 +905,7 @@ async function loadOrders(page = 1) {
 
             // Recent orders on overview (first 5 from current page)
             document.getElementById('recentOrdersTable').innerHTML = data.orders.slice(0, 5).map(o => `
-                        <tr class="${getRowClass(o.order_status)}">
+                        <tr class="${getRowClass(o)}">
                             <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
                             <td>${escapeHTML(o.customer_name)}</td>
                             <td>${escapeHTML(o.part_description?.slice(0, 25))}...</td>
