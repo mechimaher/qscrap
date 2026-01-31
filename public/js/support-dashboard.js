@@ -446,7 +446,6 @@ function renderOrders(orders) {
                 
                 <div class="order-actions">
                     ${isActive ? `<button class="order-action-btn" onclick="event.stopPropagation(); trackOrder('${o.order_id}')">📍 Track</button>` : ''}
-                    ${isActive ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('cancel_order', '${o.order_id}')">❌ Cancel</button>` : ''}
                     ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')">🏭 Garage</button>` : ''}
                     ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
                     ${o.order_status === 'refunded' || o.payment_status === 'refunded'
@@ -522,7 +521,7 @@ function quickAction(actionType, orderId = null) {
     orderId = orderId || currentOrder;
 
     // Actions that require an order
-    const orderRequiredActions = ['request_refund', 'cancel_order', 'reassign_driver', 'rush_delivery', 'escalate_to_ops'];
+    const orderRequiredActions = ['request_refund', 'escalate_to_ops'];
     if (orderRequiredActions.includes(actionType) && !orderId) {
         showToast('Please select an order first', 'error');
         return;
