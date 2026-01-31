@@ -2813,15 +2813,15 @@ function renderOrderDetailsModal(data) {
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                     <div>
                         <div style="font-size: 11px; color: #991b1b;">Amount</div>
-                        <div style="font-weight: 700;">${formatCurrency(refund.amount)}</div>
+                        <div style="font-weight: 700;">${formatCurrency(refund.refund_amount)}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; color: #991b1b;">Status</div>
-                        <div style="font-weight: 700; text-transform: uppercase;">${escapeHTML(refund.status)}</div>
+                        <div style="font-weight: 700; text-transform: uppercase;">${escapeHTML(refund.refund_status || 'pending')}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; color: #991b1b;">Reason</div>
-                        <div style="font-weight: 600; font-size: 12px;">${escapeHTML(refund.reason || 'N/A')}</div>
+                        <div style="font-weight: 600; font-size: 12px;">${escapeHTML(refund.refund_reason || 'N/A')}</div>
                     </div>
                 </div>
             </div>
