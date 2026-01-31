@@ -1577,7 +1577,7 @@ async function loadOrders() {
 
         // Update order count badge
         const activeCount = orders.filter(o => !['completed', 'cancelled_by_customer', 'cancelled_by_garage', 'refunded'].includes(o.order_status)).length;
-        updateOrdersBadge(activeCount);
+        setOrdersBadgeCount(activeCount);
 
         // Populate Dashboard Recent Orders (collapsible - 1 by default, 10 when expanded)
         window.recentOrdersData = orders.slice(0, 10); // Store for toggle
@@ -1588,22 +1588,11 @@ async function loadOrders() {
     }
 }
 
-// Update orders badge in nav
-function updateOrdersBadge(count) {
-    // Add badge element if not exists
-    let badge = document.getElementById('ordersBadge');
-    const ordersNav = document.querySelector('[data-section="orders"]');
-    if (!badge && ordersNav) {
-        badge = document.createElement('span');
-        badge.id = 'ordersBadge';
-        badge.className = 'nav-badge';
-        badge.style.cssText = 'background: var(--success);';
-        ordersNav.appendChild(badge);
-    }
-    if (badge) {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'flex' : 'none';
-    }
+// Update orders badge in nav - sets global activeOrdersCount and delegates to main function
+// NOTE: Main updateOrdersBadge() is defined at line ~3508 and handles display logic
+function setOrdersBadgeCount(count) {
+    activeOrdersCount = count;
+    updateOrdersBadge();
 }
 
 // Update earnings badge in nav (payouts awaiting confirmation)
