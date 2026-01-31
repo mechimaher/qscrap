@@ -544,6 +544,15 @@ export class SupportService {
                 case 'full_refund':
                     if (!params.orderId) throw new Error('Order ID required for refund');
 
+                    // P0 FIX: Check for existing pending refund to prevent duplicates
+                    const existingPendingRefund = await client.query(
+                        `SELECT refund_id FROM refunds WHERE order_id = $1 AND refund_status = 'pending'`,
+                        [params.orderId]
+                    );
+                    if (existingPendingRefund.rows.length > 0) {
+                        throw new Error('A pending refund request already exists for this order. Please wait for Finance to process it.');
+                    }
+
                     // Get order details for refund amount
                     const orderResult = await client.query(
                         `SELECT total_amount, customer_id FROM orders WHERE order_id = $1`,
