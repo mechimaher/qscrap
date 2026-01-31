@@ -451,7 +451,7 @@ function renderOrders(orders) {
                     ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
                     ${o.order_status === 'refunded' || o.payment_status === 'refunded'
                 ? `<button class="order-action-btn danger" disabled title="Already refunded">💰 Refunded</button>`
-                : (hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('full_refund', '${o.order_id}')">💰 Request Refund</button>` : '')}
+                : (hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('request_refund', '${o.order_id}')">💰 Request Refund</button>` : '')}
                 </div>
             </div>
         `;
@@ -522,7 +522,7 @@ function quickAction(actionType, orderId = null) {
     orderId = orderId || currentOrder;
 
     // Actions that require an order
-    const orderRequiredActions = ['full_refund', 'cancel_order', 'reassign_driver', 'rush_delivery', 'escalate_to_ops'];
+    const orderRequiredActions = ['request_refund', 'cancel_order', 'reassign_driver', 'rush_delivery', 'escalate_to_ops'];
     if (orderRequiredActions.includes(actionType) && !orderId) {
         showToast('Please select an order first', 'error');
         return;
@@ -563,7 +563,7 @@ function quickAction(actionType, orderId = null) {
             allowedStatuses: activeStatuses,
             errorMessage: `Cannot rush order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nRush delivery only applies to orders in progress.`
         },
-        'full_refund': {
+        'request_refund': {
             blockedStatuses: ['refunded', 'cancelled'],
             errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nThis order has already been refunded or cancelled.`
         },
@@ -624,23 +624,15 @@ function quickAction(actionType, orderId = null) {
 
     // Action configurations
     const actionConfig = {
-        'full_refund': {
+        'request_refund': {
             title: 'Request Refund',
-            icon: 'bi-send-exclamation',
+            icon: 'bi-arrow-counterclockwise',
             color: 'linear-gradient(135deg, #f59e0b, #d97706)',
             confirmText: 'Submit Request to Finance',
             needsAmount: false,
             showOrderAmount: true,
-            message: 'This will submit a refund request to the Finance team for review and approval. You cannot process refunds directly.'
-        },
-        'partial_refund': {
-            title: 'Partial Refund',
-            icon: 'bi-percent',
-            color: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-            confirmText: 'Submit Request to Finance',
-            needsAmount: true,
-            amountLabel: 'Refund Amount (QAR)',
-            message: 'Enter the partial refund amount. This will be submitted to Finance for approval.'
+            isUnifiedRefund: true,
+            message: 'Select a reason for the refund. The system will automatically determine if fees apply based on the reason.'
         },
         'goodwill_credit': {
             title: 'Goodwill Credit',
@@ -834,7 +826,7 @@ function quickAction(actionType, orderId = null) {
                     const refundReason = refundReasonEl?.value || '';
 
                     // Validate refund reason is selected for refund actions
-                    if (actionType === 'full_refund' && refundReasonEl && !refundReason) {
+                    if (actionType === 'request_refund' && refundReasonEl && !refundReason) {
                         showToast('Please select a refund reason', 'error');
                         refundReasonEl.focus();
                         return;
@@ -1458,7 +1450,7 @@ function renderResolutionLog(logs) {
     }
 
     const actionLabels = {
-        'full_refund': '💰 Full Refund',
+        'request_refund': '💰 Request Refund',
 
         'goodwill_credit': '🎁 Goodwill Credit',
         'cancel_order': '❌ Cancel Order',
