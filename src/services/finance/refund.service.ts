@@ -455,4 +455,84 @@ export class RefundService {
             client.release();
         }
     }
+
+    /**
+     * Reject a pending refund request
+     * Finance team can reject with a reason, notifying Support and Customer
+     */
+    async rejectRefund(refundId: string, rejectedBy: string, rejectionReason: string): Promise<{
+        success: boolean;
+        message: string;
+    }> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // Get the refund details
+            const refundResult = await client.query(`
+                SELECT r.*, o.order_number, o.customer_id
+                FROM refunds r
+                JOIN orders o ON o.order_id = r.order_id
+                WHERE r.refund_id = $1
+            `, [refundId]);
+
+            if (refundResult.rows.length === 0) {
+                throw new RefundNotFoundError(refundId);
+            }
+
+            const refund = refundResult.rows[0];
+
+            if (refund.refund_status !== 'pending') {
+                throw new RefundAlreadyProcessedError(refundId);
+            }
+
+            // Update refund status to rejected
+            await client.query(`
+                UPDATE refunds 
+                SET refund_status = 'rejected',
+                    rejection_reason = $1,
+                    processed_by = $2,
+                    processed_at = NOW(),
+                    updated_at = NOW()
+                WHERE refund_id = $3
+            `, [rejectionReason, rejectedBy, refundId]);
+
+            // Log the rejection
+            console.log(`[RefundService] Refund ${refundId} REJECTED by ${rejectedBy}. Reason: ${rejectionReason}`);
+
+            await client.query('COMMIT');
+
+            // Notify customer about rejection
+            try {
+                const { createNotification } = await import('../notification.service');
+                await createNotification({
+                    userId: refund.customer_id,
+                    target_role: 'customer',
+                    type: 'refund_rejected',
+                    title: 'Refund Request Rejected',
+                    message: `Your refund request for order #${refund.order_number} has been reviewed and rejected. Reason: ${rejectionReason}`,
+                    data: {
+                        order_id: refund.order_id,
+                        order_number: refund.order_number,
+                        refund_id: refundId,
+                        rejection_reason: rejectionReason
+                    }
+                });
+            } catch (notifyErr) {
+                console.warn('[RefundService] Failed to notify customer about rejection:', notifyErr);
+            }
+
+            return {
+                success: true,
+                message: `Refund request rejected. Customer has been notified.`
+            };
+        } catch (err: any) {
+            await client.query('ROLLBACK');
+            console.error('[RefundService] Reject refund error:', err.message);
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
 }

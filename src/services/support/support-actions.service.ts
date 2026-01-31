@@ -240,6 +240,29 @@ export class SupportActionsService {
 
             await client.query('COMMIT');
 
+            // Notify Finance team about pending refund request
+            try {
+                await createNotification({
+                    userId: 'finance_team', // Special ID for team notifications
+                    target_role: 'operations',
+                    type: 'refund_request_pending',
+                    title: 'New Refund Request',
+                    message: `Order #${context.order.order_number}: ${refundCalc.refundableAmount.toFixed(2)} QAR refund requested. Reason: ${params.reason}`,
+                    data: {
+                        order_id: params.orderId,
+                        order_number: context.order.order_number,
+                        refund_id: refundId,
+                        amount: refundCalc.refundableAmount,
+                        stage: refundCalc.stage,
+                        reason: params.reason
+                    }
+                });
+                console.log(`[SupportActions] Finance notification sent for refund request ${refundId}`);
+            } catch (notifyErr) {
+                console.warn('[SupportActions] Failed to notify Finance team:', notifyErr);
+                // Don't fail the request if notification fails
+            }
+
             // Build user-friendly message with breakdown
             let message = `Refund request submitted for order #${context.order.order_number}.\n`;
             if (refundCalc.feePercentage > 0 || refundCalc.deliveryFeeRetained > 0) {
