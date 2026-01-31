@@ -1181,6 +1181,7 @@ export const en = {
         garagePartPhotos: 'Part Photos from Garage',
         conditionPhotos: 'Condition Photos',
         photoCount: '{{count}} photos',
+        waitingForGarage: 'Waiting for garage',
     },
 
     // =============================================
