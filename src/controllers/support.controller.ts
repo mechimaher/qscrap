@@ -475,7 +475,7 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
         }
 
         // Get full order details with all related data
-        // Uses same verified columns as order/query.service.ts
+        // o.* already includes part_price, delivery_fee, total_amount from orders table
         const result = await pool.query(`
             SELECT 
                 o.*,
@@ -485,7 +485,6 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
                 pr.image_urls as request_images,
                 pr.delivery_lat::float as delivery_lat, 
                 pr.delivery_lng::float as delivery_lng,
-                b.part_price, b.delivery_fee, b.total_price,
                 b.warranty_days, b.part_condition, b.brand_name, 
                 b.image_urls as bid_images, b.notes as bid_notes,
                 g.garage_name, g.phone_number as garage_phone, g.address as garage_address,
