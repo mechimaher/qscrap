@@ -148,30 +148,36 @@ export function useSocket() {
             });
 
             // Bid was updated
-            socket.current.on('bid_updated', (data: { bid_id: string; bid_amount: number; request_id?: string }) => {
-                console.log('[Socket] Bid updated:', data.bid_id);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            socket.current.on('bid_updated', (data: { bid_id: string; bid_amount?: number; request_id?: string }) => {
+                console.log('[Socket] Bid updated:', data.bid_id, data.bid_amount);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    scheduleLocalNotification(
-                        '💰 Bid Updated',
-                        `A garage revised their offer to ${data.bid_amount} QAR`,
-                        {
-                            type: 'bid_updated',
-                            bidId: data.bid_id,
-                            requestId: data.request_id,
-                            bidAmount: data.bid_amount,
-                        }
+                // Only show notification if bid_amount is provided (actual price change)
+                // Skip notification when bid_updated is used as just a refresh trigger
+                if (data.bid_amount !== undefined && data.bid_amount !== null) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                    import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                        scheduleLocalNotification(
+                            '💰 Bid Updated',
+                            `A garage revised their offer to ${data.bid_amount} QAR`,
+                            {
+                                type: 'bid_updated',
+                                bidId: data.bid_id,
+                                requestId: data.request_id,
+                                bidAmount: data.bid_amount,
+                            }
+                        );
+                    });
+
+                    setNewBids(prev =>
+                        prev.map(bid =>
+                            bid.bid_id === data.bid_id
+                                ? { ...bid, bid_amount: data.bid_amount! }
+                                : bid
+                        ).sort((a, b) => a.bid_amount - b.bid_amount)
                     );
-                });
-
-                setNewBids(prev =>
-                    prev.map(bid =>
-                        bid.bid_id === data.bid_id
-                            ? { ...bid, bid_amount: data.bid_amount }
-                            : bid
-                    ).sort((a, b) => a.bid_amount - b.bid_amount)
-                );
+                }
+                // If no bid_amount, this is just a refresh trigger - no notification needed
             });
 
             // === COUNTER-OFFER EVENTS ===
