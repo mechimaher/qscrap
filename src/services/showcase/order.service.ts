@@ -57,8 +57,8 @@ export class ShowcaseOrderService {
                 throw new InsufficientStockError(part_id, quantity, part.quantity);
             }
 
-            // Calculate delivery fee
-            let delivery_fee = 25.00;
+            // Calculate delivery fee (Zone-based: Garage → Customer only)
+            let delivery_fee = 10.00; // Zone 1 base fee
             let delivery_zone_id = null;
             if (delivery_lat && delivery_lng) {
                 const zoneInfo = await getDeliveryFeeForLocation(delivery_lat, delivery_lng);

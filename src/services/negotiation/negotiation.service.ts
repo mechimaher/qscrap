@@ -7,6 +7,7 @@ import { Pool, PoolClient } from 'pg';
 import { CounterOfferData, CounterOfferResponse, NegotiationHistory } from './types';
 import { NegotiationLimitReachedError, BidNotPendingError } from './errors';
 import { createNotification } from '../notification.service';
+import { getDeliveryFeeForLocation } from '../../controllers/delivery.controller';
 
 const MAX_NEGOTIATION_ROUNDS = 3;
 
@@ -267,7 +268,17 @@ export class NegotiationService {
 
         // 5. Calculate prices
         const partPrice = parseFloat(offer.proposed_amount);
-        const deliveryFee = 25; // Default delivery fee
+
+        // Calculate delivery fee from zone (NOT hardcoded) - platform_positioning_cost excluded
+        let deliveryFee = 10; // Zone 1 fallback
+        if (request.delivery_lat && request.delivery_lng) {
+            const zoneInfo = await getDeliveryFeeForLocation(
+                parseFloat(request.delivery_lat),
+                parseFloat(request.delivery_lng)
+            );
+            deliveryFee = zoneInfo.fee;
+        }
+
         const platformFee = Math.round(partPrice * commissionRate * 100) / 100;
         const totalAmount = partPrice + deliveryFee;
         const garagePayout = partPrice - platformFee;
