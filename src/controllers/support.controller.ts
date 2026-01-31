@@ -460,3 +460,109 @@ export const grantGoodwillCredit = async (req: AuthRequest, res: Response) => {
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
+
+/**
+ * Get full order details for support - includes all fields, images, timeline
+ * Support agents need this to make informed decisions
+ */
+export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response) => {
+    try {
+        requireAgent(req);
+        const { order_id } = req.params;
+
+        if (!order_id) {
+            return res.status(400).json({ error: 'order_id required' });
+        }
+
+        // Get full order details with all related data
+        const result = await pool.query(`
+            SELECT 
+                o.*,
+                o.pod_photo_url,
+                o.pod_signature_url,
+                pr.car_make, pr.car_model, pr.car_year, pr.car_vin,
+                pr.part_description, pr.part_category, pr.part_subcategory,
+                pr.image_urls as request_images,
+                pr.delivery_lat::float as delivery_lat, 
+                pr.delivery_lng::float as delivery_lng,
+                pr.notes as customer_notes,
+                pr.created_at as request_created_at,
+                b.part_price, b.delivery_fee, b.total_price,
+                b.warranty_days, b.part_condition, b.brand_name, 
+                b.image_urls as bid_images, b.notes as bid_notes,
+                b.estimated_delivery_days, b.created_at as bid_created_at,
+                g.garage_name, g.phone_number as garage_phone, g.address as garage_address,
+                g.rating_average as garage_rating, g.rating_count as garage_rating_count,
+                g.subscription_plan as garage_plan,
+                u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email,
+                u.created_at as customer_since,
+                d.full_name as driver_name, d.phone as driver_phone, 
+                d.vehicle_type, d.vehicle_plate,
+                d.current_lat::float as driver_lat, d.current_lng::float as driver_lng,
+                da.status as delivery_status, da.estimated_delivery,
+                da.pickup_at, da.delivered_at, da.created_at as delivery_assigned_at,
+                r.rating, r.review_text, r.created_at as review_date,
+                cr.reason_code, cr.reason_text as cancellation_reason, 
+                cr.refund_percentage, cr.cancelled_at, cr.cancelled_by_role
+            FROM orders o
+            JOIN part_requests pr ON o.request_id = pr.request_id
+            JOIN bids b ON o.bid_id = b.bid_id
+            JOIN garages g ON o.garage_id = g.garage_id
+            JOIN users u ON o.customer_id = u.user_id
+            LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
+            LEFT JOIN drivers d ON da.driver_id = d.driver_id
+            LEFT JOIN order_reviews r ON o.order_id = r.order_id
+            LEFT JOIN cancellation_requests cr ON o.order_id = cr.order_id
+            WHERE o.order_id = $1
+        `, [order_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = result.rows[0];
+
+        // Get status history timeline
+        const historyResult = await pool.query(`
+            SELECT status, notes, created_at, changed_by
+            FROM order_status_history 
+            WHERE order_id = $1 
+            ORDER BY created_at ASC
+        `, [order_id]);
+
+        // Get payout info if exists
+        const payoutResult = await pool.query(`
+            SELECT payout_id, payout_status, gross_amount, commission_amount, net_amount,
+                   created_at, paid_at, payment_method, payment_reference
+            FROM garage_payouts 
+            WHERE order_id = $1
+        `, [order_id]);
+
+        // Get refund info if exists
+        const refundResult = await pool.query(`
+            SELECT refund_id, amount, status, reason, created_at, processed_at
+            FROM refunds 
+            WHERE order_id = $1
+        `, [order_id]);
+
+        // Get related tickets
+        const ticketsResult = await pool.query(`
+            SELECT ticket_id, subject, status, priority, created_at
+            FROM support_tickets 
+            WHERE order_id = $1 
+            ORDER BY created_at DESC
+        `, [order_id]);
+
+        res.json({
+            success: true,
+            order,
+            status_history: historyResult.rows,
+            payout: payoutResult.rows[0] || null,
+            refund: refundResult.rows[0] || null,
+            tickets: ticketsResult.rows
+        });
+    } catch (err: any) {
+        console.error('[SUPPORT] getOrderDetailsForSupport error:', getErrorMessage(err));
+        res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
+    }
+};

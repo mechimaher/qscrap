@@ -445,6 +445,7 @@ function renderOrders(orders) {
                 ` : ''}
                 
                 <div class="order-actions">
+                    <button class="order-action-btn" onclick="event.stopPropagation(); openOrderDetailsModal('${o.order_id}')" style="background: var(--primary); color: white; border-color: var(--primary);">📋 Details</button>
                     ${isActive ? `<button class="order-action-btn" onclick="event.stopPropagation(); trackOrder('${o.order_id}')">📍 Track</button>` : ''}
                     ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')">🏭 Garage</button>` : ''}
                     ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
@@ -2467,3 +2468,425 @@ document.addEventListener('DOMContentLoaded', function () {
 
 console.log('Tickets Queue Module loaded - v1.0');
 
+// ==========================================
+// ORDER DETAILS MODAL (Full details for Support)
+// ==========================================
+
+/**
+ * Open full order details modal
+ * Calls: GET /api/support/order-details/:order_id
+ */
+async function openOrderDetailsModal(orderId) {
+    const modal = document.getElementById('orderDetailsModal');
+    const content = document.getElementById('orderDetailsContent');
+
+    if (!modal || !content) {
+        showToast('Modal not found', 'error');
+        return;
+    }
+
+    modal.style.display = 'flex';
+    content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <i class="bi bi-hourglass-split" style="font-size: 32px; opacity: 0.5; animation: spin 1s linear infinite;"></i>
+            <p>Loading order details...</p>
+        </div>
+    `;
+
+    try {
+        const res = await fetch(`${API_URL}/support/order-details/${orderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to load order');
+        }
+
+        const data = await res.json();
+        renderOrderDetailsModal(data);
+
+    } catch (err) {
+        console.error('Order details error:', err);
+        content.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #ef4444;">
+                <i class="bi bi-exclamation-triangle" style="font-size: 32px;"></i>
+                <p>${escapeHTML(err.message || 'Failed to load order details')}</p>
+                <button onclick="closeOrderDetailsModal()" class="btn btn-ghost" style="margin-top: 16px;">Close</button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Close order details modal
+ */
+function closeOrderDetailsModal() {
+    const modal = document.getElementById('orderDetailsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Render full order details in modal
+ */
+function renderOrderDetailsModal(data) {
+    const { order, status_history, payout, refund, tickets } = data;
+    const content = document.getElementById('orderDetailsContent');
+
+    // Status color mapping
+    const statusColors = {
+        'completed': '#10b981',
+        'delivered': '#10b981',
+        'pending': '#f59e0b',
+        'confirmed': '#3b82f6',
+        'in_transit': '#8b5cf6',
+        'out_for_delivery': '#8b5cf6',
+        'cancelled': '#ef4444',
+        'refunded': '#6b7280'
+    };
+
+    const statusColor = statusColors[order.order_status] || '#6b7280';
+
+    // Parse images
+    let requestImages = [];
+    let bidImages = [];
+    try {
+        requestImages = typeof order.request_images === 'string' ? JSON.parse(order.request_images) : (order.request_images || []);
+        bidImages = typeof order.bid_images === 'string' ? JSON.parse(order.bid_images) : (order.bid_images || []);
+    } catch (e) { }
+
+    let html = `
+        <!-- Order Header -->
+        <div style="background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary)); padding: 20px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <div style="font-size: 24px; font-weight: 800; color: var(--primary);">#${order.order_number}</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Created ${formatDate(order.created_at)}</div>
+                </div>
+                <div style="padding: 8px 16px; background: ${statusColor}; color: white; border-radius: 8px; font-weight: 700; text-transform: uppercase;">
+                    ${order.order_status.replace(/_/g, ' ')}
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 20px;">
+            <!-- Part Details Card -->
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-gear" style="color: var(--primary);"></i> Part Details
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Part Description</div>
+                        <div style="font-weight: 600; font-size: 14px;">${escapeHTML(order.part_description || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Category</div>
+                        <div style="font-weight: 600; font-size: 14px;">${escapeHTML(order.part_category || 'N/A')} ${order.part_subcategory ? `→ ${escapeHTML(order.part_subcategory)}` : ''}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Condition</div>
+                        <div style="font-weight: 600; font-size: 14px;">${escapeHTML(order.part_condition || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Brand</div>
+                        <div style="font-weight: 600; font-size: 14px;">${escapeHTML(order.brand_name || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Warranty</div>
+                        <div style="font-weight: 600; font-size: 14px;">${order.warranty_days || 0} days</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Est. Delivery</div>
+                        <div style="font-weight: 600; font-size: 14px;">${order.estimated_delivery_days || 'N/A'} days</div>
+                    </div>
+                </div>
+                ${order.bid_notes ? `
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Garage Notes</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">${escapeHTML(order.bid_notes)}</div>
+                    </div>
+                ` : ''}
+            </div>
+            
+            <!-- Vehicle Info Card -->
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-car-front" style="color: var(--primary);"></i> Vehicle
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Make</div>
+                        <div style="font-weight: 600;">${escapeHTML(order.car_make || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Model</div>
+                        <div style="font-weight: 600;">${escapeHTML(order.car_model || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Year</div>
+                        <div style="font-weight: 600;">${order.car_year || 'N/A'}</div>
+                    </div>
+                </div>
+                ${order.car_vin ? `
+                    <div style="margin-top: 12px;">
+                        <div style="font-size: 11px; color: var(--text-muted);">VIN</div>
+                        <div style="font-weight: 600; font-family: monospace;">${escapeHTML(order.car_vin)}</div>
+                    </div>
+                ` : ''}
+            </div>
+            
+            <!-- Images Section -->
+            ${(requestImages.length > 0 || bidImages.length > 0) ? `
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-images" style="color: var(--primary);"></i> Images
+                </h3>
+                ${requestImages.length > 0 ? `
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Customer Request Photos</div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            ${requestImages.map(img => `
+                                <img src="${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid var(--border);" 
+                                    onclick="window.open('${img}', '_blank')" title="Click to enlarge">
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${bidImages.length > 0 ? `
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Garage Part Photos</div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            ${bidImages.map(img => `
+                                <img src="${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid var(--border);" 
+                                    onclick="window.open('${img}', '_blank')" title="Click to enlarge">
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${order.pod_photo_url ? `
+                    <div style="margin-top: 12px;">
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Proof of Delivery</div>
+                        <img src="${order.pod_photo_url}" style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #10b981;" 
+                            onclick="window.open('${order.pod_photo_url}', '_blank')" title="POD Photo">
+                    </div>
+                ` : ''}
+            </div>
+            ` : ''}
+            
+            <!-- Pricing Card -->
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-currency-dollar" style="color: var(--primary);"></i> Pricing
+                </h3>
+                <div style="display: grid; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <span>Part Price</span>
+                        <strong>${formatCurrency(order.part_price)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <span>Delivery Fee</span>
+                        <strong>${formatCurrency(order.delivery_fee)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 16px; color: var(--primary);">
+                        <span><strong>Total</strong></span>
+                        <strong>${formatCurrency(order.total_amount || order.total_price)}</strong>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: var(--bg-primary); border-radius: 8px; font-size: 12px;">
+                    <strong>Payment:</strong> ${escapeHTML(order.payment_method || 'N/A')} 
+                    <span style="color: ${order.payment_status === 'paid' ? '#10b981' : '#f59e0b'};">(${order.payment_status || 'pending'})</span>
+                </div>
+            </div>
+            
+            <!-- Parties Card -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <!-- Customer -->
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px; border: 1px solid var(--border);">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">👤 CUSTOMER</div>
+                    <div style="font-weight: 700; font-size: 14px;">${escapeHTML(order.customer_name || 'N/A')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.customer_phone || 'N/A')}</div>
+                    ${order.customer_email ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(order.customer_email)}</div>` : ''}
+                    ${order.customer_phone ? `
+                        <button onclick="openWhatsApp('${order.customer_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #25D366; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                            <i class="bi bi-whatsapp"></i> Chat
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <!-- Garage -->
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px; border: 1px solid var(--border);">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">🏭 GARAGE</div>
+                    <div style="font-weight: 700; font-size: 14px;">${escapeHTML(order.garage_name || 'N/A')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.garage_phone || 'N/A')}</div>
+                    ${order.garage_rating ? `<div style="font-size: 11px; color: #f59e0b;">⭐ ${order.garage_rating} (${order.garage_rating_count || 0})</div>` : ''}
+                    <div style="font-size: 10px; color: var(--text-muted);">Plan: ${escapeHTML(order.garage_plan || 'N/A')}</div>
+                    ${order.garage_phone ? `
+                        <button onclick="openWhatsApp('${order.garage_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                            <i class="bi bi-whatsapp"></i> Chat
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <!-- Driver -->
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px; border: 1px solid var(--border);">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">🚗 DRIVER</div>
+                    ${order.driver_name ? `
+                        <div style="font-weight: 700; font-size: 14px;">${escapeHTML(order.driver_name)}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.driver_phone || 'N/A')}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(order.vehicle_type || '')} ${escapeHTML(order.vehicle_plate || '')}</div>
+                        ${order.driver_phone ? `
+                            <button onclick="openWhatsApp('${order.driver_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #8b5cf6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                                <i class="bi bi-whatsapp"></i> Chat
+                            </button>
+                        ` : ''}
+                    ` : `
+                        <div style="color: var(--text-muted); font-size: 13px;">Not assigned</div>
+                    `}
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-clock-history" style="color: var(--primary);"></i> Status Timeline
+                </h3>
+                ${status_history && status_history.length > 0 ? `
+                    <div style="display: grid; gap: 8px;">
+                        ${status_history.map((h, i) => `
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <div style="width: 8px; height: 8px; background: ${i === status_history.length - 1 ? '#10b981' : '#6b7280'}; border-radius: 50%; margin-top: 6px; flex-shrink: 0;"></div>
+                                <div>
+                                    <div style="font-weight: 600; font-size: 13px; text-transform: capitalize;">${escapeHTML(h.status.replace(/_/g, ' '))}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">${formatDate(h.created_at)} ${h.notes ? `- ${escapeHTML(h.notes)}` : ''}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `
+                    <div style="color: var(--text-muted); font-size: 13px;">No status history</div>
+                `}
+            </div>
+            
+            <!-- Payout Info -->
+            ${payout ? `
+            <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #10b981;">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #047857; display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-wallet2"></i> Garage Payout
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: #047857;">Status</div>
+                        <div style="font-weight: 700; text-transform: uppercase;">${escapeHTML(payout.payout_status)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #047857;">Gross</div>
+                        <div style="font-weight: 700;">${formatCurrency(payout.gross_amount)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #047857;">Commission</div>
+                        <div style="font-weight: 700;">-${formatCurrency(payout.commission_amount)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #047857;">Net</div>
+                        <div style="font-weight: 700;">${formatCurrency(payout.net_amount)}</div>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            
+            <!-- Refund Info -->
+            ${refund ? `
+            <div style="background: linear-gradient(135deg, #fef2f2, #fecaca); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #ef4444;">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #991b1b; display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-arrow-return-left"></i> Refund
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: #991b1b;">Amount</div>
+                        <div style="font-weight: 700;">${formatCurrency(refund.amount)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #991b1b;">Status</div>
+                        <div style="font-weight: 700; text-transform: uppercase;">${escapeHTML(refund.status)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #991b1b;">Reason</div>
+                        <div style="font-weight: 600; font-size: 12px;">${escapeHTML(refund.reason || 'N/A')}</div>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            
+            <!-- Cancellation Info -->
+            ${order.cancellation_reason ? `
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #f59e0b;">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #92400e; display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-x-circle"></i> Cancellation Details
+                </h3>
+                <div style="display: grid; gap: 8px;">
+                    <div><strong>Reason:</strong> ${escapeHTML(order.cancellation_reason)}</div>
+                    <div><strong>Cancelled By:</strong> ${escapeHTML(order.cancelled_by_role || 'N/A')}</div>
+                    <div><strong>Refund %:</strong> ${order.refund_percentage || 0}%</div>
+                    <div><strong>Cancelled At:</strong> ${order.cancelled_at ? formatDate(order.cancelled_at) : 'N/A'}</div>
+                </div>
+            </div>
+            ` : ''}
+            
+            <!-- Related Tickets -->
+            ${tickets && tickets.length > 0 ? `
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; border: 1px solid var(--border);">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-ticket" style="color: var(--primary);"></i> Related Tickets (${tickets.length})
+                </h3>
+                <div style="display: grid; gap: 8px;">
+                    ${tickets.map(t => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: var(--bg-primary); border-radius: 8px;">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">${escapeHTML(t.subject)}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">${formatDate(t.created_at)}</div>
+                            </div>
+                            <span style="font-size: 10px; padding: 4px 8px; background: ${t.status === 'open' ? '#dbeafe' : t.status === 'resolved' ? '#dcfce7' : '#f3f4f6'}; color: ${t.status === 'open' ? '#2563eb' : t.status === 'resolved' ? '#16a34a' : '#6b7280'}; border-radius: 12px; font-weight: 600;">
+                                ${t.status.toUpperCase()}
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+            
+            <!-- Actions Footer -->
+            <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+                <button onclick="quickAction('cancel_order', '${order.order_id}')" class="btn btn-danger" style="flex: 1;">
+                    <i class="bi bi-x-circle"></i> Cancel Order
+                </button>
+                <button onclick="quickAction('request_refund', '${order.order_id}')" class="btn btn-warning" style="flex: 1;">
+                    <i class="bi bi-arrow-return-left"></i> Refund
+                </button>
+                <button onclick="closeOrderDetailsModal()" class="btn btn-ghost" style="flex: 1;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+
+    content.innerHTML = html;
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function (e) {
+    if (e.target.id === 'orderDetailsModal') {
+        closeOrderDetailsModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        closeOrderDetailsModal();
+    }
+});
+
+console.log('Order Details Modal loaded - v1.0');

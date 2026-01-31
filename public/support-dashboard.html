@@ -1279,6 +1279,22 @@
         </div>
     </div>
 
+    <!-- Order Details Modal for Support -->
+    <div class="modal-overlay" id="orderDetailsModal" style="display: none;">
+        <div class="modal-container" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: var(--vvip-gradient); color: white;">
+                <h2><i class="bi bi-box-seam"></i> Order Details</h2>
+                <button class="modal-close" onclick="closeOrderDetailsModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent" style="padding: 0;">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="bi bi-hourglass-split" style="font-size: 32px; opacity: 0.5;"></i>
+                    <p>Loading order details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
