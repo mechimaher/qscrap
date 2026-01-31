@@ -1185,6 +1185,7 @@ export const ar = {
         garagePartPhotos: 'صور القطعة من الكراج',
         conditionPhotos: 'صور الحالة',
         photoCount: '{{count}} صور',
+        waitingForGarage: 'بانتظار الكراج',
     },
 
     // =============================================
