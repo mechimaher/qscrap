@@ -499,7 +499,8 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
                 da.pickup_at, da.delivered_at, da.created_at as delivery_assigned_at,
                 r.overall_rating, r.review_text, r.created_at as review_date,
                 cr.reason_code, cr.reason_text as cancellation_reason, 
-                cr.refund_amount, cr.requested_by_type, cr.created_at as cancelled_at
+                cr.refund_amount, cr.cancellation_fee_rate as refund_percentage, 
+                cr.requested_by_type as cancelled_by_role, cr.created_at as cancelled_at
             FROM orders o
             JOIN part_requests pr ON o.request_id = pr.request_id
             JOIN bids b ON o.bid_id = b.bid_id
