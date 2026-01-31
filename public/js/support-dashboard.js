@@ -2879,7 +2879,13 @@ function renderOrderDetailsModal(data) {
         </div>
     `;
 
-    content.innerHTML = html;
+    try {
+        content.innerHTML = html;
+        console.log('[Order Details] Modal HTML set successfully, length:', html.length);
+    } catch (renderErr) {
+        console.error('[Order Details] Error setting innerHTML:', renderErr);
+        content.innerHTML = `<div style="padding: 40px; color: red;">Error rendering: ${renderErr.message}</div>`;
+    }
 }
 
 // Close modal on overlay click
