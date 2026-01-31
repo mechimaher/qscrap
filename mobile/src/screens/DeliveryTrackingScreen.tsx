@@ -373,7 +373,7 @@ const DeliveryTrackingScreen: React.FC = () => {
                         </Text>
                     </View>
                     {distance && (
-                        <Text style={[styles.distanceText, { color: colors.textSecondary }]}>
+                        <Text style={[styles.distanceText, { color: colors.text }]}>
                             📏 {distance} {t('tracking.away')}
                         </Text>
                     )}
@@ -389,7 +389,7 @@ const DeliveryTrackingScreen: React.FC = () => {
                             <Text style={[styles.driverName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                                 {order.driver_name}
                             </Text>
-                            <Text style={[styles.vehicleInfo, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text style={[styles.vehicleInfo, { color: isDark ? '#FFFFFF' : colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {order.vehicle_type} • {order.vehicle_plate}
                             </Text>
                         </View>
@@ -420,8 +420,8 @@ const DeliveryTrackingScreen: React.FC = () => {
                     </View>
                 ) : (
                     <View style={styles.noDriverSection}>
-                        <Ionicons name="time-outline" size={24} color={colors.textMuted} />
-                        <Text style={[styles.noDriverText, { color: colors.textMuted }]}>
+                        <Ionicons name="time-outline" size={24} color={isDark ? '#FFFFFF' : colors.textMuted} />
+                        <Text style={[styles.noDriverText, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                             {t('tracking.waitingForDriver')}
                         </Text>
                     </View>
