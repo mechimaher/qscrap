@@ -1473,7 +1473,7 @@ async function loadDrivers(page = 1) {
                 `;
             }).join('');
         } else {
-            document.getElementById('driversTable').innerHTML = '<tr><td colspan="3" class="empty-state">No drivers. Click "Add Driver" to create one.</td></tr>';
+            document.getElementById('driversTable').innerHTML = '<tr><td colspan="3" class="empty-state">No drivers found. Contact Admin to add drivers.</td></tr>';
         }
 
         // Render pagination
@@ -1588,77 +1588,9 @@ async function loadDeliveryHistory(page = 1) {
     }
 }
 
-function openAddDriverModal() {
-    const modal = document.createElement('div');
-    modal.id = 'addDriverModal';
-    modal.className = 'modal-overlay active';
-    modal.innerHTML = `
-                <div class="modal-container" style="max-width: 500px;">
-                    <div class="modal-header">
-                        <h2><i class="bi bi-person-plus"></i> Add Driver</h2>
-                        <button class="modal-close" onclick="document.getElementById('addDriverModal').remove()"><i class="bi bi-x-lg"></i></button>
-                    </div>
-                    <div class="modal-body">
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Full Name *</label>
-                            <input type="text" id="driverName" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);" required>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Phone *</label>
-                            <input type="text" id="driverPhone" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);" required>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Vehicle Type</label>
-                            <select id="driverVehicle" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
-                                <option value="motorcycle">Motorcycle</option>
-                                <option value="car">Car</option>
-                                <option value="van">Van</option>
-                                <option value="truck">Truck</option>
-                            </select>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Vehicle Plate</label>
-                            <input type="text" id="driverPlate" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
-                        </div>
-                    </div>
-                    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
-                        <button class="btn btn-ghost" onclick="document.getElementById('addDriverModal').remove()">Cancel</button>
-                        <button class="btn btn-primary" onclick="submitAddDriver()"><i class="bi bi-check-lg"></i> Add Driver</button>
-                    </div>
-                </div>
-            `;
-    document.body.appendChild(modal);
-}
+// Add Driver functions removed - driver management is Admin Dashboard only
+// See admin-dashboard.js for openAddDriverModal() and submitAddDriver()
 
-async function submitAddDriver() {
-    const name = document.getElementById('driverName').value.trim();
-    const phone = document.getElementById('driverPhone').value.trim();
-    const vehicle = document.getElementById('driverVehicle').value;
-    const plate = document.getElementById('driverPlate').value.trim();
-
-    if (!name || !phone) {
-        showToast('Name and phone are required', 'error');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/delivery/drivers`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ full_name: name, phone, vehicle_type: vehicle, vehicle_plate: plate })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showToast(data.message || 'Driver added!', 'success');
-            document.getElementById('addDriverModal').remove();
-            loadDeliveryData();
-        } else {
-            showToast(data.error || 'Failed to add driver', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
 
 // ==========================================
 // RETURN ASSIGNMENTS MANAGEMENT
