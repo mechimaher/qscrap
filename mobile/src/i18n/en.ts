@@ -1373,7 +1373,7 @@ export const en = {
         section5Item2: 'Provide valid and authorized payment information',
         section5Item3: 'Authorize charges to your selected payment method',
         section5Item4: 'Accept our cancellation and refund policies as disclosed at checkout',
-        section5Item5: 'Understand that platform service fees apply to transactions'
+        section5Item5: 'Understand that platform service fees apply to transactions',
         // Section 6 - Delivery
         section6Title: '6. Delivery Terms',
         section6Content: 'Delivery is provided by QScrap-verified independent drivers. Delivery fees are calculated based on distance from the garage to your delivery address. Estimated delivery times are provided for guidance only and may vary based on traffic, weather, and driver availability. QScrap is not liable for delays caused by factors beyond our reasonable control.',
@@ -1384,7 +1384,7 @@ export const en = {
         section7Item2: 'Warranty covers manufacturing defects and non-conformity with description',
         section7Item3: 'Returns require photo evidence and are subject to review',
         section7Item4: 'A 20% restocking fee applies to change-of-mind returns (per Law 8/2008 Article 27)',
-        section7Item5: 'Refunds processed within 48 hours after approval (per QCB Circular 32/2023)'
+        section7Item5: 'Refunds processed within 48 hours after approval (per QCB Circular 32/2023)',
         // Section 8 - Prohibited Activities
         section8Title: '8. Prohibited Conduct',
         section8Content: 'You agree not to engage in the following prohibited activities:',

@@ -9,7 +9,7 @@ export interface CounterOfferData {
 }
 
 export interface CounterOfferResponse {
-    action: 'accept' | 'counter' | 'decline';
+    action: 'accept' | 'counter' | 'decline' | 'reject';
     counter_price?: number;
     notes?: string;
 }

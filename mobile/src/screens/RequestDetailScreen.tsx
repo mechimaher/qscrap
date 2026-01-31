@@ -722,7 +722,7 @@ const PremiumBidCard = ({
                                 colors={['#9CA3AF', '#6B7280']}
                                 style={styles.acceptGradient}
                             >
-                                <Text style={styles.acceptBtnText}>⏳ {t('bidCard.waitingForGarage', 'Waiting for garage')}</Text>
+                                <Text style={styles.acceptBtnText}>⏳ {t('bidCard.waitingForGarage')}</Text>
                             </LinearGradient>
                         </View>
                     )}
