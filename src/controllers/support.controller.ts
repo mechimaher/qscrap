@@ -475,21 +475,19 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
         }
 
         // Get full order details with all related data
+        // Uses same verified columns as order/query.service.ts
         const result = await pool.query(`
             SELECT 
                 o.*,
                 o.pod_photo_url,
-                pr.car_make, pr.car_model, pr.car_year, pr.car_vin,
+                pr.car_make, pr.car_model, pr.car_year,
                 pr.part_description, pr.part_category, pr.part_subcategory,
                 pr.image_urls as request_images,
                 pr.delivery_lat::float as delivery_lat, 
                 pr.delivery_lng::float as delivery_lng,
-                pr.notes as customer_notes,
-                pr.created_at as request_created_at,
                 b.part_price, b.delivery_fee, b.total_price,
                 b.warranty_days, b.part_condition, b.brand_name, 
                 b.image_urls as bid_images, b.notes as bid_notes,
-                b.estimated_delivery_days, b.created_at as bid_created_at,
                 g.garage_name, g.phone_number as garage_phone, g.address as garage_address,
                 g.rating_average as garage_rating, g.rating_count as garage_rating_count,
                 g.subscription_plan as garage_plan,
