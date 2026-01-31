@@ -2485,7 +2485,7 @@ async function openOrderDetailsModal(orderId) {
         return;
     }
 
-    modal.style.display = 'flex';
+    modal.classList.add('active');
     content.innerHTML = `
         <div style="text-align: center; padding: 40px;">
             <i class="bi bi-hourglass-split" style="font-size: 32px; opacity: 0.5; animation: spin 1s linear infinite;"></i>
@@ -2524,7 +2524,7 @@ async function openOrderDetailsModal(orderId) {
 function closeOrderDetailsModal() {
     const modal = document.getElementById('orderDetailsModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('active');
     }
 }
 
