@@ -633,7 +633,15 @@ function quickAction(actionType, orderId = null) {
             showOrderAmount: true,
             message: 'This will submit a refund request to the Finance team for review and approval. You cannot process refunds directly.'
         },
-
+        'partial_refund': {
+            title: 'Partial Refund',
+            icon: 'bi-percent',
+            color: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+            confirmText: 'Submit Request to Finance',
+            needsAmount: true,
+            amountLabel: 'Refund Amount (QAR)',
+            message: 'Enter the partial refund amount. This will be submitted to Finance for approval.'
+        },
         'goodwill_credit': {
             title: 'Goodwill Credit',
             icon: 'bi-gift',
