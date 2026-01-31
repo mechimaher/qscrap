@@ -18,6 +18,26 @@
             if (overlay) overlay.classList.toggle('is-visible');
         };
     </script>
+    <style>
+        /* Compensation payout row styling */
+        .compensation-row {
+            background: rgba(245, 158, 11, 0.08) !important;
+        }
+
+        .compensation-row:hover {
+            background: rgba(245, 158, 11, 0.15) !important;
+        }
+
+        .badge-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .badge-info {
+            background: #3b82f6;
+            color: white;
+        }
+    </style>
 </head>
 
 <body>
@@ -352,6 +372,7 @@
                                     <input type="checkbox" id="selectAllPending" onchange="toggleSelectAllPending()"
                                         title="Select all visible payouts">
                                 </th>
+                                <th>Type</th>
                                 <th>Garage</th>
                                 <th>Order #</th>
                                 <th>Part Amount</th>
@@ -363,7 +384,7 @@
                         </thead>
                         <tbody id="pendingPayoutsTable">
                             <tr>
-                                <td colspan="8" class="empty-state">Loading...</td>
+                                <td colspan="9" class="empty-state">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
