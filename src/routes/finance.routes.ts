@@ -34,7 +34,11 @@ import {
     getBatchPayoutPreview,
     sendBatchPayments,
     // Payout statements / Tax invoices
-    getPayoutStatement
+    getPayoutStatement,
+    // Compensation review (Support/Finance manual decision)
+    getPendingCompensationReviews,
+    approveCompensation,
+    denyCompensation
 } from '../controllers/finance.controller';
 
 const router = Router();
@@ -125,5 +129,18 @@ router.post('/refunds/:refund_id/process', authorizeOperations, processStripeRef
 router.post('/refunds/:refund_id/approve', authorizeOperations, processStripeRefund); // Alias for approve
 router.post('/refunds/:refund_id/reject', authorizeOperations, rejectRefund);
 router.post('/refund/:order_id', authorizeOperations, createRefund);
+
+// ==========================================
+// COMPENSATION REVIEW (Support/Finance Manual Decision)
+// ==========================================
+
+// Get all pending compensation reviews
+router.get('/compensation-reviews/pending', authorizeOperations, getPendingCompensationReviews);
+
+// Approve garage compensation
+router.post('/compensation-reviews/:payout_id/approve', authorizeOperations, approveCompensation);
+
+// Deny garage compensation (with optional penalty)
+router.post('/compensation-reviews/:payout_id/deny', authorizeOperations, denyCompensation);
 
 export default router;

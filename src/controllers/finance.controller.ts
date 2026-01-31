@@ -13,6 +13,7 @@ import {
     isFinanceError,
     getHttpStatusForError
 } from '../services/finance';
+import { createNotification } from '../services/notification.service';
 
 // Initialize services
 const payoutService = new PayoutService(pool);
@@ -709,5 +710,175 @@ export const autoConfirmPayouts = async () => {
     } catch (err) {
         console.error('[CRON] autoConfirmPayouts error:', err);
         return { confirmed: 0, failed: 1 };
+    }
+};
+
+// ============================================
+// COMPENSATION REVIEW (Support/Finance Manual Decision)
+// ============================================
+
+/**
+ * Get all payouts pending compensation review
+ * These are customer cancellations during prep/delivery stages
+ * Support/Finance must decide if garage deserves compensation
+ */
+export const getPendingCompensationReviews = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                gp.payout_id,
+                gp.order_id,
+                gp.garage_id,
+                gp.potential_compensation,
+                gp.review_reason,
+                gp.created_at,
+                g.garage_name,
+                g.email as garage_email,
+                o.order_number,
+                o.customer_id,
+                c.full_name as customer_name,
+                cr.reason_text,
+                cr.order_status_at_cancel,
+                cr.time_since_order_minutes
+            FROM garage_payouts gp
+            JOIN garages g ON gp.garage_id = g.garage_id
+            JOIN orders o ON gp.order_id = o.order_id
+            LEFT JOIN cancellation_requests cr ON gp.order_id = cr.order_id
+            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            WHERE gp.payout_status = 'pending_compensation_review'
+            ORDER BY gp.created_at DESC
+        `);
+
+        res.json({
+            success: true,
+            reviews: result.rows,
+            count: result.rows.length
+        });
+    } catch (err: any) {
+        console.error('[Finance] getPendingCompensationReviews error:', err);
+        res.status(500).json({ error: 'Failed to get pending reviews' });
+    }
+};
+
+/**
+ * Approve garage compensation
+ * Garage gets the potential_compensation amount paid out
+ */
+export const approveCompensation = async (req: AuthRequest, res: Response) => {
+    const { payout_id } = req.params;
+    const { notes } = req.body;
+    const reviewerId = req.user?.userId;
+
+    try {
+        const result = await pool.query(`
+            UPDATE garage_payouts 
+            SET payout_status = 'pending',
+                net_amount = potential_compensation,
+                gross_amount = potential_compensation,
+                commission_amount = 0,
+                adjustment_reason = 'Compensation approved by Support/Finance',
+                reviewed_by = $2,
+                reviewed_at = NOW(),
+                review_notes = $3,
+                updated_at = NOW()
+            WHERE payout_id = $1 AND payout_status = 'pending_compensation_review'
+            RETURNING *
+        `, [payout_id, reviewerId, notes || 'Approved']);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Payout not found or already reviewed' });
+        }
+
+        const payout = result.rows[0];
+
+        // Update cancellation request
+        await pool.query(`
+            UPDATE cancellation_requests 
+            SET garage_compensation = $2,
+                compensation_status = 'approved'
+            WHERE order_id = $1
+        `, [payout.order_id, payout.net_amount]);
+
+        // Notify garage
+        await createNotification({
+            userId: payout.garage_id,
+            type: 'compensation_approved',
+            title: '✅ Compensation Approved',
+            message: `Your compensation of ${payout.net_amount?.toFixed(2)} QAR has been approved!`,
+            data: { payout_id, order_id: payout.order_id, amount: payout.net_amount },
+            target_role: 'garage'
+        });
+
+        console.log(`[Finance] Compensation approved: ${payout.net_amount} QAR for payout ${payout_id}`);
+        res.json({ success: true, message: 'Compensation approved', payout: result.rows[0] });
+    } catch (err: any) {
+        console.error('[Finance] approveCompensation error:', err);
+        res.status(500).json({ error: 'Failed to approve compensation' });
+    }
+};
+
+/**
+ * Deny garage compensation
+ * Garage gets $0, payout is cancelled
+ * Optional: Apply penalty for garage fault
+ */
+export const denyCompensation = async (req: AuthRequest, res: Response) => {
+    const { payout_id } = req.params;
+    const { reason, apply_penalty, penalty_type, penalty_amount } = req.body;
+    const reviewerId = req.user?.userId;
+
+    try {
+        const result = await pool.query(`
+            UPDATE garage_payouts 
+            SET payout_status = 'cancelled',
+                cancellation_reason = $2,
+                cancelled_at = NOW(),
+                reviewed_by = $3,
+                reviewed_at = NOW(),
+                review_notes = $2,
+                updated_at = NOW()
+            WHERE payout_id = $1 AND payout_status = 'pending_compensation_review'
+            RETURNING *
+        `, [payout_id, reason || 'Compensation denied by Support/Finance', reviewerId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Payout not found or already reviewed' });
+        }
+
+        const payout = result.rows[0];
+
+        // Update cancellation request
+        await pool.query(`
+            UPDATE cancellation_requests 
+            SET garage_compensation = 0,
+                compensation_status = 'denied'
+            WHERE order_id = $1
+        `, [payout.order_id]);
+
+        // Apply penalty if requested
+        if (apply_penalty && penalty_type && penalty_amount > 0) {
+            await pool.query(`
+                INSERT INTO garage_penalties (garage_id, order_id, penalty_type, penalty_amount, reason, created_at)
+                VALUES ($1, $2, $3, $4, $5, NOW())
+            `, [payout.garage_id, payout.order_id, penalty_type, penalty_amount, reason]);
+
+            console.log(`[Finance] Penalty applied: ${penalty_amount} QAR (${penalty_type}) to garage ${payout.garage_id}`);
+        }
+
+        // Notify garage
+        await createNotification({
+            userId: payout.garage_id,
+            type: 'compensation_denied',
+            title: '❌ Compensation Denied',
+            message: `Compensation request was denied. Reason: ${reason || 'Not specified'}`,
+            data: { payout_id, order_id: payout.order_id, reason },
+            target_role: 'garage'
+        });
+
+        console.log(`[Finance] Compensation denied for payout ${payout_id}: ${reason}`);
+        res.json({ success: true, message: 'Compensation denied', payout: result.rows[0] });
+    } catch (err: any) {
+        console.error('[Finance] denyCompensation error:', err);
+        res.status(500).json({ error: 'Failed to deny compensation' });
     }
 };

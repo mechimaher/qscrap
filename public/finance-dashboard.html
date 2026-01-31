@@ -128,6 +128,10 @@
                     <a class="nav-item" data-section="refunds">
                         <i class="bi bi-arrow-return-left"></i> Refund History
                     </a>
+                    <a class="nav-item" data-section="compensationReviews">
+                        <i class="bi bi-clipboard-check"></i> Compensation Reviews
+                        <span class="nav-badge" id="reviewsBadge" style="display: none; background: #f59e0b;">0</span>
+                    </a>
                 </div>
             </nav>
 
@@ -678,6 +682,54 @@
                     </table>
                 </div>
                 <div id="refundsPagination"></div>
+            </section>
+
+            <!-- Compensation Reviews Section -->
+            <section class="section" id="sectionCompensationReviews">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-clipboard-check"></i> Compensation Reviews</h1>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span> Customer Cancellation Review Queue
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1)); border-left: 4px solid #f59e0b;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <i class="bi bi-info-circle" style="font-size: 24px; color: #f59e0b;"></i>
+                        <div>
+                            <strong>Manual Review Required</strong>
+                            <p style="margin: 5px 0 0; color: var(--text-secondary);">
+                                When a customer cancels during preparation or delivery, garage compensation is NOT
+                                automatic.
+                                Review each case to decide if the garage deserves compensation or if the cancellation
+                                was their fault (wrong part, defective, etc).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Garage</th>
+                                <th>Customer</th>
+                                <th>Reason Code</th>
+                                <th>Details</th>
+                                <th>Potential Compensation</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compensationReviewsTable">
+                            <tr>
+                                <td colspan="8" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </main>
     </div>

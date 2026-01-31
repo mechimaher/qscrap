@@ -207,6 +207,7 @@ function switchSection(section) {
         case 'revenue': loadRevenue(); break;
         case 'pendingRefunds': loadPendingRefunds(); break;
         case 'refunds': loadRefunds(); break;
+        case 'compensationReviews': loadCompensationReviews(); break;
     }
 }
 
@@ -1809,6 +1810,140 @@ async function rejectRefund(refundId) {
             loadRefunds();
         } else {
             showToast(data.error || 'Failed to reject refund', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// ============================================
+// COMPENSATION REVIEWS (Manual Decision)
+// ============================================
+
+async function loadCompensationReviews() {
+    const table = document.getElementById('compensationReviewsTable');
+    if (!table) return;
+
+    table.innerHTML = '<tr><td colspan="8" class="empty-state">Loading...</td></tr>';
+
+    try {
+        const res = await fetch(`${API_URL}/finance/compensation-reviews/pending`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Failed to load');
+
+        const data = await res.json();
+
+        if (!data.reviews || data.reviews.length === 0) {
+            table.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="bi bi-check-circle"></i> No pending compensation reviews</td></tr>';
+            updateBadge('reviewsBadge', 0);
+            return;
+        }
+
+        updateBadge('reviewsBadge', data.count);
+
+        table.innerHTML = data.reviews.map(r => `
+            <tr>
+                <td><strong>#${escapeHTML(r.order_number)}</strong></td>
+                <td>${escapeHTML(r.garage_name)}</td>
+                <td>${escapeHTML(r.customer_name || 'N/A')}</td>
+                <td><span class="badge badge-warning">${escapeHTML(r.review_reason || 'changed_mind')}</span></td>
+                <td>${escapeHTML(r.reason_text || '-')}</td>
+                <td><strong>${formatCurrency(r.potential_compensation)}</strong></td>
+                <td>${formatDate(r.created_at)}</td>
+                <td>
+                    <button class="btn btn-success btn-sm" onclick="approveCompensationReview('${r.payout_id}', '${escapeHTML(r.garage_name)}', ${r.potential_compensation})">
+                        <i class="bi bi-check-lg"></i> Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="denyCompensationReview('${r.payout_id}', '${escapeHTML(r.garage_name)}', '${r.garage_id}')">
+                        <i class="bi bi-x-lg"></i> Deny
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('loadCompensationReviews error:', err);
+        table.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load reviews</td></tr>';
+    }
+}
+
+async function approveCompensationReview(payoutId, garageName, amount) {
+    if (!confirm(`Approve ${amount.toFixed(2)} QAR compensation for ${garageName}?`)) return;
+
+    const notes = prompt('Optional: Add a note for this approval', '');
+
+    try {
+        const res = await fetch(`${API_URL}/finance/compensation-reviews/${payoutId}/approve`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: notes || 'Approved' })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Compensation approved: ${amount.toFixed(2)} QAR for ${garageName}`, 'success');
+            loadCompensationReviews();
+            loadBadges();
+        } else {
+            showToast(data.error || 'Failed to approve', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+async function denyCompensationReview(payoutId, garageName, garageId) {
+    const reason = prompt(`Why deny compensation for ${garageName}?\n\nExamples:\n- Wrong part sent\n- Part was defective\n- Part didn't match description`);
+
+    if (!reason) {
+        showToast('Reason is required to deny compensation', 'error');
+        return;
+    }
+
+    // Ask about penalty
+    const applyPenalty = confirm('Apply a penalty to the garage for this fault?');
+
+    let penaltyType = null;
+    let penaltyAmount = 0;
+
+    if (applyPenalty) {
+        penaltyType = prompt('Penalty type:\n1. wrong_part (100 QAR)\n2. damaged_part (50 QAR)\n3. quality_issue (50 QAR)\n\nEnter type:', 'wrong_part');
+
+        if (penaltyType === 'wrong_part') {
+            penaltyAmount = 100;
+        } else if (penaltyType === 'damaged_part' || penaltyType === 'quality_issue') {
+            penaltyAmount = 50;
+        } else {
+            penaltyAmount = parseInt(prompt('Enter penalty amount (QAR):', '50')) || 50;
+        }
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/finance/compensation-reviews/${payoutId}/deny`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                reason,
+                apply_penalty: applyPenalty,
+                penalty_type: penaltyType,
+                penalty_amount: penaltyAmount
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            let msg = `Compensation denied for ${garageName}`;
+            if (applyPenalty) {
+                msg += `. Penalty: ${penaltyAmount} QAR`;
+            }
+            showToast(msg, 'success');
+            loadCompensationReviews();
+            loadBadges();
+        } else {
+            showToast(data.error || 'Failed to deny', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');

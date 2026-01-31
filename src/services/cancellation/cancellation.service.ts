@@ -495,42 +495,67 @@ export class CancellationService {
                 }
             }
 
-            // BRAIN v3.0: Calculate garage compensation from cancellation fee
-            // Philosophy: "Platform NEVER loses, garages get compensated for their time"
+            // BRAIN v3.0: Garage compensation - MANUAL REVIEW WORKFLOW
+            // Philosophy: "Customer is King" - Support/Finance team decides if garage deserves compensation
+            // 
+            // When customer cancels during/after preparation:
+            // 1. Payout is marked as "pending_compensation_review" 
+            // 2. Support/Finance team reviews the reason
+            // 3. They approve (garage gets 5%) or deny (garage gets 0 + possible penalty)
+
             const stage = feeInfo.stage as keyof typeof FEE_SPLIT;
             const feeSplit = FEE_SPLIT[stage] || { platform: 0, garage: 0 };
-            const garageCompensation = partPrice * feeSplit.garage;
+            const potentialCompensation = partPrice * feeSplit.garage;
 
-            if (garageCompensation > 0) {
-                // Garage gets partial payout for work done
+            if (potentialCompensation > 0) {
+                // Stage 5-7: Needs manual review by Support/Finance
+                // Store potential compensation amount for review
                 await client.query(
                     `UPDATE garage_payouts 
-                     SET net_amount = $2,
-                         gross_amount = $2,
-                         commission_amount = 0,
-                         adjustment_reason = 'Customer cancellation - compensation for work done (BRAIN v3.0)',
-                         adjusted_at = NOW(),
-                         payout_status = 'pending',
+                     SET payout_status = 'pending_compensation_review',
+                         potential_compensation = $2,
+                         review_reason = $3,
+                         adjustment_reason = 'Customer cancellation - awaiting Support/Finance review',
                          payout_type = 'cancellation_compensation',
                          updated_at = NOW()
                      WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
-                    [orderId, garageCompensation]
+                    [orderId, potentialCompensation, reasonCode || 'changed_mind']
                 );
 
-                // Record garage compensation in cancellation record
+                // Record in cancellation request for visibility
                 await client.query(
                     `UPDATE cancellation_requests 
-                     SET garage_compensation = $2 
+                     SET garage_compensation = 0,
+                         pending_compensation = $2,
+                         compensation_status = 'pending_review'
                      WHERE order_id = $1 AND cancellation_id = (
                          SELECT cancellation_id FROM cancellation_requests 
                          WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1
                      )`,
-                    [orderId, garageCompensation]
+                    [orderId, potentialCompensation]
                 );
 
-                console.log(`[Cancellation] Garage compensation: ${garageCompensation} QAR (${feeSplit.garage * 100}% of ${partPrice} QAR)`);
+                console.log(`[Cancellation] Payout awaiting review. Potential compensation: ${potentialCompensation} QAR`);
+
+                // Notify Support team
+                await createNotification({
+                    userId: 'support_team', // Special identifier for team notifications
+                    type: 'compensation_review_needed',
+                    title: '🔍 Compensation Review Required',
+                    message: `Order #${order.order_number} cancelled. Review if garage deserves ${potentialCompensation.toFixed(0)} QAR compensation.`,
+                    data: {
+                        order_id: orderId,
+                        order_number: order.order_number,
+                        garage_name: order.garage_name,
+                        reason_code: reasonCode,
+                        reason_text: reasonText,
+                        potential_compensation: potentialCompensation,
+                        stage: stage
+                    },
+                    target_role: 'operations'
+                });
             } else {
-                // Before preparation: no compensation, cancel payout entirely
+                // Before preparation: no compensation possible, cancel payout entirely
                 await client.query(
                     `UPDATE garage_payouts SET payout_status = 'cancelled', 
                      cancellation_reason = 'Customer cancelled before preparation',
@@ -540,6 +565,9 @@ export class CancellationService {
                     [orderId]
                 );
             }
+
+            // Set garageCompensation to 0 for now (pending review)
+            const garageCompensation = 0;
 
             await client.query('COMMIT');
 
