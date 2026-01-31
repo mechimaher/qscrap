@@ -23,6 +23,7 @@ import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
 import { ToastProvider } from './src/components/Toast';
 import { Address } from './src/services/api';
+import { BadgeCountsProvider, useBadgeCounts } from './src/hooks/useBadgeCounts';
 
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -134,7 +135,6 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 function MainTabs() {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { useBadgeCounts } = require('./src/hooks/useBadgeCounts');
   const { requestsBadge, ordersBadge, profileBadge } = useBadgeCounts();
 
   return (
@@ -380,11 +380,13 @@ export default function App() {
           <ThemeProvider>
             <AuthProvider>
               <SocketProvider>
-                <ToastProvider>
-                  <NavigationContainer>
-                    <ThemedApp />
-                  </NavigationContainer>
-                </ToastProvider>
+                <BadgeCountsProvider>
+                  <ToastProvider>
+                    <NavigationContainer>
+                      <ThemedApp />
+                    </NavigationContainer>
+                  </ToastProvider>
+                </BadgeCountsProvider>
               </SocketProvider>
             </AuthProvider>
           </ThemeProvider>
