@@ -876,18 +876,18 @@ export default function RequestDetailScreen() {
     const handleAcceptBid = async (bid: Bid, priceToShow: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Calculate delivery fee based on request location
-        let deliveryFee = 25; // Default zone 1
+        // Calculate delivery fee based on request location (Zone-based, not driver position)
+        let deliveryFee = 10; // Zone 1 base fee - backend is source of truth
         try {
             if (request?.delivery_lat && request?.delivery_lng) {
                 const feeResult = await api.calculateDeliveryFee(
                     parseFloat(request.delivery_lat),
                     parseFloat(request.delivery_lng)
                 );
-                deliveryFee = feeResult.fee || 25;
+                deliveryFee = feeResult.fee || 10;
             }
         } catch (e) {
-            console.log('Using default delivery fee');
+            console.log('Using Zone 1 base delivery fee');
         }
 
         Alert.alert(

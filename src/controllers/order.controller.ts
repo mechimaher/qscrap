@@ -44,8 +44,8 @@ export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
 
     const request = requestResult.rows[0];
 
-    // Calculate delivery fee
-    let delivery_fee = 25.00; // Default
+    // Calculate delivery fee (Zone-based: Garage → Customer only, not driver position)
+    let delivery_fee = 10.00; // Zone 1 base fee
     let delivery_zone_id: number | null = null;
     let deliveryAddress = '';
 
