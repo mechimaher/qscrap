@@ -570,10 +570,13 @@ async function openManagePlanModal(garageId, garageName, currentPlan, status) {
                 <option value="demo_30">🎁 Demo Trial (30 days free, unlimited bids)</option>
                 ${status === 'demo' ? '<option value="demo_extend">🔄 Extend Demo (+30 days)</option>' : ''}
             </optgroup>
-            <optgroup label="💼 Paid Plans">
+            <optgroup label="💰 Commission-Only (No Monthly Fee)">
+                <option value="pay_per_sale">💰 Pay-per-Sale - 15% commission per order (no monthly fee)</option>
+            </optgroup>
+            <optgroup label="💼 Subscription Plans (Lower Commission)">
                 ${(data.plans || []).map(p => `
                     <option value="${p.plan_id}" data-commission="${p.commission_rate}">
-                        💼 ${p.plan_name} - ${(p.commission_rate * 100).toFixed(0)}% commission${p.max_bids_per_month ? ` (${p.max_bids_per_month} bids/month)` : ' (unlimited)'}
+                        💼 ${p.plan_name} - ${p.monthly_fee} QAR/month, ${(p.commission_rate * 100).toFixed(0)}% commission${p.max_bids_per_month ? ` (${p.max_bids_per_month} bids/month)` : ' (unlimited)'}
                     </option>
                 `).join('')}
             </optgroup>
@@ -628,6 +631,13 @@ async function confirmAssignSubscription() {
                 days: planValue === 'demo_30' ? 30 : days,
                 notes: notes || (planValue === 'demo_30' ? 'Demo assigned by admin' : 'Demo extended by admin')
             };
+        } else if (planValue === 'pay_per_sale') {
+            // Activate garage with pay-per-sale model (15% commission, no subscription)
+            endpoint = `${API_URL}/admin/garages/${garageId}/approve`;
+            body = {
+                notes: notes || 'Activated with Pay-per-Sale model (15% commission per order, no monthly fee)',
+                pay_per_sale: true
+            };
         } else {
             // Assign paid plan
             endpoint = `${API_URL}/admin/garages/${garageId}/plan`;
@@ -650,8 +660,8 @@ async function confirmAssignSubscription() {
         const data = await res.json();
 
         if (res.ok) {
-            // Handle commission override for paid plans
-            if (commissionOverride && planValue !== 'demo_30' && planValue !== 'demo_extend') {
+            // Handle commission override for paid plans (not demo or pay_per_sale)
+            if (commissionOverride && planValue !== 'demo_30' && planValue !== 'demo_extend' && planValue !== 'pay_per_sale') {
                 try {
                     await fetch(`${API_URL}/admin/garages/${garageId}/commission`, {
                         method: 'POST',
@@ -669,7 +679,15 @@ async function confirmAssignSubscription() {
                 }
             }
 
-            showToast(data.message || 'Plan assigned successfully!', 'success');
+            // Dynamic success message
+            let successMsg = data.message || 'Plan assigned successfully!';
+            if (planValue === 'pay_per_sale') {
+                successMsg = 'Garage activated with Pay-per-Sale model (15% commission)';
+            } else if (planValue === 'demo_30') {
+                successMsg = 'Demo trial granted for 30 days';
+            }
+
+            showToast(successMsg, 'success');
             closeModal('subscriptionModal');
             loadGarages();
             loadPendingGarages();

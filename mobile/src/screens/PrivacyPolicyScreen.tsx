@@ -39,7 +39,7 @@ const PrivacyPolicyScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <Text style={[styles.lastUpdated, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
-                    {t('privacy.lastUpdated', { date: 'December 2024' })}
+                    {t('privacy.lastUpdated', { date: 'January 31, 2026' })}
                 </Text>
 
                 <Section title={t('privacy.section1Title')} colors={colors} isRTL={isRTL}>

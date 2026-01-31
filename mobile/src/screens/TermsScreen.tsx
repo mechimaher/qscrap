@@ -39,7 +39,7 @@ const TermsScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <Text style={[styles.lastUpdated, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
-                    {t('terms.lastUpdated', { date: 'December 2024' })}
+                    {t('terms.lastUpdated', { date: 'January 31, 2026' })}
                 </Text>
 
                 <Section title={t('terms.section1Title')} colors={colors} isRTL={isRTL}>

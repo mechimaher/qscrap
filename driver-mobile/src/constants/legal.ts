@@ -17,7 +17,7 @@ export const LEGAL_DOCS = {
     </head>
     <body>
         <h1>Driver Terms of Service</h1>
-        <p>Last Updated: January 14, 2026</p>
+        <p>Last Updated: January 31, 2026</p>
 
         <p>Welcome to QScrap Driver. By accessing or using the QScrap Driver application ("App"), you agree to be bound by these Terms of Service ("Terms"). These terms are drafted in compliance with the laws of the State of Qatar.</p>
 
@@ -77,7 +77,7 @@ export const LEGAL_DOCS = {
         <p>These Terms are governed by the laws of the State of Qatar. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Qatar.</p>
 
         <h2>10. Contact</h2>
-        <p>For support or questions regarding these terms, please contact Operations Support.</p>
+        <p>QScrap Services & Trading L.L.C. (CR No. 155892)<br/>P.O. Box 32544, Industrial Area St 10, Doha, Qatar<br/>Phone: +974 4455 4444<br/>Email: drivers@qscrap.qa</p>
     </body>
     </html>
     `,
@@ -98,7 +98,7 @@ export const LEGAL_DOCS = {
     </head>
     <body>
         <h1>Driver Privacy Policy</h1>
-        <p>Last Updated: January 14, 2026</p>
+        <p>Last Updated: January 31, 2026</p>
 
         <p>QScrap ("we", "our") values your privacy. This policy explains how we collect, use, and share information when you use the QScrap Driver App, in compliance with Qatar's Personal Data Privacy Protection Law (PDPPL).</p>
 
@@ -160,9 +160,11 @@ export const LEGAL_DOCS = {
         <h2>9. Contact Us</h2>
         <p>For privacy-related inquiries or to exercise your data rights, please contact us:</p>
         <ul>
-            <li><strong>Email:</strong> privacy@qscrap.qa</li>
-            <li><strong>Support:</strong> support@qscrap.qa</li>
-            <li><strong>Address:</strong> QScrap W.L.L., Doha, Qatar</li>
+            <li><strong>Data Protection Officer:</strong> privacy@qscrap.qa</li>
+            <li><strong>Driver Support:</strong> drivers@qscrap.qa</li>
+            <li><strong>Phone:</strong> +974 4455 4444</li>
+            <li><strong>Address:</strong> QScrap Services & Trading L.L.C., P.O. Box 32544, Industrial Area St 10, Doha, Qatar</li>
+            <li><strong>CR Number:</strong> 155892</li>
         </ul>
     </body>
     </html>
