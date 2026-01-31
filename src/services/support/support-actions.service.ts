@@ -5,6 +5,7 @@
  * - PayoutService (cancel/reversal for garage payouts)
  * - PaymentGateway (customer refunds)
  * - 7-day warranty validation
+ * - BRAIN v3.0 stage-based refund calculation
  * - Complete audit trail
  * 
  * This replaces the broken executeQuickAction() in support.service.ts
@@ -12,6 +13,12 @@
 
 import { Pool, PoolClient } from 'pg';
 import { createNotification } from '../notification.service';
+import {
+    calculateRefundableAmount,
+    determineRefundStage,
+    getRefundReasonOptions,
+    RefundCalculation
+} from '../finance/refund-calculator.service';
 
 // Constants
 const WARRANTY_DAYS = 7;
@@ -166,20 +173,44 @@ export class SupportActionsService {
                 );
             }
 
-            // 2. Create PENDING refund request (Finance must approve)
+            // 2. Calculate refundable amount using BRAIN v3.0 stage-based fees
+            const refundCalc = calculateRefundableAmount({
+                orderStatus: context.order.order_status,
+                paymentStatus: context.order.payment_status,
+                totalAmount: parseFloat(context.order.total_amount),
+                deliveryFee: parseFloat(context.order.delivery_fee || '0'),
+                deliveredAt: context.order.delivered_at,
+                isDefectiveItem: params.reason.toLowerCase().includes('defective'),
+                isWrongItem: params.reason.toLowerCase().includes('wrong')
+            });
+
+            console.log(`[SupportActions] BRAIN v3.0 Refund Calculation:`, {
+                order: context.order.order_number,
+                stage: refundCalc.stage,
+                stageName: refundCalc.stageName,
+                original: refundCalc.originalAmount,
+                feePercentage: refundCalc.feePercentage,
+                platformFee: refundCalc.platformFee,
+                deliveryRetained: refundCalc.deliveryFeeRetained,
+                refundable: refundCalc.refundableAmount
+            });
+
+            // Create PENDING refund request (Finance must approve)
             const idempotencyKey = `support_refund_req_${params.orderId}_${Date.now()}`;
             const refundResult = await client.query(`
                 INSERT INTO refunds 
-                (order_id, customer_id, original_amount, refund_amount, refund_reason, 
-                 refund_status, initiated_by, refund_type, idempotency_key, payment_intent_id)
-                VALUES ($1, $2, $3, $4, $5, 'pending', 'support', 'support_refund_request', $6, $7)
+                (order_id, customer_id, original_amount, refund_amount, fee_retained, delivery_fee_retained,
+                 refund_reason, refund_status, initiated_by, refund_type, idempotency_key, payment_intent_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 'support', 'support_refund_request', $8, $9)
                 RETURNING refund_id
             `, [
                 params.orderId,
                 params.customerId,
-                context.order.total_amount,
-                context.order.total_amount,
-                params.reason,
+                refundCalc.originalAmount,
+                refundCalc.refundableAmount, // Stage-adjusted amount
+                refundCalc.platformFee,
+                refundCalc.deliveryFeeRetained,
+                `${params.reason} [Stage ${refundCalc.stage}: ${refundCalc.stageName}]`,
                 idempotencyKey,
                 paymentIntentId
             ]);
@@ -197,7 +228,13 @@ export class SupportActionsService {
                 actionType: 'refund_request',
                 actionDetails: {
                     refund_id: refundId,
-                    requested_amount: context.order.total_amount,
+                    original_amount: refundCalc.originalAmount,
+                    refundable_amount: refundCalc.refundableAmount,
+                    stage: refundCalc.stage,
+                    stage_name: refundCalc.stageName,
+                    fee_percentage: refundCalc.feePercentage,
+                    platform_fee: refundCalc.platformFee,
+                    delivery_fee_retained: refundCalc.deliveryFeeRetained,
                     status: 'pending_finance_approval',
                     warranty_days_remaining: context.warrantyDaysRemaining
                 },
@@ -206,13 +243,30 @@ export class SupportActionsService {
 
             await client.query('COMMIT');
 
-            console.log(`[SupportActions] Refund REQUEST submitted for order ${context.order.order_number}. Awaiting Finance approval.`);
+            // Build user-friendly message with breakdown
+            let message = `Refund request submitted for order #${context.order.order_number}.\n`;
+            if (refundCalc.feePercentage > 0 || refundCalc.deliveryFeeRetained > 0) {
+                message += `\n📊 BRAIN v3.0 Stage ${refundCalc.stage} Fees Applied:\n`;
+                message += `• Original Amount: ${refundCalc.originalAmount.toFixed(2)} QAR\n`;
+                if (refundCalc.platformFee > 0) {
+                    message += `• Platform Fee (${refundCalc.feePercentage}%): -${refundCalc.platformFee.toFixed(2)} QAR\n`;
+                }
+                if (refundCalc.deliveryFeeRetained > 0) {
+                    message += `• Delivery Fee Retained: -${refundCalc.deliveryFeeRetained.toFixed(2)} QAR\n`;
+                }
+                message += `• Refundable Amount: ${refundCalc.refundableAmount.toFixed(2)} QAR\n`;
+            } else {
+                message += `\nAmount: ${refundCalc.refundableAmount.toFixed(2)} QAR (Full refund - defective/wrong part)\n`;
+            }
+            message += `\nAwaiting Finance team approval.`;
+
+            console.log(`[SupportActions] Refund REQUEST submitted for order ${context.order.order_number}. Amount: ${refundCalc.refundableAmount} QAR (Stage ${refundCalc.stage})`);
 
             return {
                 success: true,
                 action: 'refund_request',
                 orderId: params.orderId,
-                message: `Refund request of ${context.order.total_amount} QAR submitted for order #${context.order.order_number}. The Finance team will review and process.`,
+                message,
                 refundId,
                 status: 'pending_finance_approval'
             };

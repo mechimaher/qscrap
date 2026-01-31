@@ -693,12 +693,75 @@ function quickAction(actionType, orderId = null) {
     // Show order amount preview for refunds (100/100 alignment)
     if (config.showOrderAmount && currentOrderData) {
         const orderCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
-        const orderAmount = orderCard?.querySelector('.order-meta')?.textContent?.match(/[\d,]+\.\d{2}|\d+/)?.[0] || 'N/A';
+        const orderAmount = parseFloat(orderCard?.querySelector('.order-meta')?.textContent?.match(/[\d,]+\.\d{2}|\d+/)?.[0]?.replace(',', '') || '0');
+        const deliveryFee = 10; // Standard delivery fee
+
+        // Calculate Stage 7 deductions (20% + delivery fee)
+        const partPrice = orderAmount - deliveryFee;
+        const platformFee = partPrice * 0.20;
+        const refundableAmount = orderAmount - platformFee - deliveryFee;
+
         formContent += `
-            <div style="margin-bottom: 16px; padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; text-align: center;">
-                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Refund Amount</div>
-                <div style="font-size: 28px; font-weight: 700; color: #ef4444;">QAR ${orderAmount}</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Order #${currentOrderData.order_number}</div>
+            <!-- BRAIN v3.0 Stage 7 Warning -->
+            <div style="margin-bottom: 16px; padding: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15)); border: 2px solid rgba(245, 158, 11, 0.5); border-radius: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <i class="bi bi-exclamation-triangle-fill" style="color: #f59e0b; font-size: 18px;"></i>
+                    <strong style="color: #f59e0b;">BRAIN v3.0 Policy - Stage 7 (After Delivery)</strong>
+                </div>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
+                    Per Qatar Law 8/2008, post-delivery refunds incur <strong>20% platform fee</strong> + <strong>100% delivery fee</strong>.
+                    Full refunds only apply for defective/wrong parts (select reason below).
+                </p>
+            </div>
+            
+            <!-- Refund Amount Breakdown -->
+            <div style="margin-bottom: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);">Original Amount:</span>
+                    <span style="font-weight: 600;">${orderAmount.toFixed(2)} QAR</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #ef4444;">
+                    <span>Platform Fee (20%):</span>
+                    <span>-${platformFee.toFixed(2)} QAR</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #ef4444;">
+                    <span>Delivery Fee Retained:</span>
+                    <span>-${deliveryFee.toFixed(2)} QAR</span>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed var(--border); margin: 8px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 18px;">
+                    <span style="font-weight: 700;">Refundable Amount:</span>
+                    <span style="font-weight: 700; color: #10b981;">${refundableAmount.toFixed(2)} QAR</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                    Order #${currentOrderData.order_number} • Finance team will review
+                </div>
+            </div>
+            
+            <!-- Refund Reason Dropdown (BRAIN v3.0) -->
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">
+                    <i class="bi bi-list-check" style="margin-right: 4px;"></i>Refund Reason *
+                </label>
+                <select id="refundReason" class="form-control" required
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
+                    <option value="">-- Select Reason --</option>
+                    <optgroup label="Full Refund (No Fees)">
+                        <option value="Defective Part">🔧 Defective Part</option>
+                        <option value="Wrong Part Delivered">❌ Wrong Part Delivered</option>
+                        <option value="Part Does Not Match Description">📋 Part Does Not Match Description</option>
+                    </optgroup>
+                    <optgroup label="Partial Refund (Stage 7 Fees Apply)">
+                        <option value="Part Does Not Fit Vehicle">🚗 Part Does Not Fit Vehicle</option>
+                        <option value="Quality Not As Expected">⭐ Quality Not As Expected</option>
+                        <option value="Changed Mind - No Longer Needed">💭 Changed Mind - No Longer Needed</option>
+                        <option value="Found Better Alternative">🔄 Found Better Alternative</option>
+                    </optgroup>
+                    <option value="Other">📝 Other (Specify in notes)</option>
+                </select>
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+                    ⚠️ Selecting "Defective/Wrong Part" qualifies for FULL refund (no deductions)
+                </small>
             </div>
         `;
     }
@@ -758,6 +821,22 @@ function quickAction(actionType, orderId = null) {
 
                     const notes = document.getElementById('actionNotes').value.trim();
 
+                    // Get refund reason from dropdown if present (BRAIN v3.0)
+                    const refundReasonEl = document.getElementById('refundReason');
+                    const refundReason = refundReasonEl?.value || '';
+
+                    // Validate refund reason is selected for refund actions
+                    if (actionType === 'full_refund' && refundReasonEl && !refundReason) {
+                        showToast('Please select a refund reason', 'error');
+                        refundReasonEl.focus();
+                        return;
+                    }
+
+                    // Combine reason + notes for complete tracking
+                    const combinedReason = refundReason
+                        ? (notes ? `${refundReason}: ${notes}` : refundReason)
+                        : notes;
+
                     // Close modal and show loading
                     QScrapModal.close('quick-action-modal');
                     showToast('Processing...', 'info');
@@ -775,7 +854,7 @@ function quickAction(actionType, orderId = null) {
                                 order_id: orderId,
                                 action_type: actionType,
                                 action_details: actionDetails,
-                                notes: notes || undefined
+                                notes: combinedReason || undefined
                             })
                         });
 
