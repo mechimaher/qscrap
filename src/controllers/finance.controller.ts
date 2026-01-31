@@ -733,7 +733,7 @@ export const getPendingCompensationReviews = async (req: AuthRequest, res: Respo
                 gp.review_reason,
                 gp.created_at,
                 g.garage_name,
-                g.email as garage_email,
+                g.phone_number as garage_phone,
                 o.order_number,
                 o.customer_id,
                 u.full_name as customer_name,
