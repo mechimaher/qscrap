@@ -33,6 +33,8 @@ interface ActionResult {
     message: string;
     payoutAction?: { action: string; payout_id?: string; reversal_id?: string };
     refundAction?: { refund_id?: string; amount: number };
+    refundId?: string;
+    status?: string;
     error?: string;
 }
 
@@ -90,14 +92,17 @@ export class SupportActionsService {
     }
 
     /**
-     * Execute Full Refund with proper business logic
+     * REQUEST Refund (Support → Finance Approval Required)
      * 
-     * Flow:
-     * 1. Validate warranty (7 days)
-     * 2. Cancel/reverse payout
-     * 3. Process customer refund via payment gateway
-     * 4. Update order status
-     * 5. Notify all parties
+     * CRITICAL: Support agents can ONLY REQUEST refunds.
+     * The refund is NOT processed immediately - creates a pending
+     * record that Finance team must approve.
+     * 
+     * Workflow:
+     * 1. Support submits refund request → Creates 'pending' refund record
+     * 2. Finance team sees it in their Pending Refunds queue
+     * 3. Finance approves → Stripe refund executed, order marked 'refunded'
+     * 4. Finance rejects → Request denied, order status unchanged
      */
     async executeFullRefund(params: {
         orderId: string;
@@ -113,6 +118,23 @@ export class SupportActionsService {
             // 1. Get context and validate
             const context = await this.getActionContextInternal(params.orderId, client);
 
+            // Validate: Order must be paid to request a refund
+            if (context.order.payment_status !== 'paid') {
+                throw new Error(
+                    `Cannot request refund: Order payment status is '${context.order.payment_status}'. ` +
+                    `Only fully paid orders can be refunded.`
+                );
+            }
+
+            // Validate: Order must be delivered/completed for post-delivery refunds
+            const refundableStatuses = ['delivered', 'completed'];
+            if (!refundableStatuses.includes(context.order.order_status)) {
+                throw new Error(
+                    `Cannot request refund: Order status is '${context.order.order_status}'. ` +
+                    `For orders not yet delivered, use 'Cancel Order' instead.`
+                );
+            }
+
             // Validate warranty period
             if (!context.isWithinWarranty) {
                 throw new Error(
@@ -122,81 +144,87 @@ export class SupportActionsService {
                 );
             }
 
-            let payoutAction: any = null;
-            let refundAction: any = null;
-
-            // 2. Handle payout cancellation/reversal
-            if (context.payout) {
-                payoutAction = await this.handlePayoutForRefund(
-                    context.payout,
-                    context.order.garage_id,
-                    params.reason,
-                    client
+            // Validate: Must have payment intent
+            const paymentIntentId = context.order.final_payment_intent_id || context.order.deposit_intent_id;
+            if (!paymentIntentId) {
+                throw new Error(
+                    `Cannot request refund: No Stripe payment intent found. ` +
+                    `Please verify payment was processed correctly.`
                 );
             }
 
-            // 3. Process customer refund (if paid)
-            if (context.order.payment_status === 'paid') {
-                refundAction = await this.processCustomerRefund(
-                    context.order,
-                    context.order.total_amount,
-                    params.reason,
-                    client
-                );
-            }
-
-            // 4. Update order status
-            await client.query(`
-                UPDATE orders SET 
-                    order_status = 'refunded',
-                    updated_at = NOW()
-                WHERE order_id = $1
+            // Check for existing pending refund request
+            const existingRefund = await client.query(`
+                SELECT refund_id, refund_status FROM refunds 
+                WHERE order_id = $1 AND refund_status = 'pending'
             `, [params.orderId]);
 
-            // Record in status history
-            await client.query(`
-                INSERT INTO order_status_history 
-                (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-                VALUES ($1, $2, 'refunded', $3, 'support', $4)
-            `, [params.orderId, context.order.order_status, params.agentId, params.reason]);
+            if (existingRefund.rows.length > 0) {
+                throw new Error(
+                    `A refund request is already pending for this order. ` +
+                    `Please wait for Finance team to review.`
+                );
+            }
 
-            // 5. Log resolution
+            // 2. Create PENDING refund request (Finance must approve)
+            const idempotencyKey = `support_refund_req_${params.orderId}_${Date.now()}`;
+            const refundResult = await client.query(`
+                INSERT INTO refunds 
+                (order_id, customer_id, original_amount, refund_amount, refund_reason, 
+                 refund_status, initiated_by, refund_type, idempotency_key, payment_intent_id)
+                VALUES ($1, $2, $3, $4, $5, 'pending', 'support', 'support_refund_request', $6, $7)
+                RETURNING refund_id
+            `, [
+                params.orderId,
+                params.customerId,
+                context.order.total_amount,
+                context.order.total_amount,
+                params.reason,
+                idempotencyKey,
+                paymentIntentId
+            ]);
+
+            const refundId = refundResult.rows[0]?.refund_id;
+
+            // 3. DO NOT change order status to 'refunded' - Finance will do that
+            // Only log the request in resolution logs
+
+            // 4. Log resolution (as REQUEST, not completed action)
             await this.logResolution({
                 orderId: params.orderId,
                 customerId: params.customerId,
                 agentId: params.agentId,
-                actionType: 'full_refund',
+                actionType: 'refund_request',
                 actionDetails: {
-                    refund_amount: context.order.total_amount,
-                    payout_action: payoutAction,
-                    refund_action: refundAction,
+                    refund_id: refundId,
+                    requested_amount: context.order.total_amount,
+                    status: 'pending_finance_approval',
                     warranty_days_remaining: context.warrantyDaysRemaining
                 },
                 notes: params.reason
             }, client);
 
-            // 6. Notify parties
-            await this.notifyRefund(context, params.reason);
-
             await client.query('COMMIT');
+
+            console.log(`[SupportActions] Refund REQUEST submitted for order ${context.order.order_number}. Awaiting Finance approval.`);
 
             return {
                 success: true,
-                action: 'full_refund',
+                action: 'refund_request',
                 orderId: params.orderId,
-                message: `Refund of ${context.order.total_amount} QAR processed for order ${context.order.order_number}`,
-                payoutAction,
-                refundAction
+                message: `Refund request of ${context.order.total_amount} QAR submitted for order #${context.order.order_number}. The Finance team will review and process.`,
+                refundId,
+                status: 'pending_finance_approval'
             };
 
         } catch (err: any) {
             await client.query('ROLLBACK');
-            console.error('[SupportActions] Full refund error:', err.message);
+            console.error('[SupportActions] Refund request error:', err.message);
             return {
                 success: false,
-                action: 'full_refund',
+                action: 'refund_request',
                 orderId: params.orderId,
-                message: 'Refund failed',
+                message: 'Refund request failed',
                 error: err.message
             };
         } finally {
