@@ -368,24 +368,39 @@ export class NegotiationService {
     }
 
     private async declineOffer(offer: any, bid: any, client: PoolClient): Promise<void> {
-        // Update counter-offer status to rejected (matches DB constraint: pending/accepted/rejected/countered/expired)
+        // Only reject the counter-offer, NOT the entire bid
+        // The bid stays 'pending' so customer can still accept garage's last offer
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['rejected', offer.counter_offer_id]);
-        // Update bid status to rejected
-        await client.query('UPDATE bids SET status = $1 WHERE bid_id = $2', ['rejected', offer.bid_id]);
+
+        // NOTE: We do NOT reject the bid here - garage's previous offer is still valid
+        // Customer can use "Accept Last Garage Offer" to accept it
 
         // Get customer_id from bid to notify them
         const customerId = bid.customer_id;
         if (customerId) {
+            // Get garage's last offer to include in notification
+            const lastGarageOffer = await client.query(`
+                SELECT proposed_amount FROM counter_offers 
+                WHERE bid_id = $1 AND offered_by_type = 'garage' 
+                ORDER BY round_number DESC LIMIT 1
+            `, [offer.bid_id]);
+
+            const garageLastPrice = lastGarageOffer.rows[0]?.proposed_amount;
+            const acceptMessage = garageLastPrice
+                ? ` You can still accept the garage's offer of ${garageLastPrice} QAR.`
+                : '';
+
             // Create database notification for customer
             await createNotification({
                 userId: customerId,
                 type: 'counter_offer_rejected',
                 title: '❌ Counter-Offer Declined',
-                message: `Your counter-offer of ${offer.proposed_amount} QAR was declined by the garage.`,
+                message: `Your counter-offer of ${offer.proposed_amount} QAR was declined.${acceptMessage}`,
                 data: {
                     bid_id: offer.bid_id,
                     counter_offer_id: offer.counter_offer_id,
-                    proposed_amount: offer.proposed_amount
+                    proposed_amount: offer.proposed_amount,
+                    garage_last_offer: garageLastPrice
                 },
                 target_role: 'customer'
             });
@@ -396,7 +411,7 @@ export class NegotiationService {
                 await pushService.sendToUser(
                     customerId,
                     '❌ Counter-Offer Declined',
-                    `Your counter-offer of ${offer.proposed_amount} QAR was declined.`,
+                    `Your offer was declined.${acceptMessage}`,
                     { type: 'counter_offer_rejected', bid_id: offer.bid_id },
                     { channelId: 'bids', sound: true }
                 );
@@ -410,7 +425,9 @@ export class NegotiationService {
                 bid_id: offer.bid_id,
                 counter_offer_id: offer.counter_offer_id,
                 proposed_amount: offer.proposed_amount,
-                notification: 'Your counter-offer was declined by the garage.'
+                garage_last_offer: garageLastPrice,
+                can_accept_last_offer: !!garageLastPrice,
+                notification: `Your counter-offer was declined.${acceptMessage}`
             });
             // Also emit bid_updated to trigger UI refresh
             emitToUser(customerId, 'bid_updated', { bid_id: offer.bid_id, request_id: offer.request_id });
