@@ -5,6 +5,7 @@ import {
     getCancellationPreview,
     cancelOrderByCustomer,
     cancelOrderByGarage,
+    cancelOrderByDriver,
     getCancellationHistory,
     getReturnPreview,
     createReturnRequest,
@@ -37,6 +38,9 @@ router.post('/orders/:order_id/cancel/customer', authenticate, requireRole('cust
 
 // Garage: Cancel an order (cannot fulfill)
 router.post('/orders/:order_id/cancel/garage', authenticate, requireRole('garage'), cancelOrderByGarage);
+
+// Driver: Cancel an order (delivery issues)
+router.post('/orders/:order_id/cancel/driver', authenticate, requireRole('driver'), cancelOrderByDriver);
 
 // ============================================
 // 7-DAY RETURN WINDOW (BRAIN v3.0)

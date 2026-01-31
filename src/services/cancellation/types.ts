@@ -36,6 +36,7 @@ export interface CancelOrderResult {
     refund_amount?: number;
     refund_status?: string;
     impact?: string;
+    fault_party?: 'customer' | 'garage' | 'driver' | 'platform';
 }
 
 // ===========================================
