@@ -84,11 +84,28 @@ const getStatusConfig = (status: string, t: any) => {
             label: t('status.completed'),
             gradient: ['#22C55E', '#16A34A'] as const
         };
+        case 'cancelled':
+        case 'cancelled_by_customer':
+        case 'cancelled_by_garage':
+        case 'cancelled_by_ops': return {
+            color: '#EF4444',
+            bg: '#FEE2E2',
+            icon: '✕',
+            label: t('status.cancelled'),
+            gradient: ['#EF4444', '#DC2626'] as const
+        };
+        case 'refunded': return {
+            color: '#6B7280',
+            bg: '#F3F4F6',
+            icon: '💸',
+            label: t('status.refunded'),
+            gradient: ['#6B7280', '#4B5563'] as const
+        };
         default: return {
             color: '#6B7280',
             bg: '#F3F4F6',
             icon: '•',
-            label: status,
+            label: status.replace(/_/g, ' '),
             gradient: ['#6B7280', '#4B5563'] as const
         };
     }
@@ -580,7 +597,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
-        flexShrink: 0,
+        flexShrink: 1,
+        maxWidth: 120,
     },
     statusText: { fontSize: FontSizes.xs, fontWeight: '700' },
     carChip: {
