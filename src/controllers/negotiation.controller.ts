@@ -30,6 +30,7 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
         await negotiationService.respondToCounterOffer(req.user!.userId, counter_offer_id, { action, counter_price: counterPrice, notes });
         res.json({ message: `Counter-offer ${action}ed` });
     } catch (err) {
+        console.error('[respondToCounterOffer] Error:', err);
         if (isNegotiationError(err)) return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });
         res.status(400).json({ error: getErrorMessage(err) });
     }
