@@ -394,7 +394,8 @@ export class PayoutAdminService {
         const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         const statement_number = `INV-${datePrefix}-${randomSuffix}`;
 
-        // 3. Get all confirmed/completed payouts within date range
+        // 3. Get all payouts for completed orders within date range (by delivery date)
+        // Includes pending payouts still in 7-day warranty hold
         const ordersResult = await this.pool.query(`
             SELECT 
                 gp.payout_id,
@@ -411,6 +412,7 @@ export class PayoutAdminService {
                 END as part_name,
                 o.delivered_at,
                 gp.confirmed_at,
+                gp.payout_status,
                 gp.gross_amount,
                 COALESCE(gp.commission_amount, 0) as platform_fee,
                 gp.net_amount,
@@ -420,10 +422,10 @@ export class PayoutAdminService {
             LEFT JOIN bids b ON o.bid_id = b.bid_id
             LEFT JOIN part_requests r ON o.request_id = r.request_id
             WHERE gp.garage_id = $1
-            AND gp.payout_status IN ('confirmed', 'completed')
-            AND gp.confirmed_at::date >= $2::date
-            AND gp.confirmed_at::date <= $3::date
-            ORDER BY gp.confirmed_at ASC
+            AND gp.payout_status NOT IN ('cancelled', 'failed')
+            AND o.delivered_at::date >= $2::date
+            AND o.delivered_at::date <= $3::date
+            ORDER BY o.delivered_at ASC
         `, [garage_id, from_date, to_date]);
 
         const orders = ordersResult.rows.map(row => ({
