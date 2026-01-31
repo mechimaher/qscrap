@@ -45,7 +45,7 @@ interface BadgeCountsContextValue {
 const BadgeCountsContext = createContext<BadgeCountsContextValue>({
     counts: DEFAULT_COUNTS,
     isLoading: true,
-    refresh: async () => { },
+    refresh: async () => {},
     requestsBadge: undefined,
     ordersBadge: undefined,
     profileBadge: undefined,
@@ -74,49 +74,37 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // Initial fetch
     useEffect(() => {
         fetchBadgeCounts();
     }, [fetchBadgeCounts]);
 
-    // Refresh on app focus (coming back from background)
     useEffect(() => {
         const handleAppStateChange = (nextAppState: AppStateStatus) => {
             if (nextAppState === 'active') {
                 fetchBadgeCounts();
             }
         };
-
         const subscription = AppState.addEventListener('change', handleAppStateChange);
         return () => subscription?.remove();
     }, [fetchBadgeCounts]);
 
-    // Real-time updates via WebSocket
     useEffect(() => {
         if (!socket) return;
 
         const handleNewBid = () => {
             setCounts(prev => ({
                 ...prev,
-                requests: {
-                    ...prev.requests,
-                    with_bids: prev.requests.with_bids + 1,
-                },
+                requests: { ...prev.requests, with_bids: prev.requests.with_bids + 1 },
                 total_badge: prev.total_badge + 1,
             }));
         };
 
-        const handleOrderUpdate = () => {
-            fetchBadgeCounts();
-        };
+        const handleOrderUpdate = () => fetchBadgeCounts();
 
         const handleCounterOffer = () => {
             setCounts(prev => ({
                 ...prev,
-                requests: {
-                    ...prev.requests,
-                    pending_action: prev.requests.pending_action + 1,
-                },
+                requests: { ...prev.requests, pending_action: prev.requests.pending_action + 1 },
                 total_badge: prev.total_badge + 1,
             }));
         };
@@ -124,9 +112,7 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
         const handleNotification = () => {
             setCounts(prev => ({
                 ...prev,
-                notifications: {
-                    unread: prev.notifications.unread + 1,
-                },
+                notifications: { unread: prev.notifications.unread + 1 },
                 total_badge: prev.total_badge + 1,
             }));
         };
@@ -144,7 +130,6 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
         };
     }, [socket, fetchBadgeCounts]);
 
-    // Calculate individual tab badges
     const requestsBadge = counts.requests.with_bids + counts.requests.pending_action;
     const ordersBadge = counts.orders.pending_payment + counts.orders.pending_confirmation;
     const profileBadge = counts.notifications.unread;
@@ -159,13 +144,12 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <BadgeCountsContext.Provider value= { value } >
-        { children }
+        <BadgeCountsContext.Provider value={value}>
+            {children}
         </BadgeCountsContext.Provider>
     );
 }
 
-// Hook to consume badge counts - now uses shared context
 export function useBadgeCounts() {
     return useContext(BadgeCountsContext);
 }
