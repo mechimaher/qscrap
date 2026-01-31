@@ -2532,8 +2532,15 @@ function closeOrderDetailsModal() {
  * Render full order details in modal
  */
 function renderOrderDetailsModal(data) {
+    console.log('[Order Details] Rendering modal with data:', data);
     const { order, status_history, payout, refund, tickets } = data;
     const content = document.getElementById('orderDetailsContent');
+
+    if (!order) {
+        console.error('[Order Details] No order data received');
+        content.innerHTML = '<div style="padding: 40px; text-align: center;">No order data available</div>';
+        return;
+    }
 
     // Status color mapping
     const statusColors = {
