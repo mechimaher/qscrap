@@ -1504,6 +1504,41 @@ async function loadOrders() {
                         </button>
                     </div>
                 `;
+            } else if (isCancelled) {
+                // Cancelled orders - show clear status (no payout for cancelled orders per BRAIN v3.0)
+                const canceller = o.order_status === 'cancelled_by_customer' ? 'Customer' : 'Garage';
+                // Clear professional message about what happened
+                actionsHtml = `
+                    <div class="order-actions" style="display: flex; flex-direction: column; gap: 6px;">
+                        <div style="padding: 10px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.04)); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                            ${o.order_status === 'cancelled_by_customer' ? `
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="color: #dc2626; font-weight: 600; font-size: 12px;">
+                                        <i class="bi bi-person-x"></i> ${canceller} Cancelled
+                                    </span>
+                                    <span style="color: var(--text-muted); font-weight: 600; font-size: 12px;">
+                                        Order Lost
+                                    </span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                                    No payout for this order. Customer refund processed.
+                                </div>
+                            ` : `
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="color: #dc2626; font-weight: 600; font-size: 12px;">
+                                        <i class="bi bi-shop"></i> You Cancelled
+                                    </span>
+                                    <span style="color: var(--text-muted); font-weight: 600; font-size: 12px;">
+                                        No payout
+                                    </span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                                    Customer received full refund. No charges to you.
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
             } else if (isRefunded) {
                 // Refunded orders
                 actionsHtml = `<div class="order-actions"><span style="color: var(--danger);"><i class="bi bi-arrow-return-left"></i> Refunded to customer</span></div>`;

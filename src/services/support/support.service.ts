@@ -540,6 +540,7 @@ export class SupportService {
             let result: any = null;
 
             switch (params.actionType) {
+                case 'request_refund': // Unified refund button - Finance determines full/partial based on reason
                 case 'full_refund':
                     if (!params.orderId) throw new Error('Order ID required for refund');
 
