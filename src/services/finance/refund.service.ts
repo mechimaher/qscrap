@@ -379,7 +379,7 @@ export class RefundService {
                         processed_by: processedBy
                     }
                 }, {
-                    idempotencyKey: `manual_refund_${refundId}`
+                    idempotencyKey: `manual_refund_${refundId}_${refundAmountCents}`
                 });
                 stripeRefundId = stripeRefund.id;
             }
