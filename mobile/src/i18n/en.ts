@@ -1344,10 +1344,10 @@ export const en = {
         dohaQatar: 'Industrial Area, Street 10, P.O. Box 32544, Doha, Qatar',
         phone: 'Phone',
         email: 'Email',
-        crNumber: 'Commercial Registration: 155892',
+        // crNumber removed - CR only shown on invoices/documents, not in legal text for app stores
         // Section 1 - Agreement
         section1Title: '1. Agreement to Terms',
-        section1Content: 'By downloading, installing, or using the QScrap mobile application ("App"), you agree to be legally bound by these Terms of Service ("Terms"). QScrap Services & Trading L.L.C (CR: 155892), a company registered in the State of Qatar ("QScrap", "we", "us", or "our"), operates this marketplace platform. If you do not agree to these Terms, you must not access or use our services.',
+        section1Content: 'By downloading, installing, or using the QScrap mobile application ("App"), you agree to be legally bound by these Terms of Service ("Terms"). QScrap Services & Trading L.L.C, a company registered in the State of Qatar ("QScrap", "we", "us", or "our"), operates this marketplace platform. If you do not agree to these Terms, you must not access or use our services.',
         // Section 2 - Eligibility
         section2Title: '2. Eligibility Requirements',
         section2Content: 'To use QScrap, you must meet the following requirements, which you represent and warrant to be true:',
@@ -1430,11 +1430,11 @@ export const en = {
         email: 'Email',
         phone: 'Phone',
         address: 'Address',
-        crNumber: 'Commercial Registration: 155892',
+        // crNumber removed - CR only shown on invoices/documents, not in legal text for app stores
         dataProtectionOfficer: 'Data Protection: privacy@qscrap.qa',
         // Section 1 - Introduction
         section1Title: '1. Introduction & Scope',
-        section1Content1: 'QScrap Services & Trading L.L.C (CR: 155892) ("QScrap," "we," "us," or "our"), a company registered in the State of Qatar, is committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, retain, and safeguard your information when you use our mobile applications (QScrap Customer App and QScrap Driver App) and related services.',
+        section1Content1: 'QScrap Services & Trading L.L.C ("QScrap," "we," "us," or "our"), a company registered in the State of Qatar, is committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, retain, and safeguard your information when you use our mobile applications (QScrap Customer App and QScrap Driver App) and related services.',
         section1Content2: 'This policy complies with Qatar Personal Data Protection Law No. 13 of 2016 and Google Play Developer Program Policies. By using QScrap, you consent to the data practices described herein. If you do not agree, please do not use our services.',
         // Section 2 - Information We Collect
         section2Title: '2. Information We Collect',
