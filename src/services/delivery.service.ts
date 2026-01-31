@@ -120,6 +120,90 @@ export class DeliveryService {
     }
 
     /**
+     * Get drivers ranked by distance to a specific order's garage
+     * Uses Haversine formula for accurate distance calculation
+     * Returns drivers sorted by proximity with distance_km field
+     */
+    static async getRankedDriversForOrder(order_id: string): Promise<{
+        drivers: (Driver & { distance_km: number | null; last_location_update: string | null })[];
+        garage: { garage_id: string; garage_name: string; location_lat: number; location_lng: number };
+    }> {
+        // 1. Get the order's garage location
+        const orderResult = await pool.query(`
+            SELECT o.order_id, o.garage_id, g.garage_name, g.location_lat, g.location_lng
+            FROM orders o
+            JOIN garages g ON o.garage_id = g.garage_id
+            WHERE o.order_id = $1
+        `, [order_id]);
+
+        if (orderResult.rows.length === 0) {
+            throw ApiError.notFound('Order not found');
+        }
+
+        const order = orderResult.rows[0];
+        const garageLat = parseFloat(order.location_lat);
+        const garageLng = parseFloat(order.location_lng);
+
+        // 2. Get all active drivers with their GPS positions from drivers table
+        // Using Haversine formula in SQL for efficiency
+        const driversResult = await pool.query(`
+            SELECT 
+                d.driver_id, d.user_id, d.full_name, d.phone, d.email, d.vehicle_type, 
+                d.vehicle_plate, d.vehicle_model, d.status, d.total_deliveries, 
+                d.rating_average, d.is_active,
+                d.current_lat, d.current_lng, d.last_location_update,
+                -- Haversine formula: distance in kilometers
+                CASE 
+                    WHEN d.current_lat IS NOT NULL AND d.current_lng IS NOT NULL THEN
+                        6371 * acos(
+                            LEAST(1.0, GREATEST(-1.0,
+                                cos(radians($1)) * cos(radians(d.current_lat)) * 
+                                cos(radians(d.current_lng) - radians($2)) + 
+                                sin(radians($1)) * sin(radians(d.current_lat))
+                            ))
+                        )
+                    ELSE NULL
+                END as distance_km
+            FROM drivers d
+            WHERE d.is_active = true 
+              AND d.status IN ('available', 'busy')
+            ORDER BY 
+                -- Available drivers first, then by distance
+                CASE WHEN d.status = 'available' THEN 0 ELSE 1 END,
+                distance_km NULLS LAST,
+                d.rating_average DESC
+        `, [garageLat, garageLng]);
+
+        // 3. Format response with rounded distances
+        const drivers = driversResult.rows.map(d => ({
+            driver_id: d.driver_id,
+            user_id: d.user_id,
+            full_name: d.full_name,
+            phone: d.phone,
+            email: d.email,
+            vehicle_type: d.vehicle_type,
+            vehicle_plate: d.vehicle_plate,
+            vehicle_model: d.vehicle_model,
+            status: d.status,
+            total_deliveries: d.total_deliveries,
+            rating_average: d.rating_average,
+            is_active: d.is_active,
+            distance_km: d.distance_km ? Math.round(d.distance_km * 10) / 10 : null, // Round to 1 decimal
+            last_location_update: d.last_location_update
+        }));
+
+        return {
+            drivers,
+            garage: {
+                garage_id: order.garage_id,
+                garage_name: order.garage_name,
+                location_lat: garageLat,
+                location_lng: garageLng
+            }
+        };
+    }
+
+    /**
      * Get single driver with recent assignments
      */
     static async getDriverDetails(driver_id: string): Promise<{ driver: Driver; recent_assignments: Assignment[] }> {

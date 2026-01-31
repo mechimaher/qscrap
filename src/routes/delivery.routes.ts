@@ -20,7 +20,8 @@ import {
     getActiveDeliveries,
     calculateDeliveryFee,
     getDeliveryZones,
-    updateZoneFee
+    updateZoneFee,
+    getRankedDriversForOrder
 } from '../controllers/delivery.controller';
 
 const router = Router();
@@ -48,6 +49,7 @@ router.get('/active', getActiveDeliveries);
 
 // Drivers
 router.get('/drivers', getDrivers);
+router.get('/drivers/ranked/:order_id', getRankedDriversForOrder); // NEW: Drivers ranked by distance to order's garage
 router.get('/drivers/:driver_id', getDriverDetails);
 router.post('/drivers', createDriver);
 router.patch('/drivers/:driver_id', updateDriver);
