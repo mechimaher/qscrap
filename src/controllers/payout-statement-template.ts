@@ -8,8 +8,10 @@ import { PayoutStatementData } from '../services/finance/types';
 import { COMPANY_INFO } from '../services/documents/bilingual-labels';
 
 // Format helpers
-function formatDate(dateStr: string | Date): string {
+function formatDate(dateStr: string | Date | null | undefined): string {
+    if (!dateStr) return 'N/A';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime()) || d.getFullYear() < 2000) return 'N/A';
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -31,7 +33,7 @@ export function generatePayoutStatementHTML(
     const orderRowsHTML = orders.map((order, idx) => `
         <tr>
             <td style="text-align:center;padding:6px 4px;">${idx + 1}</td>
-            <td style="padding:6px 4px;">${formatDate(order.confirmed_at)}</td>
+            <td style="padding:6px 4px;">${formatDate(order.delivered_at)}</td>
             <td style="padding:6px 4px;">${order.order_number}</td>
             <td style="padding:6px 4px;">${order.part_name}</td>
             <td style="text-align:right;padding:6px 4px;">${formatMoney(order.gross_amount)}</td>
