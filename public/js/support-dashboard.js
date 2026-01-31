@@ -625,13 +625,13 @@ function quickAction(actionType, orderId = null) {
     // Action configurations
     const actionConfig = {
         'full_refund': {
-            title: 'Request Full Refund',
-            icon: 'bi-arrow-counterclockwise',
-            color: 'linear-gradient(135deg, #ef4444, #dc2626)',
-            confirmText: 'Process Refund via Stripe',
+            title: 'Request Refund',
+            icon: 'bi-send-exclamation',
+            color: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            confirmText: 'Submit Request to Finance',
             needsAmount: false,
-            showOrderAmount: true, // Show order amount before confirmation
-            message: 'This will process a full refund via Stripe and notify the Finance team.'
+            showOrderAmount: true,
+            message: 'This will submit a refund request to the Finance team for review and approval. You cannot process refunds directly.'
         },
 
         'goodwill_credit': {
