@@ -3,7 +3,7 @@
  * Handles support tickets, messages, dashboard stats, and urgent items
  */
 import { Pool, PoolClient } from 'pg';
-import { CANCELLATION_FEES, STATUS_TO_STAGE, CancellationStage } from '../cancellation/cancellation.constants';
+import { CANCELLATION_FEES, STATUS_TO_STAGE, FEE_POLICY, CancellationStage } from '../cancellation/cancellation.constants';
 
 export class SupportService {
     constructor(private pool: Pool) { }
@@ -597,14 +597,35 @@ export class SupportService {
                     }
 
                     // Calculate fee on PART PRICE only (not delivery)
-                    const cancellationFee = Math.round(partPrice * feeRate * 100) / 100;
+                    let cancellationFee = Math.round(partPrice * feeRate * 100) / 100;
+
+                    // BRAIN v3.1: Apply customer-friendly fee policy
+                    if (cancellationFee > 0) {
+                        // Check first cancellation free policy
+                        if (FEE_POLICY.FIRST_CANCELLATION_FREE) {
+                            const prevCancellations = await client.query(
+                                `SELECT COUNT(*) as count FROM cancellation_requests 
+                                 WHERE requested_by = $1 AND requested_by_type = 'customer'`,
+                                [order.customer_id]
+                            );
+                            if (parseInt(prevCancellations.rows[0].count) === 0) {
+                                cancellationFee = 0; // First cancellation is FREE!
+                            }
+                        }
+
+                        // Apply max fee cap
+                        if (cancellationFee > 0 && cancellationFee > FEE_POLICY.MAX_FEE_QAR) {
+                            cancellationFee = FEE_POLICY.MAX_FEE_QAR;
+                        }
+                    }
+
                     const refundAmount = Math.round((totalAmount - cancellationFee - deliveryFeeRetained) * 100) / 100;
 
                     // NOTE: Do NOT change order status here!
                     // Order status only changes to 'refunded' when Finance approves the refund.
                     // This just creates a pending refund request for Finance team review.
 
-                    // Create refund record with PENDING status and BRAIN v3.0 fee calculation
+                    // Create refund record with PENDING status and BRAIN v3.1 fee calculation
                     await client.query(`
                         INSERT INTO refunds (
                             order_id, customer_id, original_amount, refund_amount, 
@@ -618,7 +639,7 @@ export class SupportService {
                         refundAmount,
                         cancellationFee,
                         deliveryFeeRetained,
-                        params.notes || `Refund requested by support (Stage: ${stage}, Fee: ${feeRate * 100}%)`
+                        params.notes || `Refund requested by support (Stage: ${stage}, Fee: ${cancellationFee > 0 ? (feeRate * 100) + '%' : 'FREE'})`
                     ]);
 
                     result = {
