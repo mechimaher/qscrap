@@ -609,6 +609,8 @@ function getOrderActions(order) {
             return `<span class="status-badge delivered" style="font-size: 11px;">Delivered</span>`;
         case 'completed':
             return `<span class="status-badge completed" style="font-size: 11px;">Completed</span>`;
+        case 'refunded':
+            return `<span class="status-badge refunded" style="font-size: 11px;">Refunded</span>`;
         case 'disputed':
             return `<button class="btn btn-warning btn-sm" onclick="switchSection('disputes')" title="View dispute"><i class="bi bi-exclamation-circle"></i></button>`;
         default:
