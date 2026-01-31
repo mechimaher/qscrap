@@ -63,8 +63,8 @@ export class NegotiationService {
             if (response.action === 'accept') {
                 // Garage accepts customer's counter-offer - get customer_id from bid
                 order = await this.acceptOffer(offer, bid, bid.customer_id, client);
-            } else if (response.action === 'decline') {
-                await this.declineOffer(offer, client);
+            } else if (response.action === 'decline' || response.action === 'reject') {
+                await this.declineOffer(offer, bid, client);
             } else if (response.action === 'counter' && response.counter_price) {
                 await this.createGarageCounter(offer, garageId, response.counter_price, response.notes, client);
             }
@@ -91,8 +91,8 @@ export class NegotiationService {
             let order = null;
             if (response.action === 'accept') {
                 order = await this.acceptOffer(offer, bid, customerId, client);
-            } else if (response.action === 'decline') {
-                await this.declineOffer(offer, client);
+            } else if (response.action === 'decline' || response.action === 'reject') {
+                await this.declineOffer(offer, bid, client);
             } else if (response.action === 'counter' && response.counter_price) {
                 await this.createCustomerCounter(offer, customerId, response.counter_price, response.notes, client);
             }
@@ -367,9 +367,54 @@ export class NegotiationService {
         return order;
     }
 
-    private async declineOffer(offer: any, client: PoolClient): Promise<void> {
+    private async declineOffer(offer: any, bid: any, client: PoolClient): Promise<void> {
+        // Update counter-offer status to declined
         await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['declined', offer.counter_offer_id]);
+        // Update bid status to declined
         await client.query('UPDATE bids SET status = $1 WHERE bid_id = $2', ['declined', offer.bid_id]);
+
+        // Get customer_id from bid to notify them
+        const customerId = bid.customer_id;
+        if (customerId) {
+            // Create database notification for customer
+            await createNotification({
+                userId: customerId,
+                type: 'counter_offer_rejected',
+                title: '❌ Counter-Offer Declined',
+                message: `Your counter-offer of ${offer.proposed_amount} QAR was declined by the garage.`,
+                data: {
+                    bid_id: offer.bid_id,
+                    counter_offer_id: offer.counter_offer_id,
+                    proposed_amount: offer.proposed_amount
+                },
+                target_role: 'customer'
+            });
+
+            // Send push notification
+            try {
+                const { pushService } = await import('../push.service');
+                await pushService.sendToUser(
+                    customerId,
+                    '❌ Counter-Offer Declined',
+                    `Your counter-offer of ${offer.proposed_amount} QAR was declined.`,
+                    { type: 'counter_offer_rejected', bid_id: offer.bid_id },
+                    { channelId: 'bids', sound: true }
+                );
+            } catch (pushErr) {
+                console.error('[NEGOTIATION] Push to customer failed:', pushErr);
+            }
+
+            // Emit WebSocket event to customer app
+            const { emitToUser } = await import('../../utils/socketIO');
+            emitToUser(customerId, 'counter_offer_rejected', {
+                bid_id: offer.bid_id,
+                counter_offer_id: offer.counter_offer_id,
+                proposed_amount: offer.proposed_amount,
+                notification: 'Your counter-offer was declined by the garage.'
+            });
+            // Also emit bid_updated to trigger UI refresh
+            emitToUser(customerId, 'bid_updated', { bid_id: offer.bid_id, request_id: offer.request_id });
+        }
     }
 
     private async createGarageCounter(offer: any, garageId: string, counterPrice: number, notes: string | undefined, client: PoolClient): Promise<void> {
