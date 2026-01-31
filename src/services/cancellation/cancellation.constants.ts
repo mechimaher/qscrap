@@ -29,6 +29,25 @@ export const CANCELLATION_FEES = {
 } as const;
 
 /**
+ * Fee Split Between Platform and Garage
+ * 
+ * PHILOSOPHY: "Platform NEVER loses, garages get compensated for their time"
+ * 
+ * The cancellation fee is charged to the CUSTOMER and split between:
+ * - Platform: Covers transaction costs, refund processing, admin overhead
+ * - Garage: Compensates for work/time already invested
+ * 
+ * Customer pays the fee, both parties benefit.
+ */
+export const FEE_SPLIT = {
+    BEFORE_PAYMENT: { platform: 0, garage: 0 },
+    AFTER_PAYMENT: { platform: 0.05, garage: 0 },           // 5% to platform only (no work done yet)
+    DURING_PREPARATION: { platform: 0.05, garage: 0.05 },   // 5% each (garage started work)
+    IN_DELIVERY: { platform: 0.05, garage: 0.05 },          // 5% each (part ready, in transit)
+    AFTER_DELIVERY: { platform: 0.10, garage: 0.10 },       // 10% each (return processing)
+} as const;
+
+/**
  * 7-Day Return Policy (Qatar Law No. 8/2008 Article 26 - MANDATORY)
  * 
  * WARNING: Reducing window below 7 days risks MOCI fines up to 1,000,000 QAR
