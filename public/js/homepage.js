@@ -150,7 +150,7 @@ const translations = {
         'nav.download': 'تحميل التطبيق',
 
         // Hero Section
-        'hero.badge': '⭐ المنصة الأولى لقطع غيار السيارات في قطر',
+        'hero.badge': 'المنصة الأولى لقطع غيار السيارات في قطر',
         'hero.title1': 'سوق قطع غيار',
         'hero.title2': 'السيارات المتميز',
         'hero.title3': 'في قطر',
@@ -197,7 +197,7 @@ const translations = {
         // Gallery
         'gallery.badge': 'جودتنا',
         'gallery.title': 'معرض القطع المتميزة',
-        'gallery.subtitle': 'قطع أصلية OEM وقطع معتمدة الجودة من موردين موثوقين',
+        'gallery.subtitle': 'قطع أصلية من المصنّع وقطع معتمدة الجودة من موردين موثوقين',
         'gallery.item1': 'مكونات السيارة الكاملة',
         'gallery.item2': 'أجزاء المحرك الداخلية',
         'gallery.item3': 'اختيار الخبراء',
