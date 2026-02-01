@@ -259,6 +259,13 @@
         .nav-logo img {
             height: 140px;
             width: auto;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            filter: drop-shadow(0 4px 12px rgba(141, 27, 61, 0.15));
+        }
+
+        .nav-logo:hover img {
+            transform: translateY(-4px) scale(1.05);
+            filter: drop-shadow(0 16px 40px rgba(141, 27, 61, 0.35));
         }
 
         .nav-logo-text {
@@ -1098,7 +1105,7 @@
         <div class="nav-container">
             <a href="/" class="nav-logo">
                 <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
-                
+
             </a>
             <div class="nav-links">
                 <a href="#how-it-works" class="nav-link">How It Works</a>
@@ -1466,8 +1473,9 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <a href="/" class="nav-logo" style="margin-bottom: 16px;">
-                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" style="filter: brightness(0) invert(1);">
-                        
+                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap"
+                            style="filter: brightness(0) invert(1);">
+
                     </a>
                     <p>Qatar's premium automotive parts marketplace. Connecting customers with verified garages for
                         quality new, used, and OEM parts.</p>
