@@ -20,26 +20,16 @@
     <meta property="og:description" content="Find new, used, and genuine OEM automotive parts delivered to your door.">
     <meta property="og:image" content="https://www.qscrap.qa/assets/og-image.jpg">
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="QScrap - Qatar's Premium Automotive Parts Marketplace">
-    <meta name="twitter:description" content="Find new, used, and genuine OEM automotive parts delivered to your door.">
-
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
-
-    <!-- Canonical -->
     <link rel="canonical" href="https://www.qscrap.qa/">
 
-    <!-- Preconnect for performance -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <!-- Stylesheets -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/design-tokens.css">
-    <link rel="stylesheet" href="/css/website.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
@@ -57,15 +47,1049 @@
             "postOfficeBoxNumber": "32544",
             "addressLocality": "Doha",
             "addressCountry": "QA"
-        },
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "+974-4455-4444",
-            "contactType": "customer service",
-            "email": "support@qscrap.qa"
         }
     }
     </script>
+
+    <style>
+        /* ===== VVIP Platinum Ultra-Premium Design System ===== */
+        :root {
+            --qatar-maroon: #8D1B3D;
+            --qatar-maroon-dark: #6B1530;
+            --qatar-maroon-light: #F5E6EB;
+            --gold: #C9A227;
+            --gold-dark: #A68520;
+            --gold-glow: rgba(201, 162, 39, 0.4);
+            --white: #FFFFFF;
+            --mist: #F8F9FA;
+            --pearl: #F0F0F0;
+            --silver: #E5E5E5;
+            --slate: #6A6A6A;
+            --charcoal: #3A3A3A;
+            --black: #1A1A1A;
+            --success: #10B981;
+            --glass-white: rgba(255, 255, 255, 0.95);
+            --glass-dark: rgba(26, 26, 26, 0.8);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--white);
+            color: var(--charcoal);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== Reveal Animations ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px var(--gold-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 40px var(--gold-glow), 0 0 60px var(--gold-glow);
+            }
+        }
+
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-left.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-right.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ===== Navigation ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            height: 44px;
+            width: auto;
+        }
+
+        .nav-logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--qatar-maroon);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            position: relative;
+            padding: 8px 0;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--qatar-maroon);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--qatar-maroon);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--qatar-maroon);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--qatar-maroon-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(141, 27, 61, 0.3);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        /* ===== Hero Section - Cinematic ===== */
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2020 100%);
+        }
+
+        .hero-bg-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .hero-bg-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            animation: kenBurns 20s ease-in-out infinite alternate;
+        }
+
+        .hero-bg-slide.active {
+            opacity: 0.5;
+        }
+
+        .hero-bg-slide:nth-child(1) {
+            background-image: url('/assets/images/parts/wp3195881-cars-engine-parts-wallpaper.jpg');
+        }
+
+        .hero-bg-slide:nth-child(2) {
+            background-image: url('/assets/images/parts/wp8391656-auto-parts-wallpapers.jpg');
+        }
+
+        .hero-bg-slide:nth-child(3) {
+            background-image: url('/assets/images/parts/wp8391878-auto-parts-wallpapers.jpg');
+        }
+
+        .hero-bg-slide:nth-child(4) {
+            background-image: url('/assets/images/parts/wp8391790-auto-parts-wallpapers.jpg');
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(141, 27, 61, 0.85) 0%, rgba(26, 26, 26, 0.9) 100%);
+            z-index: 2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            padding: 120px 24px 80px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: rgba(201, 162, 39, 0.15);
+            border: 1px solid var(--gold);
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 32px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .hero-title {
+            font-size: clamp(42px, 6vw, 72px);
+            font-weight: 900;
+            color: var(--white);
+            line-height: 1.05;
+            margin-bottom: 24px;
+            letter-spacing: -2px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--gold) 0%, #E8D48A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.6s;
+            opacity: 0;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 60px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.8s;
+            opacity: 0;
+        }
+
+        .btn-hero-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 36px;
+            background: var(--gold);
+            color: var(--black);
+            text-decoration: none;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px var(--gold-glow);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 40px var(--gold-glow);
+        }
+
+        .btn-hero-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 36px;
+            background: transparent;
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--white);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 1s;
+            opacity: 0;
+        }
+
+        .hero-stat {
+            text-align: left;
+        }
+
+        .hero-stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1;
+        }
+
+        .hero-stat-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        /* ===== Infinite Parts Carousel ===== */
+        .parts-showcase {
+            padding: 80px 0;
+            background: var(--mist);
+            overflow: hidden;
+        }
+
+        .showcase-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .showcase-label {
+            display: inline-block;
+            padding: 8px 20px;
+            background: var(--qatar-maroon-light);
+            color: var(--qatar-maroon);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .showcase-title {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--black);
+        }
+
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .carousel-track {
+            display: flex;
+            gap: 24px;
+            animation: scroll-left 40s linear infinite;
+            width: max-content;
+        }
+
+        .carousel-track:hover {
+            animation-play-state: paused;
+        }
+
+        .carousel-item {
+            flex-shrink: 0;
+            width: 350px;
+            height: 250px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .carousel-item:hover {
+            transform: scale(1.05) translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .carousel-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .carousel-item-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 20px 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+            color: var(--white);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-item:hover .carousel-item-overlay {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .carousel-item-title {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .carousel-item-desc {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* ===== How It Works Section ===== */
+        .how-it-works {
+            padding: 120px 24px;
+            background: var(--white);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 80px;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            background: var(--qatar-maroon-light);
+            color: var(--qatar-maroon);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--black);
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--slate);
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .step-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px 32px;
+            text-align: center;
+            border: 1px solid var(--silver);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
+        .step-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 30px 60px rgba(141, 27, 61, 0.2);
+            border-color: transparent;
+        }
+
+        .step-card:hover::before {
+            opacity: 1;
+        }
+
+        .step-card:hover .step-number,
+        .step-card:hover .step-title,
+        .step-card:hover .step-desc {
+            color: var(--white);
+        }
+
+        .step-card:hover .step-number {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--gold);
+        }
+
+        .step-number {
+            width: 56px;
+            height: 56px;
+            background: var(--qatar-maroon-light);
+            color: var(--qatar-maroon);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0 auto 24px;
+            transition: all 0.3s ease;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--black);
+            margin-bottom: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .step-desc {
+            color: var(--slate);
+            font-size: 15px;
+            line-height: 1.6;
+            transition: color 0.3s ease;
+        }
+
+        /* ===== Gallery Masonry Section ===== */
+        .gallery-section {
+            padding: 120px 24px;
+            background: var(--black);
+        }
+
+        .gallery-section .section-badge {
+            background: rgba(201, 162, 39, 0.2);
+            color: var(--gold);
+        }
+
+        .gallery-section .section-title {
+            color: var(--white);
+        }
+
+        .gallery-section .section-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 280px);
+            gap: 16px;
+        }
+
+        .gallery-item {
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-item.large {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        .gallery-item.wide {
+            grid-column: span 2;
+        }
+
+        .gallery-item-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(141, 27, 61, 0.9) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: flex-end;
+            padding: 24px;
+        }
+
+        .gallery-item:hover .gallery-item-overlay {
+            opacity: 1;
+        }
+
+        .gallery-item-text {
+            color: var(--white);
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* ===== Value Props Section ===== */
+        .value-props {
+            padding: 120px 24px;
+            background: linear-gradient(180deg, var(--white) 0%, var(--mist) 100%);
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .value-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 48px 36px;
+            text-align: center;
+            border: 1px solid var(--silver);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .value-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--qatar-maroon), var(--gold));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .value-card:hover {
+            transform: translateY(-16px);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12);
+        }
+
+        .value-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .value-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--qatar-maroon-light) 0%, #fff 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+            transition: all 0.4s ease;
+        }
+
+        .value-card:hover .value-icon {
+            transform: scale(1.1) rotate(5deg);
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+        }
+
+        .value-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--black);
+            margin-bottom: 12px;
+        }
+
+        .value-desc {
+            color: var(--slate);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* ===== CTA Section ===== */
+        .cta-section {
+            padding: 120px 24px;
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(201, 162, 39, 0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-size: 52px;
+            font-weight: 900;
+            color: var(--white);
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .cta-subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 48px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            background: var(--black);
+            color: var(--white);
+            padding: 80px 24px 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand p {
+            color: var(--slate);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-top: 16px;
+        }
+
+        .footer-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--slate);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--gold);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-legal {
+            font-size: 14px;
+            color: var(--slate);
+        }
+
+        .footer-copyright {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1024px) {
+
+            .steps-grid,
+            .value-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+            }
+
+            .gallery-item.large {
+                grid-column: span 2;
+                grid-row: span 1;
+                height: 300px;
+            }
+
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 8px;
+            }
+
+            .mobile-menu-btn span {
+                width: 24px;
+                height: 2px;
+                background: var(--charcoal);
+                transition: all 0.3s ease;
+            }
+
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .steps-grid,
+            .value-grid,
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-item.large,
+            .gallery-item.wide {
+                grid-column: span 1;
+            }
+
+            .cta-title {
+                font-size: 32px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -76,40 +1100,36 @@
                 <img src="/assets/images/qscrap-logo.png" alt="QScrap Logo">
                 <span class="nav-logo-text">QScrap</span>
             </a>
-
             <div class="nav-links">
                 <a href="#how-it-works" class="nav-link">How It Works</a>
-                <a href="#marketplace" class="nav-link">Marketplace</a>
+                <a href="#gallery" class="nav-link">Gallery</a>
                 <a href="/partners.html" class="nav-link">For Businesses</a>
                 <a href="/about.html" class="nav-link">About</a>
             </div>
-
-            <div class="nav-actions">
-                <div class="lang-switch">
-                    <button class="lang-btn active" data-lang="en">EN</button>
-                    <button class="lang-btn" data-lang="ar">عربي</button>
-                </div>
-                <a href="#download" class="nav-cta">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Download App
-                </a>
-            </div>
-
+            <a href="#download" class="nav-cta">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Download App
+            </a>
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </button>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Hero Section with Cinematic Slideshow -->
     <section class="hero">
-        <div class="hero-container">
+        <div class="hero-bg-slideshow">
+            <div class="hero-bg-slide active"></div>
+            <div class="hero-bg-slide"></div>
+            <div class="hero-bg-slide"></div>
+            <div class="hero-bg-slide"></div>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="container">
             <div class="hero-content">
                 <div class="hero-badge">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -118,23 +1138,14 @@
                     </svg>
                     Qatar's #1 Auto Parts Platform
                 </div>
-
                 <h1 class="hero-title">
                     Qatar's Premium<br>
                     <span>Automotive Parts</span><br>
                     Marketplace
                 </h1>
-
                 <p class="hero-subtitle">
-                    New • Used • Genuine OEM — Delivered to Your Door
+                    New • Used • Genuine OEM — Delivered Same Day to Your Door
                 </p>
-
-                <div class="hero-tags">
-                    <span class="hero-tag">Quality Guaranteed</span>
-                    <span class="hero-tag">Same-Day Delivery</span>
-                    <span class="hero-tag">7-Day Returns</span>
-                </div>
-
                 <div class="hero-buttons">
                     <a href="#download" class="btn-hero-primary">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -145,7 +1156,7 @@
                         </svg>
                         Download App - It's Free
                     </a>
-                    <a href="#partners" class="btn-hero-secondary">
+                    <a href="/partners.html" class="btn-hero-secondary">
                         For Businesses
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -154,14 +1165,13 @@
                         </svg>
                     </a>
                 </div>
-
                 <div class="hero-stats">
                     <div class="hero-stat">
                         <div class="hero-stat-value">5,000+</div>
                         <div class="hero-stat-label">Parts Delivered</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value">100+</div>
+                        <div class="hero-stat-value">50+</div>
                         <div class="hero-stat-label">Verified Garages</div>
                     </div>
                     <div class="hero-stat">
@@ -170,31 +1180,129 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <div class="hero-visual">
-                <div class="hero-image-wrapper">
-                    <img src="/assets/hero-car-parts.jpg" alt="Premium Car Parts" class="hero-image"
-                        onerror="this.style.background='linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%)'; this.style.height='400px';">
-                </div>
-                <div class="hero-floating-card card-1">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div
-                            style="width: 40px; height: 40px; background: #D1FAE5; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #059669; font-size: 18px;">
-                            ✓</div>
+    <!-- Infinite Parts Carousel -->
+    <section class="parts-showcase">
+        <div class="showcase-header">
+            <span class="showcase-label">Parts Showcase</span>
+            <h2 class="showcase-title">Thousands of Quality Parts</h2>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track">
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391672-auto-parts-wallpapers.jpg" alt="Engine Components"
+                        loading="lazy">
+                    <div class="carousel-item-overlay">
                         <div>
-                            <div style="font-weight: 600; color: #1A1A1A;">Part Delivered!</div>
-                            <div style="font-size: 12px; color: #6A6A6A;">Toyota Camry Brake Pads</div>
+                            <div class="carousel-item-title">Engine Components</div>
+                            <div class="carousel-item-desc">Premium quality internals</div>
                         </div>
                     </div>
                 </div>
-                <div class="hero-floating-card card-2">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div
-                            style="width: 40px; height: 40px; background: #F5E6EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #8D1B3D; font-size: 18px;">
-                            🚗</div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391790-auto-parts-wallpapers.jpg" alt="BMW Parts" loading="lazy">
+                    <div class="carousel-item-overlay">
                         <div>
-                            <div style="font-weight: 600; color: #1A1A1A;">3 Bids Received</div>
-                            <div style="font-size: 12px; color: #6A6A6A;">From 150 QAR</div>
+                            <div class="carousel-item-title">BMW Premium Parts</div>
+                            <div class="carousel-item-desc">OEM & Aftermarket</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/connect-part-to-people-4.jpg" alt="Full Catalog" loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Full Catalog</div>
+                            <div class="carousel-item-desc">Every part you need</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391836-auto-parts-wallpapers.png" alt="Performance Engines"
+                        loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Performance Engines</div>
+                            <div class="carousel-item-desc">High-performance parts</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/connect-part-to-people-8.jpg" alt="Expert Service" loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Expert Service</div>
+                            <div class="carousel-item-desc">Professional guidance</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391656-auto-parts-wallpapers.jpg" alt="Industrial Scale"
+                        loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Industrial Scale</div>
+                            <div class="carousel-item-desc">Massive inventory</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Duplicate for infinite scroll -->
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391672-auto-parts-wallpapers.jpg" alt="Engine Components"
+                        loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Engine Components</div>
+                            <div class="carousel-item-desc">Premium quality internals</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391790-auto-parts-wallpapers.jpg" alt="BMW Parts" loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">BMW Premium Parts</div>
+                            <div class="carousel-item-desc">OEM & Aftermarket</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/connect-part-to-people-4.jpg" alt="Full Catalog" loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Full Catalog</div>
+                            <div class="carousel-item-desc">Every part you need</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391836-auto-parts-wallpapers.png" alt="Performance Engines"
+                        loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Performance Engines</div>
+                            <div class="carousel-item-desc">High-performance parts</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/connect-part-to-people-8.jpg" alt="Expert Service" loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Expert Service</div>
+                            <div class="carousel-item-desc">Professional guidance</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="/assets/images/parts/wp8391656-auto-parts-wallpapers.jpg" alt="Industrial Scale"
+                        loading="lazy">
+                    <div class="carousel-item-overlay">
+                        <div>
+                            <div class="carousel-item-title">Industrial Scale</div>
+                            <div class="carousel-item-desc">Massive inventory</div>
                         </div>
                     </div>
                 </div>
@@ -202,32 +1310,31 @@
         </div>
     </section>
 
-    <!-- How It Works Section -->
-    <section class="section how-it-works" id="how-it-works">
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
         <div class="container">
-            <div class="section-header">
+            <div class="section-header reveal">
                 <span class="section-badge">How It Works</span>
                 <h2 class="section-title">Simple. Fast. Reliable.</h2>
                 <p class="section-subtitle">Get the parts you need in 4 easy steps</p>
             </div>
-
             <div class="steps-grid">
-                <div class="step-card">
+                <div class="step-card reveal">
                     <div class="step-number">1</div>
                     <h3 class="step-title">Request</h3>
                     <p class="step-desc">Describe the part you need. Add photos and your car details for accuracy.</p>
                 </div>
-                <div class="step-card">
+                <div class="step-card reveal">
                     <div class="step-number">2</div>
                     <h3 class="step-title">Compare Bids</h3>
                     <p class="step-desc">Receive competitive quotes from verified garages within hours.</p>
                 </div>
-                <div class="step-card">
+                <div class="step-card reveal">
                     <div class="step-number">3</div>
                     <h3 class="step-title">Pay Securely</h3>
                     <p class="step-desc">Choose card payment or Cash on Delivery. Your money is protected.</p>
                 </div>
-                <div class="step-card">
+                <div class="step-card reveal">
                     <div class="step-number">4</div>
                     <h3 class="step-title">Receive at Door</h3>
                     <p class="step-desc">Track your order in real-time and receive it at your doorstep.</p>
@@ -236,229 +1343,119 @@
         </div>
     </section>
 
-    <!-- Value Propositions Section -->
-    <section class="section value-props">
+    <!-- Gallery Section -->
+    <section class="gallery-section" id="gallery">
         <div class="container">
-            <div class="section-header">
+            <div class="section-header reveal">
+                <span class="section-badge">Gallery</span>
+                <h2 class="section-title">The World of Auto Parts</h2>
+                <p class="section-subtitle">Quality parts from verified sources</p>
+            </div>
+            <div class="gallery-grid">
+                <div class="gallery-item large reveal-left">
+                    <img src="/assets/images/parts/wp3195881-cars-engine-parts-wallpaper.jpg"
+                        alt="Car Parts Exploded View" loading="lazy">
+                    <div class="gallery-item-overlay"><span class="gallery-item-text">Complete Vehicle Components</span>
+                    </div>
+                </div>
+                <div class="gallery-item reveal">
+                    <img src="/assets/images/parts/wp8391672-auto-parts-wallpapers.jpg" alt="Engine Parts"
+                        loading="lazy">
+                    <div class="gallery-item-overlay"><span class="gallery-item-text">Engine Internals</span></div>
+                </div>
+                <div class="gallery-item reveal-right">
+                    <img src="/assets/images/parts/connect-part-to-people-8.jpg" alt="Parts Warehouse" loading="lazy">
+                    <div class="gallery-item-overlay"><span class="gallery-item-text">Expert Selection</span></div>
+                </div>
+                <div class="gallery-item wide reveal">
+                    <img src="/assets/images/parts/wp8391790-auto-parts-wallpapers.jpg" alt="BMW Parts Knolling"
+                        loading="lazy">
+                    <div class="gallery-item-overlay"><span class="gallery-item-text">Premium BMW Components</span>
+                    </div>
+                </div>
+                <div class="gallery-item reveal-left">
+                    <img src="/assets/images/parts/wp8391878-auto-parts-wallpapers.jpg" alt="Scrap Yard Porsche"
+                        loading="lazy">
+                    <div class="gallery-item-overlay"><span class="gallery-item-text">Luxury Parts Available</span>
+                    </div>
+                </div>
+                <div class="gallery-item reveal-right">
+                    <img src="/assets/images/parts/connect-part-to-people-10.jpg" alt="Garage Workshop" loading="lazy">
+                    <div class="gallery-item-overlay"><span class="gallery-item-text">Industrial Workshop</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Props -->
+    <section class="value-props">
+        <div class="container">
+            <div class="section-header reveal">
                 <span class="section-badge">Why QScrap</span>
                 <h2 class="section-title">The Smart Way to Buy Auto Parts</h2>
                 <p class="section-subtitle">Trust, quality, and convenience in every order</p>
             </div>
-
-            <div class="value-props-grid">
-                <div class="value-card">
+            <div class="value-grid">
+                <div class="value-card reveal">
                     <div class="value-icon">🏆</div>
                     <h3 class="value-title">Quality Guaranteed</h3>
-                    <p class="value-desc">Every part is inspected by our QC team before delivery. No surprises, only
-                        quality parts.</p>
+                    <p class="value-desc">Every part is verified for quality. 7-day return policy if anything doesn't
+                        match your expectations.</p>
                 </div>
-                <div class="value-card">
+                <div class="value-card reveal">
                     <div class="value-icon">🚚</div>
-                    <h3 class="value-title">Fast Delivery</h3>
-                    <p class="value-desc">Same-day delivery across Doha. Track your order in real-time with our
-                        professional drivers.</p>
+                    <h3 class="value-title">Same-Day Delivery</h3>
+                    <p class="value-desc">Get parts delivered to your door across Doha within hours. Real-time tracking
+                        included.</p>
                 </div>
-                <div class="value-card">
-                    <div class="value-icon">🛡️</div>
-                    <h3 class="value-title">7-Day Returns</h3>
-                    <p class="value-desc">Not satisfied? Return unused parts within 7 days for a hassle-free refund.</p>
+                <div class="value-card reveal">
+                    <div class="value-icon">💰</div>
+                    <h3 class="value-title">Best Prices</h3>
+                    <p class="value-desc">Compare quotes from multiple garages. Find the best deal without calling
+                        around.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 3-Tier Marketplace Section -->
-    <section class="section marketplace" id="marketplace">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Part Options</span>
-                <h2 class="section-title">Find the Right Part at the Right Price</h2>
-                <p class="section-subtitle">Choose from three quality tiers to match your needs and budget</p>
-            </div>
-
-            <div class="tiers-grid">
-                <div class="tier-card">
-                    <div class="tier-icon">
-                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                            <circle cx="32" cy="32" r="28" stroke="#8D1B3D" stroke-width="2" fill="#F5E6EB" />
-                            <text x="32" y="38" text-anchor="middle" fill="#8D1B3D" font-size="24"
-                                font-weight="bold">♻️</text>
-                        </svg>
-                    </div>
-                    <h3 class="tier-name">Used Parts</h3>
-                    <p class="tier-desc">Budget-friendly verified scrap parts from certified garages. Perfect for older
-                        vehicles and non-critical repairs.</p>
-                    <span class="tier-price">From 50 QAR</span>
+                <div class="value-card reveal">
+                    <div class="value-icon">🔒</div>
+                    <h3 class="value-title">Secure Payments</h3>
+                    <p class="value-desc">Pay by card or COD. Escrow protection ensures your money is safe until you're
+                        satisfied.</p>
                 </div>
-                <div class="tier-card featured">
-                    <div class="tier-icon">
-                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                            <circle cx="32" cy="32" r="28" stroke="#C9A227" stroke-width="3" fill="#F5F0E1" />
-                            <text x="32" y="38" text-anchor="middle" fill="#A68520" font-size="24"
-                                font-weight="bold">⭐</text>
-                        </svg>
-                    </div>
-                    <h3 class="tier-name">Aftermarket</h3>
-                    <p class="tier-desc">Quality new parts from top aftermarket suppliers. Great balance of price and
-                        performance for most repairs.</p>
-                    <span class="tier-price">From 150 QAR</span>
+                <div class="value-card reveal">
+                    <div class="value-icon">✓</div>
+                    <h3 class="value-title">Verified Garages</h3>
+                    <p class="value-desc">All garages are vetted and verified. Buy with confidence from trusted sellers.
+                    </p>
                 </div>
-                <div class="tier-card">
-                    <div class="tier-icon">
-                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                            <circle cx="32" cy="32" r="28" stroke="#8D1B3D" stroke-width="2" fill="#F5E6EB" />
-                            <text x="32" y="38" text-anchor="middle" fill="#8D1B3D" font-size="24"
-                                font-weight="bold">💎</text>
-                        </svg>
-                    </div>
-                    <h3 class="tier-name">Genuine OEM</h3>
-                    <p class="tier-desc">Original manufacturer parts with full warranty. For VVIP customers who demand
-                        the absolute best.</p>
-                    <span class="tier-price">Premium</span>
+                <div class="value-card reveal">
+                    <div class="value-icon">📱</div>
+                    <h3 class="value-title">Easy Mobile App</h3>
+                    <p class="value-desc">Request parts, track orders, and manage everything from our intuitive mobile
+                        app.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Trust Indicators Section -->
-    <section class="trust">
-        <div class="container">
-            <div class="trust-container">
-                <div class="trust-stats">
-                    <div class="trust-stat">
-                        <div class="trust-stat-value">5,000+</div>
-                        <div class="trust-stat-label">Parts Delivered</div>
-                    </div>
-                    <div class="trust-stat">
-                        <div class="trust-stat-value">100+</div>
-                        <div class="trust-stat-label">Verified Garages</div>
-                    </div>
-                    <div class="trust-stat">
-                        <div class="trust-stat-value">10K+</div>
-                        <div class="trust-stat-label">Happy Customers</div>
-                    </div>
-                </div>
-                <div class="trust-rating">
-                    <span class="trust-stars">★★★★★</span>
-                    <span class="trust-rating-text">4.8/5 Average Rating</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- B2B Partners Section -->
-    <section class="section partners" id="partners">
-        <div class="container">
-            <div class="partners-content">
-                <div class="partners-text">
-                    <span class="section-badge">For Businesses</span>
-                    <h2>Partner with QScrap</h2>
-                    <p>Are you a garage owner? Join Qatar's fastest-growing automotive parts marketplace and grow your
-                        business.</p>
-
-                    <ul class="partners-benefits">
-                        <li>Access 1000s of part requests daily</li>
-                        <li>Competitive bidding = fair pricing</li>
-                        <li>Guaranteed monthly payouts</li>
-                        <li>Free tablet for Premium partners</li>
-                        <li>Dedicated support team</li>
-                    </ul>
-
-                    <a href="mailto:partners@qscrap.qa?subject=Partnership%20Inquiry" class="btn-partner">
-                        Become a Partner
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                    </a>
-                </div>
-
-                <div class="partners-image">
-                    <img src="/assets/partner-garage.jpg" alt="QScrap Partner Garage"
-                        onerror="this.style.background='linear-gradient(135deg, #F8F8F8 0%, #E5E5E5 100%)'; this.style.height='400px'; this.style.display='block';">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section class="section testimonials">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-badge">Testimonials</span>
-                <h2 class="section-title">What Our Customers Say</h2>
-                <p class="section-subtitle">Real stories from real customers across Qatar</p>
-            </div>
-
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <p class="testimonial-text">I found the exact part for my Land Cruiser in 2 hours. Three garages
-                        bid, I chose the best price. Delivered the same day. Amazing service!</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">A</div>
-                        <div>
-                            <div class="testimonial-name">Ahmed Al-Thani</div>
-                            <div class="testimonial-role">Customer since 2025</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-card">
-                    <p class="testimonial-text">As a fleet manager, QScrap saves me hours every week. No more calling 10
-                        garages. One request, multiple quotes. Brilliant!</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">M</div>
-                        <div>
-                            <div class="testimonial-name">Mohammed Hassan</div>
-                            <div class="testimonial-role">Fleet Manager</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-card">
-                    <p class="testimonial-text">The quality guarantee gives me peace of mind. I've ordered genuine OEM
-                        parts for my Mercedes and they arrive inspected and verified.</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-avatar">S</div>
-                        <div>
-                            <div class="testimonial-name">Sara Al-Kuwari</div>
-                            <div class="testimonial-role">Car Enthusiast</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Download CTA Section -->
-    <section class="download-cta" id="download">
-        <div class="container">
-            <div class="download-content">
-                <h2>Get the QScrap App</h2>
-                <p>Download now and get your first delivery fee FREE</p>
-
-                <div class="download-buttons">
-                    <a href="https://apps.apple.com/qa/app/qscrap" class="store-btn" target="_blank" rel="noopener">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                        </svg>
-                        <div class="store-btn-text">
-                            <span class="store-btn-small">Download on the</span>
-                            <span class="store-btn-big">App Store</span>
-                        </div>
-                    </a>
-                    <a href="https://play.google.com/store/apps/details?id=qa.qscrap.customer" class="store-btn"
-                        target="_blank" rel="noopener">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
-                        </svg>
-                        <div class="store-btn-text">
-                            <span class="store-btn-small">Get it on</span>
-                            <span class="store-btn-big">Google Play</span>
-                        </div>
-                    </a>
-                </div>
+    <!-- CTA Section -->
+    <section class="cta-section" id="download">
+        <div class="cta-content reveal">
+            <h2 class="cta-title">Ready to Find Your Part?</h2>
+            <p class="cta-subtitle">Download the QScrap app and get started in minutes. It's free!</p>
+            <div class="cta-buttons">
+                <a href="#" class="btn-hero-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                    </svg>
+                    Download for iOS
+                </a>
+                <a href="#" class="btn-hero-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.802 8.99l-2.303 2.303-8.635-8.635z" />
+                    </svg>
+                    Download for Android
+                </a>
             </div>
         </div>
     </section>
@@ -468,113 +1465,57 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="/assets/images/qscrap-logo.png" alt="QScrap Logo"
-                        style="filter: brightness(0) invert(1);">
-                    <p>Qatar's leading automotive parts marketplace. Connecting buyers with verified garages for quality
-                        parts delivered to your door.</p>
-                    <div class="footer-social">
-                        <a href="https://facebook.com/qscrapqa" aria-label="Facebook" target="_blank" rel="noopener">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                            </svg>
-                        </a>
-                        <a href="https://instagram.com/qscrapqa" aria-label="Instagram" target="_blank" rel="noopener">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                            </svg>
-                        </a>
-                        <a href="https://twitter.com/qscrapqa" aria-label="Twitter" target="_blank" rel="noopener">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                        </a>
-                    </div>
+                    <a href="/" class="nav-logo" style="margin-bottom: 16px;">
+                        <img src="/assets/images/qscrap-logo.png" alt="QScrap" style="filter: brightness(0) invert(1);">
+                        <span class="nav-logo-text" style="color: white;">QScrap</span>
+                    </a>
+                    <p>Qatar's premium automotive parts marketplace. Connecting customers with verified garages for
+                        quality new, used, and OEM parts.</p>
                 </div>
-
-                <div class="footer-column">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="/about">About Us</a></li>
-                        <li><a href="/careers">Careers</a></li>
-                        <li><a href="/press">Press</a></li>
+                <div>
+                    <h4 class="footer-title">Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="/about.html">About Us</a></li>
+                        <li><a href="/partners.html">For Businesses</a></li>
+                        <li><a href="/about.html#contact">Contact</a></li>
                     </ul>
                 </div>
-
-                <div class="footer-column">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="/faq">FAQ</a></li>
-                        <li><a href="/contact">Contact</a></li>
-                        <li><a href="mailto:support@qscrap.qa">Email Us</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-column">
-                    <h4>Legal</h4>
-                    <ul>
+                <div>
+                    <h4 class="footer-title">Legal</h4>
+                    <ul class="footer-links">
                         <li><a href="/privacy.html">Privacy Policy</a></li>
-                        <li><a href="/terms.html">Terms of Service</a></li>
-                        <li><a href="/refunds">Refund Policy</a></li>
+                        <li><a href="/privacy.html">Terms of Service</a></li>
+                        <li><a href="/privacy.html">Refund Policy</a></li>
                     </ul>
                 </div>
-
-                <div class="footer-column">
-                    <h4>Connect</h4>
-                    <ul>
-                        <li><a href="https://facebook.com/qscrapqa" target="_blank">Facebook</a></li>
-                        <li><a href="https://instagram.com/qscrapqa" target="_blank">Instagram</a></li>
-                        <li><a href="https://twitter.com/qscrapqa" target="_blank">Twitter</a></li>
+                <div>
+                    <h4 class="footer-title">Contact</h4>
+                    <ul class="footer-links">
+                        <li><a href="mailto:support@qscrap.qa">support@qscrap.qa</a></li>
+                        <li><a href="tel:+97450267974">+974 5026 7974</a></li>
+                        <li><a href="tel:+97455906912">+974 5590 6912</a></li>
                     </ul>
                 </div>
             </div>
-
             <div class="footer-bottom">
-                <div class="footer-legal">
-                    <div class="footer-legal-name">QScrap Services & Trading L.L.C</div>
-                    <div class="footer-legal-name-ar">كيوسكراب للخدمات والتجارة ذ.م.م</div>
-                    <div class="footer-legal-name" style="margin-top: 8px;">CR: 155892 | State of Qatar</div>
-                </div>
-
-                <div class="footer-contact">
-                    <a href="tel:+97444554444">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path
-                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                        +974 4455 4444
-                    </a>
-                    <a href="mailto:support@qscrap.qa">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                            <polyline points="22,6 12,13 2,6" />
-                        </svg>
-                        support@qscrap.qa
-                    </a>
-                    <a href="#">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        P.O. Box 32544, Industrial Area St 10
-                    </a>
-                </div>
-
-                <div class="footer-copyright">
-                    © 2026 QScrap. All rights reserved.
-                </div>
+                <p class="footer-legal">QScrap Services & Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar</p>
+                <p class="footer-copyright">© 2026 QScrap. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
     <script>
-        // Scroll effect for navigation
+        // Hero Background Slideshow
+        const slides = document.querySelectorAll('.hero-bg-slide');
+        let currentSlide = 0;
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+        setInterval(nextSlide, 5000);
+
+        // Navigation scroll effect
         const nav = document.getElementById('mainNav');
         window.addEventListener('scroll', () => {
             if (window.scrollY > 50) {
@@ -584,42 +1525,19 @@
             }
         });
 
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+        // Reveal on scroll animations
+        const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+        const revealOnScroll = () => {
+            reveals.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top < windowHeight - 100) {
+                    el.classList.add('active');
                 }
             });
-        });
-
-        // Language switch (placeholder - would integrate with i18n)
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                // TODO: Implement full language switching
-                if (this.dataset.lang === 'ar') {
-                    document.documentElement.lang = 'ar';
-                    document.documentElement.dir = 'rtl';
-                } else {
-                    document.documentElement.lang = 'en';
-                    document.documentElement.dir = 'ltr';
-                }
-            });
-        });
-
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        mobileMenuBtn.addEventListener('click', () => {
-            // TODO: Implement mobile menu
-            alert('Mobile menu coming soon!');
-        });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
     </script>
 </body>
 
