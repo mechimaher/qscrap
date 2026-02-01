@@ -638,16 +638,17 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <div class="hero-badge">
+            <div class="hero-badge" data-i18n="hero.protection">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path
                         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 </svg>
-                Customer Protection
+                <span data-i18n="hero.protection">Customer Protection</span>
             </div>
-            <h1>Refund Policy</h1>
-            <p class="hero-arabic">سياسة الاسترداد</p>
-            <p class="hero-date">Last updated: February 1, 2026 | آخر تحديث: 1 فبراير 2026</p>
+            <h1 data-i18n="refund.title">Refund Policy</h1>
+            <p class="hero-arabic" data-i18n="refund.titleAr">سياسة الاسترداد</p>
+            <p class="hero-date" data-i18n="refund.lastUpdated">Last updated: February 1, 2026 | آخر تحديث: 1 فبراير
+                2026</p>
         </div>
     </section>
 
@@ -657,8 +658,9 @@
 
             <!-- Summary Card -->
             <div class="summary-card">
-                <h2>💰 Our Commitment to You</h2>
-                <p>At QScrap, we believe in fair and transparent refund policies. This document outlines when and how
+                <h2 data-i18n="refund.summary.title">💰 Our Commitment to You</h2>
+                <p data-i18n="refund.summary.text">At QScrap, we believe in fair and transparent refund policies. This
+                    document outlines when and how
                     you can receive a refund for your orders. Our escrow payment system ensures your money is protected
                     throughout the entire transaction process.</p>
             </div>
@@ -667,17 +669,19 @@
             <article class="section-card">
                 <div class="section-header">
                     <div class="section-number">1</div>
-                    <h2 class="section-title">7-Day Return Guarantee</h2>
+                    <h2 class="section-title" data-i18n="refund.s1.title">7-Day Return Guarantee</h2>
                 </div>
-                <p>All parts purchased through QScrap come with a 7-day return guarantee from the date of delivery:</p>
+                <p data-i18n="refund.s1.intro">All parts purchased through QScrap come with a 7-day return guarantee
+                    from the date of delivery:</p>
                 <ul>
-                    <li>If the part doesn't fit your vehicle as specified</li>
-                    <li>If the part is significantly different from the description</li>
-                    <li>If the part is defective or damaged upon receipt</li>
-                    <li>If the part was incorrectly identified by the garage</li>
+                    <li data-i18n="refund.s1.item1">If the part doesn't fit your vehicle as specified</li>
+                    <li data-i18n="refund.s1.item2">If the part is significantly different from the description</li>
+                    <li data-i18n="refund.s1.item3">If the part is defective or damaged upon receipt</li>
+                    <li data-i18n="refund.s1.item4">If the part was incorrectly identified by the garage</li>
                 </ul>
                 <div class="highlight-box success">
-                    <p><strong>Full refund guaranteed</strong> within 7 days if the part doesn't match the listing
+                    <p data-i18n="refund.s1.highlight"><strong>Full refund guaranteed</strong> within 7 days if the part
+                        doesn't match the listing
                         description or is defective.</p>
                 </div>
             </article>
@@ -686,54 +690,56 @@
             <article class="section-card">
                 <div class="section-header">
                     <div class="section-number">2</div>
-                    <h2 class="section-title">Cancellation Stages & Refunds</h2>
+                    <h2 class="section-title" data-i18n="refund.s2.title">Cancellation Stages & Refunds</h2>
                 </div>
-                <p>Your refund amount depends on when you cancel your order:</p>
+                <p data-i18n="refund.s2.intro">Your refund amount depends on when you cancel your order:</p>
 
                 <table class="refund-table">
                     <thead>
                         <tr>
-                            <th>Stage</th>
-                            <th>When</th>
-                            <th>Refund</th>
+                            <th data-i18n="refund.s2.th1">Stage</th>
+                            <th data-i18n="refund.s2.th2">When</th>
+                            <th data-i18n="refund.s2.th3">Refund</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Before Garage Accepts</td>
-                            <td>Order submitted, waiting for garage</td>
-                            <td><span class="badge badge-full">100% Refund</span></td>
+                            <td data-i18n="refund.s2.stage1">Before Garage Accepts</td>
+                            <td data-i18n="refund.s2.when1">Order submitted, waiting for garage</td>
+                            <td><span class="badge badge-full" data-i18n="refund.s2.refund1">100% Refund</span></td>
                         </tr>
                         <tr>
-                            <td>After Garage Accepts</td>
-                            <td>Garage confirmed, preparing part</td>
-                            <td><span class="badge badge-full">100% Refund</span></td>
+                            <td data-i18n="refund.s2.stage2">After Garage Accepts</td>
+                            <td data-i18n="refund.s2.when2">Garage confirmed, preparing part</td>
+                            <td><span class="badge badge-full" data-i18n="refund.s2.refund2">100% Refund</span></td>
                         </tr>
                         <tr>
-                            <td>Part Ready</td>
-                            <td>Part prepared, awaiting pickup</td>
-                            <td><span class="badge badge-partial">90% Refund</span></td>
+                            <td data-i18n="refund.s2.stage3">Part Ready</td>
+                            <td data-i18n="refund.s2.when3">Part prepared, awaiting pickup</td>
+                            <td><span class="badge badge-partial" data-i18n="refund.s2.refund3">90% Refund</span></td>
                         </tr>
                         <tr>
-                            <td>Driver Assigned</td>
-                            <td>Driver picked up the part</td>
-                            <td><span class="badge badge-partial">85% Refund</span></td>
+                            <td data-i18n="refund.s2.stage4">Driver Assigned</td>
+                            <td data-i18n="refund.s2.when4">Driver picked up the part</td>
+                            <td><span class="badge badge-partial" data-i18n="refund.s2.refund4">85% Refund</span></td>
                         </tr>
                         <tr>
-                            <td>In Transit</td>
-                            <td>Part is on the way to you</td>
-                            <td><span class="badge badge-partial">80% Refund</span></td>
+                            <td data-i18n="refund.s2.stage5">In Transit</td>
+                            <td data-i18n="refund.s2.when5">Part is on the way to you</td>
+                            <td><span class="badge badge-partial" data-i18n="refund.s2.refund5">80% Refund</span></td>
                         </tr>
                         <tr>
-                            <td>After Delivery</td>
-                            <td>Within 7-day return window</td>
-                            <td><span class="badge badge-partial">85-100% Refund*</span></td>
+                            <td data-i18n="refund.s2.stage6">After Delivery</td>
+                            <td data-i18n="refund.s2.when6">Within 7-day return window</td>
+                            <td><span class="badge badge-partial" data-i18n="refund.s2.refund6">85-100% Refund*</span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
 
                 <div class="highlight-box gold">
-                    <p><strong>*Note:</strong> Post-delivery refunds may vary based on part condition. Full refund for
+                    <p data-i18n="refund.s2.note"><strong>*Note:</strong> Post-delivery refunds may vary based on part
+                        condition. Full refund for
                         defective/wrong parts. Return shipping may be deducted for change-of-mind returns.</p>
                 </div>
             </article>
@@ -742,18 +748,20 @@
             <article class="section-card">
                 <div class="section-header">
                     <div class="section-number">3</div>
-                    <h2 class="section-title">Non-Refundable Items</h2>
+                    <h2 class="section-title" data-i18n="refund.s3.title">Non-Refundable Items</h2>
                 </div>
-                <p>The following situations are not eligible for refund:</p>
+                <p data-i18n="refund.s3.intro">The following situations are not eligible for refund:</p>
                 <ul>
-                    <li>Parts that have been installed or modified</li>
-                    <li>Parts damaged after delivery due to customer handling</li>
-                    <li>Parts returned after the 7-day return window</li>
-                    <li>Custom-order or specially sourced parts (unless defective)</li>
-                    <li>Electrical parts that have been tested/connected (unless defective on arrival)</li>
+                    <li data-i18n="refund.s3.item1">Parts that have been installed or modified</li>
+                    <li data-i18n="refund.s3.item2">Parts damaged after delivery due to customer handling</li>
+                    <li data-i18n="refund.s3.item3">Parts returned after the 7-day return window</li>
+                    <li data-i18n="refund.s3.item4">Custom-order or specially sourced parts (unless defective)</li>
+                    <li data-i18n="refund.s3.item5">Electrical parts that have been tested/connected (unless defective
+                        on arrival)</li>
                 </ul>
                 <div class="highlight-box warning">
-                    <p><strong>Important:</strong> Always inspect your parts before installation. Once installed, parts
+                    <p data-i18n="refund.s3.warning"><strong>Important:</strong> Always inspect your parts before
+                        installation. Once installed, parts
                         cannot be returned for fitment issues.</p>
                 </div>
             </article>
@@ -762,33 +770,37 @@
             <article class="section-card">
                 <div class="section-header">
                     <div class="section-number">4</div>
-                    <h2 class="section-title">How to Request a Refund</h2>
+                    <h2 class="section-title" data-i18n="refund.s4.title">How to Request a Refund</h2>
                 </div>
-                <p>To request a refund:</p>
+                <p data-i18n="refund.s4.intro">To request a refund:</p>
                 <ul>
-                    <li>Open the QScrap app and go to "My Orders"</li>
-                    <li>Select the order you wish to return or cancel</li>
-                    <li>Tap "Request Refund" and select your reason</li>
-                    <li>Upload photos if reporting a defective or wrong part</li>
-                    <li>Our support team will review within 24 hours</li>
+                    <li data-i18n="refund.s4.item1">Open the QScrap app and go to "My Orders"</li>
+                    <li data-i18n="refund.s4.item2">Select the order you wish to return or cancel</li>
+                    <li data-i18n="refund.s4.item3">Tap "Request Refund" and select your reason</li>
+                    <li data-i18n="refund.s4.item4">Upload photos if reporting a defective or wrong part</li>
+                    <li data-i18n="refund.s4.item5">Our support team will review within 24 hours</li>
                 </ul>
-                <p>For urgent issues, contact us directly at <a href="mailto:support@qscrap.qa">support@qscrap.qa</a> or
-                    WhatsApp <a href="https://wa.me/97450267974">+974 5026 7974</a>.</p>
+                <p data-i18n="refund.s4.contact">For urgent issues, contact us directly at <a
+                        href="mailto:support@qscrap.qa">support@qscrap.qa</a> or
+                    WhatsApp <a href="https://wa.me/97450267974" dir="ltr">+974 5026 7974</a>.</p>
             </article>
 
             <!-- Section 5 -->
             <article class="section-card">
                 <div class="section-header">
                     <div class="section-number">5</div>
-                    <h2 class="section-title">Refund Processing Time</h2>
+                    <h2 class="section-title" data-i18n="refund.s5.title">Refund Processing Time</h2>
                 </div>
                 <ul>
-                    <li><strong>Card Payments:</strong> 5-7 business days after approval</li>
-                    <li><strong>Cash on Delivery:</strong> Bank transfer within 3-5 business days</li>
-                    <li><strong>QScrap Wallet:</strong> Instant credit after approval</li>
+                    <li data-i18n="refund.s5.item1"><strong>Card Payments:</strong> 5-7 business days after approval
+                    </li>
+                    <li data-i18n="refund.s5.item2"><strong>Cash on Delivery:</strong> Bank transfer within 3-5 business
+                        days</li>
+                    <li data-i18n="refund.s5.item3"><strong>QScrap Wallet:</strong> Instant credit after approval</li>
                 </ul>
                 <div class="highlight-box">
-                    <p><strong>Tip:</strong> Refunds to your QScrap Wallet are processed instantly and can be used for
+                    <p data-i18n="refund.s5.tip"><strong>Tip:</strong> Refunds to your QScrap Wallet are processed
+                        instantly and can be used for
                         future purchases or withdrawn to your bank account.</p>
                 </div>
             </article>
@@ -797,29 +809,30 @@
             <article class="section-card">
                 <div class="section-header">
                     <div class="section-number">6</div>
-                    <h2 class="section-title">Dispute Resolution</h2>
+                    <h2 class="section-title" data-i18n="refund.s6.title">Dispute Resolution</h2>
                 </div>
-                <p>If you disagree with a refund decision:</p>
+                <p data-i18n="refund.s6.intro">If you disagree with a refund decision:</p>
                 <ul>
-                    <li>Request an escalation through the app or email</li>
-                    <li>Our senior support team will review within 48 hours</li>
-                    <li>You may provide additional evidence (photos, videos)</li>
-                    <li>Final decisions comply with Qatar Consumer Protection Law</li>
+                    <li data-i18n="refund.s6.item1">Request an escalation through the app or email</li>
+                    <li data-i18n="refund.s6.item2">Our senior support team will review within 48 hours</li>
+                    <li data-i18n="refund.s6.item3">You may provide additional evidence (photos, videos)</li>
+                    <li data-i18n="refund.s6.item4">Final decisions comply with Qatar Consumer Protection Law</li>
                 </ul>
                 <div class="highlight-box gold">
-                    <p><strong>Consumer Rights:</strong> Nothing in this policy affects your statutory rights under
+                    <p data-i18n="refund.s6.rights"><strong>Consumer Rights:</strong> Nothing in this policy affects
+                        your statutory rights under
                         Qatar's Consumer Protection Law (Law No. 8 of 2008) and MOCI regulations.</p>
                 </div>
             </article>
 
             <!-- Company Contact Card -->
             <div class="company-card">
-                <h2>📞 Need Help?</h2>
+                <h2 data-i18n="refund.contact.title">📞 Need Help?</h2>
                 <div class="company-grid">
                     <div class="company-item">
                         <div class="company-icon">📧</div>
                         <div>
-                            <div class="company-item-label">Refund Support</div>
+                            <div class="company-item-label" data-i18n="refund.contact.support">Refund Support</div>
                             <div class="company-item-value"><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>
                             </div>
                         </div>
@@ -827,29 +840,34 @@
                     <div class="company-item">
                         <div class="company-icon">💬</div>
                         <div>
-                            <div class="company-item-label">WhatsApp</div>
-                            <div class="company-item-value"><a href="https://wa.me/97450267974">+974 5026 7974</a></div>
+                            <div class="company-item-label" data-i18n="refund.contact.whatsapp">WhatsApp</div>
+                            <div class="company-item-value"><a href="https://wa.me/97450267974" dir="ltr">+974 5026
+                                    7974</a></div>
                         </div>
                     </div>
                     <div class="company-item">
                         <div class="company-icon">📞</div>
                         <div>
-                            <div class="company-item-label">Customer Service</div>
-                            <div class="company-item-value"><a href="tel:+97450267974">+974 5026 7974</a></div>
+                            <div class="company-item-label" data-i18n="refund.contact.service">Customer Service</div>
+                            <div class="company-item-value"><a href="tel:+97450267974" dir="ltr">+974 5026 7974</a>
+                            </div>
                         </div>
                     </div>
                     <div class="company-item">
                         <div class="company-icon">🌐</div>
                         <div>
-                            <div class="company-item-label">Website</div>
+                            <div class="company-item-label" data-i18n="refund.contact.website">Website</div>
                             <div class="company-item-value"><a href="https://qscrap.qa">qscrap.qa</a></div>
                         </div>
                     </div>
                 </div>
                 <div class="company-legal">
-                    <div class="company-legal-name">QScrap Services & Trading L.L.C</div>
-                    <div class="company-legal-arabic">كيوسكراب للخدمات والتجارة ذ.م.م</div>
-                    <div class="company-cr">Commercial Registration: 155892 | State of Qatar</div>
+                    <div class="company-legal-name" data-i18n="refund.contact.company">QScrap Services & Trading L.L.C
+                    </div>
+                    <div class="company-legal-arabic" data-i18n="refund.contact.companyAr">كيوسكراب للخدمات والتجارة
+                        ذ.م.م</div>
+                    <div class="company-cr" data-i18n="refund.contact.cr">Commercial Registration: 155892 | State of
+                        Qatar</div>
                 </div>
             </div>
 
