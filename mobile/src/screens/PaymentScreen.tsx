@@ -200,7 +200,8 @@ export default function PaymentScreen() {
                     paymentResult = await api.createFullPaymentIntent(orderId, discountOnTotal);
                     setPaymentAmount(paymentResult.breakdown?.total || finalAmount);
                 } else {
-                    paymentResult = await api.createDeliveryFeeIntent(orderId);
+                    // Pass discount for COD calculation (discount applies to part price)
+                    paymentResult = await api.createDeliveryFeeIntent(orderId, discountOnPart);
                     setPaymentAmount(deliveryFee);
                 }
 
@@ -275,7 +276,11 @@ export default function PaymentScreen() {
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
                 setDiscountAmount(currentDiscount);
             } else {
-                paymentResult = await api.createDeliveryFeeIntent(orderIdToUse);
+                // For delivery-only, discount applies to part price (COD amount)
+                const partDiscount = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
+                    ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
+                    : 0;
+                paymentResult = await api.createDeliveryFeeIntent(orderIdToUse, partDiscount);
                 setPaymentAmount(deliveryFee);
             }
 

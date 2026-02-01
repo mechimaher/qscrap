@@ -743,8 +743,8 @@ class ApiService {
         return this.request('/payments/methods');
     }
 
-    // Stripe Delivery Fee Payment
-    async createDeliveryFeeIntent(orderId: string): Promise<{
+    // Stripe Delivery Fee Payment (Part is COD at delivery)
+    async createDeliveryFeeIntent(orderId: string, loyaltyDiscount?: number): Promise<{
         success: boolean;
         intent: {
             id: string;
@@ -752,9 +752,18 @@ class ApiService {
             amount: number;
             currency: string;
         };
+        breakdown?: {
+            partPrice: number;
+            deliveryFee: number;
+            loyaltyDiscount: number;
+            originalTotal: number;
+            codAmount: number;
+            total: number;
+        };
     }> {
         return this.request(`/payments/deposit/${orderId}`, {
             method: 'POST',
+            body: JSON.stringify({ loyaltyDiscount: loyaltyDiscount || 0 }),
         });
     }
 
