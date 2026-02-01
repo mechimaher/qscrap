@@ -138,6 +138,38 @@
             transform: translateY(-1px);
         }
 
+        .nav-links-group {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--slate);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            padding: 8px 16px;
+            border-radius: 100px;
+        }
+
+        .nav-back-link:hover {
+            color: var(--qatar-maroon);
+            background: var(--qatar-maroon-lighter);
+        }
+
+        .nav-back-link svg {
+            transition: transform 0.2s ease;
+        }
+
+        .nav-back-link:hover svg {
+            transform: translateX(-3px);
+        }
+
         /* ===== Hero Section ===== */
         .hero {
             background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
@@ -838,7 +870,16 @@
                 <img src="/assets/images/qscrap-logo.png" alt="QScrap Logo">
                 <span class="nav-logo-text">QScrap</span>
             </a>
-            <a href="#apply" class="nav-cta">Apply Now</a>
+            <div class="nav-links-group">
+                <a href="/" class="nav-back-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                    Back to Home
+                </a>
+                <a href="#apply" class="nav-cta">Apply Now</a>
+            </div>
         </div>
     </nav>
 
