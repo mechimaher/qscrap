@@ -31,6 +31,172 @@
         rel="stylesheet">
 
     <style>
+        /* ===== Language Switcher ===== */
+        .language-switcher {
+            display: flex;
+            gap: 4px;
+            background: rgba(141, 27, 61, 0.08);
+            border-radius: 100px;
+            padding: 4px;
+            margin-right: 16px;
+        }
+
+        .lang-btn {
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            color: var(--charcoal);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 100px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .lang-btn:hover {
+            color: var(--qatar-maroon);
+        }
+
+        .lang-btn.active {
+            background: var(--qatar-maroon);
+            color: var(--white);
+        }
+
+        /* ===== RTL Support ===== */
+        html[dir="rtl"] body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+
+        html[dir="rtl"] .nav-back-link svg {
+            transform: scaleX(-1);
+        }
+
+        html[dir="rtl"] .nav-back-link:hover svg {
+            transform: scaleX(-1) translateX(3px);
+        }
+
+        html[dir="rtl"] .hero-cta-group {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .btn-primary svg,
+        html[dir="rtl"] .btn-secondary svg {
+            transform: scaleX(-1);
+        }
+
+        html[dir="rtl"] .benefit-card,
+        html[dir="rtl"] .step-card,
+        html[dir="rtl"] .tier-card {
+            text-align: right;
+        }
+
+        html[dir="rtl"] .tier-features {
+            text-align: right;
+        }
+
+        html[dir="rtl"] .tier-features li {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .testimonial-author {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .testimonial-info {
+            text-align: right;
+        }
+
+        html[dir="rtl"] .form-control {
+            text-align: right;
+        }
+
+        html[dir="rtl"] select.form-control {
+            background-position: left 12px center;
+            padding-right: 16px;
+            padding-left: 40px;
+        }
+
+        html[dir="rtl"] .brand-section-header {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .toggle-switch {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .brand-checkbox {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .form-message {
+            flex-direction: row-reverse;
+            text-align: right;
+        }
+
+        html[dir="rtl"] .footer-links a:hover {
+            transform: translateX(-4px);
+        }
+
+        html[dir="rtl"] .footer-grid {
+            direction: rtl;
+        }
+
+        html[dir="rtl"] .step-card::after {
+            content: '←';
+            left: -20px;
+            right: auto;
+        }
+
+        /* RTL Navigation - Native RTL flow (no row-reverse hack) */
+        html[dir="rtl"] .nav-container {
+            /* Let dir=rtl handle natural flow - no row-reverse needed */
+        }
+
+        html[dir="rtl"] .nav-links-group {
+            /* Let dir=rtl handle natural flow - no row-reverse needed */
+        }
+
+        html[dir="rtl"] .language-switcher {
+            margin-inline-start: 16px;
+            margin-inline-end: 0;
+        }
+
+        /* RTL Hero - Content alignment */
+        html[dir="rtl"] .hero-content {
+            text-align: center;
+        }
+
+        /* RTL Stats - Mirror layout */
+        html[dir="rtl"] .stats-container {
+            direction: rtl;
+        }
+
+        /* RTL Grids - Reverse order */
+        html[dir="rtl"] .benefits-grid,
+        html[dir="rtl"] .steps-container,
+        html[dir="rtl"] .tiers-grid,
+        html[dir="rtl"] .testimonials-grid {
+            direction: rtl;
+        }
+
+        /* RTL Footer Grid - Reverse columns */
+        html[dir="rtl"] .footer-grid {
+            direction: rtl;
+        }
+
+        html[dir="rtl"] .footer-brand {
+            text-align: right;
+        }
+
+        html[dir="rtl"] .footer-social {
+            justify-content: flex-end;
+        }
+
+        html[dir="rtl"] .footer-bottom {
+            flex-direction: row-reverse;
+        }
+
         /* ===== 2026 INTELLIGENT RESPONSIVE DESIGN SYSTEM ===== */
         :root {
             /* Brand Colors */
@@ -1439,18 +1605,22 @@
     <nav class="nav" id="mainNav">
         <div class="nav-container">
             <a href="/" class="nav-logo">
-                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
-
+                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo" data-i18n-alt="logo.alt">
             </a>
             <div class="nav-links-group">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="ar">AR 🇶🇦</button>
+                    <button class="lang-btn active" data-lang="en">EN 🇬🇧</button>
+                </div>
                 <a href="/" class="nav-back-link">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="m15 18-6-6 6-6" />
                     </svg>
-                    Back to Home
+                    <span data-i18n="nav.backHome">Back to Home</span>
                 </a>
-                <a href="#apply" class="nav-cta">Apply Now</a>
+                <a href="#apply" class="nav-cta" data-i18n="nav.applyNow">Apply Now</a>
             </div>
         </div>
     </nav>
@@ -1460,24 +1630,21 @@
         <div class="hero-bg"></div>
         <div class="hero-overlay"></div>
         <div class="hero-content">
-            <div class="hero-badge">
-                <span>🚀</span>
-                Partner Program
-            </div>
-            <h1>Grow Your <span>Parts Business</span> With Qatar's #1 Marketplace</h1>
-            <p class="hero-subtitle">
+            <div class="hero-badge" data-i18n="hero.badge">🚀 Partner Program</div>
+            <h1 data-i18n="hero.title">Grow Your <span>Parts Business</span> With Qatar's #1 Marketplace</h1>
+            <p class="hero-subtitle" data-i18n="hero.subtitle">
                 Join 50+ verified garages already earning more through QScrap.
                 Zero upfront costs, guaranteed payouts, and thousands of customers waiting for your parts.
             </p>
             <div class="hero-cta-group">
                 <a href="#apply" class="btn-primary">
-                    Apply to Join
+                    <span data-i18n="hero.cta.apply">Apply to Join</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="5" y1="12" x2="19" y2="12" />
                         <polyline points="12 5 19 12 12 19" />
                     </svg>
                 </a>
-                <a href="#benefits" class="btn-secondary">
+                <a href="#benefits" class="btn-secondary" data-i18n="hero.cta.benefits">
                     See Benefits
                 </a>
             </div>
@@ -1488,20 +1655,20 @@
     <section class="stats-bar">
         <div class="stats-container">
             <div class="stat-item">
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Partner Garages</div>
+                <div class="stat-number" data-i18n="stats.partners.number">50+</div>
+                <div class="stat-label" data-i18n="stats.partners.label">Partner Garages</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">5,000+</div>
-                <div class="stat-label">Monthly Orders</div>
+                <div class="stat-number" data-i18n="stats.orders.number">5,000+</div>
+                <div class="stat-label" data-i18n="stats.orders.label">Monthly Orders</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">98%</div>
-                <div class="stat-label">Partner Satisfaction</div>
+                <div class="stat-number" data-i18n="stats.satisfaction.number">98%</div>
+                <div class="stat-label" data-i18n="stats.satisfaction.label">Partner Satisfaction</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">7-Day</div>
-                <div class="stat-label">Warranty Protected</div>
+                <div class="stat-number" data-i18n="stats.warranty.number">7-Day</div>
+                <div class="stat-label" data-i18n="stats.warranty.label">Warranty Protected</div>
             </div>
         </div>
     </section>
@@ -1510,49 +1677,48 @@
     <section class="benefits" id="benefits">
         <div class="container">
             <div class="section-header">
-                <span class="section-label">Why Partner With Us</span>
-                <h2 class="section-title">Everything You Need to Scale Your Business</h2>
-                <p class="section-subtitle">QScrap handles the technology, logistics, and customers — you focus on
-                    providing quality parts.</p>
+                <span class="section-label" data-i18n="benefits.label">Why Partner With Us</span>
+                <h2 class="section-title" data-i18n="benefits.title">Everything You Need to Scale Your Business</h2>
+                <p class="section-subtitle" data-i18n="benefits.subtitle">QScrap handles the technology, logistics, and
+                    customers — you focus on providing quality parts.</p>
             </div>
 
             <div class="benefits-grid">
                 <div class="benefit-card">
                     <div class="benefit-icon">💰</div>
-                    <h3 class="benefit-title">Guaranteed Payouts</h3>
-                    <p class="benefit-desc">Get paid reliably after the 7-day warranty period. Secure, transparent
-                        process.
-                        Direct bank transfer to your account.</p>
+                    <h3 class="benefit-title" data-i18n="benefit1.title">Guaranteed Payouts</h3>
+                    <p class="benefit-desc" data-i18n="benefit1.desc">Get paid reliably after the 7-day warranty period.
+                        Secure, transparent process. Direct bank transfer to your account.</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">📱</div>
-                    <h3 class="benefit-title">Easy Dashboard</h3>
-                    <p class="benefit-desc">Manage bids, track orders, and view earnings from our intuitive garage
-                        dashboard. Works on any device.</p>
+                    <h3 class="benefit-title" data-i18n="benefit2.title">Easy Dashboard</h3>
+                    <p class="benefit-desc" data-i18n="benefit2.desc">Manage bids, track orders, and view earnings from
+                        our intuitive garage dashboard. Works on any device.</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">🚚</div>
-                    <h3 class="benefit-title">We Handle Delivery</h3>
-                    <p class="benefit-desc">Our verified driver network picks up and delivers to customers. You never
-                        leave your garage.</p>
+                    <h3 class="benefit-title" data-i18n="benefit3.title">We Handle Delivery</h3>
+                    <p class="benefit-desc" data-i18n="benefit3.desc">Our verified driver network picks up and delivers
+                        to customers. You never leave your garage.</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">📈</div>
-                    <h3 class="benefit-title">More Customers</h3>
-                    <p class="benefit-desc">Access thousands of active buyers in Qatar looking for parts. Expand your
-                        reach without marketing spend.</p>
+                    <h3 class="benefit-title" data-i18n="benefit4.title">More Customers</h3>
+                    <p class="benefit-desc" data-i18n="benefit4.desc">Access thousands of active buyers in Qatar looking
+                        for parts. Expand your reach without marketing spend.</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">✅</div>
-                    <h3 class="benefit-title">Verified Badge</h3>
-                    <p class="benefit-desc">Build trust with customers through our verification system. Higher
-                        visibility, more bids accepted.</p>
+                    <h3 class="benefit-title" data-i18n="benefit5.title">Verified Badge</h3>
+                    <p class="benefit-desc" data-i18n="benefit5.desc">Build trust with customers through our
+                        verification system. Higher visibility, more bids accepted.</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">🛡️</div>
-                    <h3 class="benefit-title">Dispute Protection</h3>
-                    <p class="benefit-desc">Our support team handles customer issues. Fair resolution process protects
-                        your business.</p>
+                    <h3 class="benefit-title" data-i18n="benefit6.title">Dispute Protection</h3>
+                    <p class="benefit-desc" data-i18n="benefit6.desc">Our support team handles customer issues. Fair
+                        resolution process protects your business.</p>
                 </div>
             </div>
         </div>
@@ -1562,32 +1728,36 @@
     <section class="how-it-works">
         <div class="container">
             <div class="section-header">
-                <span class="section-label">How It Works</span>
-                <h2 class="section-title">Start Earning in 4 Simple Steps</h2>
-                <p class="section-subtitle">From application to your first sale — we make it seamless.</p>
+                <span class="section-label" data-i18n="hiw.label">How It Works</span>
+                <h2 class="section-title" data-i18n="hiw.title">Start Earning in 4 Simple Steps</h2>
+                <p class="section-subtitle" data-i18n="hiw.subtitle">From application to your first sale — we make it
+                    seamless.</p>
             </div>
 
             <div class="steps-container">
                 <div class="step-card">
                     <div class="step-number">1</div>
-                    <h3 class="step-title">Apply Online</h3>
-                    <p class="step-desc">Submit your garage details and commercial registration. Takes just 5 minutes.
-                    </p>
+                    <h3 class="step-title" data-i18n="step1.title">Apply Online</h3>
+                    <p class="step-desc" data-i18n="step1.desc">Submit your garage details and commercial registration.
+                        Takes just 5 minutes.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-number">2</div>
-                    <h3 class="step-title">Get Verified</h3>
-                    <p class="step-desc">Our team reviews and verifies your business within 24-48 hours.</p>
+                    <h3 class="step-title" data-i18n="step2.title">Get Verified</h3>
+                    <p class="step-desc" data-i18n="step2.desc">Our team reviews and verifies your business within 24-48
+                        hours.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-number">3</div>
-                    <h3 class="step-title">Receive Requests</h3>
-                    <p class="step-desc">Start receiving part requests matching your inventory. Bid competitively.</p>
+                    <h3 class="step-title" data-i18n="step3.title">Receive Requests</h3>
+                    <p class="step-desc" data-i18n="step3.desc">Start receiving part requests matching your inventory.
+                        Bid competitively.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-number">4</div>
-                    <h3 class="step-title">Earn & Grow</h3>
-                    <p class="step-desc">Fulfill orders, receive guaranteed payouts, and grow your customer base.</p>
+                    <h3 class="step-title" data-i18n="step4.title">Earn & Grow</h3>
+                    <p class="step-desc" data-i18n="step4.desc">Fulfill orders, receive guaranteed payouts, and grow
+                        your customer base.</p>
                 </div>
             </div>
         </div>
@@ -1597,55 +1767,59 @@
     <section class="tiers">
         <div class="container">
             <div class="section-header">
-                <span class="section-label">Flexible Pricing</span>
-                <h2 class="section-title">Choose What Works for You</h2>
-                <p class="section-subtitle">No upfront fees. Only pay when you make sales.</p>
+                <span class="section-label" data-i18n="tiers.label">Flexible Pricing</span>
+                <h2 class="section-title" data-i18n="tiers.title">Choose What Works for You</h2>
+                <p class="section-subtitle" data-i18n="tiers.subtitle">No upfront fees. Only pay when you make sales.
+                </p>
             </div>
 
             <div class="tiers-grid">
                 <div class="tier-card">
-                    <h3 class="tier-name">Pay-Per-Sale</h3>
-                    <div class="tier-commission">15%<span> per order</span></div>
-                    <p class="tier-desc">Perfect for new garages</p>
+                    <h3 class="tier-name" data-i18n="tier1.name">Pay-Per-Sale</h3>
+                    <div class="tier-commission"><span data-i18n="tier1.commission">15%</span><span
+                            data-i18n="tier1.perOrder"> per order</span></div>
+                    <p class="tier-desc" data-i18n="tier1.desc">Perfect for new garages</p>
                     <ul class="tier-features">
-                        <li>Zero monthly fees</li>
-                        <li>Access to all customers</li>
-                        <li>Standard dashboard</li>
-                        <li>Email support</li>
-                        <li>Guaranteed 7-day payouts</li>
+                        <li data-i18n="tier1.feature1">Zero monthly fees</li>
+                        <li data-i18n="tier1.feature2">Access to all customers</li>
+                        <li data-i18n="tier1.feature3">Standard dashboard</li>
+                        <li data-i18n="tier1.feature4">Email support</li>
+                        <li data-i18n="tier1.feature5">Guaranteed 7-day payouts</li>
                     </ul>
-                    <a href="#apply" class="tier-cta">Get Started Free</a>
+                    <a href="#apply" class="tier-cta" data-i18n="tier1.cta">Get Started Free</a>
                 </div>
 
                 <div class="tier-card featured">
-                    <div class="tier-badge">Most Popular</div>
-                    <h3 class="tier-name">Gold Partner</h3>
-                    <div class="tier-commission">5%<span> per order</span></div>
-                    <p class="tier-desc">Best value for active garages</p>
+                    <div class="tier-badge" data-i18n="tier2.badge">Most Popular</div>
+                    <h3 class="tier-name" data-i18n="tier2.name">Gold Partner</h3>
+                    <div class="tier-commission"><span data-i18n="tier2.commission">5%</span><span
+                            data-i18n="tier2.perOrder"> per order</span></div>
+                    <p class="tier-desc" data-i18n="tier2.desc">Best value for active garages</p>
                     <ul class="tier-features">
-                        <li>QAR 999/month subscription</li>
-                        <li>Priority listing in search</li>
-                        <li>Advanced analytics</li>
-                        <li>Priority phone support</li>
-                        <li>Priority 7-day payouts</li>
-                        <li>Promotional features</li>
+                        <li data-i18n="tier2.feature1">QAR 999/month subscription</li>
+                        <li data-i18n="tier2.feature2">Priority listing in search</li>
+                        <li data-i18n="tier2.feature3">Advanced analytics</li>
+                        <li data-i18n="tier2.feature4">Priority phone support</li>
+                        <li data-i18n="tier2.feature5">Priority 7-day payouts</li>
+                        <li data-i18n="tier2.feature6">Promotional features</li>
                     </ul>
-                    <a href="#apply" class="tier-cta">Apply for Gold</a>
+                    <a href="#apply" class="tier-cta" data-i18n="tier2.cta">Apply for Gold</a>
                 </div>
 
                 <div class="tier-card">
-                    <h3 class="tier-name">Platinum Partner</h3>
-                    <div class="tier-commission">3%<span> per order</span></div>
-                    <p class="tier-desc">For high-volume sellers</p>
+                    <h3 class="tier-name" data-i18n="tier3.name">Platinum Partner</h3>
+                    <div class="tier-commission"><span data-i18n="tier3.commission">3%</span><span
+                            data-i18n="tier3.perOrder"> per order</span></div>
+                    <p class="tier-desc" data-i18n="tier3.desc">For high-volume sellers</p>
                     <ul class="tier-features">
-                        <li>QAR 2,499/month subscription</li>
-                        <li>Featured placement</li>
-                        <li>Dedicated account manager</li>
-                        <li>Custom analytics reports</li>
-                        <li>Express 7-day payouts</li>
-                        <li>Marketing co-investment</li>
+                        <li data-i18n="tier3.feature1">QAR 2,499/month subscription</li>
+                        <li data-i18n="tier3.feature2">Featured placement</li>
+                        <li data-i18n="tier3.feature3">Dedicated account manager</li>
+                        <li data-i18n="tier3.feature4">Custom analytics reports</li>
+                        <li data-i18n="tier3.feature5">Express 7-day payouts</li>
+                        <li data-i18n="tier3.feature6">Marketing co-investment</li>
                     </ul>
-                    <a href="#apply" class="tier-cta">Contact Sales</a>
+                    <a href="#apply" class="tier-cta" data-i18n="tier3.cta">Contact Sales</a>
                 </div>
             </div>
         </div>
@@ -1655,30 +1829,31 @@
     <section class="testimonials">
         <div class="container">
             <div class="section-header">
-                <span class="section-label">Partner Stories</span>
-                <h2 class="section-title">What Our Garages Say</h2>
+                <span class="section-label" data-i18n="testimonials.label">Partner Stories</span>
+                <h2 class="section-title" data-i18n="testimonials.title">What Our Garages Say</h2>
             </div>
 
             <div class="testimonials-grid">
                 <div class="testimonial-card">
-                    <p class="testimonial-quote">"QScrap doubled our monthly sales within 3 months. The dashboard is
-                        easy to use, and payouts are always on time. Best business decision we made."</p>
+                    <p class="testimonial-quote" data-i18n="testimonial1.quote">"QScrap doubled our monthly sales within
+                        3 months. The dashboard is easy to use, and payouts are always on time. Best business decision
+                        we made."</p>
                     <div class="testimonial-author">
                         <div class="testimonial-avatar">R</div>
                         <div class="testimonial-info">
-                            <h4>Rajesh Krishnan</h4>
-                            <p>Krishnan Auto Parts, Doha</p>
+                            <h4 data-i18n="testimonial1.name">Rajesh Krishnan</h4>
+                            <p data-i18n="testimonial1.business">Krishnan Auto Parts, Doha</p>
                         </div>
                     </div>
                 </div>
                 <div class="testimonial-card">
-                    <p class="testimonial-quote">"We used to struggle finding customers. Now orders come to us daily.
-                        The delivery network saves us so much time and hassle."</p>
+                    <p class="testimonial-quote" data-i18n="testimonial2.quote">"We used to struggle finding customers.
+                        Now orders come to us daily. The delivery network saves us so much time and hassle."</p>
                     <div class="testimonial-author">
                         <div class="testimonial-avatar">A</div>
                         <div class="testimonial-info">
-                            <h4>Ahmed Hassan</h4>
-                            <p>Hassan Motors, Industrial Area</p>
+                            <h4 data-i18n="testimonial2.name">Ahmed Hassan</h4>
+                            <p data-i18n="testimonial2.business">Hassan Motors, Industrial Area</p>
                         </div>
                     </div>
                 </div>
@@ -1689,14 +1864,15 @@
     <!-- CTA Section with Registration Form -->
     <section class="cta-section" id="apply">
         <div class="cta-card">
-            <h2>Start Selling on QScrap Today</h2>
-            <p>Join Qatar's fastest-growing automotive marketplace. Free to join, no upfront costs.</p>
+            <h2 data-i18n="cta.title">Start Selling on QScrap Today</h2>
+            <p data-i18n="cta.subtitle">Join Qatar's fastest-growing automotive marketplace. Free to join, no upfront
+                costs.</p>
 
             <!-- Registration Form -->
             <div class="registration-form" id="registrationForm">
                 <div class="form-header">
-                    <h3>Partner Registration</h3>
-                    <p>Fill in your details below to get started</p>
+                    <h3 data-i18n="form.title">Partner Registration</h3>
+                    <p data-i18n="form.subtitle">Fill in your details below to get started</p>
                 </div>
 
                 <!-- Error/Success Message -->
@@ -1713,72 +1889,84 @@
                     <!-- Row 1: Garage Name & Owner Name -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Garage Name <span class="required">*</span></label>
+                            <label><span data-i18n="form.garageName">Garage Name</span> <span
+                                    class="required">*</span></label>
                             <input type="text" class="form-control" id="garageName"
+                                data-i18n-placeholder="form.garageName.placeholder"
                                 placeholder="e.g. Al Rayyan Auto Parts" required>
                         </div>
                         <div class="form-group">
-                            <label>Owner Name <span class="required">*</span></label>
-                            <input type="text" class="form-control" id="ownerName" placeholder="Full name" required>
+                            <label><span data-i18n="form.ownerName">Owner Name</span> <span
+                                    class="required">*</span></label>
+                            <input type="text" class="form-control" id="ownerName"
+                                data-i18n-placeholder="form.ownerName.placeholder" placeholder="Full name" required>
                         </div>
                     </div>
 
                     <!-- Row 2: Phone & Email -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Phone Number <span class="required">*</span></label>
-                            <input type="tel" class="form-control" id="phoneNumber" placeholder="+974 XXXX XXXX"
-                                required>
+                            <label><span data-i18n="form.phone">Phone Number</span> <span
+                                    class="required">*</span></label>
+                            <input type="tel" class="form-control" id="phoneNumber"
+                                data-i18n-placeholder="form.phone.placeholder" placeholder="+974 XXXX XXXX" required>
                         </div>
                         <div class="form-group">
-                            <label>Email Address <span class="required">*</span></label>
-                            <input type="email" class="form-control" id="emailAddress" placeholder="garage@example.com"
+                            <label><span data-i18n="form.email">Email Address</span> <span
+                                    class="required">*</span></label>
+                            <input type="email" class="form-control" id="emailAddress"
+                                data-i18n-placeholder="form.email.placeholder" placeholder="garage@example.com"
                                 required>
                         </div>
                     </div>
 
                     <!-- Row 3: Address -->
                     <div class="form-group">
-                        <label>Garage Address <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="garageAddress" placeholder="Full address with area"
+                        <label><span data-i18n="form.address">Garage Address</span> <span
+                                class="required">*</span></label>
+                        <input type="text" class="form-control" id="garageAddress"
+                            data-i18n-placeholder="form.address.placeholder" placeholder="Full address with area"
                             required>
                     </div>
 
                     <!-- Row 4: CR Number & Trade License -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Commercial Registration (CR) Number</label>
-                            <input type="text" class="form-control" id="crNumber" placeholder="e.g. 123456">
+                            <label data-i18n="form.crNumber">Commercial Registration (CR) Number</label>
+                            <input type="text" class="form-control" id="crNumber"
+                                data-i18n-placeholder="form.crNumber.placeholder" placeholder="e.g. 123456">
                         </div>
                         <div class="form-group">
-                            <label>Trade License Number</label>
-                            <input type="text" class="form-control" id="tradeLicense" placeholder="e.g. TL-12345">
+                            <label data-i18n="form.tradeLicense">Trade License Number</label>
+                            <input type="text" class="form-control" id="tradeLicense"
+                                data-i18n-placeholder="form.tradeLicense.placeholder" placeholder="e.g. TL-12345">
                         </div>
                     </div>
 
                     <!-- Parts Type -->
                     <div class="form-group">
-                        <label>What type of parts do you supply? <span class="required">*</span></label>
-                        <select class="form-control" id="supplierType" required>
-                            <option value="">Select...</option>
-                            <option value="used">Used Parts (Scrapyard/Salvage)</option>
-                            <option value="new">New Parts (OEM/Commercial)</option>
-                            <option value="both">Both Used & New Parts</option>
+                        <label><span data-i18n="form.partsType">What type of parts do you supply?</span> <span
+                                class="required">*</span></label>
+                        <select class="form-control" id="supplierType" required data-i18n-options="true">
+                            <option value="" data-i18n="form.partsType.select">Select...</option>
+                            <option value="used" data-i18n="form.partsType.used">Used Parts (Scrapyard/Salvage)</option>
+                            <option value="new" data-i18n="form.partsType.new">New Parts (OEM/Commercial)</option>
+                            <option value="both" data-i18n="form.partsType.both">Both Used & New Parts</option>
                         </select>
                     </div>
 
                     <!-- Brand Specialization -->
                     <div class="brand-section">
                         <div class="brand-section-header">
-                            <h4>🚗 Brand Specialization</h4>
+                            <h4 data-i18n="form.brandSection">🚗 Brand Specialization</h4>
                             <label class="toggle-switch">
-                                <span class="toggle-label">All Brands</span>
+                                <span class="toggle-label" data-i18n="form.allBrands">All Brands</span>
                                 <input type="checkbox" id="allBrandsToggle" checked onchange="toggleBrandGrid()">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <p style="font-size: 13px; color: var(--slate); margin: 0 0 12px;">Helps us match you with
-                            relevant customer requests</p>
+                        <p style="font-size: 13px; color: var(--slate); margin: 0 0 12px;"
+                            data-i18n="form.brandSection.help">Helps us match you with relevant customer requests</p>
 
                         <div class="brand-grid hidden" id="brandGrid">
                             <label class="brand-checkbox"><input type="checkbox" name="brands"
@@ -1817,25 +2005,29 @@
                     <!-- Password -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Create Password <span class="required">*</span></label>
-                            <input type="password" class="form-control" id="password" placeholder="Min 6 characters"
+                            <label><span data-i18n="form.password">Create Password</span> <span
+                                    class="required">*</span></label>
+                            <input type="password" class="form-control" id="password"
+                                data-i18n-placeholder="form.password.placeholder" placeholder="Min 6 characters"
                                 required minlength="6">
                         </div>
                         <div class="form-group">
-                            <label>Confirm Password <span class="required">*</span></label>
+                            <label><span data-i18n="form.confirmPassword">Confirm Password</span> <span
+                                    class="required">*</span></label>
                             <input type="password" class="form-control" id="confirmPassword"
-                                placeholder="Re-enter password" required>
+                                data-i18n-placeholder="form.confirmPassword.placeholder" placeholder="Re-enter password"
+                                required>
                         </div>
                     </div>
 
                     <button type="submit" class="btn-submit" id="submitBtn">
-                        <span id="submitText">Submit Application</span>
+                        <span id="submitText" data-i18n="form.submit">Submit Application</span>
                         <div class="spinner" id="submitSpinner" style="display: none;"></div>
                     </button>
 
                     <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--slate);">
-                        By registering, you agree to our <a href="/terms.html" style="color: var(--qatar-maroon);">Terms
-                            of Service</a>
+                        <span data-i18n="form.terms">By registering, you agree to our</span> <a href="/terms.html"
+                            style="color: var(--qatar-maroon);" data-i18n="form.termsLink">Terms of Service</a>
                     </p>
                 </form>
             </div>
@@ -1847,24 +2039,25 @@
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 </div>
-                <h3>Application Submitted! 🎉</h3>
-                <p>Thank you for registering. Our team will review your application and contact you shortly.</p>
+                <h3 data-i18n="success.title">Application Submitted! 🎉</h3>
+                <p data-i18n="success.message">Thank you for registering. Our team will review your application and
+                    contact you shortly.</p>
 
                 <div class="success-details">
-                    <p><strong>Garage:</strong> <span id="successGarageName"></span></p>
-                    <p><strong>Phone:</strong> <span id="successPhone"></span></p>
-                    <p><strong>Submitted:</strong> <span id="successTimestamp"></span></p>
+                    <p><strong data-i18n="success.garage">Garage:</strong> <span id="successGarageName"></span></p>
+                    <p><strong data-i18n="success.phone">Phone:</strong> <span id="successPhone"></span></p>
+                    <p><strong data-i18n="success.submitted">Submitted:</strong> <span id="successTimestamp"></span></p>
                 </div>
 
                 <p style="font-size: 14px; color: var(--charcoal); margin-bottom: 24px;">
-                    <strong>What's Next?</strong><br>
-                    ✅ We'll review your application<br>
-                    ✅ You'll receive a callback within 24-48 hours<br>
-                    ✅ Once approved, you can login to your dashboard
+                    <strong data-i18n="success.whatsNext">What's Next?</strong><br>
+                    <span data-i18n="success.step1">✅ We'll review your application</span><br>
+                    <span data-i18n="success.step2">✅ You'll receive a callback within 24-48 hours</span><br>
+                    <span data-i18n="success.step3">✅ Once approved, you can login to your dashboard</span>
                 </p>
 
                 <a href="/garage-dashboard.html" class="btn-secondary">
-                    Go to Partner Portal
+                    <span data-i18n="success.portalBtn">Go to Partner Portal</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
@@ -1873,7 +2066,9 @@
             </div>
 
             <p class="cta-contact">
-                Questions? Call <a href="tel:+97444554444">+974 4455 4444</a> to speak with our partner team
+                <span data-i18n="cta.contact">Questions? Call</span> <a href="tel:+97444554444"
+                    data-i18n="cta.contactLink">+974 4455 4444</a> <span data-i18n="cta.contactSuffix">to speak with our
+                    partner team</span>
             </p>
         </div>
     </section>
@@ -1885,42 +2080,43 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <a href="/" class="nav-logo" style="margin-bottom: 16px;">
-                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap"
+                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" data-i18n-alt="logo.alt"
                             style="filter: brightness(0) invert(1);">
                     </a>
-                    <p>Qatar's premium automotive parts marketplace. Connecting customers with verified garages for
-                        quality new, used, and OEM parts.</p>
+                    <p data-i18n="footer.description">Qatar's premium automotive parts marketplace. Connecting customers
+                        with verified garages for quality new, used, and OEM parts.</p>
                 </div>
                 <div>
-                    <h4 class="footer-title">Company</h4>
+                    <h4 class="footer-title" data-i18n="footer.company">Company</h4>
                     <ul class="footer-links">
-                        <li><a href="/about.html">About Us</a></li>
-                        <li><a href="/partners.html">For Businesses</a></li>
-                        <li><a href="/about.html#contact">Contact</a></li>
-                        <li><a href="/#how-it-works">How It Works</a></li>
+                        <li><a href="/about.html" data-i18n="footer.aboutUs">About Us</a></li>
+                        <li><a href="/partners.html" data-i18n="footer.forBusinesses">For Businesses</a></li>
+                        <li><a href="/about.html#contact" data-i18n="footer.contact">Contact</a></li>
+                        <li><a href="/#how-it-works" data-i18n="footer.howItWorks">How It Works</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="footer-title">Legal</h4>
+                    <h4 class="footer-title" data-i18n="footer.legal">Legal</h4>
                     <ul class="footer-links">
-                        <li><a href="/privacy.html">Privacy Policy</a></li>
-                        <li><a href="/terms.html">Terms of Service</a></li>
-                        <li><a href="/refund.html">Refund Policy</a></li>
+                        <li><a href="/privacy.html" data-i18n="footer.privacy">Privacy Policy</a></li>
+                        <li><a href="/terms.html" data-i18n="footer.terms">Terms of Service</a></li>
+                        <li><a href="/refund.html" data-i18n="footer.refund">Refund Policy</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="footer-title">Contact</h4>
+                    <h4 class="footer-title" data-i18n="footer.contactTitle">Contact</h4>
                     <ul class="footer-links">
                         <li><a href="mailto:support@qscrap.qa">📧 support@qscrap.qa</a></li>
                         <li><a href="tel:+97450267974">📞 +974 5026 7974</a></li>
-                        <li><a href="https://wa.me/97450267974" target="_blank">💬 WhatsApp Support</a></li>
+                        <li><a href="https://wa.me/97450267974" target="_blank"><span data-i18n="footer.whatsapp">💬
+                                    WhatsApp Support</span></a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
                 <p class="footer-legal">QScrap Services & Trading L.L.C | كيوسكراب للخدمات والتجارة ذ.م.م | CR: 155892
                 </p>
-                <p class="footer-copyright">© 2026 QScrap. All rights reserved.</p>
+                <p class="footer-copyright" data-i18n="footer.copyright">© 2026 QScrap. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -2020,31 +2216,31 @@
 
             // Client-side validation
             if (!garageName || !ownerName || !phoneNumber || !email || !address || !supplierType || !password) {
-                showFormMessage('Please fill in all required fields.');
+                showFormMessage(t('form.error.required'));
                 return;
             }
 
             // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showFormMessage('Please enter a valid email address.');
+                showFormMessage(t('form.error.email'));
                 return;
             }
 
             if (password !== confirmPassword) {
-                showFormMessage('Passwords do not match.');
+                showFormMessage(t('form.error.passwordMatch'));
                 return;
             }
 
             if (password.length < 6) {
-                showFormMessage('Password must be at least 6 characters.');
+                showFormMessage(t('form.error.passwordLength'));
                 return;
             }
 
             // Phone validation (Qatar format)
             const phoneRegex = /^\+?974?[3-7]\d{7}$/;
             if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
-                showFormMessage('Please enter a valid Qatar phone number.');
+                showFormMessage(t('form.error.phone'));
                 return;
             }
 
@@ -2080,13 +2276,13 @@
                 if (!response.ok) {
                     // Handle specific error cases with friendly messages
                     if (data.error?.includes('already exists') || data.error?.includes('duplicate')) {
-                        throw new Error('This phone number is already registered. Please login or use a different number.');
+                        throw new Error(t('form.error.duplicate'));
                     } else if (data.error?.includes('email')) {
-                        throw new Error('This email is already in use. Please use a different email address.');
+                        throw new Error(t('form.error.duplicateEmail'));
                     } else if (response.status === 400) {
-                        throw new Error(data.error || 'Please check your information and try again.');
+                        throw new Error(data.error || t('form.error.required'));
                     } else {
-                        throw new Error('Registration temporarily unavailable. Please call us at +974 4455 4444.');
+                        throw new Error(t('form.error.generic'));
                     }
                 }
 
@@ -2095,10 +2291,10 @@
                 document.getElementById('successScreen').classList.add('active');
                 document.getElementById('successGarageName').textContent = garageName;
                 document.getElementById('successPhone').textContent = phoneNumber;
-                document.getElementById('successTimestamp').textContent = new Date().toLocaleString('en-QA', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                });
+                document.getElementById('successTimestamp').textContent = new Date().toLocaleString(
+                    (typeof currentLanguage !== 'undefined' && currentLanguage === 'ar') ? 'ar-QA' : 'en-QA',
+                    { dateStyle: 'medium', timeStyle: 'short' }
+                );
 
                 // Scroll to success screen
                 document.getElementById('successScreen').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2109,7 +2305,7 @@
 
                 // Detect network/fetch errors
                 if (error.name === 'TypeError' || error.message.includes('fetch') || error.message.includes('network')) {
-                    errorMessage = 'Connection issue. Please check your internet or call us at +974 4455 4444 to register.';
+                    errorMessage = t('form.error.network');
                 }
 
                 // Show error with fallback contact
@@ -2124,6 +2320,9 @@
             }
         }
     </script>
+
+    <!-- Partners i18n System -->
+    <script src="/js/partners.js"></script>
 </body>
 
 </html>
