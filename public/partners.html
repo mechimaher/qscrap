@@ -157,6 +157,13 @@
         .nav-logo img {
             height: 140px;
             width: auto;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            filter: drop-shadow(0 4px 12px rgba(141, 27, 61, 0.15));
+        }
+
+        .nav-logo:hover img {
+            transform: translateY(-4px) scale(1.05);
+            filter: drop-shadow(0 16px 40px rgba(141, 27, 61, 0.35));
         }
 
         .nav-logo-text {
