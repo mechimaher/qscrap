@@ -1303,21 +1303,31 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
-            color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
-            font-size: 18px;
             transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .footer-social a img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+            transition: filter 0.3s ease;
         }
 
         .footer-social a:hover {
             background: var(--gold);
             border-color: var(--gold);
-            color: var(--black);
             transform: translateY(-3px);
             box-shadow: 0 8px 24px rgba(201, 162, 39, 0.3);
+        }
+
+        .footer-social a:hover img {
+            filter: brightness(0);
         }
 
         .footer-title {
@@ -1868,10 +1878,19 @@
                         quality new, used, and OEM parts.</p>
                     <div class="footer-social">
                         <a href="https://instagram.com/qscrap.qa" target="_blank" rel="noopener"
-                            title="Instagram">📷</a>
-                        <a href="https://wa.me/97450267974" target="_blank" rel="noopener" title="WhatsApp">💬</a>
-                        <a href="https://twitter.com/qscrapqa" target="_blank" rel="noopener" title="Twitter/X">✖</a>
-                        <a href="https://facebook.com/qscrapqa" target="_blank" rel="noopener" title="Facebook">📘</a>
+                            title="Follow us on Instagram">
+                            <img src="/assets/images/social/instagram.png" alt="Instagram" loading="lazy">
+                        </a>
+                        <a href="https://wa.me/97450267974" target="_blank" rel="noopener" title="Chat on WhatsApp">
+                            <img src="/assets/images/social/whatsapp.png" alt="WhatsApp" loading="lazy">
+                        </a>
+                        <a href="https://twitter.com/qscrapqa" target="_blank" rel="noopener" title="Follow us on X">
+                            <img src="/assets/images/social/x-twitter.jpg" alt="X (Twitter)" loading="lazy">
+                        </a>
+                        <a href="https://facebook.com/qscrapqa" target="_blank" rel="noopener"
+                            title="Like us on Facebook">
+                            <img src="/assets/images/social/facebook.png" alt="Facebook" loading="lazy">
+                        </a>
                     </div>
                 </div>
                 <div>
