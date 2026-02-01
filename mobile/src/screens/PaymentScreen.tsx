@@ -635,7 +635,7 @@ export default function PaymentScreen() {
                                             {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% OFF
                                         </Text>
                                         <Text style={styles.vvipLoyaltySavings}>
-                                            {applyDiscount ? `Save ${discountAmount} QAR` : 'Tap to apply'}
+                                            {applyDiscount ? `Save ${paymentType === 'full' ? calculateDiscount().discountOnTotal : calculateDiscount().discountOnPart} QAR` : 'Tap to apply'}
                                         </Text>
                                     </View>
                                 </View>
@@ -661,7 +661,7 @@ export default function PaymentScreen() {
                             )}
 
                             {/* Discount Summary */}
-                            {applyDiscount && discountAmount > 0 && !isFreeOrder() && (
+                            {applyDiscount && (paymentType === 'full' ? calculateDiscount().discountOnTotal : calculateDiscount().discountOnPart) > 0 && !isFreeOrder() && (
                                 <View style={styles.vvipDiscountSummary}>
                                     <Text style={styles.vvipDiscountLabel}>
                                         {paymentType === 'full' ? 'You Pay' : 'COD Amount'}
