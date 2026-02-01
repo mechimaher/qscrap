@@ -92,6 +92,12 @@ const translations = {
         'gallery.badge': 'Our Quality',
         'gallery.title': 'Premium Parts Gallery',
         'gallery.subtitle': 'Genuine OEM and quality-verified parts from trusted suppliers',
+        'gallery.item1': 'Complete Vehicle Components',
+        'gallery.item2': 'Engine Internals',
+        'gallery.item3': 'Expert Selection',
+        'gallery.item4': 'Premium BMW Components',
+        'gallery.item5': 'Luxury Parts Available',
+        'gallery.item6': 'Industrial Workshop',
 
         // CTA
         'cta.title': 'Ready to Find Your Part?',
@@ -174,6 +180,12 @@ const translations = {
         'gallery.badge': 'جودتنا',
         'gallery.title': 'معرض القطع المتميزة',
         'gallery.subtitle': 'قطع أصلية OEM وقطع معتمدة الجودة من موردين موثوقين',
+        'gallery.item1': 'مكونات السيارة الكاملة',
+        'gallery.item2': 'أجزاء المحرك الداخلية',
+        'gallery.item3': 'اختيار الخبراء',
+        'gallery.item4': 'قطع BMW المتميزة',
+        'gallery.item5': 'قطع فاخرة متوفرة',
+        'gallery.item6': 'ورشة صناعية',
 
         // CTA
         'cta.title': 'مستعد للعثور على قطعتك؟',
