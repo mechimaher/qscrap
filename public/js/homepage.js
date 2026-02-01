@@ -99,6 +99,24 @@ const translations = {
         'gallery.item5': 'Luxury Parts Available',
         'gallery.item6': 'Industrial Workshop',
 
+        // Showcase
+        'showcase.label': 'Parts Showcase',
+        'showcase.title': 'Thousands of Quality Parts',
+
+        // Carousel
+        'carousel.item1.title': 'Engine Components',
+        'carousel.item1.desc': 'Premium quality internals',
+        'carousel.item2.title': 'BMW Premium Parts',
+        'carousel.item2.desc': 'OEM & Aftermarket',
+        'carousel.item3.title': 'Full Catalog',
+        'carousel.item3.desc': 'Every part you need',
+        'carousel.item4.title': 'Performance Engines',
+        'carousel.item4.desc': 'High-performance parts',
+        'carousel.item5.title': 'Expert Service',
+        'carousel.item5.desc': 'Professional guidance',
+        'carousel.item6.title': 'Industrial Scale',
+        'carousel.item6.desc': 'Massive inventory',
+
         // CTA
         'cta.title': 'Ready to Find Your Part?',
         'cta.subtitle': 'Download the QScrap app and get started in minutes. It\'s free!',
@@ -186,6 +204,24 @@ const translations = {
         'gallery.item4': 'قطع BMW المتميزة',
         'gallery.item5': 'قطع فاخرة متوفرة',
         'gallery.item6': 'ورشة صناعية',
+
+        // Showcase
+        'showcase.label': 'معرض القطع',
+        'showcase.title': 'آلاف القطع عالية الجودة',
+
+        // Carousel
+        'carousel.item1.title': 'مكونات المحرك',
+        'carousel.item1.desc': 'قطع داخلية متميزة',
+        'carousel.item2.title': 'قطع BMW المتميزة',
+        'carousel.item2.desc': 'أصلية وبديلة',
+        'carousel.item3.title': 'كتالوج شامل',
+        'carousel.item3.desc': 'كل قطعة تحتاجها',
+        'carousel.item4.title': 'محركات عالية الأداء',
+        'carousel.item4.desc': 'قطع أداء متميزة',
+        'carousel.item5.title': 'خدمة الخبراء',
+        'carousel.item5.desc': 'إرشاد متخصص',
+        'carousel.item6.title': 'حجم صناعي',
+        'carousel.item6.desc': 'مخزون ضخم',
 
         // CTA
         'cta.title': 'مستعد للعثور على قطعتك؟',
