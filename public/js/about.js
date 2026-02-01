@@ -81,6 +81,7 @@ const translations = {
         'cta.partner': 'Become a Partner',
 
         // Footer
+        'footer.tagline': "Qatar's premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.",
         'footer.company': 'Company',
         'footer.aboutUs': 'About Us',
         'footer.forBusiness': 'For Businesses',
@@ -176,6 +177,7 @@ const translations = {
         'cta.partner': 'كن شريكاً',
 
         // Footer
+        'footer.tagline': 'سوق قطع غيار السيارات المتميز في قطر. نربط العملاء بكراجات معتمدة للحصول على قطع جديدة ومستعملة وأصلية.',
         'footer.company': 'الشركة',
         'footer.aboutUs': 'من نحن',
         'footer.forBusiness': 'للشركات',
