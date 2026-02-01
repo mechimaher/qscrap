@@ -131,4 +131,10 @@ v1Router.use('/payments', paymentRoutes);
 import loyaltyRoutes from './loyalty.routes';
 v1Router.use('/loyalty', loyaltyRoutes);
 
+// ==========================================
+// B2B GARAGE ONBOARDING (Magic Link Setup)
+// ==========================================
+import garageSetupRoutes from './garage-setup.routes';
+v1Router.use('/garage', garageSetupRoutes);
+
 export default v1Router;

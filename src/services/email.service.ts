@@ -288,6 +288,413 @@ export class EmailService {
 
         return this.send(email, subject, html);
     }
+
+    /**
+     * Send B2B Garage Welcome Email with Magic Link
+     * Enterprise-grade onboarding email sent upon admin approval
+     */
+    async sendGarageWelcomeEmail(
+        email: string,
+        garageName: string,
+        magicLink: string,
+        expiresIn: string = '48 hours'
+    ): Promise<boolean> {
+        const subject = '🎉 Welcome to QScrap Partner Network - Account Approved!';
+        const html = this.getGarageWelcomeTemplate(garageName, magicLink, expiresIn);
+        return this.send(email, subject, html);
+    }
+
+    /**
+     * VVVIP B2B Welcome Email Template - Gold Partner Edition
+     * QScrap Enterprise Brand: Qatar Maroon (#8D1B3D) + Gold (#C9A227)
+     * Philosophy: Garages are our Gold Partners
+     */
+    private getGarageWelcomeTemplate(garageName: string, magicLink: string, expiresIn: string): string {
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to QScrap Gold Partner Network</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 100%);
+            padding: 40px 20px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 640px; 
+            margin: 0 auto; 
+            background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(201, 162, 39, 0.1);
+        }
+        
+        /* VVVIP Header with Gold Accent */
+        .header { 
+            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 50%, #4A0F22 100%);
+            color: white;
+            padding: 60px 48px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 70%, rgba(201, 162, 39, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .gold-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.25) 0%, rgba(201, 162, 39, 0.1) 100%);
+            border: 2px solid #C9A227;
+            color: #C9A227;
+            padding: 10px 24px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 28px;
+            box-shadow: 0 0 30px rgba(201, 162, 39, 0.3);
+        }
+        .logo-text {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .logo-text span {
+            color: #C9A227;
+        }
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        /* Main Content */
+        .content { 
+            padding: 56px 48px;
+        }
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0D0D0D;
+            margin-bottom: 24px;
+            line-height: 1.3;
+        }
+        .welcome-title span {
+            color: #8D1B3D;
+        }
+        .content p {
+            font-size: 16px;
+            color: #525252;
+            margin-bottom: 24px;
+        }
+        .content strong {
+            color: #0D0D0D;
+        }
+        
+        /* Gold Partner Status Card */
+        .partner-card {
+            background: linear-gradient(135deg, #0D0D0D 0%, #1A1A1A 100%);
+            border: 2px solid #C9A227;
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            margin: 36px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .partner-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #C9A227 0%, #E8D48A 50%, #C9A227 100%);
+        }
+        .partner-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+        .partner-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #C9A227;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .partner-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Premium CTA Button */
+        .cta-container {
+            text-align: center;
+            padding: 24px 0 32px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%);
+            color: white !important;
+            text-decoration: none;
+            padding: 20px 56px;
+            border-radius: 100px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 12px 40px rgba(141, 27, 61, 0.4), 0 0 0 1px rgba(201, 162, 39, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* Expiry Warning */
+        .expiry-box {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border-left: 5px solid #C9A227;
+            padding: 18px 24px;
+            margin: 32px 0;
+            border-radius: 0 16px 16px 0;
+        }
+        .expiry-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #78350F;
+            font-weight: 500;
+        }
+        
+        /* Benefits Grid */
+        .benefits-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0D0D0D;
+            margin: 40px 0 20px;
+            text-align: center;
+        }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .benefit-item {
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+            border: 1px solid #E5E5E5;
+            padding: 24px 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .benefit-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+        .benefit-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0D0D0D;
+            margin-bottom: 4px;
+        }
+        .benefit-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Premium Footer */
+        .footer { 
+            background: linear-gradient(180deg, #0D0D0D 0%, #000000 100%);
+            color: white;
+            padding: 48px;
+            text-align: center;
+        }
+        .footer-logo {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .footer-logo span {
+            color: #C9A227;
+        }
+        .footer-tagline {
+            font-size: 13px;
+            color: #C9A227;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 32px;
+            font-weight: 600;
+        }
+        .footer p {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .footer a {
+            color: #C9A227;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+            padding: 24px;
+            background: rgba(201, 162, 39, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(201, 162, 39, 0.1);
+        }
+        .contact-item {
+            text-align: center;
+        }
+        .contact-item span {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .legal {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #222;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            .container { border-radius: 16px; }
+            .header, .content, .footer { padding: 36px 24px; }
+            .logo-text { font-size: 32px; }
+            .welcome-title { font-size: 22px; }
+            .benefits-grid { grid-template-columns: 1fr; }
+            .contact-grid { grid-template-columns: 1fr; gap: 12px; }
+            .cta-button { padding: 18px 40px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- VVVIP Header -->
+        <div class="header">
+            <div class="gold-badge">
+                <span>⭐</span> Gold Partner Approved
+            </div>
+            <div class="logo-text">Q<span>Scrap</span></div>
+            <p class="header-subtitle">Qatar's Premier Automotive Parts Marketplace</p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h1 class="welcome-title">
+                Welcome to the Family, <span>\${garageName}</span>! 🎉
+            </h1>
+            
+            <p>Your application to join the <strong>QScrap Partner Network</strong> has been carefully reviewed and <strong>approved</strong> by our team.</p>
+            
+            <p>We're thrilled to have you as a <strong>Gold Partner</strong>. At QScrap, we believe our garages are the backbone of our marketplace — your success is our success.</p>
+            
+            <!-- Gold Partner Card -->
+            <div class="partner-card">
+                <div class="partner-icon">🏆</div>
+                <div class="partner-title">Gold Partner Status</div>
+                <p class="partner-desc">Access Qatar's largest network of auto parts buyers</p>
+            </div>
+            
+            <p style="text-align: center;">Set up your account to start receiving orders:</p>
+            
+            <!-- CTA Button -->
+            <div class="cta-container">
+                <a href="\${magicLink}" class="cta-button">Activate Your Dashboard →</a>
+            </div>
+            
+            <!-- Expiry Warning -->
+            <div class="expiry-box">
+                <p><strong>⏰ Security Notice:</strong> This activation link expires in <strong>\${expiresIn}</strong>. If it expires, contact our support team for a new link.</p>
+            </div>
+            
+            <!-- Benefits -->
+            <h3 class="benefits-title">Your Partner Benefits</h3>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon">📱</div>
+                    <div class="benefit-title">Smart Dashboard</div>
+                    <div class="benefit-desc">Manage orders & quotes</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">💰</div>
+                    <div class="benefit-title">Fast Payouts</div>
+                    <div class="benefit-desc">24-48 hour settlements</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">📊</div>
+                    <div class="benefit-title">Analytics Suite</div>
+                    <div class="benefit-desc">Track your performance</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🚀</div>
+                    <div class="benefit-title">Growth Tools</div>
+                    <div class="benefit-desc">Reach more customers</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Premium Footer -->
+        <div class="footer">
+            <div class="footer-logo">Q<span>Scrap</span></div>
+            <p class="footer-tagline">Gold Partner Network</p>
+            
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <span>📞</span>
+                    <a href="tel:+97450267974">+974 5026 7974</a>
+                </div>
+                <div class="contact-item">
+                    <span>📧</span>
+                    <a href="mailto:partners@qscrap.qa">partners@qscrap.qa</a>
+                </div>
+                <div class="contact-item">
+                    <span>💬</span>
+                    <a href="https://wa.me/97450267974">WhatsApp</a>
+                </div>
+            </div>
+            
+            <p>Our Partner Success Team is here to help you grow.</p>
+            
+            <div class="legal">
+                © 2026 QScrap Services & Trading L.L.C. All rights reserved.<br>
+                CR: 155892 | P.O. Box 32544, Doha, Qatar
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+        `;
+    }
 }
 
 export const emailService = new EmailService();
