@@ -1016,6 +1016,111 @@
                 font-size: 28px;
             }
         }
+
+        /* ===== Language Switcher ===== */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--mist);
+            padding: 6px 12px;
+            border-radius: 100px;
+            margin: 0 16px;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            background: transparent;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--slate);
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn:hover {
+            color: var(--qatar-maroon);
+        }
+
+        .lang-btn.active {
+            background: var(--white);
+            color: var(--qatar-maroon);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .lang-divider {
+            color: var(--silver);
+            font-size: 12px;
+        }
+
+        .lang-flag {
+            font-size: 16px;
+        }
+
+        /* ===== RTL Support ===== */
+        [dir="rtl"] {
+            font-family: 'Inter', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        [dir="rtl"] .nav-links {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .hero-title {
+            text-align: right;
+        }
+
+        [dir="rtl"] .hero-subtitle {
+            text-align: right;
+        }
+
+        [dir="rtl"] .mission-grid {
+            direction: rtl;
+        }
+
+        [dir="rtl"] .values-grid {
+            direction: rtl;
+        }
+
+        [dir="rtl"] .info-grid {
+            direction: rtl;
+        }
+
+        [dir="rtl"] .footer-grid {
+            direction: rtl;
+        }
+
+        [dir="rtl"] .section-header {
+            text-align: center;
+        }
+
+        [dir="rtl"] .stat-item {
+            text-align: center;
+        }
+
+        [dir="rtl"] .info-card {
+            text-align: right;
+        }
+
+        [dir="rtl"] .nav-cta {
+            margin-inline-start: auto;
+        }
+
+        @media (max-width: 768px) {
+            .lang-switcher {
+                margin: 0 8px;
+                padding: 4px 8px;
+            }
+
+            .lang-text {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -1032,10 +1137,22 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="m15 18-6-6 6-6" />
                     </svg>
-                    Home
+                    <span data-i18n="nav.home">Home</span>
                 </a>
-                <a href="/partners.html" class="nav-link">For Businesses</a>
-                <a href="#contact" class="nav-cta">Contact Us</a>
+                <a href="/partners.html" class="nav-link" data-i18n="nav.forBusiness">For Businesses</a>
+                <!-- Language Switcher -->
+                <div class="lang-switcher" id="langSwitcher">
+                    <button class="lang-btn active" data-lang="en" aria-label="English">
+                        <span class="lang-flag">🇬🇧</span>
+                        <span class="lang-text">EN</span>
+                    </button>
+                    <span class="lang-divider">|</span>
+                    <button class="lang-btn" data-lang="ar" aria-label="العربية">
+                        <span class="lang-flag">🇶🇦</span>
+                        <span class="lang-text">AR</span>
+                    </button>
+                </div>
+                <a href="#contact" class="nav-cta" data-i18n="nav.contact">Contact Us</a>
             </div>
         </div>
     </nav>
@@ -1045,14 +1162,14 @@
         <div class="hero-bg"></div>
         <div class="hero-overlay"></div>
         <div class="hero-content">
-            <div class="hero-badge">
-                <span>🏢</span>
-                About Us
+            <div class="hero-badge" data-i18n="hero.badge">
+                🏢 About Us
             </div>
             <h1 class="hero-title">
-                Transforming<br><span>Qatar's Automotive</span><br>Parts Industry
+                <span data-i18n="hero.title1">Transforming</span><br><span data-i18n="hero.title2">Qatar's
+                    Automotive</span><br><span data-i18n="hero.title3">Parts Industry</span>
             </h1>
-            <p class="hero-subtitle">
+            <p class="hero-subtitle" data-i18n="hero.subtitle">
                 QScrap is Qatar's premium B2B+B2C marketplace connecting verified garages
                 with customers seeking quality new, used, and OEM automotive parts.
             </p>
@@ -1095,18 +1212,18 @@
         <div class="container">
             <div class="mission-grid">
                 <div class="mission-content reveal">
-                    <h2>Our Mission</h2>
-                    <p>
+                    <h2 data-i18n="mission.title">Our Mission</h2>
+                    <p data-i18n="mission.p1">
                         We're on a mission to revolutionize how Qatar sources automotive parts.
                         By connecting customers directly with verified garages, we eliminate the
                         middlemen, reduce costs, and ensure quality parts reach you faster.
                     </p>
-                    <p>
+                    <p data-i18n="mission.p2">
                         Our platform handles everything from discovery to delivery, providing
                         a seamless experience backed by Qatar's strongest consumer protections
                         including a <strong>7-day return guarantee</strong> and secure escrow payments.
                     </p>
-                    <p>
+                    <p data-i18n="mission.p3">
                         Whether you need a rare OEM part or a standard replacement, QScrap connects
                         you with the right garage in minutes, not days.
                     </p>
@@ -1115,8 +1232,9 @@
                     <img src="/assets/images/parts/wp3195881-cars-engine-parts-wallpaper.jpg"
                         alt="Car Parts Exploded View">
                     <div class="mission-visual-overlay">
-                        <h3>🎯 Connecting Parts to People</h3>
-                        <p>Technology-powered marketplace for the modern automotive industry</p>
+                        <h3 data-i18n="mission.visual.title">🎯 Connecting Parts to People</h3>
+                        <p data-i18n="mission.visual.subtitle">Technology-powered marketplace for the modern automotive
+                            industry</p>
                     </div>
                 </div>
             </div>
@@ -1127,27 +1245,31 @@
     <section class="section values">
         <div class="container">
             <div class="section-header reveal">
-                <span class="section-badge">Our Values</span>
-                <h2 class="section-title">What Drives Us Forward</h2>
-                <p class="section-subtitle">Built on principles that put customers and partners first</p>
+                <span class="section-badge" data-i18n="values.badge">Our Values</span>
+                <h2 class="section-title" data-i18n="values.title">What Drives Us Forward</h2>
+                <p class="section-subtitle" data-i18n="values.subtitle">Built on principles that put customers and
+                    partners first</p>
             </div>
             <div class="values-grid">
                 <div class="value-card reveal">
                     <div class="value-icon">🛡️</div>
-                    <h3 class="value-title">Trust & Transparency</h3>
-                    <p class="value-desc">Every garage is verified. Every transaction is protected. We believe in
+                    <h3 class="value-title" data-i18n="value1.title">Trust & Transparency</h3>
+                    <p class="value-desc" data-i18n="value1.desc">Every garage is verified. Every transaction is
+                        protected. We believe in
                         complete transparency with no hidden fees.</p>
                 </div>
                 <div class="value-card reveal">
                     <div class="value-icon">⚡</div>
-                    <h3 class="value-title">Speed & Efficiency</h3>
-                    <p class="value-desc">From request to delivery, our platform is optimized for speed. Same-day
+                    <h3 class="value-title" data-i18n="value2.title">Speed & Efficiency</h3>
+                    <p class="value-desc" data-i18n="value2.desc">From request to delivery, our platform is optimized
+                        for speed. Same-day
                         delivery across Doha with real-time tracking.</p>
                 </div>
                 <div class="value-card reveal">
                     <div class="value-icon">🤝</div>
-                    <h3 class="value-title">Partner Success</h3>
-                    <p class="value-desc">We grow when our partners grow. Our tiers help garages of all sizes succeed in
+                    <h3 class="value-title" data-i18n="value3.title">Partner Success</h3>
+                    <p class="value-desc" data-i18n="value3.desc">We grow when our partners grow. Our tiers help garages
+                        of all sizes succeed in
                         the digital marketplace.</p>
                 </div>
             </div>
@@ -1158,20 +1280,20 @@
     <section class="stats">
         <div class="stats-grid reveal">
             <div class="stat-item">
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Verified Garages</div>
+                <div class="stat-number" data-i18n="stat1.value">50+</div>
+                <div class="stat-label" data-i18n="stat1.label">Verified Garages</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">5,000+</div>
-                <div class="stat-label">Parts Delivered</div>
+                <div class="stat-number" data-i18n="stat2.value">5,000+</div>
+                <div class="stat-label" data-i18n="stat2.label">Parts Delivered</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">98%</div>
-                <div class="stat-label">Customer Satisfaction</div>
+                <div class="stat-number" data-i18n="stat3.value">98%</div>
+                <div class="stat-label" data-i18n="stat3.label">Customer Satisfaction</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">7-Day</div>
-                <div class="stat-label">Return Guarantee</div>
+                <div class="stat-number" data-i18n="stat4.value">7-Day</div>
+                <div class="stat-label" data-i18n="stat4.label">Return Guarantee</div>
             </div>
         </div>
     </section>
@@ -1180,9 +1302,10 @@
     <section class="section company-info" id="contact">
         <div class="container">
             <div class="section-header reveal">
-                <span class="section-badge">Company Information</span>
-                <h2 class="section-title">Legal & Contact Details</h2>
-                <p class="section-subtitle">Registered and operating in the State of Qatar</p>
+                <span class="section-badge" data-i18n="company.badge">Company Information</span>
+                <h2 class="section-title" data-i18n="company.title">Legal & Contact Details</h2>
+                <p class="section-subtitle" data-i18n="company.subtitle">Registered and operating in the State of Qatar
+                </p>
             </div>
             <div class="info-grid">
                 <div class="info-card reveal">
@@ -1236,8 +1359,9 @@
     <!-- CTA Section -->
     <section class="cta-section">
         <div class="cta-content reveal">
-            <h2 class="cta-title">Ready to Get Started?</h2>
-            <p class="cta-subtitle">Whether you're a customer looking for parts or a garage ready to grow, QScrap is
+            <h2 class="cta-title" data-i18n="cta.title">Ready to Get Started?</h2>
+            <p class="cta-subtitle" data-i18n="cta.subtitle">Whether you're a customer looking for parts or a garage
+                ready to grow, QScrap is
                 here for you.</p>
             <div class="cta-buttons">
                 <a href="/" class="btn-primary">
@@ -1246,9 +1370,9 @@
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
-                    Download App
+                    <span data-i18n="cta.download">Download App</span>
                 </a>
-                <a href="/partners.html" class="btn-secondary">Become a Partner</a>
+                <a href="/partners.html" class="btn-secondary" data-i18n="cta.partner">Become a Partner</a>
             </div>
         </div>
     </section>
@@ -1292,8 +1416,9 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-legal">QScrap Services & Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar</p>
-                <p class="footer-copyright">© 2026 QScrap. All rights reserved.</p>
+                <p class="footer-legal" data-i18n="footer.legalInfo">QScrap Services & Trading L.L.C | CR: 155892 | P.O.
+                    Box 32544, Doha, Qatar</p>
+                <p class="footer-copyright" data-i18n="footer.copyright">© 2026 QScrap. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -1318,6 +1443,8 @@
         window.addEventListener('scroll', revealOnScroll);
         window.addEventListener('load', revealOnScroll);
     </script>
+    <!-- i18n System -->
+    <script src="/js/about.js"></script>
 </body>
 
 </html>
