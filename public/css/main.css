@@ -211,13 +211,13 @@
             text-align: right;
         }
 
-        /* Navigation RTL */
+        /* Navigation RTL - No explicit row-reverse needed, RTL direction handles it */
         html[dir="rtl"] .nav-container {
-            flex-direction: row-reverse;
+            /* RTL direction naturally reverses flex items */
         }
 
         html[dir="rtl"] .nav-links {
-            flex-direction: row-reverse;
+            /* RTL direction naturally reverses flex items */
         }
 
         /* Hero RTL */
