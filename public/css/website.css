@@ -54,7 +54,6 @@ body {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-light);
     transition: all 0.3s ease;
 }
 
@@ -377,8 +376,15 @@ body {
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
 }
 
 /* ===== Section Base ===== */
@@ -1023,49 +1029,49 @@ body {
         grid-template-columns: 1fr;
         text-align: center;
     }
-    
+
     .hero-visual {
         display: none;
     }
-    
+
     .hero-title {
         font-size: 42px;
     }
-    
+
     .hero-stats {
         justify-content: center;
     }
-    
+
     .hero-buttons {
         justify-content: center;
     }
-    
+
     .steps-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .step-card::after {
         display: none;
     }
-    
+
     .value-props-grid,
     .tiers-grid,
     .testimonials-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .tier-card.featured {
         transform: none;
     }
-    
+
     .partners-content {
         grid-template-columns: 1fr;
     }
-    
+
     .partners-image {
         order: -1;
     }
-    
+
     .footer-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -1075,75 +1081,75 @@ body {
     .nav-links {
         display: none;
     }
-    
+
     .mobile-menu-btn {
         display: block;
     }
-    
+
     .hero {
         min-height: auto;
         padding: 120px 0 80px;
     }
-    
+
     .hero-title {
         font-size: 32px;
     }
-    
+
     .hero-subtitle {
         font-size: 16px;
     }
-    
+
     .hero-tags {
         flex-direction: column;
         align-items: center;
         gap: 8px;
     }
-    
+
     .hero-stats {
         flex-direction: column;
         gap: 16px;
     }
-    
+
     .section {
         padding: 60px 0;
     }
-    
+
     .section-title {
         font-size: 28px;
     }
-    
+
     .steps-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .trust-container {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .trust-stats {
         flex-direction: column;
         gap: 24px;
     }
-    
+
     .download-content h2 {
         font-size: 28px;
     }
-    
+
     .download-buttons {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .footer-grid {
         grid-template-columns: 1fr;
         text-align: center;
     }
-    
+
     .footer-social {
         justify-content: center;
     }
-    
+
     .footer-contact {
         flex-direction: column;
         gap: 12px;
