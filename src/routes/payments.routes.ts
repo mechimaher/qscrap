@@ -229,6 +229,7 @@ router.get('/test-cards', (req: Request, res: Response) => {
 /**
  * POST /api/payments/deposit/:orderId
  * Create deposit intent for delivery fee payment
+ * Scenario A: Customer pays delivery fee upfront, part price is COD at delivery
  */
 router.post('/deposit/:orderId',
     authenticate,
@@ -241,7 +242,7 @@ router.post('/deposit/:orderId',
             // Get order details to get delivery fee
             const pool = getWritePool();
             const orderResult = await pool.query(
-                'SELECT delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
+                'SELECT part_price, delivery_fee, total_amount, customer_id, order_status FROM orders WHERE order_id = $1',
                 [orderId]
             );
 
@@ -256,9 +257,29 @@ router.post('/deposit/:orderId',
                 return res.status(403).json({ success: false, error: 'Access denied' });
             }
 
+            const partPrice = parseFloat(order.part_price) || 0;
             const deliveryFee = parseFloat(order.delivery_fee) || 0;
+            const originalTotal = partPrice + deliveryFee;
+
+            // Accept loyalty discount from request body
+            const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
+
+            // For deposit-only payments, discount applies to COD amount (part price)
+            // Customer pays: delivery fee (upfront) + (part_price - discount) (COD)
+            const discountedPartPrice = Math.max(0, partPrice - loyaltyDiscount);
+            const newTotal = deliveryFee + discountedPartPrice;
+
             if (deliveryFee <= 0) {
                 return res.status(400).json({ success: false, error: 'No delivery fee to pay' });
+            }
+
+            // Save discount info to order if provided
+            if (loyaltyDiscount > 0) {
+                await pool.query(
+                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
+                    [orderId, loyaltyDiscount, newTotal]
+                );
+                console.log(`[Payment/Deposit] Applied ${loyaltyDiscount} QAR discount. Part COD: ${discountedPartPrice} QAR (was ${partPrice}). New total: ${newTotal} QAR`);
             }
 
             const result = await depositService.createDeliveryFeeDeposit(
@@ -275,6 +296,14 @@ router.post('/deposit/:orderId',
                     clientSecret: result.clientSecret,
                     amount: result.amount,
                     currency: result.currency
+                },
+                breakdown: {
+                    partPrice,
+                    deliveryFee,
+                    loyaltyDiscount,
+                    originalTotal,
+                    codAmount: discountedPartPrice,
+                    total: newTotal
                 }
             });
         } catch (error: any) {
