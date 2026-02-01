@@ -624,6 +624,106 @@
             }
         }
 
+        /* ===== 2026 CONTAINER QUERIES (Component-Level Responsiveness) ===== */
+        /* Define containers */
+        .steps-section,
+        .gallery-section,
+        .footer-content,
+        .value-section {
+            container-type: inline-size;
+            container-name: section;
+        }
+
+        /* Steps Grid - Container Query based */
+        @container section (max-width: 900px) {
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .steps-grid::before {
+                display: none;
+                /* Hide connection line on smaller containers */
+            }
+        }
+
+        @container section (max-width: 500px) {
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-lg);
+            }
+        }
+
+        /* Step Card - Adapt to container */
+        @container section (max-width: 500px) {
+            .step-card {
+                padding: var(--space-lg);
+            }
+
+            .step-num {
+                width: 48px;
+                height: 48px;
+                font-size: var(--text-lg);
+            }
+        }
+
+        /* Gallery Grid - Container Query based */
+        @container section (max-width: 800px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: auto;
+            }
+
+            .gallery-item.large {
+                grid-column: span 2;
+                grid-row: span 1;
+                height: 280px;
+            }
+        }
+
+        @container section (max-width: 500px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-item.large,
+            .gallery-item.wide {
+                grid-column: span 1;
+                height: 200px;
+            }
+        }
+
+        /* Footer Grid - Container Query based */
+        @container section (max-width: 800px) {
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-xl);
+            }
+        }
+
+        @container section (max-width: 500px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-brand {
+                align-items: center;
+            }
+        }
+
+        /* Value Grid - Container Query based */
+        @container section (max-width: 900px) {
+            .value-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @container section (max-width: 500px) {
+            .value-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ===== Reveal Animations ===== */
         @keyframes fadeInUp {
             from {
@@ -2140,7 +2240,7 @@
     </section>
 
     <!-- How It Works -->
-    <section class="how-it-works" id="how-it-works">
+    <section class="how-it-works steps-section" id="how-it-works">
         <div class="container">
             <div class="section-header reveal">
                 <span class="section-badge">How It Works</span>
@@ -2229,7 +2329,7 @@
     </section>
 
     <!-- Value Props -->
-    <section class="value-props">
+    <section class="value-props value-section">
         <div class="container">
             <div class="section-header reveal">
                 <span class="section-badge">Why QScrap</span>
@@ -2303,7 +2403,7 @@
 
     <!-- VVVIP 2030 Premium Footer -->
     <footer class="footer">
-        <div class="container">
+        <div class="container footer-content">
             <div class="footer-grid">
                 <div class="footer-brand">
                     <a href="/" class="nav-logo" style="margin-bottom: 16px;">
