@@ -532,6 +532,77 @@
                 padding: 12px 8px;
             }
         }
+
+        /* ===== Language Switcher ===== */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--mist);
+            padding: 6px 12px;
+            border-radius: 100px;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            background: transparent;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--slate);
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn:hover {
+            color: var(--qatar-maroon);
+        }
+
+        .lang-btn.active {
+            background: var(--white);
+            color: var(--qatar-maroon);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .lang-divider {
+            color: var(--silver);
+            font-size: 12px;
+        }
+
+        .lang-flag {
+            font-size: 16px;
+        }
+
+        /* ===== RTL Support ===== */
+        [dir="rtl"] {
+            font-family: 'Inter', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        [dir="rtl"] .nav-container {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .section-header {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .company-grid {
+            direction: rtl;
+        }
+
+        @media (max-width: 768px) {
+            .lang-switcher {
+                padding: 4px 8px;
+            }
+
+            .lang-text {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -542,12 +613,24 @@
             <a href="/" class="nav-logo">
                 <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
             </a>
+            <!-- Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn active" data-lang="en" aria-label="English">
+                    <span class="lang-flag">🇬🇧</span>
+                    <span class="lang-text">EN</span>
+                </button>
+                <span class="lang-divider">|</span>
+                <button class="lang-btn" data-lang="ar" aria-label="العربية">
+                    <span class="lang-flag">🇶🇦</span>
+                    <span class="lang-text">AR</span>
+                </button>
+            </div>
             <a href="/" class="nav-back">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="19" y1="12" x2="5" y2="12" />
                     <polyline points="12 19 5 12 12 5" />
                 </svg>
-                Back to Home
+                <span data-i18n="nav.backHome">Back to Home</span>
             </a>
         </div>
     </nav>
@@ -775,13 +858,16 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p>© 2026 QScrap Services & Trading L.L.C. All rights reserved.</p>
+        <p data-i18n="footer.copyright">© 2026 QScrap Services & Trading L.L.C. All rights reserved.</p>
         <p style="margin-top: 8px;">
-            <a href="/privacy.html">Privacy Policy</a> ·
-            <a href="/terms.html">Terms of Service</a> ·
-            <a href="/refund.html">Refund Policy</a>
+            <a href="/privacy.html" data-i18n="footer.privacy">Privacy Policy</a> ·
+            <a href="/terms.html" data-i18n="footer.terms">Terms of Service</a> ·
+            <a href="/refund.html" data-i18n="footer.refund">Refund Policy</a>
         </p>
     </footer>
+
+    <!-- i18n System -->
+    <script src="/js/legal-pages.js"></script>
 </body>
 
 </html>
