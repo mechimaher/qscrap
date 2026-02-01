@@ -624,6 +624,81 @@
             }
         }
 
+        /* ===== RTL (Arabic) SUPPORT ===== */
+        /* When html has dir="rtl", layout mirrors automatically */
+        html[dir="rtl"] {
+            /* Font family for Arabic */
+            --font-arabic: 'Inter', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        html[dir="rtl"] body {
+            font-family: var(--font-arabic);
+            text-align: right;
+        }
+
+        /* Navigation RTL */
+        html[dir="rtl"] .nav-container {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .nav-links {
+            flex-direction: row-reverse;
+        }
+
+        /* Hero RTL */
+        html[dir="rtl"] .hero-content {
+            text-align: right;
+        }
+
+        html[dir="rtl"] .hero-stats {
+            flex-direction: row-reverse;
+        }
+
+        /* Section headers RTL */
+        html[dir="rtl"] .section-header {
+            text-align: right;
+        }
+
+        /* Step cards RTL - reverse the grid flow */
+        html[dir="rtl"] .steps-grid {
+            direction: rtl;
+        }
+
+        /* Footer RTL */
+        html[dir="rtl"] .footer-grid {
+            direction: rtl;
+        }
+
+        html[dir="rtl"] .footer-brand {
+            text-align: right;
+        }
+
+        html[dir="rtl"] .footer-links {
+            text-align: right;
+        }
+
+        /* Buttons RTL - flip icon positions */
+        html[dir="rtl"] .btn-hero svg,
+        html[dir="rtl"] .nav-cta svg {
+            margin-left: 8px;
+            margin-right: 0;
+        }
+
+        /* Logical properties for universal RTL support */
+        .step-card {
+            padding-inline: var(--space-lg);
+            padding-block: var(--space-xl);
+        }
+
+        .value-card {
+            padding-inline: var(--space-lg);
+            padding-block: var(--space-xl);
+        }
+
+        .footer-links li {
+            margin-block-end: var(--space-sm);
+        }
+
         /* ===== 2026 CONTAINER QUERIES (Component-Level Responsiveness) ===== */
         /* Define containers */
         .steps-section,
