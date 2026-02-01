@@ -10,6 +10,9 @@
 
 import pool from '../config/db';
 import { ApiError, ErrorCode } from '../middleware/errorHandler.middleware';
+import jwt from 'jsonwebtoken';
+import { emailService } from './email.service';
+import crypto from 'crypto';
 
 // ============================================
 // TYPES
@@ -143,15 +146,17 @@ export class AdminService {
     }
 
     /**
-     * Approve a garage
+     * Approve a garage and send welcome email with magic link
+     * Enterprise B2B onboarding flow
      */
-    static async approveGarage(params: ApproveGarageParams): Promise<{ garage: Garage }> {
+    static async approveGarage(params: ApproveGarageParams): Promise<{ garage: Garage; emailSent?: boolean }> {
         const { garage_id, admin_id, notes } = params;
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
 
+            // Get garage with user info for email
             const garageResult = await client.query(`
                 UPDATE garages SET
                     approval_status = 'approved',
@@ -167,20 +172,74 @@ export class AdminService {
                 throw ApiError.notFound('Garage not found');
             }
 
+            const garage = garageResult.rows[0];
+
+            // Get user email for welcome email
+            const userResult = await client.query(`
+                SELECT email, full_name FROM users WHERE user_id = $1
+            `, [garage_id]);
+            const user = userResult.rows[0];
+
             // Activate user account
             await client.query(`
                 UPDATE users SET is_active = true, updated_at = NOW()
                 WHERE user_id = $1
             `, [garage_id]);
 
+            // Generate magic link token (48 hours expiry)
+            const tokenPayload = {
+                garage_id,
+                type: 'garage_setup',
+                iat: Math.floor(Date.now() / 1000)
+            };
+            const magicToken = jwt.sign(
+                tokenPayload,
+                process.env.JWT_SECRET || 'qscrap-secret-key-2026',
+                { expiresIn: '48h' }
+            );
+
+            // Store token hash for validation (prevents reuse)
+            const tokenHash = crypto.createHash('sha256').update(magicToken).digest('hex');
+            await client.query(`
+                INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, token_type)
+                VALUES ($1, $2, NOW() + INTERVAL '48 hours', 'garage_setup')
+                ON CONFLICT (user_id) DO UPDATE SET
+                    token_hash = $2,
+                    expires_at = NOW() + INTERVAL '48 hours',
+                    used_at = NULL
+            `, [garage_id, tokenHash]);
+
             // Log action
             await client.query(`
                 INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
                 VALUES ($1, 'approve_garage', 'garage', $2, $3)
-            `, [admin_id, garage_id, JSON.stringify({ status: 'approved', notes })]);
+            `, [admin_id, garage_id, JSON.stringify({ status: 'approved', notes, emailSent: !!user?.email })]);
 
             await client.query('COMMIT');
-            return { garage: garageResult.rows[0] };
+
+            // Send welcome email with magic link (after commit to avoid blocking)
+            let emailSent = false;
+            if (user?.email) {
+                const baseUrl = process.env.BASE_URL || 'https://garage.qscrap.qa';
+                const magicLink = `${baseUrl}/setup?token=${magicToken}`;
+
+                try {
+                    emailSent = await emailService.sendGarageWelcomeEmail(
+                        user.email,
+                        garage.garage_name || user.full_name || 'Partner',
+                        magicLink,
+                        '48 hours'
+                    );
+                    console.log(`[Admin] Welcome email sent to ${user.email} for garage ${garage_id}`);
+                } catch (emailErr) {
+                    console.error(`[Admin] Failed to send welcome email to ${user.email}:`, emailErr);
+                    // Don't throw - approval succeeded, email is bonus
+                }
+            } else {
+                console.warn(`[Admin] No email found for garage ${garage_id}, skipping welcome email`);
+            }
+
+            return { garage, emailSent };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;

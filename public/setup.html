@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Setup | QScrap Partner Network</title>
+    <link rel="icon" type="image/x-icon" href="/assets/images/qscrap-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --qatar-maroon: #8D1B3D;
+            --qatar-maroon-dark: #6B1530;
+            --qatar-maroon-light: #F5E6EB;
+            --gold: #C9A227;
+            --gold-dark: #A68520;
+            --gold-glow: rgba(201, 162, 39, 0.4);
+            --black: #0D0D0D;
+            --white: #FFFFFF;
+            --gray-50: #FAFAFA;
+            --gray-100: #F5F5F5;
+            --gray-200: #E5E5E5;
+            --gray-500: #737373;
+            --gray-900: #171717;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, var(--black) 0%, #1A1A1A 50%, var(--black) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(201, 162, 39, 0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+            padding: 48px 40px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(201, 162, 39, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 12px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo span {
+            color: var(--gold);
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(201, 162, 39, 0.2);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-body {
+            padding: 48px 40px;
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .welcome-text h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .welcome-text p {
+            font-size: 15px;
+            color: var(--gray-500);
+        }
+
+        .garage-name {
+            color: var(--qatar-maroon);
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: var(--gray-50);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--qatar-maroon);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(141, 27, 61, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--gray-500);
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: var(--gray-200);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+        }
+
+        .password-strength-bar.weak {
+            width: 33%;
+            background: var(--error);
+        }
+
+        .password-strength-bar.medium {
+            width: 66%;
+            background: var(--gold);
+        }
+
+        .password-strength-bar.strong {
+            width: 100%;
+            background: var(--success);
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 8px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: 100px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 30px rgba(141, 27, 61, 0.4);
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(141, 27, 61, 0.5);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .submit-btn.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .submit-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--white);
+            border-top-color: transparent;
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .message.error {
+            background: #FEE2E2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+            display: block;
+        }
+
+        .message.success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+            display: block;
+        }
+
+        .card-footer {
+            background: var(--gray-50);
+            padding: 24px 40px;
+            text-align: center;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .card-footer p {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .card-footer a {
+            color: var(--qatar-maroon);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--qatar-maroon);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .error-state h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+
+        .error-state p {
+            font-size: 15px;
+            color: var(--gray-500);
+            margin-bottom: 24px;
+        }
+
+        .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--gold);
+            color: var(--black);
+            border: none;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            background: var(--gold-dark);
+        }
+
+        /* Success State */
+        .success-state {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .success-icon {
+            font-size: 72px;
+            margin-bottom: 24px;
+        }
+
+        .success-state h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+
+        .success-state p {
+            font-size: 15px;
+            color: var(--gray-500);
+            margin-bottom: 32px;
+        }
+
+        .login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 18px 48px;
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: 100px;
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 8px 30px rgba(141, 27, 61, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(141, 27, 61, 0.5);
+        }
+
+        @media (max-width: 520px) {
+
+            .card-header,
+            .card-body,
+            .card-footer {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .welcome-text h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="logo">Q<span>Scrap</span></div>
+                <div class="header-badge">
+                    <span>⭐</span> Gold Partner Setup
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Validating your activation link...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h2>Link Expired or Invalid</h2>
+                <p id="errorMessage">This activation link has expired or has already been used. Please contact our
+                    Partner Success Team for a new link.</p>
+                <a href="https://wa.me/97450267974" class="contact-btn">
+                    💬 Contact Support
+                </a>
+            </div>
+
+            <!-- Setup Form -->
+            <div id="setupForm" class="card-body" style="display: none;">
+                <div class="welcome-text">
+                    <h1>Welcome, <span id="garageName" class="garage-name">Partner</span>!</h1>
+                    <p>Create a secure password to access your dashboard</p>
+                </div>
+
+                <div id="formMessage" class="message"></div>
+
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="Enter a strong password"
+                            required minlength="8">
+                        <div class="password-strength">
+                            <div id="strengthBar" class="password-strength-bar"></div>
+                        </div>
+                        <p class="password-hint">Use at least 8 characters with a mix of letters and numbers</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input"
+                            placeholder="Re-enter your password" required>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="submit-btn">
+                        Activate Account →
+                    </button>
+                </form>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" class="success-state" style="display: none;">
+                <div class="success-icon">🎉</div>
+                <h2>Account Activated!</h2>
+                <p>Your password has been set. You can now log in to your dashboard and start receiving orders.</p>
+                <a href="/login.html" class="login-btn">
+                    Go to Dashboard →
+                </a>
+            </div>
+
+            <div class="card-footer">
+                <p>Need help? <a href="https://wa.me/97450267974">Contact Support</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = new URLSearchParams(window.location.search).get('token');
+
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const setupForm = document.getElementById('setupForm');
+        const successState = document.getElementById('successState');
+        const garageName = document.getElementById('garageName');
+        const errorMessage = document.getElementById('errorMessage');
+        const passwordForm = document.getElementById('passwordForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const formMessage = document.getElementById('formMessage');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const strengthBar = document.getElementById('strengthBar');
+
+        // Password strength checker
+        passwordInput.addEventListener('input', function () {
+            const val = this.value;
+            let strength = 'weak';
+
+            if (val.length >= 8 && /[A-Z]/.test(val) && /[0-9]/.test(val)) {
+                strength = 'strong';
+            } else if (val.length >= 8) {
+                strength = 'medium';
+            }
+
+            strengthBar.className = 'password-strength-bar ' + strength;
+        });
+
+        // Validate token on load
+        async function validateToken() {
+            if (!token) {
+                showError('No activation token found. Please use the link from your email.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/garage/setup?token=${encodeURIComponent(token)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    loadingState.style.display = 'none';
+                    setupForm.style.display = 'block';
+                    garageName.textContent = data.garage.garage_name || 'Partner';
+                } else {
+                    showError(data.error || 'Invalid or expired token');
+                }
+            } catch (err) {
+                showError('Failed to validate token. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            loadingState.style.display = 'none';
+            errorState.style.display = 'block';
+            errorMessage.textContent = message;
+        }
+
+        // Handle form submission
+        passwordForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // Validation
+            if (password.length < 8) {
+                showFormError('Password must be at least 8 characters');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showFormError('Passwords do not match');
+                return;
+            }
+
+            // Submit
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/garage/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    setupForm.style.display = 'none';
+                    successState.style.display = 'block';
+                } else {
+                    showFormError(data.error || 'Failed to set password');
+                }
+            } catch (err) {
+                showFormError('Network error. Please try again.');
+            } finally {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function showFormError(message) {
+            formMessage.textContent = message;
+            formMessage.className = 'message error';
+        }
+
+        // Start validation
+        validateToken();
+    </script>
+</body>
+
+</html>
