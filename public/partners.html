@@ -31,9 +31,8 @@
         rel="stylesheet">
 
     <style>
-        /* ===== VVIP Platinum Design System ===== */
+        /* ===== VVIP Platinum Ultra-Premium Design System ===== */
         :root {
-            /* Qatar Premium Palette */
             --qatar-maroon: #8D1B3D;
             --qatar-maroon-dark: #6B1530;
             --qatar-maroon-light: #F5E6EB;
@@ -41,8 +40,7 @@
             --gold: #C9A227;
             --gold-dark: #A68520;
             --gold-light: #F5F0E1;
-
-            /* Neutrals */
+            --gold-glow: rgba(201, 162, 39, 0.4);
             --white: #FFFFFF;
             --mist: #F8F8F8;
             --pearl: #F0F0F0;
@@ -50,13 +48,54 @@
             --slate: #9A9A9A;
             --charcoal: #3A3A3A;
             --black: #1A1A1A;
-
-            /* Success/Growth */
             --success: #10B981;
             --success-light: #D1FAE5;
-
-            /* Typography */
+            --glass-white: rgba(255, 255, 255, 0.95);
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Advanced Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         * {
@@ -82,22 +121,30 @@
             padding: 0 24px;
         }
 
-        /* ===== Navigation ===== */
+        /* ===== Glassmorphism Navigation ===== */
         .nav {
-            background: var(--white);
-            padding: 0 24px;
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
         .nav-container {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 72px;
+            padding: 16px 24px;
         }
 
         .nav-logo {
@@ -170,22 +217,31 @@
             transform: translateX(-3px);
         }
 
-        /* ===== Hero Section ===== */
+        /* ===== Cinematic Hero Section ===== */
         .hero {
-            background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
-            padding: 100px 24px 120px;
+            min-height: 90vh;
             position: relative;
+            display: flex;
+            align-items: center;
             overflow: hidden;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2020 100%);
         }
 
-        .hero::before {
-            content: '';
+        .hero-bg {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background: url('/assets/images/parts/connect-part-to-people-10.jpg') center/cover;
+            opacity: 0.5;
+            animation: kenBurns 25s ease-in-out infinite alternate;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(141, 27, 61, 0.88) 0%, rgba(26, 26, 26, 0.92) 100%);
         }
 
         .hero-content {
@@ -864,7 +920,7 @@
 
 <body>
     <!-- Navigation -->
-    <nav class="nav">
+    <nav class="nav" id="mainNav">
         <div class="nav-container">
             <a href="/" class="nav-logo">
                 <img src="/assets/images/qscrap-logo.png" alt="QScrap Logo">
@@ -885,6 +941,8 @@
 
     <!-- Hero Section -->
     <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
         <div class="hero-content">
             <div class="hero-badge">
                 <span>🚀</span>
@@ -1152,6 +1210,27 @@
             <p class="footer-copyright">© 2026 QScrap. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        // Navigation scroll effect
+        const nav = document.getElementById('mainNav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Reveal on scroll
+        const reveals = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            reveals.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight - 100) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+    </script>
 </body>
 
 </html>
