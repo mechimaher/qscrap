@@ -418,7 +418,8 @@ export default function OrdersScreen() {
     };
 
     const activeOrders = orders.filter(o =>
-        !['completed', 'cancelled', 'refunded'].includes(o.order_status)
+        !['completed', 'refunded'].includes(o.order_status) &&
+        !o.order_status.startsWith('cancelled')
     );
 
     const EmptyState = () => (
