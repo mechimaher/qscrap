@@ -44,18 +44,35 @@ const translations = {
         'stat4.value': '7-Day',
         'stat4.label': 'Return Guarantee',
 
-        // Company Info Section
+        // Company Info Section Header
         'company.badge': 'Company Information',
         'company.title': 'Legal & Contact Details',
         'company.subtitle': 'Registered and operating in the State of Qatar',
-        'company.legal.title': '📋 Legal Identity',
-        'company.legal.name': 'Company Name:',
-        'company.legal.cr': 'Commercial Registration:',
-        'company.legal.address': 'Registered Address:',
-        'company.contact.title': '📞 Get In Touch',
-        'company.contact.phone': 'Phone:',
-        'company.contact.email': 'Email:',
-        'company.contact.whatsapp': 'WhatsApp:',
+
+        // Info Cards - Legal Identity
+        'info.legal.title': '📋 Legal Identity',
+        'info.legal.company': '<strong>Company Name:</strong><br>QScrap Services & Trading L.L.C<br>كيوسكراب للخدمات والتجارة ذ.م.م',
+        'info.legal.cr': '<strong>Commercial Registration:</strong><br>CR Number: 155892',
+        'info.legal.address': '<strong>Registered Address:</strong><br>P.O. Box 32544<br>Industrial Area Street 10<br>Doha, Qatar',
+
+        // Info Cards - Contact Us
+        'info.contact.title': '📞 Contact Us',
+        'info.contact.support': '<strong>Customer Support:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
+        'info.contact.mobile': '<strong>Mobile:</strong><br><a href="tel:+97450267974">+974 5026 7974</a><br><a href="tel:+97455906912">+974 5590 6912</a>',
+        'info.contact.landline': '<strong>Landline:</strong><br>+974 4455 4444',
+        'info.contact.hours': '<strong>Business Hours:</strong><br>Saturday - Thursday<br>8:00 AM - 8:00 PM (Qatar Time)',
+
+        // Info Cards - Consumer Protection
+        'info.protection.title': '🔒 Consumer Protection',
+        'info.protection.intro': "QScrap operates in full compliance with Qatar's consumer protection laws:",
+        'info.protection.laws': '<strong>Law No. 8 of 2008</strong> - Consumer Protection<br><strong>Law No. 13 of 2016</strong> - Personal Data Protection<br><strong>MOCI Decision 25/2024</strong> - E-Commerce Regulations',
+
+        // Info Cards - Download App
+        'info.app.title': '📱 Download Our App',
+        'info.app.intro': 'Get the QScrap mobile app for the best experience:',
+        'info.app.customers': '<strong>For Customers:</strong><br>Find parts, track orders, and enjoy same-day delivery.',
+        'info.app.drivers': '<strong>For Drivers:</strong><br>Join our delivery network and earn more.',
+        'info.app.available': '<em>Available on iOS and Android</em>',
 
         // CTA Section
         'cta.title': 'Ready to Get Started?',
@@ -122,18 +139,35 @@ const translations = {
         'stat4.value': '٧ أيام',
         'stat4.label': 'ضمان الإرجاع',
 
-        // Company Info Section
+        // Company Info Section Header
         'company.badge': 'معلومات الشركة',
         'company.title': 'التفاصيل القانونية والتواصل',
         'company.subtitle': 'مسجلة وتعمل في دولة قطر',
-        'company.legal.title': '📋 الهوية القانونية',
-        'company.legal.name': 'اسم الشركة:',
-        'company.legal.cr': 'السجل التجاري:',
-        'company.legal.address': 'العنوان المسجل:',
-        'company.contact.title': '📞 تواصل معنا',
-        'company.contact.phone': 'الهاتف:',
-        'company.contact.email': 'البريد الإلكتروني:',
-        'company.contact.whatsapp': 'واتساب:',
+
+        // Info Cards - Legal Identity
+        'info.legal.title': '📋 الهوية القانونية',
+        'info.legal.company': '<strong>اسم الشركة:</strong><br>QScrap Services & Trading L.L.C<br>كيوسكراب للخدمات والتجارة ذ.م.م',
+        'info.legal.cr': '<strong>السجل التجاري:</strong><br>رقم السجل: ١٥٥٨٩٢',
+        'info.legal.address': '<strong>العنوان المسجل:</strong><br>ص.ب: ٣٢٥٤٤<br>شارع ١٠، المنطقة الصناعية<br>الدوحة، قطر',
+
+        // Info Cards - Contact Us
+        'info.contact.title': '📞 تواصل معنا',
+        'info.contact.support': '<strong>دعم العملاء:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
+        'info.contact.mobile': '<strong>الجوال:</strong><br><a href="tel:+97450267974">+974 5026 7974</a><br><a href="tel:+97455906912">+974 5590 6912</a>',
+        'info.contact.landline': '<strong>الهاتف الثابت:</strong><br>+974 4455 4444',
+        'info.contact.hours': '<strong>ساعات العمل:</strong><br>السبت - الخميس<br>٨:٠٠ صباحاً - ٨:٠٠ مساءً (توقيت قطر)',
+
+        // Info Cards - Consumer Protection
+        'info.protection.title': '🔒 حماية المستهلك',
+        'info.protection.intro': 'كيوسكراب تعمل بالامتثال الكامل لقوانين حماية المستهلك في قطر:',
+        'info.protection.laws': '<strong>القانون رقم ٨ لسنة ٢٠٠٨</strong> - حماية المستهلك<br><strong>القانون رقم ١٣ لسنة ٢٠١٦</strong> - حماية البيانات الشخصية<br><strong>قرار وزارة التجارة ٢٥/٢٠٢٤</strong> - لوائح التجارة الإلكترونية',
+
+        // Info Cards - Download App
+        'info.app.title': '📱 حمّل تطبيقنا',
+        'info.app.intro': 'احصل على تطبيق كيوسكراب للحصول على أفضل تجربة:',
+        'info.app.customers': '<strong>للعملاء:</strong><br>ابحث عن القطع، تتبع الطلبات، واستمتع بالتوصيل في نفس اليوم.',
+        'info.app.drivers': '<strong>للسائقين:</strong><br>انضم إلى شبكة التوصيل لدينا واكسب المزيد.',
+        'info.app.available': '<em>متوفر على iOS و Android</em>',
 
         // CTA Section
         'cta.title': 'مستعد للبدء؟',
