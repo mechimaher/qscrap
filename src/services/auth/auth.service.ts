@@ -21,6 +21,8 @@ export interface RegisterData {
     all_brands?: boolean;
     location_lat?: number;
     location_lng?: number;
+    cr_number?: string;
+    trade_license_number?: string;
 }
 
 export interface LoginResult {
@@ -56,7 +58,11 @@ export class AuthService {
             if (data.user_type === 'garage' && data.garage_name) {
                 // NEW GARAGES MUST BE APPROVED BY ADMIN BEFORE ACCESS
                 // Status starts as 'pending' - admin can approve, reject, or grant demo
-                await client.query(`INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, approval_status, supplier_type, specialized_brands, all_brands) VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8)`, [userId, data.garage_name, data.address, data.location_lat || null, data.location_lng || null, data.supplier_type || 'used', data.specialized_brands || [], data.all_brands !== false]);
+                await client.query(
+                    `INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, approval_status, supplier_type, specialized_brands, all_brands, cr_number, trade_license_number) 
+                     VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8, $9, $10)`,
+                    [userId, data.garage_name, data.address, data.location_lat || null, data.location_lng || null, data.supplier_type || 'used', data.specialized_brands || [], data.all_brands !== false, data.cr_number || null, data.trade_license_number || null]
+                );
             }
 
             await client.query('COMMIT');

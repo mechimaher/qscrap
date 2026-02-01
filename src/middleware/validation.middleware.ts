@@ -104,18 +104,33 @@ export const registerGarageSchema = z.object({
     garage_name: z.string()
         .min(2, 'Garage name must be at least 2 characters')
         .max(100, 'Garage name too long'),
-    owner_name: z.string()
+    full_name: z.string()
         .min(2, 'Owner name must be at least 2 characters')
         .max(100, 'Owner name too long'),
     phone_number: z.string()
         .min(8, 'Phone number must be at least 8 characters')
         .max(20, 'Phone number too long'),
+    email: z.string()
+        .email('Invalid email address')
+        .optional(),
     password: z.string()
         .min(6, 'Password must be at least 6 characters')
         .max(100, 'Password too long'),
     address: z.string()
         .min(5, 'Address must be at least 5 characters')
         .max(200, 'Address too long')
+        .optional(),
+    cr_number: z.string()
+        .max(50, 'CR number too long')
+        .optional(),
+    trade_license_number: z.string()
+        .max(50, 'Trade license number too long')
+        .optional(),
+    supplier_type: z.enum(['used', 'new', 'both'])
+        .optional(),
+    specialized_brands: z.array(z.string())
+        .optional(),
+    all_brands: z.boolean()
         .optional()
 });
 
