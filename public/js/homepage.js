@@ -150,7 +150,7 @@ const translations = {
         'nav.download': 'تحميل التطبيق',
 
         // Hero Section
-        'hero.badge': 'المنصة الأولى لقطع غيار السيارات في قطر',
+        'hero.badge': '⭐ المنصة الأولى لقطع غيار السيارات في قطر',
         'hero.title1': 'سوق قطع غيار',
         'hero.title2': 'السيارات المتميز',
         'hero.title3': 'في قطر',
@@ -161,7 +161,7 @@ const translations = {
         'hero.stat1.label': 'قطعة تم توصيلها',
         'hero.stat2.value': '+٥٠',
         'hero.stat2.label': 'كراج معتمد',
-        'hero.stat3.value': '٤.٨★',
+        'hero.stat3.value': '★٤.٨',
         'hero.stat3.label': 'تقييم العملاء',
 
         // How It Works
