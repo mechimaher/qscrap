@@ -594,6 +594,47 @@
             direction: rtl;
         }
 
+        /* RTL List Items - Checkmarks on Right */
+        [dir="rtl"] li {
+            padding-left: 0;
+            padding-right: 28px;
+        }
+
+        [dir="rtl"] li::before {
+            left: auto;
+            right: 0;
+        }
+
+        /* RTL Highlight Boxes - Border on Right */
+        [dir="rtl"] .highlight-box {
+            border-left: none;
+            border-right: 4px solid var(--qatar-maroon);
+            border-radius: 12px 0 0 12px;
+        }
+
+        [dir="rtl"] .highlight-box.gold {
+            border-right-color: var(--gold);
+        }
+
+        [dir="rtl"] .highlight-box.success {
+            border-right-color: var(--success);
+        }
+
+        [dir="rtl"] .highlight-box.warning {
+            border-right-color: var(--warning);
+        }
+
+        /* RTL Hero Badge */
+        [dir="rtl"] .hero-badge {
+            flex-direction: row-reverse;
+        }
+
+        /* RTL Company Items */
+        [dir="rtl"] .company-item {
+            flex-direction: row-reverse;
+            text-align: right;
+        }
+
         @media (max-width: 768px) {
             .lang-switcher {
                 padding: 4px 8px;
