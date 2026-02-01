@@ -681,6 +681,51 @@
             border-color: var(--white);
         }
 
+                .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .footer-brand p {
+            color: var(--slate);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-top: 16px;
+        }
+
+        .footer-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--slate);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--gold);
+        }
+
         /* Footer */
         .footer {
             background: var(--black);
@@ -1032,20 +1077,45 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-logo">
-                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap">
-                
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="nav-logo" style="margin-bottom: 16px;">
+                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap"
+                            style="filter: brightness(0) invert(1); height: 80px;">
+                    </a>
+                    <p>Qatar's premium automotive parts marketplace. Connecting customers with verified garages for
+                        quality new, used, and OEM parts.</p>
+                </div>
+                <div>
+                    <h4 class="footer-title">Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="/about.html">About Us</a></li>
+                        <li><a href="/partners.html">For Businesses</a></li>
+                        <li><a href="/about.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="/privacy.html">Privacy Policy</a></li>
+                        <li><a href="/terms.html">Terms of Service</a></li>
+                        <li><a href="/privacy.html">Refund Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Contact</h4>
+                    <ul class="footer-links">
+                        <li><a href="mailto:support@qscrap.qa">support@qscrap.qa</a></li>
+                        <li><a href="tel:+97450267974">+974 5026 7974</a></li>
+                        <li><a href="tel:+97455906912">+974 5590 6912</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-links">
-                <a href="/">Home</a>
-                <a href="/partners.html">For Businesses</a>
-                <a href="/privacy.html">Privacy Policy</a>
+            <div class="footer-bottom">
+                <p class="footer-legal">Services &amp; Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar</p>
+                <p class="footer-copyright">© 2026 All rights reserved.</p>
             </div>
-        </div>
-        <div class="footer-bottom">
-            <p class="footer-legal">QScrap Services & Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar</p>
-            <p class="footer-copyright">© 2026 All rights reserved.</p>
         </div>
     </footer>
 
