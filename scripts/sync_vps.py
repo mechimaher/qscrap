@@ -38,7 +38,7 @@ try:
     print("✅ VPS synced with GitHub!")
     
     print("🔄 Rebuilding and restarting containers...")
-    stdin, stdout, stderr = client.exec_command("cd /opt/qscrap && docker compose up -d --build")
+    stdin, stdout, stderr = client.exec_command("cd /opt/qscrap && docker compose build --no-cache backend && docker compose up -d")
     print(stdout.read().decode())
     print(stderr.read().decode())
     
