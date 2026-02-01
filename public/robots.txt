@@ -1,0 +1,35 @@
+# QScrap - Robots.txt
+# https://www.qscrap.qa
+
+User-agent: *
+Allow: /
+Allow: /about.html
+Allow: /partners.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /refund.html
+
+# Disallow internal dashboards
+Disallow: /admin-dashboard.html
+Disallow: /finance-dashboard.html
+Disallow: /support-dashboard.html
+Disallow: /operations-dashboard.html
+Disallow: /garage-dashboard.html
+Disallow: /setup.html
+Disallow: /verify.html
+
+# Crawl-delay for politeness
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://www.qscrap.qa/sitemap.xml
+
+# Social media crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
