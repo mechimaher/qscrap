@@ -2090,6 +2090,86 @@
                 font-size: var(--text-3xl);
             }
         }
+
+        /* ===== LANGUAGE SWITCHER ===== */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            background: var(--mist);
+            padding: 4px 8px;
+            border-radius: var(--radius-full);
+            margin-right: var(--space-md);
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--slate);
+            transition: all var(--duration-fast) var(--easing-default);
+        }
+
+        .lang-btn:hover {
+            color: var(--qatar-maroon);
+        }
+
+        .lang-btn.active {
+            background: var(--white);
+            color: var(--qatar-maroon);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .lang-flag {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .lang-divider {
+            color: var(--silver);
+            font-weight: 300;
+        }
+
+        .lang-text {
+            letter-spacing: 0.5px;
+        }
+
+        /* RTL specific styles for switcher */
+        html[dir="rtl"] .lang-switcher {
+            margin-right: 0;
+            margin-left: var(--space-md);
+        }
+
+        /* Mobile language switcher */
+        @media (max-width: 768px) {
+            .lang-switcher {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: var(--z-fixed);
+                background: var(--white);
+                box-shadow: var(--shadow-lg);
+                padding: 6px 12px;
+            }
+
+            html[dir="rtl"] .lang-switcher {
+                right: auto;
+                left: 20px;
+            }
+        }
+
+        /* Smooth transition for language change */
+        [data-i18n] {
+            transition: opacity var(--duration-fast) var(--easing-default);
+        }
     </style>
 </head>
 
@@ -2105,10 +2185,22 @@
 
             </a>
             <div class="nav-links">
-                <a href="#how-it-works" class="nav-link">How It Works</a>
-                <a href="#gallery" class="nav-link">Gallery</a>
-                <a href="/partners.html" class="nav-link">For Businesses</a>
-                <a href="/about.html" class="nav-link">About</a>
+                <a href="#how-it-works" class="nav-link" data-i18n="nav.howItWorks">How It Works</a>
+                <a href="#gallery" class="nav-link" data-i18n="nav.gallery">Gallery</a>
+                <a href="/partners.html" class="nav-link" data-i18n="nav.forBusiness">For Businesses</a>
+                <a href="/about.html" class="nav-link" data-i18n="nav.about">About</a>
+            </div>
+            <!-- Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn active" data-lang="en" aria-label="English">
+                    <span class="lang-flag">🇬🇧</span>
+                    <span class="lang-text">EN</span>
+                </button>
+                <span class="lang-divider">|</span>
+                <button class="lang-btn" data-lang="ar" aria-label="العربية">
+                    <span class="lang-flag">🇶🇦</span>
+                    <span class="lang-text">AR</span>
+                </button>
             </div>
             <a href="#download" class="nav-cta">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2116,7 +2208,7 @@
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Download App
+                <span data-i18n="nav.download">Download App</span>
             </a>
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
                 <span></span><span></span><span></span>
@@ -2140,14 +2232,14 @@
                         <path
                             d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                     </svg>
-                    Qatar's #1 Auto Parts Platform
+                    <span data-i18n="hero.badge">Qatar's #1 Auto Parts Platform</span>
                 </div>
                 <h1 class="hero-title">
-                    Qatar's Premium<br>
-                    <span>Automotive Parts</span><br>
-                    Marketplace
+                    <span data-i18n="hero.title1">Qatar's Premium</span><br>
+                    <span class="highlight" data-i18n="hero.title2">Automotive Parts</span><br>
+                    <span data-i18n="hero.title3">Marketplace</span>
                 </h1>
-                <p class="hero-subtitle">
+                <p class="hero-subtitle" data-i18n="hero.subtitle">
                     New • Used • Genuine OEM — Delivered Same Day to Your Door
                 </p>
                 <div class="hero-buttons">
@@ -2158,10 +2250,10 @@
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
-                        Download App - It's Free
+                        <span data-i18n="hero.cta1">Download App - It's Free</span>
                     </a>
                     <a href="/partners.html" class="btn-hero-secondary">
-                        For Businesses
+                        <span data-i18n="hero.cta2">For Businesses</span>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <line x1="5" y1="12" x2="19" y2="12" />
@@ -2171,16 +2263,16 @@
                 </div>
                 <div class="hero-stats">
                     <div class="hero-stat">
-                        <div class="hero-stat-value">5,000+</div>
-                        <div class="hero-stat-label">Parts Delivered</div>
+                        <div class="hero-stat-value" data-i18n="hero.stat1.value">5,000+</div>
+                        <div class="hero-stat-label" data-i18n="hero.stat1.label">Parts Delivered</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value">50+</div>
-                        <div class="hero-stat-label">Verified Garages</div>
+                        <div class="hero-stat-value" data-i18n="hero.stat2.value">50+</div>
+                        <div class="hero-stat-label" data-i18n="hero.stat2.label">Verified Garages</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value">4.8★</div>
-                        <div class="hero-stat-label">Customer Rating</div>
+                        <div class="hero-stat-value" data-i18n="hero.stat3.value">4.8★</div>
+                        <div class="hero-stat-label" data-i18n="hero.stat3.label">Customer Rating</div>
                     </div>
                 </div>
             </div>
@@ -2318,9 +2410,9 @@
     <section class="how-it-works steps-section" id="how-it-works">
         <div class="container">
             <div class="section-header reveal">
-                <span class="section-badge">How It Works</span>
-                <h2 class="section-title">Simple. Fast. Reliable.</h2>
-                <p class="section-subtitle">Get the parts you need in 4 easy steps</p>
+                <span class="section-badge" data-i18n="steps.badge">How It Works</span>
+                <h2 class="section-title" data-i18n="steps.title">Simple. Fast. Reliable.</h2>
+                <p class="section-subtitle" data-i18n="steps.subtitle">Get the parts you need in 4 easy steps</p>
             </div>
             <div class="steps-grid">
                 <div class="step-card reveal">
@@ -2328,32 +2420,36 @@
                         📱
                         <span class="step-number-badge">1</span>
                     </div>
-                    <h3 class="step-title">Request</h3>
-                    <p class="step-desc">Describe the part you need. Add photos and your car details for accuracy.</p>
+                    <h3 class="step-title" data-i18n="step1.title">Request</h3>
+                    <p class="step-desc" data-i18n="step1.desc">Describe the part you need. Add photos and your car
+                        details for accuracy.</p>
                 </div>
                 <div class="step-card reveal">
                     <div class="step-icon">
                         ⚡
                         <span class="step-number-badge">2</span>
                     </div>
-                    <h3 class="step-title">Compare Bids</h3>
-                    <p class="step-desc">Receive competitive quotes from verified garages within hours.</p>
+                    <h3 class="step-title" data-i18n="step2.title">Compare Bids</h3>
+                    <p class="step-desc" data-i18n="step2.desc">Receive competitive quotes from verified garages within
+                        hours.</p>
                 </div>
                 <div class="step-card reveal">
                     <div class="step-icon">
                         🔒
                         <span class="step-number-badge">3</span>
                     </div>
-                    <h3 class="step-title">Pay Securely</h3>
-                    <p class="step-desc">Choose card payment or Cash on Delivery. Your money is protected.</p>
+                    <h3 class="step-title" data-i18n="step3.title">Pay Securely</h3>
+                    <p class="step-desc" data-i18n="step3.desc">Choose card payment or Cash on Delivery. Your money is
+                        protected.</p>
                 </div>
                 <div class="step-card reveal">
                     <div class="step-icon">
                         🚚
                         <span class="step-number-badge">4</span>
                     </div>
-                    <h3 class="step-title">Receive at Door</h3>
-                    <p class="step-desc">Track your order in real-time and receive it at your doorstep.</p>
+                    <h3 class="step-title" data-i18n="step4.title">Receive at Door</h3>
+                    <p class="step-desc" data-i18n="step4.desc">Track your order in real-time and receive it at your
+                        doorstep.</p>
                 </div>
             </div>
         </div>
@@ -2555,6 +2651,228 @@
         };
         window.addEventListener('scroll', revealOnScroll);
         window.addEventListener('load', revealOnScroll);
+
+        // ===== 2026 BILINGUAL I18N SYSTEM =====
+        // Professional Arabic translations for Qatari market
+        const translations = {
+            en: {
+                // Navigation
+                'nav.howItWorks': 'How It Works',
+                'nav.gallery': 'Gallery',
+                'nav.forBusiness': 'For Businesses',
+                'nav.about': 'About',
+                'nav.download': 'Download App',
+
+                // Hero Section
+                'hero.badge': "Qatar's #1 Auto Parts Platform",
+                'hero.title1': "Qatar's Premium",
+                'hero.title2': 'Automotive Parts',
+                'hero.title3': 'Marketplace',
+                'hero.subtitle': 'New • Used • Genuine OEM — Delivered Same Day to Your Door',
+                'hero.cta1': 'Download App - It\'s Free',
+                'hero.cta2': 'For Businesses',
+                'hero.stat1.value': '5,000+',
+                'hero.stat1.label': 'Parts Delivered',
+                'hero.stat2.value': '50+',
+                'hero.stat2.label': 'Verified Garages',
+                'hero.stat3.value': '4.8★',
+                'hero.stat3.label': 'Customer Rating',
+
+                // How It Works
+                'steps.badge': 'How It Works',
+                'steps.title': 'Get Your Part in 4 Simple Steps',
+                'steps.subtitle': 'From request to delivery in as little as 2 hours',
+                'step1.title': 'Request',
+                'step1.desc': 'Describe the part you need. Add photos and your car details for accuracy.',
+                'step2.title': 'Compare Bids',
+                'step2.desc': 'Receive competitive quotes from verified garages. Choose the best offer.',
+                'step3.title': 'Pay Securely',
+                'step3.desc': 'Pay with card or cash on delivery. Your payment is held in escrow.',
+                'step4.title': 'Get It Delivered',
+                'step4.desc': 'Same-day delivery across Qatar. 7-day return guarantee included.',
+
+                // Value Props
+                'value.badge': 'Why QScrap',
+                'value.title': 'The Smart Way to Buy Auto Parts',
+                'value.subtitle': 'Trust, quality, and convenience in every order',
+                'value1.title': 'Quality Guaranteed',
+                'value1.desc': 'Every part is verified for quality. 7-day return policy if anything doesn\'t match your expectations.',
+                'value2.title': 'Competitive Prices',
+                'value2.desc': 'Compare quotes from multiple garages. Get the best deal without the haggling.',
+                'value3.title': 'Fast Delivery',
+                'value3.desc': 'Same-day delivery across Doha and surrounding areas. Track your order in real-time.',
+
+                // Gallery
+                'gallery.badge': 'Our Quality',
+                'gallery.title': 'Premium Parts Gallery',
+                'gallery.subtitle': 'Genuine OEM and quality-verified parts from trusted suppliers',
+
+                // CTA
+                'cta.title': 'Ready to Find Your Part?',
+                'cta.subtitle': 'Download the QScrap app and get your automotive parts delivered today.',
+                'cta.button': 'Download Now - It\'s Free',
+
+                // Footer
+                'footer.tagline': 'Qatar\'s trusted marketplace for automotive parts.',
+                'footer.quickLinks': 'Quick Links',
+                'footer.legal': 'Legal',
+                'footer.contact': 'Contact',
+                'footer.home': 'Home',
+                'footer.howItWorks': 'How It Works',
+                'footer.forGarages': 'For Garages',
+                'footer.aboutUs': 'About Us',
+                'footer.terms': 'Terms of Service',
+                'footer.privacy': 'Privacy Policy',
+                'footer.copyright': '© 2026 QScrap Services & Trading L.L.C. All rights reserved.'
+            },
+            ar: {
+                // Navigation
+                'nav.howItWorks': 'كيف يعمل',
+                'nav.gallery': 'المعرض',
+                'nav.forBusiness': 'للشركات',
+                'nav.about': 'من نحن',
+                'nav.download': 'تحميل التطبيق',
+
+                // Hero Section
+                'hero.badge': 'المنصة الأولى لقطع غيار السيارات في قطر',
+                'hero.title1': 'سوق قطع غيار',
+                'hero.title2': 'السيارات المتميز',
+                'hero.title3': 'في قطر',
+                'hero.subtitle': 'جديد • مستعمل • قطع أصلية — توصيل في نفس اليوم إلى باب منزلك',
+                'hero.cta1': 'حمّل التطبيق مجاناً',
+                'hero.cta2': 'للشركات',
+                'hero.stat1.value': '+٥,٠٠٠',
+                'hero.stat1.label': 'قطعة تم توصيلها',
+                'hero.stat2.value': '+٥٠',
+                'hero.stat2.label': 'كراج معتمد',
+                'hero.stat3.value': '٤.٨★',
+                'hero.stat3.label': 'تقييم العملاء',
+
+                // How It Works
+                'steps.badge': 'كيف يعمل',
+                'steps.title': 'احصل على قطعتك في ٤ خطوات بسيطة',
+                'steps.subtitle': 'من الطلب إلى التوصيل في أقل من ساعتين',
+                'step1.title': 'اطلب',
+                'step1.desc': 'صِف القطعة التي تحتاجها. أضف صوراً وتفاصيل سيارتك للدقة.',
+                'step2.title': 'قارن العروض',
+                'step2.desc': 'استلم عروض أسعار تنافسية من كراجات معتمدة. اختر أفضل عرض.',
+                'step3.title': 'ادفع بأمان',
+                'step3.desc': 'ادفع بالبطاقة أو نقداً عند الاستلام. مبلغك محفوظ في ضمان آمن.',
+                'step4.title': 'استلم طلبك',
+                'step4.desc': 'توصيل في نفس اليوم في جميع أنحاء قطر. ضمان إرجاع ٧ أيام.',
+
+                // Value Props
+                'value.badge': 'لماذا كيوسكراب',
+                'value.title': 'الطريقة الذكية لشراء قطع الغيار',
+                'value.subtitle': 'ثقة وجودة وراحة في كل طلب',
+                'value1.title': 'جودة مضمونة',
+                'value1.desc': 'كل قطعة يتم فحصها للتأكد من جودتها. سياسة إرجاع ٧ أيام إذا لم تطابق توقعاتك.',
+                'value2.title': 'أسعار تنافسية',
+                'value2.desc': 'قارن عروض الأسعار من كراجات متعددة. احصل على أفضل سعر بدون مفاوضة.',
+                'value3.title': 'توصيل سريع',
+                'value3.desc': 'توصيل في نفس اليوم في الدوحة والمناطق المحيطة. تتبع طلبك لحظة بلحظة.',
+
+                // Gallery
+                'gallery.badge': 'جودتنا',
+                'gallery.title': 'معرض القطع المتميزة',
+                'gallery.subtitle': 'قطع أصلية OEM وقطع معتمدة الجودة من موردين موثوقين',
+
+                // CTA
+                'cta.title': 'مستعد للعثور على قطعتك؟',
+                'cta.subtitle': 'حمّل تطبيق كيوسكراب واحصل على قطع غيار سيارتك اليوم.',
+                'cta.button': 'حمّل الآن - مجاناً',
+
+                // Footer
+                'footer.tagline': 'السوق الموثوق لقطع غيار السيارات في قطر.',
+                'footer.quickLinks': 'روابط سريعة',
+                'footer.legal': 'قانوني',
+                'footer.contact': 'تواصل معنا',
+                'footer.home': 'الرئيسية',
+                'footer.howItWorks': 'كيف يعمل',
+                'footer.forGarages': 'للكراجات',
+                'footer.aboutUs': 'من نحن',
+                'footer.terms': 'شروط الخدمة',
+                'footer.privacy': 'سياسة الخصوصية',
+                'footer.copyright': '© ٢٠٢٦ كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.'
+            }
+        };
+
+        // i18n System
+        const i18n = {
+            currentLang: localStorage.getItem('qscrap-lang') || 'en',
+
+            init() {
+                // Set initial language
+                this.setLanguage(this.currentLang, false);
+
+                // Setup language button listeners
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const lang = btn.dataset.lang;
+                        this.setLanguage(lang, true);
+                    });
+                });
+            },
+
+            setLanguage(lang, animate = true) {
+                this.currentLang = lang;
+                localStorage.setItem('qscrap-lang', lang);
+
+                // Update HTML attributes for RTL
+                const html = document.documentElement;
+                if (lang === 'ar') {
+                    html.setAttribute('dir', 'rtl');
+                    html.setAttribute('lang', 'ar');
+                    document.body.style.fontFamily = "'Inter', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif";
+                } else {
+                    html.setAttribute('dir', 'ltr');
+                    html.setAttribute('lang', 'en');
+                    document.body.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+                }
+
+                // Update active button state
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.lang === lang);
+                });
+
+                // Translate all elements with data-i18n attribute
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.dataset.i18n;
+                    const translation = translations[lang][key];
+                    if (translation) {
+                        if (animate) {
+                            el.style.opacity = '0';
+                            setTimeout(() => {
+                                el.textContent = translation;
+                                el.style.opacity = '1';
+                            }, 150);
+                        } else {
+                            el.textContent = translation;
+                        }
+                    }
+                });
+
+                // Update placeholders and aria-labels
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.dataset.i18nPlaceholder;
+                    const translation = translations[lang][key];
+                    if (translation) el.placeholder = translation;
+                });
+
+                document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                    const key = el.dataset.i18nAria;
+                    const translation = translations[lang][key];
+                    if (translation) el.setAttribute('aria-label', translation);
+                });
+            },
+
+            t(key) {
+                return translations[this.currentLang][key] || key;
+            }
+        };
+
+        // Initialize i18n on DOM ready
+        document.addEventListener('DOMContentLoaded', () => i18n.init());
     </script>
 </body>
 
