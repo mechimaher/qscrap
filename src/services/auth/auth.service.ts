@@ -57,12 +57,12 @@ export class AuthService {
             const userId = userResult.rows[0].user_id;
 
             if (data.user_type === 'garage' && data.garage_name) {
-                // FREEMIUM MODEL: New garages auto-approved with Pay-Per-Sale (15% commission)
-                // No admin approval needed - instant access to platform
-                // Garages can request plan upgrades anytime via dashboard
+                // SECURITY: Garages require admin verification before access
+                // Status starts as 'pending' - admin reviews CR/license, then approves
+                // preferred_plan_code captures their tier interest for admin
                 await client.query(
                     `INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, approval_status, supplier_type, specialized_brands, all_brands, cr_number, trade_license_number, current_plan_code, preferred_plan_code) 
-                     VALUES ($1, $2, $3, $4, $5, 'approved', $6, $7, $8, $9, $10, 'free', $11)`,
+                     VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8, $9, $10, NULL, $11)`,
                     [userId, data.garage_name, data.address, data.location_lat || null, data.location_lng || null, data.supplier_type || 'used', data.specialized_brands || [], data.all_brands !== false, data.cr_number || null, data.trade_license_number || null, data.preferred_plan_code || null]
                 );
             }
