@@ -16,7 +16,11 @@ import {
     autoProcessPayouts,
     autoConfirmPayouts,
     autoConfirmDeliveries,
-    cleanupOldData
+    cleanupOldData,
+    // Enterprise Infrastructure 10/10 (Feb 2, 2026)
+    processSubscriptionRenewals,
+    sendRenewalReminders,
+    processExpiredSubscriptions
     // abandonStaleInspections removed 2026-02-01 - QC workflow cancelled
 } from '../jobs';
 
@@ -40,6 +44,11 @@ export async function runAllJobs(): Promise<void> {
         await autoProcessPayouts(pool);
         await cleanupOldData(pool);
 
+        // Enterprise billing jobs (run daily but included in hourly for continuity)
+        await processSubscriptionRenewals(pool);
+        await sendRenewalReminders(pool);
+        await processExpiredSubscriptions(pool);
+
         const duration = Date.now() - startTime;
         logger.jobComplete('runAllJobs', { durationMs: duration });
     } catch (err) {
@@ -60,5 +69,9 @@ export default {
     // abandonStaleInspections removed - QC workflow cancelled
     schedulePendingPayouts: () => schedulePendingPayouts(pool),
     autoProcessPayouts: () => autoProcessPayouts(pool),
-    cleanupOldData: () => cleanupOldData(pool)
+    cleanupOldData: () => cleanupOldData(pool),
+    // Enterprise billing jobs
+    processSubscriptionRenewals: () => processSubscriptionRenewals(pool),
+    sendRenewalReminders: () => sendRenewalReminders(pool),
+    processExpiredSubscriptions: () => processExpiredSubscriptions(pool)
 };

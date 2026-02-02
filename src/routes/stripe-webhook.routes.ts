@@ -63,6 +63,11 @@ router.post('/webhook',
                     await handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
                     break;
 
+                // NEW: Handle SetupIntent for saved payment methods
+                case 'setup_intent.succeeded':
+                    await handleSetupIntentSucceeded(event.data.object as Stripe.SetupIntent);
+                    break;
+
                 // FIX PG-02: Handle refund events for status synchronization
                 case 'refund.created':
                 case 'refund.updated':
@@ -82,6 +87,7 @@ router.post('/webhook',
             console.error('[Stripe Webhook] Handler error:', error);
             res.status(500).json({ error: 'Webhook handler failed' });
         }
+
     }
 );
 
@@ -94,8 +100,20 @@ async function handlePaymentSucceeded(intent: Stripe.PaymentIntent): Promise<voi
 
     console.log(`[Stripe Webhook] Payment succeeded: ${intent.id}`);
 
+    // NEW: Handle subscription upgrade payments
+    if (intent.metadata?.type === 'subscription_upgrade') {
+        await handleSubscriptionUpgradePayment(intent);
+        return;
+    }
+
+    // NEW: Handle subscription renewal payments
+    if (intent.metadata?.type === 'subscription_renewal') {
+        await handleSubscriptionRenewalPayment(intent);
+        return;
+    }
+
     try {
-        // Find the payment intent record
+        // Existing order payment logic
         const intentResult = await pool.query(
             `SELECT pi.intent_id, pi.order_id, pi.status, o.order_status
              FROM payment_intents pi
@@ -144,6 +162,184 @@ async function handlePaymentSucceeded(intent: Stripe.PaymentIntent): Promise<voi
     } catch (error) {
         console.error('[Stripe Webhook] handlePaymentSucceeded error:', error);
         throw error;
+    }
+}
+
+/**
+ * NEW: Handle subscription upgrade payment success
+ */
+async function handleSubscriptionUpgradePayment(intent: Stripe.PaymentIntent): Promise<void> {
+    const pool = getWritePool();
+    const { request_id, garage_id, plan_name } = intent.metadata;
+
+    console.log(`[Stripe Webhook] Subscription upgrade payment: ${intent.id} for request ${request_id}`);
+
+    try {
+        // Update subscription_change_request payment status
+        const result = await pool.query(`
+            UPDATE subscription_change_requests
+            SET payment_status = 'paid',
+                payment_intent_id = $1,
+                paid_at = NOW(),
+                updated_at = NOW()
+            WHERE request_id = $2 AND payment_status != 'paid'
+            RETURNING request_id, garage_id, to_plan_id
+        `, [intent.id, request_id]);
+
+        if (result.rows.length === 0) {
+            console.log(`[Stripe Webhook] Request ${request_id} already marked paid (idempotent)`);
+            return;
+        }
+
+        // Generate invoice
+        await generateSubscriptionInvoice(pool, {
+            garage_id: garage_id || result.rows[0].garage_id,
+            request_id,
+            amount: intent.amount / 100,
+            payment_intent_id: intent.id,
+            plan_name,
+            payment_method: 'card'
+        });
+
+        console.log(`[Stripe Webhook] ✅ Subscription upgrade payment confirmed for ${garage_id}`);
+    } catch (error) {
+        console.error('[Stripe Webhook] handleSubscriptionUpgradePayment error:', error);
+        throw error;
+    }
+}
+
+/**
+ * NEW: Handle recurring subscription renewal payment
+ */
+async function handleSubscriptionRenewalPayment(intent: Stripe.PaymentIntent): Promise<void> {
+    const pool = getWritePool();
+    const { subscription_id, garage_id, plan_name } = intent.metadata;
+
+    console.log(`[Stripe Webhook] Subscription renewal payment: ${intent.id}`);
+
+    try {
+        // Extend subscription by 1 month
+        await pool.query(`
+            UPDATE garage_subscriptions 
+            SET billing_cycle_start = billing_cycle_end,
+                billing_cycle_end = billing_cycle_end + INTERVAL '1 month',
+                next_billing_date = billing_cycle_end + INTERVAL '1 month',
+                renewal_reminder_sent = false,
+                billing_retry_count = 0,
+                last_billing_attempt = NOW(),
+                updated_at = NOW()
+            WHERE subscription_id = $1
+        `, [subscription_id]);
+
+        // Generate invoice
+        await generateSubscriptionInvoice(pool, {
+            garage_id,
+            amount: intent.amount / 100,
+            payment_intent_id: intent.id,
+            plan_name,
+            payment_method: 'card'
+        });
+
+        console.log(`[Stripe Webhook] ✅ Subscription renewal confirmed, extended 1 month`);
+    } catch (error) {
+        console.error('[Stripe Webhook] handleSubscriptionRenewalPayment error:', error);
+        throw error;
+    }
+}
+
+/**
+ * NEW: Handle SetupIntent succeeded - save payment method
+ */
+async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent): Promise<void> {
+    const pool = getWritePool();
+    const { garage_id, customer_id } = setupIntent.metadata;
+    const paymentMethodId = setupIntent.payment_method as string;
+
+    if (!garage_id || !paymentMethodId) {
+        console.log('[Stripe Webhook] SetupIntent missing garage_id or payment_method');
+        return;
+    }
+
+    console.log(`[Stripe Webhook] SetupIntent succeeded for garage ${garage_id}`);
+
+    try {
+        // Get payment method details from Stripe
+        const paymentMethod = await stripe?.paymentMethods.retrieve(paymentMethodId);
+
+        if (!paymentMethod?.card) {
+            console.warn('[Stripe Webhook] SetupIntent has no card details');
+            return;
+        }
+
+        // Check if first payment method
+        const existing = await pool.query(
+            'SELECT COUNT(*) FROM garage_payment_methods WHERE garage_id = $1',
+            [garage_id]
+        );
+        const isDefault = existing.rows[0].count === '0';
+
+        // Save payment method
+        await pool.query(`
+            INSERT INTO garage_payment_methods 
+            (garage_id, stripe_payment_method_id, stripe_customer_id, card_last4, card_brand, card_exp_month, card_exp_year, is_default)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (stripe_payment_method_id) DO UPDATE SET updated_at = NOW()
+        `, [
+            garage_id,
+            paymentMethodId,
+            customer_id,
+            paymentMethod.card.last4,
+            paymentMethod.card.brand,
+            paymentMethod.card.exp_month,
+            paymentMethod.card.exp_year,
+            isDefault
+        ]);
+
+        console.log(`[Stripe Webhook] ✅ Saved ${paymentMethod.card.brand} ****${paymentMethod.card.last4}`);
+    } catch (error) {
+        console.error('[Stripe Webhook] handleSetupIntentSucceeded error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Generate invoice for subscription payment
+ */
+async function generateSubscriptionInvoice(pool: any, params: {
+    garage_id: string;
+    request_id?: string;
+    amount: number;
+    payment_intent_id?: string;
+    bank_reference?: string;
+    plan_name: string;
+    payment_method: 'card' | 'bank_transfer';
+}) {
+    try {
+        const date = new Date();
+        const prefix = `QS-INV-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const seqResult = await pool.query("SELECT nextval('invoice_number_seq')");
+        const invoiceNumber = `${prefix}-${String(seqResult.rows[0].nextval).padStart(4, '0')}`;
+
+        await pool.query(`
+            INSERT INTO subscription_invoices 
+            (invoice_number, garage_id, request_id, amount, plan_name, payment_method, payment_intent_id, bank_reference, status, paid_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'paid', NOW())
+        `, [
+            invoiceNumber,
+            params.garage_id,
+            params.request_id,
+            params.amount,
+            params.plan_name,
+            params.payment_method,
+            params.payment_intent_id,
+            params.bank_reference
+        ]);
+
+        console.log(`[Stripe Webhook] Invoice ${invoiceNumber} generated for ${params.amount} QAR`);
+        return invoiceNumber;
+    } catch (error) {
+        console.error('[Stripe Webhook] Invoice generation failed:', error);
+        // Don't throw - invoice failure shouldn't block payment confirmation
     }
 }
 
