@@ -256,9 +256,13 @@ const legalTranslations = {
         'privacy.contact.privacy': 'Privacy Inquiries',
         'privacy.contact.dpo': 'Data Protection Officer',
         'privacy.contact.general': 'General Support',
+        'privacy.contact.address': 'Address',
+        'privacy.contact.addressValue': 'Industrial Area, Street 10<br>P.O. Box 32544, Doha, Qatar',
 
         // Footer
         'footer.copyright': '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
+        'footer.compliance': 'Compliant with Google Play Developer Program Policies and Qatar\'s Personal Data Protection Law.',
+        'footer.backHome': 'Back to QScrap Home',
         'footer.privacy': 'Privacy Policy',
         'footer.terms': 'Terms of Service',
         'footer.refund': 'Refund Policy'
@@ -627,6 +631,8 @@ const legalTranslations = {
 
         // Footer
         'footer.copyright': 'كيوسكراب للخدمات والتجارة ذ.م.م © ٢٠٢٦. جميع الحقوق محفوظة.',
+        'footer.compliance': 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية في قطر.',
+        'footer.backHome': 'العودة إلى الصفحة الرئيسية',
         'footer.privacy': 'سياسة الخصوصية',
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد'

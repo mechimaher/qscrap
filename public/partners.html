@@ -100,7 +100,8 @@
         }
 
         html[dir="rtl"] .testimonial-author {
-            flex-direction: row-reverse;
+            /* In RTL: row makes first item (avatar) go to RIGHT */
+            flex-direction: row;
         }
 
         html[dir="rtl"] .testimonial-info {
