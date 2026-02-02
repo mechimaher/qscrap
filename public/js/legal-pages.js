@@ -445,7 +445,7 @@ const legalTranslations = {
 
         // ===== PRIVACY POLICY (Arabic) - COMPREHENSIVE =====
         'privacy.title': 'سياسة الخصوصية',
-        'privacy.titleAr': 'Privacy Policy',
+        'privacy.titleAr': '', // Hide subtitle in Arabic mode
         'privacy.lastUpdated': 'آخر تحديث: ١ فبراير ٢٠٢٦',
 
         'privacy.summary.title': '🔒 خصوصيتك مهمة',
