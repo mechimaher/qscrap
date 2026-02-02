@@ -403,7 +403,7 @@ const translations = {
         'footer.refund': 'سياسة الاسترداد',
         'footer.contactTitle': 'تواصل',
         'footer.whatsapp': 'دعم واتساب',
-        'footer.copyright': '© 2026 كيوسكراب. جميع الحقوق محفوظة.'
+        'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
     }
 };
 
