@@ -626,7 +626,7 @@ const legalTranslations = {
         'privacy.contact.addressValue': 'المنطقة الصناعية، شارع ١٠<br>ص.ب ٣٢٥٤٤، الدوحة، قطر',
 
         // Footer
-        'footer.copyright': '© ٢٠٢٦ كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.',
+        'footer.copyright': 'كيوسكراب للخدمات والتجارة ذ.م.م © ٢٠٢٦. جميع الحقوق محفوظة.',
         'footer.privacy': 'سياسة الخصوصية',
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد'
