@@ -561,9 +561,10 @@
             flex-direction: row-reverse;
         }
 
-        /* RTL Company Items */
+        /* RTL Company Items - Icon on RIGHT */
         [dir="rtl"] .company-item {
-            flex-direction: row-reverse;
+            /* In RTL: row makes first item (icon) go to RIGHT */
+            flex-direction: row;
             text-align: right;
         }
 
