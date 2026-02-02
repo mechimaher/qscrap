@@ -1390,12 +1390,23 @@
             font-weight: 600;
         }
 
-        /* Hide QR codes on mobile (phones can just click buttons) */
+        /* QR codes - always visible (user request) */
         @media (max-width: 768px) {
-
-            .qr-divider,
             .qr-codes-row {
-                display: none;
+                gap: 24px;
+            }
+
+            .qr-code-box {
+                padding: 8px;
+            }
+
+            .qr-code-box img {
+                width: 100px;
+                height: 100px;
+            }
+
+            .qr-label {
+                font-size: 12px;
             }
         }
 
