@@ -535,9 +535,9 @@
         }
 
         [dir="rtl"] .section-header {
-            /* Align header content to extreme RIGHT in RTL mode */
-            flex-direction: row-reverse;
-            justify-content: flex-end;
+            /* In RTL: row makes first item (number) go to RIGHT, flex-start = right edge */
+            flex-direction: row;
+            justify-content: flex-start;
         }
 
         [dir="rtl"] .section-header .section-title {
