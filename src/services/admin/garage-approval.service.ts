@@ -306,10 +306,17 @@ export class GarageApprovalService {
                 WHERE garage_id = $1 AND status IN ('active', 'trial')
             `, [garageId]);
 
-            // Update garage to demo
+            // Get the free (demo) plan
+            const freePlan = await client.query(`
+                SELECT plan_id FROM subscription_plans WHERE plan_code = 'free' AND is_active = true
+            `);
+            const planId = freePlan.rows[0]?.plan_id;
+
+            // Update garage to demo with plan code
             const result = await client.query(`
                 UPDATE garages SET
                     approval_status = 'demo',
+                    current_plan_code = 'free',
                     demo_expires_at = $1,
                     approved_by = $2,
                     admin_notes = $3,
@@ -320,6 +327,20 @@ export class GarageApprovalService {
 
             if (result.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
+            }
+
+            // Create subscription record with the free plan
+            if (planId) {
+                await client.query(`
+                    INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, next_billing_date)
+                    VALUES ($1, $2, 'trial', NOW(), $3, $3)
+                    ON CONFLICT (garage_id) DO UPDATE SET 
+                        plan_id = EXCLUDED.plan_id, 
+                        status = 'trial',
+                        billing_cycle_start = NOW(),
+                        billing_cycle_end = EXCLUDED.billing_cycle_end,
+                        updated_at = NOW()
+                `, [garageId, planId, expiryDate]);
             }
 
             // Activate user and clear any suspension
