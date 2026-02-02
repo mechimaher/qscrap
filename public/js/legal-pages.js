@@ -276,8 +276,16 @@ const legalTranslations = {
 
         // ===== REFUND POLICY (Arabic) =====
         'refund.title': 'سياسة الاسترداد',
-        'refund.titleAr': 'Refund Policy',
+        'refund.titleAr': '', // Hide subtitle in Arabic mode
         'refund.lastUpdated': 'آخر تحديث: ١ فبراير ٢٠٢٦',
+
+        // Section Numbers (Arabic Numerals)
+        'refund.s1.num': '١',
+        'refund.s2.num': '٢',
+        'refund.s3.num': '٣',
+        'refund.s4.num': '٤',
+        'refund.s5.num': '٥',
+        'refund.s6.num': '٦',
 
         // Summary
         'refund.summary.title': '💰 التزامنا تجاهك',
@@ -366,8 +374,19 @@ const legalTranslations = {
 
         // ===== TERMS OF SERVICE (Arabic) =====
         'terms.title': 'شروط الخدمة',
-        'terms.titleAr': 'Terms of Service',
+        'terms.titleAr': '', // Hide subtitle in Arabic mode
         'terms.lastUpdated': 'آخر تحديث: ١ فبراير ٢٠٢٦',
+
+        // Section Numbers (Arabic Numerals)
+        'terms.s1.num': '١',
+        'terms.s2.num': '٢',
+        'terms.s3.num': '٣',
+        'terms.s4.num': '٤',
+        'terms.s5.num': '٥',
+        'terms.s6.num': '٦',
+        'terms.s7.num': '٧',
+        'terms.s8.num': '٨',
+        'terms.s9.num': '٩',
 
         'terms.summary.title': '📋 نظرة عامة على الاتفاقية',
         'terms.summary.text': 'تحكم شروط الخدمة هذه استخدامك لمنصة كيوسكراب التي تديرها شركة كيوسكراب للخدمات والتجارة ذ.م.م. بتحميل أو استخدام تطبيقاتنا وخدماتنا، فإنك توافق على الالتزام بهذه الشروط. يرجى قراءتها بعناية قبل استخدام سوقنا.',
