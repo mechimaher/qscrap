@@ -30,15 +30,16 @@ BEGIN
 END $$;
 
 -- Ensure all 4 subscription tiers exist with correct pricing
+-- Note: commission_rate is decimal (0.15 = 15%)
 INSERT INTO subscription_plans (plan_code, plan_name, monthly_fee, commission_rate, max_bids_per_month, features, is_active)
 VALUES 
-    ('free', 'Pay-Per-Sale', 0, 15.00, NULL, 
+    ('free', 'Pay-Per-Sale', 0, 0.15, NULL, 
      '{"zero_monthly": true, "all_customers": true, "standard_dashboard": true, "email_support": true, "7_day_payout": true}', true),
-    ('starter', 'Starter', 299, 8.00, NULL, 
+    ('starter', 'Starter', 299, 0.08, NULL, 
      '{"monthly_fee": 299, "priority_listing": true, "basic_analytics": true, "email_chat_support": true, "7_day_payout": true, "showcase_20_products": true}', true),
-    ('gold', 'Gold Partner', 999, 5.00, NULL, 
+    ('gold', 'Gold Partner', 999, 0.05, NULL, 
      '{"monthly_fee": 999, "priority_listing": true, "advanced_analytics": true, "priority_phone_support": true, "priority_payout": true, "promotional_features": true}', true),
-    ('platinum', 'Platinum Partner', 2499, 3.00, NULL, 
+    ('platinum', 'Platinum Partner', 2499, 0.03, NULL, 
      '{"monthly_fee": 2499, "featured_placement": true, "dedicated_manager": true, "custom_reports": true, "express_payout": true, "marketing_coinvest": true}', true)
 ON CONFLICT (plan_code) DO UPDATE SET
     plan_name = EXCLUDED.plan_name,
