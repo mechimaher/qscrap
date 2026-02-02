@@ -333,8 +333,29 @@ export class GarageApprovalService {
 
             await client.query('COMMIT');
 
+            // Send welcome email (after commit, non-blocking)
+            const garage = result.rows[0];
+            try {
+                const userResult = await this.pool.query(`
+                    SELECT email, phone_number FROM users WHERE user_id = $1
+                `, [garageId]);
+
+                if (userResult.rows.length > 0 && userResult.rows[0].email) {
+                    const { email, phone_number } = userResult.rows[0];
+                    await emailService.sendGarageApprovalEmail(
+                        email,
+                        garage.garage_name,
+                        phone_number,
+                        `Demo Trial (${days} days free)`
+                    );
+                    console.log(`[GarageApproval] Demo welcome email sent to ${email}`);
+                }
+            } catch (emailErr: any) {
+                console.error(`[GarageApproval] Failed to send demo email:`, emailErr.message);
+            }
+
             return {
-                garage: result.rows[0],
+                garage,
                 expires_at: expiryDate,
                 message: `Demo access granted for ${days} days`
             };
