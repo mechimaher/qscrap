@@ -20,6 +20,7 @@ import {
     getSubscriptionRequests,
     approveSubscriptionRequest,
     rejectSubscriptionRequest,
+    verifyBankPayment,  // NEW: Payment verification
     // Garage Specialization
     updateGarageSpecializationAdmin,
     // Phase 4: User Management
@@ -92,6 +93,7 @@ router.post('/garages/:garage_id/commission', overrideCommission);
 router.get('/requests', getSubscriptionRequests);
 router.post('/requests/:request_id/approve', approveSubscriptionRequest);
 router.post('/requests/:request_id/reject', rejectSubscriptionRequest);
+router.post('/requests/:request_id/verify-payment', verifyBankPayment);  // NEW: Verify bank transfer
 
 // Garage Specialization
 router.put('/garages/:garage_id/specialization', updateGarageSpecializationAdmin);

@@ -38,7 +38,16 @@ export const subscribeToPlan = async (req: AuthRequest, res: Response) => {
 export const changePlan = async (req: AuthRequest, res: Response) => {
     try {
         const result = await subscriptionService.changePlan(req.user!.userId, req.body.plan_id, req.body.reason);
-        res.json({ message: `Request to switch to ${result.plan_name} submitted successfully. Waiting for admin approval.`, status: result.status });
+        res.json({
+            message: result.payment_required
+                ? `Upgrade to ${result.plan_name} requires payment of ${result.payment_amount} QAR. Use /subscription/pay to complete.`
+                : `Request to switch to ${result.plan_name} submitted successfully.`,
+            request_id: result.request_id,
+            plan_name: result.plan_name,
+            payment_required: result.payment_required,
+            payment_amount: result.payment_amount,
+            status: result.status
+        });
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });
     }
@@ -59,5 +68,60 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response) => {
         res.json(history);
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Create Stripe PaymentIntent for subscription upgrade
+ * Garage calls this to get clientSecret for card payment
+ */
+export const createPaymentIntent = async (req: AuthRequest, res: Response) => {
+    try {
+        const { request_id } = req.body;
+        if (!request_id) {
+            return res.status(400).json({ error: 'request_id is required' });
+        }
+
+        const result = await subscriptionService.createUpgradePaymentIntent(request_id, req.user!.userId);
+        res.json({
+            client_secret: result.clientSecret,
+            amount: result.amount,
+            currency: 'QAR',
+            plan_name: result.planName,
+            message: `Pay ${result.amount} QAR to upgrade to ${result.planName}`
+        });
+    } catch (err) {
+        console.error('createPaymentIntent Error:', err);
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Confirm Stripe payment succeeded (webhook alternative)
+ * After Stripe.js confirms payment, garage calls this to verify and complete
+ */
+export const confirmPayment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { payment_intent_id } = req.body;
+        if (!payment_intent_id) {
+            return res.status(400).json({ error: 'payment_intent_id is required' });
+        }
+
+        const result = await subscriptionService.confirmUpgradePayment(payment_intent_id);
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Payment verified! Your subscription upgrade is now pending admin approval.',
+                request_id: result.requestId
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: 'Payment not yet completed. Please try again.'
+            });
+        }
+    } catch (err) {
+        console.error('confirmPayment Error:', err);
+        res.status(400).json({ error: getErrorMessage(err) });
     }
 };

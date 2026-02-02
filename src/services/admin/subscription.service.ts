@@ -29,7 +29,7 @@ export class SubscriptionManagementService {
     async getSubscriptionRequests(status: string = 'pending'): Promise<SubscriptionRequest[]> {
         const result = await this.pool.query(`
             SELECT scr.*, 
-                   g.garage_name, u.phone_number,
+                   g.garage_name, u.phone_number, u.email,
                    fp.plan_name as from_plan_name,
                    tp.plan_name as to_plan_name,
                    tp.monthly_fee as new_fee
@@ -47,16 +47,19 @@ export class SubscriptionManagementService {
 
     /**
      * Approve subscription change request
+     * IMPORTANT: Only allows approval if payment has been verified
      */
     async approveSubscriptionRequest(requestId: string, adminId: string): Promise<void> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
-            // Fetch request
+            // Fetch request with payment status
             const reqQuery = await client.query(`
-                SELECT * FROM subscription_change_requests 
-                WHERE request_id = $1 AND status = 'pending' 
+                SELECT scr.*, tp.monthly_fee, tp.plan_name as target_plan_name
+                FROM subscription_change_requests scr
+                JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
+                WHERE scr.request_id = $1 AND scr.status = 'pending' 
                 FOR UPDATE
             `, [requestId]);
 
@@ -65,6 +68,20 @@ export class SubscriptionManagementService {
             }
 
             const subReq = reqQuery.rows[0];
+
+            // PAYMENT GATE: Block approval if payment not verified
+            // Allow approval for: 'paid' (verified payment) or null/undefined (free plan or admin grant)
+            const isPaidPlan = parseFloat(subReq.monthly_fee) > 0;
+            const paymentStatus = subReq.payment_status;
+
+            if (isPaidPlan && paymentStatus !== 'paid') {
+                throw new Error(
+                    `Cannot approve: Payment not verified. ` +
+                    `Target plan "${subReq.target_plan_name}" requires ${subReq.monthly_fee} QAR. ` +
+                    `Current payment status: ${paymentStatus || 'unpaid'}. ` +
+                    `Garage must pay first, or use "Verify Bank Payment" if payment was made via bank transfer.`
+                );
+            }
 
             // Update subscription
             await client.query(`
@@ -83,10 +100,71 @@ export class SubscriptionManagementService {
             // Log action
             await this.logAdminAction(client, adminId, 'approve_sub_change', subReq.garage_id, {
                 request_id: requestId,
-                to_plan: subReq.to_plan_id
+                to_plan: subReq.to_plan_id,
+                payment_status: paymentStatus,
+                payment_amount: subReq.payment_amount
             });
 
             await client.query('COMMIT');
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Verify bank payment for subscription upgrade request
+     * Admin calls this after confirming bank transfer was received
+     */
+    async verifyBankPayment(
+        requestId: string,
+        adminId: string,
+        bankReference: string
+    ): Promise<void> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Fetch request
+            const reqQuery = await client.query(`
+                SELECT scr.*, tp.monthly_fee, tp.plan_name as target_plan_name, g.garage_name
+                FROM subscription_change_requests scr
+                JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
+                JOIN garages g ON scr.garage_id = g.garage_id
+                WHERE scr.request_id = $1 AND scr.status = 'pending'
+                FOR UPDATE
+            `, [requestId]);
+
+            if (reqQuery.rows.length === 0) {
+                throw new Error('Request not found or already processed');
+            }
+
+            const subReq = reqQuery.rows[0];
+
+            // Update payment status to paid
+            await client.query(`
+                UPDATE subscription_change_requests
+                SET payment_status = 'paid',
+                    bank_reference = $1,
+                    paid_at = NOW(),
+                    updated_at = NOW()
+                WHERE request_id = $2
+            `, [bankReference, requestId]);
+
+            // Log action
+            await this.logAdminAction(client, adminId, 'verify_bank_payment', subReq.garage_id, {
+                request_id: requestId,
+                bank_reference: bankReference,
+                amount: subReq.monthly_fee,
+                plan_name: subReq.target_plan_name,
+                garage_name: subReq.garage_name
+            });
+
+            await client.query('COMMIT');
+
+            console.log(`[Subscription] Bank payment verified for ${subReq.garage_name}: ${subReq.monthly_fee} QAR (ref: ${bankReference})`);
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;

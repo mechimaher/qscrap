@@ -87,15 +87,32 @@ export class SubscriptionService {
                 }
             }
 
-            const newPlan = await client.query(`SELECT monthly_fee, plan_name FROM subscription_plans WHERE plan_id = $1`, [planId]);
+            const newPlan = await client.query(`SELECT plan_id, monthly_fee, plan_name FROM subscription_plans WHERE plan_id = $1`, [planId]);
             if (newPlan.rows.length === 0) throw new Error('Invalid plan.');
             const newFee = parseFloat(newPlan.rows[0].monthly_fee);
             const type = newFee < currentFee ? 'downgrade' : 'upgrade';
 
-            await client.query(`INSERT INTO subscription_change_requests (garage_id, from_plan_id, to_plan_id, request_type, request_reason) VALUES ($1, $2, $3, $4, $5)`, [garageId, currentPlanId, planId, type, reason || `User requested ${type}`]);
+            // Calculate payment amount (for upgrades, pay the new plan fee)
+            const paymentAmount = type === 'upgrade' ? newFee : 0;
+            const paymentStatus = paymentAmount > 0 ? 'unpaid' : 'paid';  // Free downgrades auto-paid
+
+            const result = await client.query(
+                `INSERT INTO subscription_change_requests 
+                 (garage_id, from_plan_id, to_plan_id, request_type, request_reason, payment_amount, payment_status) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 RETURNING request_id`,
+                [garageId, currentPlanId, planId, type, reason || `User requested ${type}`, paymentAmount, paymentStatus]
+            );
             await client.query('COMMIT');
 
-            return { plan_name: newPlan.rows[0].plan_name, status: 'pending' };
+            return {
+                request_id: result.rows[0].request_id,
+                plan_name: newPlan.rows[0].plan_name,
+                plan_id: newPlan.rows[0].plan_id,
+                payment_amount: paymentAmount,
+                payment_required: paymentAmount > 0,
+                status: 'pending'
+            };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -123,5 +140,138 @@ export class SubscriptionService {
     async getPaymentHistory(garageId: string) {
         const result = await this.pool.query(`SELECT sp.*, gs.billing_cycle_start, gs.billing_cycle_end FROM subscription_payments sp JOIN garage_subscriptions gs ON sp.subscription_id = gs.subscription_id WHERE gs.garage_id = $1 ORDER BY sp.created_at DESC LIMIT 12`, [garageId]);
         return result.rows;
+    }
+
+    /**
+     * Create Stripe PaymentIntent for subscription upgrade
+     * Called when garage wants to pay by card for instant upgrade
+     */
+    async createUpgradePaymentIntent(requestId: string, garageId: string): Promise<{ clientSecret: string; amount: number; planName: string }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Fetch the pending request
+            const reqQuery = await client.query(`
+                SELECT scr.*, tp.monthly_fee, tp.plan_name
+                FROM subscription_change_requests scr
+                JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
+                WHERE scr.request_id = $1 AND scr.garage_id = $2 AND scr.status = 'pending'
+                FOR UPDATE
+            `, [requestId, garageId]);
+
+            if (reqQuery.rows.length === 0) {
+                throw new Error('Pending upgrade request not found');
+            }
+
+            const request = reqQuery.rows[0];
+            const amount = parseFloat(request.monthly_fee);
+
+            if (amount <= 0) {
+                throw new Error('This plan does not require payment');
+            }
+
+            // Import Stripe (using existing test credentials)
+            const Stripe = require('stripe');
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+
+            // Create PaymentIntent
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: Math.round(amount * 100), // Stripe uses cents
+                currency: 'qar',
+                metadata: {
+                    type: 'subscription_upgrade',
+                    request_id: requestId,
+                    garage_id: garageId,
+                    plan_name: request.plan_name
+                },
+                description: `QScrap Subscription Upgrade - ${request.plan_name}`
+            });
+
+            // Update request with payment intent
+            await client.query(`
+                UPDATE subscription_change_requests
+                SET payment_status = 'pending',
+                    payment_intent_id = $1,
+                    updated_at = NOW()
+                WHERE request_id = $2
+            `, [paymentIntent.id, requestId]);
+
+            await client.query('COMMIT');
+
+            console.log(`[Subscription] Created upgrade PaymentIntent ${paymentIntent.id} for ${amount} QAR`);
+
+            return {
+                clientSecret: paymentIntent.client_secret,
+                amount,
+                planName: request.plan_name
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Confirm Stripe payment succeeded for subscription upgrade
+     * Called via webhook or after client confirmation
+     */
+    async confirmUpgradePayment(paymentIntentId: string): Promise<{ success: boolean; requestId?: string }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Find the request by payment intent
+            const reqQuery = await client.query(`
+                SELECT scr.*, tp.plan_name, g.garage_name
+                FROM subscription_change_requests scr
+                JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
+                JOIN garages g ON scr.garage_id = g.garage_id
+                WHERE scr.payment_intent_id = $1 AND scr.status = 'pending'
+                FOR UPDATE
+            `, [paymentIntentId]);
+
+            if (reqQuery.rows.length === 0) {
+                console.log(`[Subscription] No pending request for PaymentIntent ${paymentIntentId}`);
+                return { success: false };
+            }
+
+            const request = reqQuery.rows[0];
+
+            // Verify payment with Stripe
+            const Stripe = require('stripe');
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+            if (paymentIntent.status !== 'succeeded') {
+                console.log(`[Subscription] PaymentIntent ${paymentIntentId} not succeeded: ${paymentIntent.status}`);
+                return { success: false };
+            }
+
+            // Mark payment as verified
+            await client.query(`
+                UPDATE subscription_change_requests
+                SET payment_status = 'paid',
+                    paid_at = NOW(),
+                    updated_at = NOW()
+                WHERE request_id = $1
+            `, [request.request_id]);
+
+            await client.query('COMMIT');
+
+            console.log(`[Subscription] ✅ Upgrade payment confirmed for ${request.garage_name} → ${request.plan_name}`);
+
+            return {
+                success: true,
+                requestId: request.request_id
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
     }
 }
