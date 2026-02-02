@@ -1746,6 +1746,75 @@
         </div>
     </div>
 
+    <!-- Subscription Payment Modal (Stripe Integration) -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #A82050, #8D1B3D); color: white; border-radius: 12px 12px 0 0; padding: 20px;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-credit-card"></i> Complete Payment
+                </h3>
+                <button class="modal-close" onclick="closePaymentModal()"
+                    style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div id="paymentPlanInfo"
+                    style="background: var(--bg-secondary); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 18px;" id="paymentPlanName">Starter Plan</div>
+                            <div style="color: var(--text-secondary);">Monthly subscription</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent);" id="paymentPlanPrice">
+                                299 QAR</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">/month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="paymentForm">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Card Details</label>
+                        <div id="card-element"
+                            style="padding: 16px; border: 2px solid var(--border); border-radius: 10px; background: var(--input-bg);">
+                        </div>
+                        <div id="card-errors" style="color: #ef4444; margin-top: 8px; font-size: 13px;"></div>
+                    </div>
+
+                    <div
+                        style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <i class="bi bi-shield-lock-fill" style="color: #10b981; font-size: 18px;"></i>
+                        <span style="font-size: 13px; color: var(--text-secondary);">Secure payment powered by Stripe.
+                            Your card details are encrypted.</span>
+                    </div>
+
+                    <button type="submit" id="paymentSubmitBtn" class="btn btn-primary"
+                        style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600;">
+                        <i class="bi bi-lock-fill"></i> Pay <span id="paymentBtnAmount">299 QAR</span>
+                    </button>
+                </form>
+
+                <div id="paymentProcessing" style="display: none; text-align: center; padding: 40px;">
+                    <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
+                    <p style="color: var(--text-secondary);">Processing payment...</p>
+                </div>
+
+                <div id="paymentSuccess" style="display: none; text-align: center; padding: 40px;">
+                    <i class="bi bi-check-circle-fill"
+                        style="font-size: 64px; color: #10b981; margin-bottom: 16px;"></i>
+                    <h3 style="margin: 0 0 8px;">Payment Successful!</h3>
+                    <p style="color: var(--text-secondary);">Your subscription has been activated. Refreshing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Stripe.js for Subscription Payments -->
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="/lib/socket.io/socket.io.min.js"></script>
     <!-- Google Maps SDK with Places for Location Picker (Jan 27, 2026) -->
     <script>
