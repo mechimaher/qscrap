@@ -3791,9 +3791,13 @@ async function showPlanOptions() {
                             '<button class="btn" disabled>Current Plan</button>' :
                             isPending ?
                                 `<button class="btn" disabled title="You have a pending request"><i class="bi bi-lock"></i> Request Pending</button>` :
-                                `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}')">
-                                    Request Change
-                                </button>`
+                                parseFloat(plan.monthly_fee) > 0 ?
+                                    `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}', ${plan.monthly_fee})">
+                                        <i class="bi bi-credit-card"></i> Pay Now
+                                    </button>` :
+                                    `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}', 0)">
+                                        Request Change
+                                    </button>`
                         }
                             </div>
                         </div>
@@ -3807,7 +3811,14 @@ async function showPlanOptions() {
     }
 }
 
-async function changePlan(planId, planName) {
+async function changePlan(planId, planName, monthlyFee) {
+    // If it's a paid plan (monthlyFee > 0), open payment modal
+    if (monthlyFee && parseFloat(monthlyFee) > 0) {
+        openPaymentModal(planId, planName, monthlyFee);
+        return;
+    }
+
+    // Free plan - just submit request
     if (!confirm(`Request to switch to ${planName}? This will be sent to admin for approval.`)) return;
 
     try {
@@ -3833,6 +3844,183 @@ async function changePlan(planId, planName) {
         showToast('Connection error', 'error');
     }
 }
+
+// ===== STRIPE PAYMENT MODULE (Subscription Upgrades) =====
+let stripe = null;
+let cardElement = null;
+let currentPaymentPlan = null;
+
+// Initialize Stripe
+function initStripe() {
+    if (typeof Stripe === 'undefined') {
+        console.warn('Stripe.js not loaded');
+        return;
+    }
+    // Use the production Stripe publishable key
+    stripe = Stripe('pk_live_51Qk350JDUPMQh2qj1zfwxgLJaRG1axEJeZdtZPq95sFMxoLpQVBa9LZ2LNLqv2z2VfWNkeMJ7qsckL6pGiIdvxm10044DsaELo');
+}
+
+// Open payment modal for paid plan upgrade
+function openPaymentModal(planId, planName, monthlyFee) {
+    // Store current payment info
+    currentPaymentPlan = { planId, planName, monthlyFee };
+
+    // Update modal content
+    document.getElementById('paymentPlanName').textContent = planName;
+    document.getElementById('paymentPlanPrice').textContent = `${monthlyFee} QAR`;
+    document.getElementById('paymentBtnAmount').textContent = `${monthlyFee} QAR`;
+
+    // Reset view states
+    document.getElementById('paymentForm').style.display = 'block';
+    document.getElementById('paymentProcessing').style.display = 'none';
+    document.getElementById('paymentSuccess').style.display = 'none';
+
+    // Show modal
+    document.getElementById('paymentModal').classList.add('active');
+
+    // Initialize Stripe if not already
+    if (!stripe) initStripe();
+
+    // Create or re-create card element
+    if (stripe && !cardElement) {
+        const elements = stripe.elements();
+        cardElement = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#1f2937',
+                    '::placeholder': { color: '#9ca3af' }
+                },
+                invalid: { color: '#ef4444' }
+            }
+        });
+        cardElement.mount('#card-element');
+
+        // Handle errors
+        cardElement.on('change', function (event) {
+            const displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+    }
+}
+
+// Close payment modal
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+    currentPaymentPlan = null;
+}
+
+// Handle payment form submission
+document.addEventListener('DOMContentLoaded', function () {
+    const paymentForm = document.getElementById('paymentForm');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            if (!stripe || !cardElement || !currentPaymentPlan) {
+                showToast('Payment not initialized', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('paymentSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading-spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>';
+
+            try {
+                // Step 1: First create the upgrade request
+                const reqRes = await fetch(`${API_URL}/subscriptions/change-plan`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan_id: currentPaymentPlan.planId })
+                });
+
+                const reqData = await reqRes.json();
+
+                if (!reqRes.ok) {
+                    throw new Error(reqData.error || 'Failed to create upgrade request');
+                }
+
+                const requestId = reqData.request_id;
+
+                // Step 2: Create payment intent on server
+                const payRes = await fetch(`${API_URL}/subscriptions/pay`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ request_id: requestId })
+                });
+
+                const payData = await payRes.json();
+
+                if (!payRes.ok) {
+                    throw new Error(payData.error || 'Failed to create payment');
+                }
+
+                const clientSecret = payData.client_secret;
+
+                // Show processing state
+                document.getElementById('paymentForm').style.display = 'none';
+                document.getElementById('paymentProcessing').style.display = 'block';
+
+                // Step 3: Confirm payment with Stripe
+                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardElement
+                    }
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                if (paymentIntent.status === 'succeeded') {
+                    // Step 4: Confirm payment on our server
+                    await fetch(`${API_URL}/subscriptions/confirm-payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ payment_intent_id: paymentIntent.id })
+                    });
+
+                    // Show success
+                    document.getElementById('paymentProcessing').style.display = 'none';
+                    document.getElementById('paymentSuccess').style.display = 'block';
+
+                    showToast('Payment successful! Subscription activated.', 'success');
+
+                    // Refresh subscription after delay
+                    setTimeout(() => {
+                        closePaymentModal();
+                        document.getElementById('plansGrid').style.display = 'none';
+                        loadSubscription();
+                    }, 2000);
+                }
+
+            } catch (err) {
+                console.error('Payment error:', err);
+                showToast(err.message || 'Payment failed', 'error');
+
+                // Reset form
+                document.getElementById('paymentProcessing').style.display = 'none';
+                document.getElementById('paymentForm').style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="bi bi-lock-fill"></i> Pay <span id="paymentBtnAmount">${currentPaymentPlan.monthlyFee} QAR</span>`;
+            }
+        });
+    }
+});
+
 
 // ===== ANALYTICS MODULE (Pro/Enterprise) =====
 let revenueChart = null;
