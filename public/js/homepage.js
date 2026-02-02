@@ -122,6 +122,7 @@ const translations = {
         'cta.subtitle': 'Download the QScrap app and get started in minutes. It\'s free!',
         'cta.ios': 'Download for iOS',
         'cta.android': 'Download for Android',
+        'cta.orScan': 'Or scan to download',
 
         // Footer
         'footer.tagline': 'Qatar\'s premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.',
@@ -231,6 +232,7 @@ const translations = {
         'cta.subtitle': 'حمّل تطبيق كيوسكراب وابدأ في دقائق. مجاناً!',
         'cta.ios': 'تحميل لـ iOS',
         'cta.android': 'تحميل لـ Android',
+        'cta.orScan': 'أو امسح للتحميل',
 
         // Footer
         'footer.tagline': 'سوق قطع غيار السيارات المتميز في قطر. نربط العملاء بكراجات معتمدة للحصول على قطع جديدة ومستعملة وأصلية.',
