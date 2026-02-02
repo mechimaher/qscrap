@@ -125,3 +125,103 @@ export const confirmPayment = async (req: AuthRequest, res: Response) => {
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
+
+// ============================================
+// PAYMENT METHODS (Saved Cards)
+// ============================================
+
+import { PaymentMethodsService } from '../services/subscription/payment-methods.service';
+import { InvoiceService } from '../services/subscription/invoice.service';
+
+const paymentMethodsService = new PaymentMethodsService(pool);
+const invoiceService = new InvoiceService(pool);
+
+/**
+ * Create SetupIntent for adding a new payment method
+ */
+export const createSetupIntent = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await paymentMethodsService.createSetupIntent(req.user!.userId);
+        res.json({
+            client_secret: result.clientSecret,
+            customer_id: result.customerId,
+            message: 'Use this client_secret with Stripe.js to save a card'
+        });
+    } catch (err) {
+        console.error('createSetupIntent Error:', err);
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Get saved payment methods
+ */
+export const getPaymentMethods = async (req: AuthRequest, res: Response) => {
+    try {
+        const methods = await paymentMethodsService.getPaymentMethods(req.user!.userId);
+        res.json({ payment_methods: methods });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Set default payment method
+ */
+export const setDefaultPaymentMethod = async (req: AuthRequest, res: Response) => {
+    try {
+        const { method_id } = req.params;
+        await paymentMethodsService.setDefaultPaymentMethod(req.user!.userId, method_id);
+        res.json({ message: 'Default payment method updated' });
+    } catch (err) {
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Delete a payment method
+ */
+export const deletePaymentMethod = async (req: AuthRequest, res: Response) => {
+    try {
+        const { method_id } = req.params;
+        await paymentMethodsService.deletePaymentMethod(req.user!.userId, method_id);
+        res.json({ message: 'Payment method deleted' });
+    } catch (err) {
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+// ============================================
+// INVOICES
+// ============================================
+
+/**
+ * Get garage invoices
+ */
+export const getInvoices = async (req: AuthRequest, res: Response) => {
+    try {
+        const invoices = await invoiceService.getGarageInvoices(req.user!.userId);
+        res.json({ invoices });
+    } catch (err) {
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
+ * Download invoice PDF
+ */
+export const downloadInvoice = async (req: AuthRequest, res: Response) => {
+    try {
+        const { invoice_id } = req.params;
+        const pdfPath = await invoiceService.getInvoicePdf(invoice_id, req.user!.userId);
+
+        if (!pdfPath) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        res.download(pdfPath);
+    } catch (err) {
+        console.error('downloadInvoice Error:', err);
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};

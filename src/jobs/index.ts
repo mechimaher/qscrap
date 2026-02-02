@@ -15,3 +15,5 @@ export { cleanupOldData } from './maintenance.jobs';
 export { runOrphanCleanup, runOrphanCleanupNow } from './orphan-cleanup.job';
 export { runSLAAutoCancel, runSLAAutoCancelNow } from './sla-auto-cancel.job';
 
+// Enterprise Infrastructure 10/10 (Feb 2, 2026)
+export { processSubscriptionRenewals, sendRenewalReminders, processExpiredSubscriptions } from './billing.job';

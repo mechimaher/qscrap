@@ -7,7 +7,15 @@ import {
     cancelSubscription,
     getPaymentHistory,
     createPaymentIntent,
-    confirmPayment
+    confirmPayment,
+    // Payment Methods
+    createSetupIntent,
+    getPaymentMethods,
+    setDefaultPaymentMethod,
+    deletePaymentMethod,
+    // Invoices
+    getInvoices,
+    downloadInvoice
 } from '../controllers/subscription.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 
@@ -34,5 +42,19 @@ router.get('/payments', authenticate, requireRole('garage'), getPaymentHistory);
 // NEW: Garage subscription upgrade payment via Stripe
 router.post('/pay', authenticate, requireRole('garage'), createPaymentIntent);
 router.post('/confirm-payment', authenticate, requireRole('garage'), confirmPayment);
+
+// ============================================
+// SAVED PAYMENT METHODS
+// ============================================
+router.post('/payment-methods/setup', authenticate, requireRole('garage'), createSetupIntent);
+router.get('/payment-methods', authenticate, requireRole('garage'), getPaymentMethods);
+router.put('/payment-methods/:method_id/default', authenticate, requireRole('garage'), setDefaultPaymentMethod);
+router.delete('/payment-methods/:method_id', authenticate, requireRole('garage'), deletePaymentMethod);
+
+// ============================================
+// INVOICES
+// ============================================
+router.get('/invoices', authenticate, requireRole('garage'), getInvoices);
+router.get('/invoices/:invoice_id/download', authenticate, requireRole('garage'), downloadInvoice);
 
 export default router;
