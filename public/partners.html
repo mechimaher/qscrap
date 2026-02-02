@@ -1633,6 +1633,28 @@
         .hero-overlay {
             z-index: 2 !important;
         }
+
+        /* Registration Form Section Particles */
+        .cta-section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #particles-form {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .cta-card {
+            position: relative;
+            z-index: 2;
+            /* Form stays above particles */
+        }
     </style>
 
     <!-- tsParticles - Lightweight particle system -->
@@ -1904,6 +1926,8 @@
 
     <!-- CTA Section with Registration Form -->
     <section class="cta-section" id="apply">
+        <!-- Ambient Particle Background for Registration Form -->
+        <div id="particles-form"></div>
         <div class="cta-card">
             <h2 data-i18n="cta.title">Start Selling on QScrap Today</h2>
             <p data-i18n="cta.subtitle">Join Qatar's fastest-growing automotive marketplace. Free to join, no upfront
@@ -2437,15 +2461,85 @@
                 background: { color: "transparent" }
             });
 
-            // Update direction on language change
+            // Registration Form Section Particles - More subtle, refined
+            tsParticles.load("particles-form", {
+                fullScreen: { enable: false },
+                fpsLimit: isMobile ? 30 : 60,
+                particles: {
+                    number: {
+                        value: isMobile ? 20 : 40,
+                        density: { enable: true, area: 1200 }
+                    },
+                    color: {
+                        value: ["#C9A227", "#D4AF37", "#8D1B3D"]
+                    },
+                    shape: { type: "circle" },
+                    opacity: {
+                        value: { min: 0.15, max: 0.4 },
+                        animation: {
+                            enable: true,
+                            speed: 0.2,
+                            minimumValue: 0.1,
+                            sync: false
+                        }
+                    },
+                    size: {
+                        value: { min: 1, max: 3 },
+                        animation: {
+                            enable: true,
+                            speed: 0.8,
+                            minimumValue: 0.5,
+                            sync: false
+                        }
+                    },
+                    move: {
+                        enable: true,
+                        speed: 0.3,
+                        direction: isRTL ? "left" : "right",
+                        random: true,
+                        straight: false,
+                        outModes: { default: "out" }
+                    },
+                    links: {
+                        enable: true,
+                        distance: isMobile ? 80 : 120,
+                        color: "#C9A227",
+                        opacity: 0.2,
+                        width: 0.8
+                    }
+                },
+                interactivity: {
+                    detectsOn: "canvas",
+                    events: {
+                        onHover: {
+                            enable: !isMobile,
+                            mode: "grab"
+                        },
+                        resize: true
+                    },
+                    modes: {
+                        grab: {
+                            distance: 120,
+                            links: { opacity: 0.35 }
+                        }
+                    }
+                },
+                detectRetina: true,
+                background: { color: "transparent" }
+            });
+
+            // Update direction on language change for both containers
             const observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     if (mutation.attributeName === 'dir') {
-                        const container = tsParticles.domItem(0);
-                        if (container) {
-                            const newIsRTL = document.documentElement.getAttribute('dir') === 'rtl';
-                            container.options.particles.move.direction = newIsRTL ? "left" : "right";
-                        }
+                        const newIsRTL = document.documentElement.getAttribute('dir') === 'rtl';
+                        // Update both particle containers
+                        [0, 1].forEach(index => {
+                            const container = tsParticles.domItem(index);
+                            if (container) {
+                                container.options.particles.move.direction = newIsRTL ? "left" : "right";
+                            }
+                        });
                     }
                 });
             });
