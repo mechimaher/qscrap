@@ -912,7 +912,9 @@ body {
 }
 
 .footer-brand img {
-    height: 48px;
+    height: auto;
+    max-height: 48px;
+    max-width: 140px;
     margin-bottom: 20px;
 }
 
