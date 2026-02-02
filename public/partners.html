@@ -1614,6 +1614,97 @@
                 flex-wrap: wrap;
                 justify-content: center;
             }
+
+            /* ===== Mobile Navigation Fix ===== */
+            .nav-container {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 8px;
+            }
+
+            .nav-logo img {
+                max-height: 40px;
+                max-width: 150px;
+            }
+
+            .nav-links-group {
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .language-switcher {
+                order: 1;
+                margin-right: 0;
+                padding: 2px;
+            }
+
+            .lang-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .nav-back-link {
+                order: 2;
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .nav-back-link span {
+                display: none;
+            }
+
+            .nav-cta {
+                order: 3;
+                padding: 10px 18px;
+                font-size: 12px;
+            }
+        }
+
+        /* Extra small mobile screens */
+        @media (max-width: 480px) {
+            .nav-container {
+                padding: 10px 12px;
+            }
+
+            .nav-logo img {
+                max-height: 35px;
+                max-width: 120px;
+            }
+
+            .nav-links-group {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 8px;
+            }
+
+            .language-switcher {
+                order: 1;
+            }
+
+            .nav-back-link {
+                order: 2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                padding: 0;
+                border-radius: 50%;
+                background: var(--qatar-maroon-lighter);
+            }
+
+            .nav-back-link svg {
+                margin: 0;
+            }
+
+            .nav-cta {
+                order: 3;
+                flex: 1;
+                text-align: center;
+                justify-content: center;
+            }
         }
     </style>
 
