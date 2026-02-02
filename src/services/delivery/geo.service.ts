@@ -127,8 +127,8 @@ export class GeoService {
         const distance = this.calculateDistance(hub.latitude, hub.longitude, lat, lng);
         const zone = await this.getZoneForDistance(distance);
 
-        // Default fee if no zone found
-        const defaultFee = 50;
+        // Default fee if no zone found (MOCI Maximum: 20 QR per Ministerial Decision No. 8/2013)
+        const defaultFee = 20;
         const fee = zone ? zone.delivery_fee : defaultFee;
 
         const result: DeliveryFeeResult = {
