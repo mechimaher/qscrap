@@ -111,6 +111,15 @@
             text-align: right;
         }
 
+        /* RTL Form Labels - Right align and star on left side */
+        html[dir="rtl"] .form-group label {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 4px;
+            text-align: right;
+        }
+
         html[dir="rtl"] select.form-control {
             background-position: left 12px center;
             padding-right: 16px;
