@@ -5,7 +5,9 @@ import {
     subscribeToPlan,
     changePlan,
     cancelSubscription,
-    getPaymentHistory
+    getPaymentHistory,
+    createPaymentIntent,
+    confirmPayment
 } from '../controllers/subscription.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 
@@ -28,5 +30,9 @@ router.delete('/', authenticate, requireRole('garage'), cancelSubscription);
 
 // Garage: Get payment history
 router.get('/payments', authenticate, requireRole('garage'), getPaymentHistory);
+
+// NEW: Garage subscription upgrade payment via Stripe
+router.post('/pay', authenticate, requireRole('garage'), createPaymentIntent);
+router.post('/confirm-payment', authenticate, requireRole('garage'), confirmPayment);
 
 export default router;

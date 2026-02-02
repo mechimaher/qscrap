@@ -200,6 +200,31 @@ export const rejectSubscriptionRequest = async (req: AuthRequest, res: Response)
     }
 };
 
+/**
+ * Verify bank payment for subscription upgrade
+ * Admin calls this after confirming bank transfer was received
+ */
+export const verifyBankPayment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { request_id } = req.params;
+        const { bank_reference } = req.body;
+
+        if (!bank_reference) {
+            return res.status(400).json({ error: 'Bank reference number is required' });
+        }
+
+        await subscriptionService.verifyBankPayment(request_id, req.user!.userId, bank_reference);
+        res.json({
+            message: 'Bank payment verified. You can now approve the subscription upgrade.',
+            payment_status: 'paid'
+        });
+    } catch (err) {
+        console.error('[ADMIN] verifyBankPayment error:', err);
+        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
+        res.status(status).json({ error: getErrorMessage(err) });
+    }
+};
+
 export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
     try {
         const plans = await subscriptionService.getSubscriptionPlans();
