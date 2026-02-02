@@ -635,6 +635,11 @@
             flex-direction: row-reverse;
         }
 
+        /* Hide duplicate Arabic subtitle in RTL mode */
+        [dir="rtl"] .hero-arabic {
+            display: none;
+        }
+
         /* RTL Company Items - Icon on RIGHT */
         [dir="rtl"] .company-item {
             /* In RTL: row makes first item (icon) go to RIGHT */
