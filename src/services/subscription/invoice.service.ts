@@ -4,9 +4,16 @@
  */
 
 import { Pool } from 'pg';
-import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+
+// Lazy import for pdfkit (may not be installed in all environments)
+let PDFDocument: any = null;
+try {
+    PDFDocument = require('pdfkit');
+} catch {
+    console.warn('[Invoice] pdfkit not installed - PDF generation disabled');
+}
 
 export class InvoiceService {
     private invoicesDir: string;
@@ -14,8 +21,8 @@ export class InvoiceService {
     constructor(private pool: Pool) {
         this.invoicesDir = process.env.INVOICES_DIR || '/opt/qscrap/invoices';
 
-        // Ensure invoices directory exists
-        if (!fs.existsSync(this.invoicesDir)) {
+        // Ensure invoices directory exists (only if pdfkit available)
+        if (PDFDocument && !fs.existsSync(this.invoicesDir)) {
             fs.mkdirSync(this.invoicesDir, { recursive: true });
         }
     }
@@ -24,6 +31,12 @@ export class InvoiceService {
      * Generate PDF invoice
      */
     async generateInvoice(invoiceId: string): Promise<string> {
+        // Skip PDF generation if pdfkit not installed
+        if (!PDFDocument) {
+            console.warn('[Invoice] Skipping PDF generation - pdfkit not installed');
+            return '';
+        }
+
         // Fetch invoice details
         const result = await this.pool.query(`
             SELECT 
