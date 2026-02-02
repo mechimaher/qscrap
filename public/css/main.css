@@ -534,8 +534,10 @@
         }
 
         .nav-logo img {
-            height: 140px;
+            height: auto;
             width: auto;
+            max-height: 60px;
+            max-width: 160px;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             filter: drop-shadow(0 4px 12px rgba(141, 27, 61, 0.15));
         }
