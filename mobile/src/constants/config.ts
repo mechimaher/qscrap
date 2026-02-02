@@ -11,7 +11,8 @@ export const API_CONFIG = {
     TIMEOUT: 15000,
 };
 
-export const DEFAULT_DELIVERY_FEE = 25;
+// MOCI Maximum: 20 QR per Ministerial Decision No. 8/2013
+export const DEFAULT_DELIVERY_FEE = 20;
 
 // Part Categories
 export const PART_CATEGORIES = [
