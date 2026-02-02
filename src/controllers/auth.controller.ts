@@ -19,7 +19,7 @@ const isValidPhoneNumber = (phone: string): boolean => {
 };
 
 export const register = catchAsync(async (req: Request, res: Response) => {
-    const { phone_number, password, user_type, full_name, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat, location_lng } = req.body;
+    const { phone_number, password, user_type, full_name, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat, location_lng, preferred_plan_code } = req.body;
 
     if (!phone_number || !password || !user_type) return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' });
     if (!isValidPhoneNumber(phone_number)) return res.status(400).json({ error: 'Invalid phone number format', hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number' });
@@ -40,7 +40,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
         }
     }
 
-    const result = await authService.registerUser({ phone_number, password, user_type, full_name, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat: validLat, location_lng: validLng });
+    const result = await authService.registerUser({ phone_number, password, user_type, full_name, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat: validLat, location_lng: validLng, preferred_plan_code });
     res.status(201).json({ token: result.token, userId: result.userId, userType: user_type });
 });
 

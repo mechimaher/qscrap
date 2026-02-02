@@ -2178,6 +2178,23 @@
                         </select>
                     </div>
 
+                    <!-- Preferred Subscription Plan -->
+                    <div class="form-group">
+                        <label><span data-i18n="form.preferredPlan">Preferred Subscription Plan</span></label>
+                        <select class="form-control" id="preferredPlan" data-i18n-options="true">
+                            <option value="free" data-i18n="form.plan.free" selected>Pay-Per-Sale (15% commission,
+                                $0/month) - Start Free</option>
+                            <option value="starter" data-i18n="form.plan.starter">Starter (8% commission, 299 QR/month)
+                            </option>
+                            <option value="gold" data-i18n="form.plan.gold">Gold Partner (5% commission, 999 QR/month)
+                            </option>
+                            <option value="platinum" data-i18n="form.plan.platinum">Platinum (3% commission, 2,499
+                                QR/month)</option>
+                        </select>
+                        <small class="form-hint" data-i18n="form.planHint">You start on Pay-Per-Sale (free). Request
+                            upgrade anytime from your dashboard.</small>
+                    </div>
+
                     <!-- Brand Specialization -->
                     <div class="brand-section">
                         <div class="brand-section-header">
@@ -2425,6 +2442,7 @@
             const crNumber = document.getElementById('crNumber').value.trim();
             const tradeLicense = document.getElementById('tradeLicense').value.trim();
             const supplierType = document.getElementById('supplierType').value;
+            const preferredPlan = document.getElementById('preferredPlan').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const allBrands = document.getElementById('allBrandsToggle').checked;
@@ -2489,6 +2507,7 @@
                         cr_number: crNumber || undefined,
                         trade_license_number: tradeLicense || undefined,
                         supplier_type: supplierType,
+                        preferred_plan_code: preferredPlan || 'free',
                         specialized_brands: selectedBrands,
                         all_brands: allBrands
                     })
