@@ -292,7 +292,7 @@ const i18n = {
 
         // Swap logo based on language (RTL Arabic logo vs LTR English logo)
         const logoSrc = lang === 'ar'
-            ? '/assets/images/qscrap-logo-ar.png?v=2026pro'
+            ? '/assets/images/qscrap-logo-ar.png?v=2026opt'
             : '/assets/images/qscrap-logo.png?v=2026';
         document.querySelectorAll('.nav-logo img, .footer-brand img').forEach(img => {
             img.src = logoSrc;
