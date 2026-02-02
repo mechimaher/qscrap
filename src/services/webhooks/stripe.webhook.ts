@@ -100,7 +100,7 @@ router.post('/stripe', async (req: Request, res: Response) => {
  * Handle successful payment intent (subscription upgrade)
  */
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-    const metadata = paymentIntent.metadata;
+    const metadata = paymentIntent.metadata || {};
 
     if (metadata.type === 'subscription_upgrade') {
         console.log(`[Webhook] Subscription upgrade payment succeeded: ${paymentIntent.id}`);
@@ -113,11 +113,11 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
             // Generate invoice
             await generateInvoice({
-                garage_id: metadata.garage_id,
+                garage_id: metadata.garage_id || '',
                 request_id: result.requestId,
                 amount: paymentIntent.amount / 100, // Convert from cents
                 payment_intent_id: paymentIntent.id,
-                plan_name: metadata.plan_name,
+                plan_name: metadata.plan_name || 'Unknown',
                 payment_method: 'card'
             });
         }
@@ -128,7 +128,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
  * Handle failed payment intent
  */
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
-    const metadata = paymentIntent.metadata;
+    const metadata = paymentIntent.metadata || {};
 
     if (metadata.type === 'subscription_upgrade') {
         console.log(`[Webhook] ❌ Subscription upgrade payment failed: ${paymentIntent.id}`);
@@ -148,7 +148,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
  * Handle successful setup intent (saved card)
  */
 async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
-    const metadata = setupIntent.metadata;
+    const metadata = setupIntent.metadata || {};
     const paymentMethodId = setupIntent.payment_method as string;
 
     if (metadata.garage_id) {
@@ -173,7 +173,7 @@ async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
             `, [
                 metadata.garage_id,
                 paymentMethodId,
-                metadata.customer_id,
+                metadata.customer_id || '',
                 paymentMethod.card.last4,
                 paymentMethod.card.brand,
                 paymentMethod.card.exp_month,
@@ -193,7 +193,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     console.log(`[Webhook] Invoice paid: ${invoice.id}`);
 
     // Update subscription billing info if this is a recurring charge
-    if (invoice.subscription) {
+    const subscriptionId = (invoice as any).subscription;
+    if (subscriptionId) {
         const customerId = invoice.customer as string;
 
         await pool.query(`

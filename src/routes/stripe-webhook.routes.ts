@@ -252,7 +252,9 @@ async function handleSubscriptionRenewalPayment(intent: Stripe.PaymentIntent): P
  */
 async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent): Promise<void> {
     const pool = getWritePool();
-    const { garage_id, customer_id } = setupIntent.metadata;
+    const metadata = setupIntent.metadata || {};
+    const garage_id = metadata.garage_id;
+    const customer_id = metadata.customer_id;
     const paymentMethodId = setupIntent.payment_method as string;
 
     if (!garage_id || !paymentMethodId) {
