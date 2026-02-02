@@ -29,10 +29,12 @@ BEGIN
     END IF;
 END $$;
 
--- Ensure all 4 subscription tiers exist with correct pricing
+-- Ensure all 5 subscription tiers exist with correct pricing (MOCI Brain Section 2.1.0.1)
 -- Note: commission_rate is decimal (0.15 = 15%)
 INSERT INTO subscription_plans (plan_code, plan_name, monthly_fee, commission_rate, max_bids_per_month, features, is_active)
 VALUES 
+    ('demo', 'Demo Trial', 0, 0, NULL, 
+     '{"trial_days": 30, "unlimited_bids": true, "full_access": true, "no_monthly_fee": true}', true),
     ('free', 'Pay-Per-Sale', 0, 0.15, NULL, 
      '{"zero_monthly": true, "all_customers": true, "standard_dashboard": true, "email_support": true, "7_day_payout": true}', true),
     ('starter', 'Starter', 299, 0.08, NULL, 
