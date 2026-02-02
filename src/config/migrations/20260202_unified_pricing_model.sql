@@ -1,45 +1,63 @@
 -- ============================================
--- Unified Pricing Model Migration
--- Feb 2, 2026 - Aligns DB with QScrap Brain
+-- Unified Pricing Model Migration (SAFE)
+-- Feb 2, 2026 - Updates existing plans in-place
 -- ============================================
 
--- 1. Update subscription_plans to match unified pricing
--- Note: This creates/updates the authoritative tier structure
+-- 1. Update existing starter plan to match unified pricing
+UPDATE subscription_plans SET 
+    plan_name = 'Starter',
+    monthly_price_qar = 299,
+    annual_price_qar = 2990,
+    max_monthly_orders = 100,
+    features_json = '{"commission_rate": 0.08, "bid_limit_per_day": 50, "showcase_products": 20, "featured_listing": false, "priority_listing": true}'::jsonb
+WHERE plan_code = 'starter';
 
--- Delete old plans and recreate with unified structure
-DELETE FROM subscription_plans WHERE plan_code IN ('starter', 'professional', 'enterprise');
+-- 2. Update professional to Gold (or create if not exists)
+UPDATE subscription_plans SET 
+    plan_code = 'gold',
+    plan_name = 'Gold Partner',
+    monthly_price_qar = 999,
+    annual_price_qar = 9990,
+    max_monthly_orders = 500,
+    analytics_enabled = true,
+    priority_support = true,
+    features_json = '{"commission_rate": 0.05, "bid_limit_per_day": 200, "showcase_products": 100, "featured_listing": true, "analytics_retention_days": 180}'::jsonb
+WHERE plan_code = 'professional';
 
--- Insert unified pricing tiers
+-- If no professional exists, insert Gold
 INSERT INTO subscription_plans (
     plan_code, plan_name, monthly_price_qar, annual_price_qar,
     max_monthly_orders, analytics_enabled, priority_support,
-    api_access, ad_campaigns_allowed, max_team_members,
     features_json, display_order
-) VALUES
--- Starter Tier: 299 QR/month, 8% commission
-('starter', 'Starter', 299, 2990, 100, false, false, false, true, 2,
- '{"commission_rate": 0.08, "bid_limit_per_day": 50, "showcase_products": 20, "featured_listing": false, "priority_listing": true}'::jsonb, 1),
+) VALUES (
+    'gold', 'Gold Partner', 999, 9990, 500, true, true,
+    '{"commission_rate": 0.05, "bid_limit_per_day": 200, "showcase_products": 100, "featured_listing": true}'::jsonb, 2
+) ON CONFLICT (plan_code) DO NOTHING;
 
--- Gold Tier: 999 QR/month, 5% commission  
-('gold', 'Gold Partner', 999, 9990, 500, true, true, false, true, 5,
- '{"commission_rate": 0.05, "bid_limit_per_day": 200, "showcase_products": 100, "featured_listing": true, "analytics_retention_days": 180}'::jsonb, 2),
+-- 3. Update enterprise to Platinum (or create if not exists)
+UPDATE subscription_plans SET 
+    plan_code = 'platinum',
+    plan_name = 'Platinum Partner',
+    monthly_price_qar = 2499,
+    annual_price_qar = 24990,
+    max_monthly_orders = -1,
+    analytics_enabled = true,
+    priority_support = true,
+    api_access = true,
+    features_json = '{"commission_rate": 0.03, "bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "dedicated_account_manager": true}'::jsonb
+WHERE plan_code = 'enterprise';
 
--- Platinum Tier: 2499 QR/month, 3% commission
-('platinum', 'Platinum Partner', 2499, 24990, -1, true, true, true, true, 15,
- '{"commission_rate": 0.03, "bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "dedicated_account_manager": true, "marketing_co_investment": true}'::jsonb, 3)
-ON CONFLICT (plan_code) DO UPDATE SET
-    plan_name = EXCLUDED.plan_name,
-    monthly_price_qar = EXCLUDED.monthly_price_qar,
-    annual_price_qar = EXCLUDED.annual_price_qar,
-    max_monthly_orders = EXCLUDED.max_monthly_orders,
-    analytics_enabled = EXCLUDED.analytics_enabled,
-    priority_support = EXCLUDED.priority_support,
-    api_access = EXCLUDED.api_access,
-    ad_campaigns_allowed = EXCLUDED.ad_campaigns_allowed,
-    max_team_members = EXCLUDED.max_team_members,
-    features_json = EXCLUDED.features_json;
+-- If no enterprise exists, insert Platinum
+INSERT INTO subscription_plans (
+    plan_code, plan_name, monthly_price_qar, annual_price_qar,
+    max_monthly_orders, analytics_enabled, priority_support, api_access,
+    features_json, display_order
+) VALUES (
+    'platinum', 'Platinum Partner', 2499, 24990, -1, true, true, true,
+    '{"commission_rate": 0.03, "bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "dedicated_account_manager": true}'::jsonb, 3
+) ON CONFLICT (plan_code) DO NOTHING;
 
--- 2. Verify the update
+-- 4. Verify the update
 SELECT plan_code, plan_name, monthly_price_qar, 
        (features_json->>'commission_rate')::decimal as commission_rate
 FROM subscription_plans 
