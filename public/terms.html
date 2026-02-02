@@ -513,12 +513,18 @@
         }
 
         [dir="rtl"] .section-header {
-            flex-direction: row-reverse;
+            /* Don't use row-reverse with RTL - causes double reversal */
+            flex-direction: row;
             justify-content: flex-start;
-            text-align: right;
         }
 
-        [dir="rtl"] .section-title {
+        [dir="rtl"] .section-header .section-number {
+            order: 2;
+            /* Place number on right in RTL */
+        }
+
+        [dir="rtl"] .section-header .section-title {
+            order: 1;
             text-align: right;
         }
 
