@@ -100,10 +100,12 @@ body {
 }
 
 .auth-logo-img {
-    width: 100px;
-    height: 100px;
+    height: auto;
+    width: auto;
+    max-height: 80px;
+    max-width: 200px;
     margin-bottom: 20px;
-    border-radius: 24px;
+    border-radius: 12px;
     box-shadow:
         0 0 0 4px rgba(255, 255, 255, 0.3),
         0 0 40px 8px rgba(141, 27, 61, 0.4),
@@ -255,9 +257,11 @@ body {
 }
 
 .sidebar-logo-img {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
+    height: auto;
+    width: auto;
+    max-height: 46px;
+    max-width: 140px;
+    border-radius: 8px;
     box-shadow:
         0 0 0 2px rgba(255, 255, 255, 0.2),
         0 0 20px 4px rgba(141, 27, 61, 0.3),

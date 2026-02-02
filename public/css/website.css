@@ -77,8 +77,10 @@ body {
 }
 
 .nav-logo img {
-    height: 44px;
+    height: auto;
     width: auto;
+    max-height: 50px;
+    max-width: 200px;
 }
 
 .nav-logo-text {
