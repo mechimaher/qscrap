@@ -180,9 +180,13 @@ export class GarageApprovalService {
                 throw new GarageNotFoundError(garageId);
             }
 
-            // Activate user account
+            // Activate user account and clear any suspension
             await client.query(`
-                UPDATE users SET is_active = true, updated_at = NOW()
+                UPDATE users SET 
+                    is_active = true, 
+                    is_suspended = false, 
+                    suspension_reason = NULL,
+                    updated_at = NOW()
                 WHERE user_id = $1
             `, [garageId]);
 
@@ -318,9 +322,13 @@ export class GarageApprovalService {
                 throw new GarageNotFoundError(garageId);
             }
 
-            // Activate user
+            // Activate user and clear any suspension
             await client.query(`
-                UPDATE users SET is_active = true, updated_at = NOW()
+                UPDATE users SET 
+                    is_active = true, 
+                    is_suspended = false, 
+                    suspension_reason = NULL,
+                    updated_at = NOW()
                 WHERE user_id = $1
             `, [garageId]);
 
