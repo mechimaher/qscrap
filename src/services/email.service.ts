@@ -714,8 +714,9 @@ export class EmailService {
     }
 
     /**
-     * VVVIP B2B Approval Email Template - Gold Partner Edition
-     * For garages that registered with password (not Magic Link)
+     * Enterprise-Grade B2B Approval Email Template
+     * Table-based layout for universal email client compatibility
+     * VVVIP Gold Partner Edition
      */
     private getGarageApprovalTemplate(
         garageName: string,
@@ -725,400 +726,303 @@ export class EmailService {
     ): string {
         return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to QScrap Gold Partner Network</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+    <title>Welcome to QScrap Partner Network</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:AllowPNG/>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        /* Base Resets */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 100%);
-            padding: 40px 20px;
-            line-height: 1.7;
-            min-height: 100vh;
-        }
-        .container { 
-            max-width: 640px; 
-            margin: 0 auto; 
-            background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(201, 162, 39, 0.1);
-        }
-        
-        /* VVVIP Header with Gold Accent */
-        .header { 
-            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 50%, #4A0F22 100%);
-            color: white;
-            padding: 60px 48px 50px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 70%, rgba(201, 162, 39, 0.15) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        .gold-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, rgba(201, 162, 39, 0.25) 0%, rgba(201, 162, 39, 0.1) 100%);
-            border: 2px solid #C9A227;
-            color: #C9A227;
-            padding: 10px 24px;
-            border-radius: 100px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 28px;
-            box-shadow: 0 0 30px rgba(201, 162, 39, 0.3);
-        }
-        .logo-text {
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 12px;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        .logo-text span { color: #C9A227; }
-        .header-subtitle {
-            font-size: 16px;
-            opacity: 0.9;
-            font-weight: 500;
-        }
-        
-        /* Main Content */
-        .content { padding: 56px 48px; }
-        .welcome-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: #0D0D0D;
-            margin-bottom: 24px;
-            line-height: 1.3;
-        }
-        .welcome-title span { color: #8D1B3D; }
-        .content p {
-            font-size: 16px;
-            color: #525252;
-            margin-bottom: 24px;
-        }
-        .content strong { color: #0D0D0D; }
-        
-        /* Login Credentials Card */
-        .login-card {
-            background: linear-gradient(135deg, #0D0D0D 0%, #1A1A1A 100%);
-            border: 2px solid #C9A227;
-            border-radius: 20px;
-            padding: 32px;
-            margin: 36px 0;
-            position: relative;
-            overflow: hidden;
-        }
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #C9A227 0%, #E8D48A 50%, #C9A227 100%);
-        }
-        .login-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #C9A227;
-            margin-bottom: 20px;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .login-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .login-row:last-child { border-bottom: none; }
-        .login-label {
-            font-size: 14px;
-            color: rgba(255,255,255,0.6);
-        }
-        .login-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #FFFFFF;
-        }
-        .login-value a {
-            color: #C9A227;
-            text-decoration: none;
-        }
-        
-        /* Premium CTA Button */
-        .cta-container {
-            text-align: center;
-            padding: 24px 0 32px;
-        }
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%);
-            color: white !important;
-            text-decoration: none;
-            padding: 20px 56px;
-            border-radius: 100px;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            box-shadow: 0 12px 40px rgba(141, 27, 61, 0.4), 0 0 0 1px rgba(201, 162, 39, 0.2);
-        }
-        
-        /* Quick Start Guide */
-        .guide-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #0D0D0D;
-            margin: 40px 0 20px;
-            text-align: center;
-        }
-        .guide-steps {
-            background: #F9F9F9;
-            border-radius: 16px;
-            padding: 24px;
-        }
-        .guide-step {
-            display: flex;
-            gap: 16px;
-            padding: 16px 0;
-            border-bottom: 1px solid #E5E5E5;
-        }
-        .guide-step:last-child { border-bottom: none; }
-        .step-number {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        .step-content h4 {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0D0D0D;
-            margin-bottom: 4px;
-        }
-        .step-content p {
-            font-size: 13px;
-            color: #666;
-            margin: 0;
-        }
-        
-        /* Plan Info Box */
-        .plan-box {
-            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-            border-left: 5px solid #C9A227;
-            padding: 18px 24px;
-            margin: 32px 0;
-            border-radius: 0 16px 16px 0;
-        }
-        .plan-box p {
-            margin: 0;
-            font-size: 14px;
-            color: #78350F;
-            font-weight: 500;
-        }
-        
-        /* Premium Footer */
-        .footer { 
-            background: linear-gradient(180deg, #0D0D0D 0%, #000000 100%);
-            color: white;
-            padding: 48px;
-            text-align: center;
-        }
-        .footer-logo {
-            font-size: 28px;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-        .footer-logo span { color: #C9A227; }
-        .footer-tagline {
-            font-size: 13px;
-            color: #C9A227;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 32px;
-            font-weight: 600;
-        }
-        .footer p {
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 8px;
-        }
-        .footer a {
-            color: #C9A227;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin: 24px 0;
-            padding: 24px;
-            background: rgba(201, 162, 39, 0.05);
-            border-radius: 16px;
-            border: 1px solid rgba(201, 162, 39, 0.1);
-        }
-        .contact-item { text-align: center; }
-        .contact-item span {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-        .legal {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid #222;
-            font-size: 11px;
-            color: #666;
-        }
-        
-        @media (max-width: 600px) {
-            body { padding: 20px 12px; }
-            .container { border-radius: 16px; }
-            .header, .content, .footer { padding: 36px 24px; }
-            .logo-text { font-size: 32px; }
-            .welcome-title { font-size: 22px; }
-            .contact-grid { grid-template-columns: 1fr; gap: 12px; }
-            .cta-button { padding: 18px 40px; font-size: 14px; }
+        /* Client Fixes */
+        @media only screen and (max-width: 640px) {
+            .container { width: 100% !important; max-width: 100% !important; }
+            .mobile-padding { padding-left: 20px !important; padding-right: 20px !important; }
+            .mobile-center { text-align: center !important; }
+            .mobile-hide { display: none !important; }
+            .mobile-full { width: 100% !important; display: block !important; }
+            .cta-button { width: 100% !important; display: block !important; }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- VVVIP Header -->
-        <div class="header">
-            <div class="gold-badge">
-                <span>✓</span> Account Approved
-            </div>
-            <div class="logo-text">Q<span>Scrap</span></div>
-            <p class="header-subtitle">Qatar's Premier Automotive Parts Marketplace</p>
-        </div>
-        
-        <!-- Main Content -->
-        <div class="content">
-            <h1 class="welcome-title">
-                Welcome to the Family, <span>${garageName}</span>! 🎉
-            </h1>
-            
-            <p>Great news! Your application to join the <strong>QScrap Partner Network</strong> has been carefully reviewed and <strong>approved</strong> by our team.</p>
-            
-            <p>We're thrilled to have you as a <strong>Gold Partner</strong>. At QScrap, we believe our garages are the backbone of our marketplace — your success is our success.</p>
-            
-            <!-- Login Credentials Card -->
-            <div class="login-card">
-                <div class="login-title">🔐 Your Login Credentials</div>
-                <div class="login-row">
-                    <span class="login-label">Partner Portal</span>
-                    <span class="login-value"><a href="${portalUrl}">${portalUrl}</a></span>
-                </div>
-                <div class="login-row">
-                    <span class="login-label">Username (Phone)</span>
-                    <span class="login-value">${phoneNumber}</span>
-                </div>
-                <div class="login-row">
-                    <span class="login-label">Password</span>
-                    <span class="login-value">Use the password you set during registration</span>
-                </div>
-            </div>
-            
-            <!-- CTA Button -->
-            <div class="cta-container">
-                <a href="${portalUrl}" class="cta-button">Access Your Dashboard →</a>
-            </div>
-            
-            <!-- Plan Info -->
-            <div class="plan-box">
-                <p><strong>📋 Your Plan:</strong> ${planName} — You can request an upgrade anytime from your dashboard.</p>
-            </div>
-            
-            <!-- Quick Start Guide -->
-            <h3 class="guide-title">🚀 Quick Start Guide</h3>
-            <div class="guide-steps">
-                <div class="guide-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>Complete Your Profile</h4>
-                        <p>Add your logo, business hours, and service areas</p>
-                    </div>
-                </div>
-                <div class="guide-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>Set Your Operating Hours</h4>
-                        <p>Let customers know when you're available</p>
-                    </div>
-                </div>
-                <div class="guide-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Wait for Part Requests</h4>
-                        <p>You'll receive notifications when customers need parts</p>
-                    </div>
-                </div>
-                <div class="guide-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h4>Submit Your Best Quote</h4>
-                        <p>Competitive pricing wins more orders</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Premium Footer -->
-        <div class="footer">
-            <div class="footer-logo">Q<span>Scrap</span></div>
-            <p class="footer-tagline">Gold Partner Network</p>
-            
-            <div class="contact-grid">
-                <div class="contact-item">
-                    <span>📞</span>
-                    <a href="tel:+97450267974">+974 5026 7974</a>
-                </div>
-                <div class="contact-item">
-                    <span>📧</span>
-                    <a href="mailto:partners@qscrap.qa">partners@qscrap.qa</a>
-                </div>
-                <div class="contact-item">
-                    <span>💬</span>
-                    <a href="https://wa.me/97450267974">WhatsApp</a>
-                </div>
-            </div>
-            
-            <p>Our Partner Success Team is here to help you grow.</p>
-            
-            <div class="legal">
-                © 2026 QScrap Services & Trading L.L.C. All rights reserved.<br>
-                CR: 155892 | P.O. Box 32544, Doha, Qatar
-            </div>
-        </div>
-    </div>
+<body style="margin: 0 !important; padding: 0 !important; background: linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    
+    <!-- Outer Wrapper -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 100%);">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                
+                <!-- Main Container -->
+                <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background: #FFFFFF; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);">
+                    
+                    <!-- ========== HEADER ========== -->
+                    <tr>
+                        <td align="center" style="background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 50%, #4A0F22 100%); padding: 50px 40px;">
+                            
+                            <!-- Gold Badge -->
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="background: rgba(201, 162, 39, 0.15); border: 2px solid #C9A227; border-radius: 50px; padding: 10px 28px;">
+                                        <span style="color: #C9A227; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">✓ Account Approved</span>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Logo -->
+                            <h1 style="margin: 24px 0 8px 0; font-size: 42px; font-weight: 800; color: #FFFFFF; letter-spacing: -1px;">
+                                Q<span style="color: #C9A227;">Scrap</span>
+                            </h1>
+                            <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 500;">
+                                Qatar's Premier Automotive Parts Marketplace
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- ========== WELCOME CONTENT ========== -->
+                    <tr>
+                        <td class="mobile-padding" style="padding: 48px 48px 32px 48px;">
+                            <h2 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 800; color: #0D0D0D; line-height: 1.3;">
+                                Welcome to the Family, <span style="color: #8D1B3D;">${garageName}</span>! 🎉
+                            </h2>
+                            <p style="margin: 0 0 16px 0; font-size: 16px; color: #525252; line-height: 1.7;">
+                                Great news! Your application to join the <strong style="color: #0D0D0D;">QScrap Partner Network</strong> has been carefully reviewed and <strong style="color: #0D0D0D;">approved</strong> by our team.
+                            </p>
+                            <p style="margin: 0; font-size: 16px; color: #525252; line-height: 1.7;">
+                                We're thrilled to have you as a <strong style="color: #0D0D0D;">Gold Partner</strong>. At QScrap, we believe our garages are the backbone of our marketplace — your success is our success.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- ========== PORTAL ACCESS CARD ========== -->
+                    <tr>
+                        <td class="mobile-padding" style="padding: 0 48px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #0D0D0D 0%, #1A1A1A 100%); border: 2px solid #C9A227; border-radius: 20px; overflow: hidden;">
+                                
+                                <!-- Gold Top Border -->
+                                <tr>
+                                    <td colspan="2" style="height: 4px; background: linear-gradient(90deg, #C9A227 0%, #E8D48A 50%, #C9A227 100%);"></td>
+                                </tr>
+                                
+                                <!-- Card Title -->
+                                <tr>
+                                    <td colspan="2" align="center" style="padding: 28px 24px 20px 24px;">
+                                        <span style="color: #C9A227; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">🔐 Your Partner Portal Access</span>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Portal URL - PROMINENT BUTTON -->
+                                <tr>
+                                    <td colspan="2" align="center" style="padding: 0 24px 24px 24px;">
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: rgba(201, 162, 39, 0.1); border: 1px solid rgba(201, 162, 39, 0.3); border-radius: 12px;">
+                                            <tr>
+                                                <td align="center" style="padding: 20px;">
+                                                    <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Partner Dashboard URL</p>
+                                                    <a href="${portalUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #C9A227 0%, #E8D48A 50%, #C9A227 100%); color: #0D0D0D !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: 0.5px;">
+                                                        🚀 qscrap.qa/garage-dashboard
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Credentials Row: Phone -->
+                                <tr>
+                                    <td style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <span style="color: rgba(255,255,255,0.6); font-size: 14px;">Login Username</span>
+                                    </td>
+                                    <td align="right" style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <span style="color: #FFFFFF; font-size: 16px; font-weight: 700; font-family: 'Courier New', monospace;">${phoneNumber}</span>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Credentials Row: Password -->
+                                <tr>
+                                    <td style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <span style="color: rgba(255,255,255,0.6); font-size: 14px;">Password</span>
+                                    </td>
+                                    <td align="right" style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <span style="color: #C9A227; font-size: 14px; font-weight: 600;">Your registration password</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- ========== CTA BUTTON ========== -->
+                    <tr>
+                        <td align="center" style="padding: 36px 48px;">
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border-radius: 50px; box-shadow: 0 12px 40px rgba(141, 27, 61, 0.4);">
+                                        <a href="${portalUrl}" target="_blank" style="display: inline-block; color: #FFFFFF !important; font-size: 16px; font-weight: 700; text-decoration: none; padding: 18px 48px; letter-spacing: 0.5px;">
+                                            Access Your Dashboard →
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- ========== PLAN INFO ========== -->
+                    <tr>
+                        <td class="mobile-padding" style="padding: 0 48px 32px 48px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-left: 5px solid #C9A227; border-radius: 0 16px 16px 0;">
+                                <tr>
+                                    <td style="padding: 18px 24px;">
+                                        <p style="margin: 0; font-size: 15px; color: #78350F; font-weight: 600;">
+                                            📋 <strong>Your Plan:</strong> ${planName}
+                                        </p>
+                                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #92400E;">
+                                            You can request an upgrade anytime from your dashboard settings.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- ========== QUICK START GUIDE ========== -->
+                    <tr>
+                        <td class="mobile-padding" style="padding: 0 48px 40px 48px;">
+                            <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 700; color: #0D0D0D; text-align: center;">
+                                🚀 Quick Start Guide
+                            </h3>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #F9F9F9; border-radius: 16px;">
+                                <!-- Step 1 -->
+                                <tr>
+                                    <td style="padding: 20px; border-bottom: 1px solid #E5E5E5;">
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td width="44" valign="top">
+                                                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border-radius: 50%; color: #FFF; font-size: 14px; font-weight: 700; text-align: center; line-height: 32px;">1</div>
+                                                </td>
+                                                <td valign="top">
+                                                    <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #0D0D0D;">Complete Your Profile</p>
+                                                    <p style="margin: 0; font-size: 13px; color: #666;">Add your logo, business hours, and service areas</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Step 2 -->
+                                <tr>
+                                    <td style="padding: 20px; border-bottom: 1px solid #E5E5E5;">
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td width="44" valign="top">
+                                                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border-radius: 50%; color: #FFF; font-size: 14px; font-weight: 700; text-align: center; line-height: 32px;">2</div>
+                                                </td>
+                                                <td valign="top">
+                                                    <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #0D0D0D;">Set Your Operating Hours</p>
+                                                    <p style="margin: 0; font-size: 13px; color: #666;">Let customers know when you're available</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Step 3 -->
+                                <tr>
+                                    <td style="padding: 20px; border-bottom: 1px solid #E5E5E5;">
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td width="44" valign="top">
+                                                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border-radius: 50%; color: #FFF; font-size: 14px; font-weight: 700; text-align: center; line-height: 32px;">3</div>
+                                                </td>
+                                                <td valign="top">
+                                                    <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #0D0D0D;">Wait for Part Requests</p>
+                                                    <p style="margin: 0; font-size: 13px; color: #666;">You'll receive notifications when customers need parts</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <!-- Step 4 -->
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td width="44" valign="top">
+                                                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border-radius: 50%; color: #FFF; font-size: 14px; font-weight: 700; text-align: center; line-height: 32px;">4</div>
+                                                </td>
+                                                <td valign="top">
+                                                    <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #0D0D0D;">Submit Your Best Quote</p>
+                                                    <p style="margin: 0; font-size: 13px; color: #666;">Competitive pricing wins more orders</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- ========== FOOTER ========== -->
+                    <tr>
+                        <td align="center" style="background: linear-gradient(180deg, #0D0D0D 0%, #000000 100%); padding: 48px 40px;">
+                            
+                            <!-- Footer Logo -->
+                            <h2 style="margin: 0 0 4px 0; font-size: 28px; font-weight: 800; color: #FFFFFF;">
+                                Q<span style="color: #C9A227;">Scrap</span>
+                            </h2>
+                            <p style="margin: 0 0 28px 0; color: #C9A227; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">
+                                Gold Partner Network
+                            </p>
+                            
+                            <!-- Contact Grid -->
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: rgba(201, 162, 39, 0.05); border: 1px solid rgba(201, 162, 39, 0.15); border-radius: 16px;">
+                                <tr>
+                                    <td align="center" style="padding: 24px; width: 33%;">
+                                        <p style="margin: 0 0 8px 0; font-size: 22px;">📞</p>
+                                        <a href="tel:+97450267974" style="color: #C9A227; font-size: 14px; font-weight: 600; text-decoration: none;">+974 5026 7974</a>
+                                    </td>
+                                    <td align="center" style="padding: 24px; width: 33%; border-left: 1px solid rgba(201, 162, 39, 0.15); border-right: 1px solid rgba(201, 162, 39, 0.15);">
+                                        <p style="margin: 0 0 8px 0; font-size: 22px;">📧</p>
+                                        <a href="mailto:partners@qscrap.qa" style="color: #C9A227; font-size: 14px; font-weight: 600; text-decoration: none;">partners@qscrap.qa</a>
+                                    </td>
+                                    <td align="center" style="padding: 24px; width: 33%;">
+                                        <p style="margin: 0 0 8px 0; font-size: 22px;">💬</p>
+                                        <a href="https://wa.me/97450267974" style="color: #C9A227; font-size: 14px; font-weight: 600; text-decoration: none;">WhatsApp</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 24px 0 0 0; color: #888; font-size: 14px;">
+                                Our Partner Success Team is here to help you grow.
+                            </p>
+                            
+                            <!-- Legal -->
+                            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #222;">
+                                <p style="margin: 0; color: #666; font-size: 11px; line-height: 1.6;">
+                                    © 2026 QScrap Services &amp; Trading L.L.C. All rights reserved.<br>
+                                    CR: 155892 | P.O. Box 32544, Doha, Qatar
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
         `;
