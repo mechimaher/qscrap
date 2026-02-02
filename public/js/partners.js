@@ -86,6 +86,19 @@ const translations = {
         'tier1.feature5': 'Guaranteed 7-day payouts',
         'tier1.cta': 'Get Started Free',
 
+        // Starter Tier (NEW)
+        'tierStarter.name': 'Starter',
+        'tierStarter.commission': '8%',
+        'tierStarter.perOrder': 'per order',
+        'tierStarter.desc': 'For growing garages',
+        'tierStarter.feature1': 'QAR 299/month subscription',
+        'tierStarter.feature2': 'Priority listing in search',
+        'tierStarter.feature3': 'Basic analytics dashboard',
+        'tierStarter.feature4': 'Email & chat support',
+        'tierStarter.feature5': 'Standard 7-day payouts',
+        'tierStarter.feature6': 'Showcase up to 20 products',
+        'tierStarter.cta': 'Start Growing',
+
         // Gold Partner Tier
         'tier2.badge': 'Most Popular',
         'tier2.name': 'Gold Partner',
@@ -284,6 +297,19 @@ const translations = {
         'tier1.feature4': 'دعم بالبريد الإلكتروني',
         'tier1.feature5': 'مدفوعات مضمونة خلال 7 أيام',
         'tier1.cta': 'ابدأ مجاناً',
+
+        // Starter Tier (NEW)
+        'tierStarter.name': 'المبتدئ',
+        'tierStarter.commission': '8%',
+        'tierStarter.perOrder': 'لكل طلب',
+        'tierStarter.desc': 'للكراجات النامية',
+        'tierStarter.feature1': 'اشتراك 299 ريال/شهر',
+        'tierStarter.feature2': 'أولوية في نتائج البحث',
+        'tierStarter.feature3': 'لوحة تحليلات أساسية',
+        'tierStarter.feature4': 'دعم بالبريد والدردشة',
+        'tierStarter.feature5': 'مدفوعات قياسية خلال 7 أيام',
+        'tierStarter.feature6': 'عرض حتى 20 منتج',
+        'tierStarter.cta': 'ابدأ النمو',
 
         // Gold Partner Tier
         'tier2.badge': 'الأكثر شعبية',
