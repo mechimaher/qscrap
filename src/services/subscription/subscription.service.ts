@@ -8,7 +8,8 @@ export class SubscriptionService {
     constructor(private pool: Pool) { }
 
     async getSubscriptionPlans() {
-        const result = await this.pool.query(`SELECT plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured FROM subscription_plans WHERE is_active = true ORDER BY display_order ASC`);
+        // Exclude 'demo' plan - it's admin-assigned only, not for self-service upgrade
+        const result = await this.pool.query(`SELECT plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured FROM subscription_plans WHERE is_active = true AND plan_code != 'demo' ORDER BY monthly_fee ASC, display_order ASC`);
         return result.rows;
     }
 
