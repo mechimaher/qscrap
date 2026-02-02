@@ -139,7 +139,10 @@ const translations = {
         'footer.phone': '📞 +974 5026 7974',
         'footer.whatsapp': '💬 WhatsApp Support',
         'footer.legalInfo': 'QScrap Services & Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar',
-        'footer.copyright': '© 2026 QScrap. All rights reserved.'
+        'footer.copyright': '© 2026 QScrap. All rights reserved.',
+
+        // Floating Action Widget
+        'fab.text': 'Request Parts Now'
     },
     ar: {
         // Navigation
@@ -245,7 +248,10 @@ const translations = {
         'footer.phone': '📞 +974 5026 7974',
         'footer.whatsapp': '💬 دعم واتساب',
         'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | سجل تجاري: ١٥٥٨٩٢ | ص.ب: ٣٢٥٤٤، الدوحة، قطر',
-        'footer.copyright': 'كيوسكراب © ٢٠٢٦. جميع الحقوق محفوظة.'
+        'footer.copyright': 'كيوسكراب © ٢٠٢٦. جميع الحقوق محفوظة.',
+
+        // Floating Action Widget
+        'fab.text': 'اطلب قطع الغيار الآن'
     }
 };
 

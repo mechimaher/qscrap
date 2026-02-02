@@ -888,6 +888,182 @@
         </div>
     </footer>
 
+    <!-- VVIP Floating Action Widget -->
+    <style>
+        /* Floating Action Widget - Premium 2030 Design */
+        .floating-action-widget {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%);
+            color: #fff;
+            padding: 14px 24px 14px 18px;
+            border-radius: 100px;
+            box-shadow: 0 8px 32px rgba(141, 27, 61, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            text-decoration: none;
+            font-family: 'Inter', 'Cairo', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            border: 1px solid rgba(201, 162, 39, 0.2);
+        }
+
+        .floating-action-widget.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .floating-action-widget:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(141, 27, 61, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .floating-action-widget .widget-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(201, 162, 39, 0.15);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .floating-action-widget .widget-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: #C9A227;
+        }
+
+        .floating-action-widget .widget-text {
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+
+        /* Breathing glow animation */
+        @keyframes widgetBreathing {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 32px rgba(141, 27, 61, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(201, 162, 39, 0);
+            }
+
+            50% {
+                box-shadow: 0 8px 32px rgba(141, 27, 61, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 20px 4px rgba(201, 162, 39, 0.25);
+            }
+        }
+
+        .floating-action-widget.breathing {
+            animation: widgetBreathing 4s ease-in-out infinite;
+        }
+
+        .floating-action-widget:hover {
+            animation: none;
+        }
+
+        /* RTL Positioning */
+        html[dir="rtl"] .floating-action-widget {
+            right: auto;
+            left: 28px;
+            flex-direction: row-reverse;
+            padding: 14px 18px 14px 24px;
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .floating-action-widget {
+                bottom: 20px;
+                right: 16px;
+                padding: 12px 18px 12px 14px;
+                font-size: 14px;
+            }
+
+            html[dir="rtl"] .floating-action-widget {
+                right: auto;
+                left: 16px;
+                padding: 12px 14px 12px 18px;
+            }
+        }
+    </style>
+
+    <!-- Widget HTML -->
+    <a href="#download" class="floating-action-widget" id="floatingWidget" aria-label="Request Parts Now">
+        <span class="widget-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 3L4 14h7v7l9-11h-7V3z" />
+            </svg>
+        </span>
+        <span class="widget-text" data-i18n="fab.text">Request Parts Now</span>
+    </a>
+
+    <!-- Widget JavaScript -->
+    <script>
+        (function () {
+            const widget = document.getElementById('floatingWidget');
+            if (!widget) return;
+
+            let hasScrolled = false;
+            let breathingInterval = null;
+            const SCROLL_THRESHOLD = 300;
+            const IDLE_DELAY = 4000;
+            const BREATHING_INTERVAL = 15000;
+
+            function showWidget() {
+                widget.classList.add('visible');
+                startBreathing();
+            }
+
+            function startBreathing() {
+                if (breathingInterval) return;
+                breathingInterval = setInterval(() => {
+                    if (!widget.matches(':hover')) {
+                        widget.classList.add('breathing');
+                        setTimeout(() => widget.classList.remove('breathing'), 4000);
+                    }
+                }, BREATHING_INTERVAL);
+            }
+
+            // Show after scroll threshold
+            window.addEventListener('scroll', () => {
+                if (!hasScrolled && window.scrollY > SCROLL_THRESHOLD) {
+                    hasScrolled = true;
+                    showWidget();
+                }
+            }, { passive: true });
+
+            // Show after idle delay
+            setTimeout(() => {
+                if (!hasScrolled) {
+                    showWidget();
+                }
+            }, IDLE_DELAY);
+
+            // Stop breathing on hover
+            widget.addEventListener('mouseenter', () => {
+                widget.classList.remove('breathing');
+            });
+
+            // Smooth scroll to download section
+            widget.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.getElementById('download');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        })();
+    </script>
+
     <script src="/js/homepage.js" defer></script>
 </body>
 
