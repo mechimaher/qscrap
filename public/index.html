@@ -496,6 +496,52 @@
         </div>
     </nav>
 
+    <!-- Mobile Menu Overlay - iOS Safari Safe -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" aria-hidden="true">
+        <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
+        <div class="mobile-menu-panel" id="mobileMenuPanel" role="dialog" aria-modal="true"
+            aria-label="Mobile navigation menu">
+            <div class="mobile-menu-header">
+                <a href="/" class="mobile-menu-logo">
+                    <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
+                </a>
+                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <nav class="mobile-menu-nav">
+                <a href="#how-it-works" class="mobile-menu-link" data-i18n="nav.howItWorks">How It Works</a>
+                <a href="#gallery" class="mobile-menu-link" data-i18n="nav.gallery">Gallery</a>
+                <a href="/partners.html" class="mobile-menu-link" data-i18n="nav.forBusiness">For Businesses</a>
+                <a href="/about.html" class="mobile-menu-link" data-i18n="nav.about">About</a>
+            </nav>
+            <div class="mobile-menu-footer">
+                <!-- Language Switcher -->
+                <div class="mobile-lang-switcher">
+                    <button class="mobile-lang-btn active" data-lang="en" aria-label="English">
+                        <span class="lang-flag">🇬🇧</span>
+                        <span class="lang-text">English</span>
+                    </button>
+                    <button class="mobile-lang-btn" data-lang="ar" aria-label="العربية">
+                        <span class="lang-flag">🇶🇦</span>
+                        <span class="lang-text">العربية</span>
+                    </button>
+                </div>
+                <a href="#download" class="mobile-menu-cta" id="mobileDownloadBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span data-i18n="nav.download">Download App</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero Section with Cinematic Slideshow -->
     <section class="hero" id="main-content" tabindex="-1">
         <div class="hero-bg-slideshow">
