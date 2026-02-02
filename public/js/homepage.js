@@ -339,5 +339,157 @@ const i18n = {
     }
 };
 
+// ===== 2026 MOBILE MENU SYSTEM - iOS Safari Safe =====
+// Enterprise-grade mobile navigation with iOS touch event fixes
+
+const mobileMenu = {
+    isOpen: false,
+    touchHandled: false,
+
+    init() {
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const closeBtn = document.getElementById('mobileMenuClose');
+        const backdrop = document.getElementById('mobileMenuBackdrop');
+        const overlay = document.getElementById('mobileMenuOverlay');
+        const panel = document.getElementById('mobileMenuPanel');
+        const downloadBtn = document.getElementById('mobileDownloadBtn');
+
+        if (!menuBtn || !overlay) return;
+
+        // iOS Safari touch event fix: Use both touchstart and click
+        // touchstart fires immediately on iOS, but we need click for other devices
+        const handleToggle = (e) => {
+            // Prevent double-firing on touch devices
+            if (e.type === 'touchstart') {
+                this.touchHandled = true;
+                e.preventDefault(); // Prevent ghost click
+            } else if (e.type === 'click' && this.touchHandled) {
+                this.touchHandled = false;
+                return;
+            }
+
+            this.toggle();
+        };
+
+        // Attach both touchstart and click for iOS compatibility
+        menuBtn.addEventListener('touchstart', handleToggle, { passive: false });
+        menuBtn.addEventListener('click', handleToggle);
+
+        closeBtn?.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.close();
+        }, { passive: false });
+        closeBtn?.addEventListener('click', () => this.close());
+
+        backdrop?.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.close();
+        }, { passive: false });
+        backdrop?.addEventListener('click', () => this.close());
+
+        // Close on menu link click
+        document.querySelectorAll('.mobile-menu-link').forEach(link => {
+            link.addEventListener('click', () => {
+                this.close();
+            });
+        });
+
+        // Download button close
+        downloadBtn?.addEventListener('click', () => {
+            this.close();
+        });
+
+        // Mobile language switcher
+        document.querySelectorAll('.mobile-lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.lang;
+                i18n.setLanguage(lang, true);
+                // Update mobile button active state
+                document.querySelectorAll('.mobile-lang-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.lang === lang);
+                });
+                this.close();
+            });
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+
+        // Sync mobile lang buttons with current language
+        this.syncLangButtons();
+    },
+
+    syncLangButtons() {
+        const currentLang = localStorage.getItem('qscrap-lang') || 'en';
+        document.querySelectorAll('.mobile-lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === currentLang);
+        });
+    },
+
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    },
+
+    open() {
+        const overlay = document.getElementById('mobileMenuOverlay');
+        const menuBtn = document.getElementById('mobileMenuBtn');
+
+        if (!overlay) return;
+
+        this.isOpen = true;
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+        menuBtn?.classList.add('active');
+
+        // Lock body scroll - iOS Safari safe
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.top = `-${window.scrollY}px`;
+
+        // Focus trap - move focus to close button
+        setTimeout(() => {
+            document.getElementById('mobileMenuClose')?.focus();
+        }, 100);
+
+        // Sync language buttons
+        this.syncLangButtons();
+    },
+
+    close() {
+        const overlay = document.getElementById('mobileMenuOverlay');
+        const menuBtn = document.getElementById('mobileMenuBtn');
+
+        if (!overlay) return;
+
+        this.isOpen = false;
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        menuBtn?.classList.remove('active');
+
+        // Restore body scroll - iOS Safari safe
+        const scrollY = document.body.style.top;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+
+        // Return focus to menu button
+        menuBtn?.focus();
+    }
+};
+
 // Initialize i18n on DOM ready
-document.addEventListener('DOMContentLoaded', () => i18n.init());
+document.addEventListener('DOMContentLoaded', () => {
+    i18n.init();
+    mobileMenu.init();
+});
