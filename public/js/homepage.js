@@ -446,6 +446,7 @@ const mobileMenu = {
 
         this.isOpen = true;
         overlay.classList.add('active');
+        document.body.classList.add('mobile-menu-open');
         overlay.setAttribute('aria-hidden', 'false');
         menuBtn?.classList.add('active');
 
@@ -472,6 +473,7 @@ const mobileMenu = {
 
         this.isOpen = false;
         overlay.classList.remove('active');
+        document.body.classList.remove('mobile-menu-open');
         overlay.setAttribute('aria-hidden', 'true');
         menuBtn?.classList.remove('active');
 

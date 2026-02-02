@@ -1111,6 +1111,13 @@
                 padding: 12px 14px 12px 18px;
             }
         }
+
+        /* Hide floating widget when mobile menu is open */
+        .mobile-menu-overlay.active~.floating-action-widget,
+        body.mobile-menu-open .floating-action-widget {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
     </style>
 
     <!-- Widget HTML -->
