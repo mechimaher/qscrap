@@ -118,10 +118,12 @@ const translations = {
         'testimonials.title': 'What Our Garages Say',
 
         'testimonial1.quote': '"QScrap doubled our monthly sales within 3 months. The dashboard is easy to use, and payouts are always on time. Best business decision we made."',
+        'testimonial1.initial': 'R',
         'testimonial1.name': 'Rajesh Krishnan',
         'testimonial1.business': 'Krishnan Auto Parts, Doha',
 
         'testimonial2.quote': '"We used to struggle finding customers. Now orders come to us daily. The delivery network saves us so much time and hassle."',
+        'testimonial2.initial': 'A',
         'testimonial2.name': 'Ahmed Hassan',
         'testimonial2.business': 'Hassan Motors, Industrial Area',
 
@@ -315,10 +317,12 @@ const translations = {
         'testimonials.title': 'ماذا يقول شركاؤنا',
 
         'testimonial1.quote': '"كيوسكراب ضاعف مبيعاتنا الشهرية خلال 3 أشهر. لوحة التحكم سهلة الاستخدام، والمدفوعات دائماً في الوقت. أفضل قرار تجاري اتخذناه."',
+        'testimonial1.initial': 'ر',
         'testimonial1.name': 'راجيش كريشنان',
         'testimonial1.business': 'كريشنان لقطع السيارات، الدوحة',
 
         'testimonial2.quote': '"كنا نكافح لإيجاد عملاء. الآن الطلبات تأتينا يومياً. شبكة التوصيل توفر علينا الكثير من الوقت والجهد."',
+        'testimonial2.initial': 'أ',
         'testimonial2.name': 'أحمد حسان',
         'testimonial2.business': 'حسان موتورز، المنطقة الصناعية',
 
