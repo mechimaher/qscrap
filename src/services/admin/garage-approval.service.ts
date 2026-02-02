@@ -15,6 +15,7 @@ import {
     GarageAlreadyProcessedError,
     InvalidApprovalStatusError
 } from './errors';
+import { emailService } from '../email.service';
 
 const DEMO_PERIOD_DAYS = 30;
 
@@ -192,7 +193,34 @@ export class GarageApprovalService {
             });
 
             await client.query('COMMIT');
-            return garageResult.rows[0];
+
+            // Send welcome email (after commit, non-blocking)
+            const garage = garageResult.rows[0];
+            try {
+                // Fetch user email and phone
+                const userResult = await this.pool.query(`
+                    SELECT email, phone_number FROM users WHERE user_id = $1
+                `, [garageId]);
+
+                if (userResult.rows.length > 0 && userResult.rows[0].email) {
+                    const { email, phone_number } = userResult.rows[0];
+                    const planName = garage.current_plan_code === 'free' ? 'Pay-Per-Sale (Free)' :
+                        garage.current_plan_code || 'Pay-Per-Sale (Free)';
+
+                    await emailService.sendGarageApprovalEmail(
+                        email,
+                        garage.garage_name,
+                        phone_number,
+                        planName
+                    );
+                    console.log(`[GarageApproval] Welcome email sent to ${email}`);
+                }
+            } catch (emailErr: any) {
+                // Log but don't fail the approval
+                console.error(`[GarageApproval] Failed to send welcome email:`, emailErr.message);
+            }
+
+            return garage;
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
