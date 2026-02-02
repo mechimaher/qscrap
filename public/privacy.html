@@ -583,9 +583,10 @@
             flex-direction: row-reverse;
         }
 
-        /* RTL Company Items */
+        /* RTL Company Items - Icon on RIGHT */
         [dir="rtl"] .company-item {
-            flex-direction: row-reverse;
+            /* In RTL: row makes first item (icon) go to RIGHT */
+            flex-direction: row;
             text-align: right;
         }
 
@@ -1008,7 +1009,7 @@
                     <div class="company-item">
                         <div class="company-icon">📞</div>
                         <div>
-                            <div class="company-item-label">Phone</div>
+                            <div class="company-item-label" data-i18n="privacy.contact.phone">Phone</div>
                             <div class="company-item-value"><a href="tel:+97444554444" dir="ltr">+974 4455 4444</a>
                             </div>
                         </div>
@@ -1016,7 +1017,7 @@
                     <div class="company-item">
                         <div class="company-icon">📍</div>
                         <div>
-                            <div class="company-item-label">Address</div>
+                            <div class="company-item-label" data-i18n="privacy.contact.address">Address</div>
                             <div class="company-item-value">Industrial Area, Street 10<br>P.O. Box 32544, Doha, Qatar
                             </div>
                         </div>
