@@ -129,10 +129,17 @@ export class GarageApprovalService {
                 u.full_name,
                 u.is_active,
                 u.is_suspended,
+                COALESCE(sp.plan_name, 
+                    CASE g.current_plan_code 
+                        WHEN 'free' THEN 'Pay-Per-Sale'
+                        ELSE 'None'
+                    END
+                ) as plan_name,
                 (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id) as total_orders,
                 (SELECT COUNT(*) FROM bids WHERE garage_id = g.garage_id) as total_bids
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
+            LEFT JOIN subscription_plans sp ON g.current_plan_code = sp.plan_code
             ${whereClause}
             ORDER BY g.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
