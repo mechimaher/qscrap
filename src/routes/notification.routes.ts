@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { getNotifications, markRead, getUnreadNotificationCount, getBadgeCounts } from '../controllers/notification.controller';
 import { pushService } from '../services/push.service';
 import { AuthRequest } from '../middleware/auth.middleware';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.post('/register-token', authenticate, async (req: any, res: any) => {
 
         res.json({ success: true, message: 'Push token registered' });
     } catch (err) {
-        console.error('Push register error:', err);
+        logger.error('Push register error', { error: err });
         res.status(500).json({ error: 'Failed to register token' });
     }
 });

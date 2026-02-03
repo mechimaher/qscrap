@@ -4,6 +4,7 @@ import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { createNotification } from '../services/notification.service';
 import { ReviewsService } from '../services/reviews';
+import logger from '../utils/logger';
 
 const reviewsService = new ReviewsService(pool);
 
@@ -14,7 +15,7 @@ export const getGarageReviews = async (req: AuthRequest, res: Response) => {
         const result = await reviewsService.getGarageReviews(req.params.garage_id, limit, offset);
         res.json({ ...result, pagination: { limit, offset, total: parseInt(result.stats?.total_reviews || '0') } });
     } catch (err) {
-        console.error('getGarageReviews error:', err);
+        logger.error('getGarageReviews error', { error: err });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };

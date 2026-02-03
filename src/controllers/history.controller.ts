@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getReadPool } from '../config/db';
+import logger from '../utils/logger';
 
 const readPool = getReadPool();
 
@@ -32,7 +33,7 @@ export const getVehicleHistory = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('Error fetching vehicle history:', error);
+        logger.error('Error fetching vehicle history', { error });
         res.status(500).json({ error: 'Internal server error' });
     }
 };
