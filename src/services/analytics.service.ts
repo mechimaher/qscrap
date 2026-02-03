@@ -1,4 +1,5 @@
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 interface DailyAnalytics {
     date: string;
@@ -90,7 +91,7 @@ export class AnalyticsService {
                 );
                 topParts = topPartsResult.rows;
             } catch (e) {
-                console.log('[ANALYTICS] garage_popular_parts view not available, using fallback');
+                logger.info('garage_popular_parts view not available, using fallback');
             }
 
             // Get sales trend - fallback to empty if view doesn't exist
@@ -113,7 +114,7 @@ export class AnalyticsService {
                 );
                 salesTrend = trendResult.rows;
             } catch (e) {
-                console.log('[ANALYTICS] sales trend query failed, using fallback');
+                logger.info('sales trend query failed, using fallback');
             }
 
             // Get bid performance - fallback to empty if view doesn't exist
@@ -134,7 +135,7 @@ export class AnalyticsService {
                 );
                 bidPerformance = bidResult.rows;
             } catch (e) {
-                console.log('[ANALYTICS] bid performance query failed, using fallback');
+                logger.info('bid performance query failed, using fallback');
             }
 
             return {
@@ -145,7 +146,7 @@ export class AnalyticsService {
                 bid_performance: bidPerformance
             };
         } catch (error) {
-            console.error('Error fetching garage analytics:', error);
+            logger.error('Error fetching garage analytics', { error: (error as Error).message });
             throw new Error('Failed to fetch garage analytics');
         }
     }
@@ -182,7 +183,7 @@ export class AnalyticsService {
             const result = await pool.query(query, params);
             return result.rows;
         } catch (error) {
-            console.error('Error fetching sales trend:', error);
+            logger.error('Error fetching sales trend', { error: (error as Error).message });
             throw new Error('Failed to fetch sales trend');
         }
     }
@@ -214,7 +215,7 @@ export class AnalyticsService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching popular parts:', error);
+            logger.error('Error fetching popular parts', { error: (error as Error).message });
             throw new Error('Failed to fetch popular parts');
         }
     }
@@ -242,7 +243,7 @@ export class AnalyticsService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching bid performance:', error);
+            logger.error('Error fetching bid performance', { error: (error as Error).message });
             throw new Error('Failed to fetch bid performance');
         }
     }
@@ -275,7 +276,7 @@ export class AnalyticsService {
                 unique_customers: 0
             };
         } catch (error) {
-            console.error('Error fetching summary:', error);
+            logger.error('Error fetching summary', { error: (error as Error).message });
             throw new Error('Failed to fetch summary');
         }
     }
@@ -286,9 +287,9 @@ export class AnalyticsService {
     static async refreshAnalytics(): Promise<void> {
         try {
             await pool.query('SELECT refresh_garage_analytics()');
-            console.log('Analytics refreshed successfully');
+            logger.info('Analytics refreshed successfully');
         } catch (error) {
-            console.error('Error refreshing analytics:', error);
+            logger.error('Error refreshing analytics', { error: (error as Error).message });
             throw new Error('Failed to refresh analytics');
         }
     }
@@ -349,7 +350,7 @@ export class AnalyticsService {
 
             return { current, previous, changes };
         } catch (error) {
-            console.error('Error fetching comparison:', error);
+            logger.error('Error fetching comparison', { error: (error as Error).message });
             throw new Error('Failed to fetch comparison data');
         }
     }
