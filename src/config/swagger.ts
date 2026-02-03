@@ -10,6 +10,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
+import logger from '../utils/logger';
 
 // ============================================
 // OPENAPI SPECIFICATION
@@ -481,7 +482,7 @@ export const setupSwagger = (app: Express): void => {
         }
     }));
 
-    console.log('📚 Swagger UI available at /api/docs');
+    logger.startup('Swagger UI available at /api/docs');
 };
 
 export { swaggerSpec };

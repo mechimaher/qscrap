@@ -1,5 +1,6 @@
 import { Queue, Worker, Job } from 'bullmq';
 import { getRedisClient } from './redis';
+import logger from '../utils/logger';
 
 // ============================================
 // DISTRIBUTED JOB QUEUE (Bull/BullMQ)
@@ -23,7 +24,7 @@ export async function initializeJobQueues(): Promise<boolean> {
     const redisUrl = process.env.REDIS_URL;
 
     if (!redisUrl) {
-        console.log('ℹ️ [Jobs] No REDIS_URL - using fallback setInterval scheduler');
+        logger.info('No REDIS_URL - using fallback setInterval scheduler');
         return false;
     }
 
@@ -40,10 +41,10 @@ export async function initializeJobQueues(): Promise<boolean> {
         queues.scheduled = new Queue('scheduled-jobs', { connection });
         queues.notifications = new Queue('notifications', { connection });
 
-        console.log('✅ [Jobs] BullMQ queues initialized');
+        logger.startup('BullMQ queues initialized');
         return true;
     } catch (err: any) {
-        console.error('[Jobs] Failed to initialize queues:', err.message);
+        logger.error('Failed to initialize job queues', { error: err.message });
         return false;
     }
 }
@@ -73,10 +74,10 @@ export async function scheduleRecurringJob(
             removeOnComplete: 100,
             removeOnFail: 50
         });
-        console.log(`[Jobs] Scheduled recurring job: ${jobName} (${cronExpression})`);
+        logger.info('Scheduled recurring job', { jobName, cronExpression });
         return true;
     } catch (err: any) {
-        console.error(`[Jobs] Failed to schedule ${jobName}:`, err.message);
+        logger.error('Failed to schedule job', { jobName, error: err.message });
         return false;
     }
 }
@@ -102,7 +103,7 @@ export async function addJob(
         });
         return true;
     } catch (err: any) {
-        console.error(`[Jobs] Failed to add job ${jobName}:`, err.message);
+        logger.error('Failed to add job', { jobName, error: err.message });
         return false;
     }
 }
@@ -132,16 +133,16 @@ export function createJobWorker(
         );
 
         worker.on('completed', (job) => {
-            console.log(`[Jobs] Completed: ${job.name}`);
+            logger.info('Job completed', { jobName: job.name });
         });
 
         worker.on('failed', (job, err) => {
-            console.error(`[Jobs] Failed: ${job?.name}`, err.message);
+            logger.error('Job failed', { jobName: job?.name, error: err.message });
         });
 
         return worker;
     } catch (err: any) {
-        console.error('[Jobs] Worker creation failed:', err.message);
+        logger.error('Worker creation failed', { error: err.message });
         return null;
     }
 }
@@ -180,5 +181,5 @@ export async function closeJobQueues(): Promise<void> {
         .map(q => q!.close());
 
     await Promise.all(closePromises);
-    console.log('[Jobs] All queues closed');
+    logger.shutdown('All job queues');
 }

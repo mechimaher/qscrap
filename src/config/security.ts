@@ -12,6 +12,7 @@
  */
 
 import * as crypto from 'crypto';
+import logger from '../utils/logger';
 
 // ============================================
 // CONFIGURATION CONSTANTS
@@ -86,11 +87,7 @@ export const getJwtSecret = (): string => {
 
     // Development mode
     if (!secret) {
-        console.warn('');
-        console.warn('⚠️  [SECURITY] WARNING: Using development JWT secret');
-        console.warn('⚠️  [SECURITY] Set JWT_SECRET environment variable for production!');
-        console.warn('⚠️  [SECURITY] Generate: openssl rand -base64 48');
-        console.warn('');
+        logger.warn('Using development JWT secret - set JWT_SECRET for production');
 
         // Generate a consistent dev secret based on machine info
         // This prevents token invalidation during dev restarts
@@ -180,45 +177,34 @@ export const validateSecurityEnvironment = (): EnvValidationResult => {
 export const performStartupSecurityChecks = (): void => {
     const isProd = process.env.NODE_ENV === 'production';
 
-    console.log('');
-    console.log('🔐 Security Configuration');
-    console.log('─────────────────────────');
-
     // Validate environment
     const validation = validateSecurityEnvironment();
 
     // Log warnings
     for (const warning of validation.warnings) {
-        console.warn(`   ⚠️  ${warning}`);
+        logger.warn(warning);
     }
 
     // Log errors
     for (const error of validation.errors) {
-        console.error(`   ❌ ${error}`);
+        logger.error(error);
     }
 
     // Throw if invalid in production
     if (!validation.isValid && isProd) {
-        console.error('');
-        console.error('🚨 FATAL: Security validation failed in production');
-        console.error('🚨 Fix the above errors before starting the server');
-        console.error('');
+        logger.error('Security validation failed in production - fix errors before starting');
         throw new Error('Security validation failed - see errors above');
     }
 
     // Pre-validate JWT secret (will throw if invalid in production)
     try {
         getJwtSecret();
-        console.log('   ✅ JWT secret configured');
     } catch (error: any) {
         throw error;
     }
 
     // Log security summary
-    console.log(`   ✅ Environment: ${isProd ? 'PRODUCTION' : 'development'}`);
-    console.log(`   ✅ Token expiry: ${TOKEN_EXPIRY_SECONDS / 86400} days`);
-    console.log(`   ✅ Bcrypt rounds: ${BCRYPT_ROUNDS}`);
-    console.log('');
+    logger.startup(`Security: ${isProd ? 'PRODUCTION' : 'development'}, Token: ${TOKEN_EXPIRY_SECONDS / 86400}d, Bcrypt: ${BCRYPT_ROUNDS} rounds`);
 };
 
 // ============================================

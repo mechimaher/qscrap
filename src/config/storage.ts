@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import logger from '../utils/logger';
 
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
@@ -92,7 +93,7 @@ export class S3FileStorage implements IFileStorage {
                 }
             });
         } catch (err) {
-            console.error('[Storage] AWS SDK not installed. Run: npm install @aws-sdk/client-s3');
+            logger.error('AWS SDK not installed. Run: npm install @aws-sdk/client-s3');
             throw new Error('S3 storage requires @aws-sdk/client-s3 package');
         }
     }
@@ -170,7 +171,7 @@ export class AzureBlobStorage implements IFileStorage {
             // Ensure container exists
             this.containerClient.createIfNotExists({ access: 'blob' });
         } catch (err) {
-            console.error('[Storage] Azure SDK not installed. Run: npm install @azure/storage-blob');
+            logger.error('Azure SDK not installed. Run: npm install @azure/storage-blob');
             throw new Error('Azure storage requires @azure/storage-blob package');
         }
     }
@@ -222,16 +223,16 @@ export class AzureBlobStorage implements IFileStorage {
 export const createFileStorage = (): IFileStorage => {
     // Priority: S3 > Azure > Local
     if (process.env.S3_BUCKET) {
-        console.log('✅ [Storage] Using S3-compatible storage');
+        logger.startup('Using S3-compatible storage');
         return new S3FileStorage();
     }
 
     if (process.env.AZURE_STORAGE_ACCOUNT) {
-        console.log('✅ [Storage] Using Azure Blob storage');
+        logger.startup('Using Azure Blob storage');
         return new AzureBlobStorage();
     }
 
-    console.log('✅ [Storage] Using local file storage');
+    logger.startup('Using local file storage');
     return new LocalFileStorage();
 };
 

@@ -1,6 +1,7 @@
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import { Server } from 'socket.io';
+import logger from '../utils/logger';
 
 // ============================================
 // SOCKET.IO REDIS ADAPTER
@@ -15,7 +16,7 @@ export async function initializeSocketAdapter(io: Server): Promise<boolean> {
     const redisUrl = process.env.REDIS_URL;
 
     if (!redisUrl) {
-        console.log('ℹ️ [Socket.IO] No REDIS_URL - single-node mode');
+        logger.info('Socket.IO: No REDIS_URL - single-node mode');
         return false;
     }
 
@@ -26,11 +27,11 @@ export async function initializeSocketAdapter(io: Server): Promise<boolean> {
 
         // Error handlers
         pubClient.on('error', (err) => {
-            console.error('[Socket.IO] Redis pub error:', err.message);
+            logger.error('Socket.IO Redis pub error', { error: err.message });
         });
 
         subClient.on('error', (err) => {
-            console.error('[Socket.IO] Redis sub error:', err.message);
+            logger.error('Socket.IO Redis sub error', { error: err.message });
         });
 
         // Connect both clients
@@ -42,11 +43,11 @@ export async function initializeSocketAdapter(io: Server): Promise<boolean> {
         // Set the adapter
         io.adapter(createAdapter(pubClient, subClient));
 
-        console.log('✅ [Socket.IO] Redis adapter connected - multi-node ready');
+        logger.startup('Socket.IO Redis adapter connected - multi-node ready');
         return true;
     } catch (err: any) {
-        console.error('[Socket.IO] Failed to initialize Redis adapter:', err.message);
-        console.log('[Socket.IO] Falling back to single-node mode');
+        logger.error('Socket.IO: Failed to initialize Redis adapter', { error: err.message });
+        logger.info('Socket.IO: Falling back to single-node mode');
         return false;
     }
 }
