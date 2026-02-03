@@ -13,6 +13,7 @@ import { ApiError, ErrorCode } from '../middleware/errorHandler.middleware';
 import jwt from 'jsonwebtoken';
 import { emailService } from './email.service';
 import crypto from 'crypto';
+import logger from '../utils/logger';
 
 // ============================================
 // TYPES
@@ -230,13 +231,13 @@ export class AdminService {
                         magicLink,
                         '48 hours'
                     );
-                    console.log(`[Admin] Welcome email sent to ${user.email} for garage ${garage_id}`);
+                    logger.info('Welcome email sent to garage', { email: user.email, garageId: garage_id });
                 } catch (emailErr) {
-                    console.error(`[Admin] Failed to send welcome email to ${user.email}:`, emailErr);
+                    logger.error('Failed to send welcome email', { email: user.email, error: emailErr });
                     // Don't throw - approval succeeded, email is bonus
                 }
             } else {
-                console.warn(`[Admin] No email found for garage ${garage_id}, skipping welcome email`);
+                logger.warn('No email found for garage, skipping welcome email', { garageId: garage_id });
             }
 
             return { garage, emailSent };

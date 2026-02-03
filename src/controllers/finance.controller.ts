@@ -706,7 +706,7 @@ export const getTransactionDetails = async (req: AuthRequest, res: Response) => 
 export const autoConfirmPayouts = async () => {
     try {
         const result = await PayoutService.autoConfirmPayouts(pool);
-        console.log(`[CRON] Auto-confirmed ${result.confirmed} payouts, ${result.failed} failed`);
+        logger.info(`Auto-confirmed ${result.confirmed} payouts, ${result.failed} failed`);
         return result;
     } catch (err) {
         logger.error('[CRON] autoConfirmPayouts error:', { error: (err as any).message });
@@ -810,7 +810,7 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
             target_role: 'garage'
         });
 
-        console.log(`[Finance] Compensation approved: ${payout.net_amount} QAR for payout ${payout_id}`);
+        logger.info('Compensation approved', { amount: payout.net_amount, payoutId: payout_id });
         res.json({ success: true, message: 'Compensation approved', payout: result.rows[0] });
     } catch (err: any) {
         logger.error('[Finance] approveCompensation error:', { error: (err as any).message });
@@ -863,7 +863,7 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
                 VALUES ($1, $2, $3, $4, $5, NOW())
             `, [payout.garage_id, payout.order_id, penalty_type, penalty_amount, reason]);
 
-            console.log(`[Finance] Penalty applied: ${penalty_amount} QAR (${penalty_type}) to garage ${payout.garage_id}`);
+            logger.info('Penalty applied', { penaltyAmount: penalty_amount, penaltyType: penalty_type, garageId: payout.garage_id });
         }
 
         // Notify garage
@@ -876,7 +876,7 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
             target_role: 'garage'
         });
 
-        console.log(`[Finance] Compensation denied for payout ${payout_id}: ${reason}`);
+        logger.info('Compensation denied', { payoutId: payout_id, reason });
         res.json({ success: true, message: 'Compensation denied', payout: result.rows[0] });
     } catch (err: any) {
         logger.error('[Finance] denyCompensation error:', { error: (err as any).message });

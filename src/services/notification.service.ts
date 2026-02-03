@@ -2,6 +2,7 @@
 import pool from '../config/db';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import { pushService } from './push.service';
+import logger from '../utils/logger';
 
 interface NotificationPayload {
     userId: string;
@@ -91,16 +92,16 @@ export const createNotification = async (payload: NotificationPayload) => {
                         channelId: getChannelId(type)
                     }
                 );
-                console.log(`[NotificationService] Push sent to ${target_role}: ${userId}`);
+                logger.info('Push notification sent', { targetRole: target_role, userId });
             } catch (pushErr) {
                 // Don't fail the entire notification if push fails
-                console.error('[NotificationService] Push failed:', pushErr);
+                logger.error('Push notification failed', { error: pushErr });
             }
         }
 
         return true;
     } catch (err) {
-        console.error('[NotificationService] Failed to create notification:', err);
+        logger.error('Failed to create notification', { error: err });
         return false;
     }
 };
@@ -209,7 +210,7 @@ export const createBatchNotifications = async (payloads: NotificationPayload[]) 
         return payloads.length;
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('[NotificationService] Batch create failed:', err);
+        logger.error('Batch create notifications failed', { error: err });
         return 0;
     } finally {
         client.release();

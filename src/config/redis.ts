@@ -27,7 +27,7 @@ export async function initializeRedis(): Promise<RedisClientType | null> {
                 connectTimeout: 5000,
                 reconnectStrategy: (retries: number) => {
                     if (retries > 10) {
-                        console.error('[Redis] Max retries reached');
+                        logger.error('Redis max retries reached');
                         return new Error('Redis connection failed');
                     }
                     return Math.min(retries * 100, 3000);

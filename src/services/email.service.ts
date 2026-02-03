@@ -2,6 +2,7 @@
 // Supports OTP verification, notifications, and transactional emails
 
 import nodemailer from 'nodemailer';
+import logger from '../utils/logger';
 
 interface EmailConfig {
     host: string;
@@ -45,9 +46,9 @@ export class EmailService {
     private async verifyConnection() {
         try {
             await this.transporter.verify();
-            console.log('[Email] SMTP connection verified');
+            logger.startup('SMTP connection verified');
         } catch (error: any) {
-            console.error('[Email] SMTP verification failed:', error.message);
+            logger.error('SMTP verification failed', { error: error.message });
         }
     }
 
@@ -74,10 +75,10 @@ export class EmailService {
                 text: text || this.stripHtml(html)
             });
 
-            console.log(`[Email] Sent to ${to}: ${info.messageId}`);
+            logger.info('Email sent', { to, messageId: info.messageId });
             return true;
         } catch (error: any) {
-            console.error(`[Email] Failed to send to ${to}:`, error.message);
+            logger.error('Email failed', { to, error: error.message });
             return false;
         }
     }

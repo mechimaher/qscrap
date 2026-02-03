@@ -4,6 +4,7 @@ import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { createNotification } from '../services/notification.service';
 import { DisputeOrderService, DISPUTE_CONFIGS } from '../services/dispute';
+import logger from '../utils/logger';
 
 const disputeService = new DisputeOrderService(pool);
 
@@ -75,9 +76,9 @@ export const autoResolveDisputes = async () => {
             io.to(`user_${dispute.customer_id}`).emit('dispute_resolved', { dispute_id: dispute.dispute_id, resolution: 'refund_approved', refund_amount: dispute.refund_amount });
             io.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', { dispute_id: dispute.dispute_id, resolution: 'refund_approved' });
         }
-        if (resolved.length > 0) console.log(`Auto-resolved ${resolved.length} disputes`);
+        if (resolved.length > 0) logger.info(`Auto-resolved ${resolved.length} disputes`);
     } catch (err) {
-        console.error('Auto-resolve disputes failed:', err);
+        logger.error('Auto-resolve disputes failed', { error: err });
     }
 };
 

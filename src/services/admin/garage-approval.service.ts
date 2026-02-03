@@ -16,6 +16,7 @@ import {
     InvalidApprovalStatusError
 } from './errors';
 import { emailService } from '../email.service';
+import logger from '../../utils/logger';
 
 const DEMO_PERIOD_DAYS = 30;
 
@@ -225,11 +226,11 @@ export class GarageApprovalService {
                         phone_number,
                         planName
                     );
-                    console.log(`[GarageApproval] Welcome email sent to ${email}`);
+                    logger.info('Welcome email sent', { email });
                 }
             } catch (emailErr: any) {
                 // Log but don't fail the approval
-                console.error(`[GarageApproval] Failed to send welcome email:`, emailErr.message);
+                logger.error('Failed to send welcome email', { error: emailErr.message });
             }
 
             return garage;
@@ -385,10 +386,10 @@ export class GarageApprovalService {
                         phone_number,
                         `Demo Trial (${days} days free)`
                     );
-                    console.log(`[GarageApproval] Demo welcome email sent to ${email}`);
+                    logger.info('Demo welcome email sent', { email });
                 }
             } catch (emailErr: any) {
-                console.error(`[GarageApproval] Failed to send demo email:`, emailErr.message);
+                logger.error('Failed to send demo email', { error: emailErr.message });
             }
 
             return {
