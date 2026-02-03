@@ -4,6 +4,7 @@
  */
 
 import { getReadPool, getWritePool } from '../config/db';
+import logger from '../utils/logger';
 
 const readPool = getReadPool();
 const writePool = getWritePool();
@@ -66,7 +67,7 @@ export async function getPriceStatistics(
 
         return result.rows.length > 0 ? result.rows[0] : null;
     } catch (error) {
-        console.error('Error getting price statistics:', error);
+        logger.error('Error getting price statistics', { error: (error as Error).message });
         return null;
     }
 }
@@ -97,7 +98,7 @@ export async function checkPriceOutlier(
             outlier_severity: 'no_data'
         };
     } catch (error) {
-        console.error('Error checking price outlier:', error);
+        logger.error('Error checking price outlier', { error: (error as Error).message });
         return {
             is_outlier: false,
             deviation_percent: 0,
@@ -171,7 +172,7 @@ export async function recordPrice(
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `, [partName, vehicleMake, vehicleModel, vehicleYear, price, source, sourceId, garageId]);
     } catch (error) {
-        console.error('Error recording price:', error);
+        logger.error('Error recording price', { error: (error as Error).message });
         throw error;
     }
 }
@@ -207,7 +208,7 @@ export async function getPriceTrend(
         const result = await readPool.query(query, params);
         return result.rows;
     } catch (error) {
-        console.error('Error getting price trend:', error);
+        logger.error('Error getting price trend', { error: (error as Error).message });
         return [];
     }
 }
@@ -218,9 +219,9 @@ export async function getPriceTrend(
 export async function refreshBenchmarks(): Promise<void> {
     try {
         await writePool.query('SELECT refresh_price_benchmarks()');
-        console.log('Price benchmarks refreshed successfully');
+        logger.info('Price benchmarks refreshed successfully');
     } catch (error) {
-        console.error('Error refreshing benchmarks:', error);
+        logger.error('Error refreshing benchmarks', { error: (error as Error).message });
         throw error;
     }
 }
@@ -281,7 +282,7 @@ export async function getTopInflatedParts(
         const result = await readPool.query(query, params);
         return result.rows;
     } catch (error) {
-        console.error('Error getting top inflated parts:', error);
+        logger.error('Error getting top inflated parts', { error: (error as Error).message });
         return [];
     }
 }

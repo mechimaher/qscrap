@@ -16,6 +16,7 @@ import {
     InvalidRefundAmountError,
     RefundAlreadyProcessedError
 } from './errors';
+import logger from '../../utils/logger';
 
 export class RefundService {
     constructor(private pool: Pool) { }
@@ -355,7 +356,7 @@ export class RefundService {
 
             if (!refund.stripe_payment_intent_id) {
                 // No Stripe payment found - mark as manual refund (COD, test order, etc.)
-                console.log(`[RefundService] No Stripe payment for order ${refund.order_number} - processing as manual refund`);
+                logger.info('No Stripe payment for order - processing as manual refund', { orderNumber: refund.order_number });
                 refundMethod = 'manual';
             } else {
                 // Initialize Stripe and process refund
@@ -424,7 +425,7 @@ export class RefundService {
                     [payout.payout_id, newPayoutStatus]
                 );
 
-                console.log(`[RefundService] Payout ${payout.payout_id} ${newPayoutStatus} due to refund (was: ${payout.payout_status})`);
+                logger.info('Payout cancelled due to refund', { payoutId: payout.payout_id, newStatus: newPayoutStatus, wasStatus: payout.payout_status });
             }
 
             await client.query('COMMIT');
@@ -440,7 +441,7 @@ export class RefundService {
                 target_role: 'customer'
             });
 
-            console.log(`[RefundService] Refund ${stripeRefundId || 'MANUAL'} processed for ${refund.refund_amount} QAR`);
+            logger.info('Refund processed', { stripeRefundId: stripeRefundId || 'MANUAL', amount: refund.refund_amount });
 
             return {
                 success: true,
@@ -449,7 +450,7 @@ export class RefundService {
             };
         } catch (err: any) {
             await client.query('ROLLBACK');
-            console.error('[RefundService] Stripe refund error:', err.message);
+            logger.error('Stripe refund error', { error: err.message });
             throw err;
         } finally {
             client.release();
@@ -499,7 +500,7 @@ export class RefundService {
             `, [rejectionReason, rejectedBy, refundId]);
 
             // Log the rejection
-            console.log(`[RefundService] Refund ${refundId} REJECTED by ${rejectedBy}. Reason: ${rejectionReason}`);
+            logger.info('Refund rejected', { refundId, rejectedBy, reason: rejectionReason });
 
             await client.query('COMMIT');
 
@@ -520,7 +521,7 @@ export class RefundService {
                     }
                 });
             } catch (notifyErr) {
-                console.warn('[RefundService] Failed to notify customer about rejection:', notifyErr);
+                logger.warn('Failed to notify customer about rejection', { error: (notifyErr as Error).message });
             }
 
             return {
@@ -529,7 +530,7 @@ export class RefundService {
             };
         } catch (err: any) {
             await client.query('ROLLBACK');
-            console.error('[RefundService] Reject refund error:', err.message);
+            logger.error('Reject refund error', { error: err.message });
             throw err;
         } finally {
             client.release();
