@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { VehicleService } from '../services/vehicle';
+import logger from '../utils/logger';
 
 const vehicleService = new VehicleService(pool);
 
@@ -11,7 +12,7 @@ export const getMyVehicles = async (req: AuthRequest, res: Response) => {
         const vehicles = await vehicleService.getMyVehicles(req.user!.userId);
         res.json({ success: true, vehicles });
     } catch (error) {
-        console.error('[Vehicles] Error fetching vehicles:', error);
+        logger.error('Error fetching vehicles', { error: (error as Error).message });
         res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
 };
@@ -23,7 +24,7 @@ export const saveVehicle = async (req: AuthRequest, res: Response) => {
         const result = await vehicleService.saveVehicle(req.user!.userId, req.body);
         res.status(result.updated ? 200 : 201).json({ success: true, message: result.updated ? 'Vehicle updated' : 'Vehicle saved', vehicle: result.vehicle });
     } catch (error) {
-        console.error('[Vehicles] Error saving vehicle:', error);
+        logger.error('Error saving vehicle', { error: (error as Error).message });
         res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
 };
@@ -34,7 +35,7 @@ export const updateVehicle = async (req: AuthRequest, res: Response) => {
         if (!vehicle) return res.status(404).json({ success: false, error: 'Vehicle not found' });
         res.json({ success: true, vehicle });
     } catch (error) {
-        console.error('[Vehicles] Error updating vehicle:', error);
+        logger.error('Error updating vehicle', { error: (error as Error).message });
         res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
 };
@@ -45,7 +46,7 @@ export const deleteVehicle = async (req: AuthRequest, res: Response) => {
         if (!deleted) return res.status(404).json({ success: false, error: 'Vehicle not found' });
         res.json({ success: true, message: 'Vehicle deleted' });
     } catch (error) {
-        console.error('[Vehicles] Error deleting vehicle:', error);
+        logger.error('Error deleting vehicle', { error: (error as Error).message });
         res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
 };
@@ -54,7 +55,7 @@ export const autoSaveVehicle = async (customerId: string, carMake: string, carMo
     try {
         return await vehicleService.autoSaveVehicle(customerId, carMake, carModel, carYear, vinNumber, frontImageUrl, rearImageUrl);
     } catch (error) {
-        console.error('[Vehicles] Auto-save failed:', error);
+        logger.error('Auto-save failed', { error: (error as Error).message });
         return null;
     }
 };
