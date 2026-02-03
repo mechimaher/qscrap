@@ -6,6 +6,7 @@
  */
 
 import { Server } from 'socket.io';
+import logger from './logger';
 
 let ioInstance: Server | null = null;
 
@@ -23,7 +24,7 @@ export function initializeSocketIO(io: Server): void {
     ioInstance = io;
 
     io.on('connection', (socket) => {
-        console.log(`[Socket.IO] Client connected: ${socket.id}`);
+        logger.socket('Client connected', { socketId: socket.id });
 
         socket.on('track_request_view', ({ request_id }: { request_id: string }) => {
             if (!requestViewers.has(request_id)) {
@@ -39,7 +40,7 @@ export function initializeSocketIO(io: Server): void {
                 count
             });
 
-            console.log(`[Socket.IO] User ${socket.id} tracking request ${request_id}, total viewers: ${count}`);
+            logger.socket('User tracking request', { socketId: socket.id, requestId: request_id, viewerCount: count });
         });
 
         socket.on('untrack_request_view', ({ request_id }: { request_id: string }) => {
@@ -62,11 +63,11 @@ export function initializeSocketIO(io: Server): void {
         // Admin dashboard room - for real-time pending counts
         socket.on('join_admin_room', () => {
             socket.join('admin');
-            console.log(`[Socket.IO] Admin client ${socket.id} joined admin room`);
+            logger.socket('Admin client joined admin room', { socketId: socket.id });
         });
 
         socket.on('disconnect', () => {
-            console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+            logger.socket('Client disconnected', { socketId: socket.id });
 
             // Remove from all tracked requests
             requestViewers.forEach((viewers, requestId) => {

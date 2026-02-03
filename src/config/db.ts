@@ -1,5 +1,6 @@
 import { Pool, PoolConfig } from 'pg';
 import * as dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -57,11 +58,11 @@ if (process.env.DB_READ_REPLICA_HOST) {
     readReplicaPool = new Pool(replicaConfig);
 
     readReplicaPool.on('error', (err) => {
-        console.error('[DB] Read replica error:', err.message);
+        logger.error('Read replica error', { error: err.message });
         // Don't exit - fall back to primary
     });
 
-    console.log('✅ [DB] Read replica pool initialized');
+    logger.startup('Read replica pool');
 }
 
 // ============================================
@@ -69,19 +70,17 @@ if (process.env.DB_READ_REPLICA_HOST) {
 // ============================================
 
 pool.on('error', (err) => {
-    console.error('[DB] Unexpected error on idle client', err);
+    logger.error('Unexpected error on idle client', { error: err.message, stack: err.stack });
     // In production, log to monitoring service instead of exiting
     if (process.env.NODE_ENV === 'production') {
-        console.error('[DB] Critical error - monitoring should alert');
+        logger.error('Critical database error - monitoring should alert');
     } else {
         process.exit(-1);
     }
 });
 
 pool.on('connect', () => {
-    if (process.env.NODE_ENV !== 'production') {
-        console.log('[DB] New client connected to pool');
-    }
+    logger.db('New client connected to pool');
 });
 
 // ============================================
@@ -126,12 +125,12 @@ export const getPoolStats = () => {
  * Graceful shutdown - close all connections
  */
 export const closeAllPools = async () => {
-    console.log('[DB] Closing all database pools...');
+    logger.shutdown('Database pools');
     await pool.end();
     if (readReplicaPool) {
         await readReplicaPool.end();
     }
-    console.log('[DB] All pools closed');
+    logger.info('All database pools closed');
 };
 
 // Default export for backward compatibility

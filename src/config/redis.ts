@@ -1,4 +1,5 @@
 import { RedisClientType, createClient } from 'redis';
+import logger from '../utils/logger';
 
 // ============================================
 // REDIS CLIENT (Phase 2 - Simplified)
@@ -14,11 +15,8 @@ export async function initializeRedis(): Promise<RedisClientType | null> {
     const redisUrl = process.env.REDIS_URL;
 
     if (!redisUrl) {
-        console.log('ℹ️ [Redis] No REDIS_URL configured - Redis features disabled');
-        console.log('   For multi-server deployment:');
-        console.log('   1. Set up Redis server');
-        console.log('   2. Set REDIS_URL=redis://password@host:6379 in .env');
-        console.log('   3. For sessions, see CLUSTER_DEPLOYMENT.md for full setup');
+        logger.info('No REDIS_URL configured - Redis features disabled');
+        logger.info('For multi-server deployment: Set REDIS_URL in .env, see CLUSTER_DEPLOYMENT.md');
         return null;
     }
 
@@ -38,29 +36,29 @@ export async function initializeRedis(): Promise<RedisClientType | null> {
         });
 
         redisClient.on('error', (err: Error) => {
-            console.error('[Redis] Client error:', err.message);
+            logger.error('Redis client error', { error: err.message });
         });
 
         redisClient.on('connect', () => {
-            console.log('✅ [Redis] Client connected');
+            logger.startup('Redis client connected');
         });
 
         redisClient.on('ready', () => {
-            console.log('✅ [Redis] Client ready for caching');
+            logger.info('Redis client ready for caching');
         });
 
         redisClient.on('reconnecting', () => {
-            console.log('⚠️ [Redis] Reconnecting...');
+            logger.warn('Redis reconnecting...');
         });
 
         await redisClient.connect();
-        console.log('✅ [Redis] Available for caching (session store requires manual setup)');
+        logger.startup('Redis available for caching');
 
         return redisClient;
 
     } catch (err: any) {
-        console.error('[Redis] Failed to connect:', err.message);
-        console.warn('[Redis] Application will work without Redis');
+        logger.error('Redis connection failed', { error: err.message });
+        logger.warn('Application will work without Redis');
         return null;
     }
 }
@@ -94,7 +92,7 @@ export async function checkRedisHealth(): Promise<boolean> {
 export async function closeRedis(): Promise<void> {
     if (redisClient) {
         await redisClient.quit();
-        console.log('[Redis] Connection closed');
+        logger.shutdown('Redis connection');
     }
 }
 

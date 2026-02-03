@@ -130,14 +130,18 @@ export class GarageApprovalService {
                 u.full_name,
                 u.is_active,
                 u.is_suspended,
-                COALESCE(
-                    active_sp.plan_name,
-                    CASE 
-                        WHEN g.approval_status = 'demo' THEN 'Demo Trial'
-                        WHEN g.current_plan_code = 'free' THEN 'Pay-Per-Sale'
-                        ELSE 'None'
-                    END
-                ) as plan_name,
+                CASE 
+                    -- Priority 1: If garage is in demo status, always show Demo Trial
+                    WHEN g.approval_status = 'demo' THEN 'Demo Trial'
+                    -- Priority 2: If garage has an active paid subscription, show that plan
+                    WHEN active_sp.plan_name IS NOT NULL AND active_sp.plan_code NOT IN ('free', 'demo') THEN active_sp.plan_name
+                    -- Priority 3: Fallback to current_plan_code
+                    WHEN g.current_plan_code = 'free' THEN 'Pay-Per-Sale'
+                    WHEN g.current_plan_code = 'starter' THEN 'Starter'
+                    WHEN g.current_plan_code = 'gold' THEN 'Gold Partner'
+                    WHEN g.current_plan_code = 'platinum' THEN 'Platinum Partner'
+                    ELSE 'Pay-Per-Sale'
+                END as plan_name,
                 (SELECT COUNT(*) FROM orders WHERE garage_id = g.garage_id) as total_orders,
                 (SELECT COUNT(*) FROM bids WHERE garage_id = g.garage_id) as total_bids
             FROM garages g
