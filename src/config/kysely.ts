@@ -8,6 +8,7 @@
 import { Kysely, PostgresDialect, Generated, ColumnType } from 'kysely';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -192,4 +193,4 @@ export type NewOrder = Omit<OrdersTable, 'order_id' | 'order_number' | 'created_
 export type NewBid = Omit<BidsTable, 'bid_id' | 'created_at' | 'updated_at' | 'status'>;
 export type NewRequest = Omit<PartRequestsTable, 'request_id' | 'created_at' | 'updated_at' | 'bid_count' | 'status'>;
 
-console.log('✅ [DB] Kysely typed query builder initialized');
+logger.startup('Kysely typed query builder initialized');
