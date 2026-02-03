@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import pool from '../../config/db';
 import { SubscriptionService } from '../subscription/subscription.service';
+import logger from '../../utils/logger';
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
@@ -30,7 +31,7 @@ router.post('/stripe', async (req: Request, res: Response) => {
             webhookSecret
         );
     } catch (err: any) {
-        console.error('[Webhook] Signature verification failed:', err.message);
+        logger.error('Signature verification failed', { error: err.message });
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -41,11 +42,11 @@ router.post('/stripe', async (req: Request, res: Response) => {
     );
 
     if (existingEvent.rows.length > 0) {
-        console.log(`[Webhook] Event ${event.id} already processed, skipping`);
+        logger.info('Event already processed, skipping', { eventId: event.id });
         return res.json({ received: true, status: 'already_processed' });
     }
 
-    console.log(`[Webhook] Processing ${event.type}: ${event.id}`);
+    logger.info('Processing webhook event', { eventType: event.type, eventId: event.id });
 
     try {
         switch (event.type) {
@@ -67,11 +68,11 @@ router.post('/stripe', async (req: Request, res: Response) => {
 
             case 'customer.subscription.updated':
                 // Handle Stripe subscription changes if using Stripe Billing
-                console.log('[Webhook] Subscription updated:', event.data.object);
+                logger.info('Subscription updated', { subscription: event.data.object });
                 break;
 
             default:
-                console.log(`[Webhook] Unhandled event type: ${event.type}`);
+                logger.info('Unhandled event type', { eventType: event.type });
         }
 
         // Log successful processing
@@ -83,7 +84,7 @@ router.post('/stripe', async (req: Request, res: Response) => {
 
         res.json({ received: true, status: 'processed' });
     } catch (err: any) {
-        console.error(`[Webhook] Error processing ${event.type}:`, err);
+        logger.error('Error processing webhook', { eventType: event.type, error: (err as Error).message });
 
         // Log failed processing
         await pool.query(
@@ -103,13 +104,13 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     const metadata = paymentIntent.metadata || {};
 
     if (metadata.type === 'subscription_upgrade') {
-        console.log(`[Webhook] Subscription upgrade payment succeeded: ${paymentIntent.id}`);
+        logger.info('Subscription upgrade payment succeeded', { paymentIntentId: paymentIntent.id });
 
         // Confirm the upgrade payment
         const result = await subscriptionService.confirmUpgradePayment(paymentIntent.id);
 
         if (result.success) {
-            console.log(`[Webhook] ✅ Upgrade payment auto-confirmed for request ${result.requestId}`);
+            logger.info('Upgrade payment auto-confirmed', { requestId: result.requestId });
 
             // Generate invoice
             await generateInvoice({
@@ -131,7 +132,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
     const metadata = paymentIntent.metadata || {};
 
     if (metadata.type === 'subscription_upgrade') {
-        console.log(`[Webhook] ❌ Subscription upgrade payment failed: ${paymentIntent.id}`);
+        logger.info('Subscription upgrade payment failed', { paymentIntentId: paymentIntent.id });
 
         // Update request with failed status
         await pool.query(`
@@ -152,7 +153,7 @@ async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
     const paymentMethodId = setupIntent.payment_method as string;
 
     if (metadata.garage_id) {
-        console.log(`[Webhook] Setup intent succeeded, saving payment method for garage ${metadata.garage_id}`);
+        logger.info('Setup intent succeeded, saving payment method', { garageId: metadata.garage_id });
 
         // Get payment method details
         const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
@@ -181,7 +182,7 @@ async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
                 isDefault
             ]);
 
-            console.log(`[Webhook] ✅ Saved payment method ${paymentMethod.card.brand} ****${paymentMethod.card.last4}`);
+            logger.info('Saved payment method', { brand: paymentMethod.card.brand, last4: paymentMethod.card.last4 });
         }
     }
 }
@@ -190,7 +191,7 @@ async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
  * Handle paid invoice (recurring billing)
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-    console.log(`[Webhook] Invoice paid: ${invoice.id}`);
+    logger.info('Invoice paid', { invoiceId: invoice.id });
 
     // Update subscription billing info if this is a recurring charge
     const subscriptionId = (invoice as any).subscription;
@@ -243,7 +244,7 @@ async function generateInvoice(params: {
         params.bank_reference
     ]);
 
-    console.log(`[Invoice] Generated ${invoiceNumber} for ${params.amount} QAR`);
+    logger.info('Invoice generated', { invoiceNumber, amount: params.amount });
 
     return invoiceNumber;
 }

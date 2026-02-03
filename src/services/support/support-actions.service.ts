@@ -20,6 +20,7 @@ import {
     RefundCalculation
 } from '../finance/refund-calculator.service';
 
+import logger from '../../utils/logger';
 // Constants
 const WARRANTY_DAYS = 7;
 const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'processing', 'awaiting_pickup'];
@@ -154,7 +155,7 @@ export class SupportActionsService {
             // Check for payment intent (warn if missing but don't block - legacy orders may not have it)
             const paymentIntentId = context.order.final_payment_intent_id || context.order.deposit_intent_id;
             if (!paymentIntentId) {
-                console.warn(`[SupportActions] WARNING: Order ${context.order.order_number} has no Stripe payment_intent. Finance will need to verify manually.`);
+                logger.warn('Order missing payment intent', { orderNumber: context.order.order_number });
             }
 
             // Check for existing pending refund request
@@ -181,7 +182,7 @@ export class SupportActionsService {
                 isWrongItem: params.reason.toLowerCase().includes('wrong')
             });
 
-            console.log(`[SupportActions] BRAIN v3.0 Refund Calculation:`, {
+            logger.info('BRAIN v3.0 Refund Calculation', {
                 order: context.order.order_number,
                 stage: refundCalc.stage,
                 stageName: refundCalc.stageName,
@@ -257,9 +258,9 @@ export class SupportActionsService {
                         reason: params.reason
                     }
                 });
-                console.log(`[SupportActions] Finance notification sent for refund request ${refundId}`);
+                logger.info('Finance notification sent', { refundId });
             } catch (notifyErr) {
-                console.warn('[SupportActions] Failed to notify Finance team:', notifyErr);
+                logger.warn('Failed to notify Finance team', { error: (notifyErr as Error).message });
                 // Don't fail the request if notification fails
             }
 
@@ -280,7 +281,7 @@ export class SupportActionsService {
             }
             message += `\nAwaiting Finance team approval.`;
 
-            console.log(`[SupportActions] Refund REQUEST submitted for order ${context.order.order_number}. Amount: ${refundCalc.refundableAmount} QAR (Stage ${refundCalc.stage})`);
+            logger.info('Refund request submitted', { orderNumber: context.order.order_number, amount: refundCalc.refundableAmount, stage: refundCalc.stage });
 
             return {
                 success: true,
@@ -293,7 +294,7 @@ export class SupportActionsService {
 
         } catch (err: any) {
             await client.query('ROLLBACK');
-            console.error('[SupportActions] Refund request error:', err.message);
+            logger.error('Refund request error', { error: err.message });
             return {
                 success: false,
                 action: 'refund_request',
@@ -414,7 +415,7 @@ export class SupportActionsService {
 
         } catch (err: any) {
             await client.query('ROLLBACK');
-            console.error('[SupportActions] Cancel order error:', err.message);
+            logger.error('Cancel order error', { error: err.message });
             return {
                 success: false,
                 action: 'cancel_order',
@@ -659,7 +660,7 @@ export class SupportActionsService {
                 WHERE payout_id = $1
             `, [payout.payout_id, `Refund: ${reason}`]);
 
-            console.log(`[SupportActions] Cancelled payout ${payout.payout_id}`);
+            logger.info('Cancelled payout', { payoutId: payout.payout_id });
             return { action: 'cancelled', payout_id: payout.payout_id };
 
         } else if (payout.status === 'confirmed' || payout.status === 'completed') {
@@ -672,7 +673,7 @@ export class SupportActionsService {
             `, [garageId, payout.payout_id, payout.amount, `Refund: ${reason}`]);
 
             const reversalId = reversalResult.rows[0].reversal_id;
-            console.log(`[SupportActions] Created reversal for payout ${payout.payout_id}`);
+            logger.info('Created reversal for payout', { payoutId: payout.payout_id });
 
             // Notify garage about the pending deduction
             try {
@@ -696,7 +697,7 @@ export class SupportActionsService {
                     });
                 }
             } catch (notifyErr) {
-                console.error('[SupportActions] Failed to notify garage about reversal:', notifyErr);
+                logger.error('Failed to notify garage about reversal', { error: (notifyErr as Error).message });
             }
 
             return {
@@ -760,7 +761,7 @@ export class SupportActionsService {
                 });
 
                 stripeRefundId = stripeRefund.id;
-                console.log(`[SupportActions] Stripe refund executed: ${stripeRefundId} for ${amount} QAR`);
+                logger.info('Stripe refund executed', { stripeRefundId, amount });
 
                 // Mark refund as completed
                 await client.query(`
@@ -777,7 +778,7 @@ export class SupportActionsService {
                 `, [order.order_id]);
 
             } catch (stripeError: any) {
-                console.error(`[SupportActions] Stripe refund failed for order ${order.order_number}:`, stripeError.message);
+                logger.error('Stripe refund failed', { orderNumber: order.order_number, error: stripeError.message });
 
                 // Mark refund as failed but don't throw - let transaction complete
                 await client.query(`
@@ -794,7 +795,7 @@ export class SupportActionsService {
             }
         } else {
             // No payment intent - mark for manual processing
-            console.warn(`[SupportActions] No payment intent found for order ${order.order_number}. Refund requires manual processing.`);
+            logger.warn('No payment intent found - manual processing required', { orderNumber: order.order_number });
 
             await client.query(`
                 UPDATE refunds SET 
@@ -847,7 +848,7 @@ export class SupportActionsService {
                 target_role: 'customer'
             });
         } catch (e) {
-            console.error('[SupportActions] Failed to notify customer:', e);
+            logger.error('Failed to notify customer', { error: (e as Error).message });
         }
 
         // Notify garage via socket
