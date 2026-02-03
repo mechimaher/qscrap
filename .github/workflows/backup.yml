@@ -56,3 +56,58 @@ jobs:
               # Test gunzip integrity
               gunzip -t "$LATEST" && echo "✅ Backup integrity verified"
             fi
+
+  sync-to-r2:
+    name: Sync to Cloudflare R2
+    runs-on: ubuntu-latest
+    needs: [backup]
+    if: ${{ secrets.R2_ACCESS_KEY_ID != '' }}
+    
+    steps:
+      - name: Install rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone for R2
+        run: |
+          mkdir -p ~/.config/rclone
+          cat > ~/.config/rclone/rclone.conf << EOF
+          [r2]
+          type = s3
+          provider = Cloudflare
+          access_key_id = ${{ secrets.R2_ACCESS_KEY_ID }}
+          secret_access_key = ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          endpoint = https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          acl = private
+          EOF
+
+      - name: Sync backup to R2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # Install rclone if not present
+            if ! command -v rclone &> /dev/null; then
+              curl https://rclone.org/install.sh | sudo bash
+            fi
+            
+            # Configure rclone
+            mkdir -p ~/.config/rclone
+            cat > ~/.config/rclone/rclone.conf << EOF
+            [r2]
+            type = s3
+            provider = Cloudflare
+            access_key_id = ${{ secrets.R2_ACCESS_KEY_ID }}
+            secret_access_key = ${{ secrets.R2_SECRET_ACCESS_KEY }}
+            endpoint = https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+            acl = private
+            EOF
+            
+            # Sync latest backup to R2
+            LATEST=$(ls -t /opt/qscrap/backups/*.sql.gz 2>/dev/null | head -1)
+            if [ -n "$LATEST" ]; then
+              rclone copy "$LATEST" r2:qscrap-backups/ -v
+              echo "✅ Synced to R2: $(basename $LATEST)"
+            fi
