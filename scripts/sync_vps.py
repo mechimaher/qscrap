@@ -1,8 +1,17 @@
 import paramiko
+import os
+import getpass
 
-host = "147.93.89.153"
-user = "root"
-password = "QScrap@2026byMaher"
+# Read credentials from environment variables (NEVER hardcode!)
+host = os.environ.get("VPS_HOST")
+user = os.environ.get("VPS_USER", "root")
+password = os.environ.get("VPS_PASSWORD")
+
+# Prompt if not set in environment
+if not host:
+    host = input("VPS Host: ").strip() or "147.93.89.153"
+if not password:
+    password = getpass.getpass("VPS Password: ")
 
 try:
     client = paramiko.SSHClient()
