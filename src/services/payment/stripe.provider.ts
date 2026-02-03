@@ -13,6 +13,7 @@ import {
     RefundResult,
     CreatePaymentOptions
 } from './payment-gateway.interface';
+import logger from '../../utils/logger';
 
 export class StripePaymentProvider implements PaymentGateway {
     readonly providerName = 'stripe';
@@ -25,7 +26,7 @@ export class StripePaymentProvider implements PaymentGateway {
         });
 
         const isTestMode = secretKey.startsWith('sk_test_');
-        console.log(`[Stripe] Initialized in ${isTestMode ? 'TEST' : 'LIVE'} mode`);
+        logger.info('Stripe initialized', { mode: isTestMode ? 'TEST' : 'LIVE' });
     }
 
     private mapStripeStatus(status: Stripe.PaymentIntent.Status): PaymentStatus {
@@ -76,7 +77,7 @@ export class StripePaymentProvider implements PaymentGateway {
 
             const intent = await this.stripe.paymentIntents.create(params);
 
-            console.log(`[Stripe] Created intent: ${intent.id} for ${options.amount} ${options.currency}`);
+            logger.info('Created payment intent', { intentId: intent.id, amount: options.amount, currency: options.currency });
 
             return {
                 id: intent.id,
@@ -87,7 +88,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 metadata: intent.metadata as Record<string, any>
             };
         } catch (error: any) {
-            console.error('[Stripe] Create intent error:', error.message);
+            logger.error('Create intent error', { error: error.message });
             throw new Error(`Payment failed: ${error.message}`);
         }
     }
@@ -103,7 +104,7 @@ export class StripePaymentProvider implements PaymentGateway {
 
             const intent = await this.stripe.paymentIntents.confirm(intentId, params);
 
-            console.log(`[Stripe] Confirmed intent: ${intent.id} -> ${intent.status}`);
+            logger.info('Confirmed intent', { intentId: intent.id, status: intent.status });
 
             return {
                 id: intent.id,
@@ -114,7 +115,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 metadata: intent.metadata as Record<string, any>
             };
         } catch (error: any) {
-            console.error('[Stripe] Confirm error:', error.message);
+            logger.error('Confirm error', { error: error.message });
             throw new Error(`Payment confirmation failed: ${error.message}`);
         }
     }
@@ -128,7 +129,7 @@ export class StripePaymentProvider implements PaymentGateway {
 
             const intent = await this.stripe.paymentIntents.capture(intentId, params);
 
-            console.log(`[Stripe] Captured: ${intent.id}`);
+            logger.info('Captured payment', { intentId: intent.id });
 
             return {
                 id: intent.id,
@@ -139,7 +140,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 metadata: intent.metadata as Record<string, any>
             };
         } catch (error: any) {
-            console.error('[Stripe] Capture error:', error.message);
+            logger.error('Capture error', { error: error.message });
             throw new Error(`Payment capture failed: ${error.message}`);
         }
     }
@@ -147,10 +148,10 @@ export class StripePaymentProvider implements PaymentGateway {
     async cancelPaymentIntent(intentId: string): Promise<boolean> {
         try {
             await this.stripe.paymentIntents.cancel(intentId);
-            console.log(`[Stripe] Cancelled: ${intentId}`);
+            logger.info('Cancelled intent', { intentId });
             return true;
         } catch (error: any) {
-            console.error('[Stripe] Cancel error:', error.message);
+            logger.error('Cancel error', { error: error.message });
             return false;
         }
     }
@@ -177,7 +178,7 @@ export class StripePaymentProvider implements PaymentGateway {
 
             const refund = await this.stripe.refunds.create(params, options);
 
-            console.log(`[Stripe] Refund created: ${refund.id} for ${refund.amount / 100}`);
+            logger.info('Refund created', { refundId: refund.id, amount: refund.amount / 100 });
 
             return {
                 id: refund.id,
@@ -185,7 +186,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 status: refund.status === 'succeeded' ? 'succeeded' : 'pending'
             };
         } catch (error: any) {
-            console.error('[Stripe] Refund error:', error.message);
+            logger.error('Refund error', { error: error.message });
             throw new Error(`Refund failed: ${error.message}`);
         }
     }
@@ -195,7 +196,7 @@ export class StripePaymentProvider implements PaymentGateway {
             const intent = await this.stripe.paymentIntents.retrieve(intentId);
             return this.mapStripeStatus(intent.status);
         } catch (error: any) {
-            console.error('[Stripe] Get status error:', error.message);
+            logger.error('Get status error', { error: error.message });
             return 'failed';
         }
     }
@@ -209,10 +210,10 @@ export class StripePaymentProvider implements PaymentGateway {
                 metadata: { userId }
             });
 
-            console.log(`[Stripe] Created customer: ${customer.id} for user ${userId}`);
+            logger.info('Created customer', { customerId: customer.id, userId });
             return customer.id;
         } catch (error: any) {
-            console.error('[Stripe] Create customer error:', error.message);
+            logger.error('Create customer error', { error: error.message });
             throw new Error(`Failed to create customer: ${error.message}`);
         }
     }
@@ -230,7 +231,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 }
             });
 
-            console.log(`[Stripe] Attached method ${pm.id} to customer ${customerId}`);
+            logger.info('Attached payment method', { methodId: pm.id, customerId });
 
             return {
                 id: pm.id,
@@ -242,7 +243,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 cardholderName: pm.billing_details?.name || undefined
             };
         } catch (error: any) {
-            console.error('[Stripe] Attach method error:', error.message);
+            logger.error('Attach method error', { error: error.message });
             throw new Error(`Failed to save card: ${error.message}`);
         }
     }
@@ -250,10 +251,10 @@ export class StripePaymentProvider implements PaymentGateway {
     async detachPaymentMethod(paymentMethodId: string): Promise<boolean> {
         try {
             await this.stripe.paymentMethods.detach(paymentMethodId);
-            console.log(`[Stripe] Detached method ${paymentMethodId}`);
+            logger.info('Detached payment method', { paymentMethodId });
             return true;
         } catch (error: any) {
-            console.error('[Stripe] Detach method error:', error.message);
+            logger.error('Detach method error', { error: error.message });
             return false;
         }
     }
@@ -275,7 +276,7 @@ export class StripePaymentProvider implements PaymentGateway {
                 cardholderName: pm.billing_details?.name || undefined
             }));
         } catch (error: any) {
-            console.error('[Stripe] List methods error:', error.message);
+            logger.error('List methods error', { error: error.message });
             return [];
         }
     }
