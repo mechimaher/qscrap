@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret, BCRYPT_ROUNDS, TRIAL_DAYS, TOKEN_EXPIRY_SECONDS } from '../../config/security';
 import { emitToAdmin } from '../../utils/socketIO';
+import logger from '../../utils/logger';
 
 export interface RegisterData {
     phone_number: string;
@@ -217,8 +218,7 @@ export class AuthService {
             await client.query('COMMIT');
         } catch (err: any) {
             await client.query('ROLLBACK');
-            // Log the detailed error for server debugging
-            console.error('[AuthService] deleteAccount failed:', {
+            logger.error('Account deletion failed', {
                 userId,
                 error: err.message,
                 code: err.code,

@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
@@ -58,8 +59,8 @@ export const optimizeImage = async (req: Request, res: Response, next: NextFunct
         delete req.file.buffer;
 
         next();
-    } catch (error) {
-        console.error('Image optimization failed:', error);
+    } catch (error: any) {
+        logger.error('Image optimization failed', { error: error.message });
         next(new Error('Image processing failed'));
     }
 };
@@ -111,8 +112,8 @@ export const optimizeFiles = async (req: Request, res: Response, next: NextFunct
 
         await Promise.all(promises);
         next();
-    } catch (error) {
-        console.error('Batch image optimization failed:', error);
+    } catch (error: any) {
+        logger.error('Batch image optimization failed', { error: error.message });
         next(new Error('Image processing failed'));
     }
 };
@@ -142,8 +143,8 @@ export const saveTempFile = async (req: Request, res: Response, next: NextFuncti
         delete req.file.buffer;
 
         next();
-    } catch (error) {
-        console.error('Temp file save failed:', error);
+    } catch (error: any) {
+        logger.error('Temp file save failed', { error: error.message });
         next(new Error('File processing failed'));
     }
 };

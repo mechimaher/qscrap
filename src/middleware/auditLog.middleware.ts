@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from './auth.middleware';
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 /**
  * Audit Logging Middleware
@@ -58,9 +59,8 @@ export const logAuditEntry = async (entry: AuditLogEntry): Promise<void> => {
         ]);
     } catch (err: any) {
         // Don't let audit logging failures break the request
-        // Just log to console and continue
         if (err.code !== '42P01') { // Ignore "table doesn't exist" error
-            console.error('[AUDIT] Failed to log:', err.message);
+            logger.error('Audit log failed', { error: err.message });
         }
     }
 };
