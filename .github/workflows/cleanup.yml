@@ -1,0 +1,332 @@
+name: Cleanup & Hygiene
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'  # Weekly Sunday 4 AM UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode (no deletions)'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DRY_RUN: ${{ inputs.dry_run || 'true' }}
+
+jobs:
+  # ============================================
+  # 1. Static Analysis & Dead Code Detection
+  # ============================================
+  dead-code-detection:
+    name: Dead Code Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint with unused detection
+        run: |
+          echo "=== Dead Code Analysis ==="
+          npx eslint . --ext .ts,.js \
+            --rule 'no-unused-vars: warn' \
+            --rule '@typescript-eslint/no-unused-vars: warn' \
+            --format json --output-file eslint-unused.json || true
+          
+          # Count unused items
+          UNUSED=$(cat eslint-unused.json | jq '[.[] | .messages | length] | add // 0')
+          echo "Found $UNUSED potential unused code items"
+          echo "unused_count=$UNUSED" >> $GITHUB_ENV
+
+      - name: Find unused exports
+        run: |
+          echo "=== Unused Exports Analysis ==="
+          npx ts-prune --error 2>/dev/null | head -50 || echo "ts-prune not available"
+
+      - name: Upload analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dead-code-report-${{ github.sha }}
+          path: eslint-unused.json
+          retention-days: 30
+
+  # ============================================
+  # 2. File Audit & Safe Prune
+  # ============================================
+  file-audit:
+    name: File Audit & Cleanup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect cleanup candidates
+        id: detect
+        run: |
+          echo "=== File Cleanup Candidates ==="
+          echo ""
+          
+          # Patterns to flag
+          echo "📁 Debug files:"
+          find . -name "debug_*" -o -name "*.debug.*" 2>/dev/null | grep -v node_modules | head -20 || echo "None found"
+          
+          echo ""
+          echo "📁 Log files in source:"
+          find . -name "*.log" -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | head -20 || echo "None found"
+          
+          echo ""
+          echo "📁 Temporary files:"
+          find . -name "*.tmp" -o -name "*.temp" -o -name "*.bak" 2>/dev/null | grep -v node_modules | head -20 || echo "None found"
+          
+          echo ""
+          echo "📁 OS junk files:"
+          find . -name ".DS_Store" -o -name "Thumbs.db" 2>/dev/null | grep -v node_modules | head -20 || echo "None found"
+          
+          echo ""
+          echo "📁 Large files (>10MB):"
+          find . -type f -size +10M -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | head -10 || echo "None found"
+
+      - name: Calculate repo size
+        run: |
+          echo "=== Repository Size Analysis ==="
+          echo "Total size: $(du -sh . --exclude=node_modules --exclude=.git 2>/dev/null | cut -f1)"
+          echo ""
+          echo "Largest directories:"
+          du -h --max-depth=2 . 2>/dev/null | grep -v node_modules | sort -rh | head -10
+
+  # ============================================
+  # 3. Database Orphan Detection
+  # ============================================
+  db-orphan-detection:
+    name: Database Orphan Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect orphan detection script
+        run: |
+          echo "=== Database Orphan Analysis ==="
+          echo ""
+          echo "📋 Migration files:"
+          ls -la src/config/migrations/*.sql 2>/dev/null | wc -l || echo "0"
+          
+          echo ""
+          echo "📋 Tables referenced in code:"
+          grep -rh "FROM\s\+\w\+" src/ --include="*.ts" 2>/dev/null | \
+            sed 's/.*FROM\s\+\(\w\+\).*/\1/' | sort -u | head -30 || echo "None found"
+          
+          echo ""
+          echo "📋 TypeORM entities:"
+          find src/ -name "*.entity.ts" 2>/dev/null | head -20 || echo "None found"
+
+      - name: Generate orphan detection SQL
+        run: |
+          cat > orphan-detection.sql << 'EOF'
+          -- QScrap Database Orphan Detection Query
+          -- Run this manually on staging/production
+          
+          -- Find tables with no recent activity
+          SELECT 
+            schemaname,
+            relname AS table_name,
+            n_live_tup AS row_count,
+            pg_size_pretty(pg_total_relation_size(relid)) AS size,
+            COALESCE(last_vacuum, last_autovacuum, last_analyze) AS last_maintenance
+          FROM pg_stat_user_tables
+          WHERE schemaname = 'public'
+          ORDER BY n_live_tup ASC, last_maintenance NULLS FIRST
+          LIMIT 20;
+          
+          -- Find tables with no foreign key references
+          SELECT t.table_name
+          FROM information_schema.tables t
+          LEFT JOIN information_schema.table_constraints tc
+            ON t.table_name = tc.table_name AND tc.constraint_type = 'FOREIGN KEY'
+          WHERE t.table_schema = 'public'
+            AND t.table_type = 'BASE TABLE'
+            AND tc.constraint_name IS NULL
+          ORDER BY t.table_name;
+          EOF
+          echo "Generated orphan-detection.sql for manual review"
+
+      - name: Upload detection scripts
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-orphan-scripts-${{ github.sha }}
+          path: orphan-detection.sql
+          retention-days: 30
+
+  # ============================================
+  # 4. Artifact & Image Pruning
+  # ============================================
+  artifact-pruning:
+    name: Artifact & Image Pruning
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List container images
+        run: |
+          echo "=== Container Images ==="
+          echo "Checking ghcr.io/${{ github.repository }}..."
+          # List would require API calls with proper auth
+          echo "Manual review: https://github.com/${{ github.repository }}/pkgs/container"
+
+      - name: Prune old workflow artifacts
+        if: env.DRY_RUN == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30); // 30 days retention
+            
+            let deleted = 0;
+            for (const artifact of artifacts.data.artifacts) {
+              const createdAt = new Date(artifact.created_at);
+              if (createdAt < cutoffDate) {
+                console.log(`Deleting: ${artifact.name} (${artifact.created_at})`);
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+                deleted++;
+              }
+            }
+            console.log(`Deleted ${deleted} old artifacts`);
+
+      - name: Report artifact usage
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            let totalSize = 0;
+            const byAge = { '7d': 0, '30d': 0, 'older': 0 };
+            const now = new Date();
+            
+            for (const artifact of artifacts.data.artifacts) {
+              totalSize += artifact.size_in_bytes;
+              const age = (now - new Date(artifact.created_at)) / (1000 * 60 * 60 * 24);
+              if (age <= 7) byAge['7d']++;
+              else if (age <= 30) byAge['30d']++;
+              else byAge['older']++;
+            }
+            
+            console.log('=== Artifact Report ===');
+            console.log(`Total artifacts: ${artifacts.data.total_count}`);
+            console.log(`Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+            console.log(`<7 days: ${byAge['7d']}, <30 days: ${byAge['30d']}, older: ${byAge['older']}`);
+
+  # ============================================
+  # 5. VPS Cleanup (Production)
+  # ============================================
+  vps-cleanup:
+    name: VPS Cleanup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Cleanup VPS resources
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            echo "=== VPS Cleanup Report ==="
+            echo "DRY_RUN: ${{ env.DRY_RUN }}"
+            echo ""
+            
+            echo "📦 Docker disk usage:"
+            docker system df
+            
+            echo ""
+            echo "📦 Dangling images:"
+            docker images -f "dangling=true" -q | wc -l
+            
+            echo ""
+            echo "📦 Unused volumes:"
+            docker volume ls -f "dangling=true" -q | wc -l
+            
+            echo ""
+            echo "📦 Old backups (>30 days):"
+            find /opt/qscrap/backups -name "*.sql.gz" -mtime +30 2>/dev/null | wc -l
+            
+            echo ""
+            echo "📦 Log files size:"
+            du -sh /opt/qscrap/logs 2>/dev/null || echo "No logs directory"
+            
+            if [ "${{ env.DRY_RUN }}" = "false" ]; then
+              echo ""
+              echo "🧹 Executing cleanup..."
+              docker system prune -f
+              docker volume prune -f
+              echo "✅ Docker cleanup complete"
+            fi
+
+  # ============================================
+  # Cleanup Summary & Audit Log
+  # ============================================
+  cleanup-summary:
+    name: Cleanup Summary
+    runs-on: ubuntu-latest
+    needs: [dead-code-detection, file-audit, db-orphan-detection, artifact-pruning]
+    if: always()
+    steps:
+      - name: Generate audit log
+        run: |
+          echo "🧹 ================================"
+          echo "   CLEANUP AUDIT LOG"
+          echo "🧹 ================================"
+          echo ""
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Dry Run: ${{ env.DRY_RUN }}"
+          echo ""
+          echo "Job Results:"
+          echo "  Dead Code Detection: ${{ needs.dead-code-detection.result }}"
+          echo "  File Audit: ${{ needs.file-audit.result }}"
+          echo "  DB Orphan Detection: ${{ needs.db-orphan-detection.result }}"
+          echo "  Artifact Pruning: ${{ needs.artifact-pruning.result }}"
+          echo ""
+          echo "================================"
+          echo "Audit log stored in workflow run"

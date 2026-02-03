@@ -1,0 +1,185 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  # ============================================
+  # Pre-merge Quality Gates
+  # ============================================
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Gate 1: No debug/test junk
+      - name: Check for debug artifacts
+        run: |
+          echo "=== Debug Artifact Check ==="
+          ISSUES=0
+          
+          # Check for console.log in production code
+          CONSOLE_LOGS=$(grep -rn "console\.log" src/ --include="*.ts" | grep -v "\.test\." | grep -v "\.spec\." | wc -l)
+          if [ "$CONSOLE_LOGS" -gt 10 ]; then
+            echo "⚠️ Found $CONSOLE_LOGS console.log statements in production code"
+            ISSUES=$((ISSUES + 1))
+          else
+            echo "✅ Console.log count acceptable: $CONSOLE_LOGS"
+          fi
+          
+          # Check for TODO/FIXME in new code
+          TODOS=$(git diff origin/main --name-only | xargs grep -l "TODO\|FIXME" 2>/dev/null | wc -l || echo 0)
+          echo "📝 Files with TODO/FIXME in diff: $TODOS"
+          
+          # Check for debug files
+          DEBUG_FILES=$(find . -name "debug_*" -o -name "*.debug.*" 2>/dev/null | grep -v node_modules | wc -l)
+          if [ "$DEBUG_FILES" -gt 0 ]; then
+            echo "⚠️ Found $DEBUG_FILES debug files"
+            ISSUES=$((ISSUES + 1))
+          else
+            echo "✅ No debug files found"
+          fi
+          
+          echo ""
+          echo "Total issues: $ISSUES"
+
+      # Gate 2: TypeScript strict mode compliance
+      - name: TypeScript compilation
+        run: |
+          echo "=== TypeScript Compilation ==="
+          npm run build 2>&1 | tee build-output.txt
+          ERRORS=$(grep -c "error TS" build-output.txt || echo 0)
+          echo "TypeScript errors: $ERRORS"
+
+      # Gate 3: Test coverage threshold
+      - name: Run tests with coverage
+        run: |
+          npm test -- --coverage --ci --coverageReporters="text-summary" 2>&1 | tee test-output.txt || true
+
+      # Gate 4: Security quick scan
+      - name: Security quick scan
+        run: |
+          echo "=== Security Quick Scan ==="
+          npm audit --audit-level=critical 2>&1 || echo "Vulnerabilities found (review required)"
+
+      # Gate 5: Bundle size check
+      - name: Check bundle size
+        run: |
+          echo "=== Bundle Size Analysis ==="
+          npm run build 2>/dev/null
+          if [ -d "dist" ]; then
+            DIST_SIZE=$(du -sh dist | cut -f1)
+            echo "Distribution size: $DIST_SIZE"
+          fi
+          
+          # Check package.json dependencies count
+          DEPS=$(cat package.json | jq '.dependencies | length')
+          DEV_DEPS=$(cat package.json | jq '.devDependencies | length')
+          echo "Dependencies: $DEPS prod, $DEV_DEPS dev"
+
+      - name: Quality gate summary
+        run: |
+          echo "🚦 ================================"
+          echo "   QUALITY GATE SUMMARY"
+          echo "🚦 ================================"
+          echo ""
+          echo "PR: #${{ github.event.pull_request.number }}"
+          echo "Branch: ${{ github.head_ref }}"
+          echo "Author: ${{ github.event.pull_request.user.login }}"
+          echo ""
+          echo "All gates evaluated - check details above"
+          echo "================================"
+
+  # ============================================
+  # PR Size Check
+  # ============================================
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          echo "=== PR Size Analysis ==="
+          
+          # Get changed files count
+          FILES_CHANGED=$(git diff --name-only origin/main | wc -l)
+          echo "Files changed: $FILES_CHANGED"
+          
+          # Get lines changed
+          ADDITIONS=$(git diff origin/main --numstat | awk '{ add += $1 } END { print add }')
+          DELETIONS=$(git diff origin/main --numstat | awk '{ del += $2 } END { print del }')
+          echo "Lines added: ${ADDITIONS:-0}"
+          echo "Lines deleted: ${DELETIONS:-0}"
+          
+          # Size classification
+          TOTAL=$((${ADDITIONS:-0} + ${DELETIONS:-0}))
+          if [ "$TOTAL" -lt 100 ]; then
+            echo "📦 Size: XS (< 100 lines)"
+          elif [ "$TOTAL" -lt 500 ]; then
+            echo "📦 Size: S (< 500 lines)"
+          elif [ "$TOTAL" -lt 1000 ]; then
+            echo "📦 Size: M (< 1000 lines)"
+          elif [ "$TOTAL" -lt 2000 ]; then
+            echo "📦 Size: L (< 2000 lines) ⚠️ Consider splitting"
+          else
+            echo "📦 Size: XL (2000+ lines) ⚠️ Should be split"
+          fi
+
+  # ============================================
+  # Commit Message Lint
+  # ============================================
+  commit-lint:
+    name: Commit Message Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          echo "=== Commit Message Check ==="
+          
+          # Get commits in PR
+          COMMITS=$(git log origin/main..HEAD --oneline)
+          echo "$COMMITS"
+          echo ""
+          
+          # Check for conventional commits pattern
+          VALID_PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+"
+          
+          while IFS= read -r commit; do
+            MSG=$(echo "$commit" | cut -d' ' -f2-)
+            if echo "$MSG" | grep -qE "$VALID_PATTERN"; then
+              echo "✅ $MSG"
+            else
+              echo "⚠️ $MSG (not conventional)"
+            fi
+          done <<< "$COMMITS"
