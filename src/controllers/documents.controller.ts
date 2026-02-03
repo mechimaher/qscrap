@@ -9,6 +9,7 @@ import {
     DocumentQueryService,
     DocumentAccessService
 } from '../services/documents';
+import logger from '../utils/logger';
 
 // Import template helpers (keeping these for now - can be extracted later)
 import { generateBilingualCustomerInvoiceHTML, generateGaragePayoutStatementHTML } from './documents-templates';
@@ -53,7 +54,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
             document: result.document
         });
     } catch (err) {
-        console.error('[DOCUMENTS] generateInvoice Error:', err);
+        logger.error('generateInvoice Error', { error: (err as Error).message });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: err.message });
         }
@@ -81,7 +82,7 @@ export const getDocument = async (req: AuthRequest, res: Response) => {
 
         res.json({ document });
     } catch (err) {
-        console.error('[DOCUMENTS] getDocument Error:', err);
+        logger.error('getDocument Error', { error: (err as Error).message });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Document not found' });
         }
@@ -105,7 +106,7 @@ export const getOrderDocuments = async (req: AuthRequest, res: Response) => {
         const documents = await queryService.getOrderDocuments(order_id, userId, userType);
         res.json({ documents });
     } catch (err) {
-        console.error('[DOCUMENTS] getOrderDocuments Error:', err);
+        logger.error('getOrderDocuments Error', { error: (err as Error).message });
         if (err instanceof Error && err.message.includes('Order not found')) {
             return res.status(404).json({ error: 'Order not found' });
         }
@@ -133,7 +134,7 @@ export const getMyDocuments = async (req: AuthRequest, res: Response) => {
 
         res.json({ documents });
     } catch (err) {
-        console.error('[DOCUMENTS] getMyDocuments Error:', err);
+        logger.error('getMyDocuments Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -161,7 +162,7 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
         res.setHeader('Content-Disposition', `attachment; filename="${doc.document_number}.pdf"`);
         res.send(pdfBuffer);
     } catch (err) {
-        console.error('[DOCUMENTS] downloadDocument Error:', err);
+        logger.error('downloadDocument Error', { error: (err as Error).message });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Document not found' });
         }
@@ -203,7 +204,7 @@ export const downloadDocumentWithToken = async (req: Request, res: Response) => 
         res.setHeader('Content-Disposition', `attachment; filename="${doc.document_number}.pdf"`);
         res.send(pdfBuffer);
     } catch (err) {
-        console.error('[DOCUMENTS] downloadDocumentWithToken Error:', err);
+        logger.error('downloadDocumentWithToken Error', { error: (err as Error).message });
         if ((err as Error).name === 'JsonWebTokenError' || (err as Error).name === 'TokenExpiredError') {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
@@ -232,7 +233,7 @@ export const verifyDocument = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('[DOCUMENTS] verifyDocument Error:', err);
+        logger.error('verifyDocument Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
