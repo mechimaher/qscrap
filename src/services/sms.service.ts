@@ -5,6 +5,8 @@
  * Only used for critical financial actions (refunds, payments)
  */
 
+import logger from '../utils/logger';
+
 interface SMSOptions {
     to: string;
     message: string;
@@ -23,7 +25,7 @@ class SMSService {
         this.enabled = !!(this.accountSid && this.authToken && this.fromNumber);
 
         if (!this.enabled) {
-            console.warn('[SMS] Twilio not configured - SMS notifications disabled');
+            logger.warn('Twilio not configured - SMS notifications disabled');
         }
     }
 
@@ -33,7 +35,7 @@ class SMSService {
      */
     async send(options: SMSOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
         if (!this.enabled) {
-            console.log(`[SMS] Would send to ${options.to}: ${options.message}`);
+            logger.info('SMS not configured, would send', { to: options.to, message: options.message });
             return { success: false, error: 'SMS not configured' };
         }
 
@@ -47,10 +49,10 @@ class SMSService {
                 to: options.to
             });
 
-            console.log(`[SMS] Sent to ${options.to}: ${message.sid}`);
+            logger.info('SMS sent', { to: options.to, messageId: message.sid });
             return { success: true, messageId: message.sid };
         } catch (err: any) {
-            console.error(`[SMS] Failed to send to ${options.to}:`, err.message);
+            logger.error('SMS failed', { to: options.to, error: err.message });
             return { success: false, error: err.message };
         }
     }

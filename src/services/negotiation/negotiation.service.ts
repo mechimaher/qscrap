@@ -8,6 +8,7 @@ import { CounterOfferData, CounterOfferResponse, NegotiationHistory } from './ty
 import { NegotiationLimitReachedError, BidNotPendingError } from './errors';
 import { createNotification } from '../notification.service';
 import { getDeliveryFeeForLocation } from '../../controllers/delivery.controller';
+import logger from '../../utils/logger';
 
 const MAX_NEGOTIATION_ROUNDS = 3;
 
@@ -416,7 +417,7 @@ export class NegotiationService {
                     { channelId: 'bids', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[NEGOTIATION] Push to customer failed:', pushErr);
+                logger.error('Push to customer failed', { error: pushErr });
             }
 
             // Emit WebSocket event to customer app
@@ -500,7 +501,7 @@ export class NegotiationService {
                     { channelId: 'bids', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[NEGOTIATION] Push to customer failed:', pushErr);
+                logger.error('Push to customer failed', { error: pushErr });
             }
 
             // Emit real-time WebSocket event - emit BOTH event names for mobile compatibility
@@ -584,7 +585,7 @@ export class NegotiationService {
                 { channelId: 'bids', sound: true }
             );
         } catch (pushErr) {
-            console.error('[NEGOTIATION] Push to garage failed:', pushErr);
+            logger.error('Push to garage failed', { error: pushErr });
         }
 
         // Emit real-time WebSocket event to garage dashboard

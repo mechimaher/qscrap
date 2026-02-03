@@ -1,4 +1,5 @@
 import { getWritePool } from '../config/db';
+import logger from '../utils/logger';
 
 export interface WalletTransaction {
     transaction_id: string;
@@ -102,7 +103,7 @@ export class WalletService {
             // Block transaction if it would exceed the negative threshold
             if (projectedBalance < NEGATIVE_BALANCE_THRESHOLD) {
                 await client.query('ROLLBACK');
-                console.error(`[WALLET_BLOCKED] Transaction blocked for wallet ${walletId}: Would result in ${projectedBalance.toFixed(2)} QAR (threshold: ${NEGATIVE_BALANCE_THRESHOLD} QAR)`);
+                logger.error('Wallet transaction blocked: negative balance threshold exceeded', { walletId, projectedBalance: projectedBalance.toFixed(2), threshold: NEGATIVE_BALANCE_THRESHOLD });
                 throw new Error(`Transaction blocked: Driver balance would exceed credit limit of ${Math.abs(NEGATIVE_BALANCE_THRESHOLD)} QAR. Current: ${currentBalance.toFixed(2)} QAR, Attempted: ${amount.toFixed(2)} QAR`);
             }
 
@@ -111,7 +112,7 @@ export class WalletService {
 
             // Warning for balances approaching threshold (within 100 QAR of limit)
             if (projectedBalance < (NEGATIVE_BALANCE_THRESHOLD + 100) && projectedBalance >= NEGATIVE_BALANCE_THRESHOLD) {
-                console.warn(`[WALLET_WARNING] Driver wallet ${walletId} approaching negative balance threshold: ${projectedBalance.toFixed(2)} QAR (limit: ${NEGATIVE_BALANCE_THRESHOLD} QAR)`);
+                logger.warn('Driver wallet approaching negative balance threshold', { walletId, projectedBalance: projectedBalance.toFixed(2), threshold: NEGATIVE_BALANCE_THRESHOLD });
             }
 
             await client.query('COMMIT');

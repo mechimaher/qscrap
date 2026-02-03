@@ -6,13 +6,14 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
+import logger from '../../utils/logger';
 
 // Lazy import for pdfkit (may not be installed in all environments)
 let PDFDocument: any = null;
 try {
     PDFDocument = require('pdfkit');
 } catch {
-    console.warn('[Invoice] pdfkit not installed - PDF generation disabled');
+    logger.warn('pdfkit not installed - PDF generation disabled');
 }
 
 export class InvoiceService {
@@ -33,7 +34,7 @@ export class InvoiceService {
     async generateInvoice(invoiceId: string): Promise<string> {
         // Skip PDF generation if pdfkit not installed
         if (!PDFDocument) {
-            console.warn('[Invoice] Skipping PDF generation - pdfkit not installed');
+            logger.warn('Skipping PDF generation - pdfkit not installed');
             return '';
         }
 
@@ -183,7 +184,7 @@ export class InvoiceService {
             [filepath, invoiceId]
         );
 
-        console.log(`[Invoice] Generated PDF: ${filepath}`);
+        logger.info('Invoice PDF generated', { filepath });
 
         return filepath;
     }
@@ -286,7 +287,7 @@ export class InvoiceService {
         try {
             await this.generateInvoice(invoiceId);
         } catch (err) {
-            console.error('[Invoice] PDF generation failed:', err);
+            logger.error('Invoice PDF generation failed', { error: err });
         }
 
         return {

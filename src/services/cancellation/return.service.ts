@@ -11,6 +11,7 @@ import { RETURN_POLICY, CANCELLATION_FEES } from './cancellation.constants';
 import { getFraudDetectionService } from './fraud-detection.service';
 import { createNotification } from '../notification.service';
 import { emitToOperations } from '../../utils/socketIO';
+import logger from '../../utils/logger';
 
 export class ReturnService {
     constructor(private pool: Pool) { }
@@ -255,7 +256,7 @@ export class ReturnService {
                 target_role: 'customer'
             });
 
-            console.log(`[ReturnService] Return request ${returnId} created for order ${orderId}. Refund: ${preview.refund_amount} QAR`);
+            logger.info('Return request created', { returnId, orderId, refundAmount: preview.refund_amount });
 
             return {
                 success: true,
@@ -348,7 +349,7 @@ export class ReturnService {
                 target_role: 'customer'
             });
 
-            console.log(`[ReturnService] Return ${returnId} approved. Refund: ${returnReq.refund_amount} QAR`);
+            logger.info('Return approved', { returnId, refundAmount: returnReq.refund_amount });
 
             return {
                 success: true,
@@ -413,7 +414,7 @@ export class ReturnService {
                 target_role: 'customer'
             });
 
-            console.log(`[ReturnService] Return ${returnId} rejected: ${reason}`);
+            logger.info('Return rejected', { returnId, reason });
 
             return {
                 success: true,

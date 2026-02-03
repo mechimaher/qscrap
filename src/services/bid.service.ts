@@ -9,6 +9,7 @@ import pool from '../config/db';
 import { emitToUser, emitToGarage } from '../utils/socketIO';
 import fs from 'fs/promises';
 import { getFraudDetectionService } from './security/fraud-detection.service';
+import logger from '../utils/logger';
 
 // ============================================
 // TYPES
@@ -173,7 +174,7 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
             for (const file of files) {
                 try {
                     await fs.unlink(file.path);
-                } catch (e) { console.error('File cleanup failed', e); }
+                } catch (e) { logger.error('File cleanup failed', { error: e }); }
             }
         }
 
@@ -229,6 +230,6 @@ async function notifyBidSubmission(customerId: string, requestId: string, bidId:
             created_at: createdAt
         });
     } catch (err) {
-        console.error('Bid notification failed', err);
+        logger.error('Bid notification failed', { error: err });
     }
 }

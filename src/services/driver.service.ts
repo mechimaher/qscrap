@@ -5,6 +5,7 @@ import { AssignmentState } from '../state/assignment.state';
 import { storageService } from './storage.service';
 import { walletService } from './wallet.service';
 import { pushService } from './push.service';
+import logger from '../utils/logger';
 
 export class DriverService {
     private pool = getWritePool();
@@ -376,7 +377,7 @@ export class DriverService {
                             );
                         }
                     } catch (walletErr) {
-                        console.error('Wallet transaction failed:', walletErr);
+                        logger.error('Wallet transaction failed', { error: walletErr });
                         // Don't fail the whole request, but log it critical
                     }
                     // ---------------------------------------------
@@ -485,7 +486,7 @@ export class DriverService {
                 newOrderStatus,
                 assignment.order_id,
                 { driverName: assignment.driver_name }
-            ).catch(err => console.error('[Push] Failed to send order status notification:', err));
+            ).catch(err => logger.error('Failed to send order status notification', { error: err }));
         }
     }
 

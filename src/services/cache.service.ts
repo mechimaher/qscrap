@@ -1,4 +1,5 @@
 import { getRedisClient } from '../config/redis';
+import logger from '../utils/logger';
 
 /**
  * Cache Service - High-level caching abstraction
@@ -28,7 +29,7 @@ export class CacheService {
 
             return JSON.parse(value) as T;
         } catch (error) {
-            console.error(`Cache get error for key ${key}:`, error);
+            logger.error('Cache get error', { key, error });
             return null;
         }
     }
@@ -51,7 +52,7 @@ export class CacheService {
 
             return true;
         } catch (error) {
-            console.error(`Cache set error for key ${key}:`, error);
+            logger.error('Cache set error', { key, error });
             return false;
         }
     }
@@ -67,7 +68,7 @@ export class CacheService {
             await redis.del(key);
             return true;
         } catch (error) {
-            console.error(`Cache delete error for key ${key}:`, error);
+            logger.error('Cache delete error', { key, error });
             return false;
         }
     }
@@ -86,7 +87,7 @@ export class CacheService {
             await redis.del(keys);
             return keys.length;
         } catch (error) {
-            console.error(`Cache pattern delete error for ${pattern}:`, error);
+            logger.error('Cache pattern delete error', { pattern, error });
             return 0;
         }
     }

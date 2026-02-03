@@ -4,6 +4,7 @@
 
 import pool from '../../config/db';
 import crypto from 'crypto';
+import logger from '../../utils/logger';
 import {
     PaymentProvider,
     PaymentRequest,
@@ -67,7 +68,7 @@ export class PaymentService {
             const existing = await this.checkIdempotency(client, idempotencyKey);
             if (existing) {
                 await client.query('COMMIT');
-                console.log('[Payment] Idempotent request detected, returning cached result');
+                logger.info('Idempotent request detected, returning cached result');
                 return existing;
             }
 
@@ -121,13 +122,13 @@ export class PaymentService {
             await client.query('COMMIT');
 
             const processingTime = Date.now() - startTime;
-            console.log(`[Payment] Transaction ${transaction.transaction_id} completed in ${processingTime}ms`);
+            logger.info('Payment transaction completed', { transactionId: transaction.transaction_id, processingTime });
 
             return result;
 
         } catch (error: any) {
             await client.query('ROLLBACK');
-            console.error('[Payment] Transaction failed:', error);
+            logger.error('Payment transaction failed', { error });
             throw new Error(`Payment processing failed: ${error.message}`);
         } finally {
             client.release();

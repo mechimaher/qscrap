@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 /**
  * Origin Validation Middleware
@@ -80,7 +81,7 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
 
     // Validate origin
     if (!isValidOrigin(origin, referer)) {
-        console.warn(`[CSRF] Blocked request from invalid origin: ${origin || referer || 'none'}`);
+        logger.warn('CSRF blocked request from invalid origin', { origin: origin || referer || 'none' });
 
         // In production, block the request
         if (process.env.NODE_ENV === 'production') {
@@ -91,7 +92,7 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
         }
 
         // In development, log a warning but allow the request
-        console.warn('[CSRF] Request allowed in development mode despite invalid origin');
+        logger.warn('CSRF request allowed in development mode despite invalid origin');
     }
 
     next();
@@ -114,7 +115,7 @@ export const strictValidateOrigin = (req: Request, res: Response, next: NextFunc
 
     // For strict validation, always require valid origin
     if (!origin && !referer) {
-        console.warn('[CSRF-STRICT] Blocked request with no origin');
+        logger.warn('CSRF-STRICT blocked request with no origin');
         return res.status(403).json({
             error: 'Origin required',
             message: 'Requests to this endpoint must include Origin header'
@@ -122,7 +123,7 @@ export const strictValidateOrigin = (req: Request, res: Response, next: NextFunc
     }
 
     if (!isValidOrigin(origin, referer)) {
-        console.warn(`[CSRF-STRICT] Blocked request from: ${origin || referer}`);
+        logger.warn('CSRF-STRICT blocked request from invalid origin', { origin: origin || referer });
         return res.status(403).json({
             error: 'Invalid origin',
             message: 'Request blocked due to CSRF protection'

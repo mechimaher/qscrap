@@ -12,6 +12,7 @@
  */
 
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 export interface PayoutInfo {
     payout_id: string;
@@ -65,7 +66,7 @@ export async function createPayout(orderId: string): Promise<PayoutResult> {
             action_taken: 'created'
         };
     } catch (err: any) {
-        console.error('[PayoutService] createPayout error:', err.message);
+        logger.error('Payout creation error', { error: err.message });
         return { success: false, message: err.message };
     }
 }
@@ -176,7 +177,7 @@ export async function reversePayout(orderId: string, refundAmount: number): Prom
         }
     } catch (err: any) {
         await client.query('ROLLBACK');
-        console.error('[PayoutService] reversePayout error:', err.message);
+        logger.error('Payout reversal error', { error: err.message });
         return { success: false, message: err.message };
     } finally {
         client.release();

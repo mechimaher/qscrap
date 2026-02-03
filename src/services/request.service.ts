@@ -10,6 +10,7 @@ import { vinService } from './vin.service';
 import { createBatchNotifications } from './notification.service';
 import { autoSaveVehicle } from '../controllers/vehicle.controller';
 import fs from 'fs/promises';
+import logger from '../utils/logger';
 
 // ============================================
 // TYPES
@@ -199,7 +200,7 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
                 carRearImageUrl || undefined
             );
         } catch (autoSaveErr) {
-            console.error('[REQUEST] Vehicle auto-save failed:', autoSaveErr);
+            logger.error('Vehicle auto-save failed', { error: autoSaveErr });
         }
 
         return {
@@ -219,7 +220,7 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
         for (const file of allFiles) {
             try {
                 await fs.unlink(file.path);
-            } catch (e) { console.error('File cleanup failed', e); }
+            } catch (e) { logger.error('File cleanup failed', { error: e }); }
         }
 
         throw err;
@@ -292,7 +293,7 @@ async function notifyRelevantGarages(
                         { channelId: 'default', sound: true }
                     );
                 } catch (pushErr) {
-                    console.error('[REQUEST] Push notification failed:', pushErr);
+                    logger.error('Push notification failed', { error: pushErr });
                 }
 
                 // Emit Live Request
@@ -333,6 +334,6 @@ async function notifyRelevantGarages(
         }
 
     } catch (socketErr) {
-        console.error('[REQUEST] Notification logic failed:', socketErr);
+        logger.error('Notification logic failed', { error: socketErr });
     }
 }
