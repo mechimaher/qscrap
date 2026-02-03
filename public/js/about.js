@@ -154,8 +154,8 @@ const translations = {
         // Info Cards - Contact Us
         'info.contact.title': '📞 تواصل معنا',
         'info.contact.support': '<strong>دعم العملاء:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
-        'info.contact.mobile': '<strong>الجوال:</strong><br><a href="tel:+97450267974">+974 5026 7974</a><br><a href="tel:+97455906912">+974 5590 6912</a>',
-        'info.contact.landline': '<strong>الهاتف الثابت:</strong><br>+974 4455 4444',
+        'info.contact.mobile': '<strong>الجوال:</strong><br><a href="tel:+97450267974" dir="ltr">+974 5026 7974</a><br><a href="tel:+97455906912" dir="ltr">+974 5590 6912</a>',
+        'info.contact.landline': '<strong>الهاتف الثابت:</strong><br><span dir="ltr">+974 4455 4444</span>',
         'info.contact.hours': '<strong>ساعات العمل:</strong><br>السبت - الخميس<br>8:00 صباحاً - 8:00 مساءً (توقيت قطر)',
 
         // Info Cards - Consumer Protection
@@ -189,7 +189,7 @@ const translations = {
         'footer.refund': 'سياسة الاسترداد',
         'footer.contactTitle': 'تواصل معنا',
         'footer.email': '📧 support@qscrap.qa',
-        'footer.phone': '📞 +974 5026 7974',
+        'footer.phone': '📞 <span dir="ltr">+974 5026 7974</span>',
         'footer.whatsapp': '💬 دعم واتساب',
         'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | سجل تجاري: 155892 | ص.ب: 32544، الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
