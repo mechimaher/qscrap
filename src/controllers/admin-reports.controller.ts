@@ -5,6 +5,7 @@ import {
     GarageReportService,
     RevenueReportService
 } from '../services/admin-reports';
+import logger from '../utils/logger';
 
 const garageReportService = new GarageReportService(getReadPool());
 const revenueReportService = new RevenueReportService(getReadPool());
@@ -29,7 +30,7 @@ export const getDemoGaragesReport = async (req: AuthRequest, res: Response) => {
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getDemoGaragesReport error:', err);
+        logger.error('getDemoGaragesReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
@@ -51,7 +52,7 @@ export const getExpiredDemosReport = async (req: AuthRequest, res: Response) => 
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getExpiredDemosReport error:', err);
+        logger.error('getExpiredDemosReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
@@ -73,7 +74,7 @@ export const getDemoConversionsReport = async (req: AuthRequest, res: Response) 
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getDemoConversionsReport error:', err);
+        logger.error('getDemoConversionsReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
@@ -94,7 +95,7 @@ export const getAllGaragesReport = async (req: AuthRequest, res: Response) => {
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getAllGaragesReport error:', err);
+        logger.error('getAllGaragesReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
@@ -120,7 +121,7 @@ export const getSubscriptionRenewalsReport = async (req: AuthRequest, res: Respo
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getSubscriptionRenewalsReport error:', err);
+        logger.error('getSubscriptionRenewalsReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
@@ -142,7 +143,7 @@ export const getCommissionRevenueReport = async (req: AuthRequest, res: Response
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getCommissionRevenueReport error:', err);
+        logger.error('getCommissionRevenueReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };
@@ -164,7 +165,7 @@ export const getRegistrationsReport = async (req: AuthRequest, res: Response) =>
             ...(typeof result === 'object' ? result as object : { data: result })
         });
     } catch (err: any) {
-        console.error('[REPORTS] getRegistrationsReport error:', err);
+        logger.error('getRegistrationsReport error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to generate report' });
     }
 };

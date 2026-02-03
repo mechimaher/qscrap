@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { AdService } from '../services/ad.service';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 
 /**
  * POST /api/garage/ads/campaigns
@@ -45,7 +46,7 @@ export const createCampaign = async (req: AuthRequest, res: Response) => {
             message: 'Campaign created and pending approval'
         });
     } catch (err) {
-        console.error('createCampaign error:', err);
+        logger.error('createCampaign error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -66,7 +67,7 @@ export const getMyCampaigns = async (req: AuthRequest, res: Response) => {
             count: campaigns.length
         });
     } catch (err) {
-        console.error('getMyCampaigns error:', err);
+        logger.error('getMyCampaigns error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -90,7 +91,7 @@ export const getCampaignPerformance = async (req: AuthRequest, res: Response) =>
             data: performance
         });
     } catch (err) {
-        console.error('getCampaignPerformance error:', err);
+        logger.error('getCampaignPerformance error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -115,7 +116,7 @@ export const updateCampaignStatus = async (req: AuthRequest, res: Response) => {
             message: `Campaign ${status}`
         });
     } catch (err) {
-        console.error('updateCampaignStatus error:', err);
+        logger.error('updateCampaignStatus error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -133,7 +134,7 @@ export const getAdPricing = async (req: AuthRequest, res: Response) => {
             data: pricing
         });
     } catch (err) {
-        console.error('getAdPricing error:', err);
+        logger.error('getAdPricing error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -154,7 +155,7 @@ export const reviewCampaign = async (req: AuthRequest, res: Response) => {
             message: approved ? 'Campaign approved' : 'Campaign rejected'
         });
     } catch (err) {
-        console.error('reviewCampaign error:', err);
+        logger.error('reviewCampaign error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -172,7 +173,7 @@ export const getAdStats = async (req: AuthRequest, res: Response) => {
             data: stats
         });
     } catch (err) {
-        console.error('getAdStats error:', err);
+        logger.error('getAdStats error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
