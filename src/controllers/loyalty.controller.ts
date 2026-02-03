@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { LoyaltyService } from '../services/loyalty.service';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 
 /**
  * GET /api/customer/loyalty/summary
@@ -29,7 +30,7 @@ export const getRewardsSummary = async (req: AuthRequest, res: Response) => {
             points_to_next_tier: summary.points_to_next_tier
         });
     } catch (err) {
-        console.error('getRewardsSummary error:', err);
+        logger.error('getRewardsSummary error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -51,7 +52,7 @@ export const getTransactionHistory = async (req: AuthRequest, res: Response) => 
             count: transactions.length
         });
     } catch (err) {
-        console.error('getTransactionHistory error:', err);
+        logger.error('getTransactionHistory error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -100,7 +101,7 @@ export const redeemPoints = async (req: AuthRequest, res: Response) => {
             message: result.message
         });
     } catch (err) {
-        console.error('redeemPoints error:', err);
+        logger.error('redeemPoints error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -118,7 +119,7 @@ export const getTierBenefits = async (req: AuthRequest, res: Response) => {
             data: tiers
         });
     } catch (err) {
-        console.error('getTierBenefits error:', err);
+        logger.error('getTierBenefits error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -144,7 +145,7 @@ export const calculateRewards = async (req: AuthRequest, res: Response) => {
             qar_per_point: 10
         });
     } catch (err) {
-        console.error('calculateRewards error:', err);
+        logger.error('calculateRewards error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -182,7 +183,7 @@ export const awardBonusPoints = async (req: AuthRequest, res: Response) => {
             message: `Awarded ${points} bonus points`
         });
     } catch (err) {
-        console.error('awardBonusPoints error:', err);
+        logger.error('awardBonusPoints error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -200,7 +201,7 @@ export const getLoyaltyStats = async (req: AuthRequest, res: Response) => {
             data: stats
         });
     } catch (err) {
-        console.error('getLoyaltyStats error:', err);
+        logger.error('getLoyaltyStats error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
