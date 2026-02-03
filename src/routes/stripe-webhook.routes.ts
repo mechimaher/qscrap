@@ -9,6 +9,7 @@
 import express, { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { getWritePool } from '../config/db';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
@@ -33,12 +34,12 @@ router.post('/webhook',
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
         if (!stripe) {
-            console.error('[Stripe Webhook] Stripe not configured');
+            logger.error('Stripe not configured');
             return res.status(500).json({ error: 'Stripe not configured' });
         }
 
         if (!webhookSecret) {
-            console.error('[Stripe Webhook] No webhook secret configured');
+            logger.error('Stripe webhook secret not configured');
             return res.status(500).json({ error: 'Webhook not configured' });
         }
 
@@ -47,11 +48,11 @@ router.post('/webhook',
         try {
             event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
         } catch (err: any) {
-            console.error('[Stripe Webhook] Signature verification failed:', err.message);
+            logger.error('Stripe signature verification failed', { error: err.message });
             return res.status(400).send(`Webhook Error: ${err.message}`);
         }
 
-        console.log(`[Stripe Webhook] Received event: ${event.type}`);
+        logger.info('Stripe webhook received', { eventType: event.type, eventId: event.id });
 
         try {
             switch (event.type) {
@@ -79,12 +80,12 @@ router.post('/webhook',
                     break;
 
                 default:
-                    console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+                    logger.info('Stripe webhook unhandled event type', { eventType: event.type });
             }
 
             res.json({ received: true });
         } catch (error: any) {
-            console.error('[Stripe Webhook] Handler error:', error);
+            logger.error('Stripe webhook handler error', { eventType: event.type, error: error.message });
             res.status(500).json({ error: 'Webhook handler failed' });
         }
 
@@ -98,7 +99,7 @@ router.post('/webhook',
 async function handlePaymentSucceeded(intent: Stripe.PaymentIntent): Promise<void> {
     const pool = getWritePool();
 
-    console.log(`[Stripe Webhook] Payment succeeded: ${intent.id}`);
+    logger.info('Payment succeeded', { intentId: intent.id });
 
     // NEW: Handle subscription upgrade payments
     if (intent.metadata?.type === 'subscription_upgrade') {
@@ -123,7 +124,7 @@ async function handlePaymentSucceeded(intent: Stripe.PaymentIntent): Promise<voi
         );
 
         if (intentResult.rows.length === 0) {
-            console.log(`[Stripe Webhook] No matching intent found for ${intent.id}`);
+            logger.info('No matching payment intent found', { intentId: intent.id });
             return;
         }
 
@@ -131,7 +132,7 @@ async function handlePaymentSucceeded(intent: Stripe.PaymentIntent): Promise<voi
 
         // Check if already confirmed (idempotent)
         if (record.status === 'succeeded' && record.order_status === 'confirmed') {
-            console.log(`[Stripe Webhook] Order ${record.order_id} already confirmed (idempotent)`);
+            logger.info('Order already confirmed (idempotent)', { orderId: record.order_id });
             return;
         }
 
@@ -152,15 +153,15 @@ async function handlePaymentSucceeded(intent: Stripe.PaymentIntent): Promise<voi
             [record.order_id]
         );
 
-        console.log(`[Stripe Webhook] Order ${record.order_id} confirmed via webhook`);
+        logger.info('Order confirmed via webhook', { orderId: record.order_id });
 
         // Notify garage of confirmed order (async - don't await to prevent webhook timeout)
         notifyGarageAsync(record.order_id).catch(err =>
-            console.error('[Stripe Webhook] Failed to notify garage:', err)
+            logger.error('Failed to notify garage', { orderId: record.order_id, error: err.message })
         );
 
-    } catch (error) {
-        console.error('[Stripe Webhook] handlePaymentSucceeded error:', error);
+    } catch (error: any) {
+        logger.error('handlePaymentSucceeded error', { intentId: intent.id, error: error.message });
         throw error;
     }
 }
@@ -172,7 +173,7 @@ async function handleSubscriptionUpgradePayment(intent: Stripe.PaymentIntent): P
     const pool = getWritePool();
     const { request_id, garage_id, plan_name } = intent.metadata;
 
-    console.log(`[Stripe Webhook] Subscription upgrade payment: ${intent.id} for request ${request_id}`);
+    logger.info('Subscription upgrade payment', { intentId: intent.id, requestId: request_id, garageId: garage_id });
 
     try {
         // Update subscription_change_request payment status
@@ -187,7 +188,7 @@ async function handleSubscriptionUpgradePayment(intent: Stripe.PaymentIntent): P
         `, [intent.id, request_id]);
 
         if (result.rows.length === 0) {
-            console.log(`[Stripe Webhook] Request ${request_id} already marked paid (idempotent)`);
+            logger.info('Subscription request already marked paid (idempotent)', { requestId: request_id });
             return;
         }
 
@@ -201,9 +202,9 @@ async function handleSubscriptionUpgradePayment(intent: Stripe.PaymentIntent): P
             payment_method: 'card'
         });
 
-        console.log(`[Stripe Webhook] ✅ Subscription upgrade payment confirmed for ${garage_id}`);
-    } catch (error) {
-        console.error('[Stripe Webhook] handleSubscriptionUpgradePayment error:', error);
+        logger.info('Subscription upgrade payment confirmed', { garageId: garage_id, planName: plan_name });
+    } catch (error: any) {
+        logger.error('handleSubscriptionUpgradePayment error', { intentId: intent.id, error: error.message });
         throw error;
     }
 }
@@ -215,7 +216,7 @@ async function handleSubscriptionRenewalPayment(intent: Stripe.PaymentIntent): P
     const pool = getWritePool();
     const { subscription_id, garage_id, plan_name } = intent.metadata;
 
-    console.log(`[Stripe Webhook] Subscription renewal payment: ${intent.id}`);
+    logger.info('Subscription renewal payment', { intentId: intent.id, subscriptionId: subscription_id });
 
     try {
         // Extend subscription by 1 month
@@ -240,9 +241,9 @@ async function handleSubscriptionRenewalPayment(intent: Stripe.PaymentIntent): P
             payment_method: 'card'
         });
 
-        console.log(`[Stripe Webhook] ✅ Subscription renewal confirmed, extended 1 month`);
-    } catch (error) {
-        console.error('[Stripe Webhook] handleSubscriptionRenewalPayment error:', error);
+        logger.info('Subscription renewal confirmed, extended 1 month', { subscriptionId: subscription_id });
+    } catch (error: any) {
+        logger.error('handleSubscriptionRenewalPayment error', { intentId: intent.id, error: error.message });
         throw error;
     }
 }
@@ -258,18 +259,18 @@ async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent): Prom
     const paymentMethodId = setupIntent.payment_method as string;
 
     if (!garage_id || !paymentMethodId) {
-        console.log('[Stripe Webhook] SetupIntent missing garage_id or payment_method');
+        logger.warn('SetupIntent missing garage_id or payment_method', { setupIntentId: setupIntent.id });
         return;
     }
 
-    console.log(`[Stripe Webhook] SetupIntent succeeded for garage ${garage_id}`);
+    logger.info('SetupIntent succeeded', { garageId: garage_id, paymentMethodId });
 
     try {
         // Get payment method details from Stripe
         const paymentMethod = await stripe?.paymentMethods.retrieve(paymentMethodId);
 
         if (!paymentMethod?.card) {
-            console.warn('[Stripe Webhook] SetupIntent has no card details');
+            logger.warn('SetupIntent has no card details', { paymentMethodId });
             return;
         }
 
@@ -297,9 +298,9 @@ async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent): Prom
             isDefault
         ]);
 
-        console.log(`[Stripe Webhook] ✅ Saved ${paymentMethod.card.brand} ****${paymentMethod.card.last4}`);
-    } catch (error) {
-        console.error('[Stripe Webhook] handleSetupIntentSucceeded error:', error);
+        logger.info('Payment method saved', { brand: paymentMethod.card.brand, last4: paymentMethod.card.last4 });
+    } catch (error: any) {
+        logger.error('handleSetupIntentSucceeded error', { setupIntentId: setupIntent.id, error: error.message });
         throw error;
     }
 }
@@ -337,10 +338,10 @@ async function generateSubscriptionInvoice(pool: any, params: {
             params.bank_reference
         ]);
 
-        console.log(`[Stripe Webhook] Invoice ${invoiceNumber} generated for ${params.amount} QAR`);
+        logger.info('Invoice generated', { invoiceNumber, amount: params.amount });
         return invoiceNumber;
-    } catch (error) {
-        console.error('[Stripe Webhook] Invoice generation failed:', error);
+    } catch (error: any) {
+        logger.error('Invoice generation failed', { garageId: params.garage_id, error: error.message });
         // Don't throw - invoice failure shouldn't block payment confirmation
     }
 }
@@ -351,9 +352,7 @@ async function generateSubscriptionInvoice(pool: any, params: {
 async function handlePaymentFailed(intent: Stripe.PaymentIntent): Promise<void> {
     const pool = getWritePool();
 
-    console.log(`[Stripe Webhook] Payment failed: ${intent.id}`, {
-        error: intent.last_payment_error?.message
-    });
+    logger.warn('Payment failed', { intentId: intent.id, error: intent.last_payment_error?.message });
 
     try {
         // Update payment intent status
@@ -365,8 +364,8 @@ async function handlePaymentFailed(intent: Stripe.PaymentIntent): Promise<void> 
              WHERE provider_intent_id = $1`,
             [intent.id, intent.last_payment_error?.message || 'Payment declined']
         );
-    } catch (error) {
-        console.error('[Stripe Webhook] handlePaymentFailed error:', error);
+    } catch (error: any) {
+        logger.error('handlePaymentFailed error', { intentId: intent.id, error: error.message });
         throw error;
     }
 }
@@ -405,8 +404,8 @@ async function notifyGarageAsync(orderId: string): Promise<void> {
         // Socket notification handled separately via notification service
         // The in-app notification created above will be pushed via polling
 
-    } catch (error) {
-        console.error('[Stripe Webhook] Garage notification error:', error);
+    } catch (error: any) {
+        logger.error('Garage notification error', { orderId, error: error.message });
     }
 }
 
@@ -418,7 +417,7 @@ async function handleRefundUpdate(stripeRefund: Stripe.Refund): Promise<void> {
     const pool = getWritePool();
     const { id: stripeRefundId, status, metadata, failure_reason } = stripeRefund;
 
-    console.log(`[Stripe Webhook] Processing refund ${stripeRefundId}, status: ${status}`);
+    logger.info('Processing refund', { stripeRefundId, status });
 
     // Map Stripe status to internal status
     let internalStatus: string;
@@ -459,7 +458,7 @@ async function handleRefundUpdate(stripeRefund: Stripe.Refund): Promise<void> {
 
         if (updateResult.rows.length > 0) {
             const refund = updateResult.rows[0];
-            console.log(`[Stripe Webhook] Updated refund ${refund.refund_id} to ${internalStatus}`);
+            logger.info('Refund updated', { refundId: refund.refund_id, status: internalStatus });
 
             // If completed, update order payment_status
             if (internalStatus === 'completed') {
@@ -468,13 +467,13 @@ async function handleRefundUpdate(stripeRefund: Stripe.Refund): Promise<void> {
                      WHERE order_id = $1 AND payment_status != 'refunded'`,
                     [refund.order_id]
                 );
-                console.log(`[Stripe Webhook] Marked order ${refund.order_id} as refunded`);
+                logger.info('Order marked as refunded', { orderId: refund.order_id });
             }
         } else {
-            console.warn(`[Stripe Webhook] No matching refund found for Stripe refund ${stripeRefundId}`);
+            logger.warn('No matching refund found', { stripeRefundId });
         }
-    } catch (error) {
-        console.error('[Stripe Webhook] handleRefundUpdate error:', error);
+    } catch (error: any) {
+        logger.error('handleRefundUpdate error', { stripeRefundId, error: error.message });
         throw error;
     }
 }
@@ -491,11 +490,11 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
         : charge.payment_intent?.id;
 
     if (!paymentIntentId) {
-        console.warn('[Stripe Webhook] charge.refunded event without payment_intent');
+        logger.warn('charge.refunded event without payment_intent', { chargeId: charge.id });
         return;
     }
 
-    console.log(`[Stripe Webhook] Charge refunded for payment intent: ${paymentIntentId}`);
+    logger.info('Charge refunded', { paymentIntentId });
 
     try {
         // Find order by payment intent
@@ -507,7 +506,7 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
         );
 
         if (orderResult.rows.length === 0) {
-            console.warn(`[Stripe Webhook] No order found for payment intent ${paymentIntentId}`);
+            logger.warn('No order found for payment intent', { paymentIntentId });
             return;
         }
 
@@ -526,7 +525,7 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
         );
 
         if (refundResult.rows.length > 0) {
-            console.log(`[Stripe Webhook] Marked refund ${refundResult.rows[0].refund_id} as completed via charge.refunded`);
+            logger.info('Refund marked completed via charge.refunded', { refundId: refundResult.rows[0].refund_id });
 
             // Update order payment status
             await pool.query(
@@ -534,8 +533,8 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
                 [orderId]
             );
         }
-    } catch (error) {
-        console.error('[Stripe Webhook] handleChargeRefunded error:', error);
+    } catch (error: any) {
+        logger.error('handleChargeRefunded error', { paymentIntentId, error: error.message });
         throw error;
     }
 }
