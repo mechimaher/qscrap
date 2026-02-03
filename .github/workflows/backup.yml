@@ -1,0 +1,58 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC (3 AM Qatar)
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  backup:
+    name: PostgreSQL Backup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create database backup
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            echo "📦 Starting database backup..."
+            
+            # Create backup directory if not exists
+            mkdir -p /opt/qscrap/backups
+            
+            # Create timestamped backup
+            BACKUP_FILE="/opt/qscrap/backups/qscrap_db_$(date +%Y%m%d_%H%M%S).sql.gz"
+            docker exec qscrap-postgres pg_dump -U postgres qscrap_db | gzip > $BACKUP_FILE
+            
+            # Verify backup was created
+            if [ -f "$BACKUP_FILE" ]; then
+              SIZE=$(du -h $BACKUP_FILE | cut -f1)
+              echo "✅ Backup created: $BACKUP_FILE ($SIZE)"
+            else
+              echo "❌ Backup failed!"
+              exit 1
+            fi
+            
+            # Cleanup: Keep only last 7 daily backups
+            echo "🧹 Cleaning old backups..."
+            ls -t /opt/qscrap/backups/*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm -v
+            
+            # List current backups
+            echo "📋 Current backups:"
+            ls -lh /opt/qscrap/backups/*.sql.gz 2>/dev/null || echo "No backups found"
+
+      - name: Verify backup integrity
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            LATEST=$(ls -t /opt/qscrap/backups/*.sql.gz 2>/dev/null | head -1)
+            if [ -n "$LATEST" ]; then
+              # Test gunzip integrity
+              gunzip -t "$LATEST" && echo "✅ Backup integrity verified"
+            fi

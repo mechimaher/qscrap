@@ -5,15 +5,52 @@ on:
     branches: [main]
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  deploy:
+  build-and-push:
+    name: Build & Push to GHCR
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    
+    steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -27,6 +64,9 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             
+            echo "🏷️ Tagging current stable version..."
+            docker tag qscrap-backend:latest qscrap-backend:stable 2>/dev/null || true
+            
             echo "🔨 Rebuilding backend..."
             docker compose build --no-cache backend
             
@@ -39,23 +79,80 @@ jobs:
             echo "🗄️ Running migrations..."
             docker exec qscrap-backend npm run db:migrate || true
             
+            echo "📝 Recording deployment..."
+            git rev-parse HEAD > /opt/qscrap/.last_good_deploy
+            
             echo "✅ Deployment complete!"
             docker ps --filter name=qscrap
 
-      - name: Verify deployment
+      - name: Comprehensive health check
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            # Health check
-            curl -sf http://localhost:3000/health || exit 1
-            echo "✅ Health check passed!"
+            echo "=== Health Check ==="
+            
+            # API Health
+            if curl -sf http://localhost:3000/health > /dev/null; then
+              echo "✅ API: Healthy"
+            else
+              echo "❌ API: Failed"
+              exit 1
+            fi
+            
+            # PostgreSQL
+            if docker exec qscrap-postgres pg_isready -U postgres > /dev/null 2>&1; then
+              echo "✅ PostgreSQL: Ready"
+            else
+              echo "❌ PostgreSQL: Not ready"
+            fi
+            
+            # Redis
+            if docker exec qscrap-redis redis-cli ping > /dev/null 2>&1; then
+              echo "✅ Redis: Ready"
+            else
+              echo "❌ Redis: Not ready"
+            fi
+            
+            # Disk usage
+            echo ""
+            echo "=== Disk Usage ==="
+            df -h /opt/qscrap | tail -1
 
-      - name: Notify on failure
-        if: failure()
+      - name: Notify success
+        if: success()
         run: |
-          echo "❌ Deployment failed! Check the logs above."
+          echo "✅ Deployment successful!"
           echo "Commit: ${{ github.sha }}"
           echo "Actor: ${{ github.actor }}"
+          echo "Time: $(date -u)"
+          # Slack notification (if SLACK_WEBHOOK secret is configured)
+          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+              -H 'Content-type: application/json' \
+              -d '{
+                "text": "✅ QScrap deployed successfully",
+                "blocks": [{
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*QScrap Deployed* 🚀\nCommit: `${{ github.sha }}`\nBy: ${{ github.actor }}"
+                  }
+                }]
+              }'
+          fi
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Deployment FAILED!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          # Slack notification (if SLACK_WEBHOOK secret is configured)
+          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+              -H 'Content-type: application/json' \
+              -d '{"text": "❌ QScrap deployment FAILED - Commit: ${{ github.sha }} - Actor: ${{ github.actor }}"}'
+          fi
