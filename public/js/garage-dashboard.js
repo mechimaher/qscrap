@@ -3674,9 +3674,9 @@ async function loadSubscription() {
                 } else {
                     document.getElementById('subRenewal').innerHTML = `<span style="color: var(--warning);"><i class="bi bi-calendar-event"></i> ${dateStr} (${daysLeft} days left)</span>`;
                 }
-            } else if (sub.is_commission_based) {
-                // Commission-based plans - no expiry
-                document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
+            } else if (sub.is_commission_based || (sub.monthly_fee === 0 && sub.commission_rate > 0)) {
+                // Commission-based plans - no renewal needed
+                document.getElementById('subRenewal').textContent = 'Never (Pay-Per-Sale)';
             } else if (sub.billing_cycle_end) {
                 // Only show renewal date if there's an actual billing cycle
                 const endDate = new Date(sub.billing_cycle_end);
@@ -3690,8 +3690,9 @@ async function loadSubscription() {
                         </span>
                     `;
                 } else {
-                    if (endDate.getFullYear() >= 2099) {
-                        document.getElementById('subRenewal').textContent = 'Never (Commission Only)';
+                    // Check if it's effectively a commission-only plan  
+                    if (endDate.getFullYear() >= 2099 || (parseFloat(sub.monthly_fee || 0) === 0)) {
+                        document.getElementById('subRenewal').textContent = 'Never (Pay-Per-Sale)';
                     } else {
                         document.getElementById('subRenewal').textContent = endDate.toLocaleDateString();
                     }
