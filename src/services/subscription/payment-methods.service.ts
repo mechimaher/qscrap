@@ -5,6 +5,7 @@
 
 import { Pool } from 'pg';
 import Stripe from 'stripe';
+import logger from '../../utils/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
@@ -54,7 +55,7 @@ export class PaymentMethodsService {
             [customer.id, garageId]
         );
 
-        console.log(`[PaymentMethods] Created Stripe customer ${customer.id} for ${garage.garage_name}`);
+        logger.info('Created Stripe customer', { customerId: customer.id, garageName: garage.garage_name });
 
         return customer.id;
     }
@@ -75,7 +76,7 @@ export class PaymentMethodsService {
             }
         });
 
-        console.log(`[PaymentMethods] Created SetupIntent for garage ${garageId}`);
+        logger.info('Created SetupIntent for garage', { garageId });
 
         return {
             clientSecret: setupIntent.client_secret!,
@@ -143,7 +144,7 @@ export class PaymentMethodsService {
             }
 
             await client.query('COMMIT');
-            console.log(`[PaymentMethods] Set default payment method for garage ${garageId}`);
+            logger.info('Set default payment method for garage', { garageId });
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -172,7 +173,7 @@ export class PaymentMethodsService {
         try {
             await stripe.paymentMethods.detach(paymentMethod.stripe_payment_method_id);
         } catch (err) {
-            console.warn('[PaymentMethods] Failed to detach from Stripe:', err);
+            logger.warn('Failed to detach from Stripe', { error: err });
         }
 
         // Delete from database
@@ -193,7 +194,7 @@ export class PaymentMethodsService {
             `, [garageId]);
         }
 
-        console.log(`[PaymentMethods] Deleted payment method ${methodId}`);
+        logger.info('Deleted payment method', { methodId });
     }
 
     /**
@@ -234,6 +235,6 @@ export class PaymentMethodsService {
             isDefault
         ]);
 
-        console.log(`[PaymentMethods] Added ${paymentMethod.card.brand} ****${paymentMethod.card.last4}`);
+        logger.info('Added payment method', { brand: paymentMethod.card.brand, last4: paymentMethod.card.last4 });
     }
 }
