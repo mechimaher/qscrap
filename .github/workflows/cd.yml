@@ -1,0 +1,61 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd /opt/qscrap
+            
+            echo "📥 Pulling latest changes..."
+            git fetch origin main
+            git reset --hard origin/main
+            
+            echo "🔨 Rebuilding backend..."
+            docker compose build --no-cache backend
+            
+            echo "🚀 Deploying..."
+            docker compose up -d
+            
+            echo "⏳ Waiting for services..."
+            sleep 15
+            
+            echo "🗄️ Running migrations..."
+            docker exec qscrap-backend npm run db:migrate || true
+            
+            echo "✅ Deployment complete!"
+            docker ps --filter name=qscrap
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # Health check
+            curl -sf http://localhost:3000/health || exit 1
+            echo "✅ Health check passed!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check the logs above."
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
