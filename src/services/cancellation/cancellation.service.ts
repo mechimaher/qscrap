@@ -28,6 +28,7 @@ import {
     FEE_POLICY,
     CancellationStage
 } from './cancellation.constants';
+import logger from '../../utils/logger';
 import { getFraudDetectionService } from './fraud-detection.service';
 import { smsService } from '../sms.service';
 
@@ -532,9 +533,9 @@ export class CancellationService {
                             status: 'completed'
                         };
 
-                        console.log(`[Cancellation] Auto-refund ${stripeRefund.id}: ${refundableAmount} QAR (delivery fee ${deliveryFee} retained)`);
+                        logger.info('Auto-refund processed', { refundId: stripeRefund.id, amount: refundableAmount, deliveryFeeRetained: deliveryFee });
                     } catch (stripeErr: any) {
-                        console.error('[Cancellation] Stripe refund failed:', stripeErr.message);
+                        logger.error('Stripe refund failed', { error: stripeErr.message });
                         // Mark refund as failed, Operations can retry
                         await client.query(
                             `UPDATE refunds SET refund_status = 'failed', 
@@ -585,7 +586,7 @@ export class CancellationService {
                     [orderId, potentialCompensation]
                 );
 
-                console.log(`[Cancellation] Payout awaiting review. Potential compensation: ${potentialCompensation} QAR`);
+                logger.info('Payout awaiting compensation review', { potentialCompensation });
 
                 // Notify Support team
                 await createNotification({
@@ -650,7 +651,7 @@ export class CancellationService {
                     { channelId: 'orders', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[CANCEL] Push to garage failed:', pushErr);
+                logger.error('Push to garage failed', { error: (pushErr as Error).message });
             }
 
             (global as any).io?.to(`garage_${order.garage_id}`).emit('order_cancelled', {
@@ -682,7 +683,7 @@ export class CancellationService {
                         { channelId: 'orders', sound: true }
                     );
                 } catch (pushErr) {
-                    console.error('[CANCEL] Push to driver failed:', pushErr);
+                    logger.error('Push to driver failed', { error: (pushErr as Error).message });
                 }
 
                 // Socket to driver
@@ -694,7 +695,7 @@ export class CancellationService {
                     action: 'return_to_garage'
                 });
 
-                console.log(`[Cancellation] Driver ${order.driver_id} notified of cancellation for order ${order.order_number}`);
+                logger.info('Driver notified of cancellation', { driverId: order.driver_id, orderNumber: order.order_number });
             }
 
             // Notify customer about refund (in-app)
@@ -726,7 +727,7 @@ export class CancellationService {
                         );
                     }
                 } catch (smsErr) {
-                    console.error('[Cancellation] SMS notification failed:', smsErr);
+                    logger.error('SMS notification failed', { error: (smsErr as Error).message });
                 }
             }
 
@@ -894,9 +895,9 @@ export class CancellationService {
                         );
 
                         stripeRefundResult = { refund_id: stripeRefund.id, amount: refundAmount };
-                        console.log(`[Garage-Cancel] Auto-refund ${stripeRefund.id}: ${refundAmount} QAR`);
+                        logger.info('Garage-Cancel auto-refund', { refundId: stripeRefund.id, amount: refundAmount });
                     } catch (stripeErr: any) {
-                        console.error('[Garage-Cancel] Stripe refund failed:', stripeErr.message);
+                        logger.error('Garage-Cancel Stripe refund failed', { error: stripeErr.message });
                         await client.query(
                             `UPDATE refunds SET refund_status = 'failed', 
                              refund_reason = $2 WHERE refund_id = $1`,
@@ -948,7 +949,7 @@ export class CancellationService {
                         );
                     }
                 } catch (smsErr) {
-                    console.error('[Garage-Cancel] SMS notification failed:', smsErr);
+                    logger.error('Garage-Cancel SMS notification failed', { error: (smsErr as Error).message });
                 }
             }
 
@@ -963,7 +964,7 @@ export class CancellationService {
                     { channelId: 'orders', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[CANCEL] Push to customer failed:', pushErr);
+                logger.error('Push to customer failed', { error: (pushErr as Error).message });
             }
 
             // Notify driver if order was assigned
@@ -987,7 +988,7 @@ export class CancellationService {
                         { channelId: 'orders', sound: true }
                     );
                 } catch (pushErr) {
-                    console.error('[CANCEL] Push to driver failed:', pushErr);
+                    logger.error('Push to driver failed', { error: (pushErr as Error).message });
                 }
 
                 (global as any).io?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
@@ -1214,9 +1215,9 @@ export class CancellationService {
                         );
 
                         stripeRefundResult = { refund_id: stripeRefund.id, amount: refundAmount };
-                        console.log(`[Driver-Cancel] Refund ${stripeRefund.id}: ${refundAmount} QAR (fault: ${faultParty})`);
+                        logger.info('Driver-Cancel refund', { refundId: stripeRefund.id, amount: refundAmount, faultParty });
                     } catch (stripeErr: any) {
-                        console.error('[Driver-Cancel] Stripe refund failed:', stripeErr.message);
+                        logger.error('Driver-Cancel Stripe refund failed', { error: stripeErr.message });
                         await client.query(
                             `UPDATE refunds SET refund_status = 'failed', 
                              refund_reason = $2 WHERE refund_id = $1`,
@@ -1278,7 +1279,7 @@ export class CancellationService {
                         );
                     }
                 } catch (smsErr) {
-                    console.error('[Driver-Cancel] SMS notification failed:', smsErr);
+                    logger.error('Driver-Cancel SMS notification failed', { error: (smsErr as Error).message });
                 }
             }
 
@@ -1293,7 +1294,7 @@ export class CancellationService {
                     { channelId: 'orders', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[Driver-Cancel] Push to customer failed:', pushErr);
+                logger.error('Driver-Cancel push to customer failed', { error: (pushErr as Error).message });
             }
 
             // Notify garage
@@ -1466,9 +1467,9 @@ export class CancellationService {
                         );
 
                         refundProcessed = true;
-                        console.log(`[Operations] Refunded ${refundAmount} QAR for order ${order.order_number}`);
+                        logger.info('Operations refund processed', { amount: refundAmount, orderNumber: order.order_number });
                     } catch (stripeErr: any) {
-                        console.error('[Operations] Stripe refund failed:', stripeErr.message);
+                        logger.error('Operations Stripe refund failed', { error: stripeErr.message });
                         // Log failed refund for manual processing
                         await client.query(
                             `INSERT INTO refunds 

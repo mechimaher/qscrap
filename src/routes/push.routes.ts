@@ -12,6 +12,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { pushService } from '../services/push.service';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { Response } from 'express';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -23,13 +24,13 @@ router.use(authenticate as RequestHandler);
  * Register a push token for the authenticated user
  */
 router.post('/register', async (req: AuthRequest, res: Response) => {
-    console.log('[PushToken] Registration attempt received');
+    logger.info('Push token registration attempt received');
     try {
         const { token, platform, device_id } = req.body;
         const userId = req.user!.userId;
         const userType = req.user!.userType;
 
-        console.log('[PushToken] Registration details:', {
+        logger.info('Push token registration details', {
             userId: userId?.substring(0, 8),
             userType,
             platform,
@@ -39,28 +40,28 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
         });
 
         if (!token) {
-            console.error('[PushToken] ❌ Missing token in request');
+            logger.error('Missing token in request');
             return res.status(400).json({ error: 'Push token is required' });
         }
 
         if (!platform || !['ios', 'android'].includes(platform)) {
-            console.error('[PushToken] ❌ Invalid platform:', platform);
+            logger.error('Invalid platform', { platform });
             return res.status(400).json({ error: 'Platform must be ios or android' });
         }
 
         // Determine app type based on user type
         const appType = userType === 'driver' ? 'driver' : 'customer';
-        console.log('[PushToken] Determined app_type:', appType, 'from userType:', userType);
+        logger.info('Determined app_type', { appType, userType });
 
         await pushService.registerToken(userId, token, platform, appType, device_id);
 
-        console.log('[PushToken] ✅ Token registered successfully for', userType, 'as', appType);
+        logger.info('Token registered successfully', { userType, appType });
         res.json({
             success: true,
             message: 'Push token registered successfully'
         });
     } catch (err) {
-        console.error('[PushToken] ❌ Registration failed:', err);
+        logger.error('Registration failed', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to register push token' });
     }
 });
@@ -81,7 +82,7 @@ router.delete('/unregister', async (req: AuthRequest, res: Response) => {
             message: 'Push token unregistered successfully'
         });
     } catch (err) {
-        console.error('Push unregister error:', err);
+        logger.error('Push unregister error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to unregister push token' });
     }
 });
@@ -109,7 +110,7 @@ if (process.env.NODE_ENV !== 'production') {
                 message: `Sent to ${results.length} device(s)`
             });
         } catch (err) {
-            console.error('Push test error:', err);
+            logger.error('Push test error', { error: (err as Error).message });
             res.status(500).json({ error: 'Failed to send test notification' });
         }
     });
