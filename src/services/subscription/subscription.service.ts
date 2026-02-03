@@ -3,6 +3,7 @@
  * Handles garage subscriptions, plans, upgrades, cancellations, and payment history
  */
 import { Pool } from 'pg';
+import logger from '../../utils/logger';
 
 export class SubscriptionService {
     constructor(private pool: Pool) { }
@@ -200,7 +201,7 @@ export class SubscriptionService {
 
             await client.query('COMMIT');
 
-            console.log(`[Subscription] Created upgrade PaymentIntent ${paymentIntent.id} for ${amount} QAR`);
+            logger.info('Created upgrade PaymentIntent', { paymentIntentId: paymentIntent.id, amount });
 
             return {
                 clientSecret: paymentIntent.client_secret,
@@ -235,7 +236,7 @@ export class SubscriptionService {
             `, [paymentIntentId]);
 
             if (reqQuery.rows.length === 0) {
-                console.log(`[Subscription] No pending request for PaymentIntent ${paymentIntentId}`);
+                logger.info('No pending request for PaymentIntent', { paymentIntentId });
                 return { success: false };
             }
 
@@ -247,7 +248,7 @@ export class SubscriptionService {
             const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
             if (paymentIntent.status !== 'succeeded') {
-                console.log(`[Subscription] PaymentIntent ${paymentIntentId} not succeeded: ${paymentIntent.status}`);
+                logger.info('PaymentIntent not succeeded', { paymentIntentId, status: paymentIntent.status });
                 return { success: false };
             }
 
@@ -262,7 +263,7 @@ export class SubscriptionService {
 
             await client.query('COMMIT');
 
-            console.log(`[Subscription] ✅ Upgrade payment confirmed for ${request.garage_name} → ${request.plan_name}`);
+            logger.info('Upgrade payment confirmed', { garageName: request.garage_name, planName: request.plan_name });
 
             return {
                 success: true,
@@ -324,7 +325,7 @@ export class SubscriptionService {
                     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
                     await stripe.paymentIntents.cancel(request.payment_intent_id);
                 } catch (stripeErr) {
-                    console.log('[Subscription] Could not cancel PaymentIntent (may already be cancelled):', stripeErr);
+                    logger.warn('Could not cancel PaymentIntent (may already be cancelled)', { error: stripeErr });
                 }
             }
 
@@ -339,7 +340,7 @@ export class SubscriptionService {
 
             await client.query('COMMIT');
 
-            console.log(`[Subscription] Garage ${garageId} cancelled their pending upgrade request`);
+            logger.info('Garage cancelled pending upgrade request', { garageId });
 
             return {
                 success: true,
