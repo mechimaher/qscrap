@@ -1683,15 +1683,8 @@
             }
         }
 
-        /* MD: Tablets portrait (768px+) */
+        /* MD: Tablets portrait (768px+) - Keep mobile nav, just adjust grid layouts */
         @media (min-width: 768px) {
-            .nav-links {
-                display: flex;
-            }
-
-            .mobile-menu-btn {
-                display: none;
-            }
 
             .steps-grid,
             .value-grid {
@@ -1716,6 +1709,16 @@
 
         /* LG: Tablets landscape / Small laptops (1024px+) */
         @media (min-width: 1024px) {
+
+            /* Show horizontal nav only on larger screens */
+            .nav-links {
+                display: flex;
+            }
+
+            .mobile-menu-btn {
+                display: none;
+            }
+
             .steps-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
