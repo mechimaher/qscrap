@@ -6,6 +6,7 @@
  * 
  * Premium 2026: Comprehensive state management with clear transition rules
  */
+import logger from './logger';
 
 // ============================================
 // ORDER STATUS TRANSITIONS
@@ -211,7 +212,7 @@ export function canTransitionPayout(from: string, to: string): TransitionResult 
  * Use with caution and always log the override
  */
 export function adminOverride(entityType: string, from: string, to: string): TransitionResult {
-    console.warn(`[STATE-MACHINE] Admin override: ${entityType} ${from} → ${to}`);
+    logger.warn('Admin state machine override', { entityType, from, to });
     return { valid: true };
 }
 

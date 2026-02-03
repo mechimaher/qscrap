@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { SearchService } from '../services/search';
+import logger from '../utils/logger';
 
 const searchService = new SearchService(pool);
 
@@ -13,7 +14,7 @@ export const universalSearch = async (req: AuthRequest, res: Response) => {
         const results = await searchService.universalSearch(req.user!.userId, req.user!.userType, q.trim(), type as string, Math.min(Number(limit) || 10, 50));
         res.json({ results, query: q });
     } catch (err) {
-        console.error('Universal search error:', err);
+        logger.error('Universal search error', { error: err });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -25,7 +26,7 @@ export const getSearchSuggestions = async (req: AuthRequest, res: Response) => {
         const suggestions = await searchService.getSuggestions(req.user!.userId, req.user!.userType, q.trim());
         res.json({ suggestions });
     } catch (err) {
-        console.error('Search suggestions error:', err);
+        logger.error('Search suggestions error', { error: err });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };

@@ -1,6 +1,7 @@
 // Migration endpoint - run database migrations via API
 import { Router, Request, Response } from 'express';
 import pool from '../config/db';
+import logger from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,14 +14,14 @@ const router = Router();
 router.get('/email-otp', async (req: Request, res: Response) => {
     const client = await pool.connect();
     try {
-        console.log('[Migration] Starting Email OTP migration...');
+        logger.info('Starting Email OTP migration...');
 
         const sqlPath = path.join(__dirname, '../../scripts/migrations/20260124_add_email_otp_system.sql');
         const sql = fs.readFileSync(sqlPath, 'utf8');
 
         await client.query(sql);
 
-        console.log('[Migration] Email OTP migration completed successfully!');
+        logger.info('Email OTP migration completed successfully!');
 
         res.json({
             success: true,
@@ -32,7 +33,7 @@ router.get('/email-otp', async (req: Request, res: Response) => {
             }
         });
     } catch (error: any) {
-        console.error('[Migration] Failed:', error);
+        logger.error('Migration failed', { error });
         res.status(500).json({
             success: false,
             error: error.message

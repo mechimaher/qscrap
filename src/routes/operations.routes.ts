@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
+import logger from '../utils/logger';
 import { authorizeOperations } from '../middleware/authorize.middleware';
 import {
     getDashboardStats,
@@ -55,7 +56,7 @@ router.get('/returns', async (req, res) => {
         const returns = await returnService.getPendingReturns();
         res.json({ returns });
     } catch (error) {
-        console.error('[Operations] Get returns error:', error);
+        logger.error('Get returns error', { error });
         res.json({ returns: [] });
     }
 });
@@ -74,7 +75,7 @@ router.post('/returns/:return_id/approve', async (req, res) => {
 
         res.json(result);
     } catch (error: any) {
-        console.error('[Operations] Approve return error:', error);
+        logger.error('Approve return error', { error });
         res.status(400).json({ success: false, message: error.message || 'Failed to approve return' });
     }
 });
@@ -97,7 +98,7 @@ router.post('/returns/:return_id/reject', async (req, res) => {
 
         res.json(result);
     } catch (error: any) {
-        console.error('[Operations] Reject return error:', error);
+        logger.error('Reject return error', { error });
         res.status(400).json({ success: false, message: error.message || 'Failed to reject return' });
     }
 });

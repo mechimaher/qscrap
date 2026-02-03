@@ -5,6 +5,7 @@ import { getUserNotifications, getUnreadCount, markNotificationsRead } from '../
 import { getErrorMessage } from '../types';
 import pool from '../config/db';
 import { BadgeCountService } from '../services/notification/badge.service';
+import logger from '../utils/logger';
 
 const badgeService = new BadgeCountService(pool);
 
@@ -54,7 +55,7 @@ export const getUnreadNotificationCount = async (req: AuthRequest, res: Response
         const count = await getUnreadCount(userId);
         res.json({ count });
     } catch (err) {
-        console.error('[Notification] Failed to get unread count:', err);
+        logger.error('Failed to get unread count', { error: err });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -71,7 +72,7 @@ export const getBadgeCounts = async (req: AuthRequest, res: Response) => {
         const counts = await badgeService.getCustomerBadgeCounts(userId);
         res.json({ success: true, ...counts });
     } catch (err) {
-        console.error('[Notification] Failed to get badge counts:', err);
+        logger.error('Failed to get badge counts', { error: err });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -91,7 +92,7 @@ export const getGarageBadgeCounts = async (req: AuthRequest, res: Response) => {
         const counts = await badgeService.getGarageBadgeCounts(garageId);
         res.json({ success: true, ...counts });
     } catch (err) {
-        console.error('[Notification] Failed to get garage badge counts:', err);
+        logger.error('Failed to get garage badge counts', { error: err });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };

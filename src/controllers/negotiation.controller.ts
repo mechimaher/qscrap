@@ -6,6 +6,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { NegotiationService, isNegotiationError, getHttpStatusForError } from '../services/negotiation';
+import logger from '../utils/logger';
 
 const negotiationService = new NegotiationService(pool);
 
@@ -30,7 +31,7 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
         await negotiationService.respondToCounterOffer(req.user!.userId, counter_offer_id, { action, counter_price: counterPrice, notes });
         res.json({ message: `Counter-offer ${action}ed` });
     } catch (err) {
-        console.error('[respondToCounterOffer] Error:', err);
+        logger.error('respondToCounterOffer error', { error: err });
         if (isNegotiationError(err)) return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });
         res.status(400).json({ error: getErrorMessage(err) });
     }

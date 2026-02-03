@@ -9,6 +9,7 @@
 
 import pool from '../config/db';
 import { ApiError, ErrorCode } from '../middleware/errorHandler.middleware';
+import logger from '../utils/logger';
 
 // ============================================
 // TYPES
@@ -201,7 +202,7 @@ export class DocumentService {
             `, [document_id, action, actor_id, actor_type]);
         } catch (err) {
             // Non-critical - don't fail main operation
-            console.error('[DocumentService] Failed to log access:', err);
+            logger.error('Failed to log document access', { error: err });
         }
     }
 }

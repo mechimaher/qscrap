@@ -199,7 +199,7 @@ async function notifyOrderCreation(order: any, garageId: string, customerId: str
             { channelId: 'orders', sound: true }
         );
     } catch (pushErr) {
-        console.error('[ORDER] Push notification to garage failed:', pushErr);
+        logger.error('Push notification to garage failed', { error: pushErr });
     }
 
     // Notify winning garage (in-app)
