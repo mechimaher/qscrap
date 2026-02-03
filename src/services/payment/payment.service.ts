@@ -12,6 +12,7 @@ import { Pool } from 'pg';
 import { PaymentGateway, PaymentIntent, PaymentMethod, PaymentStatus, CreatePaymentOptions } from './payment-gateway.interface';
 import { StripePaymentProvider } from './stripe.provider';
 import { MockPaymentProvider } from './mock.provider';
+import logger from '../../utils/logger';
 
 export interface DepositResult {
     intentId: string;
@@ -41,7 +42,7 @@ export class PaymentService {
         if (type === 'stripe') {
             const secretKey = process.env.STRIPE_SECRET_KEY;
             if (!secretKey) {
-                console.warn('[PaymentService] No Stripe key, falling back to Mock');
+                logger.warn('No Stripe key, falling back to Mock');
                 this.provider = new MockPaymentProvider();
             } else {
                 this.provider = new StripePaymentProvider(secretKey);
@@ -50,7 +51,7 @@ export class PaymentService {
             this.provider = new MockPaymentProvider();
         }
 
-        console.log(`[PaymentService] Using provider: ${this.provider.providerName}`);
+        logger.info('Payment provider initialized', { provider: this.provider.providerName });
     }
 
     /**
@@ -100,7 +101,7 @@ export class PaymentService {
 
             await client.query('COMMIT');
 
-            console.log(`[PaymentService] Created deposit intent ${intent.id} for order ${orderId}: ${deliveryFee} ${currency}`);
+            logger.info('Created deposit intent', { intentId: intent.id, orderId, amount: deliveryFee, currency });
 
             return {
                 intentId: intent.id,
@@ -169,7 +170,7 @@ export class PaymentService {
 
             await client.query('COMMIT');
 
-            console.log(`[PaymentService] Created FULL payment intent ${intent.id} for order ${orderId}: ${totalAmount} ${currency}`);
+            logger.info('Created full payment intent', { intentId: intent.id, orderId, amount: totalAmount, currency });
 
             return {
                 intentId: intent.id,
@@ -202,7 +203,7 @@ export class PaymentService {
             const status = await this.provider.getPaymentStatus(providerIntentId);
 
             if (status !== 'succeeded') {
-                console.log(`[PaymentService] Intent ${providerIntentId} not succeeded: ${status}`);
+                logger.info('Intent not succeeded', { providerIntentId, status });
                 return false;
             }
 
@@ -242,7 +243,7 @@ export class PaymentService {
                         updated_at = NOW()
                     WHERE order_id = $1
                 `, [order.order_id]);
-                console.log(`[PaymentService] FULL payment confirmed for order ${order.order_number}, payment_status → paid`);
+                logger.info('Full payment confirmed', { orderNumber: order.order_number, paymentStatus: 'paid' });
             } else {
                 await client.query(`
                     UPDATE orders 
@@ -251,7 +252,7 @@ export class PaymentService {
                         updated_at = NOW()
                     WHERE order_id = $1
                 `, [order.order_id]);
-                console.log(`[PaymentService] Deposit confirmed for order ${order.order_number}, status → confirmed`);
+                logger.info('Deposit confirmed', { orderNumber: order.order_number, status: 'confirmed' });
             }
 
             // Add to order status history
@@ -268,7 +269,7 @@ export class PaymentService {
 
             // Send notifications to garage (async, don't block)
             this.notifyGarageOfConfirmedOrder(order).catch(err =>
-                console.error('[PaymentService] Notification error:', err)
+                logger.error('Notification error', { error: (err as Error).message })
             );
 
             return true;
@@ -323,7 +324,7 @@ export class PaymentService {
             });
 
         } catch (err) {
-            console.error('[PaymentService] Garage notification failed:', err);
+            logger.error('Garage notification failed', { error: (err as Error).message });
         }
     }
 
@@ -376,7 +377,7 @@ export class PaymentService {
 
                 await client.query('COMMIT');
 
-                console.log(`[PaymentService] No refund for order ${orderId}: full fee retained (${depositAmount})`);
+                logger.info('No refund - full fee retained', { orderId, depositAmount });
 
                 return {
                     refundAmount: 0,
@@ -407,7 +408,7 @@ export class PaymentService {
 
             await client.query('COMMIT');
 
-            console.log(`[PaymentService] Refunded ${refundAmount} for order ${orderId}, retained ${feeToRetain}`);
+            logger.info('Refund processed', { orderId, refundAmount, feeRetained: feeToRetain });
 
             return {
                 refundId: refundResult.id,
