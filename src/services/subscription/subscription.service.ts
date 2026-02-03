@@ -275,4 +275,81 @@ export class SubscriptionService {
             client.release();
         }
     }
+
+    /**
+     * Cancel a pending plan change request
+     * Garage can cancel if they change their mind before admin approval
+     */
+    async cancelPendingRequest(garageId: string): Promise<{ success: boolean; message: string }> {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Find pending request
+            const reqQuery = await client.query(`
+                SELECT request_id, payment_status, payment_intent_id, payment_amount
+                FROM subscription_change_requests
+                WHERE garage_id = $1 AND status = 'pending'
+                FOR UPDATE
+            `, [garageId]);
+
+            if (reqQuery.rows.length === 0) {
+                throw new Error('No pending request found to cancel');
+            }
+
+            const request = reqQuery.rows[0];
+
+            // If payment was made, we need to refund (or admin will handle)
+            if (request.payment_status === 'paid' && request.payment_intent_id) {
+                // Mark for refund - admin will process
+                await client.query(`
+                    UPDATE subscription_change_requests
+                    SET status = 'cancelled',
+                        admin_notes = 'Cancelled by garage - refund required',
+                        updated_at = NOW()
+                    WHERE request_id = $1
+                `, [request.request_id]);
+
+                await client.query('COMMIT');
+                return {
+                    success: true,
+                    message: 'Request cancelled. Your payment refund will be processed within 3-5 business days.'
+                };
+            }
+
+            // Cancel Stripe PaymentIntent if pending
+            if (request.payment_intent_id && request.payment_status === 'pending') {
+                try {
+                    const Stripe = require('stripe');
+                    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+                    await stripe.paymentIntents.cancel(request.payment_intent_id);
+                } catch (stripeErr) {
+                    console.log('[Subscription] Could not cancel PaymentIntent (may already be cancelled):', stripeErr);
+                }
+            }
+
+            // Cancel the request
+            await client.query(`
+                UPDATE subscription_change_requests
+                SET status = 'cancelled',
+                    admin_notes = 'Cancelled by garage',
+                    updated_at = NOW()
+                WHERE request_id = $1
+            `, [request.request_id]);
+
+            await client.query('COMMIT');
+
+            console.log(`[Subscription] Garage ${garageId} cancelled their pending upgrade request`);
+
+            return {
+                success: true,
+                message: 'Your pending plan change request has been cancelled.'
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
 }

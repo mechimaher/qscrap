@@ -3710,10 +3710,17 @@ async function loadSubscription() {
                 banner.className = 'alert alert-warning';
                 banner.style.marginTop = '16px';
                 banner.innerHTML = `
-                    <i class="bi bi-hourglass-split"></i> 
-                    <strong>Pending Request:</strong> Your request to switch to 
-                    <strong>${req.target_plan_name || 'New Plan'}</strong> 
-                    is awaiting admin approval.
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <i class="bi bi-hourglass-split"></i> 
+                            <strong>Pending Request:</strong> Your request to switch to 
+                            <strong>${req.target_plan_name || 'New Plan'}</strong> 
+                            is awaiting admin approval.
+                        </div>
+                        <button class="btn btn-sm" onclick="cancelPendingRequest()" style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                            <i class="bi bi-x-circle"></i> Cancel Request
+                        </button>
+                    </div>
                 `;
                 // Remove existing banners if any to avoid stacking
                 const existing = document.querySelector('#currentSubscription .alert-warning');
@@ -3839,6 +3846,32 @@ async function changePlan(planId, planName, monthlyFee) {
             loadSubscription(); // Reload to show pending state
         } else {
             showToast(data.error || 'Failed to submit request', 'error');
+        }
+    } catch (err) {
+        showToast('Connection error', 'error');
+    }
+}
+
+// Cancel pending plan change request
+async function cancelPendingRequest() {
+    if (!confirm('Are you sure you want to cancel your pending plan change request?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/subscriptions/pending-request`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(data.message || 'Request cancelled', 'success');
+            currentPendingRequest = null;
+            loadSubscription(); // Reload to clear pending state
+        } else {
+            showToast(data.error || 'Failed to cancel request', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');

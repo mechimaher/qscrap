@@ -72,6 +72,19 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response) => {
 };
 
 /**
+ * Cancel pending plan change request
+ * Garage can cancel if they change their mind before admin approval
+ */
+export const cancelPendingRequest = async (req: AuthRequest, res: Response) => {
+    try {
+        const result = await subscriptionService.cancelPendingRequest(req.user!.userId);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ error: getErrorMessage(err) });
+    }
+};
+
+/**
  * Create Stripe PaymentIntent for subscription upgrade
  * Garage calls this to get clientSecret for card payment
  */
