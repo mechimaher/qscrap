@@ -18,6 +18,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { getErrorMessage } from '../types';
 import pool from '../config/db';
+import logger from '../utils/logger';
 import { getIO } from '../utils/socketIO';
 import { createNotification } from '../services/notification.service';
 import { SupportService } from '../services/support';
@@ -54,7 +55,7 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
 
         res.status(201).json(result);
     } catch (err) {
-        console.error('[SUPPORT] createTicket error:', getErrorMessage(err));
+        logger.error('createTicket error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -70,7 +71,7 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
         });
         res.json(result);
     } catch (err) {
-        console.error('[SUPPORT] getTickets error:', getErrorMessage(err));
+        logger.error('getTickets error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -87,7 +88,7 @@ export const getTicketMessages = async (req: AuthRequest, res: Response) => {
         const messages = await supportService.getTicketMessages(ticketId, req.user!.userType);
         res.json(messages);
     } catch (err) {
-        console.error('[SUPPORT] getTicketMessages error:', getErrorMessage(err));
+        logger.error('getTicketMessages error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -135,7 +136,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 
         res.json(message);
     } catch (err) {
-        console.error('[SUPPORT] sendMessage error:', getErrorMessage(err));
+        logger.error('sendMessage error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -147,7 +148,7 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
         getIO()?.to(`ticket_${req.params.ticketId}`).emit('ticket_updated', { status: req.body.status });
         res.json(ticket);
     } catch (err: any) {
-        console.error('[SUPPORT] updateTicketStatus error:', getErrorMessage(err));
+        logger.error('updateTicketStatus error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -199,7 +200,7 @@ export const getMyEscalations = async (req: AuthRequest, res: Response) => {
             resolved_count: result.rows.filter((e: any) => e.status === 'resolved').length
         });
     } catch (err: any) {
-        console.error('[SUPPORT] getMyEscalations error:', getErrorMessage(err));
+        logger.error('getMyEscalations error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -238,7 +239,7 @@ export const getTicketDetail = async (req: AuthRequest, res: Response) => {
         if (!detail) return res.status(404).json({ error: 'Ticket not found' });
         res.json(detail);
     } catch (err: any) {
-        console.error('[SUPPORT] getTicketDetail error:', getErrorMessage(err));
+        logger.error('getTicketDetail error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -276,7 +277,7 @@ export const reopenTicket = async (req: AuthRequest, res: Response) => {
         getIO()?.to('operations').emit('ticket_reopened', result.ticket);
         res.json(result);
     } catch (err) {
-        console.error('[SUPPORT] reopenTicket error:', getErrorMessage(err));
+        logger.error('reopenTicket error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -383,7 +384,7 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err: any) {
-        console.error('[SUPPORT] executeQuickAction error:', getErrorMessage(err));
+        logger.error('executeQuickAction error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -397,7 +398,7 @@ export const getResolutionLogs = async (req: AuthRequest, res: Response) => {
         });
         res.json({ logs });
     } catch (err: any) {
-        console.error('[SUPPORT] getResolutionLogs error:', getErrorMessage(err));
+        logger.error('getResolutionLogs error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -421,7 +422,7 @@ export const createTicketForCustomer = async (req: AuthRequest, res: Response) =
         getIO()?.to('operations').emit('new_ticket', result);
         res.status(201).json(result);
     } catch (err: any) {
-        console.error('[SUPPORT] createTicketForCustomer error:', getErrorMessage(err));
+        logger.error('createTicketForCustomer error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -432,7 +433,7 @@ export const getCannedResponses = async (req: AuthRequest, res: Response) => {
         const responses = await supportService.getCannedResponses(req.query.category as string);
         res.json(responses);
     } catch (err: any) {
-        console.error('[SUPPORT] getCannedResponses error:', getErrorMessage(err));
+        logger.error('getCannedResponses error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -456,7 +457,7 @@ export const grantGoodwillCredit = async (req: AuthRequest, res: Response) => {
         getIO()?.to(`user_${customer_id}`).emit('goodwill_credit', result);
         res.json(result);
     } catch (err: any) {
-        console.error('[SUPPORT] grantGoodwillCredit error:', getErrorMessage(err));
+        logger.error('grantGoodwillCredit error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
@@ -559,7 +560,7 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
             tickets: ticketsResult.rows
         });
     } catch (err: any) {
-        console.error('[SUPPORT] getOrderDetailsForSupport error:', getErrorMessage(err));
+        logger.error('getOrderDetailsForSupport error', { error: getErrorMessage(err) });
         res.status(err.message === 'Agent access required' ? 403 : 500).json({ error: getErrorMessage(err) });
     }
 };
