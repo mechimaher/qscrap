@@ -12,11 +12,11 @@ export const securityMiddleware = helmet({
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com"],
             scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
             imgSrc: ["'self'", "data:", "blob:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://maps.googleapis.com"],
-            frameSrc: ["'none'"],
+            connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://maps.googleapis.com", "https://api.stripe.com"],
+            frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com"],
             objectSrc: ["'none'"],
             // Only enable upgrade-insecure-requests when HTTPS is configured
             upgradeInsecureRequests: process.env.HTTPS_ENABLED === 'true' ? [] : null
