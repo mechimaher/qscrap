@@ -1,4 +1,5 @@
 // QScrap Payment API Routes
+import logger from '../utils/logger';
 // Secure endpoints with rate limiting and validation
 
 import express, { Request, Response } from 'express';
@@ -92,7 +93,7 @@ router.post('/process',
             res.status(statusCode).json(result);
 
         } catch (error: any) {
-            console.error('[Payment API] Process error:', error);
+            logger.error('Process error', { error: (error as Error).message });
             res.status(500).json({
                 success: false,
                 error: error.message || 'Payment processing failed'
@@ -127,7 +128,7 @@ router.post('/:transactionId/refund',
             res.json(result);
 
         } catch (error: any) {
-            console.error('[Payment API] Refund error:', error);
+            logger.error('Refund error', { error: (error as Error).message });
             res.status(500).json({
                 success: false,
                 error: error.message || 'Refund processing failed'
@@ -161,7 +162,7 @@ router.get('/:transactionId',
             res.json({ success: true, transaction });
 
         } catch (error: any) {
-            console.error('[Payment API] Get transaction error:', error);
+            logger.error('Get transaction error', { error: (error as Error).message });
             res.status(500).json({
                 success: false,
                 error: error.message || 'Failed to retrieve transaction'
@@ -186,7 +187,7 @@ router.get('/my',
             res.json({ success: true, transactions });
 
         } catch (error: any) {
-            console.error('[Payment API] Get history error:', error);
+            logger.error('Get history error', { error: (error as Error).message });
             res.status(500).json({
                 success: false,
                 error: error.message || 'Failed to retrieve payment history'
@@ -279,7 +280,7 @@ router.post('/deposit/:orderId',
                     'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
                     [orderId, loyaltyDiscount, newTotal]
                 );
-                console.log(`[Payment/Deposit] Applied ${loyaltyDiscount} QAR discount. Part COD: ${discountedPartPrice} QAR (was ${partPrice}). New total: ${newTotal} QAR`);
+                logger.info('Deposit discount applied', { loyaltyDiscount, discountedPartPrice, partPrice, newTotal });
             }
 
             const result = await depositService.createDeliveryFeeDeposit(
@@ -307,7 +308,7 @@ router.post('/deposit/:orderId',
                 }
             });
         } catch (error: any) {
-            console.error('[Payment API] Deposit error:', error);
+            logger.error('Deposit error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message || 'Deposit creation failed' });
         }
     }
@@ -363,7 +364,7 @@ router.post('/full/:orderId',
                     'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
                     [orderId, loyaltyDiscount, chargeAmount]
                 );
-                console.log(`[Payment] Applied ${loyaltyDiscount} QAR discount. New total: ${chargeAmount} QAR`);
+                logger.info('Full payment discount applied', { loyaltyDiscount, chargeAmount });
             }
 
             const result = await depositService.createFullPaymentIntent(
@@ -392,7 +393,7 @@ router.post('/full/:orderId',
                 }
             });
         } catch (error: any) {
-            console.error('[Payment API] Full payment error:', error);
+            logger.error('Full payment error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message || 'Full payment creation failed' });
         }
     }
@@ -455,7 +456,7 @@ router.post('/free/:orderId',
             `, [orderId, discount]);
 
             // Log free order event
-            console.log(`[Payment] 🎊 FREE ORDER confirmed: ${orderId}. Discount: ${discount} QAR covers total: ${totalAmount} QAR`);
+            logger.info('Free order confirmed', { orderId, discount, totalAmount });
 
             // TODO: Award loyalty points for the order (even though it was free)
             // TODO: Notify garage of new order
@@ -471,7 +472,7 @@ router.post('/free/:orderId',
                 }
             });
         } catch (error: any) {
-            console.error('[Payment API] Free order error:', error);
+            logger.error('Free order error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message || 'Free order confirmation failed' });
         }
     }
@@ -494,7 +495,7 @@ router.post('/deposit/confirm/:intentId',
                 res.status(400).json({ success: false, message: 'Payment not completed' });
             }
         } catch (error: any) {
-            console.error('[Payment API] Confirm deposit error:', error);
+            logger.error('Confirm deposit error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -529,7 +530,7 @@ router.get('/order/:orderId/status',
             const status = await depositService.getOrderPaymentStatus(orderId);
             res.json({ success: true, ...status });
         } catch (error: any) {
-            console.error('[Payment API] Get status error:', error);
+            logger.error('Get status error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -553,7 +554,7 @@ router.post('/methods',
             const method = await depositService.savePaymentMethod(userId, paymentMethodId);
             res.json({ success: true, method });
         } catch (error: any) {
-            console.error('[Payment API] Save method error:', error);
+            logger.error('Save method error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -571,7 +572,7 @@ router.get('/methods',
             const methods = await depositService.getPaymentMethods(userId);
             res.json({ success: true, methods });
         } catch (error: any) {
-            console.error('[Payment API] Get methods error:', error);
+            logger.error('Get methods error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -591,7 +592,7 @@ router.delete('/methods/:methodId',
             await depositService.removePaymentMethod(userId, methodId);
             res.json({ success: true, message: 'Payment method removed' });
         } catch (error: any) {
-            console.error('[Payment API] Remove method error:', error);
+            logger.error('Remove method error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message });
         }
     }
