@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { driverService } from '../services/driver.service';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 // ============================================================================
 // DRIVER PROFILE
 // ============================================================================
@@ -15,7 +16,7 @@ export const getMyProfile = async (req: AuthRequest, res: Response) => {
         }
         res.json({ driver });
     } catch (err) {
-        console.error('getMyProfile Error:', err);
+        logger.error('getMyProfile Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -32,7 +33,7 @@ export const getMyAssignments = async (req: AuthRequest, res: Response) => {
             count: assignments.length
         });
     } catch (err) {
-        console.error('getMyAssignments Error:', err);
+        logger.error('getMyAssignments Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -45,7 +46,7 @@ export const getAssignmentDetails = async (req: AuthRequest, res: Response) => {
         }
         res.json({ assignment });
     } catch (err) {
-        console.error('getAssignmentDetails Error:', err);
+        logger.error('getAssignmentDetails Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -65,7 +66,7 @@ export const acceptAssignment = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('acceptAssignment Error:', err);
+        logger.error('acceptAssignment Error', { error: getErrorMessage(err) });
         if (getErrorMessage(err).includes('not found')) {
             return res.status(404).json({ error: getErrorMessage(err) });
         }
@@ -104,7 +105,7 @@ export const rejectAssignment = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('rejectAssignment Error:', err);
+        logger.error('rejectAssignment Error', { error: getErrorMessage(err) });
         if (getErrorMessage(err).includes('not found')) {
             return res.status(404).json({ error: getErrorMessage(err) });
         }
@@ -132,7 +133,7 @@ export const updateMyLocation = async (req: AuthRequest, res: Response) => {
         );
         res.json(result);
     } catch (err) {
-        console.error('updateMyLocation Error:', err);
+        logger.error('updateMyLocation Error', { error: getErrorMessage(err) });
         if (getErrorMessage(err) === 'Driver profile not found') {
             return res.status(404).json({ error: getErrorMessage(err) });
         }
@@ -156,7 +157,7 @@ export const updateAssignmentStatus = async (req: AuthRequest, res: Response) =>
         );
         res.json(result);
     } catch (err) {
-        console.error('updateAssignmentStatus Error:', err);
+        logger.error('updateAssignmentStatus Error', { error: getErrorMessage(err) });
         if (getErrorMessage(err).includes('not found')) {
             return res.status(404).json({ error: getErrorMessage(err) });
         }
@@ -179,7 +180,7 @@ export const uploadDeliveryProof = async (req: AuthRequest, res: Response) => {
         );
         res.json(result);
     } catch (err) {
-        console.error('uploadDeliveryProof Error:', err);
+        logger.error('uploadDeliveryProof Error', { error: getErrorMessage(err) });
         if (getErrorMessage(err).includes('not found')) {
             return res.status(404).json({ error: getErrorMessage(err) });
         }
@@ -199,7 +200,7 @@ export const getMyStats = async (req: AuthRequest, res: Response) => {
         }
         res.json({ stats });
     } catch (err) {
-        console.error('getMyStats Error:', err);
+        logger.error('getMyStats Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -209,7 +210,7 @@ export const getWallet = async (req: AuthRequest, res: Response) => {
         const wallet = await driverService.getWallet(req.user!.userId);
         res.json({ wallet });
     } catch (err) {
-        console.error('getWallet Error:', err);
+        logger.error('getWallet Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -219,7 +220,7 @@ export const getWalletHistory = async (req: AuthRequest, res: Response) => {
         const history = await driverService.getWalletHistory(req.user!.userId);
         res.json({ history });
     } catch (err) {
-        console.error('getWalletHistory Error:', err);
+        logger.error('getWalletHistory Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -229,7 +230,7 @@ export const getEarningsTrend = async (req: AuthRequest, res: Response) => {
         const trend = await driverService.getEarningsTrend(req.user!.userId);
         res.json({ trend });
     } catch (err) {
-        console.error('getEarningsTrend Error:', err);
+        logger.error('getEarningsTrend Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -239,7 +240,7 @@ export const getPayoutHistory = async (req: AuthRequest, res: Response) => {
         const payouts = await driverService.getPayoutHistory(req.user!.userId);
         res.json({ payouts });
     } catch (err) {
-        console.error('getPayoutHistory Error:', err);
+        logger.error('getPayoutHistory Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -253,7 +254,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
             driver
         });
     } catch (err) {
-        console.error('updateProfile Error:', err);
+        logger.error('updateProfile Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -273,7 +274,7 @@ export const toggleAvailability = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('toggleAvailability Error:', err);
+        logger.error('toggleAvailability Error', { error: getErrorMessage(err) });
         if (getErrorMessage(err).includes('Cannot go offline')) {
             return res.status(400).json({ error: getErrorMessage(err) });
         }

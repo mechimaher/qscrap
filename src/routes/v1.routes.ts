@@ -110,9 +110,6 @@ v1Router.use('/notifications', notificationRoutes);
 v1Router.use('/admin', adminRoutes);
 v1Router.use('/addresses', addressRoutes);
 
-// OCR Routes (VIN Scanner)
-import ocrRoutes from './ocr.routes';
-v1Router.use('/ocr', ocrRoutes);
 
 // Vehicle Routes (My Vehicles / Family Fleet)
 import vehicleRoutes from './vehicle.routes';
