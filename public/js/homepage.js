@@ -311,11 +311,11 @@ const i18n = {
                 if (animate) {
                     el.style.opacity = '0';
                     setTimeout(() => {
-                        el.textContent = translation;
+                        el.innerHTML = translation;
                         el.style.opacity = '1';
                     }, 150);
                 } else {
-                    el.textContent = translation;
+                    el.innerHTML = translation;
                 }
             }
         });
