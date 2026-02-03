@@ -7,6 +7,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 import DeliveryService from '../services/delivery.service';
 import { GeoService, TrackingService } from '../services/delivery';
 
@@ -28,7 +29,7 @@ export const getDrivers = async (req: AuthRequest, res: Response) => {
         });
         res.json(result);
     } catch (err) {
-        console.error('getDrivers Error:', err);
+        logger.error('Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -43,7 +44,7 @@ export const getRankedDriversForOrder = async (req: AuthRequest, res: Response) 
         const result = await DeliveryService.getRankedDriversForOrder(order_id);
         res.json(result);
     } catch (err) {
-        console.error('getRankedDriversForOrder Error:', err);
+        logger.error('getRankedDriversForOrder Error', { error: getErrorMessage(err) });
         const status = (err as any).statusCode || 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -55,7 +56,7 @@ export const getDriverDetails = async (req: AuthRequest, res: Response) => {
         const result = await DeliveryService.getDriverDetails(driver_id);
         res.json(result);
     } catch (err) {
-        console.error('getDriverDetails Error:', err);
+        logger.error('getDriverDetails Error', { error: getErrorMessage(err) });
         const status = (err as any).statusCode || 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -83,7 +84,7 @@ export const createDriver = async (req: AuthRequest, res: Response) => {
         res.status(201).json({ driver: result.rows[0] });
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('createDriver Error:', err);
+        logger.error('createDriver Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
@@ -116,7 +117,7 @@ export const updateDriver = async (req: AuthRequest, res: Response) => {
 
         res.json({ driver: result.rows[0] });
     } catch (err) {
-        console.error('updateDriver Error:', err);
+        logger.error('updateDriver Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -130,7 +131,7 @@ export const getOrdersReadyForCollection = async (req: AuthRequest, res: Respons
         const orders = await DeliveryService.getOrdersReadyForCollection();
         res.json({ orders });
     } catch (err) {
-        console.error('getOrdersReadyForCollection Error:', err);
+        logger.error('getOrdersReadyForCollection Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -140,7 +141,7 @@ export const getOrdersReadyForDelivery = async (req: AuthRequest, res: Response)
         const orders = await DeliveryService.getOrdersReadyForDelivery();
         res.json({ orders });
     } catch (err) {
-        console.error('getOrdersReadyForDelivery Error:', err);
+        logger.error('getOrdersReadyForDelivery Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -163,7 +164,7 @@ export const assignCollectionDriver = async (req: AuthRequest, res: Response) =>
 
         res.json(result);
     } catch (err) {
-        console.error('assignCollectionDriver Error:', err);
+        logger.error('assignCollectionDriver Error', { error: getErrorMessage(err) });
         const status = (err as any).statusCode || 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -188,7 +189,7 @@ export const assignDriver = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('assignDriver Error:', err);
+        logger.error('assignDriver Error', { error: getErrorMessage(err) });
         const status = (err as any).statusCode || 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -214,7 +215,7 @@ export const getOrdersForDelivery = async (req: AuthRequest, res: Response) => {
             ready_for_delivery: delivery
         });
     } catch (err) {
-        console.error('getOrdersForDelivery Error:', err);
+        logger.error('getOrdersForDelivery Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -296,7 +297,7 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
         });
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('reassignDriver Error:', err);
+        logger.error('reassignDriver Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
@@ -353,7 +354,7 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
         res.json({ success: true, assignment: result.rows[0] });
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('updateDeliveryStatus Error:', err);
+        logger.error('updateDeliveryStatus Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     } finally {
         client.release();
@@ -369,7 +370,7 @@ export const getDeliveryStats = async (req: AuthRequest, res: Response) => {
         const stats = await trackingService.getDeliveryStats();
         res.json({ stats });
     } catch (err) {
-        console.error('getDeliveryStats Error:', err);
+        logger.error('getDeliveryStats Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -398,7 +399,7 @@ export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
             location: { latitude, longitude }
         });
     } catch (err) {
-        console.error('updateDriverLocation Error:', err);
+        logger.error('updateDriverLocation Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -429,7 +430,7 @@ export const completeWithPOD = async (req: AuthRequest, res: Response) => {
             pod_photo_url
         });
     } catch (err) {
-        console.error('completeWithPOD Error:', err);
+        logger.error('completeWithPOD Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -439,7 +440,7 @@ export const getActiveDeliveries = async (req: AuthRequest, res: Response) => {
         const deliveries = await trackingService.getActiveDeliveries();
         res.json({ deliveries });
     } catch (err) {
-        console.error('getActiveDeliveries Error:', err);
+        logger.error('getActiveDeliveries Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -501,7 +502,7 @@ export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
             hub: result.hub
         });
     } catch (err) {
-        console.error('calculateDeliveryFee Error:', err);
+        logger.error('calculateDeliveryFee Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: 'Failed to calculate delivery fee' });
     }
 };
@@ -512,7 +513,7 @@ export const getDeliveryZones = async (_req: AuthRequest, res: Response) => {
         const hub = await geoService.getPrimaryHub();
         res.json({ zones, hub });
     } catch (err) {
-        console.error('getDeliveryZones Error:', err);
+        logger.error('getDeliveryZones Error', { error: getErrorMessage(err) });
         res.status(500).json({ error: 'Failed to fetch delivery zones' });
     }
 };
@@ -539,7 +540,7 @@ export const updateZoneFee = async (req: AuthRequest, res: Response) => {
             zone
         });
     } catch (err) {
-        console.error('updateZoneFee Error:', err);
+        logger.error('updateZoneFee Error', { error: getErrorMessage(err) });
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
