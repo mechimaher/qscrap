@@ -14,24 +14,80 @@ permissions:
   actions: read
 
 jobs:
-  secret-scan:
-    name: Secret Detection
+  # ============================================
+  # 1. CodeQL SAST - Enterprise Gold Standard
+  # ============================================
+  codeql:
+    name: CodeQL SAST Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          config: |
+            paths-ignore:
+              - node_modules
+              - '**/node_modules'
+              - mobile/node_modules
+              - driver-mobile/node_modules
+              - '**/*.test.ts'
+              - '**/*.spec.ts'
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  # ============================================
+  # 2. Container Security - Trivy
+  # ============================================
+  container-security:
+    name: Container Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t qscrap-backend:${{ github.sha }} .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          fetch-depth: 0
+          image-ref: 'qscrap-backend:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate SBOM
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'qscrap-backend:${{ github.sha }}'
+          format: 'cyclonedx'
+          output: 'sbom.json'
 
-  dependency-audit:
-    name: Dependency Audit
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.json
+          retention-days: 30
+
+  # ============================================
+  # 3. Dependency Security - npm audit + OSV
+  # ============================================
+  dependency-security:
+    name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,29 +101,104 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run npm audit
+      - name: npm audit (Critical/High)
         run: |
-          echo "=== Dependency Security Audit ==="
-          npm audit --audit-level=critical || echo "⚠️ Found vulnerabilities (non-blocking)"
-        continue-on-error: true
+          echo "=== NPM Security Audit ==="
+          npm audit --audit-level=high --json > audit-results.json || true
+          npm audit --audit-level=high || true
 
-  container-scan:
-    name: Container Scan
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ github.sha }}
+          path: audit-results.json
+          retention-days: 30
+
+  # ============================================
+  # 4. Secret Detection - Gitleaks
+  # ============================================
+  secret-detection:
+    name: Secret Detection
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # 5. Infrastructure as Code Security
+  # ============================================
+  iac-security:
+    name: IaC Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t qscrap-backend:scan . || exit 0
-        continue-on-error: true
+      - name: Run Trivy IaC scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
 
-      - name: Run Trivy vulnerability scanner
-        if: success()
+  # ============================================
+  # 6. License Compliance
+  # ============================================
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check licenses
         run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:latest image \
-            --severity CRITICAL,HIGH \
-            --no-progress \
-            qscrap-backend:scan || echo "⚠️ Scan complete (non-blocking)"
-        continue-on-error: true
+          npx license-checker --summary --production || true
+          echo "=== License check complete ==="
+
+  # ============================================
+  # Security Summary Job
+  # ============================================
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [codeql, container-security, dependency-security, secret-detection, iac-security, license-check]
+    if: always()
+    steps:
+      - name: Security scan summary
+        run: |
+          echo "🔒 ================================"
+          echo "   SECURITY SCAN SUMMARY"
+          echo "🔒 ================================"
+          echo ""
+          echo "CodeQL SAST:        ${{ needs.codeql.result }}"
+          echo "Container Scan:     ${{ needs.container-security.result }}"
+          echo "Dependency Scan:    ${{ needs.dependency-security.result }}"
+          echo "Secret Detection:   ${{ needs.secret-detection.result }}"
+          echo "IaC Security:       ${{ needs.iac-security.result }}"
+          echo "License Check:      ${{ needs.license-check.result }}"
+          echo ""
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "================================"
