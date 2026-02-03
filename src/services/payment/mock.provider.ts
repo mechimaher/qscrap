@@ -11,6 +11,7 @@ import {
     RefundResult,
     CreatePaymentOptions
 } from './payment-gateway.interface';
+import logger from '../../utils/logger';
 
 export class MockPaymentProvider implements PaymentGateway {
     readonly providerName = 'mock';
@@ -42,7 +43,7 @@ export class MockPaymentProvider implements PaymentGateway {
         };
 
         this.intents.set(intentId, intent);
-        console.log(`[MockPayment] Created intent: ${intentId} for ${options.amount} ${options.currency}`);
+        logger.info('MockPayment created intent', { intentId, amount: options.amount, currency: options.currency });
 
         return intent;
     }
@@ -64,7 +65,7 @@ export class MockPaymentProvider implements PaymentGateway {
         }
 
         this.intents.set(intentId, intent);
-        console.log(`[MockPayment] Confirmed intent: ${intentId} -> ${intent.status}`);
+        logger.info('MockPayment confirmed intent', { intentId, status: intent.status });
 
         return intent;
     }
@@ -81,7 +82,7 @@ export class MockPaymentProvider implements PaymentGateway {
         }
 
         this.intents.set(intentId, intent);
-        console.log(`[MockPayment] Captured: ${intentId}`);
+        logger.info('MockPayment captured', { intentId });
 
         return intent;
     }
@@ -94,7 +95,7 @@ export class MockPaymentProvider implements PaymentGateway {
 
         intent.status = 'cancelled';
         this.intents.set(intentId, intent);
-        console.log(`[MockPayment] Cancelled: ${intentId}`);
+        logger.info('MockPayment cancelled', { intentId });
 
         return true;
     }
@@ -113,7 +114,7 @@ export class MockPaymentProvider implements PaymentGateway {
         }
         this.intents.set(intentId, intent);
 
-        console.log(`[MockPayment] Refunded ${refundAmount} from ${intentId}. Reason: ${reason}`);
+        logger.info('MockPayment refunded', { refundAmount, intentId, reason });
 
         return {
             id: refundId,
@@ -137,7 +138,7 @@ export class MockPaymentProvider implements PaymentGateway {
         this.customers.set(userId, customerId);
         this.paymentMethods.set(customerId, []);
 
-        console.log(`[MockPayment] Created customer: ${customerId} for user ${userId}`);
+        logger.info('MockPayment created customer', { customerId, userId });
         return customerId;
     }
 
@@ -156,7 +157,7 @@ export class MockPaymentProvider implements PaymentGateway {
         methods.push(method);
         this.paymentMethods.set(customerId, methods);
 
-        console.log(`[MockPayment] Attached method ${method.id} to customer ${customerId}`);
+        logger.info('MockPayment attached method', { methodId: method.id, customerId });
         return method;
     }
 
@@ -166,7 +167,7 @@ export class MockPaymentProvider implements PaymentGateway {
             const filtered = methods.filter(m => m.id !== paymentMethodId && m.providerId !== paymentMethodId);
             if (filtered.length !== methods.length) {
                 this.paymentMethods.set(customerId, filtered);
-                console.log(`[MockPayment] Detached method ${paymentMethodId}`);
+                logger.info('MockPayment detached method', { paymentMethodId });
                 return true;
             }
         }

@@ -3,6 +3,7 @@
  * Handles customer vehicle management and auto-save
  */
 import { Pool } from 'pg';
+import logger from '../../utils/logger';
 
 export class VehicleService {
     constructor(private pool: Pool) { }
@@ -32,7 +33,7 @@ export class VehicleService {
     }
 
     async deleteVehicle(customerId: string, vehicleId: string) {
-        console.log('[DELETE-VEHICLE] Starting deletion check', { customerId, vehicleId });
+        logger.info('Starting vehicle deletion check', { customerId, vehicleId });
 
         // Get vehicle details first
         const vehicleResult = await this.pool.query(
@@ -41,12 +42,12 @@ export class VehicleService {
         );
 
         if (vehicleResult.rows.length === 0) {
-            console.log('[DELETE-VEHICLE] Vehicle not found');
+            logger.info('Vehicle not found');
             throw new Error('Vehicle not found');
         }
 
         const vehicle = vehicleResult.rows[0];
-        console.log('[DELETE-VEHICLE] Vehicle details:', vehicle);
+        logger.info('Vehicle details', vehicle);
 
 
         // Check for active part requests (still waiting for bids)
@@ -60,7 +61,7 @@ export class VehicleService {
         );
 
         const activeRequestsCount = parseInt(activeRequestsResult.rows[0].count);
-        console.log('[DELETE-VEHICLE] Active requests count:', activeRequestsCount);
+        logger.info('Active requests count', { count: activeRequestsCount });
 
         // Check for active orders
         const activeOrdersResult = await this.pool.query(
@@ -73,7 +74,7 @@ export class VehicleService {
         );
 
         const activeOrdersCount = parseInt(activeOrdersResult.rows[0].count);
-        console.log('[DELETE-VEHICLE] Active orders count:', activeOrdersCount);
+        logger.info('Active orders count', { count: activeOrdersCount });
 
 
         // Block deletion if any active items exist
@@ -84,11 +85,11 @@ export class VehicleService {
             if (activeOrdersCount > 0) errors.push(`${activeOrdersCount} active order${activeOrdersCount > 1 ? 's' : ''}`);
 
             const errorMessage = `Cannot delete vehicle. This vehicle has ${errors.join(', ')}. Please complete or cancel them first.`;
-            console.log('[DELETE-VEHICLE] BLOCKED:', errorMessage);
+            logger.warn('Deletion blocked', { reason: errorMessage });
             throw new Error(errorMessage);
         }
 
-        console.log('[DELETE-VEHICLE] All checks passed, proceeding with deletion');
+        logger.info('All checks passed, proceeding with deletion');
 
         // Safe to delete
         const result = await this.pool.query(
@@ -96,7 +97,7 @@ export class VehicleService {
             [vehicleId, customerId]
         );
 
-        console.log('[DELETE-VEHICLE] Deletion successful');
+        logger.info('Vehicle deletion successful');
         return result.rowCount! > 0;
     }
 
