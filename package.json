@@ -53,7 +53,7 @@
     "stripe": "^20.2.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^9.0.1",
+    "uuid": "^13.0.0",
     "zod": "^4.2.0"
   },
   "devDependencies": {
