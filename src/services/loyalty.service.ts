@@ -1,4 +1,5 @@
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 interface RewardsSummary {
     points_balance: number;
@@ -47,7 +48,7 @@ export class LoyaltyService {
 
             return result.rows[0];
         } catch (error) {
-            console.error('Error fetching customer rewards:', error);
+            logger.error('Error fetching customer rewards', { error: (error as Error).message });
             throw new Error('Failed to fetch rewards summary');
         }
     }
@@ -64,7 +65,7 @@ export class LoyaltyService {
                 [customerId]
             );
         } catch (error) {
-            console.error('Error initializing customer rewards:', error);
+            logger.error('Error initializing customer rewards', { error: (error as Error).message });
             throw new Error('Failed to initialize rewards account');
         }
     }
@@ -88,7 +89,7 @@ export class LoyaltyService {
 
             return result.rows[0];
         } catch (error) {
-            console.error('Error adding points:', error);
+            logger.error('Error adding points', { error: (error as Error).message });
             throw new Error('Failed to add points');
         }
     }
@@ -108,7 +109,7 @@ export class LoyaltyService {
 
             return result.rows[0];
         } catch (error) {
-            console.error('Error redeeming points:', error);
+            logger.error('Error redeeming points', { error: (error as Error).message });
             throw new Error('Failed to redeem points');
         }
     }
@@ -139,7 +140,7 @@ export class LoyaltyService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching transaction history:', error);
+            logger.error('Error fetching transaction history', { error: (error as Error).message });
             throw new Error('Failed to fetch transaction history');
         }
     }
@@ -178,7 +179,7 @@ export class LoyaltyService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching tier benefits:', error);
+            logger.error('Error fetching tier benefits', { error: (error as Error).message });
             throw new Error('Failed to fetch tier benefits');
         }
     }
@@ -235,7 +236,7 @@ export class LoyaltyService {
                 avg_points_per_customer: parseFloat(pointsResult.rows[0]?.avg_earned) || 0
             };
         } catch (error) {
-            console.error('Error fetching loyalty stats:', error);
+            logger.error('Error fetching loyalty stats', { error: (error as Error).message });
             throw new Error('Failed to fetch loyalty statistics');
         }
     }
@@ -257,7 +258,7 @@ export class LoyaltyService {
                 `Admin bonus: ${reason}`
             );
         } catch (error) {
-            console.error('Error awarding bonus points:', error);
+            logger.error('Error awarding bonus points', { error: (error as Error).message });
             throw new Error('Failed to award bonus points');
         }
     }
@@ -287,7 +288,7 @@ export class LoyaltyService {
                 current_balance: currentBalance
             };
         } catch (error) {
-            console.error('Error checking redemption eligibility:', error);
+            logger.error('Error checking redemption eligibility', { error: (error as Error).message });
             throw new Error('Failed to check redemption eligibility');
         }
     }

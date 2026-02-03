@@ -3,6 +3,7 @@
 
 import crypto from 'crypto';
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 interface OTPResult {
     success: boolean;
@@ -66,14 +67,14 @@ export class OTPService {
                 [email, otp, purpose, expiresAt, ipAddress, userAgent]
             );
 
-            console.log(`[OTP] Created OTP for ${email} (purpose: ${purpose})`);
+            logger.info('Created OTP', { email, purpose });
 
             return {
                 success: true,
                 otp
             };
         } catch (error: any) {
-            console.error('[OTP] Create error:', error);
+            logger.error('OTP create error', { error: error.message });
             return {
                 success: false,
                 error: 'Failed to generate OTP'
@@ -149,13 +150,13 @@ export class OTPService {
                 [otpRecord.id]
             );
 
-            console.log(`[OTP] Successfully verified OTP for ${email}`);
+            logger.info('Successfully verified OTP', { email });
 
             return {
                 success: true
             };
         } catch (error: any) {
-            console.error('[OTP] Verify error:', error);
+            logger.error('OTP verify error', { error: error.message });
             return {
                 success: false,
                 error: 'Verification failed. Please try again.'
@@ -195,7 +196,7 @@ export class OTPService {
 
             return { allowed: true };
         } catch (error: any) {
-            console.error('[OTP] Rate limit check error:', error);
+            logger.error('OTP rate limit check error', { error: error.message });
             // Allow on error to not block users
             return { allowed: true };
         }
@@ -215,9 +216,9 @@ export class OTPService {
                 [email, purpose]
             );
 
-            console.log(`[OTP] Invalidated all OTPs for ${email} (purpose: ${purpose})`);
+            logger.info('Invalidated all OTPs', { email, purpose });
         } catch (error: any) {
-            console.error('[OTP] Invalidate error:', error);
+            logger.error('OTP invalidate error', { error: error.message });
         }
     }
 
@@ -232,12 +233,12 @@ export class OTPService {
 
             const deletedCount = result.rowCount || 0;
             if (deletedCount > 0) {
-                console.log(`[OTP] Cleaned up ${deletedCount} expired OTPs`);
+                logger.info('Cleaned up expired OTPs', { count: deletedCount });
             }
 
             return deletedCount;
         } catch (error: any) {
-            console.error('[OTP] Cleanup error:', error);
+            logger.error('OTP cleanup error', { error: error.message });
             return 0;
         }
     }
@@ -258,7 +259,7 @@ export class OTPService {
 
             return result.rows[0];
         } catch (error: any) {
-            console.error('[OTP] Stats error:', error);
+            logger.error('OTP stats error', { error: error.message });
             return { total: 0, active: 0, expired: 0, used: 0 };
         }
     }
