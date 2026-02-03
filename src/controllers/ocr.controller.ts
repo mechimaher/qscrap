@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
+import logger from '../utils/logger';
 
 // OCR.space provides free OCR API (25,000 requests/month free tier)
 // Get your free API key at: https://ocr.space/ocrapi/freekey
@@ -17,7 +18,7 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
     try {
         // Check if API key is configured
         if (!OCR_SPACE_API_KEY) {
-            console.error('[OCR] OCR_SPACE_API_KEY not configured');
+            logger.error('OCR_SPACE_API_KEY not configured');
             res.status(503).json({
                 success: false,
                 error: 'OCR service not configured',
@@ -31,7 +32,7 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
             return;
         }
 
-        console.log('[OCR] Processing image:', req.file.originalname, 'size:', req.file.size);
+        logger.info('Processing OCR image', { filename: req.file.originalname, size: req.file.size });
 
         // Read image and convert to base64
         const imagePath = req.file.path;
@@ -54,7 +55,7 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
         formBody.append('OCREngine', '2');
         formBody.append('filetype', fileType.toUpperCase());
 
-        console.log('[OCR] Calling OCR.space API with filetype:', fileType);
+        logger.info('Calling OCR.space API', { filetype: fileType });
 
         const response = await fetch(OCR_SPACE_API_URL, {
             method: 'POST',
@@ -67,7 +68,7 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[OCR] OCR.space API error:', errorText);
+            logger.error('OCR.space API error', { error: errorText });
             res.json({
                 success: false,
                 message: 'OCR service temporarily unavailable',
@@ -83,7 +84,7 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
         };
 
         if (data.IsErroredOnProcessing || !data.ParsedResults?.[0]?.ParsedText) {
-            console.error('[OCR] OCR.space parsing error:', data.ErrorMessage);
+            logger.error('OCR.space parsing error', { error: data.ErrorMessage });
             res.json({
                 success: false,
                 message: data.ErrorMessage || 'Could not parse image',
@@ -93,13 +94,13 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
         }
 
         const ocrText = data.ParsedResults[0].ParsedText;
-        console.log('[OCR] OCR.space raw text:', ocrText.substring(0, 200));
+        logger.info('OCR.space raw text', { preview: ocrText.substring(0, 200) });
 
         // Extract VIN from OCR text
         const vin = extractVINFromText(ocrText);
 
         if (vin) {
-            console.log('[OCR] Extracted VIN:', vin);
+            logger.info('Extracted VIN', { vin });
             res.json({
                 success: true,
                 vin: vin,
@@ -110,7 +111,7 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
             // Try to find partial match
             const partial = findPartialVIN(ocrText);
             if (partial) {
-                console.log('[OCR] Partial VIN found:', partial);
+                logger.info('Partial VIN found', { vin: partial });
                 res.json({
                     success: true,
                     vin: partial,
@@ -130,11 +131,11 @@ export async function recognizeVIN(req: MulterRequest, res: Response): Promise<v
         try {
             fs.unlinkSync(imagePath);
         } catch (e) {
-            console.log('[OCR] Could not cleanup temp file:', imagePath);
+            logger.warn('Could not cleanup temp file', { path: imagePath });
         }
 
     } catch (error) {
-        console.error('[OCR] Error:', error);
+        logger.error('OCR processing error', { error: error instanceof Error ? error.message : 'Unknown' });
         res.status(500).json({
             error: 'OCR processing failed',
             message: error instanceof Error ? error.message : 'Unknown error'
@@ -266,7 +267,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
     try {
         // Check if API key is configured
         if (!OCR_SPACE_API_KEY) {
-            console.error('[OCR] OCR_SPACE_API_KEY not configured');
+            logger.error('OCR_SPACE_API_KEY not configured');
             res.status(503).json({
                 vin: null,
                 confidence: 0,
@@ -286,7 +287,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
             return;
         }
 
-        console.log('[OCR] Processing base64 image, length:', image.length);
+        logger.info('Processing base64 image', { length: image.length });
 
         // Prepare base64 image for OCR.space API
         let base64Image = image;
@@ -305,7 +306,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
         formBody.append('OCREngine', '2'); // Engine 2 is better for documents
         formBody.append('filetype', 'JPG');
 
-        console.log('[OCR] Calling OCR.space API for mobile request');
+        logger.info('Calling OCR.space API for mobile request');
 
         const response = await fetch(OCR_SPACE_API_URL, {
             method: 'POST',
@@ -318,7 +319,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[OCR] OCR.space API error:', errorText);
+            logger.error('OCR.space API error', { error: errorText });
             res.json({
                 vin: null,
                 confidence: 0,
@@ -334,7 +335,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
         };
 
         if (data.IsErroredOnProcessing || !data.ParsedResults?.[0]?.ParsedText) {
-            console.error('[OCR] OCR.space parsing error:', data.ErrorMessage);
+            logger.error('OCR.space parsing error', { error: data.ErrorMessage });
             res.json({
                 vin: null,
                 confidence: 0,
@@ -345,13 +346,13 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
         }
 
         const ocrText = data.ParsedResults[0].ParsedText;
-        console.log('[OCR] Mobile OCR raw text:', ocrText.substring(0, 200));
+        logger.info('Mobile OCR raw text', { preview: ocrText.substring(0, 200) });
 
         // Extract VIN from OCR text
         const vin = extractVINFromText(ocrText);
 
         if (vin) {
-            console.log('[OCR] Mobile extracted VIN:', vin);
+            logger.info('Mobile extracted VIN', { vin });
             res.json({
                 vin: vin,
                 confidence: 85,
@@ -361,7 +362,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
             // Try partial match
             const partial = findPartialVIN(ocrText);
             if (partial) {
-                console.log('[OCR] Mobile partial VIN:', partial);
+                logger.info('Mobile partial VIN', { vin: partial });
                 res.json({
                     vin: partial,
                     confidence: 60,
@@ -378,7 +379,7 @@ export async function recognizeVINBase64(req: Request, res: Response): Promise<v
         }
 
     } catch (error) {
-        console.error('[OCR] Mobile OCR error:', error);
+        logger.error('Mobile OCR error', { error: error instanceof Error ? error.message : 'Unknown' });
         res.status(500).json({
             vin: null,
             confidence: 0,
