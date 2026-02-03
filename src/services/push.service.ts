@@ -8,6 +8,7 @@
  */
 
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 // Expo Push API endpoint
 const EXPO_PUSH_API = 'https://exp.host/--/api/v2/push/send';
@@ -53,7 +54,7 @@ class PushService {
     ): Promise<void> {
         // Validate Expo push token format
         if (!token.startsWith('ExponentPushToken[') && !token.startsWith('ExpoPushToken[')) {
-            console.warn('[Push] Invalid token format:', token.substring(0, 30));
+            logger.warn('Invalid token format', { tokenPreview: token.substring(0, 30) });
             return;
         }
 
@@ -69,7 +70,7 @@ class PushService {
                 updated_at = NOW()
         `, [userId, token, platform, appType, deviceId]);
 
-        console.log('[Push] Token registered for user:', userId, appType);
+        logger.info('Token registered', { userId, appType });
     }
 
     /**
@@ -88,7 +89,7 @@ class PushService {
                 [userId]
             );
         }
-        console.log('[Push] Token(s) deactivated for user:', userId);
+        logger.info('Token(s) deactivated', { userId });
     }
 
     /**
@@ -115,7 +116,7 @@ class PushService {
         const tokens = await this.getTokensForUser(userId);
 
         if (tokens.length === 0) {
-            console.log('[Push] No active tokens for user:', userId);
+            logger.info('No active tokens for user', { userId });
             return [];
         }
 
@@ -177,7 +178,7 @@ class PushService {
         }
 
         if (allMessages.length === 0) {
-            console.log('[Push] No active tokens for any of the users');
+            logger.info('No active tokens for any users');
             return results;
         }
 
@@ -216,7 +217,7 @@ class PushService {
             });
 
             if (!response.ok) {
-                console.error('[Push] API error:', response.status, response.statusText);
+                logger.error('Push API error', { status: response.status, statusText: response.statusText });
                 return messages.map(() => ({ success: false, error: `HTTP ${response.status}` }));
             }
 
@@ -236,11 +237,11 @@ class PushService {
             });
 
             const successCount = results.filter(r => r.success).length;
-            console.log(`[Push] Sent ${successCount}/${messages.length} notifications${userId ? ` to user ${userId}` : ''}`);
+            logger.info('Push notifications sent', { success: successCount, total: messages.length, userId });
 
             return results;
         } catch (error) {
-            console.error('[Push] Send error:', error);
+            logger.error('Push send error', { error: (error as Error).message });
             return messages.map(() => ({ success: false, error: 'Network error' }));
         }
     }
@@ -254,9 +255,9 @@ class PushService {
                 'UPDATE push_tokens SET is_active = false, updated_at = NOW() WHERE token = $1',
                 [token]
             );
-            console.log('[Push] Deactivated invalid token');
+            logger.info('Deactivated invalid token');
         } catch (err) {
-            console.error('[Push] Failed to deactivate token:', err);
+            logger.error('Failed to deactivate token', { error: (err as Error).message });
         }
     }
 

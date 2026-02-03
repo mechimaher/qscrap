@@ -14,6 +14,7 @@ import {
 import { createNotification } from '../notification.service';
 import { predictiveService } from '../predictive.service';
 import { LoyaltyService } from '../loyalty.service';
+import logger from '../../utils/logger';
 
 export class OrderLifecycleService {
     constructor(private pool: Pool) { }
@@ -172,10 +173,10 @@ export class OrderLifecycleService {
                         orderId,
                         `Earned ${pointsToAward} points for order #${order.order_number}`
                     );
-                    console.log(`[LOYALTY] Awarded ${pointsToAward} points to customer ${order.customer_id} for order ${orderId}`);
+                    logger.info('Loyalty points awarded', { points: pointsToAward, customerId: order.customer_id, orderId });
                 }
             } catch (loyaltyErr) {
-                console.error('[LOYALTY] Failed to award points:', loyaltyErr);
+                logger.error('Failed to award loyalty points', { error: (loyaltyErr as Error).message });
                 // Don't fail the order completion if loyalty fails
             }
 
@@ -183,7 +184,7 @@ export class OrderLifecycleService {
             try {
                 await this.sendPredictiveSuggestions(orderId, customerId);
             } catch (predErr) {
-                console.error('[ORDER] Predictive service failed:', predErr);
+                logger.error('Predictive service failed', { error: (predErr as Error).message });
             }
         } catch (err) {
             await client.query('ROLLBACK');
@@ -280,7 +281,7 @@ export class OrderLifecycleService {
                     { channelId: 'orders', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[ORDER] Push to customer failed:', pushErr);
+                logger.error('Push to customer failed', { error: (pushErr as Error).message });
             }
 
             // Notify garage
@@ -304,7 +305,7 @@ export class OrderLifecycleService {
                     { channelId: 'orders', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[ORDER] Push to garage failed:', pushErr);
+                logger.error('Push to garage failed', { error: (pushErr as Error).message });
             }
 
             // Socket emit for real-time update
@@ -408,17 +409,17 @@ export class OrderLifecycleService {
                             order.order_id,
                             `Earned ${pointsToAward} points for order #${order.order_number} (auto-completed)`
                         );
-                        console.log(`[LOYALTY] Awarded ${pointsToAward} points to customer ${order.customer_id} for auto-completed order ${order.order_id}`);
+                        logger.info('Loyalty points awarded for auto-complete', { points: pointsToAward, customerId: order.customer_id, orderId: order.order_id });
                     }
                 } catch (loyaltyErr) {
-                    console.error('[LOYALTY] Failed to award points for auto-complete:', loyaltyErr);
+                    logger.error('Failed to award points for auto-complete', { error: (loyaltyErr as Error).message });
                 }
             }
 
             await client.query('COMMIT');
 
             // Log to console for monitoring
-            console.log(`[AUTO-COMPLETE] Completed ${completedOrders.length} orders: ${completedOrders.join(', ')}`);
+            logger.info('Auto-complete processed', { count: completedOrders.length, orders: completedOrders });
 
             return {
                 completed_count: completedOrders.length,
@@ -427,7 +428,7 @@ export class OrderLifecycleService {
 
         } catch (err) {
             await client.query('ROLLBACK');
-            console.error('[AUTO-COMPLETE] Error:', err);
+            logger.error('Auto-complete error', { error: (err as Error).message });
             throw err;
         } finally {
             client.release();
@@ -531,7 +532,7 @@ export class OrderLifecycleService {
                 { channelId: 'orders', sound: true }
             );
         } catch (pushErr) {
-            console.error('[ORDER] Push notification failed:', pushErr);
+            logger.error('Push notification failed', { error: (pushErr as Error).message });
         }
 
         // Socket events
