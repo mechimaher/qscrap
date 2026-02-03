@@ -246,9 +246,9 @@ const translations = {
         'footer.privacy': 'سياسة الخصوصية',
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد',
-        'footer.email': 'support@qscrap.qa 📧',
+        'footer.email': '📧 support@qscrap.qa',
         'footer.phone': '<span dir="ltr">+974 5026 7974</span> 📞',
-        'footer.whatsapp': 'دعم واتساب 💬',
+        'footer.whatsapp': '💬 دعم واتساب',
         'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | سجل تجاري: 155892 | ص.ب: 32544، الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.',
 
