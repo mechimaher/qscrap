@@ -1,4 +1,5 @@
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 interface SubscriptionPlan {
     plan_code: string;
@@ -44,7 +45,7 @@ export class SubscriptionService {
             );
             return result.rows;
         } catch (error) {
-            console.error('Error fetching plans:', error);
+            logger.error('Error fetching plans', { error: (error as Error).message });
             throw new Error('Failed to fetch subscription plans');
         }
     }
@@ -61,7 +62,7 @@ export class SubscriptionService {
 
             return result.rows[0] || null;
         } catch (error) {
-            console.error('Error fetching subscription:', error);
+            logger.error('Error fetching subscription', { error: (error as Error).message });
             throw new Error('Failed to fetch subscription details');
         }
     }
@@ -81,7 +82,7 @@ export class SubscriptionService {
 
             return result.rows[0]?.has_access || false;
         } catch (error) {
-            console.error('Error checking feature access:', error);
+            logger.error('Error checking feature access', { error: (error as Error).message });
             return false;
         }
     }
@@ -107,7 +108,7 @@ export class SubscriptionService {
 
             return result.rows[0];
         } catch (error) {
-            console.error('Error changing subscription:', error);
+            logger.error('Error changing subscription', { error: (error as Error).message });
             throw new Error('Failed to change subscription');
         }
     }
@@ -133,7 +134,7 @@ export class SubscriptionService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching history:', error);
+            logger.error('Error fetching history', { error: (error as Error).message });
             throw new Error('Failed to fetch subscription history');
         }
     }
@@ -149,7 +150,7 @@ export class SubscriptionService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching revenue stats:', error);
+            logger.error('Error fetching revenue stats', { error: (error as Error).message });
             throw new Error('Failed to fetch revenue stats');
         }
     }
@@ -188,7 +189,7 @@ export class SubscriptionService {
                 is_upgrade: difference > 0
             };
         } catch (error) {
-            console.error('Error calculating price difference:', error);
+            logger.error('Error calculating price difference', { error: (error as Error).message });
             throw new Error('Failed to calculate price difference');
         }
     }
