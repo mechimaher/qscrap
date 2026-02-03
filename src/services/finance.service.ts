@@ -11,6 +11,7 @@ import pool from '../config/db';
 import { ApiError, ErrorCode } from '../middleware/errorHandler.middleware';
 import { createNotification } from './notification.service';
 import { emitToGarage, emitToOperations } from '../utils/socketIO';
+import logger from '../utils/logger';
 
 // ============================================
 // TYPES
@@ -352,10 +353,7 @@ export class FinanceService {
         created_by: string;
     }): Promise<{ refund: unknown }> {
         // G-01 FIX: Deprecation warning - this method doesn't call Stripe!
-        console.warn(
-            `[DEPRECATED] FinanceService.createRefund() called for order ${params.order_id}. ` +
-            `This method does NOT execute Stripe refunds. Use RefundService.createRefund() instead.`
-        );
+        logger.warn('DEPRECATED FinanceService.createRefund() called - use RefundService.createRefund() instead', { orderId: params.order_id });
 
         const { order_id, amount, reason, created_by } = params;
         const client = await pool.connect();

@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -104,7 +105,7 @@ router.get('/setup', async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('[GarageSetup] Validation error:', error);
+        logger.error('Garage setup validation error', { error });
         return res.status(500).json({
             success: false,
             error: 'Failed to validate token'
@@ -206,7 +207,7 @@ router.post('/setup', async (req: Request, res: Response) => {
 
         await client.query('COMMIT');
 
-        console.log(`[GarageSetup] Password set successfully for garage ${decoded.garage_id}`);
+        logger.info('Password set successfully', { garageId: decoded.garage_id });
 
         return res.json({
             success: true,
@@ -216,7 +217,7 @@ router.post('/setup', async (req: Request, res: Response) => {
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('[GarageSetup] Setup error:', error);
+        logger.error('Garage setup error', { error });
         return res.status(500).json({
             success: false,
             error: 'Failed to complete setup'

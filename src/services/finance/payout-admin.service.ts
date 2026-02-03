@@ -18,6 +18,7 @@ import {
 } from './types';
 import { PayoutNotFoundError } from './errors';
 import { PayoutHelpers } from './payout-helpers';
+import logger from '../../utils/logger';
 
 export class PayoutAdminService {
     private helpers: PayoutHelpers;
@@ -149,7 +150,7 @@ export class PayoutAdminService {
         } catch (err) {
             await client.query('ROLLBACK');
             failed++;
-            console.error('autoConfirmPayouts error:', err);
+            logger.error('autoConfirmPayouts error', { error: err });
         } finally {
             client.release();
         }
