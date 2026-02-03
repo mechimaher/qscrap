@@ -6,6 +6,7 @@
 import { Pool } from 'pg';
 import Stripe from 'stripe';
 import { generateInvoice } from '../webhooks/stripe.webhook';
+import logger from '../../utils/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
@@ -17,7 +18,7 @@ export class SubscriptionBillingJob {
      * Run daily via cron: 0 6 * * * (6 AM Qatar time)
      */
     async processRenewals() {
-        console.log('[Billing] Starting subscription renewal processing...');
+        logger.info('Starting subscription renewal processing');
 
         // Get subscriptions due for renewal within next 24 hours
         const dueSubscriptions = await this.pool.query(`
@@ -40,17 +41,17 @@ export class SubscriptionBillingJob {
             ORDER BY gs.billing_cycle_end ASC
         `);
 
-        console.log(`[Billing] Found ${dueSubscriptions.rows.length} subscriptions due for renewal`);
+        logger.info('Found subscriptions due for renewal', { count: dueSubscriptions.rows.length });
 
         for (const sub of dueSubscriptions.rows) {
             try {
                 await this.processSubscriptionRenewal(sub);
             } catch (err) {
-                console.error(`[Billing] Error processing ${sub.garage_name}:`, err);
+                logger.error('Error processing subscription', { garage: sub.garage_name, error: (err as Error).message });
             }
         }
 
-        console.log('[Billing] Renewal processing complete');
+        logger.info('Renewal processing complete');
     }
 
     /**
@@ -67,12 +68,12 @@ export class SubscriptionBillingJob {
 
         // Check if has saved payment method
         if (!sub.stripe_payment_method_id || !sub.stripe_customer_id) {
-            console.log(`[Billing] ${sub.garage_name} has no saved payment method, sending reminder`);
+            logger.info('No saved payment method, sending reminder', { garage: sub.garage_name });
             await this.sendPaymentReminder(sub, 'no_payment_method');
             return;
         }
 
-        console.log(`[Billing] Charging ${sub.garage_name}: ${amount} QAR`);
+        logger.info('Charging subscription', { garage: sub.garage_name, amount });
 
         try {
             // Create and confirm payment intent
@@ -93,7 +94,7 @@ export class SubscriptionBillingJob {
             });
 
             if (paymentIntent.status === 'succeeded') {
-                console.log(`[Billing] ✅ Payment succeeded for ${sub.garage_name}`);
+                logger.info('Payment succeeded', { garage: sub.garage_name });
 
                 // Extend subscription
                 await this.extendSubscription(sub.subscription_id, sub.garage_name);
@@ -117,7 +118,7 @@ export class SubscriptionBillingJob {
                 throw new Error(`Payment status: ${paymentIntent.status}`);
             }
         } catch (err: any) {
-            console.error(`[Billing] ❌ Payment failed for ${sub.garage_name}:`, err.message);
+            logger.error('Payment failed', { garage: sub.garage_name, error: err.message });
 
             // Increment retry count
             await this.pool.query(`
@@ -147,7 +148,7 @@ export class SubscriptionBillingJob {
             WHERE subscription_id = $1
         `, [subscriptionId]);
 
-        console.log(`[Billing] Extended subscription for ${garageName}`);
+        logger.info('Extended subscription', { garage: garageName });
     }
 
     /**
@@ -155,7 +156,7 @@ export class SubscriptionBillingJob {
      * Run daily: 0 9 * * * (9 AM Qatar time)
      */
     async sendRenewalReminders() {
-        console.log('[Billing] Sending renewal reminders...');
+        logger.info('Sending renewal reminders');
 
         // 7 days before expiry
         await this.sendRemindersForDays(7);
@@ -188,7 +189,7 @@ export class SubscriptionBillingJob {
         for (const sub of subscriptions.rows) {
             const hasPaymentMethod = !!sub.stripe_customer_id && !!sub.card_last4;
 
-            console.log(`[Billing] Sending ${days}-day reminder to ${sub.garage_name}`);
+            logger.info('Sending reminder', { days, garage: sub.garage_name });
 
             await this.sendPaymentReminder(sub, hasPaymentMethod ? 'renewal_upcoming' : 'add_payment_method');
 
@@ -206,7 +207,7 @@ export class SubscriptionBillingJob {
      */
     private async sendPaymentReminder(sub: any, type: string) {
         // TODO: Integrate with email.service.ts and SMS service
-        console.log(`[Billing] Would send ${type} reminder to ${sub.email}`);
+        logger.info('Would send reminder', { type, email: sub.email });
 
         // Log the reminder attempt
         await this.pool.query(`
@@ -220,7 +221,7 @@ export class SubscriptionBillingJob {
      * Run daily: 0 2 * * * (2 AM Qatar time)
      */
     async processExpiredSubscriptions() {
-        console.log('[Billing] Processing expired subscriptions...');
+        logger.info('Processing expired subscriptions');
 
         // Suspend subscriptions that are 3+ days past due with failed payments
         const expired = await this.pool.query(`
@@ -233,10 +234,10 @@ export class SubscriptionBillingJob {
             RETURNING subscription_id, garage_id
         `);
 
-        console.log(`[Billing] Suspended ${expired.rows.length} expired subscriptions`);
+        logger.info('Suspended expired subscriptions', { count: expired.rows.length });
 
         for (const sub of expired.rows) {
-            console.log(`[Billing] Suspended subscription ${sub.subscription_id}`);
+            logger.info('Suspended subscription', { subscriptionId: sub.subscription_id });
         }
     }
 }
