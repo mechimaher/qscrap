@@ -19,6 +19,7 @@ import {
     InvalidCommissionRateError,
     GarageNotFoundError
 } from './errors';
+import logger from '../../utils/logger';
 
 export class SubscriptionManagementService {
     constructor(private pool: Pool) { }
@@ -164,7 +165,7 @@ export class SubscriptionManagementService {
 
             await client.query('COMMIT');
 
-            console.log(`[Subscription] Bank payment verified for ${subReq.garage_name}: ${subReq.monthly_fee} QAR (ref: ${bankReference})`);
+            logger.info('Bank payment verified', { garageName: subReq.garage_name, monthlyFee: subReq.monthly_fee, bankReference });
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;

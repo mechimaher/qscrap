@@ -13,6 +13,7 @@ import {
     CardBrand,
     CardValidationResult
 } from './payment.interface';
+import logger from '../../utils/logger';
 
 // ============================================================================
 // TEST CARD NUMBERS (Industry standard test cards)
@@ -61,12 +62,12 @@ export class MockPaymentProvider implements PaymentProvider {
             const response = await this.executeScenario(scenario, data);
 
             const processingTime = Date.now() - startTime;
-            console.log(`[MockPayment] Processed in ${processingTime}ms - Status: ${response.status}`);
+            logger.info('MockPayment processed', { processingTime: `${processingTime}ms`, status: response.status });
 
             return response;
 
         } catch (error: any) {
-            console.error('[MockPayment] Processing error:', error);
+            logger.error('MockPayment processing error', { error });
             return this.createFailureResponse(
                 'processing_error',
                 error.message || 'Payment processing failed'

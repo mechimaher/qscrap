@@ -6,6 +6,8 @@
  * Values can be overridden via environment variables or database config table.
  */
 
+import logger from '../utils/logger';
+
 export interface PricingConfig {
     // Platform Commission
     PLATFORM_COMMISSION_RATE: number;        // 0.10 = 10%
@@ -77,7 +79,7 @@ export async function getPricingConfig(): Promise<PricingConfig> {
 }
 
 // Log config on startup
-console.log('[Config] Pricing configuration loaded:', {
+logger.info('Pricing configuration loaded', {
     commission: `${PRICING_CONFIG.PLATFORM_COMMISSION_RATE * 100}%`,
     deliveryFees: `${PRICING_CONFIG.DELIVERY_FEE_ZONE_1}-${PRICING_CONFIG.DELIVERY_FEE_ZONE_4} QAR`,
     autoConfirmDays: PRICING_CONFIG.PAYOUT_AUTO_CONFIRM_DAYS

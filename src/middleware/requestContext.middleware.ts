@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import logger from '../utils/logger';
 
 // Extended request with context
 export interface RequestWithContext extends Request {
@@ -24,15 +25,19 @@ export const requestContext = (req: RequestWithContext, res: Response, next: Nex
     res.setHeader('X-Request-ID', req.requestId || '');
 
     // Log request start (console only per user requirement)
-    console.log(`[${new Date().toISOString()}] [${req.requestId}] ${req.method} ${req.path} - Started`);
+    logger.info('Request started', { requestId: req.requestId, method: req.method, path: req.path });
 
     // Log response on finish
     res.on('finish', () => {
         const duration = Date.now() - (req.requestStartTime || Date.now());
-        const logLevel = res.statusCode >= 400 ? 'WARN' : 'INFO';
-        console.log(
-            `[${new Date().toISOString()}] [${req.requestId}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms) [${logLevel}]`
-        );
+        const logLevel = res.statusCode >= 400 ? 'warn' : 'info';
+        logger[logLevel]('Request completed', {
+            requestId: req.requestId,
+            method: req.method,
+            path: req.path,
+            statusCode: res.statusCode,
+            durationMs: duration
+        });
     });
 
     next();

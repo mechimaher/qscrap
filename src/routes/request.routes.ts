@@ -4,6 +4,7 @@ import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { upload, optimizeFiles } from '../middleware/file.middleware';
 import { validateParams, requestIdParamSchema } from '../middleware/validation.middleware';
 import { requestWriteLimiter } from '../middleware/rateLimiter.middleware';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const router = Router();
 const handleMulterError = (fn: any) => (req: Request, res: Response, next: NextFunction) => {
     fn(req, res, (err: any) => {
         if (err) {
-            console.error('Multer error:', err.message);
+            logger.error('Multer error', { message: err.message });
             if (err.code === 'LIMIT_UNEXPECTED_FILE') {
                 return res.status(400).json({ error: 'Unexpected file field. Please use "images" for photo uploads.' });
             }
