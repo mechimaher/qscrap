@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
 
     socket.on('join_user_room', (userId) => {
         socket.join(`user_${userId}`);
-        console.log(`[SOCKET] User ${userId} joined room user_${userId}`);
+        logger.socket('User joined room', { userId, room: `user_${userId}` });
     });
 
     // Mobile app customer room join - extracts user ID from auth token
@@ -61,11 +61,11 @@ io.on('connection', (socket) => {
                 const userId = decoded.userId || decoded.user_id;
                 if (userId) {
                     socket.join(`user_${userId}`);
-                    console.log(`[SOCKET] Customer ${userId} joined room user_${userId}`);
+                    logger.socket('Customer joined room', { userId, room: `user_${userId}` });
                 }
             }
-        } catch (err) {
-            console.error('[SOCKET] join_customer_room error:', err);
+        } catch (err: any) {
+            logger.error('join_customer_room error', { error: err.message });
         }
     });
 
@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
         const orderId = data?.order_id || data;
         socket.join(`order_${orderId}`);
         if (process.env.NODE_ENV !== 'production') {
-            console.log(`[${NODE_ID}] User joined order chat: order_${orderId}`);
+            logger.socket('User joined order chat', { room: `order_${orderId}` });
         }
     });
 
@@ -134,8 +134,8 @@ io.on('connection', (socket) => {
                     });
                 }
             }
-        } catch (err) {
-            console.error(`[SOCKET] Failed to fetch initial driver location for ${orderId}:`, err);
+        } catch (err: any) {
+            logger.error('Failed to fetch initial driver location', { orderId, error: err.message });
         }
     });
 
@@ -151,11 +151,11 @@ const JOB_INTERVAL = 1000 * 60 * 60; // 1 hour
 let useDistributedJobs = false;
 
 async function runScheduledJobs() {
-    console.log(`[${NODE_ID}] Running scheduled jobs...`);
+    logger.info('Running scheduled jobs', { nodeId: NODE_ID });
     try {
         await jobs.runAllJobs();
-    } catch (err) {
-        console.error(`[${NODE_ID}] Job run failed:`, err);
+    } catch (err: any) {
+        logger.error('Scheduled job run failed', { nodeId: NODE_ID, error: err.message });
     }
 }
 
@@ -163,27 +163,27 @@ async function runScheduledJobs() {
 // GRACEFUL SHUTDOWN
 // ============================================
 async function gracefulShutdown(signal: string) {
-    console.log(`[${NODE_ID}] ${signal} received, closing server gracefully...`);
+    logger.shutdown(`${signal} received, closing server gracefully`);
 
     server.close(async () => {
-        console.log(`[${NODE_ID}] HTTP server closed`);
+        logger.shutdown('HTTP server closed');
 
         try {
             // Close in order: jobs -> redis -> database
             await closeJobQueues();
             await closeRedis();
             await closeAllPools();
-            console.log(`[${NODE_ID}] All connections closed`);
+            logger.shutdown('All connections closed');
             process.exit(0);
-        } catch (err) {
-            console.error(`[${NODE_ID}] Shutdown error:`, err);
+        } catch (err: any) {
+            logger.error('Shutdown error', { error: err.message });
             process.exit(1);
         }
     });
 
     // Force shutdown after 30 seconds
     setTimeout(() => {
-        console.error(`[${NODE_ID}] Forced shutdown after 30s timeout`);
+        logger.error('Forced shutdown after 30s timeout');
         process.exit(1);
     }, 30000);
 }
@@ -195,35 +195,27 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // SERVER STARTUP
 // ============================================
 server.listen(PORT, async () => {
-    console.log('');
-    console.log('═══════════════════════════════════════════════════');
-    console.log(`🚀 QScrap Server - ${NODE_ID}`);
-    console.log('═══════════════════════════════════════════════════');
-    console.log(`   Port: ${PORT}`);
-    console.log(`   Env:  ${process.env.NODE_ENV || 'development'}`);
-    console.log(`   PID:  ${process.pid}`);
-    console.log('');
+    logger.startup(`QScrap Server ${NODE_ID} starting on port ${PORT} (${process.env.NODE_ENV || 'development'}, PID: ${process.pid})`);
 
     // Perform security validation before anything else
-    // This will throw in production if critical checks fail
     performStartupSecurityChecks();
 
     // Initialize Redis (for caching)
     const redisClient = await initializeRedis();
     if (redisClient) {
-        console.log('✅ Redis connected (caching enabled)');
+        logger.startup('Redis connected (caching enabled)');
     }
 
     // Initialize Socket.IO Redis adapter (for multi-node)
     const socketAdapterReady = await initializeSocketAdapter(io);
     if (socketAdapterReady) {
-        console.log('✅ Socket.IO Redis adapter (multi-node ready)');
+        logger.startup('Socket.IO Redis adapter (multi-node ready)');
     }
 
     // Initialize job queues (for distributed jobs)
     useDistributedJobs = await initializeJobQueues();
     if (useDistributedJobs) {
-        console.log('✅ BullMQ job queues initialized');
+        logger.startup('BullMQ job queues initialized');
 
         // Schedule recurring jobs via queue
         await scheduleRecurringJob('scheduled', 'hourly-jobs', {}, '0 * * * *');
@@ -236,33 +228,29 @@ server.listen(PORT, async () => {
         });
     } else {
         // Fallback to setInterval for single-node
-        console.log('ℹ️  Using setInterval scheduler (single-node)');
+        logger.info('Using setInterval scheduler (single-node)');
         setInterval(runScheduledJobs, JOB_INTERVAL);
     }
 
     // Database pool stats
     const dbStats = getPoolStats();
-    console.log(`✅ Database pool: ${dbStats.primary.total} connections`);
+    logger.startup(`Database pool: ${dbStats.primary.total} connections`);
     if (dbStats.replica) {
-        console.log(`✅ Read replica: ${dbStats.replica.total} connections`);
+        logger.startup(`Read replica: ${dbStats.replica.total} connections`);
     }
-
-    console.log('');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('');
 
     // Start auto-complete cron job
     startAutoCompleteJob();
-    console.log('✅ Auto-complete job scheduled (daily 2:00 AM)');
+    logger.startup('Auto-complete job scheduled (daily 2:00 AM)');
 
     // Start delivery reminder job  
     startDeliveryReminderJob();
-    console.log('✅ Delivery reminders scheduled (hourly)');
+    logger.startup('Delivery reminders scheduled (hourly)');
 
     // Run initial job sweep (after 10 second delay)
     setTimeout(async () => {
         if (!useDistributedJobs) {
-            console.log(`[${NODE_ID}] Running initial job sweep...`);
+            logger.info('Running initial job sweep', { nodeId: NODE_ID });
             await runScheduledJobs();
         }
     }, 10000);
@@ -272,7 +260,7 @@ server.listen(PORT, async () => {
         setInterval(async () => {
             const socketCount = await getGlobalSocketCount(io);
             const db = getPoolStats();
-            console.log(`[${NODE_ID}] Stats: ${socketCount} sockets, ${db.primary.total}/${db.primary.idle} DB connections`);
+            logger.info('Server stats', { nodeId: NODE_ID, sockets: socketCount, dbConnections: db.primary.total, dbIdle: db.primary.idle });
         }, 5 * 60 * 1000);
     }
 });

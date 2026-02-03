@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getRedisClient } from '../config/redis';
+import logger from '../utils/logger';
 
 // ============================================
 // RESPONSE CACHING MIDDLEWARE
@@ -60,7 +61,7 @@ export function cacheResponse(options: CacheOptions = {}) {
                 // Cache successful responses only
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     redis.setEx(cacheKey, ttl, JSON.stringify(body)).catch(err => {
-                        console.error('[Cache] Failed to set cache:', err.message);
+                        logger.error('Cache set failed', { error: err.message });
                     });
                 }
                 res.setHeader('X-Cache', 'MISS');
@@ -68,9 +69,9 @@ export function cacheResponse(options: CacheOptions = {}) {
             };
 
             next();
-        } catch (err) {
+        } catch (err: any) {
             // Redis error - continue without caching
-            console.error('[Cache] Cache middleware error:', err);
+            logger.error('Cache middleware error', { error: err.message });
             next();
         }
     };
@@ -88,10 +89,10 @@ export async function invalidateCache(pattern: string): Promise<void> {
         const keys = await redis.keys(`cache:${pattern}*`);
         if (keys.length > 0) {
             await redis.del(keys);
-            console.log(`[Cache] Invalidated ${keys.length} keys matching: ${pattern}`);
+            logger.info('Cache invalidated', { pattern, keysCleared: keys.length });
         }
     } catch (err: any) {
-        console.error('[Cache] Invalidation error:', err.message);
+        logger.error('Cache invalidation error', { error: err.message });
     }
 }
 

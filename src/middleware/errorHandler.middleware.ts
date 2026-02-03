@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { RequestWithContext } from './requestContext.middleware';
+import logger from '../utils/logger';
 
 // Error codes for consistent error handling
 export enum ErrorCode {
@@ -147,14 +148,8 @@ export const errorHandler = (
         message = err.message || message;
     }
 
-    // Log error (console only per user requirement)
-    const logMessage = `[${new Date().toISOString()}] [${requestId}] ERROR: ${err.message}`;
-    console.error(logMessage);
-
-    // In development, log stack trace to console (hidden in production per user requirement)
-    if (!isProduction && err.stack) {
-        console.error(err.stack);
-    }
+    // Log error with structured logger
+    logger.error(err.message, { requestId, statusCode, code, stack: !isProduction ? err.stack : undefined });
 
     // Build standardized error response
     const errorResponse: ErrorResponse = {
