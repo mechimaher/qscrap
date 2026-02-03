@@ -1,5 +1,6 @@
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 
 interface Campaign {
     campaign_id: string;
@@ -58,7 +59,7 @@ export class AdService {
 
             return result.rows[0].campaign_id;
         } catch (error) {
-            console.error('Error creating campaign:', error);
+            logger.error('Error creating campaign', { error: (error as Error).message });
             throw new Error('Failed to create campaign');
         }
     }
@@ -82,7 +83,7 @@ export class AdService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching campaigns:', error);
+            logger.error('Error fetching campaigns', { error: (error as Error).message });
             throw new Error('Failed to fetch campaigns');
         }
     }
@@ -100,7 +101,7 @@ export class AdService {
 
             return result.rows[0] || null;
         } catch (error) {
-            console.error('Error fetching campaign performance:', error);
+            logger.error('Error fetching campaign performance', { error: (error as Error).message });
             throw new Error('Failed to fetch performance data');
         }
     }
@@ -127,7 +128,7 @@ export class AdService {
                 ]
             );
         } catch (error) {
-            console.error('Error recording impression:', error);
+            logger.error('Error recording impression', { error: (error as Error).message });
             // Don't throw - impressions shouldn't break user experience
         }
     }
@@ -147,7 +148,7 @@ export class AdService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching active ads:', error);
+            logger.error('Error fetching active ads', { error: (error as Error).message });
             return [];
         }
     }
@@ -167,7 +168,7 @@ export class AdService {
                 [status, campaignId]
             );
         } catch (error) {
-            console.error('Error updating campaign status:', error);
+            logger.error('Error updating campaign status', { error: (error as Error).message });
             throw new Error('Failed to update campaign status');
         }
     }
@@ -183,7 +184,7 @@ export class AdService {
 
             return result.rows;
         } catch (error) {
-            console.error('Error fetching pricing:', error);
+            logger.error('Error fetching pricing', { error: (error as Error).message });
             throw new Error('Failed to fetch pricing');
         }
     }
@@ -206,7 +207,7 @@ export class AdService {
                 [approved ? 'active' : 'rejected', reviewedBy, campaignId]
             );
         } catch (error) {
-            console.error('Error reviewing campaign:', error);
+            logger.error('Error reviewing campaign', { error: (error as Error).message });
             throw new Error('Failed to review campaign');
         }
     }
@@ -234,7 +235,7 @@ export class AdService {
 
             return result.rows[0];
         } catch (error) {
-            console.error('Error fetching platform ad stats:', error);
+            logger.error('Error fetching platform ad stats', { error: (error as Error).message });
             throw new Error('Failed to fetch ad stats');
         }
     }
