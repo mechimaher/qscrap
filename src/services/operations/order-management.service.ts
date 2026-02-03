@@ -5,6 +5,7 @@
 import { Pool, PoolClient } from 'pg';
 import { OrderFilters, OrderWithDetails, PaginationMetadata } from './types';
 import { OrderNotFoundError, InvalidStatusTransitionError } from './errors';
+import logger from '../../utils/logger';
 
 export class OrderManagementService {
     constructor(private pool: Pool) { }
@@ -239,7 +240,7 @@ export class OrderManagementService {
                     { garageName: order.garage_name }
                 );
             } catch (pushErr) {
-                console.error('[OrderManagement] Push notification failed:', pushErr);
+                logger.error('Push notification failed', { error: pushErr });
             }
 
             return {

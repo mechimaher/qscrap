@@ -5,6 +5,7 @@
 
 import { Pool } from 'pg';
 import { ShowcaseFilters, PartDetail } from './types';
+import logger from '../../utils/logger';
 
 export class ShowcaseQueryService {
     constructor(private pool: Pool) { }
@@ -93,7 +94,7 @@ export class ShowcaseQueryService {
         // Track view (async, best effort)
         if (userId) {
             this.trackPartView(partId, userId).catch(err =>
-                console.error('[SHOWCASE] Failed to track view:', err)
+                logger.error('Failed to track showcase view', { partId, userId, error: err })
             );
         }
 

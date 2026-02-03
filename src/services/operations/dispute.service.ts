@@ -6,6 +6,7 @@ import { Pool, PoolClient } from 'pg';
 import { DisputeFilters, DisputeResolution, PaginationMetadata } from './types';
 import { DisputeNotFoundError } from './errors';
 import { createNotification } from '../notification.service';
+import logger from '../../utils/logger';
 
 export class DisputeService {
     constructor(private pool: Pool) { }
@@ -262,7 +263,7 @@ export class DisputeService {
                                 });
                             }
                         } catch (notifyErr) {
-                            console.error('[DisputeService] Failed to notify garage about reversal:', notifyErr);
+                            logger.error('Failed to notify garage about reversal', { error: notifyErr });
                         }
                     }
                 }

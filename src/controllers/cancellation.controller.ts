@@ -7,6 +7,7 @@ import {
 } from '../services/cancellation';
 import { getWritePool } from '../config/db';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 
 const pool = getWritePool();
 const cancellationService = new CancellationService(pool);
@@ -107,7 +108,7 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
         const cacheKey = `cancel_customer:${order_id}:${idempotencyKey}`;
         const cached = getCachedResult(cacheKey);
         if (cached) {
-            console.log(`[IDEMPOTENCY] Returning cached result for ${cacheKey}`);
+            logger.info('Returning cached idempotency result', { cacheKey });
             return res.json(cached);
         }
     }
