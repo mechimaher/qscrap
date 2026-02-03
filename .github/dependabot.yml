@@ -1,0 +1,54 @@
+# To learn more about Dependabot, please see:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # Backend npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # Customer mobile app
+  - package-ecosystem: "npm"
+    directory: "/mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(mobile)"
+    labels:
+      - "dependencies"
+      - "mobile"
+
+  # Driver mobile app
+  - package-ecosystem: "npm"
+    directory: "/driver-mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(driver)"
+    labels:
+      - "dependencies"
+      - "mobile"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "ci"
