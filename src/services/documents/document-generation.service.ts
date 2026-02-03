@@ -8,6 +8,7 @@ import path from 'path';
 import fs from 'fs';
 import { DocumentData, GenerateInvoiceParams, DocumentRecord } from './types';
 import { DocumentGenerationError, PDFGenerationError } from './errors';
+import logger from '../../utils/logger';
 import { BILINGUAL_LABELS, COMPANY_INFO, formatConditionBilingual } from './bilingual-labels';
 
 // Lazy load optional dependencies
@@ -17,13 +18,13 @@ let QRCode: any;
 try {
     puppeteer = require('puppeteer');
 } catch (e) {
-    console.warn('Puppeteer not available, PDF generation will be limited');
+    logger.warn('Puppeteer not available, PDF generation will be limited');
 }
 
 try {
     QRCode = require('qrcode');
 } catch (e) {
-    console.warn('QRCode not available');
+    logger.warn('QRCode not available');
 }
 
 export class DocumentGenerationService {
@@ -293,7 +294,7 @@ export class DocumentGenerationService {
      */
     async generatePDF(html: string): Promise<Buffer> {
         if (!puppeteer) {
-            console.warn('Puppeteer not available, returning HTML');
+            logger.warn('Puppeteer not available, returning HTML');
             return Buffer.from(html, 'utf-8');
         }
 
@@ -320,7 +321,7 @@ export class DocumentGenerationService {
             await browser.close();
             return Buffer.from(pdfBuffer);
         } catch (err) {
-            console.error('PDF generation error:', err);
+            logger.error('PDF generation error', { error: err });
             throw new PDFGenerationError((err as Error).message);
         }
     }
@@ -336,7 +337,7 @@ export class DocumentGenerationService {
         try {
             return await QRCode.toDataURL(url, { width: 150, margin: 1 });
         } catch (err) {
-            console.error('QR code generation error:', err);
+            logger.error('QR code generation error', { error: err });
             return '';
         }
     }
@@ -388,9 +389,9 @@ export class DocumentGenerationService {
                     return `data:image/png;base64,${logoBuffer.toString('base64')}`;
                 }
             }
-            console.warn('[DOCUMENTS] Logo not found at any expected path');
+            logger.warn('Logo not found at any expected path');
         } catch (err) {
-            console.error('Error reading logo file:', err);
+            logger.error('Error reading logo file', { error: err });
         }
         return '';
     }

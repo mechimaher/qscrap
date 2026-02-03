@@ -19,6 +19,7 @@ import {
     getCustomerContextualData
 } from '../controllers/dashboard-urgent.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -83,7 +84,7 @@ router.get('/customer/activity', authenticate, requireRole('customer'), async (r
             limit
         });
     } catch (error) {
-        console.error('[Dashboard] Get customer activity error:', error);
+        logger.error('Get customer activity error', { error });
         res.status(500).json({ success: false, error: 'Failed to fetch activity' });
     }
 });
@@ -127,7 +128,7 @@ router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (r
         const counts = await badgeService.getGarageBadgeCounts(garageId);
         res.json({ success: true, ...counts });
     } catch (err) {
-        console.error('[Dashboard] Garage badge counts error:', err);
+        logger.error('Garage badge counts error', { error: err });
         res.status(500).json({ error: 'Failed to get badge counts' });
     }
 });
@@ -167,7 +168,7 @@ router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), a
             const verifyUrl = `https://qscrap.qa/verify/${statementData.statement_number}`;
             qrCode = await QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
         } catch (e) {
-            console.warn('QR generation failed:', e);
+            logger.warn('QR generation failed', { error: e });
         }
 
         // Get logo
@@ -180,7 +181,7 @@ router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), a
                 logoBase64 = fs.readFileSync(logoPath).toString('base64');
             }
         } catch (e) {
-            console.warn('Logo loading failed:', e);
+            logger.warn('Logo loading failed', { error: e });
         }
 
         const { generatePayoutStatementHTML } = await import('../controllers/payout-statement-template');
@@ -197,14 +198,14 @@ router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), a
                     `attachment; filename="invoice-${statementData.statement_number}.pdf"`);
                 return res.send(pdfBuffer);
             } catch (pdfErr) {
-                console.warn('PDF generation failed, falling back to HTML:', pdfErr);
+                logger.warn('PDF generation failed, falling back to HTML', { error: pdfErr });
             }
         }
 
         res.setHeader('Content-Type', 'text/html');
         res.send(html);
     } catch (err) {
-        console.error('[Dashboard] Garage payout statement error:', err);
+        logger.error('Garage payout statement error', { error: err });
         res.status(500).json({ error: 'Failed to generate statement' });
     }
 });
