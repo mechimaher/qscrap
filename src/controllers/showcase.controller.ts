@@ -15,6 +15,7 @@ import {
     getHttpStatusForError
 } from '../services/showcase';
 
+import logger from '../utils/logger';
 // Initialize services
 const showcaseQueryService = new ShowcaseQueryService(pool);
 const showcaseManagementService = new ShowcaseManagementService(pool);
@@ -41,7 +42,7 @@ export const getShowcaseParts = async (req: AuthRequest, res: Response) => {
 
         res.json({ parts });
     } catch (err) {
-        console.error('[SHOWCASE] getShowcaseParts error:', err);
+        logger.error('getShowcaseParts error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -54,7 +55,7 @@ export const getFeaturedParts = async (req: AuthRequest, res: Response) => {
         const parts = await showcaseQueryService.getFeaturedParts(10);
         res.json({ parts });
     } catch (err) {
-        console.error('[SHOWCASE] getFeaturedParts error:', err);
+        logger.error('getFeaturedParts error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -70,7 +71,7 @@ export const getPartDetail = async (req: AuthRequest, res: Response) => {
         const part = await showcaseQueryService.getPartDetail(id, userId);
         res.json({ part });
     } catch (err) {
-        console.error('[SHOWCASE] getPartDetail error:', err);
+        logger.error('getPartDetail error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -106,7 +107,7 @@ export const getMyShowcaseParts = async (req: AuthRequest, res: Response) => {
 
         res.json({ parts, analytics });
     } catch (err) {
-        console.error('[SHOWCASE] getMyShowcaseParts error:', err);
+        logger.error('getMyShowcaseParts error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -156,7 +157,7 @@ export const addGaragePart = async (req: AuthRequest, res: Response) => {
 
         res.status(201).json({ message: 'Part added to showcase', part });
     } catch (err) {
-        console.error('[SHOWCASE] addGaragePart error:', err);
+        logger.error('addGaragePart error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -188,7 +189,7 @@ export const updateGaragePart = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Part updated successfully', part });
     } catch (err) {
-        console.error('[SHOWCASE] updateGaragePart error:', err);
+        logger.error('updateGaragePart error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -208,7 +209,7 @@ export const deleteGaragePart = async (req: AuthRequest, res: Response) => {
         await showcaseManagementService.deleteGaragePart(id, garageId);
         res.json({ message: 'Part deleted successfully' });
     } catch (err) {
-        console.error('[SHOWCASE] deleteGaragePart error:', err);
+        logger.error('deleteGaragePart error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -231,7 +232,7 @@ export const togglePartStatus = async (req: AuthRequest, res: Response) => {
             status: part.status
         });
     } catch (err) {
-        console.error('[SHOWCASE] togglePartStatus error:', err);
+        logger.error('togglePartStatus error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -281,7 +282,7 @@ export const quickOrderFromShowcase = async (req: AuthRequest, res: Response) =>
             ...result
         });
     } catch (err) {
-        console.error('[SHOWCASE] quickOrderFromShowcase error:', err);
+        logger.error('quickOrderFromShowcase error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -322,7 +323,7 @@ export const requestQuoteFromShowcase = async (req: AuthRequest, res: Response) 
 
         res.status(201).json(result);
     } catch (err) {
-        console.error('[SHOWCASE] requestQuoteFromShowcase error:', err);
+        logger.error('requestQuoteFromShowcase error', { error: (err as Error).message });
         if (isShowcaseError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
