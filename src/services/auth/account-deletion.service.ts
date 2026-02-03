@@ -5,6 +5,7 @@
  */
 
 import { Pool } from 'pg';
+import logger from '../../utils/logger';
 
 export interface DeletionBlocker {
     type: 'active_orders' | 'open_tickets' | 'active_disputes' | 'pending_refunds' | 'active_requests';
@@ -49,7 +50,7 @@ export class AccountDeletionService {
                 });
             }
         } catch (err: any) {
-            console.error('[AccountDeletion] Failed to check ORDERS:', err.message);
+            logger.error('Failed to check ORDERS', { error: err.message });
             throw new Error(`Deletion Check Failed (Orders): ${err.message}`);
         }
 
@@ -73,7 +74,7 @@ export class AccountDeletionService {
                 });
             }
         } catch (err: any) {
-            console.error('[AccountDeletion] Failed to check TICKETS:', err.message);
+            logger.error('Failed to check TICKETS', { error: err.message });
             throw new Error(`Deletion Check Failed (Tickets): ${err.message}`);
         }
 
@@ -97,7 +98,7 @@ export class AccountDeletionService {
                 });
             }
         } catch (err: any) {
-            console.error('[AccountDeletion] Failed to check DISPUTES:', err.message);
+            logger.error('Failed to check DISPUTES', { error: err.message });
             throw new Error(`Deletion Check Failed (Disputes): ${err.message}`);
         }
 
@@ -121,7 +122,7 @@ export class AccountDeletionService {
                 });
             }
         } catch (err: any) {
-            console.error('[AccountDeletion] Failed to check REFUNDS:', err.message);
+            logger.error('Failed to check REFUNDS', { error: err.message });
             throw new Error(`Deletion Check Failed (Refunds): ${err.message}`);
         }
 
@@ -148,7 +149,7 @@ export class AccountDeletionService {
                 });
             }
         } catch (err: any) {
-            console.error('[AccountDeletion] Failed to check REQUESTS:', err.message);
+            logger.error('Failed to check REQUESTS', { error: err.message });
             throw new Error(`Deletion Check Failed (Requests): ${err.message}`);
         }
 

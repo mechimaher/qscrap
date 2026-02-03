@@ -12,6 +12,7 @@ import {
     GARAGE_THRESHOLDS,
     FRAUD_FLAG_LEVELS
 } from './cancellation.constants';
+import logger from '../../utils/logger';
 
 export class FraudDetectionService {
     constructor(private pool: Pool) { }
@@ -79,7 +80,7 @@ export class FraudDetectionService {
         const allowed = newCount <= CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH;
 
         if (!allowed) {
-            console.log(`[FraudDetection] Customer ${customerId} exceeded return limit (${newCount}/${CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH})`);
+            logger.info('Customer exceeded return limit', { customerId, count: newCount, limit: CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH });
         }
 
         return { allowed, newCount };
@@ -109,7 +110,7 @@ export class FraudDetectionService {
         const allowed = newCount <= CUSTOMER_LIMITS.MAX_DEFECTIVE_CLAIMS_PER_MONTH;
 
         if (!allowed) {
-            console.log(`[FraudDetection] Customer ${customerId} exceeded defective claim limit - requires investigation`);
+            logger.info('Customer exceeded defective claim limit - requires investigation', { customerId });
         }
 
         return { allowed, newCount };
@@ -135,7 +136,7 @@ export class FraudDetectionService {
         const flagged = count >= CUSTOMER_LIMITS.CANCELLATION_REVIEW_THRESHOLD;
 
         if (flagged) {
-            console.log(`[FraudDetection] Customer ${customerId} flagged for cancellation review (${count} this month)`);
+            logger.info('Customer flagged for cancellation review', { customerId, count });
         }
 
         return { count, flagged };
@@ -192,7 +193,7 @@ export class FraudDetectionService {
             [customerId, operatorId, JSON.stringify({ new_flag: flagLevel, reason })]
         );
 
-        console.log(`[FraudDetection] Customer ${customerId} flag set to ${flagLevel} by ${operatorId}: ${reason}`);
+        logger.info('Customer flag level updated', { customerId, flagLevel, operatorId, reason });
     }
 
     // =========================================
@@ -296,7 +297,7 @@ export class FraudDetectionService {
             action = 'first_cancellation_penalty';
         }
 
-        console.log(`[FraudDetection] Garage ${garageId} cancellation #${count}: action=${action}, penalty=${penaltyAmount} QAR`);
+        logger.info('Garage cancellation recorded', { garageId, count, action, penaltyAmount });
 
         return { count, penaltyAmount, action };
     }
