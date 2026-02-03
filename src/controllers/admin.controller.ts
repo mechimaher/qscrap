@@ -7,6 +7,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 import {
     AnalyticsService,
     GarageApprovalService,
@@ -37,7 +38,7 @@ export const getPendingGarages = async (req: AuthRequest, res: Response) => {
         });
         res.json(result);
     } catch (err) {
-        console.error('[ADMIN] getPendingGarages error:', err);
+        logger.error('getPendingGarages error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
 };
@@ -53,7 +54,7 @@ export const getAllGaragesAdmin = async (req: AuthRequest, res: Response) => {
         });
         res.json(result);
     } catch (err) {
-        console.error('[ADMIN] getAllGaragesAdmin error:', err);
+        logger.error('getAllGaragesAdmin error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
 };
@@ -69,7 +70,7 @@ export const approveGarage = async (req: AuthRequest, res: Response) => {
         );
         res.json({ message: 'Garage approved successfully', garage });
     } catch (err) {
-        console.error('[ADMIN] approveGarage error:', err);
+        logger.error('approveGarage error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -91,7 +92,7 @@ export const rejectGarage = async (req: AuthRequest, res: Response) => {
         );
         res.json({ message: 'Garage rejected', garage });
     } catch (err) {
-        console.error('[ADMIN] rejectGarage error:', err);
+        logger.error('rejectGarage error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -109,7 +110,7 @@ export const grantDemoAccess = async (req: AuthRequest, res: Response) => {
         );
         res.json(result);
     } catch (err) {
-        console.error('[ADMIN] grantDemoAccess error:', err);
+        logger.error('grantDemoAccess error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -126,7 +127,7 @@ export const revokeGarageAccess = async (req: AuthRequest, res: Response) => {
         );
         res.json({ message: 'Garage access revoked', garage });
     } catch (err) {
-        console.error('[ADMIN] revokeGarageAccess error:', err);
+        logger.error('revokeGarageAccess error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -141,7 +142,7 @@ export const getAdminDashboardStats = async (req: AuthRequest, res: Response) =>
         const stats = await analyticsService.getDashboardStats();
         res.json({ stats });
     } catch (err) {
-        console.error('[ADMIN] getAdminDashboardStats error:', err);
+        logger.error('getAdminDashboardStats error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch dashboard stats' });
     }
 };
@@ -157,7 +158,7 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
         });
         res.json(result);
     } catch (err) {
-        console.error('[ADMIN] getAuditLog error:', err);
+        logger.error('getAuditLog error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch audit log' });
     }
 };
@@ -172,7 +173,7 @@ export const getSubscriptionRequests = async (req: AuthRequest, res: Response) =
         const requests = await subscriptionService.getSubscriptionRequests(status as string);
         res.json({ requests });
     } catch (err) {
-        console.error('[ADMIN] getSubscriptionRequests error:', err);
+        logger.error('getSubscriptionRequests error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch requests' });
     }
 };
@@ -183,7 +184,7 @@ export const approveSubscriptionRequest = async (req: AuthRequest, res: Response
         await subscriptionService.approveSubscriptionRequest(request_id, req.user!.userId);
         res.json({ message: 'Plan change approved and applied.' });
     } catch (err) {
-        console.error('[ADMIN] approveSubscriptionRequest error:', err);
+        logger.error('approveSubscriptionRequest error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -219,7 +220,7 @@ export const verifyBankPayment = async (req: AuthRequest, res: Response) => {
             payment_status: 'paid'
         });
     } catch (err) {
-        console.error('[ADMIN] verifyBankPayment error:', err);
+        logger.error('verifyBankPayment error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -230,7 +231,7 @@ export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
         const plans = await subscriptionService.getSubscriptionPlans();
         res.json({ plans });
     } catch (err) {
-        console.error('[ADMIN] getSubscriptionPlans error:', err);
+        logger.error('getSubscriptionPlans error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch plans' });
     }
 };
@@ -256,7 +257,7 @@ export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
             subscription
         });
     } catch (err) {
-        console.error('[ADMIN] assignPlanToGarage error:', err);
+        logger.error('assignPlanToGarage error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -269,7 +270,7 @@ export const revokeSubscription = async (req: AuthRequest, res: Response) => {
         await subscriptionService.revokeSubscription(garage_id, req.user!.userId, reason);
         res.json({ message: 'Subscription revoked successfully' });
     } catch (err) {
-        console.error('[ADMIN] revokeSubscription error:', err);
+        logger.error('revokeSubscription error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -296,7 +297,7 @@ export const extendSubscription = async (req: AuthRequest, res: Response) => {
             subscription
         });
     } catch (err) {
-        console.error('[ADMIN] extendSubscription error:', err);
+        logger.error('extendSubscription error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -320,7 +321,7 @@ export const overrideCommission = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Commission rate updated successfully' });
     } catch (err) {
-        console.error('[ADMIN] overrideCommission error:', err);
+        logger.error('overrideCommission error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -339,7 +340,7 @@ export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Res
 
         res.json({ message: 'Specialization updated successfully', garage });
     } catch (err) {
-        console.error('[ADMIN] updateGarageSpecializationAdmin error:', err);
+        logger.error('updateGarageSpecializationAdmin error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -374,7 +375,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
         });
         res.json(result);
     } catch (err) {
-        console.error('[ADMIN] getAllUsers error:', err);
+        logger.error('getAllUsers error:', { error: (err as any).message });
         res.status(500).json({ error: 'Failed to fetch users' });
     }
 };
@@ -393,7 +394,7 @@ export const getAdminUserDetails = async (req: AuthRequest, res: Response) => {
             activity: activity || null
         });
     } catch (err) {
-        console.error('[ADMIN] getAdminUserDetails error:', err);
+        logger.error('getAdminUserDetails error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -412,7 +413,7 @@ export const updateUserAdmin = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'User updated successfully', user });
     } catch (err) {
-        console.error('[ADMIN] updateUserAdmin error:', err);
+        logger.error('updateUserAdmin error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -430,7 +431,7 @@ export const adminSuspendUser = async (req: AuthRequest, res: Response) => {
         await userManagementService.suspendUser(user_id, req.user!.userId, reason);
         res.json({ message: 'User suspended successfully' });
     } catch (err) {
-        console.error('[ADMIN] adminSuspendUser error:', err);
+        logger.error('adminSuspendUser error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -443,7 +444,7 @@ export const adminActivateUser = async (req: AuthRequest, res: Response) => {
         await userManagementService.activateUser(user_id, req.user!.userId, notes);
         res.json({ message: 'User activated successfully' });
     } catch (err) {
-        console.error('[ADMIN] adminActivateUser error:', err);
+        logger.error('adminActivateUser error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -461,7 +462,7 @@ export const adminResetPassword = async (req: AuthRequest, res: Response) => {
         await userManagementService.resetPassword(user_id, req.user!.userId, new_password);
         res.json({ message: 'Password reset successfully. User must change on next login.' });
     } catch (err) {
-        console.error('[ADMIN] adminResetPassword error:', err);
+        logger.error('adminResetPassword error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
@@ -473,7 +474,7 @@ export const adminCreateUser = async (req: AuthRequest, res: Response) => {
         const user = await userManagementService.createUser(req.user!.userId, userData);
         res.status(201).json({ message: 'User created successfully', user });
     } catch (err) {
-        console.error('[ADMIN] adminCreateUser error:', err);
+        logger.error('adminCreateUser error:', { error: (err as any).message });
         const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
         res.status(status).json({ error: getErrorMessage(err) });
     }
