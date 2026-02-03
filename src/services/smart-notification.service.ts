@@ -1,6 +1,7 @@
 // Smart Time-Aware Notification Service - P2 Feature
 import { getIO } from '../utils/socketIO';
 import pool from '../config/db';
+import logger from '../utils/logger';
 
 interface TimeAwareNotificationOptions {
     userId: string;
@@ -53,7 +54,7 @@ class SmartNotificationService {
 
         // Check quiet hours for non-urgent notifications
         if (this.isQuietHours()) {
-            console.log(`[Smart Notifications] Queueing notification for user ${userId} until quiet hours end`);
+            logger.info('Queueing notification for user until quiet hours end', { userId });
             await this.queueNotification(options);
             return false;
         }
@@ -86,7 +87,7 @@ class SmartNotificationService {
             [userId, title, message, type]
         );
 
-        console.log(`[Smart Notifications] Sent to user ${userId}: ${title}`);
+        logger.info('Sent notification to user', { userId, title });
         return true;
     }
 
@@ -120,7 +121,7 @@ class SmartNotificationService {
             [options.userId, options.title, options.message, options.type, options.priority, sendAt]
         );
 
-        console.log(`[Smart Notifications] Queued for ${sendAt.toISOString()}`);
+        logger.info('Notification queued', { sendAt: sendAt.toISOString() });
     }
 
     /**
@@ -128,7 +129,7 @@ class SmartNotificationService {
      */
     async processQueuedNotifications(): Promise<void> {
         if (this.isQuietHours()) {
-            console.log('[Smart Notifications] Still in quiet hours, skipping queue processing');
+            logger.info('Still in quiet hours, skipping queue processing');
             return;
         }
 
@@ -153,7 +154,7 @@ class SmartNotificationService {
             );
         }
 
-        console.log(`[Smart Notifications] Processed ${result.rows.length} queued notifications`);
+        logger.info('Processed queued notifications', { count: result.rows.length });
     }
 }
 

@@ -12,6 +12,7 @@ import pool from '../config/db';
 import { createNotification } from './notification.service';
 import { ApiError, ErrorCode } from '../middleware/errorHandler.middleware';
 import { emitToRoom, emitToDriver, emitToOperations } from '../utils/socketIO';
+import logger from '../utils/logger';
 
 // ============================================
 // TYPES
@@ -560,9 +561,9 @@ export class DeliveryService {
                     order.garage_address as string,
                     assignment.assignment_id as string
                 );
-                console.log('[Delivery] ✅ Push notification sent to driver for collection');
+                logger.info('Push notification sent to driver for collection');
             } catch (pushErr) {
-                console.error('[Delivery] ❌ Push notification for collection failed:', pushErr);
+                logger.error('Push notification for collection failed', { error: (pushErr as Error).message });
                 // Don't throw - socket notification should still work for in-app
             }
         }
@@ -625,9 +626,9 @@ export class DeliveryService {
                     order.delivery_address as string,
                     assignment.assignment_id as string
                 );
-                console.log('[Delivery] ✅ Push notification sent to driver for delivery');
+                logger.info('Push notification sent to driver for delivery');
             } catch (pushErr) {
-                console.error('[Delivery] ❌ Push notification for delivery failed:', pushErr);
+                logger.error('Push notification for delivery failed', { error: (pushErr as Error).message });
                 // Don't throw - socket notification should still work for in-app
             }
         }
@@ -659,7 +660,7 @@ export class DeliveryService {
                 { driverName: driver.full_name as string }
             );
         } catch (pushErr) {
-            console.error('[Delivery] Push notification for transit failed:', pushErr);
+            logger.error('Push notification for transit failed', { error: (pushErr as Error).message });
         }
 
         // Notify operations
