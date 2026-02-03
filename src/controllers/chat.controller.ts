@@ -4,6 +4,7 @@ import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { pushService } from '../services/push.service';
 import { ChatService } from '../services/chat';
+import logger from '../utils/logger';
 
 const chatService = new ChatService(pool);
 
@@ -16,7 +17,7 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
         await chatService.markAsRead(req.params.assignment_id, senderType);
         res.json({ messages, assignment_status: assignment.status, can_chat: ['assigned', 'picked_up', 'in_transit'].includes(assignment.status) });
     } catch (err) {
-        console.error('getChatMessages Error:', err);
+        logger.error('getChatMessages Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -47,13 +48,13 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
                     { channelId: 'chat', sound: true }
                 );
             } catch (pushErr) {
-                console.error('[Chat] Push notification failed:', pushErr);
+                logger.error('Push notification failed', { error: (pushErr as Error).message });
             }
         }
 
         res.status(201).json({ message: newMessage });
     } catch (err) {
-        console.error('sendChatMessage Error:', err);
+        logger.error('sendChatMessage Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -63,7 +64,7 @@ export const getUnreadCount = async (req: AuthRequest, res: Response) => {
         const count = await chatService.getUnreadCount(req.user!.userId);
         res.json({ unread_count: count });
     } catch (err) {
-        console.error('getUnreadCount Error:', err);
+        logger.error('getUnreadCount Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -75,7 +76,7 @@ export const getOrderChatMessages = async (req: AuthRequest, res: Response) => {
         const messages = await chatService.getOrderMessages(req.params.order_id, assignment.driver_name);
         res.json({ messages, can_chat: assignment.assignment_id && ['assigned', 'picked_up', 'in_transit'].includes(assignment.status) });
     } catch (err) {
-        console.error('getOrderChatMessages Error:', err);
+        logger.error('getOrderChatMessages Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -102,13 +103,13 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
                     const senderName = senderType === 'customer' ? 'Customer' : (assignment.driver_name || 'Driver');
                     await pushService.sendChatNotification(recipientId, senderName, message.trim(), order_id, assignment.order_number);
                 } catch (e) {
-                    console.error('[Chat] Push notification failed:', e);
+                    logger.error('Push notification failed', { error: (e as Error).message });
                 }
             }
         }
         res.status(201).json({ message: { ...newMessage, order_id, sender_name: 'You', is_read: false } });
     } catch (err) {
-        console.error('sendOrderChatMessage Error:', err);
+        logger.error('sendOrderChatMessage Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };

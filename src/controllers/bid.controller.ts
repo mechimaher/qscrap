@@ -6,6 +6,7 @@ import { getErrorMessage } from '../types';
 import { catchAsync } from '../utils/catchAsync';
 import { submitBid as serviceSubmitBid } from '../services/bid.service';
 import { pricingService } from '../services/pricing.service';
+import logger from '../utils/logger';
 
 const bidQueryService = new BidQueryService(getReadPool());
 const bidManagementService = new BidManagementService(getWritePool());
@@ -52,7 +53,7 @@ export const getMyBids = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('[BID] GetMyBids error:', err);
+        logger.error('GetMyBids error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to fetch bids' });
     }
 };
@@ -65,7 +66,7 @@ export const getBidById = async (req: AuthRequest, res: Response) => {
         const bid = await bidQueryService.getBidById(bid_id, garageId);
         res.json(bid);
     } catch (err) {
-        console.error('[BID] GetBidById error:', err);
+        logger.error('GetBidById error', { error: (err as Error).message });
         if (err instanceof Error && err.message === 'Bid not found') {
             return res.status(404).json({ error: 'Bid not found' });
         }
@@ -81,7 +82,7 @@ export const rejectBid = async (req: AuthRequest, res: Response) => {
         const result = await bidManagementService.rejectBid(bid_id, userId);
         res.json(result);
     } catch (err) {
-        console.error('[BID] Reject error:', getErrorMessage(err));
+        logger.error('Reject error', { error: getErrorMessage(err) });
         if (err instanceof Error && err.message.includes('Not authorized')) {
             return res.status(403).json({ error: err.message });
         }
@@ -108,7 +109,7 @@ export const updateBid = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('[BID] Update error:', getErrorMessage(err));
+        logger.error('Update error', { error: getErrorMessage(err) });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(403).json({ error: err.message });
         }
@@ -127,7 +128,7 @@ export const withdrawBid = async (req: AuthRequest, res: Response) => {
         const result = await bidManagementService.withdrawBid(bid_id, garageId);
         res.json(result);
     } catch (err) {
-        console.error('[BID] Withdraw error:', getErrorMessage(err));
+        logger.error('Withdraw error', { error: getErrorMessage(err) });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(403).json({ error: err.message });
         }
@@ -155,7 +156,7 @@ export const getFairPriceEstimate = async (req: AuthRequest, res: Response) => {
 
         res.json({ estimate });
     } catch (err) {
-        console.error('[BID] Estimate error:', err);
+        logger.error('Estimate error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to get estimate' });
     }
 };
