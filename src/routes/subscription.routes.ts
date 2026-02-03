@@ -5,6 +5,7 @@ import {
     subscribeToPlan,
     changePlan,
     cancelSubscription,
+    cancelPendingRequest,
     getPaymentHistory,
     createPaymentIntent,
     confirmPayment,
@@ -42,6 +43,9 @@ router.get('/payments', authenticate, requireRole('garage'), getPaymentHistory);
 // NEW: Garage subscription upgrade payment via Stripe
 router.post('/pay', authenticate, requireRole('garage'), createPaymentIntent);
 router.post('/confirm-payment', authenticate, requireRole('garage'), confirmPayment);
+
+// Garage: Cancel pending plan change request
+router.delete('/pending-request', authenticate, requireRole('garage'), cancelPendingRequest);
 
 // ============================================
 // SAVED PAYMENT METHODS
