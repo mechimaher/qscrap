@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { getErrorMessage } from '../types';
 import pool from '../config/db';
 import { SubscriptionService } from '../services/subscription';
+import logger from '../utils/logger';
 
 const subscriptionService = new SubscriptionService(pool);
 
@@ -21,7 +22,7 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
         if (!result) return res.status(404).json({ error: 'Garage not found' });
         res.json(result);
     } catch (err) {
-        console.error('getMySubscription Error:', err);
+        logger.error('getMySubscription Error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -104,7 +105,7 @@ export const createPaymentIntent = async (req: AuthRequest, res: Response) => {
             message: `Pay ${result.amount} QAR to upgrade to ${result.planName}`
         });
     } catch (err) {
-        console.error('createPaymentIntent Error:', err);
+        logger.error('createPaymentIntent Error', { error: (err as Error).message });
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
@@ -134,7 +135,7 @@ export const confirmPayment = async (req: AuthRequest, res: Response) => {
             });
         }
     } catch (err) {
-        console.error('confirmPayment Error:', err);
+        logger.error('confirmPayment Error', { error: (err as Error).message });
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
@@ -161,7 +162,7 @@ export const createSetupIntent = async (req: AuthRequest, res: Response) => {
             message: 'Use this client_secret with Stripe.js to save a card'
         });
     } catch (err) {
-        console.error('createSetupIntent Error:', err);
+        logger.error('createSetupIntent Error', { error: (err as Error).message });
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
@@ -234,7 +235,7 @@ export const downloadInvoice = async (req: AuthRequest, res: Response) => {
 
         res.download(pdfPath);
     } catch (err) {
-        console.error('downloadInvoice Error:', err);
+        logger.error('downloadInvoice Error', { error: (err as Error).message });
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
