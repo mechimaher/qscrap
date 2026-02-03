@@ -17,6 +17,7 @@ import {
     isOrderError,
     getHttpStatusForError
 } from '../services/order';
+import logger from '../utils/logger';
 
 // Initialize services
 const orderLifecycleService = new OrderLifecycleService(pool);
@@ -115,7 +116,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             new_status: result.new_status
         });
     } catch (err) {
-        console.error('[ORDER] updateOrderStatus error:', err);
+        logger.error('updateOrderStatus error', { error: (err as Error).message });
         if (isOrderError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -140,7 +141,7 @@ export const confirmDelivery = async (req: AuthRequest, res: Response) => {
             prompt_review: true
         });
     } catch (err) {
-        console.error('[ORDER] confirmDelivery error:', err);
+        logger.error('confirmDelivery error', { error: (err as Error).message });
         if (isOrderError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -170,7 +171,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('[ORDER] getMyOrders error:', err);
+        logger.error('getMyOrders error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -186,7 +187,7 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
         const result = await orderQueryService.getOrderDetails(order_id, userId);
         res.json(result);
     } catch (err) {
-        console.error('[ORDER] getOrderDetails error:', err);
+        logger.error('getOrderDetails error', { error: (err as Error).message });
         if (isOrderError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -218,7 +219,7 @@ export const submitReview = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Thank you for your review!' });
     } catch (err) {
-        console.error('[ORDER] submitReview error:', err);
+        logger.error('submitReview error', { error: (err as Error).message });
         if (isOrderError(err)) {
             return res.status(getHttpStatusForError(err))
                 .json({ error: (err as Error).message });
@@ -236,7 +237,7 @@ export const getGarageReviews = async (req: AuthRequest, res: Response) => {
         const result = await reviewService.getGarageReviews(garage_id);
         res.json(result);
     } catch (err) {
-        console.error('[ORDER] getGarageReviews error:', err);
+        logger.error('getGarageReviews error', { error: (err as Error).message });
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -257,7 +258,7 @@ export const getOrderCount = async (req: AuthRequest, res: Response) => {
         );
         res.json({ total: parseInt(result.rows[0].total, 10) });
     } catch (err) {
-        console.error('[ORDER] getOrderCount error:', err);
+        logger.error('getOrderCount error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to get order count' });
     }
 };

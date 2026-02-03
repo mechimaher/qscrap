@@ -4,6 +4,7 @@ import { RequestQueryService, RequestLifecycleService, RequestFilteringService }
 import { getReadPool, getWritePool } from '../config/db';
 import { catchAsync } from '../utils/catchAsync';
 import { createRequest as createRequestService } from '../services/request.service';
+import logger from '../utils/logger';
 
 const requestQueryService = new RequestQueryService(getReadPool());
 const requestLifecycleService = new RequestLifecycleService(getWritePool());
@@ -71,7 +72,7 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        console.error('[REQUEST] getActiveRequests error:', err);
+        logger.error('getActiveRequests error', { error: (err as Error).message });
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -98,7 +99,7 @@ export const getRequestDetails = async (req: AuthRequest, res: Response) => {
         const result = await requestQueryService.getRequestDetails(request_id, userId, userType);
         res.json(result);
     } catch (err) {
-        console.error('[REQUEST] Get request details error:', err);
+        logger.error('Get request details error', { error: (err as Error).message });
         if (err instanceof Error && err.message === 'Request not found') {
             return res.status(404).json({ error: 'Request not found' });
         }
@@ -121,7 +122,7 @@ export const cancelRequest = async (req: AuthRequest, res: Response) => {
         await requestLifecycleService.cancelRequest(request_id, userId);
         res.json({ success: true, message: 'Request cancelled successfully' });
     } catch (err) {
-        console.error('[REQUEST] Cancel request error:', err);
+        logger.error('Cancel request error', { error: (err as Error).message });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: err.message });
         }
@@ -144,7 +145,7 @@ export const deleteRequest = async (req: AuthRequest, res: Response) => {
         const result = await requestLifecycleService.deleteRequest(request_id, userId);
         res.json(result);
     } catch (err) {
-        console.error('[REQUEST] Delete request error:', err);
+        logger.error('Delete request error', { error: (err as Error).message });
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: err.message });
         }
@@ -170,7 +171,7 @@ export const ignoreRequest = async (req: AuthRequest, res: Response) => {
         await requestFilteringService.ignoreRequest(garageId, request_id);
         res.json({ success: true, message: 'Request ignored' });
     } catch (err) {
-        console.error('[REQUEST] Ignore request error:', err);
+        logger.error('Ignore request error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to ignore request' });
     }
 };
@@ -182,7 +183,7 @@ export const getIgnoredRequests = async (req: AuthRequest, res: Response) => {
         const ignoredIds = await requestFilteringService.getIgnoredRequests(garageId);
         res.json({ ignored: ignoredIds });
     } catch (err) {
-        console.error('[REQUEST] Get ignored requests error:', err);
+        logger.error('Get ignored requests error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to fetch ignored requests' });
     }
 };
@@ -195,7 +196,7 @@ export const unignoreRequest = async (req: AuthRequest, res: Response) => {
         await requestFilteringService.unignoreRequest(garageId, request_id);
         res.json({ success: true, message: 'Request restored' });
     } catch (err) {
-        console.error('[REQUEST] Unignore request error:', err);
+        logger.error('Unignore request error', { error: (err as Error).message });
         res.status(500).json({ error: 'Failed to restore request' });
     }
 };
