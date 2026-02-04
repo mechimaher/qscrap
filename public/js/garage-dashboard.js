@@ -50,7 +50,7 @@ let dismissedRequests = JSON.parse(localStorage.getItem('dismissedRequests') || 
 let bidPhotos = [];
 let pendingCounterOffers = []; // Track counter-offers from customers
 let pendingDisputes = []; // Track disputes from customers
-let flaggedBids = []; // Track bids flagged by customers for correction
+
 let activeOrdersCount = 0; // Global tracker for badge
 let garageSupplierType = 'both'; // Cache garage supplier type (used/new/both)
 
@@ -591,20 +591,7 @@ async function showDashboard() {
         showToast(data.notification || `Driver ${data.driver_name} bringing back Order #${data.order_number}`, 'info');
     });
 
-    // ===== Flag & Supersede: Customer flagged bid as incorrect =====
-    socket.on('bid:flagged', (data) => {
-        playNotificationSound('warning');
-        showToast(`⚠️ Customer flagged a bid as incorrect: ${data.reason || 'Please review'}`, 'warning');
-        // Reload flagged bids to show in Pending Actions
-        loadFlaggedBids();
-        loadBadgeCounts();
-    });
 
-    socket.on('flag:dismissed', (data) => {
-        showToast(`Flag dismissed for bid #${data.bid_id}`, 'info');
-        loadFlaggedBids();
-        loadBadgeCounts();
-    });
 
     // Load initial data
     await Promise.all([
@@ -623,8 +610,7 @@ async function showDashboard() {
     // Check for pending disputes
     loadPendingDisputes();
 
-    // Check for flagged bids (Flag & Supersede feature)
-    loadFlaggedBids();
+
 
     // Update earnings badge (awaiting confirmations)
     updateEarningsBadge();
@@ -1204,10 +1190,8 @@ function renderPendingActions() {
     // Update summary counts
     const counterEl = document.getElementById('counterOfferCount');
     const disputeEl = document.getElementById('disputeCount');
-    const flaggedEl = document.getElementById('flaggedBidCount');
     if (counterEl) counterEl.textContent = pendingCounterOffers.length;
     if (disputeEl) disputeEl.textContent = pendingDisputes.length;
-    // flaggedBidCount hidden - deprecated Feb 2026
 
     if (allActions.length === 0) {
         container.innerHTML = `
@@ -1222,14 +1206,12 @@ function renderPendingActions() {
 
     // Render cards
     container.innerHTML = allActions.map(action => {
-        if (action.type === 'flagged-bid') {
-            return createFlaggedBidCard(action.data);
-        } else if (action.type === 'counter-offer') {
-            return createCounterOfferCard(action.data);
-        } else {
-            return createDisputeActionCard(action.data);
-        }
-    }).join('');
+    } else if (action.type === 'counter-offer') {
+        return createCounterOfferCard(action.data);
+    } else {
+        return createDisputeActionCard(action.data);
+    }
+}).join('');
 }
 
 // Create premium counter-offer card
@@ -1375,7 +1357,7 @@ function createDisputeActionCard(dispute) {
 
 // Update pending actions badge
 function updatePendingActionsBadge() {
-    const total = pendingCounterOffers.length + pendingDisputes.length + flaggedBids.length;
+    const total = pendingCounterOffers.length + pendingDisputes.length;
     const badge = document.getElementById('pendingActionsBadge');
     if (badge) {
         badge.textContent = total;
@@ -1437,263 +1419,6 @@ async function respondToCounterWithAmount(counterOfferId, amount) {
             loadBids();
         } else {
             showToast(data.error || 'Failed to counter', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-// ===== Flag & Supersede: Edit & Resubmit Modal =====
-let currentEditingBid = null;
-let editBidPhotos = [];
-
-function openEditBidModal(bidId) {
-    // Look up flag data from global flaggedBids array
-    const flagData = flaggedBids.find(f => f.bid_id === bidId);
-
-    if (!flagData) {
-        showToast('Bid data not found. Please refresh the page.', 'error');
-        return;
-    }
-
-    currentEditingBid = flagData;
-    editBidPhotos = [];
-
-    // Prepare modal HTML
-    const modalHtml = `
-        <div id="editBidModal" class="modal-overlay" style="
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.7); z-index: 10000;
-            display: flex; align-items: center; justify-content: center;
-            animation: fadeIn 0.2s ease-out;
-        ">
-            <div class="modal-content" style="
-                background: var(--bg-secondary); border-radius: 20px;
-                width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-                animation: slideUp 0.3s ease-out;
-            ">
-                <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h2 style="margin: 0; font-size: 18px; color: var(--text-primary);">
-                            <i class="bi bi-pencil-square" style="color: #10b981;"></i> Edit & Resubmit Bid
-                        </h2>
-                        <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">BID-${String(currentEditingBid.bid_id).padStart(4, '0')}</p>
-                    </div>
-                    <button onclick="closeEditBidModal()" style="background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer;">×</button>
-                </div>
-                
-                <div style="padding: 20px;">
-                    <!-- Flag Reason Alert -->
-                    <div style="padding: 12px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: #ef4444; font-weight: 600; margin-bottom: 4px;">
-                            <i class="bi bi-flag-fill"></i> Customer Issue
-                        </div>
-                        <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">
-                            ${escapeHTML(currentEditingBid.customer_note || getReasonLabel(currentEditingBid.reason))}
-                        </p>
-                    </div>
-                    
-                    <!-- Original Bid Info -->
-                    <div style="padding: 12px; background: var(--bg-card); border-radius: 10px; margin-bottom: 20px; font-size: 13px;">
-                        <div style="color: var(--text-muted); margin-bottom: 4px;">Original Bid</div>
-                        <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">${parseFloat(currentEditingBid.bid_amount || 0).toFixed(0)} QAR</div>
-                    </div>
-                    
-                    <!-- Corrected Price -->
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
-                            Corrected Price (QAR) *
-                        </label>
-                        <input type="number" id="editBidPrice" value="${currentEditingBid.bid_amount || ''}" min="1" style="
-                            width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px;
-                            background: var(--input-bg); color: var(--text-primary); font-size: 16px;
-                        ">
-                    </div>
-                    
-                    <!-- Part Condition -->
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
-                            Part Condition
-                        </label>
-                        <select id="editBidCondition" style="
-                            width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px;
-                            background: var(--input-bg); color: var(--text-primary); font-size: 14px;
-                        ">
-                            <option value="used" ${currentEditingBid.part_condition === 'used' ? 'selected' : ''}>Used</option>
-                            <option value="new" ${currentEditingBid.part_condition === 'new' ? 'selected' : ''}>New</option>
-                            <option value="refurbished" ${currentEditingBid.part_condition === 'refurbished' ? 'selected' : ''}>Refurbished</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Warranty -->
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
-                            Warranty (days)
-                        </label>
-                        <input type="number" id="editBidWarranty" value="${currentEditingBid.warranty_days || 30}" min="0" max="365" style="
-                            width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px;
-                            background: var(--input-bg); color: var(--text-primary); font-size: 14px;
-                        ">
-                    </div>
-                    
-                    <!-- Photo Upload -->
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
-                            <i class="bi bi-camera"></i> Replace Photos (optional)
-                        </label>
-                        <input type="file" id="editBidPhotos" accept="image/*" multiple onchange="handleEditBidPhotos(event)" style="
-                            width: 100%; padding: 14px; border: 1px dashed var(--border); border-radius: 10px;
-                            background: var(--input-bg); color: var(--text-primary); font-size: 13px;
-                        ">
-                        <div id="editBidPhotoPreview" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
-                    </div>
-                    
-                    <!-- Note to Customer -->
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
-                            Note to Customer (optional)
-                        </label>
-                        <textarea id="editBidNote" rows="2" placeholder="Explain the correction..." style="
-                            width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px;
-                            background: var(--input-bg); color: var(--text-primary); font-size: 14px; resize: none;
-                        "></textarea>
-                    </div>
-                    
-                    <!-- Actions -->
-                    <div style="display: flex; gap: 12px;">
-                        <button onclick="closeEditBidModal()" style="
-                            flex: 1; padding: 14px; border: 1px solid var(--border); border-radius: 10px;
-                            background: transparent; color: var(--text-secondary); font-weight: 600; cursor: pointer;
-                        ">Cancel</button>
-                        <button onclick="submitCorrectedBid('${currentEditingBid.bid_id}')" style="
-                            flex: 2; padding: 14px; border: none; border-radius: 10px;
-                            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                            color: white; font-weight: 600; cursor: pointer;
-                        ">
-                            <i class="bi bi-check-circle"></i> Submit Correction
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Insert modal into DOM
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    // Focus on price input
-    setTimeout(() => {
-        document.getElementById('editBidPrice')?.focus();
-    }, 100);
-}
-
-function getReasonLabel(reason) {
-    const labels = {
-        wrong_price: 'The price was incorrect',
-        wrong_part: 'Wrong part or condition described',
-        wrong_photo: 'Photo does not match the actual part',
-        other: 'Other issue reported'
-    };
-    return labels[reason] || reason || 'Issue reported';
-}
-
-function closeEditBidModal() {
-    const modal = document.getElementById('editBidModal');
-    if (modal) {
-        modal.remove();
-    }
-    currentEditingBid = null;
-    editBidPhotos = [];
-}
-
-function handleEditBidPhotos(event) {
-    const files = event.target.files;
-    const preview = document.getElementById('editBidPhotoPreview');
-    preview.innerHTML = '';
-    editBidPhotos = [];
-
-    for (let i = 0; i < files.length && i < 5; i++) {
-        const file = files[i];
-        editBidPhotos.push(file);
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            preview.innerHTML += `
-                <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: 2px solid var(--border);">
-                    <img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-            `;
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-async function submitCorrectedBid(bidId) {
-    const price = document.getElementById('editBidPrice')?.value;
-    const condition = document.getElementById('editBidCondition')?.value;
-    const warranty = document.getElementById('editBidWarranty')?.value;
-    const note = document.getElementById('editBidNote')?.value || '';
-
-    if (!price || parseFloat(price) <= 0) {
-        showToast('Please enter a valid price', 'error');
-        return;
-    }
-
-    try {
-        // Prepare form data (for photos)
-        const formData = new FormData();
-        formData.append('bid_amount', price);
-        formData.append('part_condition', condition);
-        formData.append('warranty_days', warranty);
-        formData.append('correction_note', note);
-
-        editBidPhotos.forEach((file, idx) => {
-            formData.append('images', file);
-        });
-
-        const res = await fetch(`${API_URL}/bids/${bidId}/supersede`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('✅ Corrected bid submitted successfully!', 'success');
-            closeEditBidModal();
-            loadFlaggedBids();
-            loadBids();
-            loadBadgeCounts();
-        } else {
-            showToast(data.error || 'Failed to submit correction', 'error');
-        }
-    } catch (err) {
-        console.error('Submit correction error:', err);
-        showToast('Connection error. Please try again.', 'error');
-    }
-}
-
-async function acknowledgeFlaggedBid(flagId, bidId) {
-    try {
-        const res = await fetch(`${API_URL}/bids/flags/${flagId}/acknowledge`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('Flag acknowledged. Customer has been notified.', 'info');
-            loadFlaggedBids();
-            loadBadgeCounts();
-        } else {
-            showToast(data.error || 'Failed to acknowledge flag', 'error');
         }
     } catch (err) {
         showToast('Connection error', 'error');
@@ -3829,114 +3554,6 @@ async function loadPendingDisputes() {
     }
 }
 
-// ===== Flag & Supersede: DEPRECATED Feb 2026 =====
-// Panel decision: Simpler UX - customers can just choose another bid
-async function loadFlaggedBids() {
-    // Feature deprecated - keeping function stub for compatibility
-    console.log('[FlaggedBids] Feature deprecated (Feb 2026 panel decision)');
-    flaggedBids = [];
-    return;
-}
-
-// Create premium flagged bid card for garage to review and correct
-function createFlaggedBidCard(flag) {
-    const bidRef = `BID-${String(flag.bid_id).padStart(4, '0')}`;
-
-    // Calculate time since flagged
-    const flaggedAt = new Date(flag.created_at || Date.now());
-    const hoursAgo = Math.floor((Date.now() - flaggedAt.getTime()) / (1000 * 60 * 60));
-
-    // Urgency based on time (higher urgency = longer flag is outstanding)
-    let urgencyClass = 'urgency-low';
-    let urgencyColor = '#10b981';
-    if (hoursAgo > 12) {
-        urgencyClass = 'urgency-critical';
-        urgencyColor = '#ef4444';
-    } else if (hoursAgo > 4) {
-        urgencyClass = 'urgency-high';
-        urgencyColor = '#f59e0b';
-    }
-
-    const isUrgent = flag.is_urgent === true;
-    const timeText = hoursAgo > 0 ? `${hoursAgo}h ago` : 'Just now';
-
-    // Reason labels for display
-    const reasonLabels = {
-        wrong_price: '💰 Wrong Price',
-        wrong_part: '🔧 Wrong Part/Condition',
-        wrong_photo: '📷 Photo Mismatch',
-        other: '❓ Other Issue'
-    };
-    const reasonText = reasonLabels[flag.reason] || flag.reason || 'Issue Reported';
-
-    return `
-        <div class="pending-action-card flagged-bid-card ${urgencyClass}" style="
-            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(239, 68, 68, 0.08) 100%);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            border-radius: 16px;
-            padding: 20px;
-            animation: slideIn 0.3s ease-out;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                <div>
-                    <span style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">${bidRef}</span>
-                    <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-left: 8px;">
-                        <i class="bi bi-flag-fill"></i> Flagged
-                    </span>
-                    ${isUrgent ? `<span style="background: rgba(249, 115, 22, 0.2); color: #f97316; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-left: 8px;">
-                        <i class="bi bi-lightning-fill"></i> URGENT
-                    </span>` : ''}
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px; color: ${urgencyColor}; font-size: 13px; font-weight: 600;">
-                    <i class="bi bi-clock"></i>
-                    <span>${timeText}</span>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">${escapeHTML(flag.car_summary || 'Vehicle')}</div>
-                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">${escapeHTML(flag.part_description || 'Part Request')}</div>
-            </div>
-            
-            <!-- Flag Details -->
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: rgba(239, 68, 68, 0.1); border-radius: 12px; margin-bottom: 16px;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <span style="font-size: 12px; color: var(--text-muted);">Issue Reported</span>
-                    <span style="font-size: 16px; font-weight: 600; color: #ef4444;">${reasonText}</span>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
-                    <span style="font-size: 12px; color: var(--text-muted);">Original Bid</span>
-                    <span style="font-size: 18px; font-weight: 700; color: var(--text-primary);">${parseFloat(flag.bid_amount || 0).toFixed(0)} QAR</span>
-                </div>
-            </div>
-            
-            ${flag.customer_note ? `
-                <div style="padding: 12px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); font-style: italic;">
-                    <i class="bi bi-chat-dots"></i> "${escapeHTML(flag.customer_note)}"
-                </div>
-            ` : ''}
-            
-            <div style="display: flex; gap: 12px;">
-                <button onclick="openEditBidModal('${flag.bid_id}')" style="
-                    flex: 1; padding: 12px; border: none; border-radius: 10px;
-                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                    color: white; font-weight: 600; cursor: pointer;
-                    display: flex; align-items: center; justify-content: center; gap: 6px;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                    <i class="bi bi-pencil-square"></i> Edit & Resubmit
-                </button>
-                <button onclick="acknowledgeFlaggedBid('${flag.flag_id}', '${flag.bid_id}')" style="
-                    padding: 12px 16px; border: 1px solid var(--accent); border-radius: 10px;
-                    background: transparent; color: var(--accent); font-weight: 600; cursor: pointer;
-                    transition: all 0.2s;
-                " onmouseover="this.style.background='var(--accent)'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='var(--accent)'">
-                    <i class="bi bi-check-lg"></i> Acknowledge
-                </button>
-            </div>
-        </div>
-    `;
-}
 
 // Update dispute badge counter
 // Update consolidated Orders badge (Active + Disputes merged)
