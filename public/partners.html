@@ -1678,12 +1678,16 @@
         }
 
         html[dir="rtl"] .faq-question {
-            /* direction: rtl from parent handles natural flow - no row-reverse needed */
+            flex-direction: row;
+            justify-content: space-between;
         }
 
         html[dir="rtl"] .faq-question h3 {
             text-align: right;
-            /* direction: rtl from parent handles flow - no row-reverse needed */
+            flex-direction: row;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         html[dir="rtl"] .faq-question h3 .faq-emoji {
