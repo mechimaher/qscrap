@@ -33,6 +33,7 @@ import { useToast } from '../components/Toast';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { FlagBidModal } from '../components/FlagBidModal';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -388,6 +389,7 @@ const PremiumBidCard = ({
     onAccept,
     onCounter,
     onReject,
+    onFlag,
     onImagePress,
     isAccepting,
     requestPartDescription,
@@ -400,6 +402,7 @@ const PremiumBidCard = ({
     onAccept: (bid: Bid, price: number) => void;
     onCounter: (bid: Bid) => void;
     onReject: (bid: Bid) => void;
+    onFlag: (bid: Bid) => void;
     onImagePress: (images: string[], index: number) => void;
     isAccepting: boolean;
     requestPartDescription: string;
@@ -429,6 +432,9 @@ const PremiumBidCard = ({
 
     const conditionInfo = getConditionLabel(bid.part_condition, t);
     const isAccepted = bid.bid_status === 'accepted';
+    const isFlagged = bid.bid_status === 'flagged';
+    const isSuperseded = bid.bid_status === 'superseded';
+    const hasCorrectedVersion = !!(bid as any).superseded_by;
 
     // Negotiation state
     const hasGarageCounterOffer = !!(bid as any).garage_counter_amount;
@@ -494,6 +500,20 @@ const PremiumBidCard = ({
             {hasGarageCounterOffer && !isAccepted && !isNegotiationAgreed && (
                 <View style={[styles.counterBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
                     <Text style={styles.counterBadgeText}>{t('bidCard.counterOffer')}</Text>
+                </View>
+            )}
+
+            {/* Flagged Badge - Awaiting correction */}
+            {isFlagged && (
+                <View style={[styles.flaggedBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={styles.flaggedBadgeText}>⚠️ {t('bids.flag.statusFlagged')}</Text>
+                </View>
+            )}
+
+            {/* Superseded Badge - Has been replaced */}
+            {isSuperseded && (
+                <View style={[styles.supersededBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={styles.supersededBadgeText}>🔄 {t('bids.flag.statusCorrected')}</Text>
                 </View>
             )}
 
@@ -770,6 +790,19 @@ const PremiumBidCard = ({
                         </TouchableOpacity>
                     )}
 
+                    {/* Flag Button - Report incorrect bid */}
+                    {!isFlagged && !isSuperseded && (
+                        <TouchableOpacity
+                            style={styles.flagBtn}
+                            onPress={() => onFlag(bid)}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('bids.flag.title')}
+                            accessibilityHint={t('bids.flag.whatsWrong')}
+                        >
+                            <Text style={styles.flagBtnText}>⚠️</Text>
+                        </TouchableOpacity>
+                    )}
+
                     <TouchableOpacity
                         style={styles.rejectBtn}
                         onPress={() => onReject(bid)}
@@ -857,6 +890,9 @@ export default function RequestDetailScreen() {
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [isComparisonVisible, setIsComparisonVisible] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    // Flag bid workflow
+    const [flagModalVisible, setFlagModalVisible] = useState(false);
+    const [selectedBidForFlag, setSelectedBidForFlag] = useState<Bid | null>(null);
 
     useEffect(() => {
         loadRequestDetails();
@@ -886,6 +922,7 @@ export default function RequestDetailScreen() {
         socket.on('counter_offer_rejected', handleEvent);
         socket.on('bid_updated', handleEvent);
         socket.on('bid_withdrawn', handleEvent); // VVIP Fix: Now listening to bid_withdrawn
+        socket.on('bid:superseded', handleEvent); // Flag workflow: corrected bid received
         return () => {
             socket.off('garage_counter_offer', handleEvent);
             socket.off('counter_offer_received', handleEvent);
@@ -893,6 +930,7 @@ export default function RequestDetailScreen() {
             socket.off('counter_offer_rejected', handleEvent);
             socket.off('bid_updated', handleEvent);
             socket.off('bid_withdrawn', handleEvent);
+            socket.off('bid:superseded', handleEvent);
         };
     }, [socket, requestId]);
 
@@ -1003,6 +1041,61 @@ export default function RequestDetailScreen() {
         setIsViewerVisible(true);
     };
 
+    // Flag bid - opens modal to report incorrect bid
+    const handleFlagBid = (bid: Bid) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setSelectedBidForFlag(bid);
+        setFlagModalVisible(true);
+    };
+
+    // Submit flag to API with 10-second undo window
+    const submitFlag = async (data: { reason: string; details: string; urgent: boolean }) => {
+        if (!selectedBidForFlag) return;
+
+        const bidId = selectedBidForFlag.bid_id;
+        const garageName = selectedBidForFlag.garage_name;
+
+        try {
+            const response = await api.flagBid(bidId, {
+                reason: data.reason as any,
+                details: data.details,
+                urgent: data.urgent,
+            });
+
+            // Mark bid as flagged locally for immediate UI update
+            setBids(prev => prev.map(b =>
+                b.bid_id === bidId ? { ...b, bid_status: 'flagged' } : b
+            ));
+
+            // Show success toast with undo capability (10s window)
+            toast.show({
+                type: 'info',
+                title: t('bids.flag.success'),
+                message: t('bids.flag.successMsg'),
+                duration: 10000, // 10 second duration
+                action: {
+                    label: t('bids.flag.undoAction'),
+                    onPress: async () => {
+                        try {
+                            await api.dismissFlag(bidId, response.flag.flag_id, 'User cancelled');
+                            setBids(prev => prev.map(b =>
+                                b.bid_id === bidId ? { ...b, bid_status: 'active' } : b
+                            ));
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        } catch (undoError: any) {
+                            toast.error(t('common.error'), undoError.message);
+                        }
+                    }
+                }
+            });
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (error: any) {
+            toast.error(t('common.error'), error.message || t('bids.flag.error'));
+            throw error; // Re-throw for modal to handle
+        }
+    };
+
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -1108,6 +1201,7 @@ export default function RequestDetailScreen() {
                                 onAccept={handleAcceptBid}
                                 onCounter={handleCounter}
                                 onReject={handleRejectBid}
+                                onFlag={handleFlagBid}
                                 onImagePress={handleImagePress}
                                 isAccepting={acceptingBid === bid.bid_id}
                                 requestPartDescription={request.part_description}
@@ -1135,6 +1229,17 @@ export default function RequestDetailScreen() {
                 bids={bids}
                 onAccept={(bid) => handleAcceptBid(bid, Number(bid.bid_amount))}
                 onClose={() => setIsComparisonVisible(false)}
+            />
+
+            {/* Flag Bid Modal */}
+            <FlagBidModal
+                visible={flagModalVisible}
+                bid={selectedBidForFlag}
+                onClose={() => {
+                    setFlagModalVisible(false);
+                    setSelectedBidForFlag(null);
+                }}
+                onSubmit={submitFlag}
             />
         </SafeAreaView>
     );
@@ -1350,6 +1455,25 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     counterBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
+    // Flagged/Superseded badges
+    flaggedBadge: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#EF4444',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+        marginBottom: Spacing.md,
+    },
+    flaggedBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
+    supersededBadge: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#6B7280',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+        marginBottom: Spacing.md,
+    },
+    supersededBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
 
     bidHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     garageInfo: { flex: 1 },
@@ -1556,6 +1680,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     rejectBtnText: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.error },
+    flagBtn: {
+        width: 44,
+        height: 44,
+        backgroundColor: '#FEF3C7',
+        borderRadius: BorderRadius.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    flagBtnText: { fontSize: FontSizes.lg },
 
     // Skeleton
     skeletonContainer: { padding: Spacing.lg },

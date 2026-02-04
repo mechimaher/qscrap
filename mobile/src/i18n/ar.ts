@@ -1042,6 +1042,34 @@ export const ar = {
         bidAccepted: 'تم قبول العرض',
         bidAcceptedMsg: 'تم إنشاء طلبيتك',
         compareBids: 'مقارنة العروض',
+        // Flag Bid Feature - الإبلاغ عن مشكلة في العرض
+        flag: {
+            title: 'الإبلاغ عن مشكلة في العرض',
+            thisBid: 'هذا العرض',
+            whatsWrong: 'ما المشكلة في هذا العرض؟',
+            wrongPart: 'قطعة خاطئة',
+            wrongPicture: 'صورة خاطئة',
+            incorrectPrice: 'سعر غير صحيح',
+            missingInfo: 'معلومات ناقصة',
+            other: 'أخرى',
+            details: 'تفاصيل إضافية',
+            detailsPlaceholder: 'صف المشكلة ليتمكن الكراج من إصلاحها...',
+            markUrgent: 'تحديد كعاجل',
+            urgentDescription: 'احصل على رد أسرع (10 دقائق)',
+            urgentHint: 'فعّل لطلب رد سريع من الكراج',
+            submit: 'إرسال البلاغ',
+            selectReason: 'الرجاء تحديد ما الخطأ',
+            error: 'فشل إرسال البلاغ. يرجى المحاولة مرة أخرى.',
+            success: 'تم إرسال البلاغ',
+            successMsg: 'تم إخطار الكراج وسيقوم بتصحيح العرض.',
+            // الحالات
+            statusFlagged: 'تم الإبلاغ',
+            statusAwaitingCorrection: 'في انتظار التصحيح',
+            statusCorrected: 'تم التصحيح',
+            // التراجع
+            undoMessage: 'تم إرسال البلاغ',
+            undoAction: 'تراجع',
+        },
     },
 
     // =============================================

@@ -1040,6 +1040,34 @@ export const en = {
         bidAccepted: 'Bid Accepted',
         bidAcceptedMsg: 'Your order has been created',
         compareBids: 'Compare Bids',
+        // Flag Bid Feature
+        flag: {
+            title: 'Report Issue with Bid',
+            thisBid: 'This Bid',
+            whatsWrong: "What's wrong with this bid?",
+            wrongPart: 'Wrong Part',
+            wrongPicture: 'Wrong Picture',
+            incorrectPrice: 'Incorrect Price',
+            missingInfo: 'Missing Info',
+            other: 'Other',
+            details: 'Additional Details',
+            detailsPlaceholder: 'Describe the issue so the garage can fix it...',
+            markUrgent: 'Mark as Urgent',
+            urgentDescription: 'Get a faster response (10 min)',
+            urgentHint: 'Toggle to request priority response from garage',
+            submit: 'Submit Report',
+            selectReason: 'Please select what went wrong',
+            error: 'Failed to submit report. Please try again.',
+            success: 'Report Submitted',
+            successMsg: 'The garage has been notified and will correct the bid.',
+            // Statuses
+            statusFlagged: 'Flagged',
+            statusAwaitingCorrection: 'Awaiting Correction',
+            statusCorrected: 'Corrected',
+            // Undo
+            undoMessage: 'Report submitted',
+            undoAction: 'Undo',
+        },
     },
 
     // =============================================
