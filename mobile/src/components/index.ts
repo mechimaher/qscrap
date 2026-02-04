@@ -26,3 +26,5 @@ export { LoyaltyTierAnimation } from './LoyaltyTierAnimation';
 export { ParallaxHeader } from './ParallaxHeader';
 export { DeliveryLocationWidget } from './DeliveryLocationWidget';
 export { MapLocationPicker } from './MapLocationPicker';
+export { ScreenErrorBoundary } from './ScreenErrorBoundary';
+export { withErrorBoundary } from './withErrorBoundary';

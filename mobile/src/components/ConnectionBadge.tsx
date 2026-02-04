@@ -7,8 +7,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { useSocket } from '../contexts/SocketContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { useSocketContext } from '../hooks/useSocket';
 
 interface ConnectionBadgeProps {
     /** Callback when reconnection occurs (for triggering data refresh) */
@@ -17,7 +17,7 @@ interface ConnectionBadgeProps {
 
 export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({ onReconnect }) => {
     const { t } = useTranslation();
-    const { isConnected, socket } = useSocket();
+    const { isConnected, socket } = useSocketContext();
     const [showBadge, setShowBadge] = useState(false);
     const [reconnecting, setReconnecting] = useState(false);
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -74,7 +74,15 @@ export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({ onReconnect })
     if (!showBadge) return null;
 
     return (
-        <Animated.View style={[styles.badge, { opacity: pulseAnim }]}>
+        <Animated.View
+            style={[styles.badge, { opacity: pulseAnim }]}
+            accessible={true}
+            accessibilityRole="alert"
+            accessibilityLabel={reconnecting
+                ? t('connection.reconnecting')
+                : t('connection.offline')}
+            accessibilityLiveRegion="polite"
+        >
             <MaterialCommunityIcons
                 name={reconnecting ? "wifi-sync" : "wifi-off"}
                 size={14}
@@ -82,8 +90,8 @@ export const ConnectionBadge: React.FC<ConnectionBadgeProps> = ({ onReconnect })
             />
             <Text style={styles.text}>
                 {reconnecting
-                    ? t('connection.reconnecting', 'Reconnecting...')
-                    : t('connection.offline', 'Offline')}
+                    ? t('connection.reconnecting')
+                    : t('connection.offline')}
             </Text>
         </Animated.View>
     );

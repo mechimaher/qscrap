@@ -1498,6 +1498,25 @@ export const en = {
 
 
     // =============================================
+    // WAIT STATE - G-02 Anxiety Reduction Messages
+    // =============================================
+    waitState: {
+        waitingForOffers: 'Waiting for Offers',
+        searchingGarages: 'Garages are searching their inventory...',
+        garagesReviewing: 'Garages are reviewing your request',
+        preparingQuotes: 'Garages are preparing their quotes',
+        stillSearching: 'Still searching for the best prices',
+        notifyWhenReady: 'We\'ll notify you when offers arrive',
+        requestPosted: 'Request Posted',
+        justNow: 'Just now',
+        elapsedMinutes: '{{minutes}} min ago',
+        elapsedHours: '{{hours}}h {{minutes}}m ago',
+        elapsedDays: '{{days}}d {{hours}}h ago',
+        garagesViewing: '{{count}} garages viewing',
+        tip: 'Adding clear photos helps garages respond faster',
+    },
+
+    // =============================================
     // ACCESSIBILITY - Screen Reader Labels
     // =============================================
     accessibility: {

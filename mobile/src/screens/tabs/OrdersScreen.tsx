@@ -23,6 +23,7 @@ import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
+import { useAppStateRefresh } from '../../hooks/useAppStateRefresh';
 import { useToast } from '../../components/Toast';
 
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -396,6 +397,12 @@ export default function OrdersScreen() {
             loadOrders();
         }
     }, [orderUpdates, loadOrders]);
+
+    // G-03: Auto-refresh when app resumes from background (stale data prevention)
+    useAppStateRefresh({
+        onRefresh: loadOrders,
+        minBackgroundTimeMs: 30000, // Refresh if backgrounded for 30+ seconds
+    });
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);

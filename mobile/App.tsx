@@ -38,8 +38,8 @@ import ProfileScreen from './src/screens/tabs/ProfileScreen';
 
 // Import Modal/Stack screens
 import NewRequestScreen from './src/screens/NewRequestScreen';
-import RequestDetailScreen from './src/screens/RequestDetailScreen';
-import OrderDetailScreen from './src/screens/OrderDetailScreen';
+import RequestDetailScreenBase from './src/screens/RequestDetailScreen';
+import OrderDetailScreenBase from './src/screens/OrderDetailScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
@@ -52,10 +52,16 @@ import SupportScreen from './src/screens/SupportScreen';
 // VIN screens removed - not used
 import PaymentScreen from './src/screens/PaymentScreen';
 import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
-import DeliveryTrackingScreen from './src/screens/DeliveryTrackingScreen';
+import DeliveryTrackingScreenBase from './src/screens/DeliveryTrackingScreen';
 import MyVehiclesScreen from './src/screens/MyVehiclesScreen';
 import TermsScreen from './src/screens/TermsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+
+// E2: Wrap critical screens with error boundaries for graceful degradation
+import { withErrorBoundary } from './src/components';
+const RequestDetailScreen = withErrorBoundary(RequestDetailScreenBase, { screenName: 'Request Details' });
+const OrderDetailScreen = withErrorBoundary(OrderDetailScreenBase, { screenName: 'Order Details' });
+const DeliveryTrackingScreen = withErrorBoundary(DeliveryTrackingScreenBase, { screenName: 'Delivery Tracking' });
 
 // Navigation Types
 export type RootStackParamList = {

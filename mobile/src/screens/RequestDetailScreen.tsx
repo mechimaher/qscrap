@@ -27,6 +27,7 @@ import { API_BASE_URL, UPLOAD_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
 import { useSocketContext } from '../hooks/useSocket';
+import { WaitStateReassurance } from '../components/WaitStateReassurance';
 
 import { useToast } from '../components/Toast';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -1087,15 +1088,14 @@ export default function RequestDetailScreen() {
                     </View>
 
                     {bids.length === 0 ? (
-                        <View style={[styles.noBidsCard, { backgroundColor: colors.surface }]}>
-                            <Text style={styles.noBidsEmoji}>🔔</Text>
-                            <Text style={styles.noBidsText}>
-                                {t('requestDetail.noBidsMessage')}
-                            </Text>
-                            <Text style={styles.noBidsSubtext}>
-                                {t('requestDetail.noBidsSubtext')}
-                            </Text>
-                        </View>
+                        <WaitStateReassurance
+                            createdAt={request.created_at}
+                            colors={{
+                                surface: colors.surface,
+                                text: colors.text,
+                                textSecondary: colors.textSecondary,
+                            }}
+                        />
                     ) : (
                         bids.map((bid, index) => (
                             <PremiumBidCard
