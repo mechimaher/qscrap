@@ -1447,18 +1447,17 @@ async function respondToCounterWithAmount(counterOfferId, amount) {
 let currentEditingBid = null;
 let editBidPhotos = [];
 
-function openEditBidModal(bidId, flagData) {
+function openEditBidModal(bidId) {
+    // Look up flag data from global flaggedBids array
+    const flagData = flaggedBids.find(f => f.bid_id === bidId);
+
+    if (!flagData) {
+        showToast('Bid data not found. Please refresh the page.', 'error');
+        return;
+    }
+
     currentEditingBid = flagData;
     editBidPhotos = [];
-
-    // Parse flagData if it's a string
-    if (typeof flagData === 'string') {
-        try {
-            currentEditingBid = JSON.parse(flagData);
-        } catch (e) {
-            console.error('Failed to parse flag data:', e);
-        }
-    }
 
     // Prepare modal HTML
     const modalHtml = `
@@ -3931,7 +3930,7 @@ function createFlaggedBidCard(flag) {
             ` : ''}
             
             <div style="display: flex; gap: 12px;">
-                <button onclick="openEditBidModal('${flag.bid_id}', ${JSON.stringify(flag).replace(/"/g, '&quot;')})" style="
+                <button onclick="openEditBidModal('${flag.bid_id}')" style="
                     flex: 1; padding: 12px; border: none; border-radius: 10px;
                     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                     color: white; font-weight: 600; cursor: pointer;
