@@ -387,13 +387,12 @@ export async function getAllFlaggedBids(req: Request, res: Response): Promise<vo
                 b.part_condition,
                 b.image_urls,
                 pr.request_id,
-                CONCAT(uc.year, ' ', uc.make, ' ', uc.model) AS car_summary,
-                pr.part_name AS part_description,
+                CONCAT(pr.car_year, ' ', pr.car_make, ' ', pr.car_model) AS car_summary,
+                pr.part_description,
                 u.full_name AS customer_name
             FROM bid_flags bf
             JOIN bids b ON bf.bid_id = b.bid_id
             JOIN part_requests pr ON b.request_id = pr.request_id
-            JOIN user_cars uc ON pr.car_id = uc.car_id
             JOIN users u ON bf.flagged_by = u.user_id
             WHERE b.garage_id = $1
             AND bf.status IN ('pending', 'acknowledged')
