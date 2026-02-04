@@ -5993,7 +5993,7 @@ async function loadShowcase() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (res.status === 403) {
+        if (res.status === 403 || res.status === 400) {
             // Not Enterprise - show upgrade prompt
             hasShowcaseAccess = false;
             document.getElementById('showcaseUpgradePrompt').style.display = 'block';
