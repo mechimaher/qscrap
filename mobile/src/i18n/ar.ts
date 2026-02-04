@@ -1586,6 +1586,25 @@ export const ar = {
     },
 
     // =============================================
+    // WAIT STATE - G-02 رسائل تقليل القلق
+    // =============================================
+    waitState: {
+        waitingForOffers: 'في انتظار العروض',
+        searchingGarages: 'الكراجات تبحث في مخزونها...',
+        garagesReviewing: 'الكراجات تراجع طلبك',
+        preparingQuotes: 'الكراجات تجهز عروضها',
+        stillSearching: 'لا زلنا نبحث عن أفضل الأسعار',
+        notifyWhenReady: 'سنعلمك عند وصول العروض',
+        requestPosted: 'تم نشر الطلب',
+        justNow: 'الآن',
+        elapsedMinutes: 'منذ {{minutes}} دقيقة',
+        elapsedHours: 'منذ {{hours}} ساعة و {{minutes}} دقيقة',
+        elapsedDays: 'منذ {{days}} يوم و {{hours}} ساعة',
+        garagesViewing: '{{count}} كراجات تشاهد',
+        tip: 'إضافة صور واضحة تساعد الكراجات على الرد بسرعة',
+    },
+
+    // =============================================
     // ACCESSIBILITY - تسميات قارئ الشاشة
     // =============================================
     accessibility: {

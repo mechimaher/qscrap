@@ -26,6 +26,7 @@ import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
 import { useToast } from '../../components/Toast';
+import { useAppStateRefresh } from '../../hooks/useAppStateRefresh';
 
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -432,6 +433,12 @@ export default function RequestsScreen() {
             loadRequests();
         }, [loadRequests])
     );
+
+    // G-03: Auto-refresh when app resumes from background (stale data prevention)
+    useAppStateRefresh({
+        onRefresh: loadRequests,
+        minBackgroundTimeMs: 30000, // Refresh if backgrounded for 30+ seconds
+    });
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);

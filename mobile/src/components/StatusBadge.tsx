@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { getStatusLabel, getStatusColor, getStatusIcon } from '../constants/statusLabels';
 
 interface StatusBadgeProps {
@@ -22,8 +22,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     size = 'medium',
     showIcon = true
 }) => {
-    const { i18n } = useTranslation();
-    const lang = i18n.language?.startsWith('ar') ? 'ar' : 'en';
+    const { isRTL } = useTranslation();
+    const lang = isRTL ? 'ar' : 'en';
 
     const label = getStatusLabel(type, status, lang);
     const color = getStatusColor(type, status);

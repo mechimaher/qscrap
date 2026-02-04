@@ -16,6 +16,8 @@ export type {
     Product
 } from './api';
 
-// Socket and Notifications
-export * from './socket';
+// Notifications
 export * from './notifications';
+
+// Sentry crash reporting
+export * as Sentry from './sentry';

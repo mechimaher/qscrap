@@ -21,7 +21,8 @@ import { useTheme } from '../contexts';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
-import { api, getSocket } from '../services';
+import { api } from '../services';
+import { useSocketContext } from '../hooks/useSocket';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
@@ -86,40 +87,11 @@ const DeliveryTrackingScreen: React.FC = () => {
     useEffect(() => {
         loadOrderDetails();
 
-        // Real-time driver location updates
-        const socket = getSocket();
-        if (socket) {
-            socket.on('driver_location_update', (data: any) => {
-                if (data.order_id === orderId) {
-                    const newLocation = { lat: data.lat, lng: data.lng };
-                    setDriverLocation(newLocation);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-                    // Animate map smoothly
-                    mapRef.current?.animateToRegion({
-                        latitude: data.lat,
-                        longitude: data.lng,
-                        latitudeDelta: 0.01,
-                        longitudeDelta: 0.01,
-                    }, 500);
-
-                    // Update route when driver moves
-                    if (order?.delivery_lat && order?.delivery_lng) {
-                        fetchRoute(newLocation, {
-                            lat: parseFloat(order.delivery_lat),
-                            lng: parseFloat(order.delivery_lng),
-                        });
-                    }
-                }
-            });
-        }
-
-        // Fallback polling every 15 seconds
+        // Poll for updates every 15 seconds
         const pollInterval = setInterval(loadOrderDetails, 15000);
 
         return () => {
             clearInterval(pollInterval);
-            if (socket) socket.off('driver_location_update');
         };
     }, [orderId, order?.delivery_lat, order?.delivery_lng]);
 

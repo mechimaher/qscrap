@@ -6,9 +6,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import * as Haptics from 'expo-haptics';
-import api from '../services/api';
+import { api } from '../services/api';
 
 interface UndoToastProps {
     orderId: string;
@@ -77,8 +77,9 @@ export const UndoToast: React.FC<UndoToastProps> = ({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            await api.post(`/api/orders/${orderId}/undo`, {
-                reason: 'User initiated undo'
+            await api.request(`/api/orders/${orderId}/undo`, {
+                method: 'POST',
+                body: JSON.stringify({ reason: 'User initiated undo' })
             });
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -109,23 +110,31 @@ export const UndoToast: React.FC<UndoToastProps> = ({
                 styles.container,
                 { transform: [{ translateY: slideAnim }] }
             ]}
+            accessible={true}
+            accessibilityRole="alert"
+            accessibilityLabel={`${t('order.created')} ${orderNumber}. ${remaining} seconds to undo.`}
+            accessibilityLiveRegion="assertive"
         >
             {/* Progress bar */}
             <Animated.View
                 style={[styles.progressBar, { width: progressWidth }]}
+                accessibilityElementsHidden={true}
             />
 
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <MaterialCommunityIcons name="check-circle" size={24} color="#22C55E" />
                     <View style={styles.textContent}>
-                        <Text style={styles.title}>{t('order.created', 'Order Created')}</Text>
+                        <Text style={styles.title}>{t('order.created')}</Text>
                         <Text style={styles.subtitle}>#{orderNumber}</Text>
                     </View>
                 </View>
 
                 <View style={styles.actions}>
-                    <View style={styles.countdown}>
+                    <View
+                        style={styles.countdown}
+                        accessibilityLabel={`${remaining} seconds remaining`}
+                    >
                         <Text style={styles.countdownText}>{remaining}s</Text>
                     </View>
 
@@ -133,6 +142,10 @@ export const UndoToast: React.FC<UndoToastProps> = ({
                         style={[styles.undoButton, isUndoing && styles.undoButtonDisabled]}
                         onPress={handleUndo}
                         disabled={isUndoing || remaining <= 0}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.undo')}
+                        accessibilityHint="Cancels the order you just created"
+                        accessibilityState={{ disabled: isUndoing || remaining <= 0 }}
                     >
                         <MaterialCommunityIcons
                             name="undo"
@@ -141,14 +154,17 @@ export const UndoToast: React.FC<UndoToastProps> = ({
                             style={styles.undoIcon}
                         />
                         <Text style={styles.undoText}>
-                            {isUndoing ? t('common.loading', '...') : t('common.undo', 'UNDO')}
+                            {isUndoing ? t('common.loading') : t('common.undo')}
                         </Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
             {error && (
-                <Text style={styles.errorText}>{error}</Text>
+                <Text
+                    style={styles.errorText}
+                    accessibilityRole="alert"
+                >{error}</Text>
             )}
         </Animated.View>
     );

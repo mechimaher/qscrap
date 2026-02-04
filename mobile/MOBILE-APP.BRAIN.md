@@ -252,25 +252,22 @@ throw new Error(data.error || data.message || 'Request failed');
 
 ## 8️⃣ Enhancement Ledger
 
-### E1: Consolidate Socket Services
+### E1: ~~Consolidate Socket Services~~ ✅ RESOLVED (Feb 4, 2026)
 
 | Field | Value |
 |-------|-------|
-| **Current State** | `socket.ts` (119 lines) + `useSocket.tsx` (606 lines) coexist |
-| **Target State** | Single `useSocket.tsx` as sole socket manager |
-| **Reasoning** | Reduce cognitive load; single source of truth |
-| **Simplicity Justification** | Fewer files = less confusion |
-| **Customer Impact** | None (internal refactor) |
+| **Previous State** | `socket.ts` (119 lines) + `useSocket.tsx` (606 lines) coexisted |
+| **Resolution** | Deleted `socket.ts`; `useSocket.tsx` is now sole socket manager |
+| **Impact** | Reduced cognitive load; single source of truth |
 
-### E2: Screen-Level Error Boundaries
+### E2: ~~Screen-Level Error Boundaries~~ ✅ RESOLVED (Feb 4, 2026)
 
 | Field | Value |
 |-------|-------|
-| **Current State** | Root-only ErrorBoundary |
-| **Target State** | Critical screens wrapped individually |
-| **Reasoning** | Graceful degradation on screen errors |
-| **Simplicity Justification** | Minimal wrapper; no new patterns |
-| **Customer Impact** | Better UX on errors |
+| **Previous State** | Root-only ErrorBoundary |
+| **Resolution** | Created `ScreenErrorBoundary.tsx` + `withErrorBoundary.tsx` HOC |
+| **Wrapped Screens** | RequestDetailScreen, OrderDetailScreen, DeliveryTrackingScreen |
+| **Benefit** | Screen-level errors gracefully degrade with retry button |
 
 ### E3: Shared Types Package
 
