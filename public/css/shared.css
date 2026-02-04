@@ -876,28 +876,400 @@ textarea:focus-visible {
     }
 }
 
-/* ===== EMPTY STATE ===== */
+/* ============================================
+   GOLD STANDARD MICRO-INTERACTIONS
+   Industrial Control Room Aesthetic
+   ============================================ */
+
+/* ===== DISABLED STATES ===== */
+/* Consistent disabled appearance across all interactive elements */
+.btn:disabled,
+.btn.disabled,
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(30%);
+}
+
+/* Disabled with explanation tooltip */
+.btn:disabled[title],
+.disabled[title] {
+    position: relative;
+}
+
+/* Disabled link styling */
+a.disabled,
+.nav-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    color: var(--text-muted) !important;
+}
+
+/* Disabled form field visual */
+input:disabled,
+select:disabled,
+textarea:disabled {
+    background: var(--bg-primary);
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+
+/* ===== EMPTY STATES ===== */
+/* Calm, informative empty states following Gold Standard */
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 48px 24px;
     color: var(--text-muted);
+    background: linear-gradient(135deg, rgba(141, 27, 61, 0.02) 0%, transparent 100%);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border);
 }
 
 .empty-state i,
 .empty-state-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
+    font-size: 56px;
+    margin-bottom: 20px;
     display: block;
+    opacity: 0.4;
+    color: var(--primary);
 }
 
-.empty-state h4 {
+.empty-state h4,
+.empty-state-title {
     margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--text-secondary);
 }
 
-.empty-state p {
+.empty-state p,
+.empty-state-text {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
+/* Empty state with action button */
+.empty-state-action {
+    margin-top: 20px;
+}
+
+.empty-state-action .btn {
+    padding: 10px 24px;
+}
+
+/* Compact empty state for tables */
+.empty-state-compact,
+.data-table .empty-state {
+    padding: 32px 16px;
+    background: transparent;
+    border: none;
+}
+
+.empty-state-compact i {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.empty-state-compact h4 {
+    font-size: 15px;
+}
+
+/* ===== ERROR STATES ===== */
+/* Clear, non-alarming error feedback */
+.error-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: rgba(239, 68, 68, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.error-state i,
+.error-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    color: var(--danger);
+    opacity: 0.7;
+}
+
+.error-state h4,
+.error-state-title {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--danger);
+}
+
+.error-state p,
+.error-state-text {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-state-action {
+    margin-top: 16px;
+}
+
+/* Inline error message (for forms) */
+.error-message,
+.field-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: var(--radius-sm);
+}
+
+.error-message i {
+    font-size: 14px;
+}
+
+/* Input error state */
+input.error,
+input.is-invalid,
+select.error,
+select.is-invalid,
+textarea.error,
+textarea.is-invalid,
+.form-control.error,
+.form-control.is-invalid {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ===== LOADING STATES ===== */
+/* Subtle, non-intrusive loading indicators */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+}
+
+.loading-state .spinner {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+    margin-bottom: 16px;
+}
+
+.loading-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Inline loading (for buttons) */
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    left: 50%;
+    top: 50%;
+    margin-left: -9px;
+    margin-top: -9px;
+    color: white;
+}
+
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg,
+            var(--bg-primary) 25%,
+            var(--bg-secondary) 50%,
+            var(--bg-primary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+    height: 14px;
+    margin-bottom: 8px;
+}
+
+.skeleton-text:last-child {
+    width: 70%;
+}
+
+.skeleton-circle {
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    padding: 20px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ===== SUCCESS STATES ===== */
+.success-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: rgba(16, 185, 129, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.success-state i,
+.success-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    color: var(--success);
+}
+
+.success-state h4 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.success-state p {
     margin: 0;
     font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ===== WARNING STATES ===== */
+.warning-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: rgba(245, 158, 11, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.warning-state i,
+.warning-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    color: var(--warning);
+}
+
+.warning-state h4 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #b45309;
+}
+
+.warning-state p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ===== INFO CALLOUTS ===== */
+.callout {
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.callout i {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.callout-info {
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 3px solid var(--info);
+    color: var(--text-primary);
+}
+
+.callout-info i {
+    color: var(--info);
+}
+
+.callout-warning {
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 3px solid var(--warning);
+    color: var(--text-primary);
+}
+
+.callout-warning i {
+    color: var(--warning);
+}
+
+.callout-danger {
+    background: rgba(239, 68, 68, 0.08);
+    border-left: 3px solid var(--danger);
+    color: var(--text-primary);
+}
+
+.callout-danger i {
+    color: var(--danger);
+}
+
+.callout-success {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid var(--success);
+    color: var(--text-primary);
+}
+
+.callout-success i {
+    color: var(--success);
+}
+
+/* ===== FOCUS STATES (Gold Standard) ===== */
+/* Custom maroon ring for accessible focus */
+*:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Remove default focus for mouse users */
+*:focus:not(:focus-visible) {
+    outline: none;
 }
 
 /* ===== PAGINATION COMPONENT ===== */
