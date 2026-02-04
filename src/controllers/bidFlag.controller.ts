@@ -370,21 +370,9 @@ export async function supersedeBid(req: Request, res: Response): Promise<void> {
 // Get all flagged bids for the current garage
 // ============================================
 export async function getAllFlaggedBids(req: Request, res: Response): Promise<void> {
-    const garageId = req.user!.userId;
+    const garageId = req.user!.userId; // userId IS the garage_id in bids table
 
     try {
-        // Get the garage_id from the user's garage record
-        const garageResult = await pool.query(`
-            SELECT garage_id FROM garages WHERE user_id = $1
-        `, [garageId]);
-
-        if (garageResult.rows.length === 0) {
-            res.status(404).json({ error: 'Garage not found' });
-            return;
-        }
-
-        const garage_id = garageResult.rows[0].garage_id;
-
         // Get all pending flagged bids for this garage with related info
         const flagsResult = await pool.query(`
             SELECT 
@@ -410,7 +398,7 @@ export async function getAllFlaggedBids(req: Request, res: Response): Promise<vo
             WHERE b.garage_id = $1
             AND bf.status IN ('pending', 'acknowledged')
             ORDER BY bf.is_urgent DESC, bf.created_at ASC
-        `, [garage_id]);
+        `, [garageId]);
 
         res.json({
             success: true,
