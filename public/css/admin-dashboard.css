@@ -48,6 +48,7 @@ body {
     font-size: 14px;
 }
 
+/* Gold Standard: Static premium auth logo - no decorative motion */
 .auth-logo {
     height: auto;
     width: auto;
@@ -57,32 +58,17 @@ body {
     border-radius: 12px;
     box-shadow:
         0 0 0 4px rgba(255, 255, 255, 0.3),
-        0 0 40px 8px rgba(141, 27, 61, 0.4),
-        0 0 80px 16px rgba(141, 27, 61, 0.2),
-        0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: logoFloat 3s ease-in-out infinite, logoGlow 2s ease-in-out infinite alternate;
-    position: relative;
-    z-index: 1;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.auth-logo::before {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border-radius: 27px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), transparent, rgba(255, 255, 255, 0.3));
-    z-index: -1;
-    animation: logoRotate 4s linear infinite;
+        0 0 40px 8px rgba(141, 27, 61, 0.35),
+        0 20px 40px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .auth-logo:hover {
-    transform: scale(1.08) translateY(-4px);
+    transform: scale(1.03);
     box-shadow:
-        0 0 0 6px rgba(255, 255, 255, 0.4),
-        0 0 60px 12px rgba(141, 27, 61, 0.5),
-        0 0 100px 24px rgba(141, 27, 61, 0.3),
-        0 30px 50px rgba(0, 0, 0, 0.35);
+        0 0 0 4px rgba(255, 255, 255, 0.35),
+        0 0 50px 10px rgba(141, 27, 61, 0.4),
+        0 24px 48px rgba(0, 0, 0, 0.3);
 }
 
 /* Shimmer effect removed to prevent glow overflow */
@@ -160,6 +146,7 @@ body {
     box-shadow: 0 10px 30px rgba(141, 27, 61, 0.4);
 }
 
+/* Gold Standard: Static sidebar logo - no decorative pulse */
 .sidebar-logo {
     height: auto;
     width: auto;
@@ -171,8 +158,7 @@ body {
     box-shadow:
         0 0 0 2px rgba(255, 255, 255, 0.3),
         0 4px 16px rgba(0, 0, 0, 0.2);
-    animation: sidebarLogoPulse 2.5s ease-in-out infinite;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sidebar-logo:hover {
@@ -182,67 +168,7 @@ body {
         0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-/* Keyframe Animations */
-@keyframes logoFloat {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-@keyframes logoGlow {
-    0% {
-        filter: brightness(1) drop-shadow(0 0 10px rgba(141, 27, 61, 0.3));
-    }
-
-    100% {
-        filter: brightness(1.1) drop-shadow(0 0 20px rgba(141, 27, 61, 0.5));
-    }
-}
-
-@keyframes logoRotate {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes shimmer {
-    0% {
-        left: -100%;
-    }
-
-    50%,
-    100% {
-        left: 100%;
-    }
-}
-
-@keyframes sidebarLogoPulse {
-
-    0%,
-    100% {
-        box-shadow:
-            0 0 0 2px rgba(255, 255, 255, 0.2),
-            0 0 20px 4px rgba(141, 27, 61, 0.3),
-            0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    50% {
-        box-shadow:
-            0 0 0 3px rgba(255, 255, 255, 0.3),
-            0 0 25px 6px rgba(141, 27, 61, 0.45),
-            0 4px 16px rgba(0, 0, 0, 0.35);
-    }
-}
+/* Note: Decorative keyframes (logoFloat, logoGlow, logoRotate, sidebarLogoPulse) removed per Gold Standard */
 
 /* App Container */
 .app-container {

@@ -19,6 +19,28 @@
             --glass-border: rgba(255, 255, 255, 0.15);
         }
 
+        /* Gold Standard: Custom focus states */
+        *:focus-visible {
+            outline: 2px solid #8D1B3D;
+            outline-offset: 2px;
+        }
+
+        button:focus-visible,
+        .btn:focus-visible,
+        .nav-item:focus-visible {
+            outline: 2px solid #8D1B3D;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(141, 27, 61, 0.15);
+        }
+
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: none;
+            border-color: #8D1B3D;
+            box-shadow: 0 0 0 3px rgba(141, 27, 61, 0.12);
+        }
+
         /* Hero Header */
         .support-hero {
             background: var(--vvip-gradient);
@@ -980,28 +1002,15 @@
                                             box-shadow: 0 16px 48px rgba(37, 211, 102, 0.35);
                                         }
 
+                                        /* Gold Standard: Static glow - no infinite animation */
                                         .wa-card-glow {
                                             position: absolute;
                                             top: -50%;
                                             right: -50%;
                                             width: 200%;
                                             height: 200%;
-                                            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-                                            animation: waGlow 3s ease-in-out infinite;
-                                        }
-
-                                        @keyframes waGlow {
-
-                                            0%,
-                                            100% {
-                                                opacity: 0.3;
-                                                transform: scale(1);
-                                            }
-
-                                            50% {
-                                                opacity: 0.6;
-                                                transform: scale(1.1);
-                                            }
+                                            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+                                            opacity: 0.4;
                                         }
 
                                         .wa-card-content {

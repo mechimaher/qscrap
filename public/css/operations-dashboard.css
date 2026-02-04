@@ -970,6 +970,7 @@ body {
     padding-top: 20px;
 }
 
+/* Gold Standard: Static premium login logo - no decorative motion */
 .login-logo {
     height: auto;
     width: auto;
@@ -979,42 +980,17 @@ body {
     border-radius: 12px;
     box-shadow:
         0 0 0 4px rgba(255, 255, 255, 0.3),
-        0 0 40px 8px rgba(141, 27, 61, 0.4),
-        0 0 80px 16px rgba(141, 27, 61, 0.2),
-        0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: loginLogoFloat 3s ease-in-out infinite, loginLogoGlow 2s ease-in-out infinite alternate;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        0 0 40px 8px rgba(141, 27, 61, 0.35),
+        0 20px 40px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .login-logo:hover {
-    transform: scale(1.08) translateY(-4px);
+    transform: scale(1.03);
     box-shadow:
-        0 0 0 6px rgba(255, 255, 255, 0.4),
-        0 0 60px 12px rgba(141, 27, 61, 0.5),
-        0 0 100px 24px rgba(141, 27, 61, 0.3),
-        0 30px 50px rgba(0, 0, 0, 0.35);
-}
-
-@keyframes loginLogoFloat {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-@keyframes loginLogoGlow {
-    0% {
-        filter: brightness(1) drop-shadow(0 0 10px rgba(141, 27, 61, 0.3));
-    }
-
-    100% {
-        filter: brightness(1.1) drop-shadow(0 0 20px rgba(141, 27, 61, 0.5));
-    }
+        0 0 0 4px rgba(255, 255, 255, 0.35),
+        0 0 50px 10px rgba(141, 27, 61, 0.4),
+        0 24px 48px rgba(0, 0, 0, 0.3);
 }
 
 .login-title {
@@ -1966,35 +1942,10 @@ body {
 
 /* ============================================
    PREMIUM VVIP ENHANCEMENTS
+   (Gold Standard: Decorative animations removed)
    ============================================ */
 
-/* ===== Login Logo Premium Effects ===== */
-.login-logo {
-    height: auto;
-    width: auto;
-    max-height: 80px;
-    max-width: 200px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    box-shadow:
-        0 0 0 4px rgba(255, 255, 255, 0.3),
-        0 0 40px 8px rgba(141, 27, 61, 0.4),
-        0 0 80px 16px rgba(141, 27, 61, 0.2),
-        0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: logoFloat 3s ease-in-out infinite, logoGlow 2s ease-in-out infinite alternate;
-    position: relative;
-    z-index: 1;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.login-logo:hover {
-    transform: scale(1.08) translateY(-4px);
-    box-shadow:
-        0 0 0 6px rgba(255, 255, 255, 0.4),
-        0 0 60px 12px rgba(141, 27, 61, 0.5),
-        0 0 100px 24px rgba(141, 27, 61, 0.3),
-        0 30px 50px rgba(0, 0, 0, 0.35);
-}
+/* Note: .login-logo is defined earlier with Gold Standard static styling */
 
 .login-header {
     text-align: center;
@@ -2004,28 +1955,6 @@ body {
 }
 
 /* Shimmer effect removed to prevent glow overflow */
-
-@keyframes logoFloat {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-@keyframes logoGlow {
-    0% {
-        filter: brightness(1) drop-shadow(0 0 10px rgba(141, 27, 61, 0.3));
-    }
-
-    100% {
-        filter: brightness(1.1) drop-shadow(0 0 20px rgba(141, 27, 61, 0.5));
-    }
-}
 
 @keyframes shimmerEffect {
     0% {
@@ -2038,7 +1967,7 @@ body {
     }
 }
 
-/* ===== Sidebar Logo Premium Effects ===== */
+/* Gold Standard: Static sidebar logo - no decorative pulse */
 .sidebar-logo-img {
     height: auto;
     width: auto;
@@ -2048,35 +1977,16 @@ body {
     box-shadow:
         0 0 0 2px rgba(255, 255, 255, 0.2),
         0 0 20px 4px rgba(141, 27, 61, 0.3),
-        0 4px 12px rgba(0, 0, 0, 0.3);
-    animation: sidebarLogoPulse 2.5s ease-in-out infinite;
-    transition: all 0.3s ease;
+        0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sidebar-logo-img:hover {
-    transform: scale(1.1) rotate(3deg);
+    transform: scale(1.05);
     box-shadow:
-        0 0 0 3px rgba(255, 255, 255, 0.3),
-        0 0 30px 6px rgba(141, 27, 61, 0.5),
-        0 8px 20px rgba(0, 0, 0, 0.4);
-}
-
-@keyframes sidebarLogoPulse {
-
-    0%,
-    100% {
-        box-shadow:
-            0 0 0 2px rgba(255, 255, 255, 0.2),
-            0 0 20px 4px rgba(141, 27, 61, 0.3),
-            0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    50% {
-        box-shadow:
-            0 0 0 3px rgba(255, 255, 255, 0.3),
-            0 0 25px 6px rgba(141, 27, 61, 0.45),
-            0 4px 16px rgba(0, 0, 0, 0.35);
-    }
+        0 0 0 2px rgba(255, 255, 255, 0.25),
+        0 0 24px 5px rgba(141, 27, 61, 0.4),
+        0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== Top Header Bar ===== */
