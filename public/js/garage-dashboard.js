@@ -53,6 +53,62 @@ let pendingDisputes = []; // Track disputes from customers
 let activeOrdersCount = 0; // Global tracker for badge
 let garageSupplierType = 'both'; // Cache garage supplier type (used/new/both)
 
+// ===== VVIP G-04: Human Status Labels =====
+const ORDER_STATUS_LABELS = {
+    pending_payment: { label: 'Awaiting Payment', color: '#F59E0B' },
+    confirmed: { label: 'Confirmed', color: '#22C55E' },
+    preparing: { label: 'Being Prepared', color: '#F59E0B' },
+    ready_for_pickup: { label: 'Ready for Pickup', color: '#8B5CF6' },
+    ready_for_collection: { label: 'Ready for Pickup', color: '#8B5CF6' },
+    collected: { label: 'Picked Up', color: '#3B82F6' },
+    in_transit: { label: 'On the Way', color: '#3B82F6' },
+    delivered: { label: 'Delivered', color: '#22C55E' },
+    completed: { label: 'Complete', color: '#22C55E' },
+    cancelled_by_customer: { label: 'Cancelled', color: '#EF4444' },
+    cancelled_by_garage: { label: 'Cancelled', color: '#EF4444' },
+    cancelled_by_ops: { label: 'Cancelled', color: '#EF4444' },
+    cancelled_by_undo: { label: 'Undone', color: '#6B7280' },
+    disputed: { label: 'Under Review', color: '#F59E0B' },
+    refunded: { label: 'Refunded', color: '#6B7280' }
+};
+
+function getOrderStatusLabel(status) {
+    return ORDER_STATUS_LABELS[status]?.label || status;
+}
+
+function getOrderStatusColor(status) {
+    return ORDER_STATUS_LABELS[status]?.color || '#6B7280';
+}
+
+// ===== VVIP G-01: Undo Order Function =====
+async function undoOrder(orderId, reason = 'User initiated undo') {
+    try {
+        const res = await fetch(`${API_URL}/orders/${orderId}/undo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showNotification(data.error || 'Undo failed', 'error');
+            return false;
+        }
+
+        showNotification('Order undone successfully', 'success');
+        loadOrders(); // Refresh orders list
+        loadStats();  // Refresh stats
+        return true;
+    } catch (err) {
+        console.error('Undo order failed:', err);
+        showNotification('Failed to undo order', 'error');
+        return false;
+    }
+}
+
 // Premium Feature Variables (must be declared before showDashboard call)
 let autoRefreshInterval = null;
 let lastActivityTime = Date.now();

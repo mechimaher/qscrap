@@ -110,6 +110,10 @@ v1Router.use('/notifications', notificationRoutes);
 v1Router.use('/admin', adminRoutes);
 v1Router.use('/addresses', addressRoutes);
 
+// Feature Flags (Admin/Ops - VVIP QA-SRE-S1)
+import featureFlagsRoutes from './featureFlags.routes';
+v1Router.use('/feature-flags', featureFlagsRoutes);
+
 
 // Vehicle Routes (My Vehicles / Family Fleet)
 import vehicleRoutes from './vehicle.routes';

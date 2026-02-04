@@ -9,7 +9,7 @@ import pool from '../config/db';
 import { getErrorMessage } from '../types';
 import { getDeliveryFeeForLocation } from './delivery.controller';
 import { catchAsync } from '../utils/catchAsync';
-import { createOrderFromBid } from '../services/order.service';
+import { createOrderFromBid, undoOrder } from '../services/order.service';
 import {
     OrderLifecycleService,
     OrderQueryService,
@@ -72,11 +72,46 @@ export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
         deliveryAddress: deliveryAddress
     });
 
+    // VVIP G-01: Include undo_deadline in response for client countdown
     res.json({
         message: 'Order created successfully',
         order_id: order.order_id,
         order_number: order.order_number,
-        total_amount: totalAmount
+        total_amount: totalAmount,
+        undo_deadline: order.undo_deadline
+    });
+});
+
+// ============================================
+// UNDO ORDER (VVIP G-01: 30-Second Grace Window)
+// ============================================
+
+/**
+ * Undo an order within 30-second grace window
+ * POST /api/orders/:order_id/undo
+ */
+export const undoOrderHandler = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { order_id } = req.params;
+    const userId = req.user!.userId;
+    const userType = req.user!.userType as 'customer' | 'garage';
+    const { reason } = req.body;
+
+    const result = await undoOrder(order_id, userId, userType, reason);
+
+    if (!result.success) {
+        // Use 409 Conflict for expired undo
+        const status = result.expired ? 409 : 400;
+        return res.status(status).json({
+            error: result.message,
+            code: result.error,
+            expired: result.expired
+        });
+    }
+
+    res.json({
+        success: true,
+        message: result.message,
+        order_status: result.order_status
     });
 });
 

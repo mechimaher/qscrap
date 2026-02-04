@@ -45,7 +45,7 @@ interface BadgeCountsContextValue {
 const BadgeCountsContext = createContext<BadgeCountsContextValue>({
     counts: DEFAULT_COUNTS,
     isLoading: true,
-    refresh: async () => {},
+    refresh: async () => { },
     requestsBadge: undefined,
     ordersBadge: undefined,
     profileBadge: undefined,
@@ -117,16 +117,27 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
             }));
         };
 
+        // Gap 1 Fix: order_status_updated (not order_status_update)
+        // Gap 2 Fix: Added bid_withdrawn listener
+        const handleBidWithdrawn = () => {
+            setCounts(prev => ({
+                ...prev,
+                requests: { ...prev.requests, with_bids: Math.max(0, prev.requests.with_bids - 1) },
+            }));
+        };
+
         socket.on('new_bid', handleNewBid);
-        socket.on('order_status_update', handleOrderUpdate);
+        socket.on('order_status_updated', handleOrderUpdate); // FIXED: was order_status_update
         socket.on('garage_counter_offer', handleCounterOffer);
         socket.on('notification', handleNotification);
+        socket.on('bid_withdrawn', handleBidWithdrawn); // NEW: Gap 2 fix
 
         return () => {
             socket.off('new_bid', handleNewBid);
-            socket.off('order_status_update', handleOrderUpdate);
+            socket.off('order_status_updated', handleOrderUpdate);
             socket.off('garage_counter_offer', handleCounterOffer);
             socket.off('notification', handleNotification);
+            socket.off('bid_withdrawn', handleBidWithdrawn);
         };
     }, [socket, fetchBadgeCounts]);
 
