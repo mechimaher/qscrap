@@ -69,6 +69,11 @@ v1Router.use('/orders', orderRoutes);
 
 v1Router.use('/subscriptions', subscriptionRoutes);
 v1Router.use('/cancellations', cancellationRoutes);
+
+// Fraud Prevention Center (Operations Dashboard) - singular 'cancellation' for frontend compat
+import cancellationFraudRoutes from './cancellation-fraud.routes';
+v1Router.use('/cancellation', cancellationFraudRoutes);
+
 v1Router.use('/dashboard', dashboardRoutes);
 v1Router.use('/negotiations', negotiationRoutes);
 v1Router.use('/disputes', disputeRoutes);
