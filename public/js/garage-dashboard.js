@@ -1206,12 +1206,12 @@ function renderPendingActions() {
 
     // Render cards
     container.innerHTML = allActions.map(action => {
-    } else if (action.type === 'counter-offer') {
-        return createCounterOfferCard(action.data);
-    } else {
-        return createDisputeActionCard(action.data);
-    }
-}).join('');
+        if (action.type === 'counter-offer') {
+            return createCounterOfferCard(action.data);
+        } else {
+            return createDisputeActionCard(action.data);
+        }
+    }).join('');
 }
 
 // Create premium counter-offer card
