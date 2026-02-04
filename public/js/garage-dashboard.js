@@ -3829,26 +3829,13 @@ async function loadPendingDisputes() {
     }
 }
 
-// ===== Flag & Supersede: Load flagged bids for correction =====
+// ===== Flag & Supersede: DEPRECATED Feb 2026 =====
+// Panel decision: Simpler UX - customers can just choose another bid
 async function loadFlaggedBids() {
-    try {
-        const res = await fetch(`${API_URL}/bids/flagged`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.flagged_bids && data.flagged_bids.length > 0) {
-            flaggedBids = data.flagged_bids;
-            // Update pending actions count
-            updatePendingActionsBadge();
-            // Re-render pending actions to include flagged bids
-            renderPendingActions();
-        } else {
-            flaggedBids = [];
-        }
-    } catch (err) {
-        console.error('[FlaggedBids] Failed to load:', err);
-    }
+    // Feature deprecated - keeping function stub for compatibility
+    console.log('[FlaggedBids] Feature deprecated (Feb 2026 panel decision)');
+    flaggedBids = [];
+    return;
 }
 
 // Create premium flagged bid card for garage to review and correct
