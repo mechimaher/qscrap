@@ -50,7 +50,6 @@ let dismissedRequests = JSON.parse(localStorage.getItem('dismissedRequests') || 
 let bidPhotos = [];
 let pendingCounterOffers = []; // Track counter-offers from customers
 let pendingDisputes = []; // Track disputes from customers
-
 let activeOrdersCount = 0; // Global tracker for badge
 let garageSupplierType = 'both'; // Cache garage supplier type (used/new/both)
 
@@ -591,8 +590,6 @@ async function showDashboard() {
         showToast(data.notification || `Driver ${data.driver_name} bringing back Order #${data.order_number}`, 'info');
     });
 
-
-
     // Load initial data
     await Promise.all([
         loadStats(),
@@ -609,8 +606,6 @@ async function showDashboard() {
 
     // Check for pending disputes
     loadPendingDisputes();
-
-
 
     // Update earnings badge (awaiting confirmations)
     updateEarningsBadge();
@@ -1182,7 +1177,6 @@ function renderPendingActions() {
     if (!container) return;
 
     const allActions = [
-        // Flagged bids removed - Feb 2026 panel decision for simpler UX
         ...pendingCounterOffers.map(co => ({ type: 'counter-offer', data: co })),
         ...pendingDisputes.map(d => ({ type: 'dispute', data: d }))
     ];
@@ -3553,7 +3547,6 @@ async function loadPendingDisputes() {
         console.error('Failed to load disputes:', err);
     }
 }
-
 
 // Update dispute badge counter
 // Update consolidated Orders badge (Active + Disputes merged)
