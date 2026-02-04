@@ -1,5 +1,4 @@
 import { Queue, Worker, Job } from 'bullmq';
-import { getRedisClient } from './redis';
 import logger from '../utils/logger';
 
 // ============================================
@@ -66,7 +65,9 @@ export async function scheduleRecurringJob(
     cronExpression: string
 ): Promise<boolean> {
     const queue = queues[queueName];
-    if (!queue) return false;
+    if (!queue) {
+        return false;
+    }
 
     try {
         await queue.add(jobName, data, {
@@ -92,7 +93,9 @@ export async function addJob(
     options?: { delay?: number; priority?: number }
 ): Promise<boolean> {
     const queue = queues[queueName];
-    if (!queue) return false;
+    if (!queue) {
+        return false;
+    }
 
     try {
         await queue.add(jobName, data, {
@@ -116,7 +119,9 @@ export function createJobWorker(
     processor: (job: Job) => Promise<void>
 ): Worker | null {
     const redisUrl = process.env.REDIS_URL;
-    if (!redisUrl) return null;
+    if (!redisUrl) {
+        return null;
+    }
 
     try {
         const url = new URL(redisUrl);
@@ -157,7 +162,9 @@ export async function getQueueStats(queueName: 'scheduled' | 'notifications'): P
     failed: number;
 } | null> {
     const queue = queues[queueName];
-    if (!queue) return null;
+    if (!queue) {
+        return null;
+    }
 
     try {
         const [waiting, active, completed, failed] = await Promise.all([
@@ -167,7 +174,7 @@ export async function getQueueStats(queueName: 'scheduled' | 'notifications'): P
             queue.getFailedCount()
         ]);
         return { waiting, active, completed, failed };
-    } catch (err) {
+    } catch (_err) {
         return null;
     }
 }
