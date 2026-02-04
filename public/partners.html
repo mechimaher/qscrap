@@ -34,33 +34,40 @@
         /* ===== Language Switcher ===== */
         .language-switcher {
             display: flex;
-            gap: 4px;
-            background: rgba(141, 27, 61, 0.08);
+            gap: 2px;
+            background: rgba(141, 27, 61, 0.06);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-radius: 100px;
-            padding: 4px;
+            padding: 3px;
             margin-right: 16px;
+            border: 1px solid rgba(141, 27, 61, 0.1);
         }
 
         .lang-btn {
-            padding: 8px 14px;
+            padding: 8px 16px;
             border: none;
             background: transparent;
-            color: var(--charcoal);
-            font-size: 13px;
-            font-weight: 600;
+            color: var(--slate);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
             cursor: pointer;
             border-radius: 100px;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: inherit;
         }
 
         .lang-btn:hover {
             color: var(--qatar-maroon);
+            background: rgba(141, 27, 61, 0.05);
         }
 
         .lang-btn.active {
             background: var(--qatar-maroon);
             color: var(--white);
+            box-shadow: 0 2px 8px rgba(141, 27, 61, 0.25);
         }
 
         /* ===== RTL Support ===== */
@@ -2601,8 +2608,8 @@
             <div class="nav-links-group">
                 <!-- Language Switcher -->
                 <div class="language-switcher">
-                    <button class="lang-btn" data-lang="ar">AR 🇶🇦</button>
-                    <button class="lang-btn active" data-lang="en">EN 🇬🇧</button>
+                    <button class="lang-btn" data-lang="ar">AR</button>
+                    <button class="lang-btn active" data-lang="en">EN</button>
                 </div>
                 <a href="/" class="nav-back-link">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
