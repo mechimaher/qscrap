@@ -472,10 +472,12 @@ function showMobileChat() {
 
 function switchSection(section) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    const navItem = document.querySelector(`[data-section="${section}"]`);
+    if (navItem) navItem.classList.add('active');
 
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+    const sectionEl = document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1));
+    if (sectionEl) sectionEl.classList.add('active');
 
     // Load section data
     if (section === 'orders') loadOrders();
