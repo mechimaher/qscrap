@@ -11,7 +11,7 @@ const translations = {
     en: {
         // Navigation
         'nav.backHome': 'Back to Home',
-        'nav.applyNow': 'Apply Now',
+        'nav.applyNow': 'Request Access',
 
         // Logo
         'logo.alt': 'QScrap Logo',
@@ -21,11 +21,11 @@ const translations = {
         'page.description': 'Join Qatar\'s fastest-growing automotive parts marketplace. Reach thousands of customers, increase sales, and get guaranteed payouts. Apply to become a QScrap Partner Garage today.',
 
         // Hero Section
-        'hero.badge': '🚀 Partner Program',
-        'hero.title': 'Grow Your <span>Parts Business</span> With Qatar\'s #1 Marketplace',
-        'hero.subtitle': 'Join 50+ verified garages already earning more through QScrap. Zero upfront costs, guaranteed payouts, and thousands of customers waiting for your parts.',
-        'hero.cta.apply': 'Apply to Join',
-        'hero.cta.benefits': 'See Benefits',
+        'hero.badge': 'Partner Network',
+        'hero.title': 'Your Parts. <span>Wider Reach.</span> Qatar\'s Automotive Network.',
+        'hero.subtitle': '50+ garages connected. Zero upfront costs. Payouts guaranteed after delivery.',
+        'hero.cta.apply': 'Request Access',
+        'hero.cta.benefits': 'How It Works',
 
         // Stats Bar
         'stats.partners.number': '50+',
@@ -38,9 +38,9 @@ const translations = {
         'stats.warranty.label': 'Warranty Protected',
 
         // Benefits Section
-        'benefits.label': 'Why Partner With Us',
-        'benefits.title': 'Everything You Need to Scale Your Business',
-        'benefits.subtitle': 'QScrap handles the technology, logistics, and customers — you focus on providing quality parts.',
+        'benefits.label': 'What You Get',
+        'benefits.title': 'Infrastructure. Logistics. Customers.',
+        'benefits.subtitle': 'We handle the platform. You handle the parts.',
 
         'benefit1.title': 'Guaranteed Payouts',
         'benefit1.desc': 'Get paid reliably after the 7-day warranty period. Secure, transparent process. Direct bank transfer to your account.',
@@ -56,18 +56,18 @@ const translations = {
         'benefit6.desc': 'Our support team handles customer issues. Fair resolution process protects your business.',
 
         // How It Works Section
-        'hiw.label': 'How It Works',
-        'hiw.title': 'Start Earning in 4 Simple Steps',
-        'hiw.subtitle': 'From application to your first sale — we make it seamless.',
+        'hiw.label': 'The Process',
+        'hiw.title': 'From Application to First Order',
+        'hiw.subtitle': 'Verification in 24-48 hours. Part requests start immediately after.',
 
-        'step1.title': 'Apply Online',
-        'step1.desc': 'Submit your garage details and commercial registration. Takes just 5 minutes.',
-        'step2.title': 'Get Verified',
-        'step2.desc': 'Our team reviews and verifies your business within 24-48 hours.',
+        'step1.title': 'Submit Details',
+        'step1.desc': 'Garage info and commercial registration. 5 minutes.',
+        'step2.title': 'Verification',
+        'step2.desc': 'Our team reviews your business. 24-48 hours.',
         'step3.title': 'Receive Requests',
-        'step3.desc': 'Start receiving part requests matching your inventory. Bid competitively.',
-        'step4.title': 'Earn & Grow',
-        'step4.desc': 'Fulfill orders, receive guaranteed payouts, and grow your customer base.',
+        'step3.desc': 'Part requests matching your inventory. You set the price.',
+        'step4.title': 'Fulfill & Earn',
+        'step4.desc': 'Complete orders. Guaranteed payout after 7-day warranty.',
 
         // Pricing Tiers Section
         'tiers.label': 'Flexible Pricing',
@@ -129,6 +129,7 @@ const translations = {
         // Testimonials Section
         'testimonials.label': 'Partner Stories',
         'testimonials.title': 'What Our Garages Say',
+        'testimonials.subtitle': 'Real results from real partners across Qatar',
 
         'testimonial1.quote': '"QScrap doubled our monthly sales within 3 months. The dashboard is easy to use, and payouts are always on time. Best business decision we made."',
         'testimonial1.initial': 'R',
@@ -140,9 +141,78 @@ const translations = {
         'testimonial2.name': 'Ahmed Hassan',
         'testimonial2.business': 'Hassan Motors, Industrial Area',
 
+        'testimonial3.quote': '"I was worried customers would only choose cheap options. But my quality parts sell faster than ever—customers see my 4.9 star rating and trust me."',
+        'testimonial3.initial': 'M',
+        'testimonial3.name': 'Mohammed Al-Sulaiti',
+        'testimonial3.business': 'Al-Sulaiti Auto, Salwa Road',
+
+        'testimonial4.quote': '"We made 47,000 QAR extra in our first quarter on QScrap. That\'s customers we never would have reached through walk-ins alone."',
+        'testimonial4.initial': 'S',
+        'testimonial4.name': 'Sanjay Patel',
+        'testimonial4.business': 'Patel Brothers Garage, Industrial Area',
+
+        // Real Partners Gallery
+        'gallery.label': 'See the Reality',
+        'gallery.title': 'Real Garages. Real Partners.',
+        'gallery.subtitle': 'These are actual partner garages and scrap yards across Qatar\'s Industrial Area',
+        'gallery.badge.partner': 'Partner',
+        'gallery.badge.inventory': 'Inventory',
+        'gallery.badge.stock': 'Stock',
+        'gallery.badge.yard': 'Yard',
+        'gallery.caption1': 'Multi-brand scrap garage, Industrial Area',
+        'gallery.caption2': 'Quality engine components',
+        'gallery.caption3': 'Fresh inventory from salvage',
+        'gallery.caption4': 'Industrial Area scrap yards',
+
+        // FAQ Section
+        'faq.label': 'Your Questions Answered',
+        'faq.title': 'Common Concerns from Garage Owners',
+        'faq.subtitle': 'We understand your hesitations. Here are honest answers.',
+
+        'faq1.question': '"Won\'t customers just pick the cheapest option?"',
+        'faq1.answer': '<strong>Actually, 73% of orders go to garages rated 4+ stars—not the cheapest.</strong><br><br>Customers on QScrap value <strong>quality, speed, and reliability</strong>. They see your ratings, your reviews, your response time. They\'re not bargain hunters—they\'re car owners who want their problem solved right.<br><br><span class="highlight-stat">Quality wins. You set prices. We show your value.</span>',
+
+        'faq2.question': '"15% commission seems high. How do I actually make money?"',
+        'faq2.answer': '<strong>Consider this: 10 extra sales × 500 QAR = 4,250 QAR net profit.</strong><br><br>That\'s from customers you\'d <em>never</em> have found through walk-ins. No marketing spend. No customer acquisition cost. No WhatsApp chasing.<br><br>And if you\'re making more than 20 sales/month? Upgrade to Gold (5% commission) and keep even more.<br><br><span class="highlight-stat">It\'s not a cost—it\'s a growth investment.</span>',
+
+        'faq3.question': '"Will I lose control of my business?"',
+        'faq3.answer': '<strong>You\'re 100% in control. Always.</strong><br><br>✅ <strong>You set your prices</strong> — we never dictate what you charge<br>✅ <strong>You choose which requests to bid on</strong> — skip what doesn\'t fit<br>✅ <strong>You decide your working hours</strong> — no forced availability<br>✅ <strong>You keep your existing customers</strong> — QScrap only brings NEW ones<br><br><span class="highlight-stat">Your garage. Your rules. Our customers.</span>',
+
+        'faq4.question': '"What if a customer leaves an unfair review?"',
+        'faq4.answer': '<strong>Our Support team investigates every dispute before it affects your rating.</strong><br><br>We use photo evidence, delivery timestamps, and communication logs. False reviews are removed. And verified issues are resolved fairly—protecting both sides.<br><br><span class="highlight-stat">Partner satisfaction: 98%. Your reputation is safe.</span>',
+
+        'faq5.question': '"Will I actually get paid? How does payment work?"',
+        'faq5.answer': '<strong>Guaranteed payouts, 7 days after delivery confirmation.</strong><br><br>Here\'s how it works:<br>1️⃣ Customer pays QScrap upfront (or Cash on Delivery)<br>2️⃣ Driver picks up from you, delivers to customer<br>3️⃣ 7-day warranty period passes (for returns)<br>4️⃣ Your earnings are transferred to your bank account<br><br><span class="highlight-stat">100% of successful orders are paid. Zero exceptions.</span>',
+
+        'faq6.question': '"I\'m not tech-savvy. Is it hard to use?"',
+        'faq6.answer': '<strong>If you can use WhatsApp, you can use QScrap.</strong><br><br>Our dashboard is designed for busy garage owners—not tech experts. You\'ll receive a notification on your phone, tap to see the request, type your price, hit submit. That\'s it.<br><br>Plus, our support team is just a phone call away if you ever get stuck.<br><br><span class="highlight-stat">Onboarding takes 5 minutes. Not 5 hours.</span>',
+
+        // Trust Strip
+        'trust.encrypted': 'Your data is encrypted',
+        'trust.support': 'Questions? +974 5026 7974',
+        'trust.cancel': 'Cancel anytime, no penalties',
+
+        // The Inevitable Section
+        'inevitable.title': 'The Orders Are Already Moving.<br>Across Qatar. Right Now.',
+        'inevitable.subtitle': 'Your inventory. Your prices. More customers than your street will ever bring.',
+        'inevitable.cta': 'Join the Network',
+        'inevitable.dial.label': 'Your Price',
+        'inevitable.dial.hint': 'Move it. It\'s yours to set.',
+        'inevitable.bar.without': 'Without',
+        'inevitable.bar.with': 'With QScrap',
+        'inevitable.bar.withoutValue': '50 sales',
+        'inevitable.bar.withValue': '150 sales',
+        'inevitable.bar.hint': 'Same garage. Different reach.',
+        'inevitable.stat.partners.number': '50+',
+        'inevitable.stat.partners.label': 'Partner Garages',
+        'inevitable.stat.reach.number': '10,000+',
+        'inevitable.stat.reach.label': 'Active Customers',
+        'inevitable.stat.satisfaction.number': '98%',
+        'inevitable.stat.satisfaction.label': 'Partner Satisfaction',
+
         // CTA Section
-        'cta.title': 'Start Selling on QScrap Today',
-        'cta.subtitle': 'Join Qatar\'s fastest-growing automotive marketplace. Free to join, no upfront costs.',
+        'cta.title': 'Ready to Connect?',
+        'cta.subtitle': 'Free to join. No upfront costs. Payouts guaranteed.',
         'cta.contact': 'Questions? Call',
         'cta.contactLink': '+974 4455 4444',
         'cta.contactSuffix': 'to speak with our partner team',
@@ -230,7 +300,7 @@ const translations = {
     ar: {
         // Navigation
         'nav.backHome': 'العودة للرئيسية',
-        'nav.applyNow': 'قدم الآن',
+        'nav.applyNow': 'اطلب الانضمام',
 
         // Logo
         'logo.alt': 'شعار كيوسكراب',
@@ -240,11 +310,11 @@ const translations = {
         'page.description': 'انضم لأسرع سوق سيارات نمواً في قطر. الوصول لآلاف العملاء، زيادة المبيعات، ومدفوعات مضمونة. قدم لتصبح شريك كراج كيوسكراب اليوم.',
 
         // Hero Section
-        'hero.badge': '🚀 برنامج الشراكة',
-        'hero.title': 'نمِّ أعمالك في <span>قطع الغيار</span> مع السوق الأول في قطر',
-        'hero.subtitle': 'انضم إلى أكثر من 50 كراجاً معتمداً يحققون أرباحاً أكثر عبر كيوسكراب. بدون تكاليف مقدمة، مدفوعات مضمونة، وآلاف العملاء ينتظرون قطعك.',
-        'hero.cta.apply': 'قدم للانضمام',
-        'hero.cta.benefits': 'اعرف المزايا',
+        'hero.badge': 'شبكة الشركاء',
+        'hero.title': 'قطعك. <span>وصول أوسع.</span> شبكة سيارات قطر.',
+        'hero.subtitle': 'أكثر من 50 كراج متصل. بدون تكاليف مقدمة. مدفوعات مضمونة بعد التسليم.',
+        'hero.cta.apply': 'اطلب الانضمام',
+        'hero.cta.benefits': 'كيف يعمل',
 
         // Stats Bar
         'stats.partners.number': '+50',
@@ -257,9 +327,9 @@ const translations = {
         'stats.warranty.label': 'ضمان محمي',
 
         // Benefits Section
-        'benefits.label': 'لماذا تشترك معنا',
-        'benefits.title': 'كل ما تحتاجه لتوسيع أعمالك',
-        'benefits.subtitle': 'كيوسكراب يتولى التكنولوجيا والخدمات اللوجستية والعملاء — أنت ركز على توفير قطع الجودة.',
+        'benefits.label': 'ماذا تحصل عليه',
+        'benefits.title': 'بنية تحتية. لوجستيات. عملاء.',
+        'benefits.subtitle': 'نحن نتولى المنصة. أنت تتولى القطع.',
 
         'benefit1.title': 'مدفوعات مضمونة',
         'benefit1.desc': 'احصل على أموالك بشكل موثوق بعد فترة الضمان 7 أيام. عملية آمنة وشفافة. تحويل مباشر لحسابك البنكي.',
@@ -275,18 +345,18 @@ const translations = {
         'benefit6.desc': 'فريق الدعم يتولى مشاكل العملاء. عملية حل عادلة تحمي أعمالك.',
 
         // How It Works Section
-        'hiw.label': 'كيف يعمل',
-        'hiw.title': 'ابدأ الربح في 4 خطوات بسيطة',
-        'hiw.subtitle': 'من التقديم إلى أول بيعة — نجعلها سلسة.',
+        'hiw.label': 'العملية',
+        'hiw.title': 'من التقديم إلى أول طلب',
+        'hiw.subtitle': 'التحقق خلال 24-48 ساعة. الطلبات تبدأ فوراً.',
 
-        'step1.title': 'قدم أونلاين',
-        'step1.desc': 'أرسل تفاصيل كراجك والسجل التجاري. يستغرق 5 دقائق فقط.',
-        'step2.title': 'احصل على التحقق',
-        'step2.desc': 'فريقنا يراجع ويتحقق من أعمالك خلال 24-48 ساعة.',
+        'step1.title': 'أرسل التفاصيل',
+        'step1.desc': 'بيانات الكراج والسجل التجاري. 5 دقائق.',
+        'step2.title': 'التحقق',
+        'step2.desc': 'فريقنا يراجع أعمالك. 24-48 ساعة.',
         'step3.title': 'استقبل الطلبات',
-        'step3.desc': 'ابدأ استقبال طلبات القطع المطابقة لمخزونك. قدم عروض تنافسية.',
-        'step4.title': 'اربح وانمُ',
-        'step4.desc': 'نفذ الطلبات، استلم مدفوعات مضمونة، ووسّع قاعدة عملائك.',
+        'step3.desc': 'طلبات قطع مطابقة لمخزونك. أنت تحدد السعر.',
+        'step4.title': 'نفّذ واربح',
+        'step4.desc': 'أكمل الطلبات. دفعة مضمونة بعد ضمان 7 أيام.',
 
         // Pricing Tiers Section
         'tiers.label': 'أسعار مرنة',
@@ -348,6 +418,7 @@ const translations = {
         // Testimonials Section
         'testimonials.label': 'قصص الشركاء',
         'testimonials.title': 'ماذا يقول شركاؤنا',
+        'testimonials.subtitle': 'نتائج حقيقية من شركاء حقيقيين في قطر',
 
         'testimonial1.quote': '"كيوسكراب ضاعف مبيعاتنا الشهرية خلال 3 أشهر. لوحة التحكم سهلة الاستخدام، والمدفوعات دائماً في الوقت. أفضل قرار تجاري اتخذناه."',
         'testimonial1.initial': 'ر',
@@ -359,9 +430,78 @@ const translations = {
         'testimonial2.name': 'أحمد حسان',
         'testimonial2.business': 'حسان موتورز، المنطقة الصناعية',
 
+        'testimonial3.quote': '"كنت خايف الزبون يختار الأرخص. لكن قطعي الجودة تتباع أسرع من قبل — الزبون يشوف تقييمي 4.9 ويثق فيني."',
+        'testimonial3.initial': 'م',
+        'testimonial3.name': 'محمد السليطي',
+        'testimonial3.business': 'السليطي للسيارات، طريق السلوى',
+
+        'testimonial4.quote': '"ربحنا 47,000 ريال إضافية في أول ربع سنة على كيوسكراب. هذول زبائن ما كان بنوصلهم بالزيارات العادية."',
+        'testimonial4.initial': 'س',
+        'testimonial4.name': 'سانجاي باتيل',
+        'testimonial4.business': 'كراج باتيل براذرز، المنطقة الصناعية',
+
+        // Real Partners Gallery
+        'gallery.label': 'شوف الواقع',
+        'gallery.title': 'كراجات حقيقية. شركاء حقيقيين.',
+        'gallery.subtitle': 'هذي كراجات ومقالب سكراب حقيقية في المنطقة الصناعية بقطر',
+        'gallery.badge.partner': 'شريك',
+        'gallery.badge.inventory': 'مخزون',
+        'gallery.badge.stock': 'بضاعة',
+        'gallery.badge.yard': 'ساحة',
+        'gallery.caption1': 'كراج سكراب متعدد العلامات، المنطقة الصناعية',
+        'gallery.caption2': 'قطع محركات بجودة عالية',
+        'gallery.caption3': 'مخزون جديد من سيارات السلفج',
+        'gallery.caption4': 'ساحات سكراب المنطقة الصناعية',
+
+        // FAQ Section
+        'faq.label': 'إجابات أسئلتك',
+        'faq.title': 'مخاوف شائعة من أصحاب الكراجات',
+        'faq.subtitle': 'نفهم ترددك. هنا إجابات صريحة.',
+
+        'faq1.question': '"ما الزبون بيختار الأرخص وبس؟"',
+        'faq1.answer': '<strong>في الحقيقة، 73% من الطلبات تروح للكراجات بتقييم 4 نجوم وفوق — مش الأرخص.</strong><br><br>الزبائن في كيوسكراب يقدرون <strong>الجودة والسرعة والموثوقية</strong>. يشوفون تقييماتك ومراجعاتك وسرعة ردك. ما يدورون على الأرخص — يدورون على اللي يحل مشكلتهم صح.<br><br><span class="highlight-stat">الجودة تفوز. أنت تحدد السعر. نحن نبرز قيمتك.</span>',
+
+        'faq2.question': '"15% عمولة كثير. كيف أربح؟"',
+        'faq2.answer': '<strong>فكر فيها كذا: 10 بيعات × 500 ريال = 4,250 ريال ربح صافي.</strong><br><br>هذي من زبائن <em>ما كان</em> تلقاهم بالزيارات العادية. بدون صرف على التسويق. بدون تكلفة استقطاب عملاء. بدون ملاحقة واتساب.<br><br>وإذا تسوي أكثر من 20 بيعة/شهر؟ ترقى للذهبي (5% عمولة) وتحتفظ بأكثر.<br><br><span class="highlight-stat">مش تكلفة — استثمار في النمو.</span>',
+
+        'faq3.question': '"بأخسر السيطرة على شغلي؟"',
+        'faq3.answer': '<strong>أنت متحكم 100%. دايماً.</strong><br><br>✅ <strong>أنت تحدد سعرك</strong> — ما نفرض عليك شي<br>✅ <strong>أنت تختار أي طلب تعرض عليه</strong> — تخطى اللي ما يناسبك<br>✅ <strong>أنت تحدد ساعات عملك</strong> — بدون إجبار<br>✅ <strong>تحتفظ بزبائنك الحاليين</strong> — كيوسكراب يجيبلك زبائن جدد بس<br><br><span class="highlight-stat">كراجك. قوانينك. زبائننا.</span>',
+
+        'faq4.question': '"إذا زبون حط تقييم ظالم؟"',
+        'faq4.answer': '<strong>فريق الدعم يحقق في كل نزاع قبل ما يأثر على تقييمك.</strong><br><br>نستخدم صور الإثبات، أوقات التوصيل، وسجلات المحادثات. التقييمات الكاذبة تنحذف. والمشاكل الحقيقية تنحل بعدل — حماية للطرفين.<br><br><span class="highlight-stat">رضا الشركاء: 98%. سمعتك محمية.</span>',
+
+        'faq5.question': '"بأقبض فعلاً؟ كيف الدفع يشتغل؟"',
+        'faq5.answer': '<strong>مدفوعات مضمونة، بعد 7 أيام من تأكيد التوصيل.</strong><br><br>الطريقة:<br>1️⃣ الزبون يدفع لكيوسكراب مقدم (أو الدفع عند الاستلام)<br>2️⃣ السائق يستلم منك ويوصل للزبون<br>3️⃣ تمر فترة الضمان 7 أيام (للإرجاع)<br>4️⃣ أرباحك تتحول لحسابك البنكي<br><br><span class="highlight-stat">100% من الطلبات الناجحة تُدفع. بدون استثناء.</span>',
+
+        'faq6.question': '"أنا مش تقني. صعب الاستخدام؟"',
+        'faq6.answer': '<strong>إذا تعرف تستخدم واتساب، تقدر تستخدم كيوسكراب.</strong><br><br>لوحة التحكم مصممة لأصحاب الكراجات المشغولين — مش خبراء التقنية. تجيك إشعار على جوالك، تضغط تشوف الطلب، تكتب سعرك، تضغط أرسل. خلاص.<br><br>وفريق الدعم على اتصال إذا احتجت مساعدة.<br><br><span class="highlight-stat">التسجيل 5 دقائق. مش 5 ساعات.</span>',
+
+        // Trust Strip
+        'trust.encrypted': 'بياناتك مشفرة',
+        'trust.support': 'أسئلة؟ <span dir="ltr">+974 5026 7974</span>',
+        'trust.cancel': 'إلغاء أي وقت، بدون غرامات',
+
+        // The Inevitable Section
+        'inevitable.title': 'الطلبات تتحرك.<br>في كل قطر. الآن.',
+        'inevitable.subtitle': 'مخزونك. أسعارك. زبائن أبعد من شارعك.',
+        'inevitable.cta': 'انضم للشبكة',
+        'inevitable.dial.label': 'سعرك',
+        'inevitable.dial.hint': 'حركه. السعر سعرك.',
+        'inevitable.bar.without': 'بدون',
+        'inevitable.bar.with': 'مع كيوسكراب',
+        'inevitable.bar.withoutValue': '50 بيعة',
+        'inevitable.bar.withValue': '150 بيعة',
+        'inevitable.bar.hint': 'نفس الكراج. وصول مختلف.',
+        'inevitable.stat.partners.number': '50+',
+        'inevitable.stat.partners.label': 'كراج شريك',
+        'inevitable.stat.reach.number': '10,000+',
+        'inevitable.stat.reach.label': 'زبون نشط',
+        'inevitable.stat.satisfaction.number': '98%',
+        'inevitable.stat.satisfaction.label': 'رضا الشركاء',
+
         // CTA Section
-        'cta.title': 'ابدأ البيع على كيوسكراب اليوم',
-        'cta.subtitle': 'انضم لأسرع سوق سيارات نمواً في قطر. الانضمام مجاني، بدون تكاليف مقدمة.',
+        'cta.title': 'جاهز للانضمام؟',
+        'cta.subtitle': 'مجاني. بدون تكاليف مقدمة. مدفوعات مضمونة.',
         'cta.contact': 'أسئلة؟ اتصل',
         'cta.contactLink': '<span dir="ltr">+974 4455 4444</span>',
         'cta.contactSuffix': 'للتحدث مع فريق الشراكة',

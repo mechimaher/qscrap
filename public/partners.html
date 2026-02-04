@@ -611,6 +611,496 @@
             font-weight: 500;
         }
 
+        /* ===== The Inevitable Section ===== */
+        :root {
+            --inevitable-bg-start: #4A0E20;
+            --inevitable-bg-end: #8B1538;
+            --inevitable-gold: #C9A227;
+            --inevitable-gold-soft: #D4B866;
+            --inevitable-gold-bright: #FFD700;
+            --flow-direction: 1;
+            --content-align: left;
+            --cta-anchor: flex-end;
+        }
+
+        html[dir="rtl"] {
+            --flow-direction: -1;
+            --content-align: right;
+            --cta-anchor: flex-start;
+        }
+
+        .inevitable-section {
+            position: relative;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--inevitable-bg-start) 0%, var(--inevitable-bg-end) 100%);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 80px 24px;
+        }
+
+        /* Map Visualization Layer */
+        .inevitable-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .inevitable-svg {
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .inevitable-section.in-view .inevitable-svg {
+            opacity: 1;
+        }
+
+        /* Network Nodes */
+        .network-node {
+            fill: rgba(201, 162, 39, 0.3);
+            stroke: var(--inevitable-gold);
+            stroke-width: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        .network-node:hover {
+            fill: rgba(201, 162, 39, 0.6);
+            transform: scale(1.1);
+        }
+
+        .network-node.central {
+            fill: var(--inevitable-gold-bright);
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
+            animation: centralPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes centralPulse {
+
+            0%,
+            100% {
+                opacity: 0.9;
+                filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
+            }
+
+            50% {
+                opacity: 1;
+                filter: drop-shadow(0 0 35px rgba(255, 215, 0, 0.9));
+            }
+        }
+
+        /* Connection Lines */
+        .connection-line {
+            stroke: var(--inevitable-gold-soft);
+            stroke-width: 1;
+            stroke-opacity: 0.4;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            transition: stroke-dashoffset 1.5s ease-out;
+        }
+
+        .inevitable-section.in-view .connection-line {
+            stroke-dashoffset: 0;
+        }
+
+        /* Flow Particles - Subtle, not aggressive */
+        .flow-particle {
+            fill: var(--inevitable-gold);
+            opacity: 0;
+            animation: flowParticleLTR 6s ease-in-out infinite;
+        }
+
+        @keyframes flowParticleLTR {
+            0% {
+                transform: translateX(calc(-50px * var(--flow-direction)));
+                opacity: 0;
+            }
+
+            30% {
+                opacity: 0.8;
+            }
+
+            70% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translateX(calc(50px * var(--flow-direction)));
+                opacity: 0;
+            }
+        }
+
+        html[dir="rtl"] .flow-particle {
+            animation: flowParticleRTL 6s ease-in-out infinite;
+        }
+
+        @keyframes flowParticleRTL {
+            0% {
+                transform: translateX(50px);
+                opacity: 0;
+            }
+
+            30% {
+                opacity: 0.8;
+            }
+
+            70% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translateX(-50px);
+                opacity: 0;
+            }
+        }
+
+        /* Content Card */
+        .inevitable-content {
+            position: relative;
+            z-index: 10;
+            max-width: 700px;
+            text-align: center;
+            padding: 48px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(30px);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .inevitable-section.in-view .inevitable-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Direction-aware content alignment */
+        html[dir="rtl"] .inevitable-content {
+            text-align: var(--content-align);
+        }
+
+        .inevitable-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        html[dir="rtl"] .inevitable-title {
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            line-height: 1.3;
+            letter-spacing: 0;
+        }
+
+        .inevitable-subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 32px;
+        }
+
+        html[dir="rtl"] .inevitable-subtitle {
+            font-family: 'Cairo', sans-serif;
+            line-height: 1.8;
+        }
+
+        .inevitable-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--inevitable-bg-start);
+            background: var(--inevitable-gold);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .inevitable-cta:hover {
+            background: var(--inevitable-gold-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(201, 162, 39, 0.4);
+        }
+
+        /* Price Dial */
+        .price-dial-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+        }
+
+        .price-dial-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .price-dial-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--inevitable-gold);
+            margin-bottom: 16px;
+        }
+
+        .price-dial-input {
+            width: 200px;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .price-dial-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--inevitable-gold);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .price-dial-input::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .price-dial-hint {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 12px;
+        }
+
+        /* Volume Comparison Bars */
+        .volume-comparison {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 500px;
+            margin: 40px auto 0;
+        }
+
+        .volume-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        html[dir="rtl"] .volume-bar-container {
+            flex-direction: row-reverse;
+        }
+
+        .volume-bar-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            width: 80px;
+            text-align: var(--content-align);
+            flex-shrink: 0;
+        }
+
+        .volume-bar-track {
+            flex: 1;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .volume-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transform: scaleX(0);
+            transform-origin: left center;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        html[dir="rtl"] .volume-bar-fill {
+            transform-origin: right center;
+        }
+
+        .inevitable-section.in-view .volume-bar-fill {
+            transform: scaleX(1);
+        }
+
+        .volume-bar-fill.without {
+            width: 33%;
+            background: rgba(255, 255, 255, 0.4);
+            transition-delay: 0.3s;
+        }
+
+        .volume-bar-fill.with {
+            width: 100%;
+            background: linear-gradient(90deg, var(--inevitable-gold) 0%, var(--inevitable-gold-bright) 100%);
+            transition-delay: 0.6s;
+        }
+
+        html[dir="rtl"] .volume-bar-fill.with {
+            background: linear-gradient(-90deg, var(--inevitable-gold) 0%, var(--inevitable-gold-bright) 100%);
+        }
+
+        .volume-bar-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            width: 100px;
+            text-align: right;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            transition-delay: 1.2s;
+        }
+
+        html[dir="rtl"] .volume-bar-value {
+            text-align: left;
+        }
+
+        .inevitable-section.in-view .volume-bar-value {
+            opacity: 1;
+        }
+
+        .volume-bar-value.highlight {
+            color: var(--inevitable-gold);
+        }
+
+        .volume-comparison-hint {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            transition-delay: 1.5s;
+        }
+
+        .inevitable-section.in-view .volume-comparison-hint {
+            opacity: 1;
+        }
+
+        /* Stats Bar */
+        .inevitable-stats {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 48px;
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+        }
+
+        .inevitable-stat {
+            text-align: center;
+        }
+
+        .inevitable-stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--inevitable-gold);
+            display: block;
+        }
+
+        .inevitable-stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .inevitable-section {
+                min-height: auto;
+                padding: 60px 16px;
+            }
+
+            .inevitable-content {
+                padding: 32px 20px;
+            }
+
+            .inevitable-title {
+                font-size: 28px;
+            }
+
+            .inevitable-subtitle {
+                font-size: 16px;
+            }
+
+            .inevitable-stats {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .price-dial-container {
+                padding: 16px;
+            }
+
+            .price-dial-value {
+                font-size: 28px;
+            }
+
+            .volume-bar-label {
+                width: 60px;
+                font-size: 11px;
+            }
+
+            .volume-bar-value {
+                width: 70px;
+                font-size: 12px;
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            .inevitable-section * {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .inevitable-svg,
+            .inevitable-content,
+            .volume-bar-fill,
+            .volume-bar-value,
+            .volume-comparison-hint {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            .connection-line {
+                stroke-dashoffset: 0 !important;
+            }
+
+            .flow-particle {
+                display: none;
+            }
+        }
+
         /* ===== Benefits Section ===== */
         .benefits {
             padding: 100px 24px;
@@ -896,6 +1386,121 @@
             background: var(--gold-dark);
         }
 
+        /* ===== Real Partners Gallery ===== */
+        .partners-gallery {
+            padding: 80px 24px;
+            background: linear-gradient(135deg, var(--qatar-maroon) 0%, #6B1530 100%);
+            overflow: hidden;
+        }
+
+        .partners-gallery .section-header {
+            margin-bottom: 48px;
+        }
+
+        .partners-gallery .section-label {
+            background: rgba(201, 162, 39, 0.2);
+            color: var(--gold);
+        }
+
+        .partners-gallery .section-title {
+            color: var(--white);
+        }
+
+        .partners-gallery .section-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .gallery-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .gallery-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-card .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: var(--white);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .gallery-card:hover .overlay {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .gallery-card .overlay span {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .gallery-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        html[dir="rtl"] .gallery-badge {
+            right: auto;
+            left: 12px;
+        }
+
+        @media (max-width: 992px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .partners-gallery {
+                padding: 60px 16px;
+            }
+        }
+
         /* ===== Testimonials ===== */
         .testimonials {
             padding: 100px 24px;
@@ -906,9 +1511,10 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 32px;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
+
 
         .testimonial-card {
             background: var(--white);
@@ -955,6 +1561,171 @@
         .testimonial-info p {
             font-size: 14px;
             color: var(--slate);
+        }
+
+        /* ===== FAQ Section ===== */
+        .faq-section {
+            padding: 100px 24px;
+            background: var(--white);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: var(--mist);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid var(--silver);
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: var(--qatar-maroon);
+            box-shadow: 0 4px 20px rgba(141, 27, 61, 0.08);
+        }
+
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px;
+            cursor: pointer;
+            gap: 16px;
+        }
+
+        .faq-question h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--charcoal);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .faq-question h3 .faq-emoji {
+            font-size: 20px;
+        }
+
+        .faq-toggle {
+            width: 28px;
+            height: 28px;
+            background: var(--qatar-maroon-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .faq-toggle svg {
+            width: 14px;
+            height: 14px;
+            color: var(--qatar-maroon);
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-toggle {
+            background: var(--qatar-maroon);
+        }
+
+        .faq-item.active .faq-toggle svg {
+            color: var(--white);
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+
+        .faq-answer-content {
+            padding: 0 28px 24px;
+            font-size: 15px;
+            color: var(--charcoal);
+            line-height: 1.8;
+        }
+
+        .faq-answer-content strong {
+            color: var(--qatar-maroon);
+        }
+
+        .faq-answer-content .highlight-stat {
+            display: inline-block;
+            background: var(--gold-light);
+            color: var(--gold-dark);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+
+        /* RTL FAQ Support */
+        html[dir="rtl"] .faq-question {
+            flex-direction: row-reverse;
+        }
+
+        html[dir="rtl"] .faq-question h3 {
+            flex-direction: row-reverse;
+            text-align: right;
+        }
+
+        html[dir="rtl"] .faq-answer-content {
+            text-align: right;
+        }
+
+        /* ===== Trust Strip ===== */
+        .trust-strip {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 16px 20px;
+            background: var(--qatar-maroon-lighter);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .trust-strip span {
+            font-size: 13px;
+            color: var(--qatar-maroon);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .faq-question {
+                padding: 20px;
+            }
+
+            .faq-question h3 {
+                font-size: 15px;
+            }
+
+            .faq-answer-content {
+                padding: 0 20px 20px;
+                font-size: 14px;
+            }
+
+            .trust-strip {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
         }
 
         /* ===== CTA Section ===== */
@@ -1878,6 +2649,116 @@
         </div>
     </section>
 
+    <!-- The Inevitable Section -->
+    <section class="inevitable-section" id="inevitable" aria-labelledby="inevitable-headline">
+        <!-- SVG Network Visualization (Decorative) -->
+        <div class="inevitable-canvas" aria-hidden="true">
+            <svg class="inevitable-svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
+                <!-- Connection Lines -->
+                <g class="connection-lines">
+                    <line class="connection-line" x1="600" y1="300" x2="200" y2="150" />
+                    <line class="connection-line" x1="600" y1="300" x2="300" y2="450" />
+                    <line class="connection-line" x1="600" y1="300" x2="900" y2="180" />
+                    <line class="connection-line" x1="600" y1="300" x2="1000" y2="400" />
+                    <line class="connection-line" x1="600" y1="300" x2="150" y2="350" />
+                    <line class="connection-line" x1="600" y1="300" x2="850" y2="500" />
+                    <line class="connection-line" x1="600" y1="300" x2="400" y2="100" />
+                    <line class="connection-line" x1="600" y1="300" x2="1050" y2="250" />
+                </g>
+
+                <!-- Network Nodes (Outer Garages) -->
+                <g class="network-nodes">
+                    <circle class="network-node" cx="200" cy="150" r="12" />
+                    <circle class="network-node" cx="300" cy="450" r="10" />
+                    <circle class="network-node" cx="900" cy="180" r="14" />
+                    <circle class="network-node" cx="1000" cy="400" r="11" />
+                    <circle class="network-node" cx="150" cy="350" r="9" />
+                    <circle class="network-node" cx="850" cy="500" r="13" />
+                    <circle class="network-node" cx="400" cy="100" r="10" />
+                    <circle class="network-node" cx="1050" cy="250" r="12" />
+                </g>
+
+                <!-- Central Node (You) -->
+                <circle class="network-node central" cx="600" cy="300" r="20" />
+
+                <!-- Flow Particles -->
+                <g class="flow-particles">
+                    <circle class="flow-particle" cx="250" cy="180" r="3" style="animation-delay: 0s;" />
+                    <circle class="flow-particle" cx="400" cy="350" r="2" style="animation-delay: 0.5s;" />
+                    <circle class="flow-particle" cx="750" cy="220" r="3" style="animation-delay: 1s;" />
+                    <circle class="flow-particle" cx="900" cy="350" r="2" style="animation-delay: 1.5s;" />
+                    <circle class="flow-particle" cx="300" cy="280" r="2" style="animation-delay: 2s;" />
+                    <circle class="flow-particle" cx="800" cy="420" r="3" style="animation-delay: 2.5s;" />
+                </g>
+            </svg>
+        </div>
+
+        <!-- Content Card -->
+        <div class="inevitable-content">
+            <!-- Price Dial (Interactive) -->
+            <div class="price-dial-container">
+                <span class="price-dial-label" data-i18n="inevitable.dial.label">Your Price</span>
+                <span class="price-dial-value" id="priceDialValue">500 QAR</span>
+                <input type="range" class="price-dial-input" id="priceDialInput" min="100" max="2000" value="500"
+                    step="50" />
+                <span class="price-dial-hint" data-i18n="inevitable.dial.hint">Move it. It's yours to set.</span>
+            </div>
+
+            <!-- Headline -->
+            <h2 id="inevitable-headline" class="inevitable-title" data-i18n="inevitable.title">
+                The Orders Are Already Moving.<br>
+                Across Qatar. Right Now.
+            </h2>
+
+            <!-- Subtitle -->
+            <p class="inevitable-subtitle" data-i18n="inevitable.subtitle">
+                Your inventory. Your prices. More customers than your street will ever bring.
+            </p>
+
+            <!-- CTA -->
+            <a href="#apply" class="inevitable-cta" data-i18n="inevitable.cta">
+                Join the Network
+            </a>
+
+            <!-- Volume Comparison -->
+            <div class="volume-comparison">
+                <div class="volume-bar-container">
+                    <span class="volume-bar-label" data-i18n="inevitable.bar.without">Without</span>
+                    <div class="volume-bar-track">
+                        <div class="volume-bar-fill without"></div>
+                    </div>
+                    <span class="volume-bar-value" data-i18n="inevitable.bar.withoutValue">50 sales</span>
+                </div>
+                <div class="volume-bar-container">
+                    <span class="volume-bar-label" data-i18n="inevitable.bar.with">With QScrap</span>
+                    <div class="volume-bar-track">
+                        <div class="volume-bar-fill with"></div>
+                    </div>
+                    <span class="volume-bar-value highlight" data-i18n="inevitable.bar.withValue">150 sales</span>
+                </div>
+                <span class="volume-comparison-hint" data-i18n="inevitable.bar.hint">Same garage. Different
+                    reach.</span>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="inevitable-stats">
+            <div class="inevitable-stat">
+                <span class="inevitable-stat-number" data-i18n="inevitable.stat.partners.number">50+</span>
+                <span class="inevitable-stat-label" data-i18n="inevitable.stat.partners.label">Partner Garages</span>
+            </div>
+            <div class="inevitable-stat">
+                <span class="inevitable-stat-number" data-i18n="inevitable.stat.reach.number">10,000+</span>
+                <span class="inevitable-stat-label" data-i18n="inevitable.stat.reach.label">Active Customers</span>
+            </div>
+            <div class="inevitable-stat">
+                <span class="inevitable-stat-number" data-i18n="inevitable.stat.satisfaction.number">98%</span>
+                <span class="inevitable-stat-label" data-i18n="inevitable.stat.satisfaction.label">Partner
+                    Satisfaction</span>
+            </div>
+        </div>
+    </section>
+
     <!-- Benefits Section -->
     <section class="benefits" id="benefits">
         <div class="container">
@@ -2046,12 +2927,60 @@
         </div>
     </section>
 
+    <!-- Real Partners Gallery -->
+    <section class="partners-gallery">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label" data-i18n="gallery.label">See the Reality</span>
+                <h2 class="section-title" data-i18n="gallery.title">Real Garages. Real Partners.</h2>
+                <p class="section-subtitle" data-i18n="gallery.subtitle">These are actual partner garages and scrap
+                    yards across Qatar's Industrial Area</p>
+            </div>
+
+            <div class="gallery-grid">
+                <div class="gallery-card">
+                    <span class="gallery-badge" data-i18n="gallery.badge.partner">Partner</span>
+                    <img src="/assets/partners/real-garage-storefront.jpg"
+                        alt="Al Rafa Garage and Scrap - Real QScrap Partner" loading="lazy">
+                    <div class="overlay">
+                        <span data-i18n="gallery.caption1">Multi-brand scrap garage, Industrial Area</span>
+                    </div>
+                </div>
+                <div class="gallery-card">
+                    <span class="gallery-badge" data-i18n="gallery.badge.inventory">Inventory</span>
+                    <img src="/assets/partners/engine-bay.jpg" alt="Engine bay parts for sale" loading="lazy">
+                    <div class="overlay">
+                        <span data-i18n="gallery.caption2">Quality engine components</span>
+                    </div>
+                </div>
+                <div class="gallery-card">
+                    <span class="gallery-badge" data-i18n="gallery.badge.stock">Stock</span>
+                    <img src="/assets/partners/scrap-vehicle.jpg" alt="Scrap vehicle for parts" loading="lazy">
+                    <div class="overlay">
+                        <span data-i18n="gallery.caption3">Fresh inventory from salvage</span>
+                    </div>
+                </div>
+                <div class="gallery-card">
+                    <span class="gallery-badge" data-i18n="gallery.badge.yard">Yard</span>
+                    <img src="/assets/partners/scrapyard-overview.jpg" alt="Qatar Industrial Area scrapyard"
+                        loading="lazy">
+                    <div class="overlay">
+                        <span data-i18n="gallery.caption4">Industrial Area scrap yards</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Testimonials -->
+
     <section class="testimonials">
         <div class="container">
             <div class="section-header">
                 <span class="section-label" data-i18n="testimonials.label">Partner Stories</span>
                 <h2 class="section-title" data-i18n="testimonials.title">What Our Garages Say</h2>
+                <p class="section-subtitle" data-i18n="testimonials.subtitle">Real results from real partners across
+                    Qatar</p>
             </div>
 
             <div class="testimonials-grid">
@@ -2078,11 +3007,188 @@
                         </div>
                     </div>
                 </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote" data-i18n="testimonial3.quote">"I was worried customers would only
+                        choose cheap options. But my quality parts sell faster than ever—customers see my 4.9 star
+                        rating and trust me."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar" data-i18n="testimonial3.initial">M</div>
+                        <div class="testimonial-info">
+                            <h4 data-i18n="testimonial3.name">Mohammed Al-Sulaiti</h4>
+                            <p data-i18n="testimonial3.business">Al-Sulaiti Auto, Salwa Road</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote" data-i18n="testimonial4.quote">"We made 47,000 QAR extra in our first
+                        quarter on QScrap. That's customers we never would have reached through walk-ins alone."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar" data-i18n="testimonial4.initial">S</div>
+                        <div class="testimonial-info">
+                            <h4 data-i18n="testimonial4.name">Sanjay Patel</h4>
+                            <p data-i18n="testimonial4.business">Patel Brothers Garage, Industrial Area</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section - Addressing Objections -->
+    <section class="faq-section" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label" data-i18n="faq.label">Your Questions Answered</span>
+                <h2 class="section-title" data-i18n="faq.title">Common Concerns from Garage Owners</h2>
+                <p class="section-subtitle" data-i18n="faq.subtitle">We understand your hesitations. Here are honest
+                    answers.</p>
+            </div>
+
+            <div class="faq-container">
+                <!-- FAQ 1: Price War -->
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <h3><span class="faq-emoji">💰</span> <span data-i18n="faq1.question">"Won't customers just pick
+                                the cheapest option?"</span></h3>
+                        <div class="faq-toggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-i18n="faq1.answer">
+                            <strong>Actually, 73% of orders go to garages rated 4+ stars—not the
+                                cheapest.</strong><br><br>
+                            Customers on QScrap value <strong>quality, speed, and reliability</strong>. They see your
+                            ratings,
+                            your reviews, your response time. They're not bargain hunters—they're car owners who want
+                            their problem solved right.<br><br>
+                            <span class="highlight-stat">Quality wins. You set prices. We show your value.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 2: Commission -->
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <h3><span class="faq-emoji">📊</span> <span data-i18n="faq2.question">"15% commission seems
+                                high. How do I actually make money?"</span></h3>
+                        <div class="faq-toggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-i18n="faq2.answer">
+                            <strong>Consider this: 10 extra sales × 500 QAR = 4,250 QAR net profit.</strong><br><br>
+                            That's from customers you'd <em>never</em> have found through walk-ins. No marketing spend.
+                            No customer acquisition cost. No WhatsApp chasing.<br><br>
+                            And if you're making more than 20 sales/month? Upgrade to Gold (5% commission) and
+                            keep even more.<br><br>
+                            <span class="highlight-stat">It's not a cost—it's a growth investment.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 3: Control -->
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <h3><span class="faq-emoji">🎮</span> <span data-i18n="faq3.question">"Will I lose control of my
+                                business?"</span></h3>
+                        <div class="faq-toggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-i18n="faq3.answer">
+                            <strong>You're 100% in control. Always.</strong><br><br>
+                            ✅ <strong>You set your prices</strong> — we never dictate what you charge<br>
+                            ✅ <strong>You choose which requests to bid on</strong> — skip what doesn't fit<br>
+                            ✅ <strong>You decide your working hours</strong> — no forced availability<br>
+                            ✅ <strong>You keep your existing customers</strong> — QScrap only brings NEW ones<br><br>
+                            <span class="highlight-stat">Your garage. Your rules. Our customers.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 4: Bad Reviews -->
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <h3><span class="faq-emoji">⭐</span> <span data-i18n="faq4.question">"What if a customer leaves
+                                an unfair review?"</span></h3>
+                        <div class="faq-toggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-i18n="faq4.answer">
+                            <strong>Our Support team investigates every dispute before it affects your
+                                rating.</strong><br><br>
+                            We use photo evidence, delivery timestamps, and communication logs. False reviews are
+                            removed. And verified issues are resolved fairly—protecting both sides.<br><br>
+                            <span class="highlight-stat">Partner satisfaction: 98%. Your reputation is safe.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 5: Payments -->
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <h3><span class="faq-emoji">🏦</span> <span data-i18n="faq5.question">"Will I actually get paid?
+                                How does payment work?"</span></h3>
+                        <div class="faq-toggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-i18n="faq5.answer">
+                            <strong>Guaranteed payouts, 7 days after delivery confirmation.</strong><br><br>
+                            Here's how it works:<br>
+                            1️⃣ Customer pays QScrap upfront (or Cash on Delivery)<br>
+                            2️⃣ Driver picks up from you, delivers to customer<br>
+                            3️⃣ 7-day warranty period passes (for returns)<br>
+                            4️⃣ Your earnings are transferred to your bank account<br><br>
+                            <span class="highlight-stat">100% of successful orders are paid. Zero exceptions.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ 6: Technology -->
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <h3><span class="faq-emoji">📱</span> <span data-i18n="faq6.question">"I'm not tech-savvy. Is it
+                                hard to use?"</span></h3>
+                        <div class="faq-toggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-i18n="faq6.answer">
+                            <strong>If you can use WhatsApp, you can use QScrap.</strong><br><br>
+                            Our dashboard is designed for busy garage owners—not tech experts. You'll receive
+                            a notification on your phone, tap to see the request, type your price, hit submit.
+                            That's it.<br><br>
+                            Plus, our support team is just a phone call away if you ever get stuck.<br><br>
+                            <span class="highlight-stat">Onboarding takes 5 minutes. Not 5 hours.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section with Registration Form -->
+
     <section class="cta-section" id="apply">
         <!-- Ambient Particle Background for Registration Form -->
         <div id="particles-form"></div>
@@ -2096,6 +3202,13 @@
                 <div class="form-header">
                     <h3 data-i18n="form.title">Partner Registration</h3>
                     <p data-i18n="form.subtitle">Fill in your details below to get started</p>
+                </div>
+
+                <!-- Trust Strip -->
+                <div class="trust-strip">
+                    <span>🔒 <span data-i18n="trust.encrypted">Your data is encrypted</span></span>
+                    <span>📞 <span data-i18n="trust.support">Questions? +974 5026 7974</span></span>
+                    <span>✅ <span data-i18n="trust.cancel">Cancel anytime, no penalties</span></span>
                 </div>
 
                 <!-- Error/Success Message -->
@@ -2397,6 +3510,83 @@
             } else {
                 brandGrid.classList.remove('hidden');
             }
+        }
+
+        // Toggle FAQ accordion
+        function toggleFaq(element) {
+            // Close all other FAQs first (accordion behavior)
+            const allFaqs = document.querySelectorAll('.faq-item');
+            allFaqs.forEach(faq => {
+                if (faq !== element && faq.classList.contains('active')) {
+                    faq.classList.remove('active');
+                }
+            });
+            // Toggle clicked FAQ
+            element.classList.toggle('active');
+        }
+
+        // ===== The Inevitable Section =====
+        // IntersectionObserver for entry animations
+        function initInevitableSection() {
+            const inevitableSection = document.querySelector('.inevitable-section');
+            if (!inevitableSection) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                        // Only trigger once
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.3,
+                rootMargin: '0px'
+            });
+
+            observer.observe(inevitableSection);
+
+            // Price dial interaction
+            const priceDialInput = document.getElementById('priceDialInput');
+            const priceDialValue = document.getElementById('priceDialValue');
+
+            if (priceDialInput && priceDialValue) {
+                priceDialInput.addEventListener('input', function () {
+                    const value = parseInt(this.value);
+                    priceDialValue.textContent = value.toLocaleString() + ' QAR';
+                });
+            }
+
+            // Pause flow particles on inactivity (after 10 seconds of no scroll)
+            let inactivityTimer;
+            const flowParticles = inevitableSection.querySelectorAll('.flow-particle');
+
+            function pauseFlowParticles() {
+                flowParticles.forEach(p => p.style.animationPlayState = 'paused');
+            }
+
+            function resumeFlowParticles() {
+                flowParticles.forEach(p => p.style.animationPlayState = 'running');
+            }
+
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                resumeFlowParticles();
+                inactivityTimer = setTimeout(pauseFlowParticles, 10000);
+            }
+
+            window.addEventListener('scroll', resetInactivityTimer, { passive: true });
+            window.addEventListener('mousemove', resetInactivityTimer, { passive: true });
+
+            // Start with timer running
+            resetInactivityTimer();
+        }
+
+        // Initialize on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initInevitableSection);
+        } else {
+            initInevitableSection();
         }
 
         // Show form message
