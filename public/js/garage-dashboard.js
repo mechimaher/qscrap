@@ -1643,13 +1643,13 @@ async function submitCorrectedBid(bidId) {
     try {
         // Prepare form data (for photos)
         const formData = new FormData();
-        formData.append('corrected_price', price);
+        formData.append('bid_amount', price);
         formData.append('part_condition', condition);
         formData.append('warranty_days', warranty);
         formData.append('correction_note', note);
 
         editBidPhotos.forEach((file, idx) => {
-            formData.append(`photos`, file);
+            formData.append('images', file);
         });
 
         const res = await fetch(`${API_URL}/bids/${bidId}/supersede`, {
