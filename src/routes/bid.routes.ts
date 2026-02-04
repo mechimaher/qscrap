@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { submitBid, getMyBids, getBidById, rejectBid, updateBid, getFairPriceEstimate } from '../controllers/bid.controller';
-import { flagBid, supersedeBid, getBidFlags, acknowledgeFlag, dismissFlag } from '../controllers/bidFlag.controller';
+import { flagBid, supersedeBid, getBidFlags, getAllFlaggedBids, acknowledgeFlag, dismissFlag } from '../controllers/bidFlag.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { upload, optimizeFiles } from '../middleware/file.middleware';
 import { validateParams, validate, bidIdParamSchema } from '../middleware/validation.middleware';
@@ -38,6 +38,9 @@ const dismissSchema = z.object({
 
 // Get Fair Price Estimate (Public/Auth) - Must be before /:bid_id to avoid conflicts
 router.get('/estimate', authenticate, getFairPriceEstimate);
+
+// Get all flagged bids for current garage (Garage only) - Must be before /:bid_id
+router.get('/flagged', authenticate, requireRole('garage'), getAllFlaggedBids);
 
 // Submit bid (Garage only) - Allow up to 10 images (rate limited)
 // Note: Body validation handled by BidService (multipart form)
