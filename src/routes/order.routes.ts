@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
     acceptBid,
+    undoOrderHandler,
     updateOrderStatus,
     getMyOrders,
     getOrderCount,
@@ -23,6 +24,11 @@ const router = Router();
 
 // Customer: Accept a bid and create order (rate limited)
 router.post('/accept-bid/:bid_id', authenticate, requireRole('customer'), orderWriteLimiter, validateParams(bidIdParamSchema), acceptBid);
+
+// ============================================
+// UNDO ORDER (VVIP G-01: 30-Second Grace Window)
+// ============================================
+router.post('/:order_id/undo', authenticate, validateParams(orderIdParamSchema), undoOrderHandler);
 
 // Both: Get my orders (filtered by user type)
 router.get('/my', authenticate, getMyOrders);
@@ -53,3 +59,4 @@ router.post('/:order_id/review', authenticate, requireRole('customer'), validate
 router.get('/reviews/garage/:garage_id', getGarageReviews);
 
 export default router;
+

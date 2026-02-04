@@ -884,12 +884,14 @@ export default function RequestDetailScreen() {
         socket.on('counter_offer_accepted', handleEvent);
         socket.on('counter_offer_rejected', handleEvent);
         socket.on('bid_updated', handleEvent);
+        socket.on('bid_withdrawn', handleEvent); // VVIP Fix: Now listening to bid_withdrawn
         return () => {
             socket.off('garage_counter_offer', handleEvent);
             socket.off('counter_offer_received', handleEvent);
             socket.off('counter_offer_accepted', handleEvent);
             socket.off('counter_offer_rejected', handleEvent);
             socket.off('bid_updated', handleEvent);
+            socket.off('bid_withdrawn', handleEvent);
         };
     }, [socket, requestId]);
 

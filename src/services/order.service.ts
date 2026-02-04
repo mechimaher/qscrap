@@ -29,6 +29,14 @@ export interface OrderCompletionResult {
     error?: string;
 }
 
+export interface UndoOrderResult {
+    success: boolean;
+    message: string;
+    order_status?: string;
+    error?: string;
+    expired?: boolean;
+}
+
 // ============================================
 // ORDER CREATION
 // ============================================
@@ -135,13 +143,16 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
         const garagePayout = partPrice - platformFee;
 
         // 5. Create Order (with pending_payment status - requires delivery fee payment)
+        // VVIP G-01: Set undo_deadline for 30-second grace window
         const orderResult = await client.query(
             `INSERT INTO orders 
              (request_id, bid_id, customer_id, garage_id, part_price, commission_rate, 
               platform_fee, delivery_fee, total_amount, garage_payout_amount, 
-              payment_method, delivery_address, delivery_notes, order_status, deposit_amount, deposit_status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending_payment', $8, 'pending')
-             RETURNING order_id, order_number, order_status`,
+              payment_method, delivery_address, delivery_notes, order_status, deposit_amount, deposit_status,
+              undo_deadline)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending_payment', $8, 'pending',
+                     NOW() + INTERVAL '30 seconds')
+             RETURNING order_id, order_number, order_status, undo_deadline`,
             [bid.request_id, bidId, customerId, bid.garage_id, partPrice, commissionRate,
                 platformFee, params.deliveryFee, totalAmount, garagePayout,
             params.paymentMethod || 'card', params.deliveryAddress, params.deliveryNotes]
@@ -469,4 +480,171 @@ export async function getOrderHistory(orderId: string): Promise<unknown[]> {
     `, [orderId]);
 
     return result.rows;
+}
+
+// ============================================
+// UNDO ORDER (VVIP G-01)
+// ============================================
+
+/**
+ * Undo an order within the 30-second grace window.
+ * Idempotent: multiple calls return same result.
+ * Reverts order, bid, and request statuses.
+ * Creates audit trail for compliance.
+ */
+export async function undoOrder(
+    orderId: string,
+    actorId: string,
+    actorType: 'customer' | 'garage',
+    reason?: string
+): Promise<UndoOrderResult> {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Lock order for update
+        const orderResult = await client.query(
+            `SELECT order_id, order_status, customer_id, garage_id, bid_id, request_id,
+                    undo_deadline, undo_used, order_number
+             FROM orders WHERE order_id = $1 FOR UPDATE`,
+            [orderId]
+        );
+
+        if (orderResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return { success: false, message: 'Order not found', error: 'ORDER_NOT_FOUND' };
+        }
+
+        const order = orderResult.rows[0];
+
+        // Authorization check
+        if (actorType === 'customer' && order.customer_id !== actorId) {
+            await client.query('ROLLBACK');
+            return { success: false, message: 'Access denied', error: 'ACCESS_DENIED' };
+        }
+        if (actorType === 'garage' && order.garage_id !== actorId) {
+            await client.query('ROLLBACK');
+            return { success: false, message: 'Access denied', error: 'ACCESS_DENIED' };
+        }
+
+        // Idempotency: already undone
+        if (order.undo_used) {
+            await client.query('ROLLBACK');
+            return {
+                success: true,
+                message: 'Order already undone',
+                order_status: 'cancelled_by_undo'
+            };
+        }
+
+        // Check grace window
+        const now = new Date();
+        const deadline = new Date(order.undo_deadline);
+        if (now > deadline) {
+            // Log expired attempt
+            await client.query(`
+                INSERT INTO undo_audit_log (order_id, action, actor_id, actor_type, reason, metadata)
+                VALUES ($1, 'undo_expired', $2, $3, $4, $5)
+            `, [orderId, actorId, actorType, reason || 'Grace window expired',
+                JSON.stringify({ deadline: order.undo_deadline, attempted_at: now.toISOString() })]);
+
+            await client.query('COMMIT');
+            return {
+                success: false,
+                message: 'Undo window expired',
+                error: 'UNDO_EXPIRED',
+                expired: true
+            };
+        }
+
+        // Check status allows undo
+        if (!['pending_payment', 'confirmed'].includes(order.order_status)) {
+            await client.query('ROLLBACK');
+            return {
+                success: false,
+                message: `Cannot undo order in ${order.order_status} status`,
+                error: 'INVALID_STATUS'
+            };
+        }
+
+        // Revert order status
+        await client.query(`
+            UPDATE orders SET 
+                order_status = 'cancelled_by_undo',
+                undo_used = TRUE,
+                undo_at = NOW(),
+                undo_reason = $2,
+                updated_at = NOW()
+            WHERE order_id = $1
+        `, [orderId, reason || 'User initiated undo']);
+
+        // Revert bid status back to pending
+        await client.query(`
+            UPDATE bids SET status = 'pending', updated_at = NOW() 
+            WHERE bid_id = $1
+        `, [order.bid_id]);
+
+        // Revert other rejected bids for this request back to pending
+        await client.query(`
+            UPDATE bids SET status = 'pending', updated_at = NOW()
+            WHERE request_id = $1 AND status = 'rejected'
+        `, [order.request_id]);
+
+        // Revert request status back to active
+        await client.query(`
+            UPDATE part_requests SET status = 'active', updated_at = NOW()
+            WHERE request_id = $1
+        `, [order.request_id]);
+
+        // Record in order history
+        await client.query(`
+            INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+            VALUES ($1, $2, 'cancelled_by_undo', $3, $4, $5)
+        `, [orderId, order.order_status, actorId, actorType, reason || 'Order undone within grace window']);
+
+        // Create audit log entry
+        await client.query(`
+            INSERT INTO undo_audit_log (order_id, action, actor_id, actor_type, reason, metadata)
+            VALUES ($1, 'undo_completed', $2, $3, $4, $5)
+        `, [orderId, actorId, actorType, reason || 'User initiated undo',
+            JSON.stringify({
+                original_status: order.order_status,
+                deadline: order.undo_deadline,
+                undone_at: now.toISOString()
+            })]);
+
+        await client.query('COMMIT');
+
+        // Notify both parties
+        emitToUser(order.customer_id, 'order_undone', {
+            order_id: orderId,
+            order_number: order.order_number,
+            message: 'Order has been undone. You can select a different bid.'
+        });
+        emitToGarage(order.garage_id, 'order_undone', {
+            order_id: orderId,
+            order_number: order.order_number,
+            message: 'Order was undone by customer.'
+        });
+
+        logger.info('Order undone successfully', {
+            orderId,
+            actorId,
+            actorType,
+            originalStatus: order.order_status
+        });
+
+        return {
+            success: true,
+            message: 'Order undone successfully',
+            order_status: 'cancelled_by_undo'
+        };
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        logger.error('Undo order failed', { orderId, error: getErrorMessage(err) });
+        return { success: false, message: 'Undo failed', error: getErrorMessage(err) };
+    } finally {
+        client.release();
+    }
 }
