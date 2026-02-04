@@ -104,13 +104,14 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             });
 
-            // Bids channel - high priority
+            // Bids channel - MAX priority for heads-up alerts
             await Notifications.setNotificationChannelAsync('bids', {
                 name: 'New Bids',
                 description: 'Notifications when you receive new bids',
-                importance: Notifications.AndroidImportance.HIGH,
+                importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 300, 150, 300],
                 enableVibrate: true,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             });
 
             // Messages channel
@@ -231,7 +232,8 @@ export const scheduleLocalNotification = async (
     title: string,
     body: string,
     data?: Record<string, any>,
-    trigger?: Notifications.NotificationTriggerInput
+    trigger?: Notifications.NotificationTriggerInput,
+    channelId?: string
 ): Promise<string> => {
     const id = await Notifications.scheduleNotificationAsync({
         content: {
@@ -239,11 +241,24 @@ export const scheduleLocalNotification = async (
             body,
             data,
             sound: true,
+            // Android requires channelId for proper sound/alert behavior
+            ...(Platform.OS === 'android' && { channelId: channelId || getChannelFromType(data?.type) || 'default' }),
         },
         trigger: trigger || null, // null = immediate
     });
 
     return id;
+};
+
+/**
+ * Helper to determine channel from notification type
+ */
+const getChannelFromType = (type?: string): string => {
+    if (!type) return 'default';
+    if (type.includes('bid') || type.includes('counter_offer')) return 'bids';
+    if (type.includes('order') || type.includes('delivery') || type === 'driver_assigned') return 'orders';
+    if (type.includes('chat') || type.includes('support') || type.includes('message')) return 'messages';
+    return 'default';
 };
 
 /**
