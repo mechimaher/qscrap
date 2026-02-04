@@ -366,6 +366,65 @@ export async function supersedeBid(req: Request, res: Response): Promise<void> {
 }
 
 // ============================================
+// GET /api/bids/flagged
+// Get all flagged bids for the current garage
+// ============================================
+export async function getAllFlaggedBids(req: Request, res: Response): Promise<void> {
+    const garageId = req.user!.userId;
+
+    try {
+        // Get the garage_id from the user's garage record
+        const garageResult = await pool.query(`
+            SELECT garage_id FROM garages WHERE user_id = $1
+        `, [garageId]);
+
+        if (garageResult.rows.length === 0) {
+            res.status(404).json({ error: 'Garage not found' });
+            return;
+        }
+
+        const garage_id = garageResult.rows[0].garage_id;
+
+        // Get all pending flagged bids for this garage with related info
+        const flagsResult = await pool.query(`
+            SELECT 
+                bf.flag_id,
+                bf.bid_id,
+                bf.reason,
+                bf.details AS customer_note,
+                bf.is_urgent,
+                bf.status,
+                bf.created_at,
+                b.bid_amount,
+                b.part_condition,
+                b.image_urls,
+                pr.request_id,
+                CONCAT(uc.year, ' ', uc.make, ' ', uc.model) AS car_summary,
+                pr.part_name AS part_description,
+                u.full_name AS customer_name
+            FROM bid_flags bf
+            JOIN bids b ON bf.bid_id = b.bid_id
+            JOIN part_requests pr ON b.request_id = pr.request_id
+            JOIN user_cars uc ON pr.car_id = uc.car_id
+            JOIN users u ON bf.flagged_by = u.user_id
+            WHERE b.garage_id = $1
+            AND bf.status IN ('pending', 'acknowledged')
+            ORDER BY bf.is_urgent DESC, bf.created_at ASC
+        `, [garage_id]);
+
+        res.json({
+            success: true,
+            flagged_bids: flagsResult.rows,
+            count: flagsResult.rows.length
+        });
+
+    } catch (error) {
+        console.error('[getAllFlaggedBids] Error:', error);
+        res.status(500).json({ error: 'Failed to get flagged bids' });
+    }
+}
+
+// ============================================
 // GET /api/bids/:bid_id/flags
 // Get all flags for a bid
 // ============================================
@@ -542,6 +601,7 @@ export default {
     flagBid,
     supersedeBid,
     getBidFlags,
+    getAllFlaggedBids,
     acknowledgeFlag,
     dismissFlag
 };
