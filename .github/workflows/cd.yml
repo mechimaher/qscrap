@@ -56,34 +56,29 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          timeout: 60s
+          command_timeout: 10m
           script: |
+            set -e
+            cd /opt/qscrap
+            
+            echo "⬇️  Pulling latest from GitHub..."
+            git fetch origin main
+            git reset --hard origin/main
+            
             echo "🏷️ Tagging current as stable for rollback..."
             docker tag qscrap-backend:latest qscrap-backend:stable 2>/dev/null || true
             
-            echo "📥 Pulling latest image from GHCR..."
-            docker pull ghcr.io/mechimaher/qscrap:latest || true
+            echo "🔨 Rebuilding and restarting containers..."
+            docker rm -f qscrap-backend 2>/dev/null || true
+            docker compose up -d --build
             
-            echo "🔨 Rebuilding backend container..."
-            docker stop qscrap-backend 2>/dev/null || true
-            docker rm qscrap-backend 2>/dev/null || true
-            
-            # Restart with existing docker-compose or standalone
-            if [ -f /root/docker-compose.yml ]; then
-              cd /root && docker compose up -d
-            else
-              docker run -d --name qscrap-backend \
-                --network host \
-                -e NODE_ENV=production \
-                --restart unless-stopped \
-                qscrap-backend:latest || docker start qscrap-backend
-            fi
-            
-            echo "⏳ Waiting for services..."
-            sleep 10
+            echo "⏳ Waiting for services to stabilize..."
+            sleep 15
             
             echo "📝 Recording deployment..."
-            echo "${{ github.sha }}" > /root/.last_good_deploy
+            echo "${{ github.sha }}" > /opt/qscrap/.last_good_deploy
             
             echo "✅ Deployment complete!"
             docker ps --filter name=qscrap
