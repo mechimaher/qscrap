@@ -33,7 +33,7 @@ import { useToast } from '../components/Toast';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
-import { FlagBidModal } from '../components/FlagBidModal';
+// Flag feature deprecated - Feb 2026 (panel decision for simpler UX)
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -389,7 +389,7 @@ const PremiumBidCard = ({
     onAccept,
     onCounter,
     onReject,
-    onFlag,
+
     onImagePress,
     isAccepting,
     requestPartDescription,
@@ -402,7 +402,7 @@ const PremiumBidCard = ({
     onAccept: (bid: Bid, price: number) => void;
     onCounter: (bid: Bid) => void;
     onReject: (bid: Bid) => void;
-    onFlag: (bid: Bid) => void;
+
     onImagePress: (images: string[], index: number) => void;
     isAccepting: boolean;
     requestPartDescription: string;
@@ -432,7 +432,7 @@ const PremiumBidCard = ({
 
     const conditionInfo = getConditionLabel(bid.part_condition, t);
     const isAccepted = bid.bid_status === 'accepted';
-    const isFlagged = bid.bid_status === 'flagged';
+    // Flag feature deprecated - customers can simply choose another bid
     const isSuperseded = bid.bid_status === 'superseded';
     const hasCorrectedVersion = !!(bid as any).superseded_by;
 
@@ -503,12 +503,7 @@ const PremiumBidCard = ({
                 </View>
             )}
 
-            {/* Flagged Badge - Awaiting correction */}
-            {isFlagged && (
-                <View style={[styles.flaggedBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
-                    <Text style={styles.flaggedBadgeText}>⚠️ {t('bids.flag.statusFlagged')}</Text>
-                </View>
-            )}
+
 
             {/* Superseded Badge - Has been replaced */}
             {isSuperseded && (
@@ -790,18 +785,7 @@ const PremiumBidCard = ({
                         </TouchableOpacity>
                     )}
 
-                    {/* Flag Button - Report incorrect bid */}
-                    {!isFlagged && !isSuperseded && (
-                        <TouchableOpacity
-                            style={styles.flagBtn}
-                            onPress={() => onFlag(bid)}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('bids.flag.title')}
-                            accessibilityHint={t('bids.flag.whatsWrong')}
-                        >
-                            <Text style={styles.flagBtnText}>⚠️</Text>
-                        </TouchableOpacity>
-                    )}
+
 
                     <TouchableOpacity
                         style={styles.rejectBtn}
@@ -890,9 +874,7 @@ export default function RequestDetailScreen() {
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [isComparisonVisible, setIsComparisonVisible] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
-    // Flag bid workflow
-    const [flagModalVisible, setFlagModalVisible] = useState(false);
-    const [selectedBidForFlag, setSelectedBidForFlag] = useState<Bid | null>(null);
+
 
     useEffect(() => {
         loadRequestDetails();
@@ -1041,60 +1023,7 @@ export default function RequestDetailScreen() {
         setIsViewerVisible(true);
     };
 
-    // Flag bid - opens modal to report incorrect bid
-    const handleFlagBid = (bid: Bid) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setSelectedBidForFlag(bid);
-        setFlagModalVisible(true);
-    };
 
-    // Submit flag to API with 10-second undo window
-    const submitFlag = async (data: { reason: string; details: string; urgent: boolean }) => {
-        if (!selectedBidForFlag) return;
-
-        const bidId = selectedBidForFlag.bid_id;
-        const garageName = selectedBidForFlag.garage_name;
-
-        try {
-            const response = await api.flagBid(bidId, {
-                reason: data.reason as any,
-                details: data.details,
-                urgent: data.urgent,
-            });
-
-            // Mark bid as flagged locally for immediate UI update
-            setBids(prev => prev.map(b =>
-                b.bid_id === bidId ? { ...b, bid_status: 'flagged' } : b
-            ));
-
-            // Show success toast with undo capability (10s window)
-            toast.show({
-                type: 'info',
-                title: t('bids.flag.success'),
-                message: t('bids.flag.successMsg'),
-                duration: 10000, // 10 second duration
-                action: {
-                    label: t('bids.flag.undoAction'),
-                    onPress: async () => {
-                        try {
-                            await api.dismissFlag(bidId, response.flag.flag_id, 'User cancelled');
-                            setBids(prev => prev.map(b =>
-                                b.bid_id === bidId ? { ...b, bid_status: 'active' } : b
-                            ));
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        } catch (undoError: any) {
-                            toast.error(t('common.error'), undoError.message);
-                        }
-                    }
-                }
-            });
-
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (error: any) {
-            toast.error(t('common.error'), error.message || t('bids.flag.error'));
-            throw error; // Re-throw for modal to handle
-        }
-    };
 
     if (isLoading) {
         return (
@@ -1201,7 +1130,7 @@ export default function RequestDetailScreen() {
                                 onAccept={handleAcceptBid}
                                 onCounter={handleCounter}
                                 onReject={handleRejectBid}
-                                onFlag={handleFlagBid}
+
                                 onImagePress={handleImagePress}
                                 isAccepting={acceptingBid === bid.bid_id}
                                 requestPartDescription={request.part_description}
@@ -1231,16 +1160,7 @@ export default function RequestDetailScreen() {
                 onClose={() => setIsComparisonVisible(false)}
             />
 
-            {/* Flag Bid Modal */}
-            <FlagBidModal
-                visible={flagModalVisible}
-                bid={selectedBidForFlag}
-                onClose={() => {
-                    setFlagModalVisible(false);
-                    setSelectedBidForFlag(null);
-                }}
-                onSubmit={submitFlag}
-            />
+
         </SafeAreaView>
     );
 }
