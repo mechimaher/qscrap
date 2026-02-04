@@ -1196,7 +1196,7 @@ function renderPendingActions() {
     if (!container) return;
 
     const allActions = [
-        ...flaggedBids.map(f => ({ type: 'flagged-bid', data: f })),  // Flagged bids first (highest priority)
+        // Flagged bids removed - Feb 2026 panel decision for simpler UX
         ...pendingCounterOffers.map(co => ({ type: 'counter-offer', data: co })),
         ...pendingDisputes.map(d => ({ type: 'dispute', data: d }))
     ];
@@ -1207,14 +1207,14 @@ function renderPendingActions() {
     const flaggedEl = document.getElementById('flaggedBidCount');
     if (counterEl) counterEl.textContent = pendingCounterOffers.length;
     if (disputeEl) disputeEl.textContent = pendingDisputes.length;
-    if (flaggedEl) flaggedEl.textContent = flaggedBids.length;
+    // flaggedBidCount hidden - deprecated Feb 2026
 
     if (allActions.length === 0) {
         container.innerHTML = `
             <div class="empty-state" style="text-align: center; padding: 60px 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);">
                 <i class="bi bi-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 16px;"></i>
                 <h4 style="margin: 0 0 8px; font-size: 18px; color: var(--text-primary);">All Clear!</h4>
-                <p style="margin: 0; color: var(--text-secondary);">No pending actions right now. Counter-offers, flagged bids, and disputes will appear here.</p>
+                <p style="margin: 0; color: var(--text-secondary);">No pending actions right now. Counter-offers and disputes will appear here.</p>
             </div>
         `;
         return;
