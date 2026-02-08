@@ -214,7 +214,7 @@ const translations = {
         'cta.title': 'Ready to Connect?',
         'cta.subtitle': 'Free to join. No upfront costs. Payouts guaranteed.',
         'cta.contact': 'Questions? Call',
-        'cta.contactLink': '+974 4455 4444',
+        'cta.contactLink': '+974 5026 7974',
         'cta.contactSuffix': 'to speak with our partner team',
 
         // Registration Form
@@ -265,8 +265,8 @@ const translations = {
         'form.error.phone': 'Please enter a valid Qatar phone number.',
         'form.error.duplicate': 'This phone number is already registered. Please login or use a different number.',
         'form.error.duplicateEmail': 'This email is already in use. Please use a different email address.',
-        'form.error.generic': 'Registration temporarily unavailable. Please call us at +974 4455 4444.',
-        'form.error.network': 'Connection issue. Please check your internet or call us at +974 4455 4444 to register.',
+        'form.error.generic': 'Registration temporarily unavailable. Please call us at +974 5026 7974.',
+        'form.error.network': 'Connection issue. Please check your internet or call us at +974 5026 7974 to register.',
 
         // Success Screen
         'success.title': 'Application Submitted! 🎉',
@@ -503,7 +503,7 @@ const translations = {
         'cta.title': 'جاهز للانضمام؟',
         'cta.subtitle': 'مجاني. بدون تكاليف مقدمة. مدفوعات مضمونة.',
         'cta.contact': 'أسئلة؟ اتصل',
-        'cta.contactLink': '<span dir="ltr">+974 4455 4444</span>',
+        'cta.contactLink': '<span dir="ltr">+974 5026 7974</span>',
         'cta.contactSuffix': 'للتحدث مع فريق الشراكة',
 
         // Registration Form
@@ -554,8 +554,8 @@ const translations = {
         'form.error.phone': 'يرجى إدخال رقم هاتف قطري صالح.',
         'form.error.duplicate': 'رقم الهاتف مسجل مسبقاً. يرجى تسجيل الدخول أو استخدام رقم آخر.',
         'form.error.duplicateEmail': 'البريد الإلكتروني مستخدم. يرجى استخدام بريد إلكتروني آخر.',
-        'form.error.generic': 'التسجيل غير متاح مؤقتاً. يرجى الاتصال بنا على <span dir="ltr">+974 4455 4444</span>.',
-        'form.error.network': 'مشكلة في الاتصال. يرجى التحقق من الإنترنت أو الاتصال بنا على <span dir="ltr">+974 4455 4444</span> للتسجيل.',
+        'form.error.generic': 'التسجيل غير متاح مؤقتاً. يرجى الاتصال بنا على <span dir="ltr">+974 5026 7974</span>.',
+        'form.error.network': 'مشكلة في الاتصال. يرجى التحقق من الإنترنت أو الاتصال بنا على <span dir="ltr">+974 5026 7974</span> للتسجيل.',
 
         // Success Screen
         'success.title': 'تم إرسال الطلب! 🎉',

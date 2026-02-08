@@ -59,7 +59,7 @@ const translations = {
         'info.contact.title': '📞 Contact Us',
         'info.contact.support': '<strong>Customer Support:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
         'info.contact.mobile': '<strong>Mobile:</strong><br><a href="tel:+97450267974">+974 5026 7974</a><br><a href="tel:+97455906912">+974 5590 6912</a>',
-        'info.contact.landline': '<strong>Landline:</strong><br>+974 4455 4444',
+        'info.contact.landline': '<strong>Landline:</strong><br>+974 5026 7974',
         'info.contact.hours': '<strong>Business Hours:</strong><br>Saturday - Thursday<br>8:00 AM - 8:00 PM (Qatar Time)',
 
         // Info Cards - Consumer Protection
@@ -155,7 +155,7 @@ const translations = {
         'info.contact.title': '📞 تواصل معنا',
         'info.contact.support': '<strong>دعم العملاء:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
         'info.contact.mobile': '<strong>الجوال:</strong><br><a href="tel:+97450267974" dir="ltr">+974 5026 7974</a><br><a href="tel:+97455906912" dir="ltr">+974 5590 6912</a>',
-        'info.contact.landline': '<strong>الهاتف الثابت:</strong><br><span dir="ltr">+974 4455 4444</span>',
+        'info.contact.landline': '<strong>الهاتف الثابت:</strong><br><span dir="ltr">+974 5026 7974</span>',
         'info.contact.hours': '<strong>ساعات العمل:</strong><br>السبت - الخميس<br>8:00 صباحاً - 8:00 مساءً (توقيت قطر)',
 
         // Info Cards - Consumer Protection

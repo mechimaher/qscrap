@@ -23,7 +23,7 @@ import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { api } from '../services/api';
 
 // QScrap WhatsApp Business Number (Qatar)
-const WHATSAPP_NUMBER = '+97433557700';
+const WHATSAPP_NUMBER = '+97450267974';
 
 interface SupportOption {
     id: string;

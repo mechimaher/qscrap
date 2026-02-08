@@ -227,8 +227,8 @@ export default function ProfileScreen() {
                             t('profile.contactUs'),
                             t('profile.chooseContact'),
                             [
-                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL('https://wa.me/97430007227?text=Hello%20QScrap%20Support') },
-                                { text: t('alerts.callUs'), onPress: () => Linking.openURL('tel:+97430007227') },
+                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL('https://wa.me/97450267974?text=Hello%20QScrap%20Support') },
+                                { text: t('alerts.callUs'), onPress: () => Linking.openURL('tel:+97450267974') },
                                 { text: t('alerts.emailUs'), onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
                                 { text: t('common.cancel'), style: 'cancel' }
                             ]

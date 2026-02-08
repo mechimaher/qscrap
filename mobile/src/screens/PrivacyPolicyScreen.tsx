@@ -149,7 +149,7 @@ const PrivacyPolicyScreen: React.FC = () => {
                     </Text>
                     <Text style={[styles.contactInfo, { color: colors.primary, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('privacy.email')}: privacy@qscrap.qa{'\n'}
-                        {t('privacy.phone')}: +974 4455 4444{'\n'}
+                        {t('privacy.phone')}: +974 5026 7974{'\n'}
                         {t('privacy.address')}: Industrial Area, St 10, P.O. Box 32544, Doha, Qatar
                     </Text>
                 </Section>
