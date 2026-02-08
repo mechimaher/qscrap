@@ -977,6 +977,8 @@ body {
     max-height: 80px;
     max-width: 200px;
     margin: 0 auto 20px;
+    background: white;
+    padding: 8px 12px;
     border-radius: 12px;
     box-shadow:
         0 0 0 4px rgba(255, 255, 255, 0.3),
@@ -1973,6 +1975,8 @@ body {
     width: auto;
     max-height: 46px;
     max-width: 140px;
+    background: white;
+    padding: 6px 10px;
     border-radius: 8px;
     box-shadow:
         0 0 0 2px rgba(255, 255, 255, 0.2),
