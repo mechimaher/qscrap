@@ -1502,7 +1502,7 @@ function openBatchPaymentFlow() {
 
         // Show modal immediately
         console.log('[BatchPayment] Showing modal...');
-        document.getElementById('batchPaymentModal').style.display = 'flex';
+        document.getElementById('batchPaymentModal').classList.add('active');
     } catch (err) {
         console.error('[BatchPayment] Error in openBatchPaymentFlow:', err);
         showToast('Error opening batch payment: ' + err.message, 'error');
@@ -1513,7 +1513,7 @@ function openBatchPaymentFlow() {
  * Close batch payment modal
  */
 function closeBatchPaymentModal() {
-    document.getElementById('batchPaymentModal').style.display = 'none';
+    document.getElementById('batchPaymentModal').classList.remove('active');
 }
 
 /**
