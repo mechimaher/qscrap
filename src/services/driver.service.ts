@@ -344,6 +344,7 @@ export class DriverService {
                     // Qatar market rate: 1,500-2,000 QAR/month, MOCI delivery fee cap 20 QAR
                     const DRIVER_DELIVERY_BONUS = 5; // QAR flat per delivery
                     const payoutAmount = DRIVER_DELIVERY_BONUS;
+                    const orderTotal = parseFloat(order.total_amount) || 0; // needed for COD cash collection
 
                     await driverRepository.createPayout(
                         assignment.driver_id,
