@@ -8,6 +8,8 @@ import { AuthService } from '../services/auth';
 import { AccountDeletionService } from '../services/auth/account-deletion.service';
 import { otpService } from '../services/otp.service';
 import { emailService } from '../services/email.service';
+import bcrypt from 'bcrypt';
+import { BCRYPT_ROUNDS } from '../config/security';
 
 const authService = new AuthService(pool);
 const accountDeletionService = new AccountDeletionService(pool);
@@ -282,4 +284,49 @@ export const resendOTP = catchAsync(async (req: Request, res: Response) => {
         message: 'Verification code resent to your email',
         expiresIn: 600
     });
+});
+
+/**
+ * Change password — authenticated users only.
+ * Verifies current password before allowing change.
+ */
+export const changePassword = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req as AuthRequest).user?.userId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+        return res.status(400).json({ error: 'current_password and new_password are required' });
+    }
+    if (new_password.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+    if (current_password === new_password) {
+        return res.status(400).json({ error: 'New password must be different from current password' });
+    }
+
+    // Get current password hash
+    const userResult = await pool.query(
+        'SELECT password_hash FROM users WHERE user_id = $1 AND status = $2',
+        [userId, 'active']
+    );
+    if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found or account inactive' });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(current_password, userResult.rows[0].password_hash);
+    if (!isMatch) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash and update
+    const newHash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
+    await pool.query(
+        'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE user_id = $2',
+        [newHash, userId]
+    );
+
+    logger.info('[Auth] Password changed', { userId });
+    res.json({ success: true, message: 'Password changed successfully' });
 });

@@ -721,7 +721,7 @@ export const en = {
         vin: 'VIN / Chassis Number',
         vinPlaceholder: '17-character VIN from Istimara',
         vinHelp: 'Required for accurate part matching',
-        scanVIN: 'Scan VIN from Istimara',
+
         color: 'Color',
         colorPlaceholder: 'e.g. White, Black, Silver',
         plateNumber: 'Plate Number',
@@ -729,7 +729,7 @@ export const en = {
         noVehicles: 'No vehicles saved',
         noVehiclesMsg: 'Add your first vehicle to get started',
         confirmDelete: 'Are you sure you want to delete this vehicle?',
-        scanVin: 'Scan VIN',
+
         enterManually: 'Enter Manually',
         vinScanned: 'VIN Scanned Successfully',
         vinInvalid: 'Invalid VIN format',
@@ -1103,20 +1103,6 @@ export const en = {
         releasePayment: 'Payment will be released to the garage',
     },
 
-    // =============================================
-    // VIN SCANNER
-    // =============================================
-    vinScanner: {
-        title: 'Scan VIN',
-        instructions: 'Position the VIN barcode within the frame',
-        scanning: 'Scanning...',
-        vinDetected: 'VIN Detected',
-        confirm: 'Confirm VIN',
-        rescan: 'Scan Again',
-        enterManually: 'Enter Manually',
-        scanFailed: 'Could not detect VIN',
-        tryAgain: 'Please try again or enter manually',
-    },
 
     // =============================================
     // DISPUTE

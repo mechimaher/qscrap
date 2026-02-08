@@ -94,12 +94,6 @@
         }
       ],
       [
-        "expo-camera",
-        {
-          "cameraPermission": "QScrap needs camera access to take photos of car parts."
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "QScrap needs photo library access to upload part images."

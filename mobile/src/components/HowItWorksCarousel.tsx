@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useIsFocused } from '@react-navigation/native';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -40,6 +41,7 @@ interface Props {
 export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Props) {
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+    const isFocused = useIsFocused();
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -129,8 +131,8 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
         })
     ).current;
 
-    const goToSlide = (index: number) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Animate to slide (no haptics — used by auto-play)
+    const animateToSlide = (index: number) => {
         setCurrentIndex(index);
 
         Animated.parallel([
@@ -147,11 +149,18 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
         ]).start();
     };
 
-    // Auto-play
+    // User-initiated slide change (with haptic feedback)
+    const goToSlide = (index: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        animateToSlide(index);
+    };
+
+    // Auto-play — pauses when screen is not focused or user is swiping
     useEffect(() => {
-        if (!autoPlay || isPaused) {
+        if (!autoPlay || isPaused || !isFocused) {
             if (autoPlayTimer.current) {
                 clearInterval(autoPlayTimer.current);
+                autoPlayTimer.current = null;
             }
             return;
         }
@@ -159,7 +168,7 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
         autoPlayTimer.current = setInterval(() => {
             setCurrentIndex((prev) => {
                 const next = prev === STEPS.length - 1 ? 0 : prev + 1;
-                goToSlide(next);
+                animateToSlide(next);
                 return next;
             });
         }, AUTO_SWIPE_INTERVAL);
@@ -167,9 +176,10 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
         return () => {
             if (autoPlayTimer.current) {
                 clearInterval(autoPlayTimer.current);
+                autoPlayTimer.current = null;
             }
         };
-    }, [autoPlay, isPaused, currentIndex]);
+    }, [autoPlay, isPaused, isFocused, currentIndex]);
 
     const currentStep = STEPS[currentIndex];
 

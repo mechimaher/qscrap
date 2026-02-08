@@ -15,9 +15,9 @@ export const API_ENDPOINTS = {
     // Auth
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
-    CHANGE_PASSWORD: '/auth/change-password',
     DELETE_ACCOUNT: '/auth/delete-account',
     DELETION_ELIGIBILITY: '/auth/deletion-eligibility',
+    CHANGE_PASSWORD: '/auth/change-password',
 
     // Requests
     REQUESTS: '/requests',
@@ -74,8 +74,6 @@ export const API_ENDPOINTS = {
     // Catalog (Featured Products)
     CATALOG_SEARCH: '/showcase/parts',
 
-    // OCR
-    OCR_VIN: '/ocr/vin/base64',
 };
 
 // App Info
