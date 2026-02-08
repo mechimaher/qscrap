@@ -264,6 +264,7 @@ export class OrderLifecycleService {
             // ============================================================
             const DRIVER_DELIVERY_BONUS = 5; // QAR flat per delivery
             const payoutAmount = DRIVER_DELIVERY_BONUS;
+            const orderTotal = parseFloat(order.total_amount) || 0; // needed for COD cash collection
 
             // 1. Create driver payout record
             await client.query(`
@@ -313,7 +314,8 @@ export class OrderLifecycleService {
                 driver_id: assignment.driver_id,
                 order_id: orderId,
                 payout_amount: payoutAmount,
-                order_total: orderTotal
+                order_total: orderTotal,
+                rate: 'flat_5_qar'
             });
 
             // Release driver (they're done with this delivery)
