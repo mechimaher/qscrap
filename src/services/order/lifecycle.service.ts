@@ -231,7 +231,7 @@ export class OrderLifecycleService {
                     updated_at = NOW()
                 WHERE order_id = $1 
                   AND order_status = 'in_transit'
-                RETURNING garage_id, customer_id, order_number, garage_payout_amount
+                RETURNING garage_id, customer_id, order_number, garage_payout_amount, total_amount, payment_method, payment_status
             `, [orderId, podPhotoUrl]);
 
             if (result.rows.length === 0) {
@@ -255,6 +255,63 @@ export class OrderLifecycleService {
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, 'in_transit', 'delivered', $2, 'driver', 'Driver confirmed delivery with POD')
             `, [orderId, driverId]);
+
+            // ============================================================
+            // DRIVER PAYOUT & EARNINGS (Critical: was missing before!)
+            // ============================================================
+            const orderTotal = parseFloat(order.total_amount) || 0;
+            const payoutAmount = Math.max(20, orderTotal * 0.15); // 15% of order total, min 20 QAR
+
+            // 1. Create driver payout record
+            await client.query(`
+                INSERT INTO driver_payouts 
+                    (driver_id, assignment_id, order_id, order_number, amount, status)
+                VALUES ($1, $2, $3, $4, $5, 'pending')
+            `, [assignment.driver_id, assignment.assignment_id, orderId, order.order_number, payoutAmount.toFixed(2)]);
+
+            // 2. Update driver's total earnings
+            await client.query(`
+                UPDATE drivers SET 
+                    total_earnings = COALESCE(total_earnings, 0) + $1,
+                    total_deliveries = COALESCE(total_deliveries, 0) + 1,
+                    updated_at = NOW()
+                WHERE driver_id = $2
+            `, [payoutAmount.toFixed(2), assignment.driver_id]);
+
+            // 3. Wallet transactions (earning credit + COD debit)
+            try {
+                const { walletService } = await import('../wallet.service');
+
+                // Credit delivery earning
+                await walletService.addTransaction(
+                    assignment.driver_id,
+                    payoutAmount,
+                    'earning',
+                    orderId,
+                    `Delivery Earning #${order.order_number}`
+                );
+
+                // Debit cash collection (if COD)
+                if (order.payment_method === 'cash' || order.payment_status === 'pending') {
+                    await walletService.addTransaction(
+                        assignment.driver_id,
+                        -orderTotal,
+                        'cash_collection',
+                        orderId,
+                        `Cash Collected #${order.order_number}`
+                    );
+                }
+            } catch (walletErr) {
+                logger.error('Wallet transaction failed in POD completion', { error: (walletErr as Error).message });
+                // Don't fail the delivery, just log
+            }
+
+            logger.info('Driver payout created via POD', {
+                driver_id: assignment.driver_id,
+                order_id: orderId,
+                payout_amount: payoutAmount,
+                order_total: orderTotal
+            });
 
             // Release driver (they're done with this delivery)
             await this.releaseDriver(orderId, client);
