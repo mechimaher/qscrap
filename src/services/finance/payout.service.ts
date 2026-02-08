@@ -80,8 +80,8 @@ export class PayoutService {
         return this.lifecycle.resolveDispute(payoutId, resolution);
     }
 
-    async confirmAllPayouts(garageId: string, password: string): Promise<BulkConfirmResult> {
-        return this.lifecycle.confirmAllPayouts(garageId, password);
+    async confirmAllPayouts(garageId: string): Promise<BulkConfirmResult> {
+        return this.lifecycle.confirmAllPayouts(garageId);
     }
 
     async sendReminder(payoutId: string): Promise<{ success: boolean; message: string }> {

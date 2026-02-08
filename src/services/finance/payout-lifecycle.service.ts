@@ -268,11 +268,7 @@ export class PayoutLifecycleService {
     /**
      * Bulk confirm all awaiting payouts (Garage)
      */
-    async confirmAllPayouts(garageId: string, password: string): Promise<BulkConfirmResult> {
-        const isValidPassword = await this.helpers.verifyGaragePassword(garageId, password);
-        if (!isValidPassword) {
-            throw new InvalidPasswordError();
-        }
+    async confirmAllPayouts(garageId: string): Promise<BulkConfirmResult> {
 
         const client = await this.pool.connect();
         try {
