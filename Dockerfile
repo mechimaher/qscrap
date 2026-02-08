@@ -45,6 +45,10 @@ COPY --from=builder /app/dist ./dist
 # Copy public assets and static files
 COPY --from=builder /app/public ./public
 
+# Copy migration runner and SQL files (for npm run db:migrate)
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/src/config/migrations ./src/config/migrations
+
 EXPOSE 3000
 
 # Run compiled JavaScript in production
