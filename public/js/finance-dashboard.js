@@ -484,7 +484,7 @@ function toggleSelectAll(type) {
 }
 
 async function processBulkPayouts() {
-    const selected = [...document.querySelectorAll('.payout-checkbox:checked')].map(cb => cb.dataset.id);
+    const selected = [...document.querySelectorAll('.payout-checkbox:checked')].map(cb => cb.dataset.payoutId);
     if (selected.length === 0) {
         showToast('Select at least one payout', 'error');
         return;
@@ -498,7 +498,7 @@ async function processBulkPayouts() {
     // Calculate total amount
     let totalAmount = 0;
     selected.forEach(id => {
-        const row = document.querySelector(`.payout-checkbox[data-id="${id}"]`)?.closest('tr');
+        const row = document.querySelector(`.payout-checkbox[data-payout-id="${id}"]`)?.closest('tr');
         if (row) {
             const amountCell = row.querySelectorAll('td')[5];
             if (amountCell) {
@@ -1573,11 +1573,8 @@ async function submitBatchPayment() {
 
             // Refresh data
             loadPendingPayouts(1);
-            loadDashboardStats();
+            loadBadges();
             loadGaragesForFilter();
-
-            // Update badges
-            loadAwaitingConfirmation();
         } else {
             showToast(result.error || 'Batch processing failed', 'error');
         }
