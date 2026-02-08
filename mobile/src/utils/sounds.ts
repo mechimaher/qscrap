@@ -2,30 +2,11 @@
  * QScrap Notification Sounds Utility
  * 
  * Premium sound feedback for notifications and interactions.
- * Uses expo-av for audio playback.
+ * Uses expo-haptics for haptic feedback and React Native Vibration.
  */
 
-import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Vibration } from 'react-native';
-
-// Sound instances cache
-let messageSound: Audio.Sound | null = null;
-let successSound: Audio.Sound | null = null;
-let alertSound: Audio.Sound | null = null;
-
-// Configure audio mode for notifications
-const configureAudio = async () => {
-    try {
-        await Audio.setAudioModeAsync({
-            playsInSilentModeIOS: false, // Respect silent mode
-            staysActiveInBackground: false,
-            shouldDuckAndroid: true,
-        });
-    } catch (error) {
-        console.log('Audio config error:', error);
-    }
-};
 
 /**
  * Play a notification sound with haptic feedback
@@ -146,25 +127,10 @@ export const playNewBidSound = async (): Promise<void> => {
 };
 
 /**
- * Clean up sound resources
+ * Clean up sound resources (no-op - using only haptics)
  */
 export const cleanupSounds = async (): Promise<void> => {
-    try {
-        if (messageSound) {
-            await messageSound.unloadAsync();
-            messageSound = null;
-        }
-        if (successSound) {
-            await successSound.unloadAsync();
-            successSound = null;
-        }
-        if (alertSound) {
-            await alertSound.unloadAsync();
-            alertSound = null;
-        }
-    } catch (error) {
-        console.log('Cleanup sounds error:', error);
-    }
+    // No-op: using haptics only, no audio resources to clean up
 };
 
 export default {

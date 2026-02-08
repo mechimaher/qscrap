@@ -587,24 +587,6 @@ class ApiService {
     }
 
 
-    // VIN OCR - Server-side text recognition
-    async ocrVIN(imageBase64: string): Promise<{ vin: string | null; confidence: number; raw_text?: string }> {
-        try {
-            const response = await this.request<{ vin: string | null; confidence: number; raw_text?: string }>(
-                '/ocr/vin/base64',
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ image: imageBase64 })
-                }
-            );
-            return response;
-        } catch (error) {
-            console.log('[API] OCR VIN error:', error);
-            // Return empty result on error - scanner will handle gracefully
-            return { vin: null, confidence: 0 };
-        }
-    }
-
     async getOrders() {
         const response = await this.request<any>('/orders');
         return response.data;
@@ -904,72 +886,6 @@ class ApiService {
         can_make_defective_claim: boolean;
     }> {
         return this.request('/cancellations/abuse-status');
-    }
-
-    // ============================================
-    // BID FLAGS - Report Incorrect Bids
-    // ============================================
-
-    /**
-     * Flag a bid as incorrect (wrong part, wrong picture, etc.)
-     * Customer-only action
-     */
-    async flagBid(bidId: string, data: {
-        reason: 'wrong_part' | 'wrong_picture' | 'incorrect_price' | 'missing_info' | 'other';
-        details?: string;
-        urgent?: boolean;
-    }): Promise<{
-        success: boolean;
-        flag: {
-            flag_id: string;
-            event_id: string;
-            bid_id: string;
-            reason: string;
-            status: 'pending';
-            is_urgent: boolean;
-            created_at: string;
-        };
-        message: string;
-        expectedResponseTime: string;
-    }> {
-        return this.request(`/bids/${bidId}/flag`, {
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-    }
-
-    /**
-     * Get all flags for a specific bid
-     */
-    async getBidFlags(bidId: string): Promise<{
-        bid_id: string;
-        flags: Array<{
-            flag_id: string;
-            reason: string;
-            details?: string;
-            is_urgent: boolean;
-            status: 'pending' | 'acknowledged' | 'corrected' | 'dismissed' | 'cancelled';
-            created_at: string;
-            flagged_by_name: string;
-        }>;
-        count: number;
-    }> {
-        return this.request(`/bids/${bidId}/flags`);
-    }
-
-    /**
-     * Dismiss a flag (customer can undo their own flag)
-     */
-    async dismissFlag(bidId: string, flagId: string, reason?: string): Promise<{
-        success: boolean;
-        flag_id: string;
-        status: 'dismissed';
-        message: string;
-    }> {
-        return this.request(`/bids/${bidId}/flags/${flagId}/dismiss`, {
-            method: 'POST',
-            body: JSON.stringify({ reason })
-        });
     }
 
 }
