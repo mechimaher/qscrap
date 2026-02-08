@@ -21,6 +21,7 @@ import {
 } from '../finance/refund-calculator.service';
 
 import logger from '../../utils/logger';
+import { getIO } from '../../utils/socketIO';
 // Constants
 const WARRANTY_DAYS = 7;
 const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'processing', 'awaiting_pickup'];
@@ -477,7 +478,7 @@ export class SupportActionsService {
             }, client);
 
             // Notify ops team via socket
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 io.to('operations').emit('driver_reassignment_needed', {
                     order_id: params.orderId,
@@ -554,7 +555,7 @@ export class SupportActionsService {
             }, client);
 
             // Notify ops via socket
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 io.to('operations').emit('support_escalation', {
                     order_id: params.orderId,
@@ -687,7 +688,7 @@ export class SupportActionsService {
                 });
 
                 // Socket.IO notification to garage portal
-                const io = (global as any).io;
+                const io = getIO();
                 if (io) {
                     io.to(`garage_${garageId}`).emit('payout_reversal', {
                         reversal_id: reversalId,
@@ -835,7 +836,7 @@ export class SupportActionsService {
     }
 
     private async notifyRefund(context: ActionContext, reason: string): Promise<void> {
-        const io = (global as any).io;
+        const io = getIO();
 
         // Notify customer
         try {
@@ -862,7 +863,7 @@ export class SupportActionsService {
     }
 
     private async notifyGarageCancellation(context: ActionContext, reason: string): Promise<void> {
-        const io = (global as any).io;
+        const io = getIO();
 
         if (io && context.order.garage_id) {
             io.to(`garage_${context.order.garage_id}`).emit('order_cancelled', {

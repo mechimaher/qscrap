@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { getReadPool, getWritePool } from '../config/db';
 import { getErrorMessage } from '../types';
 import { createNotification } from '../services/notification.service';
-import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { getIO, emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import logger from '../utils/logger';
 import {
     OperationsDashboardService,
@@ -81,7 +81,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         await dashboardService.invalidateCache();
 
         // Notify customer and garage
-        const io = (global as any).io;
+        const io = getIO();
 
         // Get order details for notifications
         const orderDetails = await orderService.getOrderDetails(order_id);
@@ -95,7 +95,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             ? `✅ Order #${order.order_number} completed. Payment will be processed soon.`
             : `Order #${order.order_number} status updated to ${new_status}`;
 
-        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+        io?.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
             old_status: result.old_status,
@@ -104,7 +104,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             notification: customerNotification
         });
 
-        io.to(`garage_${order.garage_id}`).emit('order_status_updated', {
+        io?.to(`garage_${order.garage_id}`).emit('order_status_updated', {
             order_id,
             order_number: order.order_number,
             old_status: result.old_status,
@@ -113,13 +113,13 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         });
 
         if (new_status === 'completed') {
-            io.to('operations').emit('order_completed', {
+            io?.to('operations').emit('order_completed', {
                 order_id,
                 order_number: order.order_number,
                 notification: `Order #${order.order_number} manually completed by Operations`
             });
 
-            io.to('operations').emit('payout_pending', {
+            io?.to('operations').emit('payout_pending', {
                 order_id,
                 order_number: order.order_number,
                 garage_id: order.garage_id,
@@ -159,8 +159,8 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
         const order = orderDetails.order;
 
         // Notify customer and garage
-        const io = (global as any).io;
-        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+        const io = getIO();
+        io?.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
             order_number: result.order_number,
             old_status: 'ready_for_pickup',
@@ -168,7 +168,7 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             notification: `📦 Order #${result.order_number} has been collected and is now being inspected.`
         });
 
-        io.to(`garage_${order.garage_id}`).emit('order_status_updated', {
+        io?.to(`garage_${order.garage_id}`).emit('order_status_updated', {
             order_id,
             order_number: result.order_number,
             old_status: 'ready_for_pickup',
@@ -176,7 +176,7 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             notification: `Order #${result.order_number} has been collected by QScrap team.`
         });
 
-        io.to('operations').emit('order_status_updated', {
+        io?.to('operations').emit('order_status_updated', {
             order_id,
             order_number: result.order_number,
             old_status: 'ready_for_pickup',
@@ -256,7 +256,7 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
         const dispute = disputeDetails.dispute;
 
         // Socket.IO Notifications + Persistent
-        const io = (global as any).io;
+        const io = getIO();
 
         const refundMsg = resolution === 'refund_approved'
             ? `Refund of ${result.refund_amount} QAR approved. Your refund will be processed shortly.`
@@ -271,7 +271,7 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             target_role: 'customer'
         });
 
-        io.to(`user_${dispute.customer_id}`).emit('dispute_resolved', {
+        io?.to(`user_${dispute.customer_id}`).emit('dispute_resolved', {
             dispute_id,
             order_id: dispute.order_id,
             order_number: dispute.order_number,
@@ -293,7 +293,7 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             target_role: 'garage'
         });
 
-        io.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', {
+        io?.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', {
             dispute_id,
             order_id: dispute.order_id,
             order_number: dispute.order_number,
@@ -301,7 +301,7 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             notification: garageResolutionMsg
         });
 
-        io.to('operations').emit('dispute_resolved', {
+        io?.to('operations').emit('dispute_resolved', {
             dispute_id,
             order_id: dispute.order_id,
             order_number: dispute.order_number,
@@ -310,7 +310,7 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
         });
 
         if (resolution === 'refund_approved' && result.return_assignment) {
-            io.to('operations').emit('return_assignment_created', {
+            io?.to('operations').emit('return_assignment_created', {
                 assignment_id: result.return_assignment.assignment_id,
                 order_id: dispute.order_id,
                 order_number: dispute.order_number,
@@ -457,7 +457,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
         }
 
         // 4. Notifications
-        const io = (global as any).io;
+        const io = getIO();
         const orderRef = escalation.order_number ? `Order #${escalation.order_number}` : 'your escalated issue';
 
         // 4a. Notify support agent who escalated
@@ -476,7 +476,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                 target_role: 'operations'
             });
 
-            io.to(`support_${escalation.escalated_by}`).emit('escalation_resolved', {
+            io?.to(`support_${escalation.escalated_by}`).emit('escalation_resolved', {
                 escalation_id,
                 order_number: escalation.order_number,
                 resolution_notes,
@@ -495,7 +495,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                 target_role: 'customer'
             });
 
-            io.to(`user_${escalation.customer_id}`).emit('order_update', {
+            io?.to(`user_${escalation.customer_id}`).emit('order_update', {
                 order_number: escalation.order_number,
                 type: 'escalation_resolved',
                 notification: `Your issue regarding ${orderRef} has been resolved.`
@@ -504,7 +504,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
 
         // 4c. Notify garage if relevant
         if (escalation.garage_id) {
-            io.to(`garage_${escalation.garage_id}`).emit('escalation_update', {
+            io?.to(`garage_${escalation.garage_id}`).emit('escalation_update', {
                 order_number: escalation.order_number,
                 type: 'resolved',
                 notification: `Escalation for ${orderRef} has been resolved by Operations.`
@@ -512,7 +512,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
         }
 
         // 4d. Notify operations room
-        io.to('operations').emit('escalation_resolved', {
+        io?.to('operations').emit('escalation_resolved', {
             escalation_id,
             order_number: escalation.order_number,
             resolved_by: staffId,

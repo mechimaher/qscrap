@@ -11,6 +11,7 @@ import { createBatchNotifications } from './notification.service';
 import { autoSaveVehicle } from '../controllers/vehicle.controller';
 import fs from 'fs/promises';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 // ============================================
 // TYPES
@@ -257,7 +258,7 @@ async function notifyRelevantGarages(
         `);
 
         const notificationsToCreate: any[] = [];
-        const io = (global as any).io;
+        const io = getIO();
 
         // Use for...of to support async/await
         for (const garage of targetGaragesResult.rows) {

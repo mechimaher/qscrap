@@ -18,11 +18,35 @@ import logger from '../utils/logger';
 // CONFIGURATION CONSTANTS
 // ============================================
 
-/** Token expiry in seconds (30 days) */
-export const TOKEN_EXPIRY_SECONDS = 30 * 24 * 60 * 60;
+/**
+ * Access token expiry.
+ * Configurable via ACCESS_TOKEN_EXPIRY env var.
+ * Transition period: defaults to '30d' for backward compatibility.
+ * Target: '15m' after mobile apps support refresh flow.
+ */
+export const TOKEN_EXPIRY_STRING = process.env.ACCESS_TOKEN_EXPIRY || '30d';
 
-/** Token expiry in human-readable format for JWT */
-export const TOKEN_EXPIRY_STRING = '30d';
+/** Parse token expiry string to seconds */
+function parseExpiryToSeconds(expiry: string): number {
+    const match = expiry.match(/^(\d+)(s|m|h|d)$/);
+    if (!match) return 30 * 24 * 60 * 60; // fallback 30 days
+    const value = parseInt(match[1], 10);
+    switch (match[2]) {
+        case 's': return value;
+        case 'm': return value * 60;
+        case 'h': return value * 3600;
+        case 'd': return value * 86400;
+        default: return 30 * 86400;
+    }
+}
+
+export const TOKEN_EXPIRY_SECONDS = parseExpiryToSeconds(TOKEN_EXPIRY_STRING);
+
+/** Refresh token validity in days */
+export const REFRESH_TOKEN_EXPIRY_DAYS = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '7', 10);
+
+/** Refresh token validity in milliseconds */
+export const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
 
 /** Minimum JWT secret length for production */
 const MIN_SECRET_LENGTH = 32;
@@ -229,6 +253,23 @@ export const generateSecureToken = (length: number = 32): string => {
     return crypto.randomBytes(length).toString('hex').slice(0, length);
 };
 
+/**
+ * Generates a cryptographically secure refresh token.
+ * Returns both the raw token (sent to client) and its SHA-256 hash (stored in DB).
+ */
+export const generateRefreshToken = (): { token: string; hash: string } => {
+    const token = crypto.randomBytes(48).toString('hex');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    return { token, hash };
+};
+
+/**
+ * Hashes a refresh token for DB lookup.
+ */
+export const hashRefreshToken = (token: string): string => {
+    return crypto.createHash('sha256').update(token).digest('hex');
+};
+
 // ============================================
 // EXPORTS
 // ============================================
@@ -239,8 +280,12 @@ export default {
     performStartupSecurityChecks,
     getJwtSignOptions,
     generateSecureToken,
+    generateRefreshToken,
+    hashRefreshToken,
     TOKEN_EXPIRY_SECONDS,
     TOKEN_EXPIRY_STRING,
+    REFRESH_TOKEN_EXPIRY_DAYS,
+    REFRESH_TOKEN_EXPIRY_MS,
     BCRYPT_ROUNDS,
     TRIAL_DAYS
 };

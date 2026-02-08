@@ -5,6 +5,7 @@ import { getErrorMessage } from '../types';
 import { pushService } from '../services/push.service';
 import { ChatService } from '../services/chat';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 const chatService = new ChatService(pool);
 
@@ -33,8 +34,8 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
         const senderType = assignment.customer_id === req.user!.userId ? 'customer' : 'driver';
         const recipientId = senderType === 'customer' ? assignment.driver_user_id : assignment.customer_id;
         const newMessage = await chatService.sendMessage(req.params.assignment_id, assignment.order_id, senderType, req.user!.userId, message.trim());
-        const io = (global as any).io;
-        io.to(`chat_${req.params.assignment_id}`).emit('chat_message', { assignment_id: req.params.assignment_id, ...newMessage });
+        const io = getIO();
+        io?.to(`chat_${req.params.assignment_id}`).emit('chat_message', { assignment_id: req.params.assignment_id, ...newMessage });
 
         // PUSH: Send push notification to recipient
         if (recipientId) {
@@ -92,10 +93,10 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
         const senderType = assignment.customer_id === req.user!.userId ? 'customer' : 'driver';
         const recipientId = senderType === 'customer' ? assignment.driver_user_id : assignment.customer_id;
         const newMessage = await chatService.sendMessage(assignment.assignment_id, order_id, senderType, req.user!.userId, message.trim());
-        const io = (global as any).io;
+        const io = getIO();
         if (io) {
-            if (assignment.assignment_id) io.to(`chat_${assignment.assignment_id}`).emit('chat_message', { assignment_id: assignment.assignment_id, order_id, ...newMessage });
-            io.to(`order_${order_id}`).emit('new_message', { ...newMessage, order_id, sender_name: senderType === 'customer' ? 'You' : assignment.driver_name, is_read: false });
+            if (assignment.assignment_id) io?.to(`chat_${assignment.assignment_id}`).emit('chat_message', { assignment_id: assignment.assignment_id, order_id, ...newMessage });
+            io?.to(`order_${order_id}`).emit('new_message', { ...newMessage, order_id, sender_name: senderType === 'customer' ? 'You' : assignment.driver_name, is_read: false });
 
             // Send push notification to recipient (BOTH directions - customer↔driver)
             if (recipientId) {

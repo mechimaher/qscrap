@@ -5,6 +5,7 @@
 
 import { Pool } from 'pg';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 export async function schedulePendingPayouts(pool: Pool): Promise<number> {
     try {
@@ -30,7 +31,7 @@ export async function schedulePendingPayouts(pool: Pool): Promise<number> {
         if (scheduledCount > 0) {
             logger.jobComplete('schedulePendingPayouts', { count: scheduledCount });
 
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 for (const payout of result.rows) {
                     io.to(`garage_${payout.garage_id}`).emit('payout_scheduled', {
@@ -150,7 +151,7 @@ export async function autoProcessPayouts(pool: Pool): Promise<{ processed: numbe
         if (heldCount > 0) {
             logger.warn('Payouts held due to disputes', { count: heldCount });
 
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 for (const payout of holdResult.rows) {
                     io.to(`garage_${payout.garage_id}`).emit('payout_held', {
@@ -185,7 +186,7 @@ export async function autoProcessPayouts(pool: Pool): Promise<{ processed: numbe
         if (processedCount > 0) {
             logger.jobComplete('autoProcessPayouts', { processed: processedCount });
 
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 for (const payout of processResult.rows) {
                     io.to(`garage_${payout.garage_id}`).emit('payout_completed', {
@@ -223,7 +224,7 @@ export async function autoProcessPayouts(pool: Pool): Promise<{ processed: numbe
         if ((releaseResult.rowCount || 0) > 0) {
             logger.info('Payouts released after dispute resolution', { count: releaseResult.rowCount });
 
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 for (const payout of releaseResult.rows) {
                     io.to(`garage_${payout.garage_id}`).emit('payout_released', {
@@ -264,7 +265,7 @@ export async function autoConfirmPayouts(pool: Pool): Promise<number> {
         if (confirmedCount > 0) {
             logger.jobComplete('autoConfirmPayouts', { count: confirmedCount });
 
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 for (const payout of result.rows) {
                     io.to(`garage_${payout.garage_id}`).emit('payout_auto_confirmed', {

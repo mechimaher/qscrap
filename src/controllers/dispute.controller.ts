@@ -5,6 +5,7 @@ import { getErrorMessage } from '../types';
 import { createNotification } from '../services/notification.service';
 import { DisputeOrderService, DISPUTE_CONFIGS } from '../services/dispute';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 const disputeService = new DisputeOrderService(pool);
 
@@ -24,8 +25,8 @@ export const createDispute = async (req: AuthRequest, res: Response) => {
         await createNotification({ userId: result.order.garage_id, type: 'dispute_created', title: 'New Dispute ⚠️', message: `A dispute was opened for Order #${result.order.order_number}`, data: { dispute_id: result.dispute.dispute_id, order_id: req.body.order_id }, target_role: 'garage' });
         await createNotification({ userId: 'operations', type: 'dispute_created', title: 'New Dispute Opened', message: `Dispute opened for Order #${result.order.order_number}`, data: { dispute_id: result.dispute.dispute_id }, target_role: 'operations' });
 
-        const io = (global as any).io;
-        io.to(`garage_${result.order.garage_id}`).emit('dispute_created', { dispute_id: result.dispute.dispute_id, order_id: req.body.order_id, reason: req.body.reason, refund_amount: result.refundAmount });
+        const io = getIO();
+        io?.to(`garage_${result.order.garage_id}`).emit('dispute_created', { dispute_id: result.dispute.dispute_id, order_id: req.body.order_id, reason: req.body.reason, refund_amount: result.refundAmount });
 
         res.status(201).json({ message: 'Dispute submitted successfully', dispute_id: result.dispute.dispute_id, expected_refund: result.refundAmount, restocking_fee: result.restockingFee, return_shipping_by: result.config.returnShippingBy, delivery_refunded: result.config.deliveryRefund });
     } catch (err) {
@@ -59,9 +60,9 @@ export const getDisputeDetails = async (req: AuthRequest, res: Response) => {
 export const garageRespondToDispute = async (req: AuthRequest, res: Response) => {
     try {
         const result = await disputeService.garageRespond(req.params.dispute_id, req.user!.userId, req.body.response_message);
-        const io = (global as any).io;
-        io.to(`user_${result.dispute.customer_id}`).emit('dispute_updated', { dispute_id: req.params.dispute_id, notification: 'Garage has responded to your dispute.' });
-        io.to('operations').emit('dispute_needs_review', { dispute_id: req.params.dispute_id });
+        const io = getIO();
+        io?.to(`user_${result.dispute.customer_id}`).emit('dispute_updated', { dispute_id: req.params.dispute_id, notification: 'Garage has responded to your dispute.' });
+        io?.to('operations').emit('dispute_needs_review', { dispute_id: req.params.dispute_id });
         res.json({ message: 'Response submitted. Customer service will review.', status: 'under_review' });
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });
@@ -71,10 +72,10 @@ export const garageRespondToDispute = async (req: AuthRequest, res: Response) =>
 export const autoResolveDisputes = async () => {
     try {
         const resolved = await disputeService.autoResolveDisputes();
-        const io = (global as any).io;
+        const io = getIO();
         for (const dispute of resolved) {
-            io.to(`user_${dispute.customer_id}`).emit('dispute_resolved', { dispute_id: dispute.dispute_id, resolution: 'refund_approved', refund_amount: dispute.refund_amount });
-            io.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', { dispute_id: dispute.dispute_id, resolution: 'refund_approved' });
+            io?.to(`user_${dispute.customer_id}`).emit('dispute_resolved', { dispute_id: dispute.dispute_id, resolution: 'refund_approved', refund_amount: dispute.refund_amount });
+            io?.to(`garage_${dispute.garage_id}`).emit('dispute_resolved', { dispute_id: dispute.dispute_id, resolution: 'refund_approved' });
         }
         if (resolved.length > 0) logger.info(`Auto-resolved ${resolved.length} disputes`);
     } catch (err) {

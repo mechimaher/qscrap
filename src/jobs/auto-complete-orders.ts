@@ -7,6 +7,7 @@ import * as cron from 'node-cron';
 import { getWritePool } from '../config/db';
 import { OrderLifecycleService } from '../services/order/lifecycle.service';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 const lifecycleService = new OrderLifecycleService(getWritePool());
 
@@ -34,7 +35,7 @@ export function startAutoCompleteJob() {
             });
 
             // Emit to operations dashboard
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 io.to('operations').emit('auto_complete_summary', {
                     completed_count: result.completed_count,

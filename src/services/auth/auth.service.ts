@@ -1,11 +1,19 @@
 /**
  * Auth Service
- * Handles user registration, login, and account management
+ * Handles user registration, login, token refresh, and account management
  */
 import { Pool, PoolClient } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { getJwtSecret, BCRYPT_ROUNDS, TRIAL_DAYS, TOKEN_EXPIRY_SECONDS } from '../../config/security';
+import {
+    getJwtSecret,
+    BCRYPT_ROUNDS,
+    TRIAL_DAYS,
+    TOKEN_EXPIRY_SECONDS,
+    REFRESH_TOKEN_EXPIRY_MS,
+    generateRefreshToken,
+    hashRefreshToken
+} from '../../config/security';
 import { emitToAdmin } from '../../utils/socketIO';
 import logger from '../../utils/logger';
 
@@ -29,6 +37,7 @@ export interface RegisterData {
 
 export interface LoginResult {
     token: string;
+    refreshToken?: string;
     userId: string;
     userType: string;
     fullName?: string;
@@ -46,7 +55,7 @@ export class AuthService {
         return result.rows.length > 0;
     }
 
-    async registerUser(data: RegisterData): Promise<{ userId: string; token: string }> {
+    async registerUser(data: RegisterData): Promise<{ userId: string; token: string; refreshToken: string }> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -81,7 +90,16 @@ export class AuthService {
             }
 
             const token = jwt.sign({ userId, userType: data.user_type }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
-            return { userId, token };
+
+            // Generate refresh token
+            const refresh = generateRefreshToken();
+            await client.query(
+                `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+                 VALUES ($1, $2, NOW() + INTERVAL '1 millisecond' * $3)`,
+                [userId, refresh.hash, REFRESH_TOKEN_EXPIRY_MS]
+            );
+
+            return { userId, token, refreshToken: refresh.token };
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -138,7 +156,16 @@ export class AuthService {
             userType: user.user_type,
             staffRole: staffRole
         }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
-        return { token, userId: user.user_id, userType: user.user_type, fullName: user.full_name, phoneNumber: user.phone_number, staffRole };
+
+        // Generate refresh token
+        const refresh = generateRefreshToken();
+        await this.pool.query(
+            `INSERT INTO refresh_tokens (user_id, token_hash, device_info, expires_at)
+             VALUES ($1, $2, $3, NOW() + INTERVAL '1 millisecond' * $4)`,
+            [user.user_id, refresh.hash, null, REFRESH_TOKEN_EXPIRY_MS]
+        );
+
+        return { token, refreshToken: refresh.token, userId: user.user_id, userType: user.user_type, fullName: user.full_name, phoneNumber: user.phone_number, staffRole };
     }
 
     async deleteAccount(userId: string): Promise<void> {
@@ -228,5 +255,100 @@ export class AuthService {
         } finally {
             client.release();
         }
+    }
+
+    /**
+     * Refresh an access token using a valid refresh token.
+     * Implements token rotation: old refresh token is revoked, new pair issued.
+     */
+    async refreshAccessToken(refreshTokenRaw: string): Promise<{ token: string; refreshToken: string }> {
+        const tokenHash = hashRefreshToken(refreshTokenRaw);
+
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Find active (non-revoked, non-expired) refresh token
+            const result = await client.query(
+                `SELECT rt.token_id, rt.user_id, u.user_type, u.is_active, u.is_suspended,
+                        (SELECT sp.role FROM staff_profiles sp WHERE sp.user_id = u.user_id AND sp.is_active = true LIMIT 1) as staff_role
+                 FROM refresh_tokens rt
+                 JOIN users u ON rt.user_id = u.user_id
+                 WHERE rt.token_hash = $1
+                   AND rt.revoked_at IS NULL
+                   AND rt.expires_at > NOW()
+                 FOR UPDATE`,
+                [tokenHash]
+            );
+
+            if (result.rows.length === 0) {
+                throw new Error('Invalid or expired refresh token');
+            }
+
+            const row = result.rows[0];
+
+            if (!row.is_active || row.is_suspended) {
+                // Revoke all tokens for suspended/deactivated users
+                await client.query(
+                    `UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL`,
+                    [row.user_id]
+                );
+                await client.query('COMMIT');
+                throw new Error('Account is deactivated or suspended');
+            }
+
+            // Revoke the used refresh token
+            const newRefresh = generateRefreshToken();
+            await client.query(
+                `UPDATE refresh_tokens SET revoked_at = NOW(), replaced_by = (
+                    SELECT token_id FROM refresh_tokens WHERE token_hash = $2
+                ) WHERE token_id = $1`,
+                [row.token_id, newRefresh.hash]
+            );
+
+            // Issue new refresh token
+            await client.query(
+                `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+                 VALUES ($1, $2, NOW() + INTERVAL '1 millisecond' * $3)`,
+                [row.user_id, newRefresh.hash, REFRESH_TOKEN_EXPIRY_MS]
+            );
+
+            await client.query('COMMIT');
+
+            // Issue new access token
+            const token = jwt.sign({
+                userId: row.user_id,
+                userType: row.user_type,
+                staffRole: row.staff_role || undefined
+            }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
+
+            return { token, refreshToken: newRefresh.token };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Revoke a specific refresh token (logout).
+     */
+    async revokeRefreshToken(refreshTokenRaw: string): Promise<void> {
+        const tokenHash = hashRefreshToken(refreshTokenRaw);
+        await this.pool.query(
+            `UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1 AND revoked_at IS NULL`,
+            [tokenHash]
+        );
+    }
+
+    /**
+     * Revoke all refresh tokens for a user (password change, account deletion, force logout).
+     */
+    async revokeAllUserTokens(userId: string): Promise<void> {
+        await this.pool.query(
+            `UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL`,
+            [userId]
+        );
     }
 }

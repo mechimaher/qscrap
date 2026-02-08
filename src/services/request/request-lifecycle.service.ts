@@ -4,6 +4,7 @@
  */
 import { Pool, PoolClient } from 'pg';
 import { createNotification } from '../notification.service';
+import { getIO } from '../../utils/socketIO';
 
 export class RequestLifecycleService {
     constructor(private pool: Pool) { }
@@ -87,7 +88,7 @@ export class RequestLifecycleService {
             await client.query('COMMIT');
 
             // Notify all garages that had bids
-            const io = (global as any).io;
+            const io = getIO();
 
             for (const garageId of garageIds) {
                 await createNotification({
@@ -101,7 +102,7 @@ export class RequestLifecycleService {
             }
 
             // Broadcast to all garages that this request no longer exists
-            io.emit('request_removed', { request_id: requestId });
+            io?.emit('request_removed', { request_id: requestId });
 
             return {
                 success: true,

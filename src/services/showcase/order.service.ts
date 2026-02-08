@@ -12,6 +12,7 @@ import {
 } from './errors';
 import { getDeliveryFeeForLocation } from '../../controllers/delivery.controller';
 import { createNotification } from '../notification.service';
+import { getIO } from '../../utils/socketIO';
 
 export class ShowcaseOrderService {
     constructor(private pool: Pool) { }
@@ -231,8 +232,8 @@ export class ShowcaseOrderService {
             target_role: 'garage'
         });
 
-        const io = (global as any).io;
-        io.to(`garage_${garageId}`).emit('new_order', {
+        const io = getIO();
+        io?.to(`garage_${garageId}`).emit('new_order', {
             order_id: order.order_id,
             order_number: order.order_number,
             source: 'showcase'
@@ -252,7 +253,7 @@ export class ShowcaseOrderService {
             target_role: 'garage'
         });
 
-        const io = (global as any).io;
-        io.to(`garage_${garageId}`).emit('new_quote_request', { request_id: requestId });
+        const io = getIO();
+        io?.to(`garage_${garageId}`).emit('new_quote_request', { request_id: requestId });
     }
 }

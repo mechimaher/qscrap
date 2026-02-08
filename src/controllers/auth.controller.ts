@@ -41,7 +41,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     }
 
     const result = await authService.registerUser({ phone_number, password, user_type, full_name, email, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat: validLat, location_lng: validLng, preferred_plan_code, cr_number, trade_license_number });
-    res.status(201).json({ token: result.token, userId: result.userId, userType: user_type });
+    res.status(201).json({ token: result.token, refreshToken: result.refreshToken, userId: result.userId, userType: user_type });
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
@@ -60,6 +60,33 @@ export const login = catchAsync(async (req: Request, res: Response) => {
         if (message.startsWith('application_rejected:')) return res.status(403).json({ error: 'application_rejected', message: message.split(':')[1], status: 'rejected' });
         throw err;
     }
+});
+
+export const refreshToken = catchAsync(async (req: Request, res: Response) => {
+    const { refreshToken: refreshTokenRaw } = req.body;
+    if (!refreshTokenRaw) return res.status(400).json({ error: 'refreshToken is required' });
+
+    try {
+        const result = await authService.refreshAccessToken(refreshTokenRaw);
+        res.json({ token: result.token, refreshToken: result.refreshToken });
+    } catch (err) {
+        const message = getErrorMessage(err);
+        if (message.includes('expired') || message.includes('Invalid')) {
+            return res.status(401).json({ error: 'invalid_refresh_token', message });
+        }
+        if (message.includes('deactivated') || message.includes('suspended')) {
+            return res.status(403).json({ error: 'account_restricted', message });
+        }
+        throw err;
+    }
+});
+
+export const logout = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { refreshToken: refreshTokenRaw } = req.body;
+    if (refreshTokenRaw) {
+        await authService.revokeRefreshToken(refreshTokenRaw);
+    }
+    res.json({ message: 'Logged out successfully' });
 });
 
 export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -201,6 +228,7 @@ export const verifyEmailOTP = catchAsync(async (req: Request, res: Response) => 
             success: true,
             message: 'Registration successful',
             token: result.token,
+            refreshToken: result.refreshToken,
             userId: result.userId,
             userType: 'customer',
             emailVerified: true
