@@ -1,15 +1,5 @@
-// App Version
-export const APP_VERSION = '1.0.0';
-
-// API Configuration
-export const API_CONFIG = {
-    // Forcing production URL to match Driver App success
-    BASE_URL: 'https://qscrap.qa/api',
-    SOCKET_URL: 'https://qscrap.qa',
-    // BASE_URL: __DEV__ ? 'http://192.168.1.59:3000/api' : 'https://qscrap.qa/api',
-    // SOCKET_URL: __DEV__ ? 'http://192.168.1.59:3000' : 'https://qscrap.qa',
-    TIMEOUT: 15000,
-};
+// NOTE: API configuration lives in config/api.ts (production source of truth)
+// This file only exports non-API constants used across the app
 
 // MOCI Maximum: 20 QR per Ministerial Decision No. 8/2013
 export const DEFAULT_DELIVERY_FEE = 20;
