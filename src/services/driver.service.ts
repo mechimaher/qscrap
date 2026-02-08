@@ -340,8 +340,10 @@ export class DriverService {
 
                 if (status === 'delivered') {
                     const order = await driverRepository.getOrderTotal(assignment.order_id, client);
-                    const orderTotal = parseFloat(order.total_amount) || 0;
-                    const payoutAmount = Math.max(20, orderTotal * 0.15);
+                    // Flat 5 QAR per delivery (driver bonus, base salary via payroll)
+                    // Qatar market rate: 1,500-2,000 QAR/month, MOCI delivery fee cap 20 QAR
+                    const DRIVER_DELIVERY_BONUS = 5; // QAR flat per delivery
+                    const payoutAmount = DRIVER_DELIVERY_BONUS;
 
                     await driverRepository.createPayout(
                         assignment.driver_id,

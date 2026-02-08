@@ -257,10 +257,13 @@ export class OrderLifecycleService {
             `, [orderId, driverId]);
 
             // ============================================================
-            // DRIVER PAYOUT & EARNINGS (Critical: was missing before!)
+            // DRIVER PAYOUT & EARNINGS
+            // Flat 5 QAR per delivery (driver bonus, base salary via payroll)
+            // Calibrated for Qatar market: 1,500-2,000 QAR/month driver salary
+            // MOCI compliant: delivery fee to customer capped at 20 QAR
             // ============================================================
-            const orderTotal = parseFloat(order.total_amount) || 0;
-            const payoutAmount = Math.max(20, orderTotal * 0.15); // 15% of order total, min 20 QAR
+            const DRIVER_DELIVERY_BONUS = 5; // QAR flat per delivery
+            const payoutAmount = DRIVER_DELIVERY_BONUS;
 
             // 1. Create driver payout record
             await client.query(`
