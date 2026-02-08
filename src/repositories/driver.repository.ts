@@ -90,6 +90,7 @@ export class DriverRepository {
                 o.total_amount::FLOAT as total_amount,
                 o.part_price::FLOAT as part_price,
                 o.delivery_fee::FLOAT as delivery_fee,
+                COALESCE(o.loyalty_discount, 0)::FLOAT as loyalty_discount,
                 o.payment_method,
                 o.created_at as order_created,
                 o.customer_id, o.garage_id,

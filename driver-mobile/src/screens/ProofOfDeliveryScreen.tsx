@@ -42,7 +42,7 @@ export default function ProofOfDeliveryScreen() {
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     // Signature removed for faster delivery flow
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
-    const [orderDetails, setOrderDetails] = useState<{ total_amount: number; part_price: number; delivery_fee: number; cod_amount: number; payment_method: string } | null>(null);
+    const [orderDetails, setOrderDetails] = useState<{ total_amount: number; part_price: number; delivery_fee: number; loyalty_discount: number; cod_amount: number; payment_method: string } | null>(null);
     const [isLoadingOrder, setIsLoadingOrder] = useState(true);
 
     // Camera
@@ -66,24 +66,29 @@ export default function ProofOfDeliveryScreen() {
                     const total = parseFloat(String(assignment.total_amount)) || 0;
                     const partPrice = parseFloat(String(assignment.part_price)) || 0;
                     const deliveryFee = parseFloat(String(assignment.delivery_fee)) || 0;
+                    const loyaltyDiscount = parseFloat(String(assignment.loyalty_discount)) || 0;
                     const paymentMethod = assignment.payment_method || 'cash';
 
-                    // BUSINESS MODEL:
-                    // - payment_method = 'card_full' means FULL PAYMENT (part + delivery) was paid upfront → COD = 0
-                    // - payment_method = 'card' means DELIVERY FEE was paid upfront via Stripe → COD = part_price
-                    // - payment_method = 'cash' means nothing paid upfront → COD = part_price + delivery_fee
+                    // DISCOUNT-AWARE BUSINESS MODEL:
+                    // effectivePartPrice = partPrice - loyaltyDiscount (what customer actually owes for the part)
+                    // - payment_method = 'card_full' → COD = 0 (everything paid online, discount already applied)
+                    // - payment_method = 'card' → COD = effectivePartPrice (delivery fee paid online, collect discounted part price)
+                    // - payment_method = 'cash' → COD = effectivePartPrice + deliveryFee (collect both at delivery)
+                    const effectivePartPrice = Math.max(0, partPrice - loyaltyDiscount);
                     let codAmount = 0;
                     if (paymentMethod === 'card_full') {
                         codAmount = 0; // Full payment already collected online
                     } else if (paymentMethod === 'card') {
-                        codAmount = partPrice; // Delivery fee paid, collect part only
+                        codAmount = effectivePartPrice; // Delivery fee paid, collect discounted part only
                     } else {
-                        codAmount = partPrice + deliveryFee; // Collect both at delivery
+                        codAmount = effectivePartPrice + deliveryFee; // Collect both at delivery
                     }
 
                     console.log('[POD] Loaded assignment:', {
                         assignmentId,
                         partPrice,
+                        effectivePartPrice,
+                        loyaltyDiscount,
                         deliveryFee,
                         total,
                         paymentMethod,
@@ -94,8 +99,9 @@ export default function ProofOfDeliveryScreen() {
 
                     setOrderDetails({
                         total_amount: total,
-                        part_price: partPrice,
+                        part_price: effectivePartPrice,
                         delivery_fee: deliveryFee,
+                        loyalty_discount: loyaltyDiscount,
                         cod_amount: codAmount,
                         payment_method: paymentMethod
                     });
@@ -377,12 +383,19 @@ export default function ProofOfDeliveryScreen() {
                             ✓ Delivery fee ({orderDetails?.delivery_fee?.toFixed(0)} QAR) paid online
                         </Text>
                     )}
+                    {(orderDetails?.loyalty_discount ?? 0) > 0 && (
+                        <Text style={{ fontSize: 14, color: '#F59E0B', textAlign: 'center', marginBottom: 8 }}>
+                            🏷️ Loyalty discount of {orderDetails?.loyalty_discount?.toFixed(0)} QAR applied
+                        </Text>
+                    )}
                     <Text style={[styles.subtitle, { color: colors.text, marginBottom: 0 }]}>
                         Collect {orderDetails?.cod_amount?.toFixed(0) || '0'} QAR
                     </Text>
                     <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
                         {orderDetails?.payment_method === 'card'
-                            ? `(Part price only)`
+                            ? (orderDetails?.loyalty_discount ?? 0) > 0
+                                ? `(Part price after discount)`
+                                : `(Part price only)`
                             : `(Part ${orderDetails?.part_price?.toFixed(0)} + Delivery ${orderDetails?.delivery_fee?.toFixed(0)})`}
                     </Text>
                 </View>
