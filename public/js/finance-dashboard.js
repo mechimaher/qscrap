@@ -1443,59 +1443,70 @@ function updatePendingTotals(payouts) {
  * Uses already-loaded pendingPayoutsData — no extra API call needed
  */
 function openBatchPaymentFlow() {
-    if (!pendingPayoutsData || pendingPayoutsData.length === 0) {
-        showToast('No pending payouts to process', 'error');
-        return;
-    }
+    try {
+        console.log('[BatchPayment] openBatchPaymentFlow called, pendingPayoutsData:', pendingPayoutsData?.length);
 
-    // Build garage breakdown from local data
-    const garageMap = new Map();
-    for (const p of pendingPayoutsData) {
-        const existing = garageMap.get(p.garage_id) || {
-            garage_id: p.garage_id,
-            garage_name: p.garage_name,
-            payout_count: 0,
-            total: 0
-        };
-        existing.payout_count++;
-        existing.total += parseFloat(p.net_amount) || 0;
-        garageMap.set(p.garage_id, existing);
-    }
-    const garages = [...garageMap.values()];
-    const totalAmount = garages.reduce((sum, g) => sum + g.total, 0);
-    const totalCount = pendingPayoutsData.length;
+        if (!pendingPayoutsData || pendingPayoutsData.length === 0) {
+            showToast('No pending payouts to process', 'error');
+            return;
+        }
 
-    // Populate modal
-    document.getElementById('bpPayoutCount').textContent = totalCount;
-    document.getElementById('bpTotalAmount').textContent = formatCurrency(totalAmount);
-    document.getElementById('bpGarageCount').textContent = garages.length;
-    document.getElementById('bpCountWarning').textContent = totalCount;
+        // Build garage breakdown from local data
+        const garageMap = new Map();
+        for (const p of pendingPayoutsData) {
+            const gid = p.garage_id || 'unknown';
+            const existing = garageMap.get(gid) || {
+                garage_id: gid,
+                garage_name: p.garage_name || 'Unknown Garage',
+                payout_count: 0,
+                total: 0
+            };
+            existing.payout_count++;
+            existing.total += parseFloat(p.net_amount) || 0;
+            garageMap.set(gid, existing);
+        }
+        const garages = [...garageMap.values()];
+        const totalAmount = garages.reduce((sum, g) => sum + g.total, 0);
+        const totalCount = pendingPayoutsData.length;
 
-    // Build garage breakdown list
-    const garageList = document.getElementById('bpGarageList');
-    garageList.innerHTML = garages.map(g => `
-        <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border);">
-            <div>
-                <strong>${escapeHTML(g.garage_name)}</strong>
-                <span style="color: var(--text-secondary); font-size: 12px; margin-left: 8px;">${g.payout_count} payouts</span>
+        console.log('[BatchPayment] Garages:', garages.length, 'Total:', totalAmount, 'Count:', totalCount);
+
+        // Populate modal
+        document.getElementById('bpPayoutCount').textContent = totalCount;
+        document.getElementById('bpTotalAmount').textContent = formatCurrency(totalAmount);
+        document.getElementById('bpGarageCount').textContent = garages.length;
+        document.getElementById('bpCountWarning').textContent = totalCount;
+
+        // Build garage breakdown list
+        const garageList = document.getElementById('bpGarageList');
+        garageList.innerHTML = garages.map(g => `
+            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <strong>${escapeHTML(g.garage_name)}</strong>
+                    <span style="color: var(--text-secondary); font-size: 12px; margin-left: 8px;">${g.payout_count} payouts</span>
+                </div>
+                <div style="font-weight: 600; color: var(--accent);">${formatCurrency(g.total)}</div>
             </div>
-            <div style="font-weight: 600; color: var(--accent);">${formatCurrency(g.total)}</div>
-        </div>
-    `).join('');
+        `).join('');
 
-    // Set hidden fields — pass explicit payout IDs for precision
-    const payoutIds = pendingPayoutsData.map(p => p.payout_id);
-    document.getElementById('bpMode').value = 'ids';
-    document.getElementById('bpGarageId').value = currentGarageFilter || '';
-    document.getElementById('bpPayoutIds').value = JSON.stringify(payoutIds);
+        // Set hidden fields — pass explicit payout IDs for precision
+        const payoutIds = pendingPayoutsData.map(p => p.payout_id);
+        document.getElementById('bpMode').value = 'ids';
+        document.getElementById('bpGarageId').value = currentGarageFilter || '';
+        document.getElementById('bpPayoutIds').value = JSON.stringify(payoutIds);
 
-    // Auto-generate reference
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('bpReference').value = `BATCH-${today}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-    document.getElementById('bpNotes').value = '';
+        // Auto-generate reference
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('bpReference').value = `BATCH-${today}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+        document.getElementById('bpNotes').value = '';
 
-    // Show modal immediately
-    document.getElementById('batchPaymentModal').style.display = 'flex';
+        // Show modal immediately
+        console.log('[BatchPayment] Showing modal...');
+        document.getElementById('batchPaymentModal').style.display = 'flex';
+    } catch (err) {
+        console.error('[BatchPayment] Error in openBatchPaymentFlow:', err);
+        showToast('Error opening batch payment: ' + err.message, 'error');
+    }
 }
 
 /**
