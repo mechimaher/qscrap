@@ -8,8 +8,8 @@
 // Enterprise Support Contacts
 export const CONTACT = {
     // Primary enterprise support line (WhatsApp Business verified)
-    SUPPORT_PHONE: '+97430007227',
-    SUPPORT_PHONE_RAW: '97430007227',
+    SUPPORT_PHONE: '+97450267974',
+    SUPPORT_PHONE_RAW: '97450267974',
 
     // Email support
     SUPPORT_EMAIL: 'support@qscrap.qa',
@@ -17,7 +17,7 @@ export const CONTACT = {
     PARTNERSHIPS_EMAIL: 'partnerships@qscrap.qa',
 
     // WhatsApp Business
-    WHATSAPP_URL: 'https://wa.me/97430007227',
+    WHATSAPP_URL: 'https://wa.me/97450267974',
     WHATSAPP_GREETING: 'Hello QScrap Support',
 
     // Social Media (Production)
@@ -30,7 +30,7 @@ export const CONTACT = {
     COMPANY_NAME: 'QScrap Services & Trading L.L.C',
     COMPANY_NAME_AR: 'كيوسكراب للخدمات والتجارة ذ.م.م',
     COMPANY_BRAND: 'QScrap',
-    LANDLINE: '+974 4455 4444',
+    LANDLINE: '+97455906912',
     TAGLINE: 'Qatar\'s Premium Auto Parts Marketplace',
     TAGLINE_AR: 'أفضل سوق لقطع غيار السيارات في قطر',
 } as const;
@@ -47,17 +47,17 @@ export const BUSINESS_HOURS = {
 // Emergency/Priority Support
 export const PRIORITY_SUPPORT = {
     ENABLED: true,
-    PHONE: '+97430007227',
+    PHONE: '+97450267974',
     EMAIL: 'urgent@qscrap.qa',
     RESPONSE_TIME_MINUTES: 15,
 } as const;
 
 // Legal URLs
 export const LEGAL = {
-    PRIVACY_POLICY: 'https://qscrap.qa/privacy',
-    TERMS_OF_SERVICE: 'https://qscrap.qa/terms',
+    PRIVACY_POLICY: 'https://qscrap.qa/privacy.html',
+    TERMS_OF_SERVICE: 'https://qscrap.qa/terms.html',
     COOKIE_POLICY: 'https://qscrap.qa/cookies',
-    REFUND_POLICY: 'https://qscrap.qa/refunds',
+    REFUND_POLICY: 'https://qscrap.qa/refund.html',
 } as const;
 
 // App Store Links

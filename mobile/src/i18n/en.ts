@@ -521,7 +521,7 @@ export const en = {
         accountDeleted: 'Account Deleted',
         accountDeletedMsg: 'Your account has been successfully deleted.',
         faqs: '• How to request a part?\nGo to Home > New Part Request\n\n• How long for delivery?\nTypically 1-3 business days\n\n• Payment methods?\nCash on delivery or card',
-        contactInfo: 'Email: support@qscrap.qa\nPhone: +974 4455 4444',
+        contactInfo: 'Email: support@qscrap.qa\nPhone: +974 5026 7974',
         chooseContact: 'Choose how to reach us:',
         howCanWeHelp: 'How can we help you today?',
         // Vehicle management

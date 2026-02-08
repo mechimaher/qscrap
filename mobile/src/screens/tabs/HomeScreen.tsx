@@ -36,7 +36,7 @@ import { DeliveryLocationWidget } from '../../components/DeliveryLocationWidget'
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
-const SUPPORT_PHONE = '97444554444'; // QScrap Enterprise Support per QSCRAP_BRAIN.md
+const SUPPORT_PHONE = '97450267974'; // QScrap Enterprise Support - Official Number
 
 // ============================================
 // ANIMATED COUNT-UP COMPONENT
