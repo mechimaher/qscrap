@@ -63,8 +63,12 @@ export class InvoiceService {
         const writeStream = fs.createWriteStream(filepath);
         doc.pipe(writeStream);
 
-        // Header with logo placeholder
-        doc.fontSize(24).font('Helvetica-Bold').text('QScrap', { align: 'center' });
+        // Header with logo
+        const logoPath = path.join(__dirname, '../../../public/assets/images/qscrap-logo.png');
+        if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, { fit: [150, 60], align: 'center' });
+            doc.moveDown(0.5);
+        }
         doc.fontSize(10).font('Helvetica').text('كيو سكراب', { align: 'center' });
         doc.moveDown();
 
