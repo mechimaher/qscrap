@@ -16,3 +16,4 @@ export { SocialProofBadges } from './SocialProofBadges';
 export { DeliveryLocationWidget } from './DeliveryLocationWidget';
 export { MapLocationPicker } from './MapLocationPicker';
 export { ScreenErrorBoundary } from './ScreenErrorBoundary';
+export { withErrorBoundary } from './withErrorBoundary';
