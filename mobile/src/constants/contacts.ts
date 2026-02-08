@@ -23,7 +23,7 @@ export const CONTACT = {
     // Social Media (Production)
     INSTAGRAM: 'https://instagram.com/qscrap.qa',
     FACEBOOK: 'https://facebook.com/qscrap.qa',
-    TWITTER: 'https://twitter.com/qscrap_qa',
+    TWITTER: 'https://twitter.com/qscrap.qa',
     LINKEDIN: 'https://linkedin.com/company/qscrap',
 
     // Corporate Info
@@ -38,9 +38,10 @@ export const CONTACT = {
 // Business Hours
 export const BUSINESS_HOURS = {
     WEEKDAY_OPEN: '08:00',
-    WEEKDAY_CLOSE: '22:00',
-    WEEKEND_OPEN: '09:00',
-    WEEKEND_CLOSE: '21:00',
+    WEEKDAY_CLOSE: '17:00',
+    SATURDAY_OPEN: '08:00',
+    SATURDAY_CLOSE: '15:00',
+    FRIDAY: 'closed',
     TIMEZONE: 'Asia/Qatar',
 } as const;
 
@@ -56,14 +57,14 @@ export const PRIORITY_SUPPORT = {
 export const LEGAL = {
     PRIVACY_POLICY: 'https://qscrap.qa/privacy.html',
     TERMS_OF_SERVICE: 'https://qscrap.qa/terms.html',
-    COOKIE_POLICY: 'https://qscrap.qa/cookies',
+    COOKIE_POLICY: 'https://qscrap.qa/terms.html',
     REFUND_POLICY: 'https://qscrap.qa/refund.html',
 } as const;
 
 // App Store Links
 export const APP_LINKS = {
     GOOGLE_PLAY: 'https://play.google.com/store/apps/details?id=qa.qscrap.app',
-    APP_STORE: 'https://apps.apple.com/qa/app/qscrap/id123456789',
+    APP_STORE: 'https://apps.apple.com/qa/app/qscrap/id6740043847',
     WEBSITE: 'https://qscrap.qa',
 } as const;
 
