@@ -6,6 +6,7 @@ import { storageService } from './storage.service';
 import { walletService } from './wallet.service';
 import { pushService } from './push.service';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 export class DriverService {
     private pool = getWritePool();
@@ -76,14 +77,14 @@ export class DriverService {
         const affectedOrders = await driverRepository.updateAssignmentsLocation(driver.driver_id, lat, lng);
 
         // Notify customers (In-memory iteration)
-        const io = (global as any).io;
+        const io = getIO();
         const notifiedOrderIds = new Set<string>();
         let notifiedCustomers = 0;
 
         for (const row of affectedOrders) {
             if (notifiedOrderIds.has(row.order_id)) continue;
 
-            io.to(`user_${row.customer_id}`).emit('driver_location_update', {
+            io?.to(`user_${row.customer_id}`).emit('driver_location_update', {
                 order_id: row.order_id,
                 order_number: row.order_number,
                 latitude: lat,
@@ -136,10 +137,10 @@ export class DriverService {
             await client.query('COMMIT');
 
             // 5. Notifications (Post-Commit)
-            const io = (global as any).io;
+            const io = getIO();
 
             // Notify customer
-            io.to(`user_${assignment.customer_id}`).emit('driver_accepted_assignment', {
+            io?.to(`user_${assignment.customer_id}`).emit('driver_accepted_assignment', {
                 assignment_id: assignmentId,
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,
@@ -147,7 +148,7 @@ export class DriverService {
             });
 
             // Notify operations
-            io.to('operations').emit('assignment_accepted', {
+            io?.to('operations').emit('assignment_accepted', {
                 assignment_id: assignmentId,
                 driver_id: assignment.driver_id,
                 order_id: assignment.order_id
@@ -197,10 +198,10 @@ export class DriverService {
             await client.query('COMMIT');
 
             // 5. Notifications (Post-Commit)
-            const io = (global as any).io;
+            const io = getIO();
 
             // Notify operations for reassignment
-            io.to('operations').emit('assignment_rejected_by_driver', {
+            io?.to('operations').emit('assignment_rejected_by_driver', {
                 assignment_id: assignmentId,
                 driver_id: assignment.driver_id,
                 order_id: assignment.order_id,
@@ -404,10 +405,10 @@ export class DriverService {
     }
 
     private sendNotifications(assignment: any, status: string, newOrderStatus: string | null, failureReason?: string) {
-        const io = (global as any).io;
+        const io = getIO();
 
         // Customer Notifications
-        io.to(`user_${assignment.customer_id}`).emit('delivery_status_updated', {
+        io?.to(`user_${assignment.customer_id}`).emit('delivery_status_updated', {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             new_status: status,
@@ -417,7 +418,7 @@ export class DriverService {
         });
 
         // 1. Emit 'order_status_updated' (past tense) for useSocket (Global Context)
-        io.to(`user_${assignment.customer_id}`).emit('order_status_updated', {
+        io?.to(`user_${assignment.customer_id}`).emit('order_status_updated', {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             old_status: assignment.order_status,
@@ -428,7 +429,7 @@ export class DriverService {
         });
 
         // 2. Emit 'order_status_update' (present tense) for TrackingScreen (Local Socket)
-        io.to(`user_${assignment.customer_id}`).emit('order_status_update', {
+        io?.to(`user_${assignment.customer_id}`).emit('order_status_update', {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             old_status: assignment.order_status,
@@ -440,7 +441,7 @@ export class DriverService {
         });
 
         if (status === 'delivered') {
-            io.to(`user_${assignment.customer_id}`).emit('delivery_completed', {
+            io?.to(`user_${assignment.customer_id}`).emit('delivery_completed', {
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,
                 notification: `Your part has arrived! Please confirm delivery to complete the order.`
@@ -448,7 +449,7 @@ export class DriverService {
         }
 
         // Garage Notification
-        io.to(`garage_${assignment.garage_id}`).emit('order_status_updated', {
+        io?.to(`garage_${assignment.garage_id}`).emit('order_status_updated', {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             new_status: newOrderStatus || status
@@ -456,7 +457,7 @@ export class DriverService {
 
         // Operations Notification
         if (status === 'failed') {
-            io.to('operations').emit('dispute_created', {
+            io?.to('operations').emit('dispute_created', {
                 order_id: assignment.order_id,
                 order_number: assignment.order_number,
                 reason: 'Delivery Failed',
@@ -464,14 +465,14 @@ export class DriverService {
             });
         }
 
-        io.to('operations').emit('delivery_status_updated', {
+        io?.to('operations').emit('delivery_status_updated', {
             assignment_id: assignment.assignment_id,
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             new_status: status
         });
 
-        io.to('operations').emit('order_status_updated', {
+        io?.to('operations').emit('order_status_updated', {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             old_status: assignment.order_status,
@@ -532,8 +533,8 @@ export class DriverService {
         }
 
         // Notify operations
-        const io = (global as any).io;
-        io.to('operations').emit('driver_status_changed', {
+        const io = getIO();
+        io?.to('operations').emit('driver_status_changed', {
             driver_id: driver.driver_id,
             new_status: status
         });

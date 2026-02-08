@@ -5,6 +5,7 @@
 
 import { Pool } from 'pg';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 export async function autoResolveDisputes(pool: Pool): Promise<number> {
     const client = await pool.connect();
@@ -51,7 +52,7 @@ export async function autoResolveDisputes(pool: Pool): Promise<number> {
             resolvedCount++;
 
             // Notify customer
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 io.to(`user_${dispute.customer_id}`).emit('dispute_resolved', {
                     order_id: dispute.order_id,

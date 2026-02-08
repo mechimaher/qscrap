@@ -13,6 +13,7 @@
 
 import pool from '../config/db';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 export interface PayoutInfo {
     payout_id: string;
@@ -123,7 +124,7 @@ export async function reversePayout(orderId: string, refundAmount: number): Prom
 
             // Notify garage
             try {
-                (global as any).io?.to(`garage_${payout.garage_id}`).emit('payout_cancelled', {
+                getIO()?.to(`garage_${payout.garage_id}`).emit('payout_cancelled', {
                     payout_id: payout.payout_id,
                     order_id: orderId,
                     reason: 'Order refunded',
@@ -156,7 +157,7 @@ export async function reversePayout(orderId: string, refundAmount: number): Prom
 
             // Notify garage
             try {
-                (global as any).io?.to(`garage_${payout.garage_id}`).emit('payout_adjusted', {
+                getIO()?.to(`garage_${payout.garage_id}`).emit('payout_adjusted', {
                     payout_id: payout.payout_id,
                     order_id: orderId,
                     original_amount: payout.net_amount,

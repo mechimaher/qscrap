@@ -1,6 +1,26 @@
+# ========================================
+# Stage 1: Build
+# ========================================
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install ALL dependencies (including devDependencies for TypeScript build)
+RUN npm ci --include=dev
+
+COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# ========================================
+# Stage 2: Production
+# ========================================
 FROM node:18-alpine
 
-# Install dependencies for Puppeteer/Chromium on Alpine
+# Install dependencies for Puppeteer/Chromium on Alpine (needed for invoice PDFs)
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -15,15 +35,15 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /app
 
+# Copy package files and install production-only dependencies
 COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Install ALL dependencies (including devDependencies for build)
-RUN npm install --include=dev
+# Copy compiled JavaScript from builder
+COPY --from=builder /app/dist ./dist
 
-COPY . .
-
-# Build TypeScript
-RUN npm run build
+# Copy public assets and static files
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 

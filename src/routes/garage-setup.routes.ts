@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { BCRYPT_ROUNDS } from '../config/security';
 import crypto from 'crypto';
 import pool from '../config/db';
 import logger from '../utils/logger';
@@ -188,7 +189,7 @@ router.post('/setup', async (req: Request, res: Response) => {
         }
 
         // Hash the new password
-        const passwordHash = await bcrypt.hash(password, 12);
+        const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
         // Update user password
         await client.query(`

@@ -5,6 +5,7 @@
 
 import { Pool } from 'pg';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 export async function autoConfirmDeliveries(pool: Pool): Promise<number> {
     const client = await pool.connect();
@@ -40,7 +41,7 @@ export async function autoConfirmDeliveries(pool: Pool): Promise<number> {
             await client.query('COMMIT');
 
             // Socket notifications
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 for (const order of result.rows) {
                     io.to(`user_${order.customer_id}`).emit('order_auto_confirmed', {

@@ -36,10 +36,6 @@ export const io = new Server(server, {
 // Initialize Socket.IO singleton for type-safe access throughout the app
 initializeSocketIO(io);
 
-// DEPRECATED: Remove after migrating all (global as any).io usages
-// Kept temporarily for backward compatibility
-(global as any).io = io;
-
 io.on('connection', (socket) => {
     if (process.env.NODE_ENV !== 'production') {
         logger.socket('User connected', { socketId: socket.id });

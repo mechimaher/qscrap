@@ -5,6 +5,7 @@
 
 import { Pool } from 'pg';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 
 export async function cleanupOldData(pool: Pool): Promise<void> {
     try {
@@ -52,7 +53,7 @@ export async function escalateStaleTickets(pool: Pool): Promise<number> {
         if (result.escalated > 0) {
             logger.warn('Tickets auto-escalated', { count: result.escalated });
 
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 io.to('operations').emit('tickets_escalated', {
                     count: result.escalated,

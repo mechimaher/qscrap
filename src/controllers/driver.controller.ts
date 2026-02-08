@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { driverService } from '../services/driver.service';
 import { getErrorMessage } from '../types';
 import logger from '../utils/logger';
+import { getIO } from '../utils/socketIO';
 // ============================================================================
 // DRIVER PROFILE
 // ============================================================================
@@ -56,7 +57,7 @@ export const acceptAssignment = async (req: AuthRequest, res: Response) => {
         const result = await driverService.acceptAssignment(req.user!.userId, req.params.assignment_id);
 
         // Real-time status sync
-        const io = (global as any).io;
+        const io = getIO();
         if (io) {
             io.to(`driver_${req.user!.userId}`).emit('assignment_accepted', {
                 assignment_id: req.params.assignment_id,
@@ -87,7 +88,7 @@ export const rejectAssignment = async (req: AuthRequest, res: Response) => {
         );
 
         // Real-time status sync
-        const io = (global as any).io;
+        const io = getIO();
         if (io) {
             io.to(`driver_${req.user!.userId}`).emit('assignment_rejected', {
                 assignment_id: req.params.assignment_id,
@@ -264,7 +265,7 @@ export const toggleAvailability = async (req: AuthRequest, res: Response) => {
         const result = await driverService.toggleAvailability(req.user!.userId, req.body.status);
 
         // Real-time status sync
-        const io = (global as any).io;
+        const io = getIO();
         if (io) {
             io.to(`driver_${req.user!.userId}`).emit('driver_status_changed', {
                 status: req.body.status,

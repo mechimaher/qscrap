@@ -5,6 +5,7 @@
 
 import { Pool, PoolClient } from 'pg';
 import bcrypt from 'bcrypt';
+import { BCRYPT_ROUNDS } from '../../config/security';
 import {
     UserFilters,
     User,
@@ -366,7 +367,7 @@ export class UserManagementService {
         try {
             await client.query('BEGIN');
 
-            const passwordHash = await bcrypt.hash(newPassword, 10);
+            const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
             const result = await client.query(`
                 UPDATE users
@@ -441,7 +442,7 @@ export class UserManagementService {
             }
 
             // Hash password
-            const passwordHash = await bcrypt.hash(password, 10);
+            const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
             // Create user
             const userResult = await client.query(`

@@ -7,6 +7,7 @@ import { DisputeFilters, DisputeResolution, PaginationMetadata } from './types';
 import { DisputeNotFoundError } from './errors';
 import { createNotification } from '../notification.service';
 import logger from '../../utils/logger';
+import { getIO } from '../../utils/socketIO';
 
 export class DisputeService {
     constructor(private pool: Pool) { }
@@ -253,7 +254,7 @@ export class DisputeService {
                                 target_role: 'garage'
                             });
 
-                            const io = (global as any).io;
+                            const io = getIO();
                             if (io) {
                                 io.to(`garage_${dispute.garage_id}`).emit('payout_reversal', {
                                     reversal_id: reversalId,

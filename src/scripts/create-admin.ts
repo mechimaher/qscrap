@@ -2,7 +2,8 @@
 // Build: npm run build
 // Run from dist folder: node scripts/create-admin.js
 
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
+import { BCRYPT_ROUNDS } from '../config/security';
 import pool from '../config/db';
 
 async function createAdmin() {
@@ -26,7 +27,7 @@ async function createAdmin() {
         }
 
         // Hash password
-        const passwordHash = await bcrypt.hash(password, 10);
+        const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
         // Create admin user
         const result = await pool.query(`

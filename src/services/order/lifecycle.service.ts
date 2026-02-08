@@ -15,6 +15,7 @@ import { createNotification } from '../notification.service';
 import { predictiveService } from '../predictive.service';
 import { LoyaltyService } from '../loyalty.service';
 import logger from '../../utils/logger';
+import { getIO } from '../../utils/socketIO';
 
 export class OrderLifecycleService {
     constructor(private pool: Pool) { }
@@ -309,8 +310,8 @@ export class OrderLifecycleService {
             }
 
             // Socket emit for real-time update
-            const io = (global as any).io;
-            io.to(`user_${order.customer_id}`).emit('order_delivered', {
+            const io = getIO();
+            io?.to(`user_${order.customer_id}`).emit('order_delivered', {
                 order_id: orderId,
                 order_number: order.order_number,
                 pod_photo_url: podPhotoUrl
@@ -536,8 +537,8 @@ export class OrderLifecycleService {
         }
 
         // Socket events
-        const io = (global as any).io;
-        io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+        const io = getIO();
+        io?.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id: order.order_id,
             order_number: order.order_number,
             status: newStatus,
@@ -555,7 +556,7 @@ export class OrderLifecycleService {
                 target_role: 'operations'
             });
 
-            io.to('operations').emit('order_ready_for_pickup', {
+            io?.to('operations').emit('order_ready_for_pickup', {
                 order_id: order.order_id,
                 order_number: order.order_number
             });
@@ -566,7 +567,7 @@ export class OrderLifecycleService {
      * Notify garage and operations about order completion
      */
     private async notifyOrderCompleted(order: any, orderId: string): Promise<void> {
-        const io = (global as any).io;
+        const io = getIO();
 
         // Notify garage
         await createNotification({
@@ -578,7 +579,7 @@ export class OrderLifecycleService {
             target_role: 'garage'
         });
 
-        io.to(`garage_${order.garage_id}`).emit('order_completed', {
+        io?.to(`garage_${order.garage_id}`).emit('order_completed', {
             order_id: orderId,
             order_number: order.order_number,
             payout_amount: order.garage_payout_amount
@@ -594,7 +595,7 @@ export class OrderLifecycleService {
             target_role: 'operations'
         });
 
-        io.to('operations').emit('payout_pending', {
+        io?.to('operations').emit('payout_pending', {
             order_id: orderId,
             order_number: order.order_number,
             garage_id: order.garage_id,

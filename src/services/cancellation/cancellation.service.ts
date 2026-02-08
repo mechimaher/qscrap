@@ -11,7 +11,7 @@
  */
 import { Pool, PoolClient } from 'pg';
 import { createNotification } from '../notification.service';
-import { emitToOperations } from '../../utils/socketIO';
+import { getIO, emitToOperations } from '../../utils/socketIO';
 import {
     CancellationFeeResult,
     CancellationPreview,
@@ -95,14 +95,14 @@ export class CancellationService {
                     target_role: 'garage'
                 });
 
-                (global as any).io?.to(`garage_${garageId}`).emit('request_cancelled', {
+                getIO()?.to(`garage_${garageId}`).emit('request_cancelled', {
                     request_id: requestId,
                     message: 'The customer has cancelled this request'
                 });
             }
 
             // Broadcast to all garages
-            (global as any).io?.emit('request_cancelled', {
+            getIO()?.emit('request_cancelled', {
                 request_id: requestId,
                 message: 'Request has been cancelled'
             });
@@ -178,7 +178,7 @@ export class CancellationService {
                 target_role: 'customer'
             });
 
-            (global as any).io?.to(`user_${bid.customer_id}`).emit('bid_withdrawn', {
+            getIO()?.to(`user_${bid.customer_id}`).emit('bid_withdrawn', {
                 request_id: bid.request_id,
                 message: 'A garage has withdrawn their bid'
             });
@@ -654,7 +654,7 @@ export class CancellationService {
                 logger.error('Push to garage failed', { error: (pushErr as Error).message });
             }
 
-            (global as any).io?.to(`garage_${order.garage_id}`).emit('order_cancelled', {
+            getIO()?.to(`garage_${order.garage_id}`).emit('order_cancelled', {
                 order_id: orderId,
                 order_number: order.order_number,
                 cancelled_by: 'customer',
@@ -687,7 +687,7 @@ export class CancellationService {
                 }
 
                 // Socket to driver
-                (global as any).io?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
+                getIO()?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
                     order_id: orderId,
                     order_number: order.order_number,
                     cancelled_by: 'customer',
@@ -991,7 +991,7 @@ export class CancellationService {
                     logger.error('Push to driver failed', { error: (pushErr as Error).message });
                 }
 
-                (global as any).io?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
+                getIO()?.to(`driver_${order.driver_id}`).emit('order_cancelled', {
                     order_id: orderId,
                     order_number: order.order_number,
                     cancelled_by: 'garage',
@@ -1000,7 +1000,7 @@ export class CancellationService {
                 });
             }
 
-            (global as any).io?.to(`user_${order.customer_id}`).emit('order_cancelled', {
+            getIO()?.to(`user_${order.customer_id}`).emit('order_cancelled', {
                 order_id: orderId,
                 order_number: order.order_number,
                 cancelled_by: 'garage',

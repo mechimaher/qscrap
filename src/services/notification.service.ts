@@ -1,6 +1,6 @@
 
 import pool from '../config/db';
-import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
+import { getIO, emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import { pushService } from './push.service';
 import logger from '../utils/logger';
 
@@ -70,7 +70,7 @@ export const createNotification = async (payload: NotificationPayload) => {
         } else if (target_role === 'customer') {
             emitToUser(userId, 'new_notification', socketPayload);
         } else if (target_role === 'driver') {
-            const io = (global as any).io;
+            const io = getIO();
             if (io) {
                 io.to(`driver_${userId}`).emit('new_notification', socketPayload);
             }
@@ -185,7 +185,7 @@ export const createBatchNotifications = async (payloads: NotificationPayload[]) 
 
         // Emit socket events individually (or use room broadcast if applicable)
         // For distinct users, we must loop.
-        const io = (global as any).io;
+        const io = getIO();
         if (io) {
             payloads.forEach(p => {
                 const socketPayload = {

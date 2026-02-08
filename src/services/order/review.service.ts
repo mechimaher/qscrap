@@ -7,6 +7,7 @@ import { Pool, PoolClient } from 'pg';
 import { ReviewData, ReviewsWithStats } from './types';
 import { OrderNotCompletedError, InvalidRatingError } from './errors';
 import { createNotification } from '../notification.service';
+import { getIO } from '../../utils/socketIO';
 
 export class ReviewService {
     constructor(private pool: Pool) { }
@@ -113,8 +114,8 @@ export class ReviewService {
             target_role: 'operations'
         });
 
-        const io = (global as any).io;
-        io.to('operations').emit('review_submitted', {
+        const io = getIO();
+        io?.to('operations').emit('review_submitted', {
             order_id: orderId,
             notification: 'New review pending moderation'
         });

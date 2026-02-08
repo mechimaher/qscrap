@@ -29,8 +29,11 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
         const payload = jwt.verify(token, getJwtSecret()) as AuthPayload;
         req.user = payload;
         next();
-    } catch (err) {
-        res.status(401).json({ error: 'Invalid token' });
+    } catch (err: any) {
+        if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'token_expired', message: 'Access token has expired. Use /auth/refresh to get a new one.' });
+        }
+        res.status(401).json({ error: 'invalid_token', message: 'Invalid or malformed token' });
     }
 };
 
