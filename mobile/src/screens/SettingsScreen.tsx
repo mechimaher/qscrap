@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { log, warn, error as logError } from '../utils/logger';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -66,18 +67,18 @@ export default function SettingsScreen() {
         setSettings(prev => ({ ...prev, language }));
     }, [language]);
 
-    const loadSettings = async () => {
+    const loadSettings = useCallback(async () => {
         try {
             const saved = await AsyncStorage.getItem('qscrap_settings');
             if (saved) {
                 setSettings({ ...defaultSettings, ...JSON.parse(saved) });
             }
         } catch (error) {
-            console.log('Failed to load settings:', error);
+            log('Failed to load settings:', error);
         }
-    };
+    }, []);
 
-    const updateSetting = async (key: keyof SettingsState, value: boolean | string) => {
+    const updateSetting = useCallback(async (key: keyof SettingsState, value: boolean | string) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         const newSettings = { ...settings, [key]: value };
@@ -86,11 +87,11 @@ export default function SettingsScreen() {
         try {
             await AsyncStorage.setItem('qscrap_settings', JSON.stringify(newSettings));
         } catch (error) {
-            console.log('Failed to save settings:', error);
+            log('Failed to save settings:', error);
         }
-    };
+    }, [settings]);
 
-    const handleLanguageChange = () => {
+    const handleLanguageChange = useCallback(() => {
         Alert.alert(
             t('alerts.selectLanguage'),
             t('alerts.chooseLanguage'),
@@ -100,9 +101,9 @@ export default function SettingsScreen() {
                 { text: t('common.cancel'), style: 'cancel' },
             ]
         );
-    };
+    }, [t, setLanguage]);
 
-    const handleAppearanceChange = () => {
+    const handleAppearanceChange = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Alert.alert(
             t('settings.appearance') || 'Appearance',
@@ -123,7 +124,7 @@ export default function SettingsScreen() {
                 { text: t('common.cancel'), style: 'cancel' },
             ]
         );
-    };
+    }, [t, setTheme]);
 
     const getAppearanceLabel = () => {
         switch (themeMode) {
@@ -134,7 +135,7 @@ export default function SettingsScreen() {
         }
     };
 
-    const handleClearCache = () => {
+    const handleClearCache = useCallback(() => {
         Alert.alert(
             t('settings.clearCacheTitle'),
             t('settings.clearCacheMessage'),
@@ -150,10 +151,10 @@ export default function SettingsScreen() {
                 },
             ]
         );
-    };
+    }, [t]);
 
     // GOOGLE PLAY 2026 REQUIREMENT: Delete Account
-    const handleDeleteAccount = async () => {
+    const handleDeleteAccount = useCallback(async () => {
         if (!deletePassword.trim()) {
             Alert.alert(t('common.error'), t('settings.enterPasswordToDelete') || 'Please enter your password to confirm');
             return;
@@ -191,7 +192,7 @@ export default function SettingsScreen() {
             setIsDeleting(false);
             setDeletePassword('');
         }
-    };
+    }, [deletePassword, t, logout]);
 
     const SettingRow = ({
         icon,
@@ -217,6 +218,9 @@ export default function SettingsScreen() {
                 onValueChange={onToggle}
                 trackColor={{ false: '#E5E5E5', true: Colors.primary + '60' }}
                 thumbColor={value ? Colors.primary : '#999'}
+                accessibilityLabel={title}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: value }}
             />
         </View>
     );
@@ -232,7 +236,7 @@ export default function SettingsScreen() {
         value?: string;
         onPress: () => void;
     }) => (
-        <TouchableOpacity style={[styles.settingRow, { flexDirection: rtlFlexDirection(isRTL) }]} onPress={onPress}>
+        <TouchableOpacity style={[styles.settingRow, { flexDirection: rtlFlexDirection(isRTL) }]} onPress={onPress} accessibilityRole="button" accessibilityLabel={title}>
             <Text style={[styles.settingIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.md } : {}]}>{icon}</Text>
             <View style={styles.settingInfo}>
                 <Text style={[styles.settingTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
@@ -248,7 +252,7 @@ export default function SettingsScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
                     <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('settings.title')}</Text>

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 import { useState, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
@@ -59,7 +60,7 @@ export const useRefresh = ({
         try {
             await refreshCallback();
         } catch (error) {
-            console.error('Refresh failed:', error);
+            logError('Refresh failed:', error);
         } finally {
             // Ensure minimum duration for better UX
             const elapsed = Date.now() - startTime;

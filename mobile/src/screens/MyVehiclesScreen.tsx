@@ -1,3 +1,5 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
 // QScrap - My Vehicles Screen
 // Display saved vehicles with simple Make/Model/Year
 
@@ -23,23 +25,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
-import { api } from '../services/api';
+import { api, Vehicle } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { getAllMakes, getModelsForMake, YEARS } from '../constants/carData';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { useToast } from '../components/Toast';
 
-interface Vehicle {
-    vehicle_id: string;
-    car_make: string;
-    car_model: string;
-    car_year: number;
-    vin_number?: string;
-    nickname?: string;
-    is_primary?: boolean;
-    request_count?: number;
-    created_at: string;
-}
+// Vehicle type imported from api.ts
 
 // Get all makes from carData
 const CAR_MAKES = getAllMakes();
@@ -48,6 +41,7 @@ export default function MyVehiclesScreen() {
     const navigation = useNavigation<any>();
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+    const toast = useToast();
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -72,7 +66,7 @@ export default function MyVehiclesScreen() {
             const result = await api.getMyVehicles();
             setVehicles(result.vehicles || []);
         } catch (error) {
-            console.log('[MyVehicles] Error:', error);
+            log('[MyVehicles] Error:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -135,8 +129,7 @@ export default function MyVehiclesScreen() {
             setShowAddModal(false);
             loadVehicles();
         } catch (error) {
-            console.log('[MyVehicles] Add error:', error);
-            Alert.alert(t('common.error'), t('profile.addVehicleFailed'));
+            handleApiError(error, toast, { customMessage: t('profile.addVehicleFailed'), useAlert: true });
         } finally {
             setIsAdding(false);
         }
@@ -157,19 +150,11 @@ export default function MyVehiclesScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             loadVehicles();
                         } catch (error: any) {
-                            console.log('[MyVehicles] Delete error:', error);
-                            // Show user-friendly error message
-                            const errorMessage = error?.response?.data?.error || error?.message || t('vehicles.deleteVehicleFailed');
-                            Alert.alert(
-                                t('common.error'),
-                                errorMessage,
-                                [{ text: t('common.ok') }]
-                            );
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            handleApiError(error, toast, { useAlert: true });
                         }
                     }
-                }
-            ]
+                },
+            ],
         );
     };
 
@@ -213,8 +198,7 @@ export default function MyVehiclesScreen() {
             setEditingVehicle(null);
             loadVehicles();
         } catch (error) {
-            console.log('[MyVehicles] Edit error:', error);
-            Alert.alert('Error', 'Could not update vehicle. Please try again.');
+            handleApiError(error, toast, { useAlert: true });
         } finally {
             setIsAdding(false);
         }

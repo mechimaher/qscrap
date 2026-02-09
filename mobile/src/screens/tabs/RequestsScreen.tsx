@@ -1,3 +1,5 @@
+import { log, warn, error as logError } from '../../utils/logger';
+import { handleApiError } from '../../utils/errorHandler';
 // QScrap Requests Screen - Premium VIP Design with Active Card Highlights
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
@@ -420,8 +422,7 @@ export default function RequestsScreen() {
             const data = await api.getMyRequests();
             setRequests(data.requests || []);
         } catch (error) {
-            console.log('Failed to load requests:', error);
-            toast.error('Error', 'Failed to load requests');
+            handleApiError(error, toast, t('errors.loadFailed'));
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -469,7 +470,7 @@ export default function RequestsScreen() {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             toast.success('Deleted', 'Request deleted successfully');
                         } catch (error: any) {
-                            toast.error('Error', error.message || 'Failed to delete request');
+                            handleApiError(error, toast);
                         }
                     },
                 },

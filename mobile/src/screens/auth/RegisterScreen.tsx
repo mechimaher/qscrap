@@ -10,8 +10,8 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
-    Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
@@ -127,7 +127,8 @@ export default function RegisterScreen() {
                         <Image
                             source={require('../../../assets/logo.png')}
                             style={styles.logo}
-                            resizeMode="contain"
+                            contentFit="contain"
+                            transition={200}
                         />
                         <Text style={[styles.titleText, { textAlign: 'center' }]}>{t('auth.joinQScrap')}</Text>
                         <Text style={[styles.subtitleText, { textAlign: 'center' }]}>{t('auth.createAccountInSeconds')}</Text>

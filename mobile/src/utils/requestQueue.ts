@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from './logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const QUEUE_KEY = '@request_queue';
@@ -25,9 +26,9 @@ export const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'timestam
         };
         queue.push(newRequest);
         await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-        console.log('[RequestQueue] Request queued:', newRequest.id);
+        log('[RequestQueue] Request queued:', newRequest.id);
     } catch (error) {
-        console.error('[RequestQueue] Failed to queue request:', error);
+        logError('[RequestQueue] Failed to queue request:', error);
     }
 };
 
@@ -39,7 +40,7 @@ export const getQueue = async (): Promise<QueuedRequest[]> => {
         const queueJson = await AsyncStorage.getItem(QUEUE_KEY);
         return queueJson ? JSON.parse(queueJson) : [];
     } catch (error) {
-        console.error('[RequestQueue] Failed to get queue:', error);
+        logError('[RequestQueue] Failed to get queue:', error);
         return [];
     }
 };
@@ -60,9 +61,9 @@ export const removeFromQueue = async (requestId: string): Promise<void> => {
         const queue = await getQueue();
         const filtered = queue.filter(r => r.id !== requestId);
         await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(filtered));
-        console.log('[RequestQueue] Request removed:', requestId);
+        log('[RequestQueue] Request removed:', requestId);
     } catch (error) {
-        console.error('[RequestQueue] Failed to remove request:', error);
+        logError('[RequestQueue] Failed to remove request:', error);
     }
 };
 
@@ -72,9 +73,9 @@ export const removeFromQueue = async (requestId: string): Promise<void> => {
 export const clearQueue = async (): Promise<void> => {
     try {
         await AsyncStorage.removeItem(QUEUE_KEY);
-        console.log('[RequestQueue] Queue cleared');
+        log('[RequestQueue] Queue cleared');
     } catch (error) {
-        console.error('[RequestQueue] Failed to clear queue:', error);
+        logError('[RequestQueue] Failed to clear queue:', error);
     }
 };
 
@@ -86,7 +87,7 @@ export const processQueue = async (apiClient: any): Promise<{ success: number; f
     let success = 0;
     let failed = 0;
 
-    console.log(`[RequestQueue] Processing ${queue.length} queued requests`);
+    log(`[RequestQueue] Processing ${queue.length} queued requests`);
 
     for (const request of queue) {
         try {
@@ -100,7 +101,7 @@ export const processQueue = async (apiClient: any): Promise<{ success: number; f
             if (response.success) {
                 await removeFromQueue(request.id);
                 success++;
-                console.log('[RequestQueue] Request succeeded:', request.id);
+                log('[RequestQueue] Request succeeded:', request.id);
             } else {
                 // Increment retry count
                 request.retryCount++;
@@ -108,7 +109,7 @@ export const processQueue = async (apiClient: any): Promise<{ success: number; f
                     // Max retries reached, remove from queue
                     await removeFromQueue(request.id);
                     failed++;
-                    console.log('[RequestQueue] Max retries reached:', request.id);
+                    log('[RequestQueue] Max retries reached:', request.id);
                 } else {
                     // Update retry count
                     const updatedQueue = queue.map(r =>
@@ -118,7 +119,7 @@ export const processQueue = async (apiClient: any): Promise<{ success: number; f
                 }
             }
         } catch (error) {
-            console.error('[RequestQueue] Request failed:', request.id, error);
+            logError('[RequestQueue] Request failed:', request.id, error);
             request.retryCount++;
             if (request.retryCount >= 3) {
                 await removeFromQueue(request.id);
@@ -127,6 +128,6 @@ export const processQueue = async (apiClient: any): Promise<{ success: number; f
         }
     }
 
-    console.log(`[RequestQueue] Processing complete: ${success} succeeded, ${failed} failed`);
+    log(`[RequestQueue] Processing complete: ${success} succeeded, ${failed} failed`);
     return { success, failed };
 };

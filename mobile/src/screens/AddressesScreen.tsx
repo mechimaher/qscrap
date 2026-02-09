@@ -1,3 +1,5 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
@@ -27,6 +29,7 @@ import { RootStackParamList } from '../../App';
 import { MapLocationPicker } from '../components/MapLocationPicker';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { useToast } from '../components/Toast';
 
 type AddressScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -50,6 +53,7 @@ export default function AddressBookScreen() {
     const isSelectionMode = !!params?.onSelect;
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+    const toast = useToast();
 
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -82,7 +86,7 @@ export default function AddressBookScreen() {
             const data = await api.getAddresses();
             setAddresses(data.addresses || []);
         } catch (error) {
-            Alert.alert(t('common.error'), t('profile.failedToLoadAddresses'));
+            handleApiError(error, toast, { customMessage: t('profile.failedToLoadAddresses'), useAlert: true });
         } finally {
             setIsLoading(false);
         }
@@ -164,8 +168,8 @@ export default function AddressBookScreen() {
             setFlowStep('details');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
-            console.log('[GPS] Detection failed:', error);
-            Alert.alert(t('common.error'), t('profile.gpsFailed'));
+            log('[GPS] Detection failed:', error);
+            handleApiError(error, toast, { customMessage: t('profile.gpsFailed'), useAlert: true });
         } finally {
             setIsDetectingGPS(false);
         }
@@ -217,8 +221,8 @@ export default function AddressBookScreen() {
             setShowAddFlow(false);
             loadAddresses();
         } catch (error: any) {
-            console.log('Save address error:', error);
-            Alert.alert(t('common.error'), error?.message || t('profile.failedToSaveAddress'));
+            log('Save address error:', error);
+            handleApiError(error, toast, { useAlert: true });
         } finally {
             setIsSaving(false);
         }
@@ -245,7 +249,7 @@ export default function AddressBookScreen() {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         loadAddresses();
                     } catch (error) {
-                        Alert.alert(t('common.error'), t('profile.deleteAddressFailed'));
+                        handleApiError(error, toast, { customMessage: t('profile.deleteAddressFailed'), useAlert: true });
                     }
                 }
             }

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // VVIP G-03: App State Refresh Hook
 // Automatically refreshes critical data when app resumes from background
 // Prevents stale data display after switching apps
@@ -51,7 +52,7 @@ export function useAppStateRefresh({
             (nextAppState === 'background' || nextAppState === 'inactive')
         ) {
             backgroundTimestamp.current = Date.now();
-            console.log('[AppStateRefresh] App went to background');
+            log('[AppStateRefresh] App went to background');
         }
 
         // App became active from background
@@ -63,17 +64,17 @@ export function useAppStateRefresh({
                 ? Date.now() - backgroundTimestamp.current
                 : 0;
 
-            console.log(`[AppStateRefresh] App resumed after ${timeInBackground}ms`);
+            log(`[AppStateRefresh] App resumed after ${timeInBackground}ms`);
 
             // Only refresh if app was in background long enough
             if (timeInBackground >= minBackgroundTimeMs && !isRefreshing.current) {
                 isRefreshing.current = true;
-                console.log('[AppStateRefresh] Triggering refresh...');
+                log('[AppStateRefresh] Triggering refresh...');
 
                 try {
                     await onRefresh();
                 } catch (error) {
-                    console.error('[AppStateRefresh] Refresh failed:', error);
+                    logError('[AppStateRefresh] Refresh failed:', error);
                 } finally {
                     isRefreshing.current = false;
                 }

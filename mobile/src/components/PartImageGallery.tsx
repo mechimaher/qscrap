@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    Image,
     TouchableOpacity,
     ScrollView,
     Dimensions,
@@ -11,6 +10,7 @@ import {
     Animated,
     PanResponder,
 } from 'react-native';
+import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
@@ -154,7 +154,8 @@ export const PartImageGallery: React.FC<PartImageGalleryProps> = ({
                             <Image
                                 source={{ uri: normalizedImages[activeIndex].uri }}
                                 style={styles.mainImage}
-                                resizeMode="contain"
+                                contentFit="contain"
+                                transition={200}
                             />
                             <View style={styles.rotateHint}>
                                 <Text style={styles.rotateIcon}>🔄</Text>
@@ -185,7 +186,8 @@ export const PartImageGallery: React.FC<PartImageGalleryProps> = ({
                                     <Image
                                         source={{ uri: img.uri }}
                                         style={styles.mainImage}
-                                        resizeMode="contain"
+                                        contentFit="contain"
+                                        transition={200}
                                     />
                                 </TouchableOpacity>
                             ))}
@@ -243,7 +245,7 @@ export const PartImageGallery: React.FC<PartImageGalleryProps> = ({
                             <Image
                                 source={{ uri: img.uri }}
                                 style={styles.thumbnailImage}
-                                resizeMode="cover"
+                                contentFit="cover"
                             />
                             {img.angle !== undefined && is360Mode && (
                                 <View style={styles.thumbnailAngle}>
@@ -295,7 +297,7 @@ export const PartImageGallery: React.FC<PartImageGalleryProps> = ({
                                 key={index}
                                 source={{ uri: img.uri }}
                                 style={styles.fullscreenImage}
-                                resizeMode="contain"
+                                contentFit="contain"
                             />
                         ))}
                     </ScrollView>

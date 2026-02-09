@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -141,7 +142,7 @@ export const LoyaltyProgram: React.FC<LoyaltyProgramProps> = ({
                 ],
             });
         } catch (error) {
-            console.log('Load loyalty error:', error);
+            log('Load loyalty error:', error);
         } finally {
             setIsLoading(false);
         }

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * ScreenErrorBoundary — E2 Enterprise Resilience
  * Catches errors at screen level for graceful degradation.
@@ -14,7 +15,6 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
-import { captureException, addBreadcrumb } from '../services/sentry';
 
 interface Props {
     children: ReactNode;
@@ -44,21 +44,10 @@ export class ScreenErrorBoundary extends Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
         // Log to console in development
-        console.error('[ScreenErrorBoundary] Caught error:', error);
-        console.error('[ScreenErrorBoundary] Component stack:', errorInfo.componentStack);
+        logError('[ScreenErrorBoundary] Caught error:', error);
+        logError('[ScreenErrorBoundary] Component stack:', errorInfo.componentStack);
 
         this.setState({ errorInfo });
-
-        // Report to Sentry
-        addBreadcrumb('error-boundary', 'Screen error caught', {
-            screenName: this.props.screenName,
-            componentStack: errorInfo.componentStack,
-        }, 'error');
-
-        captureException(error, {
-            screenName: this.props.screenName,
-            componentStack: errorInfo.componentStack,
-        });
     }
 
     handleRetry = (): void => {

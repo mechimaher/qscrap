@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // Premium Map Location Picker - VVIP Qatar Style with Google Places Autocomplete
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -19,14 +20,13 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
+import { KEYS } from '../config/keys';
 
 interface MapLocationPickerProps {
     onLocationSelect: (location: { latitude: number; longitude: number; address: string }) => void;
     onCancel: () => void;
     initialLocation?: { latitude: number; longitude: number };
 }
-
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw';
 
 const DOHA_COORDINATES: Region = {
     latitude: 25.2854,
@@ -105,7 +105,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
         setIsSearching(true);
         try {
-            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}&components=country:qa&language=en&types=geocode|establishment`;
+            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${KEYS.GOOGLE_MAPS_API_KEY}&components=country:qa&language=en&types=geocode|establishment`;
 
             const response = await fetch(url);
             const data = await response.json();
@@ -115,7 +115,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 setShowPredictions(true);
             }
         } catch (error) {
-            console.log('[Places] Search failed:', error);
+            log('[Places] Search failed:', error);
         } finally {
             setIsSearching(false);
         }
@@ -127,7 +127,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             setIsLoading(true);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-            const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address,name&key=${GOOGLE_MAPS_API_KEY}`;
+            const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address,name&key=${KEYS.GOOGLE_MAPS_API_KEY}`;
 
             const response = await fetch(url);
             const data = await response.json();
@@ -153,7 +153,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
         } catch (error) {
-            console.log('[Places] Details failed:', error);
+            log('[Places] Details failed:', error);
         } finally {
             setIsLoading(false);
         }
@@ -178,7 +178,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             setIsLoading(true);
 
             // Use Google Maps Geocoding API for reliable results
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}&language=en`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${KEYS.GOOGLE_MAPS_API_KEY}&language=en`;
 
             const response = await fetch(url);
             const data = await response.json();
@@ -187,7 +187,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 // Get the formatted address from Google
                 const formattedAddress = data.results[0].formatted_address;
                 setAddress(formattedAddress);
-                console.log('[Map] Reverse geocoded:', formattedAddress);
+                log('[Map] Reverse geocoded:', formattedAddress);
             } else {
                 // Fallback: try Expo Location
                 const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
@@ -198,15 +198,15 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     const street = geocoded.street || '';
                     const fullAddress = `${street}, ${area}, ${city}`.replace(/^, /, '').trim();
                     setAddress(fullAddress);
-                    console.log('[Map] Expo geocoded:', fullAddress);
+                    log('[Map] Expo geocoded:', fullAddress);
                 } else {
                     // Last resort: use coordinates
                     setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-                    console.warn('[Map] Using coordinates as address');
+                    warn('[Map] Using coordinates as address');
                 }
             }
         } catch (error) {
-            console.error('[Map] Reverse geocode failed:', error);
+            logError('[Map] Reverse geocode failed:', error);
             // Use coordinates instead of placeholder text
             setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
         } finally {
@@ -243,7 +243,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             await reverseGeocode(location.coords.latitude, location.coords.longitude);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
-            console.error('[Map] Location error:', error);
+            logError('[Map] Location error:', error);
             alert(t('home.mapPicker.locationError'));
         } finally {
             setIsLoading(false);

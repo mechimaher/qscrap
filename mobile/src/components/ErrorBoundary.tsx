@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import {
     View,
@@ -42,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         // Log error to console (in production, send to error reporting service)
-        console.error('ErrorBoundary caught an error:', error, errorInfo);
+        logError('ErrorBoundary caught an error:', error, errorInfo);
         this.setState({ errorInfo });
 
         // TODO: Send to crash reporting service (Sentry, Crashlytics, etc.)

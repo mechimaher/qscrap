@@ -52,7 +52,7 @@ import SupportScreen from './src/screens/SupportScreen';
 // VIN screens removed - not used
 import PaymentScreen from './src/screens/PaymentScreen';
 import DeliveryConfirmationScreen from './src/screens/DeliveryConfirmationScreen';
-import DeliveryTrackingScreenBase from './src/screens/DeliveryTrackingScreen';
+// DeliveryTrackingScreen removed — consolidated into TrackingScreen
 import MyVehiclesScreen from './src/screens/MyVehiclesScreen';
 import TermsScreen from './src/screens/TermsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
@@ -61,7 +61,6 @@ import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import { withErrorBoundary } from './src/components';
 const RequestDetailScreen = withErrorBoundary(RequestDetailScreenBase, { screenName: 'Request Details' });
 const OrderDetailScreen = withErrorBoundary(OrderDetailScreenBase, { screenName: 'Order Details' });
-const DeliveryTrackingScreen = withErrorBoundary(DeliveryTrackingScreenBase, { screenName: 'Delivery Tracking' });
 
 // Navigation Types
 export type RootStackParamList = {
@@ -86,7 +85,7 @@ export type RootStackParamList = {
   Terms: undefined;
   RequestDetail: { requestId: string };
   OrderDetail: { orderId: string };
-  Tracking: { orderId: string; orderNumber: string; deliveryAddress?: string };
+  Tracking: { orderId: string; orderNumber?: string; deliveryAddress?: string };
   Chat: { orderId: string; orderNumber: string; recipientName: string; recipientType: 'driver' | 'garage' };
   EditProfile: undefined;
   Addresses: { onSelect?: (address: Address) => void } | undefined;
@@ -105,7 +104,7 @@ export type RootStackParamList = {
     partDescription: string;
     _cacheKey?: string; // Cache-busting key
   };
-  DeliveryTracking: { orderId: string };
+  // DeliveryTracking removed — consolidated into Tracking
   DeliveryConfirmation: { order?: any; escrow?: any };
   // Vehicles
   MyVehicles: undefined;
@@ -326,11 +325,7 @@ function RootNavigator() {
               component={PaymentScreen}
               options={{ animation: 'slide_from_right' }}
             />
-            <RootStack.Screen
-              name="DeliveryTracking"
-              component={DeliveryTrackingScreen}
-              options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
-            />
+            {/* Delivery Confirmation */}
             <RootStack.Screen
               name="DeliveryConfirmation"
               component={DeliveryConfirmationScreen}

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // QScrap Support Screen - WhatsApp-First Support (Qatar Market Optimized)
 // Now includes "My Tickets" section for customer ticket visibility
 import React, { useState, useEffect, useCallback } from 'react';
@@ -21,9 +22,8 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { api } from '../services/api';
+import { CONTACT } from '../constants/contacts';
 
-// QScrap WhatsApp Business Number (Qatar)
-const WHATSAPP_NUMBER = '+97450267974';
 
 interface SupportOption {
     id: string;
@@ -117,7 +117,7 @@ export default function SupportScreen() {
             const allTickets = response.tickets || [];
             setTickets(allTickets);
         } catch (error) {
-            console.error('[Support] Failed to load tickets:', error);
+            logError('[Support] Failed to load tickets:', error);
         } finally {
             setLoadingTickets(false);
             setRefreshing(false);
@@ -143,7 +143,7 @@ export default function SupportScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         const message = encodeURIComponent(messagePrefix);
-        const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${message}`;
+        const url = `whatsapp://send?phone=${CONTACT.SUPPORT_PHONE}&text=${message}`;
 
         Linking.canOpenURL(url)
             .then((supported) => {
@@ -151,12 +151,12 @@ export default function SupportScreen() {
                     return Linking.openURL(url);
                 } else {
                     // Fallback to web WhatsApp
-                    const webUrl = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}?text=${message}`;
+                    const webUrl = `https://wa.me/${CONTACT.SUPPORT_PHONE.replace('+', '')}?text=${message}`;
                     return Linking.openURL(webUrl);
                 }
             })
             .catch((err) => {
-                console.error('WhatsApp open error:', err);
+                logError('WhatsApp open error:', err);
                 Alert.alert(
                     t('common.error'),
                     t('support.whatsappNotInstalled'),

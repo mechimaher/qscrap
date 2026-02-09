@@ -19,7 +19,7 @@ export { default as RegisterScreen } from './RegisterScreen';
 export { default as NewRequestScreen } from './NewRequestScreen';
 export { default as ChatScreen } from './ChatScreen';
 export { default as CounterOfferScreen } from './CounterOfferScreen';
-export { default as DeliveryTrackingScreen } from './DeliveryTrackingScreen';
+// DeliveryTrackingScreen removed — consolidated into TrackingScreen
 export { default as TrackingScreen } from './TrackingScreen';
 export { default as CancellationPreviewScreen } from './CancellationPreviewScreen';
 export { default as ReturnRequestScreen } from './ReturnRequestScreen';

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 import React, { useState, useCallback } from 'react';
 import {
     View,
@@ -207,7 +208,7 @@ export const AutoTranslate: React.FC<AutoTranslateProps> = ({
                 onTranslationComplete(result.translatedText, targetLang);
             }
         } catch (error) {
-            console.log('Translation error:', error);
+            log('Translation error:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsTranslating(false);
@@ -329,7 +330,7 @@ export const TranslateButton: React.FC<{
             onTranslated(result.translatedText);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
-            console.log('Translation error:', error);
+            log('Translation error:', error);
         } finally {
             setIsTranslating(false);
         }

@@ -1,3 +1,4 @@
+import { handleApiError } from '../utils/errorHandler';
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -8,8 +9,8 @@ import {
     ActivityIndicator,
     TextInput,
     ScrollView,
-    Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -19,6 +20,7 @@ import { api } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { useToast } from '../components/Toast';
 
 // BRAIN v3.0 Return reasons
 const RETURN_REASONS = [
@@ -35,6 +37,7 @@ const ReturnRequestScreen: React.FC = () => {
     const route = useRoute();
     const { orderId } = route.params as { orderId: string };
     const { t, isRTL } = useTranslation();
+    const toast = useToast();
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -58,8 +61,7 @@ const ReturnRequestScreen: React.FC = () => {
             setPreview(previewRes);
             setAbuseStatus(abuseRes);
         } catch (error: any) {
-            Alert.alert(t('common.error'), error.message || t('return.cannotReturn'));
-            navigation.goBack();
+            handleApiError(error, toast, { useAlert: true, onDismiss: () => navigation.goBack() });
         } finally {
             setLoading(false);
         }
@@ -139,7 +141,7 @@ const ReturnRequestScreen: React.FC = () => {
                             Alert.alert(t('return.submitted'), t('return.submittedMessage'));
                             navigation.navigate('MainTabs');
                         } catch (error: any) {
-                            Alert.alert(t('common.error'), error.message);
+                            handleApiError(error, toast, { useAlert: true });
                         } finally {
                             setSubmitting(false);
                         }

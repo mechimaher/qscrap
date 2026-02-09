@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * QScrap i18n - Internationalization Module
  * Consolidated translation system with RTL support
@@ -44,7 +45,7 @@ export function getTranslation(lang: Language, path: string): string {
                     value = value[k];
                 } else {
                     // Return path as-is if not found in either language
-                    console.warn(`[i18n] Missing translation key: ${path}`);
+                    warn(`[i18n] Missing translation key: ${path}`);
                     return path;
                 }
             }

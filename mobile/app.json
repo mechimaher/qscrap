@@ -124,20 +124,12 @@
           "enableGooglePay": true
         }
       ],
-      "expo-font",
-      [
-        "@sentry/react-native/expo",
-        {
-          "organization": "qscrap",
-          "project": "qscrap-mobile"
-        }
-      ]
+      "expo-font"
     ],
     "extra": {
       "privacyPolicyUrl": "https://qscrap.qa/privacy",
       "termsOfServiceUrl": "https://qscrap.qa/terms",
       "supportEmail": "support@qscrap.qa",
-      "sentryDsn": "",
       "eas": {
         "projectId": "47b26c9d-3bd0-4470-8543-dd303a49b287"
       }

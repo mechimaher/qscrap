@@ -1,3 +1,5 @@
+import { log, warn, error as logError } from '../../utils/logger';
+import { handleApiError } from '../../utils/errorHandler';
 // QScrap Orders Screen - Premium 2026 Design
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
@@ -378,8 +380,7 @@ export default function OrdersScreen() {
             const data = await api.getMyOrders();
             setOrders(data.orders || []);
         } catch (error) {
-            console.log('Failed to load orders:', error);
-            toast.error('Error', 'Failed to load orders');
+            handleApiError(error, toast, t('errors.loadFailed'));
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);

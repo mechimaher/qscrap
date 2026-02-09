@@ -1,5 +1,8 @@
-// QScrap Live Tracking Screen - Premium Real-time Map Experience
-import React, { useState, useEffect, useRef } from 'react';
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
+// QScrap Live Tracking Screen - Unified Premium Real-time Map Experience
+// Consolidates TrackingScreen + DeliveryTrackingScreen into one screen
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -26,15 +29,48 @@ import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { useToast } from '../components/Toast';
 import LiveETACard from '../components/LiveETACard';
 import StatusTimeline from '../components/StatusTimeline';
 import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
+import { KEYS } from '../config/keys';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.02;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+// Light map style for theme-aware rendering
+const LIGHT_MAP_STYLE = [
+    { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e9e9e9' }] },
+    { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+];
+
+interface RouteCoordinate {
+    latitude: number;
+    longitude: number;
+}
+
+/** Decode Google Maps encoded polyline string into coordinates */
+const decodePolyline = (encoded: string): RouteCoordinate[] => {
+    const points: RouteCoordinate[] = [];
+    let index = 0, lat = 0, lng = 0;
+    while (index < encoded.length) {
+        let b, shift = 0, result = 0;
+        do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        lat += (result & 1) ? ~(result >> 1) : result >> 1;
+        shift = 0; result = 0;
+        do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        lng += (result & 1) ? ~(result >> 1) : result >> 1;
+        points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+    }
+    return points;
+};
 
 interface DriverLocation {
     latitude: number;
@@ -50,6 +86,9 @@ export default function TrackingScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute();
     const { t, isRTL } = useTranslation();
+    const { isDark } = useTheme();
+    const toast = useToast();
+    // Support both full params (from OrderDetail) and orderId-only (from PaymentScreen)
     const { orderId, orderNumber, deliveryAddress } = route.params as any;
 
     const mapRef = useRef<any>(null);
@@ -139,6 +178,7 @@ export default function TrackingScreen() {
         order_status: string;
     } | null>(null);
     const [newChatMessage, setNewChatMessage] = useState<{ text: string; from: string } | null>(null);
+    const [routeCoordinates, setRouteCoordinates] = useState<RouteCoordinate[]>([]);
 
     // Driver visible immediately after order is collected (no QC gate)
     const canShowDriver = !!(orderDetails?.order_status &&
@@ -186,26 +226,21 @@ export default function TrackingScreen() {
                             updated_at: data.timestamp,
                         });
 
-                        // Calculate ETA (simplified)
+                        // Fetch route via Google Directions for accurate ETA & polyline
                         if (customerLocation) {
-                            const dist = calculateDistance(
-                                lat, lng,
-                                customerLocation.latitude, customerLocation.longitude
+                            fetchRoute(
+                                { lat, lng },
+                                { lat: customerLocation.latitude, lng: customerLocation.longitude }
                             );
-                            setDistance(`${dist.toFixed(1)} km`);
-
-                            // Estimate: average 30 km/h in city traffic
-                            const etaMinutes = Math.ceil((dist / 30) * 60);
-                            setEta(`${etaMinutes} min`);
                         }
                     }
                 }
             });
 
             socket.current.on('order_status_update', (data: any) => {
-                console.log('[TrackingScreen] Socket order_status_update:', data);
+                log('[TrackingScreen] Socket order_status_update:', data);
                 if (data.order_id === orderId) {
-                    console.log('[TrackingScreen] Updating order status to:', data.status);
+                    log('[TrackingScreen] Updating order status to:', data.status);
                     // Update order status
                     setOrderDetails(prev => prev ? { ...prev, order_status: data.status } : null);
 
@@ -250,12 +285,10 @@ export default function TrackingScreen() {
 
             if (order) {
                 // Set customer location from order's delivery coordinates
-                if (order.delivery_lat != null && order.delivery_lng != null) {
-                    const lat = parseFloat(String(order.delivery_lat));
-                    const lng = parseFloat(String(order.delivery_lng));
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        setCustomerLocation({ latitude: lat, longitude: lng });
-                    }
+                const delivLat = order.delivery_lat != null ? parseFloat(String(order.delivery_lat)) : NaN;
+                const delivLng = order.delivery_lng != null ? parseFloat(String(order.delivery_lng)) : NaN;
+                if (!isNaN(delivLat) && !isNaN(delivLng)) {
+                    setCustomerLocation({ latitude: delivLat, longitude: delivLng });
                 }
 
                 if (order.driver_lat != null && order.driver_lng != null) {
@@ -269,6 +302,11 @@ export default function TrackingScreen() {
                             speed: 0,
                             updated_at: new Date().toISOString()
                         });
+
+                        // Fetch initial route polyline
+                        if (!isNaN(delivLat) && !isNaN(delivLng)) {
+                            fetchRoute({ lat, lng }, { lat: delivLat, lng: delivLng });
+                        }
                     }
                 }
 
@@ -282,7 +320,7 @@ export default function TrackingScreen() {
                 }
 
                 // Set order details for display
-                console.log('[TrackingScreen] Loading order details, status:', order.order_status);
+                log('[TrackingScreen] Loading order details, status:', order.order_status);
                 setOrderDetails({
                     garage_name: order.garage_name || 'Unknown Garage',
                     part_description: order.part_description || order.part_name || 'Part',
@@ -295,9 +333,36 @@ export default function TrackingScreen() {
                 });
             }
         } catch (error) {
-            console.log('Failed to load order data:', error);
+            handleApiError(error, toast, t('tracking.loadFailed'));
         }
     };
+
+    // Fetch accurate route via Google Directions API
+    const fetchRoute = useCallback(async (
+        origin: { lat: number; lng: number },
+        destination: { lat: number; lng: number }
+    ) => {
+        try {
+            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&key=${KEYS.GOOGLE_MAPS_API_KEY}&mode=driving`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.routes && data.routes.length > 0) {
+                const route = data.routes[0];
+                const leg = route.legs[0];
+
+                // Use Google's accurate ETA and distance
+                if (leg.duration?.text) setEta(leg.duration.text);
+                if (leg.distance?.text) setDistance(leg.distance.text);
+
+                // Decode polyline for accurate road route
+                const points = decodePolyline(route.overview_polyline.points);
+                setRouteCoordinates(points);
+            }
+        } catch (error) {
+            log('Route fetch failed, falling back to straight line:', error);
+        }
+    }, []);
 
     // Watch customer location
     useEffect(() => {
@@ -328,7 +393,7 @@ export default function TrackingScreen() {
                     }
                 );
             } catch (error) {
-                console.log('Location error:', error);
+                log('Location error:', error);
             }
         };
 
@@ -396,16 +461,7 @@ export default function TrackingScreen() {
     };
 
 
-    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-        const R = 6371; // Earth radius in km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    };
+    // calculateDistance removed — Google Directions API now provides accurate ETA/distance
 
     const centerOnDriver = () => {
         if (driverLocation && mapRef.current) {
@@ -447,8 +503,8 @@ export default function TrackingScreen() {
                 ref={mapRef}
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
-                customMapStyle={VVIP_MIDNIGHT_STYLE}
-                showsUserLocation={false}
+                customMapStyle={isDark ? VVIP_MIDNIGHT_STYLE : LIGHT_MAP_STYLE}
+                showsUserLocation
                 showsMyLocationButton={false}
                 loadingEnabled={true}
                 initialRegion={defaultRegion}
@@ -473,7 +529,7 @@ export default function TrackingScreen() {
                     </Marker>
                 )}
 
-                {/* Customer Location Marker */}
+                {/* Destination Marker */}
                 {customerLocation && (
                     <Marker
                         coordinate={{
@@ -487,17 +543,28 @@ export default function TrackingScreen() {
                     </Marker>
                 )}
 
-                {/* Route Polyline */}
-                {canShowDriver && driverLocation && customerLocation && (
+                {/* Google Directions Route Polyline (accurate road path) */}
+                {canShowDriver && routeCoordinates.length > 0 && (
+                    <Polyline
+                        coordinates={routeCoordinates}
+                        strokeColor={Colors.primary}
+                        strokeWidth={4}
+                        lineCap="round"
+                        lineJoin="round"
+                    />
+                )}
+
+                {/* Fallback: straight line if Directions not yet loaded */}
+                {canShowDriver && routeCoordinates.length === 0 && driverLocation && customerLocation && (
                     <Polyline
                         coordinates={[
                             { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
                             { latitude: customerLocation.latitude, longitude: customerLocation.longitude }
                         ]}
                         strokeColor={Colors.primary}
-                        strokeWidth={4}
+                        strokeWidth={3}
+                        lineDashPattern={[10, 5]}
                         lineCap="round"
-                        lineJoin="round"
                     />
                 )}
             </MapView>
