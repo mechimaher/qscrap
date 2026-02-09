@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // QScrap API Service - Full Backend Integration
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import * as SecureStore from 'expo-secure-store';
@@ -105,6 +106,11 @@ export interface Order {
     pod_photo_url?: string;  // Proof of delivery photo
     bid_id?: string;         // Original bid reference for payment resume
     loyalty_discount?: number; // Discount from loyalty points
+    // Tracking / vehicle fields
+    vehicle_plate?: string;
+    vehicle_type?: string;
+    part_condition?: string;
+    warranty_days?: number;
 }
 
 export interface Stats {
@@ -138,6 +144,86 @@ export interface Product {
     view_count: number;
 }
 
+export interface Notification {
+    notification_id: string;
+    user_id: string;
+    title: string;
+    body: string;
+    message?: string;
+    type: string;
+    data?: Record<string, string>;
+    is_read: boolean;
+    created_at: string;
+    related_id?: string;
+}
+
+export interface SupportTicket {
+    ticket_id: string;
+    subject: string;
+    message: string;
+    status: 'open' | 'in_progress' | 'resolved' | 'closed';
+    priority: 'low' | 'medium' | 'high';
+    created_at: string;
+    updated_at: string;
+    replies?: Array<{
+        reply_id: string;
+        message: string;
+        sender_type: 'customer' | 'support';
+        created_at: string;
+    }>;
+}
+
+export interface Vehicle {
+    vehicle_id: string;
+    make?: string;
+    model?: string;
+    car_make: string;
+    car_model: string;
+    car_year: number;
+    year?: number;
+    vin_number?: string;
+    plate_number?: string;
+    nickname?: string;
+    color?: string;
+    is_default?: boolean;
+    is_primary?: boolean;
+    front_image_url?: string;
+    rear_image_url?: string;
+    request_count?: number;
+    last_used_at?: string;
+    created_at?: string;
+}
+
+export interface LoyaltyTransaction {
+    transaction_id: string;
+    type: 'earned' | 'redeemed' | 'expired' | 'adjustment';
+    points: number;
+    description: string;
+    order_id?: string;
+    created_at: string;
+}
+
+export interface PaymentMethod {
+    method_id: string;
+    type: 'card' | 'apple_pay' | 'google_pay';
+    last4?: string;
+    brand?: string;
+    exp_month?: number;
+    exp_year?: number;
+    is_default: boolean;
+}
+
+export interface UrgentAction {
+    action_id: string;
+    type: string;
+    title: string;
+    description: string;
+    order_id?: string;
+    request_id?: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    created_at: string;
+}
+
 // API Helper
 class ApiService {
     private token: string | null = null;
@@ -163,7 +249,7 @@ class ApiService {
         await SecureStore.deleteItemAsync(USER_KEY);
     }
 
-    async saveUser(user: any): Promise<void> {
+    async saveUser(user: User): Promise<void> {
         await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
     }
 
@@ -210,7 +296,7 @@ class ApiService {
             } else {
                 // Non-JSON response (likely HTML error page or plain text)
                 const text = await response.text();
-                console.error('[API] Non-JSON response:', text.substring(0, 200));
+                logError('[API] Non-JSON response:', text.substring(0, 200));
                 throw new Error('Server returned invalid response. Please try again later.');
             }
 
@@ -263,13 +349,13 @@ class ApiService {
                 user_type: data.userType,
             };
 
-            await this.saveUser(userToSave);
+            await this.saveUser(userToSave as User);
         }
 
         return data;
     }
 
-    async register(full_name: string, phone_number: string, password: string): Promise<any> {
+    async register(full_name: string, phone_number: string, password: string): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.REGISTER, {
             method: 'POST',
             body: JSON.stringify({ full_name, phone_number, password, user_type: 'customer' }),
@@ -309,7 +395,7 @@ class ApiService {
             await this.setToken(response.token);
             await this.saveUser({
                 user_id: response.userId,
-                user_type: response.userType,
+                user_type: response.userType as 'customer',
                 full_name: data.full_name,
                 email: data.email,
                 phone_number: data.phone_number,
@@ -331,7 +417,7 @@ class ApiService {
         return this.request(API_ENDPOINTS.STATS);
     }
 
-    async getProfile(): Promise<any> {
+    async getProfile(): Promise<{ user: User; profile?: User; stats?: any; addresses?: Address[] }> {
         return this.request(API_ENDPOINTS.PROFILE);
     }
 
@@ -344,7 +430,7 @@ class ApiService {
         return this.request(`${API_ENDPOINTS.REQUESTS}/${requestId}`);
     }
 
-    async createRequest(formData: FormData): Promise<any> {
+    async createRequest(formData: FormData): Promise<{ success: boolean; request_id: string; message?: string }> {
         const token = await this.getToken();
 
         // Create AbortController for timeout
@@ -385,44 +471,44 @@ class ApiService {
         return this.request(API_ENDPOINTS.MY_ORDERS);
     }
 
-    async acceptBid(bidId: string, paymentMethod = 'cash'): Promise<any> {
+    async acceptBid(bidId: string, paymentMethod = 'cash'): Promise<{ success: boolean; order_id: string; message?: string }> {
         return this.request(API_ENDPOINTS.ACCEPT_BID(bidId), {
             method: 'POST',
             body: JSON.stringify({ payment_method: paymentMethod }),
         });
     }
 
-    async rejectBid(bidId: string, reason?: string): Promise<any> {
+    async rejectBid(bidId: string, reason?: string): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.REJECT_BID(bidId), {
             method: 'POST',
             body: JSON.stringify({ reason }),
         });
     }
 
-    async cancelRequest(requestId: string): Promise<any> {
+    async cancelRequest(requestId: string): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.CANCEL_REQUEST(requestId), {
             method: 'POST',
         });
     }
 
-    async deleteRequest(requestId: string): Promise<any> {
+    async deleteRequest(requestId: string): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.DELETE_REQUEST(requestId), {
             method: 'DELETE',
         });
     }
 
-    async confirmDelivery(orderId: string): Promise<any> {
+    async confirmDelivery(orderId: string): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.CONFIRM_DELIVERY(orderId), {
             method: 'POST',
         });
     }
 
     // Delivery
-    async getDeliveryZones(): Promise<any> {
+    async getDeliveryZones(): Promise<{ zones: Array<{ zone_id: string; name: string; base_fee: number }> }> {
         return this.request(API_ENDPOINTS.ZONES);
     }
 
-    async calculateDeliveryFee(latitude: number, longitude: number): Promise<any> {
+    async calculateDeliveryFee(latitude: number, longitude: number): Promise<{ fee: number; zone: string; distance_km?: number }> {
         return this.request(API_ENDPOINTS.CALCULATE_FEE, {
             method: 'POST',
             body: JSON.stringify({ latitude, longitude }),
@@ -430,7 +516,7 @@ class ApiService {
     }
 
     // Chat
-    async sendMessage(orderId: string, message: string, recipientId: string): Promise<any> {
+    async sendMessage(orderId: string, message: string, recipientId: string): Promise<{ success: boolean; message_id?: string }> {
         return this.request(API_ENDPOINTS.MESSAGES, {
             method: 'POST',
             body: JSON.stringify({
@@ -453,19 +539,19 @@ class ApiService {
         });
     }
 
-    async deleteAddress(addressId: string): Promise<any> {
+    async deleteAddress(addressId: string): Promise<{ success: boolean }> {
         return this.request(`${API_ENDPOINTS.ADDRESSES}/${addressId}`, {
             method: 'DELETE'
         });
     }
 
-    async setDefaultAddress(addressId: string): Promise<any> {
+    async setDefaultAddress(addressId: string): Promise<{ success: boolean }> {
         return this.request(`${API_ENDPOINTS.ADDRESSES}/${addressId}/default`, {
             method: 'PUT'
         });
     }
 
-    async updateAddress(addressId: string, data: { label: string; address_text: string; latitude?: number; longitude?: number; is_default?: boolean }): Promise<any> {
+    async updateAddress(addressId: string, data: { label: string; address_text: string; latitude?: number; longitude?: number; is_default?: boolean }): Promise<{ success: boolean; address?: Address }> {
         return this.request(`${API_ENDPOINTS.ADDRESSES}/${addressId}`, {
             method: 'PUT',
             body: JSON.stringify(data)
@@ -473,43 +559,43 @@ class ApiService {
     }
 
     // Notifications
-    async getNotifications(): Promise<{ notifications: any[] }> {
+    async getNotifications(): Promise<{ notifications: Notification[] }> {
         return this.request(API_ENDPOINTS.NOTIFICATIONS);
     }
 
-    async markNotificationRead(notificationId: string): Promise<any> {
+    async markNotificationRead(notificationId: string): Promise<{ success: boolean }> {
         return this.request(API_ENDPOINTS.MARK_NOTIFICATION_READ(notificationId), {
             method: 'POST'
         });
     }
 
-    async markAllNotificationsRead(): Promise<any> {
+    async markAllNotificationsRead(): Promise<{ success: boolean }> {
         return this.request(API_ENDPOINTS.MARK_ALL_NOTIFICATIONS_READ, {
             method: 'POST'
         });
     }
 
-    async clearAllNotifications(): Promise<any> {
+    async clearAllNotifications(): Promise<{ success: boolean }> {
         return this.request('/dashboard/notifications', {
             method: 'DELETE'
         });
     }
 
-    async deleteNotification(notificationId: string): Promise<any> {
+    async deleteNotification(notificationId: string): Promise<{ success: boolean }> {
         return this.request(`/dashboard/notifications/${notificationId}`, {
             method: 'DELETE'
         });
     }
 
     // Profile Updates
-    async updateProfile(data: { full_name?: string; email?: string; phone_number?: string }): Promise<any> {
+    async updateProfile(data: { full_name?: string; email?: string; phone_number?: string }): Promise<{ success: boolean; user: User }> {
         return this.request(API_ENDPOINTS.UPDATE_PROFILE, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
     }
 
-    async changePassword(currentPassword: string, newPassword: string): Promise<any> {
+    async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.CHANGE_PASSWORD, {
             method: 'POST',
             body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
@@ -517,22 +603,22 @@ class ApiService {
     }
 
     // Support Tickets
-    async getTickets(): Promise<{ tickets: any[] }> {
+    async getTickets(): Promise<{ tickets: SupportTicket[] }> {
         return this.request(API_ENDPOINTS.TICKETS);
     }
 
-    async createTicket(subject: string, message: string, category = 'general'): Promise<any> {
+    async createTicket(subject: string, message: string, category = 'general'): Promise<{ success: boolean; ticket: SupportTicket }> {
         return this.request(API_ENDPOINTS.TICKETS, {
             method: 'POST',
             body: JSON.stringify({ subject, message, category })
         });
     }
 
-    async getTicketDetail(ticketId: string): Promise<any> {
+    async getTicketDetail(ticketId: string): Promise<{ ticket: SupportTicket }> {
         return this.request(API_ENDPOINTS.TICKET_DETAIL(ticketId));
     }
 
-    async sendTicketMessage(ticketId: string, message: string): Promise<any> {
+    async sendTicketMessage(ticketId: string, message: string): Promise<{ success: boolean; reply?: { reply_id: string; message: string; created_at: string } }> {
         return this.request(API_ENDPOINTS.TICKET_MESSAGES(ticketId), {
             method: 'POST',
             body: JSON.stringify({ message })
@@ -546,7 +632,7 @@ class ApiService {
         communication_rating?: number;
         delivery_rating?: number;
         review_text?: string;
-    }): Promise<any> {
+    }): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.SUBMIT_REVIEW(orderId), {
             method: 'POST',
             body: JSON.stringify(reviewData)
@@ -567,7 +653,7 @@ class ApiService {
     }
 
     // Account Deletion
-    async deleteAccount(): Promise<any> {
+    async deleteAccount(): Promise<{ success: boolean; message: string }> {
         return this.request(API_ENDPOINTS.DELETE_ACCOUNT, {
             method: 'DELETE'
         });
@@ -579,7 +665,7 @@ class ApiService {
     }
 
     // Notifications
-    async registerPushToken(token: string, platform: 'ios' | 'android'): Promise<any> {
+    async registerPushToken(token: string, platform: 'ios' | 'android'): Promise<{ success: boolean }> {
         return this.request(API_ENDPOINTS.NOTIFICATIONS_REGISTER, {
             method: 'POST',
             body: JSON.stringify({ token, platform, device_id: 'unknown' })
@@ -587,14 +673,12 @@ class ApiService {
     }
 
 
-    async getOrders() {
-        const response = await this.request<any>('/orders');
-        return response.data;
+    async getOrders(): Promise<{ orders: Order[] }> {
+        return this.request('/orders');
     }
 
     async getOrderCount(): Promise<{ total: number }> {
-        const response = await this.request<any>('/orders/count');
-        return response.data;
+        return this.request('/orders/count');
     }
 
     // Cancellation
@@ -602,7 +686,7 @@ class ApiService {
         return this.request(`/orders/${orderId}/cancel-preview`);
     }
 
-    async cancelOrder(orderId: string, reason: string): Promise<any> {
+    async cancelOrder(orderId: string, reason: string): Promise<{ success: boolean; message: string; refund_amount?: number }> {
         return this.request(API_ENDPOINTS.CANCEL_ORDER(orderId), {
             method: 'POST',
             body: JSON.stringify({ reason })
@@ -610,12 +694,12 @@ class ApiService {
     }
 
     // Order Details (single order)
-    async getOrderDetails(orderId: string): Promise<any> {
+    async getOrderDetails(orderId: string): Promise<{ order: Order }> {
         return this.request(`/orders/${orderId}`);
     }
 
     // Disputes
-    async createDispute(formData: FormData): Promise<any> {
+    async createDispute(formData: FormData): Promise<{ success: boolean; dispute_id: string; message?: string }> {
         const token = await this.getToken();
         const response = await fetch(`${API_BASE_URL}/disputes`, {
             method: 'POST',
@@ -644,7 +728,7 @@ class ApiService {
         return this.request(`/escrow/order/${orderId}`);
     }
 
-    async confirmEscrowReceipt(escrowId: string, photos: string[]): Promise<any> {
+    async confirmEscrowReceipt(escrowId: string, photos: string[]): Promise<{ success: boolean; message: string }> {
         return this.request(`/escrow/${escrowId}/confirm`, {
             method: 'POST',
             body: JSON.stringify({
@@ -654,14 +738,14 @@ class ApiService {
         });
     }
 
-    async raiseEscrowDispute(escrowId: string, reason: string, photos?: string[]): Promise<any> {
+    async raiseEscrowDispute(escrowId: string, reason: string, photos?: string[]): Promise<{ success: boolean; dispute_id: string; message?: string }> {
         return this.request(`/escrow/${escrowId}/dispute`, {
             method: 'POST',
             body: JSON.stringify({ reason, photos })
         });
     }
 
-    async uploadProofOfCondition(escrowId: string, orderId: string, photos: string[], captureType: string): Promise<any> {
+    async uploadProofOfCondition(escrowId: string, orderId: string, photos: string[], captureType: string): Promise<{ success: boolean; message: string }> {
         return this.request(`/escrow/${escrowId}/proof`, {
             method: 'POST',
             body: JSON.stringify({
@@ -684,7 +768,7 @@ class ApiService {
         return this.request('/loyalty/balance');
     }
 
-    async getLoyaltyHistory(): Promise<{ transactions: any[] }> {
+    async getLoyaltyHistory(): Promise<{ transactions: LoyaltyTransaction[] }> {
         return this.request('/loyalty/history');
     }
 
@@ -721,11 +805,11 @@ class ApiService {
         });
     }
 
-    async getTestCards(): Promise<{ cards: any[] }> {
+    async getTestCards(): Promise<{ cards: PaymentMethod[] }> {
         return this.request('/payments/test-cards');
     }
 
-    async getPaymentMethods(): Promise<{ methods: any[] }> {
+    async getPaymentMethods(): Promise<{ methods: PaymentMethod[] }> {
         return this.request('/payments/methods');
     }
 
@@ -798,7 +882,7 @@ class ApiService {
     // ============================================
     // DASHBOARD - Smart HomeScreen
     // ============================================
-    async getUrgentActions(): Promise<{ urgent_actions: any[]; count: number }> {
+    async getUrgentActions(): Promise<{ urgent_actions: UrgentAction[]; count: number }> {
         return this.request('/v1/dashboard/customer/urgent-actions');
     }
 
@@ -815,7 +899,7 @@ class ApiService {
     // ============================================
     // VEHICLES - Family Fleet
     // ============================================
-    async getMyVehicles(): Promise<{ vehicles: any[] }> {
+    async getMyVehicles(): Promise<{ vehicles: Vehicle[] }> {
         return this.request('/vehicles');
     }
 
@@ -825,20 +909,20 @@ class ApiService {
         car_year: number;
         vin_number?: string;
         nickname?: string;
-    }): Promise<any> {
+    }): Promise<{ success: boolean; vehicle: Vehicle }> {
         return this.request('/vehicles', {
             method: 'POST',
             body: JSON.stringify(vehicleData)
         });
     }
 
-    async deleteVehicle(vehicleId: string): Promise<any> {
+    async deleteVehicle(vehicleId: string): Promise<{ success: boolean }> {
         return this.request(`/vehicles/${vehicleId}`, {
             method: 'DELETE'
         });
     }
 
-    async updateVehicle(vehicleId: string, data: { nickname?: string; is_primary?: boolean; vin_number?: string }): Promise<any> {
+    async updateVehicle(vehicleId: string, data: { nickname?: string; is_primary?: boolean; vin_number?: string }): Promise<{ success: boolean; vehicle: Vehicle }> {
         return this.request(`/vehicles/${vehicleId}`, {
             method: 'PATCH',
             body: JSON.stringify(data)

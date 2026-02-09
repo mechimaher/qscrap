@@ -12,10 +12,9 @@ import {
     Modal,
     TextInput,
     Animated,
-    Easing,
     Dimensions,
-    Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -27,308 +26,19 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { handleApiError } from '../utils/errorHandler';
+import { useToast } from '../components/Toast';
 import { RootStackParamList } from '../../App';
 import { useSocketContext } from '../hooks/useSocket';
 
+// Extracted components
+import { getStatusConfig } from '../components/order/statusConfig';
+import HeroStatusCard from '../components/order/HeroStatusCard';
+import VisualTimeline from '../components/order/VisualTimeline';
+import DriverCard from '../components/order/DriverCard';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
-
-// ============================================
-// STATUS CONFIGURATION
-// ============================================
-const getStatusConfig = (status: string, t: any) => {
-    const configs: Record<string, {
-        color: string;
-        icon: string;
-        label: string;
-        description: string;
-        gradient: readonly [string, string];
-    }> = {
-        'pending_payment': {
-            color: '#F59E0B', icon: '💳', label: t('status.awaitingPayment') || 'Awaiting Payment',
-            description: 'Complete payment to confirm your order',
-            gradient: ['#F59E0B', '#D97706'] as const
-        },
-        'confirmed': {
-            color: '#3B82F6', icon: '✓', label: t('status.confirmed'),
-            description: t('status.confirmedDesc'),
-            gradient: ['#3B82F6', '#2563EB'] as const
-        },
-        'preparing': {
-            color: '#F59E0B', icon: '🔧', label: t('status.preparing'),
-            description: t('status.preparingDesc'),
-            gradient: ['#F59E0B', '#D97706'] as const
-        },
-        'ready_for_pickup': {
-            color: '#8B5CF6', icon: '📦', label: t('status.readyForPickup'),
-            description: t('status.readyDesc'),
-            gradient: ['#8B5CF6', '#7C3AED'] as const
-        },
-        'collected': {
-            color: '#22C55E', icon: '🚚', label: t('status.inTransit'),
-            description: t('status.processingDesc'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        },
-        'qc_in_progress': {
-            color: '#22C55E', icon: '🚚', label: t('status.inTransit'),
-            description: t('status.qcDesc'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        },
-        'qc_passed': {
-            color: '#22C55E', icon: '🚚', label: t('status.inTransit'),
-            description: t('status.qcPassedDesc'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        },
-        'qc_failed': {
-            color: '#F59E0B', icon: '⏳', label: t('status.processing'),
-            description: t('status.issueDesc'),
-            gradient: ['#F59E0B', '#D97706'] as const
-        },
-        'in_transit': {
-            color: '#22C55E', icon: '🚗', label: t('status.onTheWay'),
-            description: t('status.onTheWayDesc'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        },
-        'delivered': {
-            color: '#06B6D4', icon: '📍', label: t('status.delivered'),
-            description: t('status.deliveredDesc'),
-            gradient: ['#06B6D4', '#0891B2'] as const
-        },
-        'completed': {
-            color: '#22C55E', icon: '🎉', label: t('status.completed'),
-            description: t('status.completedDesc'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        },
-        'cancelled_by_customer': {
-            color: '#EF4444', icon: '✕', label: t('status.cancelled'),
-            description: t('status.cancelledUserDesc'),
-            gradient: ['#EF4444', '#DC2626'] as const
-        },
-        'cancelled_by_garage': {
-            color: '#EF4444', icon: '✕', label: t('status.cancelled'),
-            description: t('status.cancelledGarageDesc'),
-            gradient: ['#EF4444', '#DC2626'] as const
-        },
-        'cancelled_by_ops': {
-            color: '#EF4444', icon: '✕', label: t('status.cancelled'),
-            description: t('status.cancelledSupportDesc'),
-            gradient: ['#EF4444', '#DC2626'] as const
-        },
-        'disputed': {
-            color: '#F59E0B', icon: '⚠️', label: t('status.disputed'),
-            description: t('status.disputedDesc'),
-            gradient: ['#F59E0B', '#D97706'] as const
-        },
-        'refunded': {
-            color: '#6B7280', icon: '💸', label: t('status.refunded'),
-            description: t('status.refundedDesc'),
-            gradient: ['#6B7280', '#4B5563'] as const
-        },
-    };
-    return configs[status] || {
-        color: '#6B7280', icon: '•', label: status.replace(/_/g, ' '), description: '',
-        gradient: ['#6B7280', '#4B5563'] as const
-    };
-};
-
-const getTimelineSteps = (status: string, t: any) => {
-    const allSteps = [
-        { key: 'confirmed', label: t('status.confirmed'), icon: '✓' },
-        { key: 'preparing', label: t('status.preparing'), icon: '🔧' },
-        { key: 'ready_for_pickup', label: t('status.ready'), icon: '📦' },
-        { key: 'in_transit', label: t('status.inTransit'), icon: '🚚' },
-        { key: 'delivered', label: t('status.delivered'), icon: '📍' },
-    ];
-
-    const statusToStep: Record<string, number> = {
-        'confirmed': 0, 'preparing': 1, 'ready_for_pickup': 2,
-        'collected': 3, 'qc_in_progress': 3, 'qc_passed': 3, 'qc_failed': 3,
-        'in_transit': 3, 'delivered': 4, 'completed': 4,
-    };
-
-    return { steps: allSteps, currentStep: statusToStep[status] ?? 0 };
-};
-
-// ============================================
-// HERO STATUS HEADER
-// ============================================
-const HeroStatusCard = ({ order, statusConfig }: { order: Order; statusConfig: any }) => {
-    const { t } = useTranslation();
-    const pulseAnim = useRef(new Animated.Value(0)).current;
-    const isActive = !['completed', 'cancelled'].includes(order.order_status);
-
-    useEffect(() => {
-        if (isActive) {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(pulseAnim, {
-                        toValue: 1, duration: 1500,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(pulseAnim, {
-                        toValue: 0, duration: 1500,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                ])
-            ).start();
-        }
-    }, [isActive]);
-
-    const iconScale = pulseAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 1.15],
-    });
-
-    return (
-        <LinearGradient
-            colors={statusConfig.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-        >
-            <Animated.Text style={[
-                styles.heroIcon,
-                { transform: [{ scale: iconScale }] }
-            ]}>
-                {statusConfig.icon}
-            </Animated.Text>
-            <Text style={styles.heroLabel}>{statusConfig.label}</Text>
-            <Text style={styles.heroDescription}>{statusConfig.description}</Text>
-            <View style={styles.heroOrderNumber}>
-                <Text style={styles.heroOrderText}>{t('common.order')} #{order.order_number}</Text>
-            </View>
-        </LinearGradient>
-    );
-};
-
-// ============================================
-// VISUAL TIMELINE
-// ============================================
-const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t: any }) => {
-    const { steps, currentStep } = getTimelineSteps(status, t);
-    const lineAnims = useRef(steps.map(() => new Animated.Value(0))).current;
-
-    useEffect(() => {
-        lineAnims.forEach((anim, index) => {
-            if (index < currentStep) {
-                Animated.timing(anim, {
-                    toValue: 1,
-                    duration: 500,
-                    delay: index * 150,
-                    useNativeDriver: false,
-                }).start();
-            }
-        });
-    }, [currentStep]);
-
-    return (
-        <View style={[styles.timelineContainer, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('order.progress')}</Text>
-
-            {steps.map((step, index) => {
-                const isCompleted = index < currentStep;
-                const isCurrent = index === currentStep;
-                const isLast = index === steps.length - 1;
-
-                return (
-                    <View key={step.key} style={styles.timelineStep}>
-                        <View style={styles.timelineLeft}>
-                            <View style={[
-                                styles.timelineDot,
-                                isCompleted && styles.timelineDotCompleted,
-                                isCurrent && styles.timelineDotCurrent,
-                            ]}>
-                                <Text style={[
-                                    styles.timelineDotIcon,
-                                    (isCompleted || isCurrent) && { opacity: 1 }
-                                ]}>
-                                    {isCompleted ? '✓' : step.icon}
-                                </Text>
-                            </View>
-                            {!isLast && (
-                                <View style={styles.timelineLineContainer}>
-                                    <View style={styles.timelineLineBg} />
-                                    <Animated.View style={[
-                                        styles.timelineLineFill,
-                                        {
-                                            height: lineAnims[index].interpolate({
-                                                inputRange: [0, 1],
-                                                outputRange: ['0%', '100%'],
-                                            })
-                                        }
-                                    ]} />
-                                </View>
-                            )}
-                        </View>
-                        <View style={styles.timelineContent}>
-                            <Text style={[
-                                styles.timelineLabel,
-                                { color: colors.text },
-                                (isCompleted || isCurrent) && styles.timelineLabelActive
-                            ]}>
-                                {step.label}
-                            </Text>
-                            {isCurrent && (
-                                <View style={styles.currentBadge}>
-                                    <Text style={styles.currentBadgeText}>{t('common.current')}</Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-                );
-            })}
-        </View>
-    );
-};
-
-// ============================================
-// DRIVER CARD
-// ============================================
-const DriverCard = ({ order, onCall, t, isRTL }: { order: Order; onCall: () => void; t: any; isRTL: boolean }) => {
-    const pulseAnim = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-                Animated.timing(pulseAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
-            ])
-        ).start();
-    }, []);
-
-    return (
-        <View style={styles.driverCard}>
-            <LinearGradient
-                colors={['rgba(34, 197, 94, 0.1)', 'rgba(34, 197, 94, 0.05)']}
-                style={styles.driverGradient}
-            >
-                <View style={styles.driverInfo}>
-                    <View style={styles.driverAvatar}>
-                        <Text style={styles.driverAvatarText}>🚗</Text>
-                        <Animated.View style={[
-                            styles.liveDot,
-                            { opacity: pulseAnim }
-                        ]} />
-                    </View>
-                    <View style={isRTL ? { marginRight: Spacing.md } : { marginLeft: Spacing.md }}>
-                        <Text style={[styles.driverLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.yourDriver')}</Text>
-                        <Text style={[styles.driverName, { textAlign: rtlTextAlign(isRTL) }]}>{order.driver_name}</Text>
-                    </View>
-                    {
-                        order.driver_phone && (
-                            <TouchableOpacity style={[styles.callButton, { marginLeft: isRTL ? 0 : 'auto', marginRight: isRTL ? 'auto' : 0 }]} onPress={onCall}>
-                                <Text style={styles.callIcon}>📞</Text>
-                                <Text style={styles.callText}>{t('common.call')}</Text>
-                            </TouchableOpacity>
-                        )
-                    }
-                </View>
-            </LinearGradient >
-        </View >
-    );
-};
 
 // ============================================
 // SKELETON LOADING
@@ -370,6 +80,7 @@ export default function OrderDetailScreen() {
     const { orderId } = route.params as { orderId: string };
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+    const toast = useToast();
     const { orderUpdates } = useSocketContext();
 
     const [order, setOrder] = useState<Order | null>(null);
@@ -393,7 +104,7 @@ export default function OrderDetailScreen() {
             const foundOrder = data.orders?.find((o: Order) => o.order_id === orderId);
             setOrder(foundOrder || null);
         } catch (error) {
-            Alert.alert(t('common.error'), t('order.loadFailed'));
+            handleApiError(error, toast, { customMessage: t('order.loadFailed'), useAlert: true });
         } finally {
             setIsLoading(false);
         }
@@ -419,8 +130,7 @@ export default function OrderDetailScreen() {
                         loadOrderDetails();
                         setShowReviewModal(true);
                     } catch (error: any) {
-                        Alert.alert(t('common.error'), error.message || t('order.confirmFailed'));
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                        handleApiError(error, toast, { useAlert: true });
                     } finally {
                         setIsConfirming(false);
                     }
@@ -445,7 +155,7 @@ export default function OrderDetailScreen() {
                 { text: t('common.ok'), onPress: () => navigation.goBack() }
             ]);
         } catch (error: any) {
-            Alert.alert(t('common.error'), error.message || t('review.failed'));
+            handleApiError(error, toast, { useAlert: true });
         } finally {
             setIsSubmittingReview(false);
         }
@@ -486,7 +196,7 @@ export default function OrderDetailScreen() {
                                 [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
                             );
                         } catch (error: any) {
-                            Alert.alert(t('common.error'), error.message || t('cancel.failed') || 'Failed to cancel order');
+                            handleApiError(error, toast, { useAlert: true });
                         } finally {
                             setIsCancelling(false);
                         }
@@ -529,7 +239,7 @@ export default function OrderDetailScreen() {
             await Linking.openURL(`${SOCKET_URL}/api/documents/public/${documentId}/download?token=${token}`);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error: any) {
-            Alert.alert(t('common.error'), error.message || t('order.invoiceFailed'));
+            handleApiError(error, toast, { useAlert: true });
         } finally {
             setIsDownloadingInvoice(false);
         }
@@ -903,7 +613,7 @@ export default function OrderDetailScreen() {
 }
 
 // ============================================
-// STYLES
+// STYLES (main screen only — hero, timeline, driver styles moved to components)
 // ============================================
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FAFAFA' },
@@ -921,56 +631,14 @@ const styles = StyleSheet.create({
     scrollView: { flex: 1 },
     errorText: { color: Colors.error, fontSize: FontSizes.lg, textAlign: 'center', marginTop: 100 },
 
-    // Hero
-    heroCard: {
-        margin: Spacing.lg,
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.xl,
-        alignItems: 'center',
-        ...Shadows.lg,
-    },
-    heroIcon: { fontSize: 64, marginBottom: Spacing.sm },
-    heroLabel: { fontSize: FontSizes.xxl, fontWeight: '800', color: '#fff' },
-    heroDescription: { fontSize: FontSizes.md, color: 'rgba(255,255,255,0.85)', marginTop: Spacing.xs, textAlign: 'center' },
-    heroOrderNumber: { marginTop: Spacing.lg, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.full },
-    heroOrderText: { color: '#fff', fontWeight: '600', fontSize: FontSizes.sm },
+    // Section title (shared by details card + address card)
+    sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700', marginBottom: Spacing.lg },
 
     // Track button
     trackButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
     trackGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.lg },
     trackIcon: { fontSize: 24, marginRight: Spacing.sm },
     trackText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
-
-    // Driver
-    driverCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', borderWidth: 1.5, borderColor: '#22C55E' },
-    driverGradient: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg },
-    driverInfo: { flexDirection: 'row', alignItems: 'center' },
-    driverAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md, ...Shadows.sm },
-    driverAvatarText: { fontSize: 24 },
-    liveDot: { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, backgroundColor: '#22C55E', borderWidth: 2, borderColor: '#fff' },
-    driverLabel: { fontSize: FontSizes.sm, color: '#525252' },
-    driverName: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' },
-    callButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#22C55E', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: BorderRadius.lg, ...Shadows.sm },
-    callIcon: { fontSize: 16, marginRight: Spacing.xs },
-    callText: { color: '#fff', fontWeight: '700' },
-
-    // Timeline
-    timelineContainer: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, padding: Spacing.lg, ...Shadows.sm },
-    sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700', marginBottom: Spacing.lg },
-    timelineStep: { flexDirection: 'row', minHeight: 60 },
-    timelineLeft: { width: 32, alignItems: 'center' },
-    timelineDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#E8E8E8', justifyContent: 'center', alignItems: 'center' },
-    timelineDotCompleted: { backgroundColor: '#22C55E' },
-    timelineDotCurrent: { backgroundColor: Colors.primary, borderWidth: 3, borderColor: Colors.primary + '40' },
-    timelineDotIcon: { fontSize: 14, opacity: 0.4 },
-    timelineLineContainer: { flex: 1, width: 3, alignSelf: 'center', marginVertical: 4, position: 'relative' },
-    timelineLineBg: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#E8E8E8', borderRadius: 1.5 },
-    timelineLineFill: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: '#22C55E', borderRadius: 1.5 },
-    timelineContent: { flex: 1, paddingLeft: Spacing.md, paddingBottom: Spacing.lg, flexDirection: 'row', alignItems: 'center' },
-    timelineLabel: { fontSize: FontSizes.md, color: '#737373' },
-    timelineLabelActive: { fontWeight: '600', color: '#1a1a1a' },
-    currentBadge: { marginLeft: Spacing.sm, backgroundColor: Colors.primary + '20', paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.md },
-    currentBadgeText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600' },
 
     // Details - Enhanced Order Summary Card
     detailsCard: {
@@ -988,9 +656,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.md,
     },
-    summaryIcon: {
-        fontSize: 24,
-    },
+    summaryIcon: { fontSize: 24 },
     summaryDivider: {
         height: 1,
         backgroundColor: '#E8E8E8',

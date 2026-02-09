@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * Featured Products Section
  * 
@@ -12,10 +13,10 @@ import {
     StyleSheet,
     FlatList,
     TouchableOpacity,
-    Image,
     Dimensions,
     ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api, Product } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
@@ -47,7 +48,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
             const data = await api.getFeaturedProducts(6);
             setProducts(data.products || []);
         } catch (err) {
-            console.log('[FeaturedProducts] Failed to load:', err);
+            log('[FeaturedProducts] Failed to load:', err);
             setError(true);
         } finally {
             setLoading(false);
@@ -86,7 +87,8 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
             <Image
                 source={{ uri: getImageUrl(item.image_urls?.[0]) }}
                 style={[styles.image, { backgroundColor: colors.border }]}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={200}
             />
 
             {/* Featured Badge */}

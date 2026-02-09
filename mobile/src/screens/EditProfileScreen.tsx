@@ -1,5 +1,8 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
+import { SkeletonCard } from '../components/SkeletonLoader';
 // QScrap Edit Profile Screen - Full Profile Management
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -21,6 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { useToast } from '../components/Toast';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 export default function EditProfileScreen() {
@@ -28,6 +32,7 @@ export default function EditProfileScreen() {
     const { user, refreshUser } = useAuth();
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
+    const toast = useToast();
 
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -43,7 +48,7 @@ export default function EditProfileScreen() {
         loadProfile();
     }, []);
 
-    const loadProfile = async () => {
+    const loadProfile = useCallback(async () => {
         setIsLoading(true);
         try {
             const data = await api.getProfile();
@@ -56,13 +61,13 @@ export default function EditProfileScreen() {
                 setEmail(profileData.email || '');
             }
         } catch (error) {
-            console.log('Failed to load profile:', error);
+            log('Failed to load profile:', error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = useCallback(async () => {
         if (!fullName.trim()) {
             Alert.alert(t('common.error'), t('profile.enterFullName'));
             return;
@@ -99,19 +104,15 @@ export default function EditProfileScreen() {
                 throw new Error(data.error || data.message || 'Failed to update profile');
             }
         } catch (error: any) {
-            const errorMessage = typeof error === 'string'
-                ? error
-                : error?.message || 'Failed to update profile';
-            Alert.alert('Error', errorMessage);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            handleApiError(error, toast, { useAlert: true });
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [fullName, email, toast, t, navigation, refreshUser]);
 
     // handleChangePhoto removed - avatar upload not yet implemented on backend
 
-    const handleChangePassword = async () => {
+    const handleChangePassword = useCallback(async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             Alert.alert(t('common.error'), t('profile.fillAllPasswordFields'));
             return;
@@ -155,17 +156,20 @@ export default function EditProfileScreen() {
                 throw new Error(data.error || 'Failed to change password');
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to change password');
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            handleApiError(error, toast, { useAlert: true });
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [currentPassword, newPassword, confirmPassword, toast, t]);
 
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.container}>
-                <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 100 }} />
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={{ padding: 16 }}>
+                    <SkeletonCard style={{ marginBottom: 16 }} />
+                    <SkeletonCard style={{ marginBottom: 16 }} />
+                    <SkeletonCard />
+                </View>
             </SafeAreaView>
         );
     }
@@ -174,7 +178,7 @@ export default function EditProfileScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
                     <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.editProfile')}</Text>
@@ -203,6 +207,7 @@ export default function EditProfileScreen() {
                             onChangeText={setFullName}
                             placeholder={t('profile.enterFullName')}
                             placeholderTextColor="#999"
+                            accessibilityLabel={t('profile.fullName')}
                         />
                     </View>
 
@@ -214,6 +219,8 @@ export default function EditProfileScreen() {
                             editable={false}
                             placeholder={t('profile.phoneNumber')}
                             placeholderTextColor="#999"
+                            accessibilityLabel={t('profile.phoneNumber')}
+                            accessibilityState={{ disabled: true }}
                         />
                         <Text style={[styles.inputHint, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.contactSupport')}</Text>
                     </View>
@@ -228,6 +235,7 @@ export default function EditProfileScreen() {
                             placeholderTextColor="#999"
                             keyboardType="email-address"
                             autoCapitalize="none"
+                            accessibilityLabel={t('profile.emailOptional')}
                         />
                     </View>
 
@@ -235,6 +243,9 @@ export default function EditProfileScreen() {
                         style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
                         onPress={handleSaveProfile}
                         disabled={isSaving}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.saveChanges')}
+                        accessibilityState={{ disabled: isSaving }}
                     >
                         <LinearGradient
                             colors={['#22c55e', '#16a34a'] as const}

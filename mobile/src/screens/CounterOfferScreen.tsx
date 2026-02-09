@@ -1,5 +1,8 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
 // QScrap Counter-Offer Screen - Bid Negotiation (up to 3 rounds)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { LoadingList } from '../components/SkeletonLoading';
 import {
     View,
     Text,
@@ -75,7 +78,7 @@ export default function CounterOfferScreen() {
         if (!socket) return;
 
         const handleGarageCounterOffer = (data: any) => {
-            console.log('[CounterOffer] Garage counter-offer received:', data);
+            log('[CounterOffer] Garage counter-offer received:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -83,7 +86,7 @@ export default function CounterOfferScreen() {
         };
 
         const handleCounterOfferAccepted = (data: any) => {
-            console.log('[CounterOffer] Counter-offer accepted:', data);
+            log('[CounterOffer] Counter-offer accepted:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -92,7 +95,7 @@ export default function CounterOfferScreen() {
         };
 
         const handleCounterOfferRejected = (data: any) => {
-            console.log('[CounterOffer] Counter-offer rejected:', data);
+            log('[CounterOffer] Counter-offer rejected:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -110,7 +113,7 @@ export default function CounterOfferScreen() {
         };
     }, [socket, bidId]);
 
-    const loadNegotiationHistory = async () => {
+    const loadNegotiationHistory = useCallback(async () => {
         setIsLoading(true);
         try {
             const token = await api.getToken();
@@ -142,13 +145,13 @@ export default function CounterOfferScreen() {
                 }
             }
         } catch (error) {
-            console.log('Failed to load negotiation history:', error);
+            log('Failed to load negotiation history:', error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [bidId, garageCounterId]);
 
-    const handleSendCounterOffer = async () => {
+    const handleSendCounterOffer = useCallback(async () => {
         const amount = parseFloat(proposedAmount);
 
         if (isNaN(amount) || amount <= 0) {
@@ -228,18 +231,13 @@ export default function CounterOfferScreen() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             }
         } catch (error) {
-            let errorMsg = t('common.networkError');
-            if (error instanceof Error) {
-                errorMsg = error.message;
-            }
-            toast.error(t('common.error'), errorMsg);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            handleApiError(error, toast);
         } finally {
             setIsSending(false);
         }
-    };
+    }, [proposedAmount, currentAmount, respondingToOfferId, bidId, message, garageName, requestId, toast, t, navigation]);
 
-    const handleRespondToOffer = async (action: 'accept' | 'reject' | 'counter') => {
+    const handleRespondToOffer = useCallback(async (action: 'accept' | 'reject' | 'counter') => {
         if (!pendingOffer) return;
 
         if (action === 'counter') {
@@ -290,14 +288,13 @@ export default function CounterOfferScreen() {
                 throw new Error(data.error || t('offers.responseFailed'));
             }
         } catch (error: any) {
-            toast.error(t('common.error'), error.message || t('offers.responseFailed'));
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            handleApiError(error, toast);
         } finally {
             setIsSending(false);
         }
-    };
+    }, [pendingOffer, toast, t, navigation]);
 
-    const renderHistoryItem = (item: CounterOffer) => {
+    const renderHistoryItem = useCallback((item: CounterOffer) => {
         const isCustomer = item.offered_by_type === 'customer';
 
         return (
@@ -329,12 +326,12 @@ export default function CounterOfferScreen() {
             </View>
         );
 
-    };
+    }, [isRTL, t, garageName, colors]);
 
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.container}>
-                <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 100 }} />
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <LoadingList count={3} />
             </SafeAreaView>
         );
     }

@@ -810,6 +810,7 @@ export const en = {
         attachPhoto: 'Attach Photo',
         attachLocation: 'Share Location',
         quickReplies: 'Quick Replies',
+        sendFailed: 'Failed to send message',
     },
 
     // =============================================
@@ -837,6 +838,9 @@ export const en = {
         paymentFailed: 'Payment Failed',
         tryAgain: 'Try Again',
         securePayment: 'Secure payment powered by Stripe',
+        enterCardDetails: 'Please enter valid card details',
+        failed: 'Payment failed',
+        orderNotFound: 'Order not found',
     },
 
     // =============================================

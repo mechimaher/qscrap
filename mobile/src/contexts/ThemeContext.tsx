@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // QScrap Theme Context - VVIP 2026 with Dark Mode
 // Qatar Premium Edition with System Preference Support
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
@@ -42,7 +43,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
                 setThemeModeState(saved);
             }
         } catch (e) {
-            console.log('Failed to load theme preference');
+            log('Failed to load theme preference');
         } finally {
             setIsLoaded(true);
         }
@@ -53,7 +54,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         try {
             await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
         } catch (e) {
-            console.log('Failed to save theme preference');
+            log('Failed to save theme preference');
         }
     };
 

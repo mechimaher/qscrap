@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * Push Notification Service for QScrap Mobile App
  * 
@@ -38,7 +39,7 @@ export interface NotificationData {
  */
 export const registerForPushNotifications = async (): Promise<string | null> => {
     if (!Device.isDevice) {
-        console.log('[Notifications] Push notifications not available in simulator');
+        log('[Notifications] Push notifications not available in simulator');
         return null;
     }
 
@@ -54,7 +55,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         }
 
         if (finalStatus !== 'granted') {
-            console.log('[Notifications] Permission not granted');
+            log('[Notifications] Permission not granted');
             return null;
         }
 
@@ -65,7 +66,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         const token = tokenData.data;
 
         // C4 FIX: Don't log full push token
-        console.log('[Notifications] Token registered');
+        log('[Notifications] Token registered');
 
         // Store token locally
         await storage.setItem(storage.StorageKey.PUSH_TOKEN, token);
@@ -114,15 +115,18 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             });
 
-            // Messages channel
+            // Messages channel - for chat with drivers/garages
             await Notifications.setNotificationChannelAsync('messages', {
                 name: 'Messages',
-                description: 'Support chat messages',
+                description: 'Chat messages from drivers and garages',
                 importance: Notifications.AndroidImportance.HIGH,
                 vibrationPattern: [0, 200, 100, 200],
+                enableVibrate: true,
+                enableLights: true,
+                lightColor: '#4A90D9',
             });
 
-            console.log('[Notifications] Android channels configured');
+            log('[Notifications] Android channels configured');
         }
 
         // Configure iOS notification categories with action buttons
@@ -169,7 +173,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
         return token;
     } catch (error) {
-        console.error('[Notifications] Error registering:', error);
+        logError('[Notifications] Error registering:', error);
         return null;
     }
 };
@@ -181,10 +185,10 @@ export const registerTokenWithBackend = async (token: string): Promise<boolean> 
     try {
         const platform = Platform.OS as 'ios' | 'android';
         await api.registerPushToken(token, platform);
-        console.log('[Notifications] Token registered with backend');
+        log('[Notifications] Token registered with backend');
         return true;
     } catch (error) {
-        console.error('[Notifications] Failed to register token with backend:', error);
+        logError('[Notifications] Failed to register token with backend:', error);
         return false;
     }
 };

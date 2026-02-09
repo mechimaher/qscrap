@@ -1,3 +1,5 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
 // QScrap New Request Screen - 2026 Premium Refactored Edition
 // No VIN - Uses Saved Vehicles - Stepped Wizard - Modern UI
 
@@ -31,6 +33,8 @@ import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import MyVehiclesSelector, { SavedVehicle } from '../components/MyVehiclesSelector';
 import SearchableDropdown from '../components/SearchableDropdown';
+import PartSpecsCard from '../components/request/PartSpecsCard';
+import PhotoUploadSection from '../components/request/PhotoUploadSection';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -421,8 +425,8 @@ export default function NewRequestScreen() {
             navigation.replace('RequestDetail', { requestId: response.request_id });
 
         } catch (error: any) {
-            console.error('[NewRequest] Submit error:', error);
-            toast.error(t('common.error'), error.message || t('common.unknown'));
+            logError('[NewRequest] Submit error:', error);
+            handleApiError(error, toast);
         } finally {
             setIsSubmitting(false);
         }
@@ -602,149 +606,17 @@ export default function NewRequestScreen() {
                                 </Text>
                             </View>
 
-                            {/* Part Specifications Card */}
-                            <View style={[styles.specsCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                                <View style={[styles.specsHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    <Text style={styles.specsIcon}>📋</Text>
-                                    <Text style={[styles.specsTitle, { color: colors.text }]}>{t('newRequest.partSpecs')}</Text>
-                                </View>
-
-                                {/* Quantity Stepper */}
-                                <View style={styles.specsRow}>
-                                    <Text style={[styles.specsLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.quantity')}
-                                    </Text>
-                                    <View style={[styles.quantityStepper, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                if (quantity > 1) {
-                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                    setQuantity(q => Math.max(1, q - 1));
-                                                }
-                                            }}
-                                            style={[styles.stepperBtn, { backgroundColor: quantity > 1 ? Colors.primary + '15' : colors.border }]}
-                                        >
-                                            <Text style={[styles.stepperBtnText, { color: quantity > 1 ? Colors.primary : colors.textMuted }]}>−</Text>
-                                        </TouchableOpacity>
-                                        <View style={[styles.stepperValue, { backgroundColor: colors.surface }]}>
-                                            <Text style={[styles.stepperValueText, { color: colors.text }]}>{quantity}</Text>
-                                        </View>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                if (quantity < 10) {
-                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                    setQuantity(q => Math.min(10, q + 1));
-                                                }
-                                            }}
-                                            style={[styles.stepperBtn, { backgroundColor: quantity < 10 ? Colors.primary + '15' : colors.border }]}
-                                        >
-                                            <Text style={[styles.stepperBtnText, { color: quantity < 10 ? Colors.primary : colors.textMuted }]}>+</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-
-                                {/* Side Selection */}
-                                <View style={styles.specsRow}>
-                                    <Text style={[styles.specsLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.side')}
-                                    </Text>
-                                </View>
-                                <View style={[styles.sideGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    {[
-                                        { value: 'left', label: t('newRequest.leftSide'), icon: '◀️' },
-                                        { value: 'right', label: t('newRequest.rightSide'), icon: '▶️' },
-                                        { value: 'both', label: t('newRequest.bothSides'), icon: '⇆' },
-                                        { value: 'na', label: t('newRequest.notApplicable'), icon: '⚙️' },
-                                    ].map((opt) => (
-                                        <TouchableOpacity
-                                            key={opt.value}
-                                            onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                setSide(opt.value as typeof side);
-                                            }}
-                                            style={[
-                                                styles.sideCard,
-                                                {
-                                                    backgroundColor: side === opt.value ? Colors.primary + '15' : colors.surface,
-                                                    borderColor: side === opt.value ? Colors.primary : colors.border,
-                                                    borderWidth: side === opt.value ? 2 : 1,
-                                                },
-                                            ]}
-                                        >
-                                            <Text style={styles.sideIcon}>{opt.icon}</Text>
-                                            <Text style={[styles.sideLabel, { color: side === opt.value ? Colors.primary : colors.text }]}>
-                                                {opt.label}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-
-                            {/* Part Number (Optional) */}
-                            <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                    {t('newRequest.partNumberOptional')}
-                                </Text>
-                                <TextInput
-                                    style={[
-                                        styles.input,
-                                        {
-                                            backgroundColor: colors.background,
-                                            color: colors.text,
-                                            borderColor: colors.border,
-                                            textAlign: rtlTextAlign(isRTL)
-                                        },
-                                    ]}
-                                    placeholder={t('newRequest.partNumberPlaceholder')}
-                                    placeholderTextColor={colors.textMuted}
-                                    value={partNumber}
-                                    onChangeText={setPartNumber}
-                                    autoCapitalize="characters"
-                                />
-                            </View>
-
-                            {/* Condition */}
-                            <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.conditionPreference')}</Text>
-                            <View style={[styles.conditionGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                {CONDITION_OPTIONS.map((opt) => (
-                                    <TouchableOpacity
-                                        key={opt.value}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            setCondition(opt.value);
-                                        }}
-                                        style={[
-                                            styles.conditionCard,
-                                            {
-                                                backgroundColor:
-                                                    condition === opt.value
-                                                        ? opt.color + '15'
-                                                        : colors.background,
-                                                borderColor:
-                                                    condition === opt.value
-                                                        ? opt.color
-                                                        : colors.border,
-                                                borderWidth: condition === opt.value ? 2 : 1,
-                                            },
-                                        ]}
-                                    >
-                                        <Text style={styles.conditionIcon}>{opt.icon}</Text>
-                                        <Text
-                                            style={[
-                                                styles.conditionLabel,
-                                                {
-                                                    color:
-                                                        condition === opt.value
-                                                            ? opt.color
-                                                            : colors.text,
-                                                },
-                                            ]}
-                                        >
-                                            {opt.label}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
+                            <PartSpecsCard
+                                quantity={quantity}
+                                onQuantityChange={setQuantity}
+                                side={side}
+                                onSideChange={setSide}
+                                partNumber={partNumber}
+                                onPartNumberChange={setPartNumber}
+                                condition={condition}
+                                onConditionChange={setCondition}
+                                conditionOptions={CONDITION_OPTIONS}
+                            />
                         </View>
 
                         {/* 3. Photos */}
@@ -763,50 +635,13 @@ export default function NewRequestScreen() {
                                 </View>
                             </View>
 
-                            {/* Photo Grid */}
-                            <View style={[styles.photoGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                {images.map((uri, index) => (
-                                    <View key={index} style={styles.photoWrapper}>
-                                        <Image source={{ uri }} style={styles.photo} />
-                                        <TouchableOpacity
-                                            onPress={() => handleRemoveImage(index)}
-                                            style={styles.removePhotoButton}
-                                        >
-                                            <Text style={styles.removePhotoIcon}>✕</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-
-                                {images.length < 5 && (
-                                    <TouchableOpacity
-                                        onPress={handlePickImage}
-                                        style={[
-                                            styles.addPhotoButton,
-                                            { backgroundColor: colors.background, borderColor: colors.border },
-                                        ]}
-                                    >
-                                        <Text style={styles.addPhotoIcon}>📁</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                                            {t('common.gallery')}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-
-                                {images.length < 5 && (
-                                    <TouchableOpacity
-                                        onPress={handleTakePhoto}
-                                        style={[
-                                            styles.addPhotoButton,
-                                            { backgroundColor: colors.background, borderColor: colors.border },
-                                        ]}
-                                    >
-                                        <Text style={styles.addPhotoIcon}>📸</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                                            {t('common.camera')}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
+                            <PhotoUploadSection
+                                images={images}
+                                maxImages={5}
+                                onPickImage={handlePickImage}
+                                onTakePhoto={handleTakePhoto}
+                                onRemoveImage={handleRemoveImage}
+                            />
                         </View>
 
                         {/* 4. Vehicle ID Photos */}
@@ -828,66 +663,26 @@ export default function NewRequestScreen() {
                             <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
                                 🚗 {t('newRequest.frontView')}
                             </Text>
-                            {carFrontImage ? (
-                                <View style={{ marginBottom: 16 }}>
-                                    <Image source={{ uri: carFrontImage }} style={{ width: '100%', height: 200, borderRadius: 12 }} />
-                                    <TouchableOpacity
-                                        onPress={() => setCarFrontImage(null)}
-                                        style={[styles.removePhotoButton, { top: 8, right: 8 }]}
-                                    >
-                                        <Text style={styles.removePhotoIcon}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
-                                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-                                    <TouchableOpacity
-                                        onPress={handlePickCarFrontImage}
-                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
-                                    >
-                                        <Text style={styles.addPhotoIcon}>📁</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={handleTakeCarFrontPhoto}
-                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
-                                    >
-                                        <Text style={styles.addPhotoIcon}>📸</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
+                            <PhotoUploadSection
+                                images={carFrontImage ? [carFrontImage] : []}
+                                maxImages={1}
+                                onPickImage={handlePickCarFrontImage}
+                                onTakePhoto={handleTakeCarFrontPhoto}
+                                onRemoveImage={() => setCarFrontImage(null)}
+                                fullWidth
+                            />
 
                             <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
                                 🚙 {t('newRequest.rearView')}
                             </Text>
-                            {carRearImage ? (
-                                <View>
-                                    <Image source={{ uri: carRearImage }} style={{ width: '100%', height: 200, borderRadius: 12 }} />
-                                    <TouchableOpacity
-                                        onPress={() => setCarRearImage(null)}
-                                        style={[styles.removePhotoButton, { top: 8, right: 8 }]}
-                                    >
-                                        <Text style={styles.removePhotoIcon}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
-                                <View style={{ flexDirection: 'row', gap: 12 }}>
-                                    <TouchableOpacity
-                                        onPress={handlePickCarRearImage}
-                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
-                                    >
-                                        <Text style={styles.addPhotoIcon}>📁</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={handleTakeCarRearPhoto}
-                                        style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
-                                    >
-                                        <Text style={styles.addPhotoIcon}>📸</Text>
-                                        <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
+                            <PhotoUploadSection
+                                images={carRearImage ? [carRearImage] : []}
+                                maxImages={1}
+                                onPickImage={handlePickCarRearImage}
+                                onTakePhoto={handleTakeCarRearPhoto}
+                                onRemoveImage={() => setCarRearImage(null)}
+                                fullWidth
+                            />
                         </View>
 
                         <View style={{ height: 120 }} />
@@ -1061,57 +856,6 @@ const styles = StyleSheet.create({
         marginTop: Spacing.xs,
         textAlign: 'right',
     },
-    conditionGrid: {
-        flexDirection: 'row',
-        gap: Spacing.sm,
-        marginTop: Spacing.xs,
-    },
-    conditionCard: {
-        flex: 1,
-        padding: Spacing.md,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        gap: Spacing.xs,
-    },
-    conditionIcon: { fontSize: 24 },
-    conditionLabel: { fontSize: FontSizes.xs, fontWeight: '600', textAlign: 'center' },
-    photoGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: Spacing.sm,
-    },
-    photoWrapper: {
-        width: 100,
-        height: 100,
-        borderRadius: BorderRadius.md,
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    photo: { width: '100%', height: '100%' },
-    removePhotoButton: {
-        position: 'absolute',
-        top: 4,
-        right: 4,
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    removePhotoIcon: { color: '#fff', fontSize: 14 },
-    addPhotoButton: {
-        width: 100,
-        height: 100,
-        borderRadius: BorderRadius.md,
-        borderWidth: 2,
-        borderStyle: 'dashed',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: Spacing.xs,
-    },
-    addPhotoIcon: { fontSize: 28 },
-    addPhotoText: { fontSize: FontSizes.xs, fontWeight: '600' },
     photoLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: 8 },
     footer: {
         paddingHorizontal: Spacing.lg,
@@ -1144,84 +888,5 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         textAlign: 'center',
         marginTop: Spacing.sm,
-    },
-    // Part Specifications Card Styles
-    specsCard: {
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
-        padding: Spacing.md,
-        marginTop: Spacing.md,
-    },
-    specsHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: Spacing.md,
-    },
-    specsIcon: {
-        fontSize: 18,
-        marginRight: Spacing.sm,
-    },
-    specsTitle: {
-        fontSize: FontSizes.md,
-        fontWeight: '700',
-    },
-    specsRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: Spacing.sm,
-    },
-    specsLabel: {
-        fontSize: FontSizes.sm,
-        fontWeight: '500',
-    },
-    quantityStepper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs,
-    },
-    stepperBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    stepperBtnText: {
-        fontSize: 24,
-        fontWeight: '600',
-    },
-    stepperValue: {
-        minWidth: 50,
-        height: 40,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: Spacing.md,
-    },
-    stepperValueText: {
-        fontSize: FontSizes.lg,
-        fontWeight: '700',
-    },
-    sideGrid: {
-        flexDirection: 'row',
-        gap: Spacing.sm,
-    },
-    sideCard: {
-        flex: 1,
-        paddingVertical: Spacing.sm,
-        paddingHorizontal: Spacing.xs,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    sideIcon: {
-        fontSize: 18,
-        marginBottom: 4,
-    },
-    sideLabel: {
-        fontSize: FontSizes.xs,
-        fontWeight: '600',
-        textAlign: 'center',
     },
 });

@@ -1,5 +1,7 @@
+import { log, warn, error as logError } from '../../utils/logger';
+import { handleApiError } from '../../utils/errorHandler';
 // QScrap Profile Screen - Premium VIP Design with Full i18n Support
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -24,6 +26,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../App';
 import { rtlFlexDirection, rtlChevron, rtlMarginHorizontal } from '../../utils/rtl';
+import { CONTACT } from '../../constants/contacts';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -45,27 +48,26 @@ export default function ProfileScreen() {
         return unsubscribe;
     }, [navigation]);
 
-    const loadProfile = async () => {
+    const loadProfile = useCallback(async () => {
         try {
             const data = await api.getProfile();
             setProfile(data);
         } catch (error) {
-            console.log('Failed to load profile:', error);
-            toast.error(t('common.error'), t('errors.loadFailed'));
+            handleApiError(error, toast, t('errors.loadFailed'));
         }
-    };
+    }, [toast, t]);
 
-    const loadUnreadCount = async () => {
+    const loadUnreadCount = useCallback(async () => {
         try {
             const data = await api.getNotifications();
             const unreadCount = (data.notifications || []).filter((n: any) => !n.is_read).length;
             setUnreadNotifications(unreadCount);
         } catch (error) {
-            console.log('Failed to load notifications:', error);
+            log('Failed to load notifications:', error);
         }
-    };
+    }, []);
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(() => {
         Alert.alert(
             t('profile.signOut'),
             t('profile.confirmSignOut'),
@@ -81,14 +83,14 @@ export default function ProfileScreen() {
                 },
             ]
         );
-    };
+    }, [t, logout]);
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setShowDeletionModal(true);
-    };
+    }, []);
 
-    const handleDeletionNavigate = (screen: string) => {
+    const handleDeletionNavigate = useCallback((screen: string) => {
         // Navigate to the appropriate screen from the deletion modal
         switch (screen) {
             case 'Orders':
@@ -105,7 +107,7 @@ export default function ProfileScreen() {
             default:
                 navigation.navigate('Support');
         }
-    };
+    }, [navigation]);
 
     const MenuItem = ({
         icon,
@@ -129,6 +131,8 @@ export default function ProfileScreen() {
                 onPress();
             }}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={label}
         >
             <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger, rtlMarginHorizontal(isRTL, 0, Spacing.md)]}
             >
@@ -163,6 +167,8 @@ export default function ProfileScreen() {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             navigation.navigate('EditProfile');
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('profile.edit')}
                     >
                         <Text style={styles.editButtonText}>{t('profile.edit')}</Text>
                     </TouchableOpacity>
@@ -227,9 +233,9 @@ export default function ProfileScreen() {
                             t('profile.contactUs'),
                             t('profile.chooseContact'),
                             [
-                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL('https://wa.me/97450267974?text=Hello%20QScrap%20Support') },
-                                { text: t('alerts.callUs'), onPress: () => Linking.openURL('tel:+97450267974') },
-                                { text: t('alerts.emailUs'), onPress: () => Linking.openURL('mailto:support@qscrap.qa') },
+                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL(`${CONTACT.WHATSAPP_URL}?text=${encodeURIComponent(CONTACT.WHATSAPP_GREETING)}`) },
+                                { text: t('alerts.callUs'), onPress: () => Linking.openURL(`tel:${CONTACT.SUPPORT_PHONE}`) },
+                                { text: t('alerts.emailUs'), onPress: () => Linking.openURL(`mailto:${CONTACT.SUPPORT_EMAIL}`) },
                                 { text: t('common.cancel'), style: 'cancel' }
                             ]
                         )} />

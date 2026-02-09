@@ -18,6 +18,3 @@ export type {
 
 // Notifications
 export * from './notifications';
-
-// Sentry crash reporting
-export * as Sentry from './sentry';

@@ -1,5 +1,8 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
 // QScrap Chat Screen - Real-time messaging with Driver/Garage - Full i18n Support
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { LoadingList } from '../components/SkeletonLoading';
 import {
     View,
     Text,
@@ -71,7 +74,7 @@ export default function ChatScreen() {
             // Short vibration pattern for additional feedback
             Vibration.vibrate([0, 100, 50, 100]);
         } catch (error) {
-            console.log('Notification feedback error:', error);
+            log('Notification feedback error:', error);
         }
     };
 
@@ -102,8 +105,7 @@ export default function ChatScreen() {
                 setMessages(data.messages || []);
             }
         } catch (error) {
-            console.log('Failed to load messages:', error);
-            toast.error(t('common.error'), t('errors.loadFailed'));
+            handleApiError(error, toast, t('errors.loadFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -156,11 +158,11 @@ export default function ChatScreen() {
             });
 
         } catch (error) {
-            console.log('Socket connection error:', error);
+            log('Socket connection error:', error);
         }
     };
 
-    const sendMessage = async () => {
+    const sendMessage = useCallback(async () => {
         if (!newMessage.trim() || isSending) return;
 
         setIsSending(true);
@@ -187,17 +189,16 @@ export default function ChatScreen() {
                 throw new Error('Failed to send');
             }
         } catch (error) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            toast.error(t('common.error'), t('chat.sendFailed'));
+            handleApiError(error, toast, t('chat.sendFailed'));
         } finally {
             setIsSending(false);
         }
-    };
+    }, [orderId, newMessage, isSending, toast, t]);
 
-    const formatTime = (dateString: string) => {
+    const formatTime = useCallback((dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
+    }, []);
 
     const renderMessage = ({ item }: { item: Message }) => {
         const isMe = item.sender_id === userId;
@@ -247,7 +248,7 @@ export default function ChatScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
                     <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
                 </TouchableOpacity>
                 <View style={[styles.headerInfo, isRTL && { marginLeft: 0, marginRight: Spacing.md }]}>
@@ -270,9 +271,7 @@ export default function ChatScreen() {
             >
                 {/* Messages List */}
                 {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator color={Colors.primary} size="large" />
-                    </View>
+                    <LoadingList count={4} />
                 ) : (
                     <FlatList
                         ref={flatListRef}
@@ -310,6 +309,7 @@ export default function ChatScreen() {
                         onChangeText={setNewMessage}
                         multiline
                         maxLength={500}
+                        accessibilityLabel={t('chat.typeMessage')}
                     />
                     <TouchableOpacity
                         style={[
@@ -318,6 +318,9 @@ export default function ChatScreen() {
                         ]}
                         onPress={sendMessage}
                         disabled={!newMessage.trim() || isSending}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('chat.send') || 'Send message'}
+                        accessibilityState={{ disabled: !newMessage.trim() || isSending }}
                     >
                         <LinearGradient
                             colors={['#22c55e', '#16a34a'] as const}

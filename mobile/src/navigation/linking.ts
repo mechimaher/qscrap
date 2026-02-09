@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * Deep Linking Configuration for QScrap Mobile App
  * Handles URL schemes and universal links
@@ -54,7 +55,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
                             orderId: (orderId: string) => orderId,
                         },
                     },
-                    DeliveryTracking: {
+                    Tracking: {
                         path: 'track/:orderId',
                         parse: {
                             orderId: (orderId: string) => orderId,
@@ -79,7 +80,7 @@ export const handleDeepLink = async (url: string): Promise<{ screen: string; par
     try {
         // Parse the URL
         const parsed = Linking.parse(url);
-        console.log('[DeepLink] Parsed URL:', parsed);
+        log('[DeepLink] Parsed URL:', parsed);
 
         // Extract path and params
         const { path, queryParams } = parsed;
@@ -99,7 +100,7 @@ export const handleDeepLink = async (url: string): Promise<{ screen: string; par
 
         if (path.startsWith('track/')) {
             const orderId = path.replace('track/', '');
-            return { screen: 'DeliveryTracking', params: { orderId } };
+            return { screen: 'Tracking', params: { orderId } };
         }
 
         // Handle simple paths
@@ -122,7 +123,7 @@ export const handleDeepLink = async (url: string): Promise<{ screen: string; par
                 return null;
         }
     } catch (error) {
-        console.error('[DeepLink] Error parsing URL:', error);
+        logError('[DeepLink] Error parsing URL:', error);
         return null;
     }
 };
@@ -147,7 +148,7 @@ export const getInitialURL = async (): Promise<string | null> => {
     try {
         return await Linking.getInitialURL();
     } catch (error) {
-        console.error('[DeepLink] Error getting initial URL:', error);
+        logError('[DeepLink] Error getting initial URL:', error);
         return null;
     }
 };

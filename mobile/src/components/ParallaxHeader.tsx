@@ -1,6 +1,7 @@
 // Parallax Header Component - P2 Premium Feature
 import React, { ReactNode } from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
     useAnimatedScrollHandler,

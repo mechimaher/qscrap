@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // QScrap Notifications Screen - Premium Notification Center with Full i18n Support
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -15,22 +16,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import * as Haptics from 'expo-haptics';
-import { api } from '../services/api';
+import { api, Notification as AppNotification } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
-
-interface Notification {
-    notification_id: string;
-    type: string;
-    title: string;
-    message: string;
-    is_read: boolean;
-    created_at: string;
-    related_id?: string;
-}
+import { LoadingList } from '../components/SkeletonLoading';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -39,7 +31,7 @@ export default function NotificationsScreen() {
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
     const { refresh: refreshBadges } = useBadgeCounts();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -48,7 +40,7 @@ export default function NotificationsScreen() {
             const data = await api.getNotifications();
             setNotifications(data.notifications || []);
         } catch (error) {
-            console.log('Failed to load notifications:', error);
+            log('Failed to load notifications:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -65,7 +57,7 @@ export default function NotificationsScreen() {
         loadNotifications();
     }, []);
 
-    const handleNotificationPress = async (notification: Notification) => {
+    const handleNotificationPress = async (notification: AppNotification) => {
         Haptics.selectionAsync();
 
         // Mark as read
@@ -80,7 +72,7 @@ export default function NotificationsScreen() {
                     )
                 );
             } catch (error) {
-                console.log('Failed to mark notification as read:', error);
+                log('Failed to mark notification as read:', error);
             }
         }
 
@@ -100,7 +92,7 @@ export default function NotificationsScreen() {
             // Refresh badge counts to update Profile tab badge
             refreshBadges();
         } catch (error) {
-            console.log('Failed to mark all as read:', error);
+            log('Failed to mark all as read:', error);
         }
     };
 
@@ -122,7 +114,7 @@ export default function NotificationsScreen() {
                             refreshBadges();
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         } catch (error) {
-                            console.log('Failed to clear notifications:', error);
+                            log('Failed to clear notifications:', error);
                         }
                     }
                 }
@@ -154,7 +146,7 @@ export default function NotificationsScreen() {
         return `${days}d`;
     };
 
-    const renderNotification = ({ item }: { item: Notification }) => (
+    const renderNotification = ({ item }: { item: AppNotification }) => (
         <TouchableOpacity
             style={[
                 styles.notificationCard,
@@ -169,7 +161,7 @@ export default function NotificationsScreen() {
             </View>
             <View style={styles.content}>
                 <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
-                <Text style={[styles.message, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.message}</Text>
+                <Text style={[styles.message, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.message || item.body}</Text>
                 <Text style={[styles.time, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>{formatTime(item.created_at)}</Text>
             </View>
             {!item.is_read && <View style={styles.unreadDot} />}
@@ -182,18 +174,18 @@ export default function NotificationsScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
                     <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('notifications.title')}</Text>
                 <View style={[styles.headerActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     {unreadCount > 0 && (
-                        <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
+                        <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton} accessibilityRole="button" accessibilityLabel={t('notifications.markAllRead')}>
                             <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
                         </TouchableOpacity>
                     )}
                     {notifications.length > 0 && (
-                        <TouchableOpacity onPress={handleClearAll} style={styles.clearAllButton}>
+                        <TouchableOpacity onPress={handleClearAll} style={styles.clearAllButton} accessibilityRole="button" accessibilityLabel={t('common.clear')}>
                             <Text style={styles.clearAllText}>{t('common.clear')}</Text>
                         </TouchableOpacity>
                     )}
@@ -201,7 +193,7 @@ export default function NotificationsScreen() {
             </View>
 
             {isLoading ? (
-                <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 100 }} />
+                <LoadingList count={5} />
             ) : notifications.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyIcon}>🔔</Text>

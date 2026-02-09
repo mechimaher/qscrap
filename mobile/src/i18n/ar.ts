@@ -811,6 +811,7 @@ export const ar = {
         attachPhoto: 'إرفاق صورة',
         attachLocation: 'مشاركة الموقع',
         quickReplies: 'ردود سريعة',
+        sendFailed: 'فشل إرسال الرسالة',
     },
 
     // =============================================
@@ -838,6 +839,9 @@ export const ar = {
         paymentFailed: 'فشل الدفع',
         tryAgain: 'حاول مرة أخرى',
         securePayment: 'دفع آمن مدعوم من Stripe',
+        enterCardDetails: 'يرجى إدخال بيانات بطاقة صالحة',
+        failed: 'فشل الدفع',
+        orderNotFound: 'الطلب غير موجود',
     },
 
     // =============================================

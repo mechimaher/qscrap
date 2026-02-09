@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from './logger';
 /**
  * Secure Storage Utilities for QScrap Mobile App
  * Wrapper around AsyncStorage with TypeScript support and error handling.
@@ -32,7 +33,7 @@ export const setItem = async <T>(key: StorageKey | string, value: T): Promise<bo
         await AsyncStorage.setItem(key, jsonValue);
         return true;
     } catch (error) {
-        console.error(`Storage setItem error for key "${key}":`, error);
+        logError(`Storage setItem error for key "${key}":`, error);
         return false;
     }
 };
@@ -48,7 +49,7 @@ export const getItem = async <T>(key: StorageKey | string, defaultValue?: T): Pr
         }
         return JSON.parse(jsonValue) as T;
     } catch (error) {
-        console.error(`Storage getItem error for key "${key}":`, error);
+        logError(`Storage getItem error for key "${key}":`, error);
         return defaultValue ?? null;
     }
 };
@@ -61,7 +62,7 @@ export const removeItem = async (key: StorageKey | string): Promise<boolean> => 
         await AsyncStorage.removeItem(key);
         return true;
     } catch (error) {
-        console.error(`Storage removeItem error for key "${key}":`, error);
+        logError(`Storage removeItem error for key "${key}":`, error);
         return false;
     }
 };
@@ -74,7 +75,7 @@ export const removeItems = async (keys: (StorageKey | string)[]): Promise<boolea
         await AsyncStorage.multiRemove(keys);
         return true;
     } catch (error) {
-        console.error('Storage removeItems error:', error);
+        logError('Storage removeItems error:', error);
         return false;
     }
 };
@@ -101,7 +102,7 @@ export const getItems = async <T extends Record<string, any>>(
 
         return result;
     } catch (error) {
-        console.error('Storage getItems error:', error);
+        logError('Storage getItems error:', error);
         return {};
     }
 };
@@ -118,7 +119,7 @@ export const setItems = async (items: Record<string, any>): Promise<boolean> => 
         await AsyncStorage.multiSet(pairs);
         return true;
     } catch (error) {
-        console.error('Storage setItems error:', error);
+        logError('Storage setItems error:', error);
         return false;
     }
 };
@@ -131,7 +132,7 @@ export const getAllKeys = async (): Promise<string[]> => {
         const keys = await AsyncStorage.getAllKeys();
         return keys as string[];
     } catch (error) {
-        console.error('Storage getAllKeys error:', error);
+        logError('Storage getAllKeys error:', error);
         return [];
     }
 };
@@ -144,7 +145,7 @@ export const clearAll = async (): Promise<boolean> => {
         await AsyncStorage.clear();
         return true;
     } catch (error) {
-        console.error('Storage clearAll error:', error);
+        logError('Storage clearAll error:', error);
         return false;
     }
 };
@@ -157,7 +158,7 @@ export const hasItem = async (key: StorageKey | string): Promise<boolean> => {
         const value = await AsyncStorage.getItem(key);
         return value !== null;
     } catch (error) {
-        console.error(`Storage hasItem error for key "${key}":`, error);
+        logError(`Storage hasItem error for key "${key}":`, error);
         return false;
     }
 };

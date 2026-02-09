@@ -1,7 +1,9 @@
+import { log, warn, error as logError } from '../utils/logger';
+import { handleApiError } from '../utils/errorHandler';
 // QScrap - Delivery Fee Payment Screen
 // Collects upfront delivery fee via Stripe before order confirmation
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -24,8 +26,8 @@ import { useLanguage as useTranslation } from '../contexts/LanguageContext';
 import { useToast } from '../components/Toast';
 import { api } from '../services/api';
 import { API_BASE_URL } from '../config/api';
-
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51St6AI39lYR0XT69rqWSeL7KgzTodXnECkPed1CAsZ7KsqhJOB4W3VD6QvhWyUhrVsTfADxh33p6DIJOTH30q4dK00dnPzwcBt';
+import { KEYS } from '../config/keys';
+import { useLoyalty } from '../hooks/useLoyalty';
 
 // Version for cache-busting diagnostics
 const SCREEN_VERSION = 'v2.0.0-2026-01-27';
@@ -53,13 +55,13 @@ export default function PaymentScreen() {
 
     // 🔍 CRITICAL DEBUG: Log screen mount to diagnose cache issues
     useEffect(() => {
-        console.log('========================================');
-        console.log(`🏦 PAYMENT SCREEN MOUNTED - ${SCREEN_VERSION}`);
-        console.log(`📦 Params: bidId=${bidId}, garageName=${garageName}`);
-        console.log(`💰 partPrice=${params.partPrice}, deliveryFee=${params.deliveryFee}`);
-        console.log('========================================');
+        log('========================================');
+        log(`🏦 PAYMENT SCREEN MOUNTED - ${SCREEN_VERSION}`);
+        log(`📦 Params: bidId=${bidId}, garageName=${garageName}`);
+        log(`💰 partPrice=${params.partPrice}, deliveryFee=${params.deliveryFee}`);
+        log('========================================');
         return () => {
-            console.log(`🏦 PAYMENT SCREEN UNMOUNTED - ${SCREEN_VERSION}`);
+            log(`🏦 PAYMENT SCREEN UNMOUNTED - ${SCREEN_VERSION}`);
         };
     }, []);
 
@@ -75,12 +77,13 @@ export default function PaymentScreen() {
     const [paymentType, setPaymentType] = useState<'delivery_only' | 'full'>('delivery_only');
     const [paymentAmount, setPaymentAmount] = useState(deliveryFee);
 
-    // Loyalty state
-    const [loyaltyData, setLoyaltyData] = useState<{
-        points: number;
-        tier: string;
-        discountPercentage: number;
-    } | null>(null);
+    // Loyalty - centralized hook (shared cache, no duplicate API calls)
+    const { loyalty: loyaltyRaw } = useLoyalty();
+    const loyaltyData = loyaltyRaw ? {
+        points: loyaltyRaw.points,
+        tier: loyaltyRaw.tier,
+        discountPercentage: loyaltyRaw.discountPercentage,
+    } : null;
     const [applyDiscount, setApplyDiscount] = useState(false);
     const [discountAmount, setDiscountAmount] = useState(0);
 
@@ -92,28 +95,7 @@ export default function PaymentScreen() {
     // Step 1: Create order first (pending_payment status) OR resume existing order
     useEffect(() => {
         initializePayment();
-        fetchLoyaltyData();
     }, []);
-
-    // Fetch loyalty balance
-    const fetchLoyaltyData = async () => {
-        try {
-            const data = await api.getLoyaltyBalance();
-            const tierDiscounts: Record<string, number> = {
-                bronze: 0,
-                silver: 5,
-                gold: 10,
-                platinum: 15
-            };
-            setLoyaltyData({
-                points: data.points,
-                tier: data.tier,
-                discountPercentage: tierDiscounts[data.tier.toLowerCase()] || 0
-            });
-        } catch (err) {
-            console.log('[Payment] Failed to fetch loyalty:', err);
-        }
-    };
 
     // Single consolidated useEffect for payment type and discount changes
     // Uses a version counter to cancel outdated requests
@@ -122,18 +104,18 @@ export default function PaymentScreen() {
     // CRITICAL FIX: Calculate CORRECT discount based on payment type
     // - Full Payment: discount applies to TOTAL (part + delivery)
     // - Delivery Only: discount applies to PART PRICE only (COD amount)
-    const calculateDiscount = () => {
+    const calculateDiscount = useMemo(() => {
         if (!applyDiscount || !loyaltyData || loyaltyData.discountPercentage <= 0) {
             return { discountOnPart: 0, discountOnTotal: 0 };
         }
         const discountOnTotal = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
         const discountOnPart = Math.round(partPrice * (loyaltyData.discountPercentage / 100));
         return { discountOnPart, discountOnTotal };
-    };
+    }, [applyDiscount, loyaltyData, totalAmount, partPrice]);
 
     // Get the amount customer will pay NOW (via card)
-    const getPayNowAmount = () => {
-        const { discountOnTotal } = calculateDiscount();
+    const payNowAmount = useMemo(() => {
+        const { discountOnTotal } = calculateDiscount;
         if (paymentType === 'full') {
             // Full payment: discount applies to total, minimum 0 (FREE)
             return Math.max(0, totalAmount - discountOnTotal);
@@ -141,30 +123,30 @@ export default function PaymentScreen() {
             // Delivery only: ALWAYS pay full delivery fee, never discounted
             return deliveryFee;
         }
-    };
+    }, [calculateDiscount, paymentType, totalAmount, deliveryFee]);
 
     // Get the COD amount (if delivery-only)
-    const getCodAmount = () => {
-        const { discountOnPart } = calculateDiscount();
+    const codAmount = useMemo(() => {
+        const { discountOnPart } = calculateDiscount;
         if (paymentType === 'delivery_only') {
             // COD = part price minus discount on part (minimum 0)
             return Math.max(0, partPrice - discountOnPart);
         }
         return 0;
-    };
+    }, [calculateDiscount, paymentType, partPrice]);
 
     // Check if order is FREE (discount >= total amount for full payment)
-    const isFreeOrder = () => {
-        const { discountOnTotal } = calculateDiscount();
+    const freeOrder = useMemo(() => {
+        const { discountOnTotal } = calculateDiscount;
         return paymentType === 'full' && discountOnTotal >= totalAmount;
-    };
+    }, [calculateDiscount, paymentType, totalAmount]);
 
     useEffect(() => {
         // Skip if no order yet (initial order creation happens separately)
         if (!orderId) return;
 
         // Calculate and set discount for display
-        const { discountOnPart, discountOnTotal } = calculateDiscount();
+        const { discountOnPart, discountOnTotal } = calculateDiscount;
         setDiscountAmount(paymentType === 'full' ? discountOnTotal : discountOnPart);
 
         // Increment version to cancel any in-flight requests
@@ -179,16 +161,16 @@ export default function PaymentScreen() {
         const timer = setTimeout(async () => {
             // Check if this request is still the latest
             if (thisVersion !== requestVersion.current) {
-                console.log('[Payment] Request cancelled - newer request pending');
+                log('[Payment] Request cancelled - newer request pending');
                 return;
             }
 
             try {
-                const finalAmount = getPayNowAmount();
+                const finalAmount = payNowAmount;
 
                 // If FREE order, no need for payment intent
                 if (finalAmount <= 0) {
-                    console.log('[Payment] 🎉 FREE ORDER - No payment needed!');
+                    log('[Payment] 🎉 FREE ORDER - No payment needed!');
                     setClientSecret('FREE_ORDER');
                     setPaymentAmount(0);
                     setIsCreatingOrder(false);
@@ -207,7 +189,7 @@ export default function PaymentScreen() {
 
                 // Check again if this is still the latest request
                 if (thisVersion !== requestVersion.current) {
-                    console.log('[Payment] Intent received but request is stale, ignoring');
+                    log('[Payment] Intent received but request is stale, ignoring');
                     return;
                 }
 
@@ -216,13 +198,12 @@ export default function PaymentScreen() {
                 } else {
                     const result = paymentResult as any;
                     const errorMsg = result.error?.message || result.message || 'Failed to create payment intent';
-                    console.error('[Payment] Intent creation failed:', errorMsg);
+                    logError('[Payment] Intent creation failed:', errorMsg);
                     toast.error(t('common.error'), errorMsg);
                 }
             } catch (error: any) {
                 if (thisVersion !== requestVersion.current) return;
-                console.error('[Payment] Error creating intent:', error);
-                toast.error(t('common.error'), error?.message || 'Payment setup failed');
+                handleApiError(error, toast);
             } finally {
                 if (thisVersion === requestVersion.current) {
                     setIsCreatingOrder(false);
@@ -236,7 +217,7 @@ export default function PaymentScreen() {
     const initializePayment = async () => {
         // Prevent concurrent initialization calls
         if (isInitializing.current) {
-            console.log('[Payment] ⚠️ Initialization already in progress, skipping...');
+            log('[Payment] ⚠️ Initialization already in progress, skipping...');
             return;
         }
 
@@ -295,24 +276,16 @@ export default function PaymentScreen() {
 
             setClientSecret(paymentResult.intent.clientSecret);
         } catch (error: any) {
-            console.error('Error initializing payment:', error);
-            const errorMessage = typeof error === 'string'
-                ? error
-                : (error?.message || 'Failed to initialize payment');
-            Alert.alert(
-                t('common.error'),
-                errorMessage,
-                [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
+            handleApiError(error, toast, { useAlert: true, onDismiss: () => navigation.goBack() });
         } finally {
             setIsCreatingOrder(false);
             isInitializing.current = false;
         }
     };
 
-    const handlePayment = async () => {
+    const handlePayment = useCallback(async () => {
         if (!clientSecret || !cardComplete) {
-            toast.error(t('common.error'), 'Please enter valid card details');
+            toast.error(t('common.error'), t('payment.enterCardDetails'));
             return;
         }
 
@@ -320,35 +293,35 @@ export default function PaymentScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            console.log('[Payment] Starting confirmPayment with clientSecret:', clientSecret?.substring(0, 20) + '...');
+            log('[Payment] Starting confirmPayment with clientSecret:', clientSecret?.substring(0, 20) + '...');
             const { error, paymentIntent } = await confirmPayment(clientSecret, {
                 paymentMethodType: 'Card',
             });
 
             if (error) {
-                console.error('Payment error:', error);
+                logError('Payment error:', error);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                toast.error(t('common.error'), error.message || 'Payment failed');
+                toast.error(t('common.error'), error.message || t('payment.failed'));
                 setIsLoading(false);
                 return;
             }
 
             // Check for success status (case-insensitive)
             const status = paymentIntent?.status?.toLowerCase();
-            console.log('[Payment] Stripe status:', status, 'orderId:', orderId, 'paymentIntent:', JSON.stringify(paymentIntent));
+            log('[Payment] Stripe status:', status, 'orderId:', orderId, 'paymentIntent:', JSON.stringify(paymentIntent));
 
             if (status === 'succeeded') {
                 // Confirm payment on backend to update order status
-                console.log('[Payment] ✅ Stripe payment succeeded, confirming with backend...');
-                console.log('[Payment] Payment Intent ID:', paymentIntent.id);
+                log('[Payment] ✅ Stripe payment succeeded, confirming with backend...');
+                log('[Payment] Payment Intent ID:', paymentIntent.id);
                 try {
                     const confirmResult = await api.confirmDeliveryFeePayment(paymentIntent.id);
-                    console.log('[Payment] ✅ Backend confirmed successfully:', confirmResult);
+                    log('[Payment] ✅ Backend confirmed successfully:', confirmResult);
                 } catch (confirmError: any) {
-                    console.error('[Payment] ⚠️ Backend confirm FAILED (webhook will retry):', confirmError);
-                    console.error('[Payment] Backend error type:', typeof confirmError);
-                    console.error('[Payment] Backend error message:', confirmError?.message);
-                    console.error('[Payment] Backend error details:', JSON.stringify(confirmError));
+                    logError('[Payment] ⚠️ Backend confirm FAILED (webhook will retry):', confirmError);
+                    logError('[Payment] Backend error type:', typeof confirmError);
+                    logError('[Payment] Backend error message:', confirmError?.message);
+                    logError('[Payment] Backend error details:', JSON.stringify(confirmError));
                     // Continue anyway - Stripe webhook will handle it as fallback
                 }
 
@@ -362,21 +335,21 @@ export default function PaymentScreen() {
                 });
 
                 // Navigate immediately - don't wait for setIsLoading
-                console.log('[Payment] SUCCESS - Navigating now. orderId:', orderId);
+                log('[Payment] SUCCESS - Navigating now. orderId:', orderId);
 
                 // Use shorter delay and ensure navigation happens
                 const navigateToOrder = () => {
-                    console.log('[Payment] Executing navigation reset...');
+                    log('[Payment] Executing navigation reset...');
                     if (orderId) {
                         navigation.reset({
                             index: 1,
                             routes: [
                                 { name: 'Main' },
-                                { name: 'DeliveryTracking', params: { orderId } },
+                                { name: 'Tracking', params: { orderId, orderNumber: '' } },
                             ],
                         });
                     } else {
-                        console.warn('[Payment] No orderId, navigating to Orders tab');
+                        warn('[Payment] No orderId, navigating to Orders tab');
                         navigation.reset({
                             index: 0,
                             routes: [{ name: 'Main', params: { screen: 'Orders' } }],
@@ -389,7 +362,7 @@ export default function PaymentScreen() {
 
             } else {
                 // Unexpected status - show warning but try to proceed
-                console.warn('[Payment] Unexpected status:', paymentIntent?.status);
+                warn('[Payment] Unexpected status:', paymentIntent?.status);
                 toast.show({
                     type: 'info',
                     title: 'Payment Processing',
@@ -403,38 +376,16 @@ export default function PaymentScreen() {
                 }, 1000);
             }
         } catch (error: any) {
-            console.error('[Payment] ❌ PAYMENT ERROR:', error);
-            console.error('[Payment] Error type:', typeof error);
-            console.error('[Payment] Error keys:', error ? Object.keys(error) : 'null');
-            console.error('[Payment] Error message:', error?.message);
-            console.error('[Payment] Error code:', error?.code);
-            console.error('[Payment] Full error:', JSON.stringify(error, null, 2));
-
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-
-            // Extract meaningful error message
-            let errorMessage = 'Payment failed';
-            if (typeof error === 'string') {
-                errorMessage = error;
-            } else if (error?.message) {
-                errorMessage = error.message;
-            } else if (error?.error?.message) {
-                errorMessage = error.error.message;
-            } else if (error?.localizedDescription) {
-                errorMessage = error.localizedDescription;
-            }
-
-            console.error('[Payment] Displaying error:', errorMessage);
-            toast.error(t('common.error'), errorMessage);
+            handleApiError(error, toast);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [clientSecret, cardComplete, orderId, toast, t, navigation, confirmPayment]);
 
     // Handle FREE order (when loyalty discount covers entire amount)
-    const handleFreeOrder = async () => {
+    const handleFreeOrder = useCallback(async () => {
         if (!orderId) {
-            toast.error(t('common.error'), 'Order not found');
+            toast.error(t('common.error'), t('payment.orderNotFound'));
             return;
         }
 
@@ -442,10 +393,10 @@ export default function PaymentScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         try {
-            console.log('[Payment] 🎉 Processing FREE order via loyalty discount');
+            log('[Payment] 🎉 Processing FREE order via loyalty discount');
 
             // Confirm order with zero payment (loyalty covers it)
-            const { discountOnTotal } = calculateDiscount();
+            const { discountOnTotal } = calculateDiscount;
             await api.confirmFreeOrder(orderId, discountOnTotal);
 
             // CELEBRATION!
@@ -461,20 +412,18 @@ export default function PaymentScreen() {
                     index: 1,
                     routes: [
                         { name: 'Main' },
-                        { name: 'DeliveryTracking', params: { orderId } },
+                        { name: 'Tracking', params: { orderId, orderNumber: '' } },
                     ],
                 });
             }, 1000);
         } catch (error: any) {
-            console.error('[Payment] Free order failed:', error);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            toast.error(t('common.error'), error?.message || 'Failed to process free order');
+            handleApiError(error, toast);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [orderId, calculateDiscount, toast, t, navigation]);
 
-    const handleCancel = () => {
+    const handleCancel = useCallback(() => {
         Alert.alert(
             'Cancel Order',
             'Are you sure you want to cancel? Your order will not be placed.',
@@ -487,7 +436,7 @@ export default function PaymentScreen() {
                 },
             ]
         );
-    };
+    }, [navigation]);
 
     if (isCreatingOrder) {
         return (
@@ -503,7 +452,7 @@ export default function PaymentScreen() {
     }
 
     return (
-        <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+        <StripeProvider publishableKey={KEYS.STRIPE_PUBLISHABLE_KEY}>
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 {/* Header */}
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
@@ -623,7 +572,7 @@ export default function PaymentScreen() {
                     {loyaltyData && loyaltyData.discountPercentage > 0 && (
                         <View style={[
                             styles.vvipLoyaltyCard,
-                            isFreeOrder() && { borderColor: '#22C55E', borderWidth: 2 }
+                            freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
                         ]}>
                             <View style={styles.vvipLoyaltyRow}>
                                 <View style={styles.vvipLoyaltyLeft}>
@@ -635,7 +584,7 @@ export default function PaymentScreen() {
                                             {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% OFF
                                         </Text>
                                         <Text style={styles.vvipLoyaltySavings}>
-                                            {applyDiscount ? `Save ${paymentType === 'full' ? calculateDiscount().discountOnTotal : calculateDiscount().discountOnPart} QAR` : 'Tap to apply'}
+                                            {applyDiscount ? `Save ${paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart} QAR` : 'Tap to apply'}
                                         </Text>
                                     </View>
                                 </View>
@@ -651,7 +600,7 @@ export default function PaymentScreen() {
                             </View>
 
                             {/* FREE ORDER Celebration */}
-                            {isFreeOrder() && (
+                            {freeOrder && (
                                 <LinearGradient
                                     colors={['#22C55E', '#16A34A']}
                                     style={styles.vvipFreeOrderBanner}
@@ -661,7 +610,7 @@ export default function PaymentScreen() {
                             )}
 
                             {/* Discount Summary */}
-                            {applyDiscount && (paymentType === 'full' ? calculateDiscount().discountOnTotal : calculateDiscount().discountOnPart) > 0 && !isFreeOrder() && (
+                            {applyDiscount && (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 && !freeOrder && (
                                 <View style={styles.vvipDiscountSummary}>
                                     <Text style={styles.vvipDiscountLabel}>
                                         {paymentType === 'full' ? 'You Pay' : 'COD Amount'}
@@ -671,7 +620,7 @@ export default function PaymentScreen() {
                                             {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} QAR
                                         </Text>
                                         <Text style={styles.vvipDiscountNew}>
-                                            {(paymentType === 'full' ? getPayNowAmount() : getCodAmount()).toFixed(0)} QAR
+                                            {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} QAR
                                         </Text>
                                     </View>
                                 </View>
@@ -680,12 +629,12 @@ export default function PaymentScreen() {
                     )}
 
                     {/* Quick Info Banner */}
-                    {!isFreeOrder() && (
+                    {!freeOrder && (
                         <View style={styles.vvipInfoBanner}>
                             <Text style={styles.vvipInfoText}>
                                 {paymentType === 'full'
                                     ? '✓ No cash needed at delivery'
-                                    : `💵 ${applyDiscount && discountAmount > 0 ? getCodAmount().toFixed(0) : partPrice.toFixed(0)} QAR cash at delivery`
+                                    : `💵 ${applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0)} QAR cash at delivery`
                                 }
                             </Text>
                         </View>
@@ -739,7 +688,7 @@ export default function PaymentScreen() {
 
                 {/* Pay Button - Enterprise Logic */}
                 <View style={[styles.footer, { backgroundColor: colors.surface }]}>
-                    {isFreeOrder() ? (
+                    {freeOrder ? (
                         /* FREE ORDER - Special Celebration Button */
                         <TouchableOpacity
                             style={styles.payButton}
@@ -774,7 +723,7 @@ export default function PaymentScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={styles.payButtonText}>
-                                        🔒 Pay {getPayNowAmount().toFixed(2)} QAR
+                                        🔒 Pay {payNowAmount.toFixed(2)} QAR
                                     </Text>
                                 )}
                             </LinearGradient>
@@ -782,7 +731,7 @@ export default function PaymentScreen() {
                     )}
 
                     <Text style={styles.secureText}>
-                        {isFreeOrder() ? '✨ Your loyalty rewards at work!' : '🔐 Secured by Stripe'}
+                        {freeOrder ? '✨ Your loyalty rewards at work!' : '🔐 Secured by Stripe'}
                     </Text>
                 </View>
             </SafeAreaView >

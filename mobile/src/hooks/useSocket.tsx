@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // QScrap Socket Service - Real-time Updates for Bids, Orders, Tracking
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
@@ -50,7 +51,7 @@ export function useSocket() {
         try {
             const token = await api.getToken();
             if (!token) {
-                console.log('[Socket] No token, skipping connection');
+                log('[Socket] No token, skipping connection');
                 return;
             }
 
@@ -71,7 +72,7 @@ export function useSocket() {
 
             // Connection events
             socket.current.on('connect', () => {
-                console.log('[Socket] Connected:', socket.current?.id);
+                log('[Socket] Connected:', socket.current?.id);
                 setIsConnected(true);
                 reconnectAttempts.current = 0;
 
@@ -80,7 +81,7 @@ export function useSocket() {
             });
 
             socket.current.on('disconnect', (reason) => {
-                console.log('[Socket] Disconnected:', reason);
+                log('[Socket] Disconnected:', reason);
                 setIsConnected(false);
                 // Clear notifications on disconnect to prevent ghost notifications on re-login
                 setNewBids([]);
@@ -89,17 +90,17 @@ export function useSocket() {
             });
 
             socket.current.on('connect_error', (error) => {
-                console.log('[Socket] Connection error:', error.message);
+                log('[Socket] Connection error:', error.message);
                 reconnectAttempts.current++;
             });
 
             // New bid received on your request
             socket.current.on('new_bid', (data: BidNotification) => {
-                console.log('[Socket] New bid received:', data.garage_name, data.bid_amount);
+                log('[Socket] New bid received:', data.garage_name, data.bid_amount);
 
                 // Validate the bid has required fields before showing
                 if (!data.bid_id || !data.request_id || !data.garage_name) {
-                    console.log('[Socket] Invalid bid data, skipping notification');
+                    log('[Socket] Invalid bid data, skipping notification');
                     return;
                 }
 
@@ -110,7 +111,7 @@ export function useSocket() {
                 const isOld = (now - bidTime) > 5 * 60 * 1000; // 5 minutes
 
                 if (isOld) {
-                    console.log('[Socket] Skipping old bid notification:', data.bid_id);
+                    log('[Socket] Skipping old bid notification:', data.bid_id);
                     return;
                 }
 
@@ -149,7 +150,7 @@ export function useSocket() {
 
             // Bid was updated
             socket.current.on('bid_updated', (data: { bid_id: string; bid_amount?: number; request_id?: string }) => {
-                console.log('[Socket] Bid updated:', data.bid_id, data.bid_amount);
+                log('[Socket] Bid updated:', data.bid_id, data.bid_amount);
 
                 // Only show notification if bid_amount is provided (actual price change)
                 // Skip notification when bid_updated is used as just a refresh trigger
@@ -184,7 +185,7 @@ export function useSocket() {
 
             // Garage sent a counter-offer
             socket.current.on('garage_counter_offer', (data: any) => {
-                console.log('[Socket] Garage counter-offer:', data);
+                log('[Socket] Garage counter-offer:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -202,7 +203,7 @@ export function useSocket() {
 
             // Counter-offer accepted by garage
             socket.current.on('counter_offer_accepted', (data: any) => {
-                console.log('[Socket] Counter-offer accepted:', data);
+                log('[Socket] Counter-offer accepted:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -220,7 +221,7 @@ export function useSocket() {
 
             // Counter-offer rejected by garage
             socket.current.on('counter_offer_rejected', (data: any) => {
-                console.log('[Socket] Counter-offer rejected:', data);
+                log('[Socket] Counter-offer rejected:', data);
 
                 if (data.is_final_round) {
                     // Final round rejection - more urgent notification
@@ -248,7 +249,7 @@ export function useSocket() {
 
             // Order status changed - Show rich notification with garage branding
             socket.current.on('order_status_updated', (data: OrderStatusUpdate & { garage_name?: string; part_description?: string }) => {
-                console.log('[Socket] Order status updated:', data.order_number, data.new_status);
+                log('[Socket] Order status updated:', data.order_number, data.new_status);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Schedule rich local notification for background/locked phone
@@ -319,7 +320,7 @@ export function useSocket() {
                 estimated_delivery?: string;
                 notification: string;
             }) => {
-                console.log('[Socket] Driver assigned:', data.driver?.name);
+                log('[Socket] Driver assigned:', data.driver?.name);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -342,12 +343,12 @@ export function useSocket() {
 
             socket.current.on('driver_location_update', (data: DriverLocationUpdate) => {
                 // This is handled by TrackingScreen directly
-                console.log('[Socket] Driver location update:', data.order_id);
+                log('[Socket] Driver location update:', data.order_id);
             });
 
             // Order delivered
             socket.current.on('order_delivered', (data: { order_id: string; order_number: string }) => {
-                console.log('[Socket] Order delivered:', data.order_number);
+                log('[Socket] Order delivered:', data.order_number);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -367,7 +368,7 @@ export function useSocket() {
 
             // Request expired (no bids received in time)
             socket.current.on('request_expired', (data: { request_id: string; part_description?: string }) => {
-                console.log('[Socket] Request expired:', data.request_id);
+                log('[Socket] Request expired:', data.request_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -386,7 +387,7 @@ export function useSocket() {
 
             // Garage withdrew their bid
             socket.current.on('bid_withdrawn', (data: { request_id: string; message?: string }) => {
-                console.log('[Socket] Bid withdrawn:', data.request_id);
+                log('[Socket] Bid withdrawn:', data.request_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -403,7 +404,7 @@ export function useSocket() {
 
             // Support team replied to your ticket
             socket.current.on('support_reply', (data: { ticket_id: string; message?: any }) => {
-                console.log('[Socket] Support reply:', data.ticket_id);
+                log('[Socket] Support reply:', data.ticket_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -420,7 +421,7 @@ export function useSocket() {
 
             // Order was cancelled
             socket.current.on('order_cancelled', (data: { order_id: string; order_number?: string; reason?: string; cancelled_by?: string }) => {
-                console.log('[Socket] Order cancelled:', data.order_id);
+                log('[Socket] Order cancelled:', data.order_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
@@ -447,8 +448,13 @@ export function useSocket() {
                 message: string;
                 notification: string;
             }) => {
-                console.log('[Socket] Chat notification:', data.order_number);
+                log('[Socket] Chat notification:', data.order_number);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                // Vibrate so user notices even with phone on desk
+                import('react-native').then(({ Vibration }) => {
+                    Vibration.vibrate([0, 200, 100, 200]);
+                });
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const senderLabel = data.sender_type === 'driver' ? '🚗 Driver' : '🔧 Garage';
@@ -459,13 +465,15 @@ export function useSocket() {
                             type: 'chat_message',
                             orderId: data.order_id,
                             orderNumber: data.order_number,
-                        }
+                        },
+                        undefined,
+                        'messages'
                     );
                 });
             });
 
         } catch (error) {
-            console.error('[Socket] Setup error:', error);
+            logError('[Socket] Setup error:', error);
         }
     }, []);
 
@@ -522,7 +530,7 @@ export function useSocket() {
                 const token = await api.getToken();
                 if (!token) {
                     // User logged out - disconnect socket and clear notifications
-                    console.log('[Socket] No token on app active - disconnecting...');
+                    log('[Socket] No token on app active - disconnecting...');
                     disconnect();
                     clearAllNotifications();
                     return;
@@ -530,7 +538,7 @@ export function useSocket() {
 
                 // User still logged in - reconnect if needed
                 if (!socket.current?.connected) {
-                    console.log('[Socket] App active, reconnecting...');
+                    log('[Socket] App active, reconnecting...');
                     connect();
                 }
             }

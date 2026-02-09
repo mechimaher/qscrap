@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * LanguageContext - Complete i18n solution with RTL support
  * Enhanced for Qatar VVIP market with device locale auto-detection
@@ -47,7 +48,7 @@ function detectDeviceLanguage(): Language {
 
             // Check if device language is Arabic
             if (languageCode === 'ar') {
-                console.log('[i18n] Device locale is Arabic, defaulting to Arabic');
+                log('[i18n] Device locale is Arabic, defaulting to Arabic');
                 return 'ar';
             }
         }
@@ -55,7 +56,7 @@ function detectDeviceLanguage(): Language {
         // Fallback to English for all other locales
         return 'en';
     } catch (error) {
-        console.log('[i18n] Failed to detect device locale:', error);
+        log('[i18n] Failed to detect device locale:', error);
         return 'en';
     }
 }
@@ -105,7 +106,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 }
             }
         } catch (error) {
-            console.log('[i18n] Failed to initialize language:', error);
+            log('[i18n] Failed to initialize language:', error);
         } finally {
             setIsLoading(false);
         }
@@ -118,7 +119,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         const currentRTL = I18nManager.isRTL;
 
         if (currentRTL !== shouldBeRTL) {
-            console.log(`[i18n] RTL mismatch: current=${currentRTL}, should=${shouldBeRTL}`);
+            log(`[i18n] RTL mismatch: current=${currentRTL}, should=${shouldBeRTL}`);
             // Note: The mismatch will be resolved after app restart
             // We don't force here to avoid unexpected behavior
         }
@@ -145,7 +146,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
             // ALWAYS update I18nManager to ensure RTL state is correct
             // This fixes the bug where switching AR → EN didn't properly revert RTL
-            console.log(`[i18n] Setting RTL: allowRTL(${shouldBeRTL}), forceRTL(${shouldBeRTL})`);
+            log(`[i18n] Setting RTL: allowRTL(${shouldBeRTL}), forceRTL(${shouldBeRTL})`);
 
             // For LTR languages, we must explicitly disable RTL
             // Order matters: allowRTL first, then forceRTL
@@ -166,9 +167,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 );
             }
 
-            console.log(`[i18n] Language changed: ${previousLanguage} → ${lang}, RTL: ${currentRTL} → ${shouldBeRTL}`);
+            log(`[i18n] Language changed: ${previousLanguage} → ${lang}, RTL: ${currentRTL} → ${shouldBeRTL}`);
         } catch (error) {
-            console.log('[i18n] Failed to save language:', error);
+            log('[i18n] Failed to save language:', error);
         }
     }, [language]);
 

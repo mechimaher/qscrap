@@ -1,4 +1,6 @@
+import { log, warn, error as logError } from './logger';
 import * as Haptics from 'expo-haptics';
+import { Alert } from 'react-native';
 
 export interface ErrorContext {
     error: (title: string, message?: string) => void;
@@ -37,17 +39,44 @@ export const extractErrorMessage = (error: any): string => {
     return 'An unexpected error occurred';
 };
 
+export interface HandleApiErrorOptions {
+    /** Custom message to override the extracted error message */
+    customMessage?: string;
+    /** Use Alert.alert instead of toast for critical flows (payment, delivery, cancellation) */
+    useAlert?: boolean;
+    /** Callback after the user dismisses the alert (only used with useAlert) */
+    onDismiss?: () => void;
+}
+
 /**
- * Standard error handler with toast notification and haptics
+ * Standard error handler with toast/alert notification and haptics
  * Use this for consistent error handling across the app
+ *
+ * @param error - The caught error object
+ * @param toast - Toast context (from useToast())
+ * @param options - Optional config: customMessage, useAlert, onDismiss
  */
 export const handleApiError = (
     error: any,
     toast: ErrorContext,
-    customMessage?: string
+    options?: string | HandleApiErrorOptions
 ) => {
-    const message = customMessage || extractErrorMessage(error);
-    console.error('API Error:', error);
-    toast.error('Error', message);
+    // Backward compatible: accept string as customMessage
+    const opts: HandleApiErrorOptions = typeof options === 'string'
+        ? { customMessage: options }
+        : (options || {});
+
+    const message = opts.customMessage || extractErrorMessage(error);
+    logError('API Error:', error);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+    if (opts.useAlert) {
+        Alert.alert(
+            'Error',
+            message,
+            [{ text: 'OK', onPress: opts.onDismiss }]
+        );
+    } else {
+        toast.error('Error', message);
+    }
 };

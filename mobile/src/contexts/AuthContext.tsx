@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // Auth Context - Manages authentication state across the app
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, User } from '../services/api';
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
         } catch (error) {
-            console.log('Auth check failed:', error);
+            log('Auth check failed:', error);
         } finally {
             setIsLoading(false);
         }
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     await api.saveUser(partialUser);
                 }
             } catch (profileError) {
-                console.log('Failed to fetch profile on login:', profileError);
+                log('Failed to fetch profile on login:', profileError);
                 // Fallback
                 const partialUser = {
                     user_id: response.userId,
@@ -123,9 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Reset user state
             setUser(null);
 
-            console.log('[Auth] Logout complete - all data cleared');
+            log('[Auth] Logout complete - all data cleared');
         } catch (error) {
-            console.error('[Auth] Logout error:', error);
+            logError('[Auth] Logout error:', error);
             // Still reset user even if cleanup fails
             setUser(null);
         }
@@ -147,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 await api.saveUser(updatedUser);
             }
         } catch (error) {
-            console.log('Failed to refresh user:', error);
+            log('Failed to refresh user:', error);
         }
     };
 

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 import { useState, useEffect, useCallback } from 'react';
 import NetInfo, { NetInfoState, NetInfoSubscription } from '@react-native-community/netinfo';
 
@@ -48,7 +49,7 @@ export const useNetwork = (): UseNetworkReturn => {
             const netInfoState = await NetInfo.fetch();
             updateState(netInfoState);
         } catch (error) {
-            console.error('Failed to fetch network state:', error);
+            logError('Failed to fetch network state:', error);
         }
     }, [updateState]);
 

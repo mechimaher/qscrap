@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // QScrap - My Vehicles Selector (Family Fleet)
 // Allows customers to quickly select from previously used vehicles
 import React, { useState, useEffect, useCallback } from 'react';
@@ -10,27 +11,14 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { api } from '../services/api';
+import { api, Vehicle as SavedVehicle } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '../contexts/LanguageContext';
 
-// Define SavedVehicle interface locally (matches backend response)
-export interface SavedVehicle {
-    vehicle_id: string;
-    car_make: string;
-    car_model: string;
-    car_year: number;
-    vin_number?: string;
-    nickname?: string;
-    is_primary?: boolean;
-    front_image_url?: string;
-    rear_image_url?: string;
-    request_count: number;
-    last_used_at?: string;
-    created_at: string;
-}
+// SavedVehicle is imported from api.ts as Vehicle
+export type { SavedVehicle };
 
 interface Props {
     onSelect: (vehicle: SavedVehicle) => void;
@@ -70,7 +58,7 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                 onVehiclesLoaded(loadedVehicles);
             }
         } catch (error) {
-            console.log('[MyVehicles] Error loading:', error);
+            log('[MyVehicles] Error loading:', error);
         } finally {
             setIsLoading(false);
         }
@@ -161,9 +149,9 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                     <View style={styles.vinBadge}>
                                         <Text style={styles.vinBadgeText}>{t('common.vinVerifiedShort')}</Text>
                                     </View>
-                                ) : vehicle.request_count > 0 && (
+                                ) : (vehicle.request_count ?? 0) > 0 && (
                                     <Text style={[styles.vehicleRequests, { color: colors.textSecondary }]}>
-                                        {t('common.requestsCount', { count: vehicle.request_count })}
+                                        {t('common.requestsCount', { count: vehicle.request_count ?? 0 })}
                                     </Text>
                                 )}
                             </TouchableOpacity>

@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from './logger';
 /**
  * QScrap Notification Sounds Utility
  * 
@@ -43,7 +44,7 @@ export const playNotificationSound = async (
         // await sound.playAsync();
 
     } catch (error) {
-        console.log('Notification sound error:', error);
+        log('Notification sound error:', error);
     }
 };
 
@@ -54,7 +55,7 @@ export const playInteractionSound = async (): Promise<void> => {
     try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-        console.log('Interaction sound error:', error);
+        log('Interaction sound error:', error);
     }
 };
 
@@ -66,7 +67,7 @@ export const playConfirmationSound = async (): Promise<void> => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Vibration.vibrate(50);
     } catch (error) {
-        console.log('Confirmation sound error:', error);
+        log('Confirmation sound error:', error);
     }
 };
 
@@ -79,7 +80,7 @@ export const playSuccessSound = async (): Promise<void> => {
         // Triple vibration pattern for celebration
         Vibration.vibrate([0, 50, 50, 50, 50, 100]);
     } catch (error) {
-        console.log('Success sound error:', error);
+        log('Success sound error:', error);
     }
 };
 
@@ -91,7 +92,7 @@ export const playErrorSound = async (): Promise<void> => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Vibration.vibrate([0, 100, 50, 300]);
     } catch (error) {
-        console.log('Error sound error:', error);
+        log('Error sound error:', error);
     }
 };
 
@@ -109,7 +110,7 @@ export const playDriverArrivedSound = async (): Promise<void> => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         }, 600);
     } catch (error) {
-        console.log('Driver arrived sound error:', error);
+        log('Driver arrived sound error:', error);
     }
 };
 
@@ -122,7 +123,7 @@ export const playNewBidSound = async (): Promise<void> => {
         // Ascending pattern
         Vibration.vibrate([0, 50, 30, 75, 30, 100]);
     } catch (error) {
-        console.log('New bid sound error:', error);
+        log('New bid sound error:', error);
     }
 };
 

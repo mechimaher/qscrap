@@ -8,10 +8,10 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    Image,
     Alert,
     ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,6 +22,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
+import { extractErrorMessage } from '../utils/errorHandler';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 export default function DeliveryConfirmationScreen() {
@@ -76,7 +77,7 @@ export default function DeliveryConfirmationScreen() {
             setStep('success');
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert(t('common.error'), error.message || t('common.failedToConfirm'));
+            Alert.alert(t('common.error'), extractErrorMessage(error));
         } finally {
             setIsLoading(false);
         }

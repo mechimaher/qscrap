@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 // Premium Delivery Location Widget - KEETA/TALABAT Style
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, ScrollView } from 'react-native';
@@ -43,7 +44,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                 // REMOVED: onLocationChange?.(defaultAddr); - this was closing modal prematurely
             }
         } catch (error) {
-            console.log('[Location] Failed to load addresses:', error);
+            log('[Location] Failed to load addresses:', error);
         } finally {
             setIsLoading(false);
         }
@@ -88,7 +89,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
         } catch (error) {
-            console.error('[Location] Detection failed:', error);
+            logError('[Location] Detection failed:', error);
             alert(t('home.deliveryWidget.detectionFailed'));
         } finally {
             setIsDetecting(false);

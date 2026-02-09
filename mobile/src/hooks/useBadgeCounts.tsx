@@ -1,3 +1,4 @@
+import { log, warn, error as logError } from '../utils/logger';
 /**
  * BadgeCountsContext
  * Provides shared badge counts across the entire app
@@ -68,7 +69,7 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
                 });
             }
         } catch (error) {
-            console.log('[BadgeCounts] Failed to fetch:', error);
+            log('[BadgeCounts] Failed to fetch:', error);
         } finally {
             setIsLoading(false);
         }

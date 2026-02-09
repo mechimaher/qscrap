@@ -11,9 +11,9 @@ import {
     ScrollView,
     ActivityIndicator,
     Dimensions,
-    Image,
     Animated,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
@@ -134,7 +134,9 @@ export default function LoginScreen() {
                             <Image
                                 source={require('../../../assets/logo.png')}
                                 style={styles.logo}
-                                resizeMode="cover"
+                                contentFit="cover"
+                                transition={200}
+                                accessibilityLabel="QScrap logo"
                             />
                         </Animated.View>
                         <Text style={styles.logoText}>{t('common.appName')}</Text>
@@ -189,6 +191,8 @@ export default function LoginScreen() {
                                 onChangeText={setPhone}
                                 keyboardType="phone-pad"
                                 autoCapitalize="none"
+                                accessibilityLabel={t('auth.phone')}
+                                accessibilityHint="Enter your phone number to log in"
                             />
                         </View>
 
@@ -208,10 +212,12 @@ export default function LoginScreen() {
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
+                                accessibilityLabel={t('auth.password')}
+                                accessibilityHint="Enter your password"
                             />
                         </View>
 
-                        <TouchableOpacity style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]}>
+                        <TouchableOpacity style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]} accessibilityRole="button" accessibilityLabel={t('auth.forgotPassword')}>
                             <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>{t('auth.forgotPassword')}</Text>
                         </TouchableOpacity>
 
@@ -220,6 +226,9 @@ export default function LoginScreen() {
                             onPress={handleLogin}
                             disabled={isLoading}
                             activeOpacity={0.9}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('auth.login')}
+                            accessibilityState={{ disabled: isLoading }}
                         >
                             <LinearGradient
                                 colors={ThemeColors.gradients.primary}
@@ -239,7 +248,7 @@ export default function LoginScreen() {
                     {/* Register Section */}
                     <View style={[styles.registerSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={styles.registerText}>{t('auth.noAccount')}</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Register')} accessibilityRole="button" accessibilityLabel={t('auth.createAccount')}>
                             <Text style={[styles.registerLink, isRTL ? { marginRight: Spacing.xs, marginLeft: 0 } : {}]}>
                                 {t('auth.createAccount')}
                             </Text>
