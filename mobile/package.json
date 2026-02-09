@@ -40,7 +40,7 @@
     "expo-updates": "~29.0.16",
     "pngjs": "^7.0.0",
     "react": "19.1.0",
-    "react-native": "0.81.5",
+    "react-native": "0.83.1",
     "react-native-confetti-cannon": "^1.5.2",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-image-viewing": "^0.2.2",
