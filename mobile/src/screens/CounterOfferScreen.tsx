@@ -12,6 +12,8 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -349,144 +351,150 @@ export default function CounterOfferScreen() {
                 <View style={{ width: 60 }} />
             </View>
 
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Current Bid Info */}
-                <View style={[styles.bidCard, { backgroundColor: colors.surface }]}>
-                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{garageName}</Text>
-                    <Text style={[styles.partName, { textAlign: rtlTextAlign(isRTL) }]}>{partDescription}</Text>
-                    <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={styles.priceLabel}>{t('offers.currentBid')}</Text>
-                        <Text style={styles.priceAmount}>{currentAmount} {t('common.currency')}</Text>
-                    </View>
-                    <View style={styles.roundsInfo}>
-                        <Text style={styles.roundsText}>
-                            {t('offers.roundCount', { current: currentRound, max: MAX_ROUNDS })}
-                        </Text>
-                        <View style={styles.roundsDots}>
-                            {[1, 2, 3].map(r => (
-                                <View
-                                    key={r}
-                                    style={[
-                                        styles.roundDot,
-                                        r <= currentRound && styles.roundDotActive
-                                    ]}
-                                />
-                            ))}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    {/* Current Bid Info */}
+                    <View style={[styles.bidCard, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{garageName}</Text>
+                        <Text style={[styles.partName, { textAlign: rtlTextAlign(isRTL) }]}>{partDescription}</Text>
+                        <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={styles.priceLabel}>{t('offers.currentBid')}</Text>
+                            <Text style={styles.priceAmount}>{currentAmount} {t('common.currency')}</Text>
+                        </View>
+                        <View style={styles.roundsInfo}>
+                            <Text style={styles.roundsText}>
+                                {t('offers.roundCount', { current: currentRound, max: MAX_ROUNDS })}
+                            </Text>
+                            <View style={styles.roundsDots}>
+                                {[1, 2, 3].map(r => (
+                                    <View
+                                        key={r}
+                                        style={[
+                                            styles.roundDot,
+                                            r <= currentRound && styles.roundDotActive
+                                        ]}
+                                    />
+                                ))}
+                            </View>
                         </View>
                     </View>
-                </View>
 
-                {/* Pending Offer Response */}
-                {pendingOffer && (
-                    <View style={styles.pendingCard}>
-                        <Text style={[styles.pendingTitle, { textAlign: rtlTextAlign(isRTL) }]}>🔔 {t('offers.garageCounterOffer')}</Text>
-                        <Text style={[styles.pendingAmount, { textAlign: rtlTextAlign(isRTL) }]}>{pendingOffer.proposed_amount} {t('common.currency')}</Text>
-                        {pendingOffer.message && (
-                            <Text style={[styles.pendingMessage, { textAlign: rtlTextAlign(isRTL) }]}>"{pendingOffer.message}"</Text>
-                        )}
+                    {/* Pending Offer Response */}
+                    {pendingOffer && (
+                        <View style={styles.pendingCard}>
+                            <Text style={[styles.pendingTitle, { textAlign: rtlTextAlign(isRTL) }]}>🔔 {t('offers.garageCounterOffer')}</Text>
+                            <Text style={[styles.pendingAmount, { textAlign: rtlTextAlign(isRTL) }]}>{pendingOffer.proposed_amount} {t('common.currency')}</Text>
+                            {pendingOffer.message && (
+                                <Text style={[styles.pendingMessage, { textAlign: rtlTextAlign(isRTL) }]}>"{pendingOffer.message}"</Text>
+                            )}
 
-                        <View style={[styles.responseButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <View style={[styles.responseButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <TouchableOpacity
+                                    style={styles.acceptOfferButton}
+                                    onPress={() => handleRespondToOffer('accept')}
+                                >
+                                    <LinearGradient
+                                        colors={['#22c55e', '#16a34a'] as const}
+                                        style={styles.responseGradient}
+                                    >
+                                        <Text style={styles.responseText}>✓ {t('common.accept')}</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
+
+                                {currentRound < MAX_ROUNDS && (
+                                    <TouchableOpacity
+                                        style={styles.counterOfferButton}
+                                        onPress={() => handleRespondToOffer('counter')}
+                                    >
+                                        <Text style={styles.counterButtonText}>↩ {t('offers.counter')}</Text>
+                                    </TouchableOpacity>
+                                )}
+
+                                <TouchableOpacity
+                                    style={styles.rejectOfferButton}
+                                    onPress={() => handleRespondToOffer('reject')}
+                                >
+                                    <Text style={styles.rejectButtonText}>✕ {t('common.reject')}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Counter-Offer Form */}
+                    {canNegotiate && !pendingOffer && (
+                        <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
+                            <Text style={[styles.formTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.makeCounter')}</Text>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.yourOffer')} ({t('common.currency')})</Text>
+                                <TextInput
+                                    style={[styles.amountInput, { backgroundColor: colors.primary + '10', color: colors.primary, borderColor: colors.primary, textAlign: 'center' }]}
+                                    value={proposedAmount}
+                                    onChangeText={setProposedAmount}
+                                    placeholder={t('offers.enterAmount')}
+                                    placeholderTextColor="#999"
+                                    keyboardType="numeric"
+                                />
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.messageOptional')}</Text>
+                                <TextInput
+                                    style={[styles.input, styles.messageInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                                    value={message}
+                                    onChangeText={setMessage}
+                                    placeholder={t('offers.explainOffer')}
+                                    placeholderTextColor="#999"
+                                    multiline
+                                    maxLength={200}
+                                />
+                            </View>
+
                             <TouchableOpacity
-                                style={styles.acceptOfferButton}
-                                onPress={() => handleRespondToOffer('accept')}
+                                style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
+                                onPress={handleSendCounterOffer}
+                                disabled={isSending}
                             >
                                 <LinearGradient
                                     colors={['#22c55e', '#16a34a'] as const}
-                                    style={styles.responseGradient}
+                                    style={styles.sendGradient}
                                 >
-                                    <Text style={styles.responseText}>✓ {t('common.accept')}</Text>
+                                    {isSending ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <Text style={styles.sendText}>{t('offers.sendCounter')}</Text>
+                                    )}
                                 </LinearGradient>
                             </TouchableOpacity>
-
-                            {currentRound < MAX_ROUNDS && (
-                                <TouchableOpacity
-                                    style={styles.counterOfferButton}
-                                    onPress={() => handleRespondToOffer('counter')}
-                                >
-                                    <Text style={styles.counterButtonText}>↩ {t('offers.counter')}</Text>
-                                </TouchableOpacity>
-                            )}
-
-                            <TouchableOpacity
-                                style={styles.rejectOfferButton}
-                                onPress={() => handleRespondToOffer('reject')}
-                            >
-                                <Text style={styles.rejectButtonText}>✕ {t('common.reject')}</Text>
-                            </TouchableOpacity>
                         </View>
-                    </View>
-                )}
+                    )}
 
-                {/* Counter-Offer Form */}
-                {canNegotiate && !pendingOffer && (
-                    <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.formTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.makeCounter')}</Text>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.yourOffer')} ({t('common.currency')})</Text>
-                            <TextInput
-                                style={[styles.amountInput, { backgroundColor: colors.primary + '10', color: colors.primary, borderColor: colors.primary, textAlign: 'center' }]}
-                                value={proposedAmount}
-                                onChangeText={setProposedAmount}
-                                placeholder={t('offers.enterAmount')}
-                                placeholderTextColor="#999"
-                                keyboardType="numeric"
-                            />
+                    {/* Maximum Rounds Reached */}
+                    {currentRound >= MAX_ROUNDS && !pendingOffer && (
+                        <View style={styles.maxRoundsCard}>
+                            <Text style={styles.maxRoundsIcon}>🏁</Text>
+                            <Text style={styles.maxRoundsTitle}>{t('offers.negotiationComplete')}</Text>
+                            <Text style={[styles.maxRoundsText, { textAlign: 'center' }]}>
+                                {t('offers.maxRoundsReached')}
+                            </Text>
                         </View>
+                    )}
 
-                        <View style={styles.inputGroup}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.messageOptional')}</Text>
-                            <TextInput
-                                style={[styles.input, styles.messageInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
-                                value={message}
-                                onChangeText={setMessage}
-                                placeholder={t('offers.explainOffer')}
-                                placeholderTextColor="#999"
-                                multiline
-                                maxLength={200}
-                            />
+                    {/* Negotiation History */}
+                    {history.length > 0 && (
+                        <View style={styles.historySection}>
+                            <Text style={[styles.historyTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.historyTitle')}</Text>
+                            {history.map(renderHistoryItem)}
                         </View>
+                    )}
 
-                        <TouchableOpacity
-                            style={[styles.sendButton, isSending && styles.sendButtonDisabled]}
-                            onPress={handleSendCounterOffer}
-                            disabled={isSending}
-                        >
-                            <LinearGradient
-                                colors={['#22c55e', '#16a34a'] as const}
-                                style={styles.sendGradient}
-                            >
-                                {isSending ? (
-                                    <ActivityIndicator color="#fff" size="small" />
-                                ) : (
-                                    <Text style={styles.sendText}>{t('offers.sendCounter')}</Text>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                {/* Maximum Rounds Reached */}
-                {currentRound >= MAX_ROUNDS && !pendingOffer && (
-                    <View style={styles.maxRoundsCard}>
-                        <Text style={styles.maxRoundsIcon}>🏁</Text>
-                        <Text style={styles.maxRoundsTitle}>{t('offers.negotiationComplete')}</Text>
-                        <Text style={[styles.maxRoundsText, { textAlign: 'center' }]}>
-                            {t('offers.maxRoundsReached')}
-                        </Text>
-                    </View>
-                )}
-
-                {/* Negotiation History */}
-                {history.length > 0 && (
-                    <View style={styles.historySection}>
-                        <Text style={[styles.historyTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.historyTitle')}</Text>
-                        {history.map(renderHistoryItem)}
-                    </View>
-                )}
-
-                <View style={{ height: 100 }} />
-            </ScrollView>
+                    <View style={{ height: 100 }} />
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

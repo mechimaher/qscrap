@@ -14,6 +14,7 @@ import { Colors } from './src/constants/theme';
 import * as Notifications from 'expo-notifications';
 import NotificationService from './src/services/notifications';
 import { offlineQueue } from './src/services/OfflineQueue';
+import { initSoundService } from './src/services/SoundService';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { I18nProvider } from './src/i18n';
 import { ToastProvider } from './src/components/Toast';
@@ -30,7 +31,7 @@ import ProfileScreen from './src/screens/tabs/ProfileScreen';
 import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import PartInspectionScreen from './src/screens/PartInspectionScreen';
-import NavigationScreen from './src/screens/NavigationScreen';
+
 import ProofOfDeliveryScreen from './src/screens/ProofOfDeliveryScreen';
 import WebViewScreen from './src/screens/WebViewScreen';
 
@@ -43,13 +44,7 @@ export type RootStackParamList = {
     DeliveryConfirmation: { assignmentId: string };
     ProofOfDelivery: { assignmentId: string };
     PartInspection: { assignmentId: string; orderId?: string; orderNumber?: string; partDescription?: string };
-    Navigation: {
-        pickupLat?: number; pickupLng?: number;
-        deliveryLat?: number; deliveryLng?: number;
-        destinationType: 'pickup' | 'delivery';
-        destinationName: string;
-        destinationAddress: string;
-    };
+
     Settings: undefined;
     WebView: { url: string; title: string };
 };
@@ -160,6 +155,9 @@ function RootNavigator() {
         // Process any pending offline requests
         offlineQueue.processQueue();
 
+        // Initialize sound service for assignment alerts
+        initSoundService();
+
         // Handle foreground notifications
         const notificationListener = NotificationService.addNotificationReceivedListener(notification => {
             console.log('Notification Received:', notification);
@@ -205,11 +203,7 @@ function RootNavigator() {
                         options={{ animation: 'slide_from_right' }}
                     />
 
-                    <RootStack.Screen
-                        name="Navigation"
-                        component={NavigationScreen}
-                        options={{ animation: 'slide_from_bottom' }}
-                    />
+
                     <RootStack.Screen
                         name="WebView"
                         component={WebViewScreen}

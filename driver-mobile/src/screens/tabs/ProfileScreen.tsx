@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
+import Constants from 'expo-constants';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSettings } from '../../contexts/SettingsContext';
@@ -26,7 +27,7 @@ import { api } from '../../services/api';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants/theme';
 import { LEGAL_DOCS } from '../../constants/legal';
 
-const APP_VERSION = '1.2.0';
+const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.0.0';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<any>();

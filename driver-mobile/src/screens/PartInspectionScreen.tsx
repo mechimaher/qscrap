@@ -40,28 +40,28 @@ const DEFAULT_CHECKLIST: ChecklistItem[] = [
         label: 'Part Matches Description',
         description: 'The part matches the order description',
         checked: false,
-        required: true,
+        required: false,
     },
     {
         id: 'no_visible_damage',
         label: 'No Visible Damage',
         description: 'Part has no cracks, dents, or scratches',
         checked: false,
-        required: true,
+        required: false,
     },
     {
         id: 'properly_packaged',
         label: 'Properly Packaged',
         description: 'Part is securely packaged for transport',
         checked: false,
-        required: true,
+        required: false,
     },
     {
         id: 'correct_quantity',
         label: 'Correct Quantity',
         description: 'All items in the order are present',
         checked: false,
-        required: true,
+        required: false,
     },
 ];
 

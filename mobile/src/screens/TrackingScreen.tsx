@@ -174,6 +174,7 @@ export default function TrackingScreen() {
         warranty_days: number;
         part_price: number;
         delivery_fee: number;
+        loyalty_discount: number;
         total_amount: number;
         order_status: string;
     } | null>(null);
@@ -328,6 +329,7 @@ export default function TrackingScreen() {
                     warranty_days: parseInt(String(order.warranty_days)) || 0,
                     part_price: parseFloat(String(order.part_price)) || 0,
                     delivery_fee: parseFloat(String(order.delivery_fee || 0)),
+                    loyalty_discount: parseFloat(String(order.loyalty_discount || 0)),
                     total_amount: parseFloat(String(order.total_amount)) || 0,
                     order_status: order.order_status || 'in_transit',
                 });
@@ -790,6 +792,12 @@ export default function TrackingScreen() {
                                 <Text style={styles.priceLabel}>Delivery</Text>
                                 <Text style={styles.priceValue}>{orderDetails.delivery_fee.toFixed(0)} QAR</Text>
                             </View>
+                            {orderDetails.loyalty_discount > 0 && (
+                                <View style={styles.priceRow}>
+                                    <Text style={[styles.priceLabel, { color: '#22c55e' }]}>🎁 Loyalty Discount</Text>
+                                    <Text style={[styles.priceValue, { color: '#22c55e' }]}>-{orderDetails.loyalty_discount.toFixed(0)} QAR</Text>
+                                </View>
+                            )}
                             <View style={styles.priceDivider} />
                             <View style={styles.priceRow}>
                                 <Text style={styles.totalLabel}>Total</Text>
@@ -852,7 +860,7 @@ const darkMapStyle = [
 ];
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.dark.background },
+    container: { flex: 1, backgroundColor: '#F8F9FA' },
     map: { ...StyleSheet.absoluteFillObject },
     header: {
         position: 'absolute',
@@ -870,7 +878,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         ...Shadows.md,
@@ -895,7 +903,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         ...Shadows.md,
@@ -912,7 +920,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: Spacing.sm,
@@ -995,7 +1003,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: height * 0.75, // Fixed height for proper animation
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: BorderRadius.xl,
         borderTopRightRadius: BorderRadius.xl,
         padding: Spacing.lg,
@@ -1006,7 +1014,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: Colors.dark.border,
+        backgroundColor: '#D1D5DB',
         alignSelf: 'center',
         marginBottom: Spacing.lg,
     },
@@ -1030,7 +1038,7 @@ const styles = StyleSheet.create({
     driverCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#F5F5F5',
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
         marginBottom: Spacing.md,
@@ -1039,7 +1047,7 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1061,19 +1069,19 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
     },
     messageDriverIcon: { fontSize: 20 },
     // Premium Order Card Styles
     orderCard: {
-        backgroundColor: Colors.dark.background,
+        backgroundColor: '#F5F5F5',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.dark.border,
+        borderColor: '#E0E0E0',
     },
     statusTimeline: {
         flexDirection: 'row',
@@ -1089,11 +1097,11 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: Colors.dark.surface,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: Colors.dark.border,
+        borderColor: '#E0E0E0',
     },
     timelineNodeCompleted: {
         backgroundColor: Colors.primary,
@@ -1120,7 +1128,7 @@ const styles = StyleSheet.create({
     timelineConnector: {
         flex: 1,
         height: 3,
-        backgroundColor: Colors.dark.border,
+        backgroundColor: '#E0E0E0',
         marginHorizontal: Spacing.xs,
         marginBottom: Spacing.lg,
     },
@@ -1181,7 +1189,7 @@ const styles = StyleSheet.create({
     },
     pricingSection: {
         borderTopWidth: 1,
-        borderTopColor: Colors.dark.border,
+        borderTopColor: '#E0E0E0',
         paddingTop: Spacing.sm,
         marginTop: Spacing.sm,
     },
@@ -1200,7 +1208,7 @@ const styles = StyleSheet.create({
     },
     priceDivider: {
         height: 1,
-        backgroundColor: Colors.dark.border,
+        backgroundColor: '#E0E0E0',
         marginVertical: Spacing.xs,
     },
     totalLabel: {

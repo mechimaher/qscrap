@@ -58,6 +58,7 @@ export interface Assignment {
     total_amount?: number;
     part_price?: number;
     delivery_fee?: number;
+    loyalty_discount?: number;
     payment_method?: 'cod' | 'card' | 'wallet' | 'cash' | 'card_full';
 
     // Timing

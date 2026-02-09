@@ -15,6 +15,8 @@ import {
     Vibration,
     Animated,
     Easing,
+    Linking,
+    Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,7 +51,7 @@ export default function ChatScreen() {
     const { t, isRTL } = useI18n();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { orderId, orderNumber, recipientName } = route.params || {};
+    const { orderId, orderNumber, recipientName, customerPhone } = route.params || {};
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
@@ -110,17 +112,8 @@ export default function ChatScreen() {
 
     const loadMessages = async () => {
         try {
-            // API call to get chat history
-            const token = await api.getToken();
-            const response = await fetch(
-                `${API_BASE_URL}/chat/order/${orderId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-            const data = await response.json();
+            // Use centralized API service (timeouts, error handling, token management)
+            const data = await api.request(`/chat/order/${orderId}`);
             if (data.messages) {
                 setMessages(data.messages);
             }
@@ -238,6 +231,19 @@ export default function ChatScreen() {
                     <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Order #{orderNumber}</Text>
                 </View>
                 <View style={styles.headerRight}>
+                    {customerPhone && (
+                        <TouchableOpacity
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                Linking.openURL(`tel:${customerPhone}`).catch(() =>
+                                    Alert.alert('Error', 'Could not make call')
+                                );
+                            }}
+                            style={{ padding: 8, marginRight: 4 }}
+                        >
+                            <Text style={{ fontSize: 20 }}>📞</Text>
+                        </TouchableOpacity>
+                    )}
                     <View style={[styles.onlineIndicator, { backgroundColor: getSocket()?.connected ? Colors.success : colors.textMuted }]} />
                 </View>
             </View>

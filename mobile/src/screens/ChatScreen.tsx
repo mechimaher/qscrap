@@ -58,6 +58,7 @@ export default function ChatScreen() {
 
     const flatListRef = useRef<FlatList>(null);
     const socket = useRef<Socket | null>(null);
+    const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -85,10 +86,14 @@ export default function ChatScreen() {
 
         return () => {
             socket.current?.disconnect();
+            if (pollingInterval.current) {
+                clearInterval(pollingInterval.current);
+                pollingInterval.current = null;
+            }
         };
     }, []);
 
-    const loadMessages = async () => {
+    const loadMessages = async (silent = false) => {
         try {
             const user = await api.getUser();
             setUserId(user?.user_id || '');
@@ -102,12 +107,23 @@ export default function ChatScreen() {
 
             if (response.ok) {
                 const data = await response.json();
-                setMessages(data.messages || []);
+                const newMessages = data.messages || [];
+                setMessages(prev => {
+                    // Only update if message count changed (avoids unnecessary re-renders)
+                    if (prev.length !== newMessages.length) {
+                        return newMessages;
+                    }
+                    return prev;
+                });
             }
         } catch (error) {
-            handleApiError(error, toast, t('errors.loadFailed'));
+            if (!silent) {
+                handleApiError(error, toast, t('errors.loadFailed'));
+            }
         } finally {
-            setIsLoading(false);
+            if (!silent) {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -122,6 +138,12 @@ export default function ChatScreen() {
 
             socket.current.on('connect', () => {
                 setIsConnected(true);
+                // Stop polling when socket reconnects
+                if (pollingInterval.current) {
+                    clearInterval(pollingInterval.current);
+                    pollingInterval.current = null;
+                    log('[Chat] Socket reconnected, stopped polling fallback');
+                }
                 // Join order-specific chat room
                 socket.current?.emit('join_order_chat', { order_id: orderId });
                 // Also join general order room for messages
@@ -130,6 +152,13 @@ export default function ChatScreen() {
 
             socket.current.on('disconnect', () => {
                 setIsConnected(false);
+                // Start polling fallback when socket disconnects
+                if (!pollingInterval.current) {
+                    log('[Chat] Socket disconnected, starting polling fallback (5s)');
+                    pollingInterval.current = setInterval(() => {
+                        loadMessages(true);
+                    }, 5000);
+                }
             });
 
             // Listen for new messages

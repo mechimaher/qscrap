@@ -7,7 +7,7 @@ import * as Location from 'expo-location';
 import { api } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
 import { API_ENDPOINTS } from '../config/api';
-import { analyzeLocation, getSpoofingAlertLevel } from '../utils/spoofDetector';
+
 
 interface LocationState {
     latitude: number;
@@ -23,20 +23,20 @@ interface UseLocationResult {
     isTracking: boolean;
     hasPermission: boolean;
     error: string | null;
-    spoofingAlert: 'none' | 'low' | 'medium' | 'high'; // P2: Spoofing detection
+
     startTracking: () => Promise<boolean>;
     stopTracking: () => Promise<void>;
     requestPermission: () => Promise<boolean>;
 }
 
-const POLL_INTERVAL = 3000; // Poll every 3 seconds
+const POLL_INTERVAL = 10000; // Poll every 10 seconds (battery-friendly)
 
 export function useLocation(): UseLocationResult {
     const [location, setLocation] = useState<LocationState | null>(null);
     const [isTracking, setIsTracking] = useState(false);
     const [hasPermission, setHasPermission] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [spoofingAlert, setSpoofingAlert] = useState<'none' | 'low' | 'medium' | 'high'>('none');
+
 
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const isMountedRef = useRef(true);
@@ -106,17 +106,7 @@ export function useLocation(): UseLocationResult {
             return;
         }
 
-        // P2: GPS Spoofing Detection
-        const spoofResult = analyzeLocation(state.latitude, state.longitude, state.accuracy ?? undefined);
-        if (spoofResult.isSuspicious) {
-            console.warn(`[Location] 🚨 Spoofing detected: ${spoofResult.reason} (${spoofResult.confidence}% confidence)`);
-            // Update alert level
-            setSpoofingAlert(getSpoofingAlertLevel());
-            // Still allow the update but flag it - the backend can decide to reject
-        } else {
-            // Update alert level (may decrease over time)
-            setSpoofingAlert(getSpoofingAlertLevel());
-        }
+
 
         // Only update if coordinates actually changed (avoid unnecessary re-renders)
         const prev = locationRef.current;
@@ -140,7 +130,7 @@ export function useLocation(): UseLocationResult {
                 heading: state.heading ?? undefined,
                 speed: state.speed ?? undefined,
                 timestamp: state.timestamp,
-                spoofing_alert: getSpoofingAlertLevel(), // P2: Send spoofing alert to backend
+
             }
         ).catch((err) => console.log('[Location] Queue failed:', err));
     }, []);
@@ -211,7 +201,7 @@ export function useLocation(): UseLocationResult {
 
             // 4. Start polling
             pollIntervalRef.current = setInterval(pollLocation, POLL_INTERVAL);
-            console.log('[Location] Polling started (every 3s)');
+            console.log('[Location] Polling started (every 10s)');
 
             if (isMountedRef.current) setIsTracking(true);
             return true;
@@ -244,7 +234,7 @@ export function useLocation(): UseLocationResult {
         isTracking,
         hasPermission,
         error,
-        spoofingAlert, // P2: GPS spoofing alert level
+
         startTracking,
         stopTracking,
         requestPermission
