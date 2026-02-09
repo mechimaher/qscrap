@@ -101,11 +101,10 @@ export default function AssignmentDetailScreen() {
         setIsRefreshing(false);
     }, [assignmentId]);
 
-    // FIXED: Guard against null coordinates for completed orders
+    // Open external map app (Google Maps / Waze) — no in-app nav
     const openNavigation = (address: string, lat?: number, lng?: number, type: 'pickup' | 'delivery' = 'pickup') => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        // Guard: Check if coordinates are available
         if (!lat || !lng) {
             // Fallback to Google Maps address search
             const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -115,16 +114,35 @@ export default function AssignmentDetailScreen() {
             return;
         }
 
-        // VVIP: Open in-app navigation with OSRM
-        navigation.navigate('Navigation', {
-            pickupLat: assignment?.pickup_lat,
-            pickupLng: assignment?.pickup_lng,
-            deliveryLat: assignment?.delivery_lat,
-            deliveryLng: assignment?.delivery_lng,
-            destinationType: type,
-            destinationName: type === 'pickup' ? assignment?.garage_name : assignment?.customer_name,
-            destinationAddress: address,
-        });
+        // Open external map directly — Google Maps or Waze handles turn-by-turn
+        const { openExternalMap } = require('../services/routing.service');
+        const label = type === 'pickup' ? (assignment?.garage_name || 'Pickup') : (assignment?.customer_name || 'Customer');
+        openExternalMap(lat, lng, label);
+    };
+
+    // Emergency SOS — calls Qatar 999 or dispatch
+    const emergencySOS = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert(
+            '🆘 EMERGENCY SOS',
+            'Call Emergency Services (999) or QScrap Dispatch?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'QScrap Dispatch',
+                    onPress: () => Linking.openURL('tel:+97444000000').catch(() =>
+                        Alert.alert('Error', 'Could not call dispatch')
+                    ),
+                },
+                {
+                    text: 'CALL 999',
+                    style: 'destructive',
+                    onPress: () => Linking.openURL('tel:999').catch(() =>
+                        Alert.alert('Error', 'Could not call emergency')
+                    ),
+                },
+            ]
+        );
     };
 
     const callContact = (phone: string, name: string) => {
@@ -140,6 +158,7 @@ export default function AssignmentDetailScreen() {
             orderId: assignment.order_id,
             orderNumber: assignment.order_number,
             recipientName: assignment.customer_name,
+            customerPhone: assignment.customer_phone,
         });
     };
 
@@ -465,6 +484,32 @@ export default function AssignmentDetailScreen() {
             </ScrollView>
 
             {/* VVIP Bottom Action Bar - Only for active orders */}
+            {isActive && (
+                <TouchableOpacity
+                    style={{
+                        position: 'absolute',
+                        bottom: 110,
+                        left: 20,
+                        width: 56,
+                        height: 56,
+                        borderRadius: 28,
+                        backgroundColor: '#DC2626',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        elevation: 8,
+                        shadowColor: '#DC2626',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.4,
+                        shadowRadius: 8,
+                        zIndex: 100,
+                    }}
+                    onPress={emergencySOS}
+                >
+                    <Text style={{ fontSize: 24 }}>🆘</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Bottom Action Bar - Only for active orders */}
             {isActive && nextAction && (
                 <View style={[styles.bottomBar, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity

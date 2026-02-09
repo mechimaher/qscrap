@@ -13,6 +13,8 @@ import {
     Alert,
     TouchableOpacity,
     Switch,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -465,226 +467,232 @@ export default function PaymentScreen() {
                     <View style={{ width: 60 }} />
                 </View>
 
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                    {/* ═══════════════════════════════════════════════════════════
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                >
+                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                        {/* ═══════════════════════════════════════════════════════════
                         VVIP PREMIUM ORDER CARD - Glassmorphism Style
                     ═══════════════════════════════════════════════════════════ */}
-                    <LinearGradient
-                        colors={['#1a1a2e', '#2d2d44']}
-                        style={styles.vvipOrderCard}
-                    >
-                        {/* Garage Name - Hero */}
-                        <Text style={styles.vvipGarageName}>{garageName}</Text>
+                        <LinearGradient
+                            colors={['#1a1a2e', '#2d2d44']}
+                            style={styles.vvipOrderCard}
+                        >
+                            {/* Garage Name - Hero */}
+                            <Text style={styles.vvipGarageName}>{garageName}</Text>
 
-                        {/* Part Info - Clean & Minimal */}
-                        <View style={styles.vvipPartRow}>
-                            <Text style={styles.vvipPartLabel}>🔧 Part</Text>
-                            <Text style={styles.vvipPartValue} numberOfLines={1}>
-                                {partDescription}
-                            </Text>
-                        </View>
+                            {/* Part Info - Clean & Minimal */}
+                            <View style={styles.vvipPartRow}>
+                                <Text style={styles.vvipPartLabel}>🔧 Part</Text>
+                                <Text style={styles.vvipPartValue} numberOfLines={1}>
+                                    {partDescription}
+                                </Text>
+                            </View>
 
-                        {/* Price Breakdown - Elegant */}
-                        <View style={styles.vvipDivider} />
+                            {/* Price Breakdown - Elegant */}
+                            <View style={styles.vvipDivider} />
 
-                        <View style={styles.vvipPriceRow}>
-                            <Text style={styles.vvipPriceLabel}>Part Price</Text>
-                            <Text style={styles.vvipPriceValue}>{partPrice.toFixed(0)} QAR</Text>
-                        </View>
-                        <View style={styles.vvipPriceRow}>
-                            <Text style={styles.vvipPriceLabel}>Delivery</Text>
-                            <Text style={styles.vvipPriceValue}>{deliveryFee.toFixed(0)} QAR</Text>
-                        </View>
-                        <View style={[styles.vvipPriceRow, { marginTop: Spacing.sm }]}>
-                            <Text style={styles.vvipTotalLabel}>Total</Text>
-                            <Text style={styles.vvipTotalValue}>{totalAmount.toFixed(0)} QAR</Text>
-                        </View>
-                    </LinearGradient>
+                            <View style={styles.vvipPriceRow}>
+                                <Text style={styles.vvipPriceLabel}>Part Price</Text>
+                                <Text style={styles.vvipPriceValue}>{partPrice.toFixed(0)} QAR</Text>
+                            </View>
+                            <View style={styles.vvipPriceRow}>
+                                <Text style={styles.vvipPriceLabel}>Delivery</Text>
+                                <Text style={styles.vvipPriceValue}>{deliveryFee.toFixed(0)} QAR</Text>
+                            </View>
+                            <View style={[styles.vvipPriceRow, { marginTop: Spacing.sm }]}>
+                                <Text style={styles.vvipTotalLabel}>Total</Text>
+                                <Text style={styles.vvipTotalValue}>{totalAmount.toFixed(0)} QAR</Text>
+                            </View>
+                        </LinearGradient>
 
-                    {/* ═══════════════════════════════════════════════════════════
+                        {/* ═══════════════════════════════════════════════════════════
                         PAYMENT OPTIONS - Premium Cards
                     ═══════════════════════════════════════════════════════════ */}
-                    <View style={styles.paymentOptionsSection}>
-                        {/* Pay Delivery Only Option */}
-                        <TouchableOpacity
-                            style={[
-                                styles.vvipPaymentOption,
-                                paymentType === 'delivery_only' && styles.vvipPaymentSelected
-                            ]}
-                            onPress={() => {
-                                if (paymentType !== 'delivery_only') {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setPaymentType('delivery_only');
-                                    setClientSecret(null);
-                                }
-                            }}
-                            activeOpacity={0.85}
-                        >
-                            <View style={styles.vvipPaymentLeft}>
-                                <View style={[styles.vvipPaymentIcon, { backgroundColor: '#3B82F6' }]}>
-                                    <Text style={styles.vvipPaymentEmoji}>🚚</Text>
-                                </View>
-                                <View>
-                                    <Text style={styles.vvipPaymentTitle}>Pay Delivery Only</Text>
-                                    <Text style={styles.vvipPaymentSubtitle}>Cash on delivery for part</Text>
-                                </View>
-                            </View>
-                            <View style={styles.vvipPaymentRight}>
-                                <Text style={styles.vvipPaymentAmount}>{deliveryFee.toFixed(0)}</Text>
-                                <Text style={styles.vvipPaymentCurrency}>QAR</Text>
-                            </View>
-                        </TouchableOpacity>
-
-                        {/* Pay Full Amount Option */}
-                        <TouchableOpacity
-                            style={[
-                                styles.vvipPaymentOption,
-                                paymentType === 'full' && styles.vvipPaymentSelected
-                            ]}
-                            onPress={() => {
-                                if (paymentType !== 'full') {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setPaymentType('full');
-                                    setClientSecret(null);
-                                }
-                            }}
-                            activeOpacity={0.85}
-                        >
-                            <View style={styles.vvipPaymentLeft}>
-                                <View style={[styles.vvipPaymentIcon, { backgroundColor: '#22C55E' }]}>
-                                    <Text style={styles.vvipPaymentEmoji}>💳</Text>
-                                </View>
-                                <View>
-                                    <Text style={styles.vvipPaymentTitle}>Pay Full Amount</Text>
-                                    <Text style={styles.vvipPaymentSubtitle}>No cash at delivery</Text>
-                                </View>
-                            </View>
-                            <View style={styles.vvipPaymentRight}>
-                                <Text style={[styles.vvipPaymentAmount, { color: '#22C55E' }]}>{totalAmount.toFixed(0)}</Text>
-                                <Text style={styles.vvipPaymentCurrency}>QAR</Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* ═══════════════════════════════════════════════════════════
-                        LOYALTY DISCOUNT - Premium Banner (if available)
-                    ═══════════════════════════════════════════════════════════ */}
-                    {loyaltyData && loyaltyData.discountPercentage > 0 && (
-                        <View style={[
-                            styles.vvipLoyaltyCard,
-                            freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
-                        ]}>
-                            <View style={styles.vvipLoyaltyRow}>
-                                <View style={styles.vvipLoyaltyLeft}>
-                                    <Text style={styles.vvipLoyaltyBadge}>
-                                        {loyaltyData.tier === 'platinum' ? '💎' : loyaltyData.tier === 'gold' ? '🥇' : '🥈'}
-                                    </Text>
+                        <View style={styles.paymentOptionsSection}>
+                            {/* Pay Delivery Only Option */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.vvipPaymentOption,
+                                    paymentType === 'delivery_only' && styles.vvipPaymentSelected
+                                ]}
+                                onPress={() => {
+                                    if (paymentType !== 'delivery_only') {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setPaymentType('delivery_only');
+                                        setClientSecret(null);
+                                    }
+                                }}
+                                activeOpacity={0.85}
+                            >
+                                <View style={styles.vvipPaymentLeft}>
+                                    <View style={[styles.vvipPaymentIcon, { backgroundColor: '#3B82F6' }]}>
+                                        <Text style={styles.vvipPaymentEmoji}>🚚</Text>
+                                    </View>
                                     <View>
-                                        <Text style={styles.vvipLoyaltyTier}>
-                                            {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% OFF
-                                        </Text>
-                                        <Text style={styles.vvipLoyaltySavings}>
-                                            {applyDiscount ? `Save ${paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart} QAR` : 'Tap to apply'}
-                                        </Text>
+                                        <Text style={styles.vvipPaymentTitle}>Pay Delivery Only</Text>
+                                        <Text style={styles.vvipPaymentSubtitle}>Cash on delivery for part</Text>
                                     </View>
                                 </View>
-                                <Switch
-                                    value={applyDiscount}
-                                    onValueChange={(value) => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                        setApplyDiscount(value);
+                                <View style={styles.vvipPaymentRight}>
+                                    <Text style={styles.vvipPaymentAmount}>{deliveryFee.toFixed(0)}</Text>
+                                    <Text style={styles.vvipPaymentCurrency}>QAR</Text>
+                                </View>
+                            </TouchableOpacity>
+
+                            {/* Pay Full Amount Option */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.vvipPaymentOption,
+                                    paymentType === 'full' && styles.vvipPaymentSelected
+                                ]}
+                                onPress={() => {
+                                    if (paymentType !== 'full') {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setPaymentType('full');
+                                        setClientSecret(null);
+                                    }
+                                }}
+                                activeOpacity={0.85}
+                            >
+                                <View style={styles.vvipPaymentLeft}>
+                                    <View style={[styles.vvipPaymentIcon, { backgroundColor: '#22C55E' }]}>
+                                        <Text style={styles.vvipPaymentEmoji}>💳</Text>
+                                    </View>
+                                    <View>
+                                        <Text style={styles.vvipPaymentTitle}>Pay Full Amount</Text>
+                                        <Text style={styles.vvipPaymentSubtitle}>No cash at delivery</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.vvipPaymentRight}>
+                                    <Text style={[styles.vvipPaymentAmount, { color: '#22C55E' }]}>{totalAmount.toFixed(0)}</Text>
+                                    <Text style={styles.vvipPaymentCurrency}>QAR</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* ═══════════════════════════════════════════════════════════
+                        LOYALTY DISCOUNT - Premium Banner (if available)
+                    ═══════════════════════════════════════════════════════════ */}
+                        {loyaltyData && loyaltyData.discountPercentage > 0 && (
+                            <View style={[
+                                styles.vvipLoyaltyCard,
+                                freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
+                            ]}>
+                                <View style={styles.vvipLoyaltyRow}>
+                                    <View style={styles.vvipLoyaltyLeft}>
+                                        <Text style={styles.vvipLoyaltyBadge}>
+                                            {loyaltyData.tier === 'platinum' ? '💎' : loyaltyData.tier === 'gold' ? '🥇' : '🥈'}
+                                        </Text>
+                                        <View>
+                                            <Text style={styles.vvipLoyaltyTier}>
+                                                {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% OFF
+                                            </Text>
+                                            <Text style={styles.vvipLoyaltySavings}>
+                                                {applyDiscount ? `Save ${paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart} QAR` : 'Tap to apply'}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <Switch
+                                        value={applyDiscount}
+                                        onValueChange={(value) => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                            setApplyDiscount(value);
+                                        }}
+                                        trackColor={{ false: '#374151', true: '#22C55E' }}
+                                        thumbColor={applyDiscount ? '#fff' : '#9CA3AF'}
+                                    />
+                                </View>
+
+                                {/* FREE ORDER Celebration */}
+                                {freeOrder && (
+                                    <LinearGradient
+                                        colors={['#22C55E', '#16A34A']}
+                                        style={styles.vvipFreeOrderBanner}
+                                    >
+                                        <Text style={styles.vvipFreeOrderText}>🎊 FREE ORDER! 🎊</Text>
+                                    </LinearGradient>
+                                )}
+
+                                {/* Discount Summary */}
+                                {applyDiscount && (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 && !freeOrder && (
+                                    <View style={styles.vvipDiscountSummary}>
+                                        <Text style={styles.vvipDiscountLabel}>
+                                            {paymentType === 'full' ? 'You Pay' : 'COD Amount'}
+                                        </Text>
+                                        <View style={{ alignItems: 'flex-end' }}>
+                                            <Text style={styles.vvipDiscountOld}>
+                                                {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} QAR
+                                            </Text>
+                                            <Text style={styles.vvipDiscountNew}>
+                                                {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} QAR
+                                            </Text>
+                                        </View>
+                                    </View>
+                                )}
+                            </View>
+                        )}
+
+                        {/* Quick Info Banner */}
+                        {!freeOrder && (
+                            <View style={styles.vvipInfoBanner}>
+                                <Text style={styles.vvipInfoText}>
+                                    {paymentType === 'full'
+                                        ? '✓ No cash needed at delivery'
+                                        : `💵 ${applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0)} QAR cash at delivery`
+                                    }
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* Card Input */}
+                        <View style={[styles.cardSection, { backgroundColor: colors.surface }]}>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                                💳 Card Details
+                            </Text>
+
+                            <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>
+                                Enter your card information
+                            </Text>
+
+                            <View style={styles.cardFieldWrapper}>
+                                <CardField
+                                    postalCodeEnabled={false}
+                                    placeholders={{
+                                        number: '1234 1234 1234 1234',
+                                        expiration: 'MM/YY',
+                                        cvc: 'CVC',
                                     }}
-                                    trackColor={{ false: '#374151', true: '#22C55E' }}
-                                    thumbColor={applyDiscount ? '#fff' : '#9CA3AF'}
+                                    cardStyle={{
+                                        backgroundColor: '#FFFFFF',
+                                        textColor: '#1F2937',
+                                        placeholderColor: '#9CA3AF',
+                                        borderColor: '#E5E7EB',
+                                        borderWidth: 1,
+                                        borderRadius: 12,
+                                        fontSize: 16,
+                                        fontFamily: 'System',
+                                    }}
+                                    style={styles.cardField}
+                                    onCardChange={(cardDetails) => {
+                                        setCardComplete(cardDetails.complete);
+                                    }}
                                 />
                             </View>
 
-                            {/* FREE ORDER Celebration */}
-                            {freeOrder && (
-                                <LinearGradient
-                                    colors={['#22C55E', '#16A34A']}
-                                    style={styles.vvipFreeOrderBanner}
-                                >
-                                    <Text style={styles.vvipFreeOrderText}>🎊 FREE ORDER! 🎊</Text>
-                                </LinearGradient>
-                            )}
-
-                            {/* Discount Summary */}
-                            {applyDiscount && (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 && !freeOrder && (
-                                <View style={styles.vvipDiscountSummary}>
-                                    <Text style={styles.vvipDiscountLabel}>
-                                        {paymentType === 'full' ? 'You Pay' : 'COD Amount'}
-                                    </Text>
-                                    <View style={{ alignItems: 'flex-end' }}>
-                                        <Text style={styles.vvipDiscountOld}>
-                                            {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} QAR
-                                        </Text>
-                                        <Text style={styles.vvipDiscountNew}>
-                                            {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} QAR
-                                        </Text>
-                                    </View>
-                                </View>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Quick Info Banner */}
-                    {!freeOrder && (
-                        <View style={styles.vvipInfoBanner}>
-                            <Text style={styles.vvipInfoText}>
-                                {paymentType === 'full'
-                                    ? '✓ No cash needed at delivery'
-                                    : `💵 ${applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0)} QAR cash at delivery`
-                                }
-                            </Text>
-                        </View>
-                    )}
-
-                    {/* Card Input */}
-                    <View style={[styles.cardSection, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                            💳 Card Details
-                        </Text>
-
-                        <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>
-                            Enter your card information
-                        </Text>
-
-                        <View style={styles.cardFieldWrapper}>
-                            <CardField
-                                postalCodeEnabled={false}
-                                placeholders={{
-                                    number: '1234 1234 1234 1234',
-                                    expiration: 'MM/YY',
-                                    cvc: 'CVC',
-                                }}
-                                cardStyle={{
-                                    backgroundColor: '#FFFFFF',
-                                    textColor: '#1F2937',
-                                    placeholderColor: '#9CA3AF',
-                                    borderColor: '#E5E7EB',
-                                    borderWidth: 1,
-                                    borderRadius: 12,
-                                    fontSize: 16,
-                                    fontFamily: 'System',
-                                }}
-                                style={styles.cardField}
-                                onCardChange={(cardDetails) => {
-                                    setCardComplete(cardDetails.complete);
-                                }}
-                            />
+                            <View style={styles.cardSecurityRow}>
+                                <Text style={styles.securityIcon}>🔒</Text>
+                                <Text style={[styles.securityText, { color: colors.textSecondary }]}>
+                                    Your card details are encrypted and secure
+                                </Text>
+                            </View>
                         </View>
 
-                        <View style={styles.cardSecurityRow}>
-                            <Text style={styles.securityIcon}>🔒</Text>
-                            <Text style={[styles.securityText, { color: colors.textSecondary }]}>
-                                Your card details are encrypted and secure
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={{ height: 180 }} />
-                </ScrollView>
+                        <View style={{ height: 180 }} />
+                    </ScrollView>
+                </KeyboardAvoidingView>
 
                 {/* Pay Button - Enterprise Logic */}
                 <View style={[styles.footer, { backgroundColor: colors.surface }]}>

@@ -1,239 +1,16 @@
-// QScrap Driver App - Google Maps Routing Service
-// "First Class" Premium Routing with Live Traffic & High Accuracy
-// Replaces legacy OSRM implementation
-// P1: Circuit Breaker Pattern for API Protection
+// QScrap Driver App - Routing Service (Simplified)
+// External map navigation only. No in-app turn-by-turn.
 
-import { Assignment } from './api';
 import { Platform, Linking } from 'react-native';
-import { googleMapsCircuit } from '../utils/CircuitBreaker';
-
-const GOOGLE_DIRECTIONS_API = 'https://maps.googleapis.com/maps/api/directions/json';
-// VVIP Premium Key
-const GOOGLE_API_KEY = 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw';
 
 export interface LatLng {
     latitude: number;
     longitude: number;
 }
 
-export interface RouteStep {
-    instruction: string;
-    distance: number; // meters
-    duration: number; // seconds
-    maneuver: {
-        type: string;
-        modifier?: string;
-    };
-    html_instructions?: string;
-}
-
-export interface Route {
-    coordinates: LatLng[];
-    distance: number; // Total distance in meters
-    duration: number; // Total duration in seconds
-    steps: RouteStep[];
-    summary: string;
-    traffic_duration?: number; // Duration in traffic
-}
-
-export interface RouteResult {
-    success: boolean;
-    route?: Route;
-    error?: string;
-}
-
 /**
- * Decode Google Polyline (Precision 5)
- * Google Standard Encoding
- */
-function decodePolyline(encoded: string): LatLng[] {
-    if (!encoded) return [];
-    const poly: LatLng[] = [];
-    let index = 0, len = encoded.length;
-    let lat = 0, lng = 0;
-
-    while (index < len) {
-        let b, shift = 0, result = 0;
-        do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        const dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-        lat += dlat;
-
-        shift = 0;
-        result = 0;
-        do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-        } while (b >= 0x20);
-        const dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-        lng += dlng;
-
-        const p = {
-            latitude: lat / 100000.0,
-            longitude: lng / 100000.0,
-        };
-        poly.push(p);
-    }
-    return poly;
-}
-
-/**
- * Get driving route between two points using Google Directions API
- * Includes Traffic Models (Best Guess)
- * P1: Protected by Circuit Breaker - fails fast when API is down
- */
-export async function getRoute(from: LatLng, to: LatLng): Promise<RouteResult> {
-    // P1: Circuit Breaker Pattern - protects against cascading failures
-    return googleMapsCircuit.execute(
-        'google-directions',
-        async () => {
-            const origin = `${from.latitude},${from.longitude}`;
-            const destination = `${to.latitude},${to.longitude}`;
-
-            const params = new URLSearchParams({
-                origin: origin,
-                destination: destination,
-                mode: 'driving',
-                traffic_model: 'best_guess',
-                departure_time: 'now', // Required for traffic info
-                key: GOOGLE_API_KEY
-            });
-
-            const url = `${GOOGLE_DIRECTIONS_API}?${params.toString()}`;
-            console.log('[GoogleMaps] Fetching route...');
-
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status !== 'OK') {
-                const errorMsg = data.error_message || data.status;
-                console.error('[GoogleMaps] API Error:', errorMsg);
-                // Throw to trigger circuit breaker
-                throw new Error(`Google Maps Error: ${errorMsg}`);
-            }
-
-            const routeData = data.routes[0];
-            const leg = routeData.legs[0];
-            const overviewPolyline = routeData.overview_polyline.points;
-            const coordinates = decodePolyline(overviewPolyline);
-
-            // Parse steps
-            const steps: RouteStep[] = leg.steps.map((step: any) => ({
-                instruction: step.html_instructions.replace(/<[^>]*>/g, ''), // Strip HTML
-                html_instructions: step.html_instructions,
-                distance: step.distance.value,
-                duration: step.duration.value,
-                maneuver: {
-                    type: step.maneuver || 'straight',
-                    modifier: undefined // Google maneuvers are simpler strings
-                }
-            }));
-
-            return {
-                success: true,
-                route: {
-                    coordinates,
-                    distance: leg.distance.value,
-                    duration: leg.duration.value,
-                    traffic_duration: leg.duration_in_traffic?.value,
-                    steps,
-                    summary: routeData.summary || leg.start_address,
-                }
-            };
-        },
-        // Fallback when circuit is open - return straight line estimate
-        () => {
-            console.log('[GoogleMaps] Using straight-line fallback (circuit open)');
-            const distance = calculateStraightLineDistance(from, to);
-            const duration = Math.round(distance / 10); // Assume ~36 km/h average
-            return {
-                success: true,
-                route: {
-                    coordinates: [from, to],
-                    distance,
-                    duration,
-                    traffic_duration: duration, // Same as duration for fallback
-                    steps: [{
-                        instruction: 'Head towards destination (routing unavailable)',
-                        distance,
-                        duration,
-                        maneuver: { type: 'straight' }
-                    }],
-                    summary: 'Direct route (estimated)',
-                }
-            };
-        }
-    );
-}
-
-// Helper for fallback distance calculation
-function calculateStraightLineDistance(from: LatLng, to: LatLng): number {
-    const R = 6371000; // Earth radius in meters
-    const dLat = (to.latitude - from.latitude) * Math.PI / 180;
-    const dLng = (to.longitude - from.longitude) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(from.latitude * Math.PI / 180) *
-        Math.cos(to.latitude * Math.PI / 180) *
-        Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-/**
- * Get route for an assignment (driver → pickup → delivery)
- */
-export async function getAssignmentRoute(
-    driverLocation: LatLng,
-    assignment: Assignment
-): Promise<{
-    toPickup?: Route;
-    toDelivery?: Route;
-    totalDistance: number;
-    totalDuration: number;
-}> {
-    const result = {
-        toPickup: undefined as Route | undefined,
-        toDelivery: undefined as Route | undefined,
-        totalDistance: 0,
-        totalDuration: 0,
-    };
-
-    // Route to pickup
-    if (assignment.pickup_lat && assignment.pickup_lng) {
-        const pickupRoute = await getRoute(driverLocation, {
-            latitude: assignment.pickup_lat,
-            longitude: assignment.pickup_lng,
-        });
-        if (pickupRoute.success && pickupRoute.route) {
-            result.toPickup = pickupRoute.route;
-            result.totalDistance += pickupRoute.route.distance;
-            result.totalDuration += pickupRoute.route.duration;
-        }
-    }
-
-    // Route to delivery
-    if (assignment.pickup_lat && assignment.pickup_lng &&
-        assignment.delivery_lat && assignment.delivery_lng) {
-        const deliveryRoute = await getRoute(
-            { latitude: assignment.pickup_lat, longitude: assignment.pickup_lng },
-            { latitude: assignment.delivery_lat, longitude: assignment.delivery_lng }
-        );
-        if (deliveryRoute.success && deliveryRoute.route) {
-            result.toDelivery = deliveryRoute.route;
-            result.totalDistance += deliveryRoute.route.distance;
-            result.totalDuration += deliveryRoute.route.duration;
-        }
-    }
-
-    return result;
-}
-
-/**
- * Open External Map App (Google Maps / Waze / Apple Maps)
- * "Deep Linking" for VVIP native experience
+ * Open external map app (Google Maps / Waze) with destination
+ * This is the ONLY navigation method. We don't build our own nav.
  */
 export function openExternalMap(lat: number, lng: number, label: string = 'Destination') {
     const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
@@ -244,8 +21,23 @@ export function openExternalMap(lat: number, lng: number, label: string = 'Desti
     });
 
     if (url) {
-        Linking.openURL(url).catch(err => console.error('An error occurred', err));
+        Linking.openURL(url).catch(err => console.error('Could not open maps', err));
     }
+}
+
+/**
+ * Straight-line distance between two coordinates (Haversine)
+ * Used for ETA estimates and display only
+ */
+export function calculateStraightLineDistance(from: LatLng, to: LatLng): number {
+    const R = 6371000; // Earth radius in meters
+    const dLat = (to.latitude - from.latitude) * Math.PI / 180;
+    const dLng = (to.longitude - from.longitude) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(from.latitude * Math.PI / 180) *
+        Math.cos(to.latitude * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 // Helpers
@@ -260,14 +52,4 @@ export function formatDuration(seconds: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
-}
-
-export function getManeuverIcon(type: string, modifier?: string): string {
-    // Basic mapping for Google maneuvers
-    if (type.includes('left')) return '↰';
-    if (type.includes('right')) return '↱';
-    if (type.includes('uturn')) return '↩';
-    if (type.includes('straight')) return '↑';
-    if (type.includes('merge')) return '↗';
-    return '↑';
 }

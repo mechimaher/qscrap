@@ -99,6 +99,15 @@ class OfflineQueueService {
                     }
                 }
 
+                // Age out stale requests (older than 1 hour)
+                const ageMs = Date.now() - req.timestamp;
+                if (ageMs > 60 * 60 * 1000) {
+                    console.warn(`[OfflineQueue] Dropping stale request (${Math.round(ageMs / 60000)}min old): ${req.endpoint}`);
+                    this.queue.shift();
+                    this.saveQueue();
+                    continue;
+                }
+
                 console.log(`[OfflineQueue] Processing: ${req.method} ${req.endpoint} (Attempt ${req.retryCount + 1})`);
                 await api.request(req.endpoint, {
                     method: req.method,
@@ -133,16 +142,18 @@ class OfflineQueueService {
                 // Update retry count
                 req.retryCount++;
 
-                if (req.retryCount >= 50) {
+                if (req.retryCount >= 5) {
                     console.error('[OfflineQueue] Dropping request after max retries:', req);
                     this.queue.shift();
                     this.saveQueue();
                 } else {
+                    // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                    const backoffMs = Math.pow(2, req.retryCount) * 1000;
+                    console.log(`[OfflineQueue] Backing off ${backoffMs / 1000}s before retry`);
                     // Update the queue with the incremented retry count
                     this.saveQueue();
-                    // If it failed due to network/server, we stop processing for now 
-                    // to maintain sequence and try again later
-                    break;
+                    // Wait before retrying
+                    await new Promise(resolve => setTimeout(resolve, backoffMs));
                 }
             }
         }

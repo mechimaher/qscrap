@@ -5596,7 +5596,7 @@ function renderNotifications() {
     list.innerHTML = notifications.map(n => `
         <div class="notification-item" onclick="handleNotificationClick('${n.section || ''}')">
             <div class="icon ${n.type}">
-                <i class="bi bi-${getNotificationIcon(n.type)}"></i>
+                ${getNotificationIcon(n.type)}
             </div>
             <div style="flex: 1;">
                 <div style="font-size: 13px; font-weight: 500; color: var(--text-primary);">${escapeHTML(n.title)}</div>
@@ -5606,17 +5606,7 @@ function renderNotifications() {
     `).join('');
 }
 
-/**
- * Get icon for notification type
- */
-function getNotificationIcon(type) {
-    switch (type) {
-        case 'success': return 'check-circle';
-        case 'warning': return 'exclamation-triangle';
-        case 'danger': return 'x-circle';
-        default: return 'info-circle';
-    }
-}
+// getNotificationIcon is defined at line ~4799 with comprehensive type mappings
 
 /**
  * Handle notification click
@@ -5670,13 +5660,16 @@ function refreshCurrentSection(silent = false) {
         setTimeout(() => refreshBtn.classList.remove('spinning'), 1000);
     }
 
+    // Always refresh badge counts and notifications regardless of section
+    loadStats();
+    loadNotifications();
+
     // Find active section
     const activeNav = document.querySelector('.nav-item.active');
     const section = activeNav?.dataset?.section || 'dashboard';
 
     switch (section) {
         case 'dashboard':
-            loadStats();
             loadOrders(); // This also populates dashboard recent orders
             break;
         case 'requests':

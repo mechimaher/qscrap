@@ -220,28 +220,14 @@ export default function ProofOfDeliveryScreen() {
             // 5. Complete order with POD (creates payout immediately!)
             await executeWithOfflineFallback(
                 async () => {
-                    const token = await api.getToken();
-                    const fullUrl = `${API_BASE_URL}${API_ENDPOINTS.COMPLETE_WITH_POD}`;
                     console.log('[POD] Completing delivery with photo URL:', podPhotoUrl);
-
-                    const response = await fetch(fullUrl, {
+                    return api.request(API_ENDPOINTS.COMPLETE_WITH_POD, {
                         method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
                         body: JSON.stringify({
                             order_id: orderId,
                             pod_photo_url: podPhotoUrl
                         })
                     });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('[POD] Completion failed:', response.status, errorText);
-                        throw new Error(`Failed to complete delivery: ${response.status}`);
-                    }
-                    return response.json();
                 },
                 {
                     endpoint: API_ENDPOINTS.COMPLETE_WITH_POD,
@@ -252,8 +238,8 @@ export default function ProofOfDeliveryScreen() {
             );
 
             // 6. Update local store
-            const { useJobStore } = require('../stores/useJobStore');
-            useJobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
+            const jobStore = require('../stores/useJobStore').useJobStore;
+            jobStore.getState().updateAssignmentStatus(assignmentId, 'delivered');
 
             setStep('success');
         } catch (err: any) {
@@ -264,17 +250,10 @@ export default function ProofOfDeliveryScreen() {
         }
     };
 
-    // Premium UX: Auto-navigate home after success step
+    // Success haptic — no auto-redirect, driver taps Done when ready
     useEffect(() => {
         if (step === 'success') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            const timer = setTimeout(() => {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                });
-            }, 2500);
-            return () => clearTimeout(timer);
         }
     }, [step]);
 
@@ -471,8 +450,40 @@ export default function ProofOfDeliveryScreen() {
         <View style={styles.center}>
             <Text style={{ fontSize: 64 }}>✅</Text>
             <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>Delivery Complete!</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 32 }}>Returning to home...</Text>
-            <ActivityIndicator color={Colors.primary} size="small" />
+
+            {/* Delivery summary */}
+            {orderDetails && (
+                <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginTop: 16, marginBottom: 24, width: '100%' }}>
+                    {(orderDetails.payment_method === 'cod' || orderDetails.payment_method === 'cash') && (
+                        <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>
+                            💵 COD Collected: QAR {orderDetails.cod_amount?.toFixed(0) || orderDetails.total_amount?.toFixed(0)}
+                        </Text>
+                    )}
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>
+                        Payout has been created for this delivery
+                    </Text>
+                </View>
+            )}
+
+            {/* Manual Done button — driver controls when to go back */}
+            <TouchableOpacity
+                style={{ width: '100%' }}
+                onPress={() => {
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Main' }],
+                    });
+                }}
+            >
+                <LinearGradient
+                    colors={[Colors.primary, Colors.primaryDark]}
+                    style={{ paddingVertical: 16, borderRadius: 12, alignItems: 'center' }}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                >
+                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Done ✓</Text>
+                </LinearGradient>
+            </TouchableOpacity>
         </View>
     );
 

@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { Vibration } from 'react-native';
 import { API_BASE_URL } from '../config/api';
 import { scheduleLocalNotification } from './notifications';
+import { playAssignmentAlert, initSoundService } from './SoundService';
 
 // Get socket URL from API URL (same server)
 const SOCKET_URL = API_BASE_URL.replace('/api', '');
@@ -84,8 +85,11 @@ export const initSocket = async (): Promise<Socket | null> => {
     socket.on('new_assignment', async (data: any) => {
         console.log('========================================');
         console.log('🚨 NEW ASSIGNMENT RECEIVED VIA SOCKET!');
-        console.log('📦 Data:', JSON.stringify(data, null, 2));
+        console.log('📦 Order:', data.order_number, 'Type:', data.assignment_type);
         console.log('========================================');
+
+        // 🔊 ENTERPRISE ALERT: Play assignment chime (Facebook Messenger-style)
+        playAssignmentAlert();
 
         // Strong haptic feedback - triple notification pattern
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -93,15 +97,14 @@ export const initSocket = async (): Promise<Socket | null> => {
         setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 400);
 
         // 🔊 Play loud vibration pattern for urgent alert
-        // On Android with the 'assignments' channel, the notification will also play system sound
         Vibration.vibrate([0, 500, 200, 500, 200, 500]); // Three long vibrations
 
-        // Schedule notification with high priority sound
+        // Schedule high-priority push notification (visible when phone locked)
         scheduleLocalNotification(
             '🚨 NEW DELIVERY ASSIGNMENT!',
-            data.pickup_address
-                ? `Pickup from: ${data.pickup_address}`
-                : `Order #${data.order_number || 'New'} - URGENT: Tap to view!`,
+            data.order_number
+                ? `Order #${data.order_number} — ${data.part_description || data.pickup_address || 'Tap to view'}`
+                : `New assignment — URGENT: Tap to view!`,
             {
                 type: 'new_assignment',
                 assignmentId: data.assignment_id,
@@ -149,12 +152,30 @@ export const initSocket = async (): Promise<Socket | null> => {
 
     socket.on('new_message', (data: any) => {
         console.log('[Socket] New message:', data.message_id);
+        // Play sound + vibration for incoming messages
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Vibration.vibrate([0, 200, 100, 200]); // Double short vibration
+
+        // Schedule in-app notification so driver sees it even if not on chat screen
+        if (data.sender_type !== 'driver') {
+            playAssignmentAlert(); // Reuse chime for now (attention-grabbing)
+            scheduleLocalNotification(
+                '💬 New Message',
+                data.message?.substring(0, 100) || 'You have a new message',
+                {
+                    type: 'chat_message',
+                    orderId: data.order_id,
+                },
+                'chat'
+            );
+        }
     });
 
     socket.on('chat_notification', (data: any) => {
         console.log('[Socket] Chat notification:', data.order_number);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Vibration.vibrate([0, 200, 100, 200]);
+        playAssignmentAlert();
 
         scheduleLocalNotification(
             '💬 Customer Message',
@@ -163,14 +184,28 @@ export const initSocket = async (): Promise<Socket | null> => {
                 type: 'chat_message',
                 orderId: data.order_id,
                 orderNumber: data.order_number,
-            }
+            },
+            'chat'
         );
     });
 
     socket.on('chat_message', (data: any) => {
         console.log('[Socket] Chat message received:', data.message_id);
         if (data.sender_type === 'customer') {
+            // Customer sent a message — alert the driver with sound + vibration
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Vibration.vibrate([0, 200, 100, 200]);
+            playAssignmentAlert();
+
+            scheduleLocalNotification(
+                '💬 Customer Message',
+                data.message?.substring(0, 100) || 'Tap to reply',
+                {
+                    type: 'chat_message',
+                    assignmentId: data.assignment_id,
+                },
+                'chat'
+            );
         }
     });
 

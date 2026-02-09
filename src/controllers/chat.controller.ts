@@ -46,7 +46,7 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
                     `New Message from ${senderName} 💬`,
                     message.trim().substring(0, 100),
                     { type: 'chat_message', assignment_id: req.params.assignment_id },
-                    { channelId: 'chat', sound: true }
+                    { channelId: 'messages', sound: true }
                 );
             } catch (pushErr) {
                 logger.error('Push notification failed', { error: (pushErr as Error).message });

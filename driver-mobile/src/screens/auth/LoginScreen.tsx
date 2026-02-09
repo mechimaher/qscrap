@@ -22,12 +22,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
+import { useI18n } from '../../i18n';
 import { Colors, Shadows, BorderRadius, FontWeights } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const { login } = useAuth();
+    const { t } = useI18n();
 
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -82,7 +84,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!phone.trim() || !password.trim()) {
-            Alert.alert('Error', 'Please enter phone number and password');
+            Alert.alert(t('login_error' as any), t('login_subtitle' as any));
             return;
         }
 
@@ -144,7 +146,7 @@ export default function LoginScreen() {
                         </View>
                         <View style={styles.taglineContainer}>
                             <View style={styles.goldLine} />
-                            <Text style={styles.tagline}>Delivering Excellence</Text>
+                            <Text style={styles.tagline}>{t('login_subtitle' as any)}</Text>
                             <View style={styles.goldLine} />
                         </View>
                     </Animated.View>
@@ -161,7 +163,7 @@ export default function LoginScreen() {
                             </View>
                             <TextInput
                                 style={styles.input}
-                                placeholder="Phone Number"
+                                placeholder={t('phone' as any)}
                                 placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={phone}
                                 onChangeText={setPhone}
@@ -177,7 +179,7 @@ export default function LoginScreen() {
                             </View>
                             <TextInput
                                 style={styles.input}
-                                placeholder="Password"
+                                placeholder={t('password' as any)}
                                 placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={password}
                                 onChangeText={setPassword}
@@ -211,7 +213,7 @@ export default function LoginScreen() {
                                     <ActivityIndicator color={Colors.primaryDark} size="small" />
                                 ) : (
                                     <>
-                                        <Text style={styles.loginButtonText}>Sign In</Text>
+                                        <Text style={styles.loginButtonText}>{t('login_button' as any)}</Text>
                                         <Text style={styles.loginButtonIcon}>→</Text>
                                     </>
                                 )}
@@ -229,7 +231,7 @@ export default function LoginScreen() {
                                         { text: 'Cancel', style: 'cancel' },
                                         {
                                             text: 'Contact Support',
-                                            onPress: () => Linking.openURL('whatsapp://send?phone=97455555555&text=Hi, I need help resetting my driver password')
+                                            onPress: () => Linking.openURL('whatsapp://send?phone=97440000000&text=Hi, I need help resetting my driver password')
                                         }
                                     ]
                                 );
@@ -249,7 +251,7 @@ export default function LoginScreen() {
                         </Text>
                         <TouchableOpacity
                             style={styles.helpButton}
-                            onPress={() => Linking.openURL('whatsapp://send?phone=97455555555')}
+                            onPress={() => Linking.openURL('whatsapp://send?phone=97440000000')}
                         >
                             <Text style={styles.helpButtonText}>Need Help?</Text>
                         </TouchableOpacity>

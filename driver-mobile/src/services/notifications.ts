@@ -80,6 +80,18 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 enableVibrate: true,
             });
 
+            // Chat messages channel - high priority with sound
+            await Notifications.setNotificationChannelAsync('chat', {
+                name: 'Chat Messages',
+                description: 'Customer and driver messages',
+                importance: Notifications.AndroidImportance.HIGH,
+                vibrationPattern: [0, 200, 100, 200],
+                enableLights: true,
+                lightColor: '#4A90D9',
+                enableVibrate: true,
+                bypassDnd: true, // Don't miss customer messages during active delivery
+            });
+
             // Default channel
             await Notifications.setNotificationChannelAsync('default', {
                 name: 'General',
@@ -129,6 +141,7 @@ export const scheduleLocalNotification = async (
                 data: data || {},
                 priority: Notifications.AndroidNotificationPriority.MAX,
                 vibrate: [0, 500, 250, 500],
+                ...(Platform.OS === 'android' ? { channelId } : {}),
             },
             trigger: null, // Immediate
         });

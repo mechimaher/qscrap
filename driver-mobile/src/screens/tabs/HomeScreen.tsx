@@ -82,21 +82,27 @@ export default function HomeScreen() {
             loadData();
         };
 
-        // VVIP: Show accept/reject popup for new assignments
+        // VVIP: Show accept/reject popup for new assignments — INSTANT (Talabat/Uber pattern)
         const handleNewAssignment = (data: any) => {
-            console.log('[Home] New assignment received:', data);
+            console.log('[Home] 🚨 New assignment received via socket:', data?.assignment_id);
 
-            // Critical for real-time: reload all data to update badges and lists
-            loadData();
-
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-
-            // If assignment data is included directly or as a property, show popup
+            // Direct state injection — no API round-trip (0ms vs 200-2000ms)
             const assignmentData = data?.assignment || (data?.assignment_id ? data : null);
             if (assignmentData) {
+                // Inject into active assignments list instantly
+                setActiveAssignments(prev => {
+                    const exists = prev.some(a => a.assignment_id === assignmentData.assignment_id);
+                    return exists ? prev : [assignmentData, ...prev];
+                });
+                // Show the accept/reject popup immediately
                 setPendingAssignment(assignmentData);
                 setShowAssignmentPopup(true);
             }
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+            // Background sync after 2s to get any missing fields
+            setTimeout(() => loadData(true), 2000);
         };
 
         const handleDriverStatusChange = (data: any) => {

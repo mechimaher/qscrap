@@ -60,6 +60,22 @@ export function initializeSocketIO(io: Server): void {
             }
         });
 
+        // Driver room - CRITICAL for real-time assignment delivery
+        socket.on('join_driver_room', (driverId: string) => {
+            if (driverId) {
+                socket.join(`driver_${driverId}`);
+                logger.socket('Driver joined room', { socketId: socket.id, driverId });
+            }
+        });
+
+        // Generic room join (used by driver app for chat rooms)
+        socket.on('join_room', (room: string) => {
+            if (room) {
+                socket.join(room);
+                logger.socket('Client joined room', { socketId: socket.id, room });
+            }
+        });
+
         // Admin dashboard room - for real-time pending counts
         socket.on('join_admin_room', () => {
             socket.join('admin');

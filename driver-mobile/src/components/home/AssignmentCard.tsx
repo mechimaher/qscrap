@@ -50,6 +50,37 @@ export function AssignmentCard({ assignment, colors, onPress }: AssignmentCardPr
                 <Text style={[styles.orderNumber, { color: colors.text }]}>
                     Order #{assignment.order_number}
                 </Text>
+
+                {/* COD Badge - shows amount driver needs to collect */}
+                {assignment.total_amount && (
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: assignment.payment_method === 'cod' || assignment.payment_method === 'cash'
+                            ? '#10B98110' : '#3B82F610',
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: 8,
+                        alignSelf: 'flex-start',
+                        marginBottom: 8,
+                        gap: 4,
+                    }}>
+                        <Text style={{ fontSize: 12 }}>
+                            {assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? '💵' : '💳'}
+                        </Text>
+                        <Text style={{
+                            fontSize: 13,
+                            fontWeight: '700',
+                            color: assignment.payment_method === 'cod' || assignment.payment_method === 'cash'
+                                ? '#10B981' : '#3B82F6',
+                        }}>
+                            {assignment.payment_method === 'cod' || assignment.payment_method === 'cash'
+                                ? `COD: QAR ${assignment.total_amount}`
+                                : `QAR ${assignment.total_amount} (Paid)`}
+                        </Text>
+                    </View>
+                )}
+
                 {/* Part Category - simplified for drivers */}
                 <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
                     📦 {assignment.part_category || 'Auto Part'}

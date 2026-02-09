@@ -544,12 +544,21 @@ export class DeliveryService {
             });
 
             emitToDriver(driver.user_id as string, 'new_assignment', {
+                // Full assignment data for instant popup rendering (Talabat/Uber pattern)
                 assignment_id: assignment.assignment_id,
                 assignment_type: 'collection',
                 order_id: order.order_id,
                 order_number: order.order_number,
+                status: 'assigned',
                 pickup_address: order.garage_address,
+                pickup_lat: order.garage_lat,
+                pickup_lng: order.garage_lng,
+                delivery_address: order.delivery_address,
+                delivery_lat: order.delivery_lat,
+                delivery_lng: order.delivery_lng,
                 garage_name: order.garage_name,
+                customer_name: order.customer_name,
+                part_description: order.part_description,
             });
 
             // CRITICAL: Send Expo push notification for phone-locked/app-killed scenarios
@@ -608,13 +617,21 @@ export class DeliveryService {
             });
 
             emitToDriver(driver.user_id as string, 'new_assignment', {
+                // Full assignment data for instant popup rendering (Talabat/Uber pattern)
                 assignment_id: assignment.assignment_id,
                 assignment_type: 'delivery',
                 order_id: order.order_id,
                 order_number: order.order_number,
+                status: 'assigned',
                 pickup_address: order.pickup_address,
+                pickup_lat: order.garage_lat,
+                pickup_lng: order.garage_lng,
                 delivery_address: order.delivery_address,
+                delivery_lat: order.delivery_lat,
+                delivery_lng: order.delivery_lng,
+                garage_name: order.garage_name,
                 customer_name: order.customer_name,
+                part_description: order.part_description,
             });
 
             // CRITICAL: Send Expo push notification for phone-locked/app-killed scenarios
