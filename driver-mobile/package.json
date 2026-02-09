@@ -50,7 +50,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "@types/react-native-maps": "^0.24.2",
-    "babel-preset-expo": "^54.0.9",
+    "babel-preset-expo": "^54.0.10",
     "eas-cli": "^16.31.0",
     "typescript": "~5.9.2"
   },
