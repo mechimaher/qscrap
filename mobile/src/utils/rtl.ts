@@ -20,6 +20,15 @@ export const rtlTextAlign = (isRTL: boolean): TextStyle['textAlign'] =>
     isRTL ? 'right' : 'left';
 
 /**
+ * Get combined text style with alignment AND writing direction
+ * Use on text containers to ensure full LTR restoration after AR→EN switch
+ */
+export const rtlTextStyle = (isRTL: boolean): Pick<TextStyle, 'textAlign' | 'writingDirection'> => ({
+    textAlign: isRTL ? 'right' : 'left',
+    writingDirection: isRTL ? 'rtl' : 'ltr',
+});
+
+/**
  * Get the opposite text alignment (for end-aligned text)
  */
 export const rtlTextAlignEnd = (isRTL: boolean): TextStyle['textAlign'] =>

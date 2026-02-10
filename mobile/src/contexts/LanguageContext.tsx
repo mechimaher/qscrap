@@ -7,6 +7,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { I18nManager, Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
+import * as Updates from 'expo-updates';
 import {
     translations,
     getTranslation,
@@ -117,14 +118,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     /**
      * Sync RTL state with React Native's I18nManager
+     * CRITICAL: Must ALWAYS enforce correct RTL state on startup
      */
     const syncRTLState = (shouldBeRTL: boolean) => {
         const currentRTL = I18nManager.isRTL;
 
+        // Always enforce to prevent stale RTL state after AR→EN switch
+        I18nManager.allowRTL(shouldBeRTL);
+        I18nManager.forceRTL(shouldBeRTL);
+
         if (currentRTL !== shouldBeRTL) {
-            log(`[i18n] RTL mismatch: current=${currentRTL}, should=${shouldBeRTL}`);
-            // Note: The mismatch will be resolved after app restart
-            // We don't force here to avoid unexpected behavior
+            log(`[i18n] RTL mismatch fixed on init: native=${currentRTL}, applied=${shouldBeRTL}`);
         }
     };
 
@@ -157,16 +161,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             I18nManager.allowRTL(shouldBeRTL);
             I18nManager.forceRTL(shouldBeRTL);
 
-            // Notify user that restart is needed for layout changes
-            if (needsLayoutChange) {
+            // ALWAYS reload app when language changes
+            // I18nManager.isRTL doesn't update until restart, so we can't rely
+            // on needsLayoutChange — we must always restart to guarantee correct layout
+            if (previousLanguage !== lang) {
                 Alert.alert(
                     lang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
                     lang === 'ar'
-                        ? 'يرجى إعادة تشغيل التطبيق لتطبيق تغييرات التخطيط'
-                        : 'Please restart the app to apply layout changes',
+                        ? 'سيتم إعادة تشغيل التطبيق لتطبيق التغييرات'
+                        : 'The app will restart to apply changes',
                     [{
                         text: lang === 'ar' ? 'حسناً' : 'OK',
-                        style: 'default'
+                        style: 'default',
+                        onPress: async () => {
+                            try {
+                                await Updates.reloadAsync();
+                            } catch (e) {
+                                log('[i18n] Updates.reloadAsync failed, manual restart needed:', e);
+                            }
+                        }
                     }]
                 );
             }
