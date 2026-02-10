@@ -200,7 +200,7 @@ jobs:
 
       - name: Prune old workflow artifacts
         if: env.DRY_RUN == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const artifacts = await github.rest.actions.listArtifactsForRepo({
@@ -228,7 +228,7 @@ jobs:
             console.log(`Deleted ${deleted} old artifacts`);
 
       - name: Report artifact usage
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const artifacts = await github.rest.actions.listArtifactsForRepo({
