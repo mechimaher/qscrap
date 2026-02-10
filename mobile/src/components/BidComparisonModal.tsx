@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Bid } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
     onAccept,
     onClose,
 }) => {
+    const { t } = useTranslation();
     const [sortBy, setSortBy] = useState<SortKey>('price');
 
     const handleSort = (key: SortKey) => {
@@ -76,7 +78,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                         end={{ x: 1, y: 0 }}
                         style={styles.header}
                     >
-                        <Text style={styles.headerTitle}>Compare Bids</Text>
+                        <Text style={styles.headerTitle}>{t('bidComparison.compareBids')}</Text>
                         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                             <Text style={styles.closeText}>✕</Text>
                         </TouchableOpacity>
@@ -89,7 +91,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             style={[styles.sortTab, sortBy === 'price' && styles.sortTabActive]}
                         >
                             <Text style={[styles.sortTabText, sortBy === 'price' && styles.sortTabTextActive]}>
-                                💰 Price
+                                💰 {t('bidComparison.price')}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -97,7 +99,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             style={[styles.sortTab, sortBy === 'rating' && styles.sortTabActive]}
                         >
                             <Text style={[styles.sortTabText, sortBy === 'rating' && styles.sortTabTextActive]}>
-                                ⭐ Rating
+                                ⭐ {t('bidComparison.rating')}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -105,7 +107,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             style={[styles.sortTab, sortBy === 'warranty' && styles.sortTabActive]}
                         >
                             <Text style={[styles.sortTabText, sortBy === 'warranty' && styles.sortTabTextActive]}>
-                                🛡️ Warranty
+                                🛡️ {t('bidComparison.warranty')}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -130,44 +132,44 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                         <Text style={styles.garageName}>{bid.garage_name}</Text>
                                         {isBestPrice && (
                                             <View style={styles.bestBadge}>
-                                                <Text style={styles.bestBadgeText}>BEST PRICE</Text>
+                                                <Text style={styles.bestBadgeText}>{t('bidComparison.bestPriceBadge')}</Text>
                                             </View>
                                         )}
                                     </View>
 
                                     {/* Price */}
                                     <View style={styles.bidColumn}>
-                                        <Text style={styles.columnLabel}>Price</Text>
+                                        <Text style={styles.columnLabel}>{t('bidComparison.price')}</Text>
                                         <Text style={[
                                             styles.priceText,
                                             isBestPrice && styles.priceTextBest
                                         ]}>
-                                            {bid.bid_amount} QAR
+                                            {bid.bid_amount} {t('common.currency')}
                                         </Text>
                                     </View>
 
                                     {/* Rating */}
                                     <View style={styles.bidColumn}>
-                                        <Text style={styles.columnLabel}>Rating</Text>
+                                        <Text style={styles.columnLabel}>{t('bidComparison.rating')}</Text>
                                         <View style={styles.ratingRow}>
                                             <Text style={styles.ratingStar}>⭐</Text>
                                             <Text style={[
                                                 styles.ratingText,
                                                 isBestRating && styles.ratingTextBest
                                             ]}>
-                                                {bid.rating_average?.toFixed(1) || 'N/A'}
+                                                {bid.rating_average?.toFixed(1) || '-'}
                                             </Text>
                                         </View>
                                     </View>
 
                                     {/* Warranty */}
                                     <View style={styles.bidColumn}>
-                                        <Text style={styles.columnLabel}>Warranty</Text>
+                                        <Text style={styles.columnLabel}>{t('bidComparison.warranty')}</Text>
                                         <Text style={[
                                             styles.warrantyText,
                                             isBestWarranty && styles.warrantyTextBest
                                         ]}>
-                                            {bid.warranty_days > 0 ? `${bid.warranty_days}d` : 'None'}
+                                            {bid.warranty_days > 0 ? `${bid.warranty_days}d` : t('bidComparison.none')}
                                         </Text>
                                     </View>
 
@@ -180,7 +182,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                             colors={['#22C55E', '#16A34A'] as any}
                                             style={styles.acceptGradient}
                                         >
-                                            <Text style={styles.acceptText}>Accept</Text>
+                                            <Text style={styles.acceptText}>{t('bidComparison.accept')}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface QuickReply {
     id: string;
@@ -23,43 +24,43 @@ interface QuickRepliesProps {
 }
 
 // Context-aware quick replies based on recipient type
-const QUICK_REPLIES: Record<string, QuickReply[]> = {
+const QUICK_REPLY_KEYS: Record<string, Array<{ id: string; translationKey: string; emoji: string; category: string }>> = {
     // Customer sending to Driver
     forDriver: [
-        { id: '1', text: "I'm waiting outside", emoji: '🏠', category: 'location' },
-        { id: '2', text: "Please call when you arrive", emoji: '📞', category: 'help' },
-        { id: '3', text: "I'll meet you at the gate", emoji: '🚪', category: 'location' },
-        { id: '4', text: "How long until you arrive?", emoji: '⏱️', category: 'time' },
-        { id: '5', text: "I'm on the 2nd floor", emoji: '🏢', category: 'location' },
-        { id: '6', text: "Can you deliver to security?", emoji: '👮', category: 'location' },
-        { id: '7', text: "Please ring the doorbell", emoji: '🔔', category: 'help' },
-        { id: '8', text: "Thank you!", emoji: '🙏', category: 'greeting' },
+        { id: '1', translationKey: 'quickReplies.waitingOutside', emoji: '🏠', category: 'location' },
+        { id: '2', translationKey: 'quickReplies.callWhenArrive', emoji: '📞', category: 'help' },
+        { id: '3', translationKey: 'quickReplies.meetAtGate', emoji: '🚪', category: 'location' },
+        { id: '4', translationKey: 'quickReplies.howLongUntilArrive', emoji: '⏱️', category: 'time' },
+        { id: '5', translationKey: 'quickReplies.onSecondFloor', emoji: '🏢', category: 'location' },
+        { id: '6', translationKey: 'quickReplies.deliverToSecurity', emoji: '👮', category: 'location' },
+        { id: '7', translationKey: 'quickReplies.ringDoorbell', emoji: '🔔', category: 'help' },
+        { id: '8', translationKey: 'quickReplies.thankYou', emoji: '🙏', category: 'greeting' },
     ],
 
     // Customer sending to Garage
     forGarage: [
-        { id: '1', text: "Is the part still available?", emoji: '❓', category: 'status' },
-        { id: '2', text: "Can you confirm the part number?", emoji: '🔢', category: 'help' },
-        { id: '3', text: "When will it be ready for pickup?", emoji: '⏱️', category: 'time' },
-        { id: '4', text: "Does this include warranty?", emoji: '📋', category: 'help' },
-        { id: '5', text: "Can you send more photos?", emoji: '📸', category: 'help' },
-        { id: '6', text: "What's the condition?", emoji: '🔍', category: 'status' },
-        { id: '7', text: "Is the price negotiable?", emoji: '💰', category: 'help' },
-        { id: '8', text: "Thank you for your help!", emoji: '🙏', category: 'greeting' },
+        { id: '1', translationKey: 'quickReplies.partStillAvailable', emoji: '❓', category: 'status' },
+        { id: '2', translationKey: 'quickReplies.confirmPartNumber', emoji: '🔢', category: 'help' },
+        { id: '3', translationKey: 'quickReplies.whenReadyPickup', emoji: '⏱️', category: 'time' },
+        { id: '4', translationKey: 'quickReplies.includeWarranty', emoji: '📋', category: 'help' },
+        { id: '5', translationKey: 'quickReplies.sendMorePhotos', emoji: '📸', category: 'help' },
+        { id: '6', translationKey: 'quickReplies.whatCondition', emoji: '🔍', category: 'status' },
+        { id: '7', translationKey: 'quickReplies.priceNegotiable', emoji: '💰', category: 'help' },
+        { id: '8', translationKey: 'quickReplies.thankYouHelp', emoji: '🙏', category: 'greeting' },
     ],
 
     // Driver/Staff sending to Customer  
     forCustomer: [
-        { id: '1', text: "I'm 5 minutes away", emoji: '🚗', category: 'time' },
-        { id: '2', text: "I've arrived at your location", emoji: '📍', category: 'location' },
-        { id: '3', text: "Please come outside", emoji: '🚶', category: 'help' },
-        { id: '4', text: "I'm waiting at the gate", emoji: '🚪', category: 'location' },
-        { id: '5', text: "I tried calling but no answer", emoji: '📞', category: 'status' },
-        { id: '6', text: "Can you share your exact location?", emoji: '🗺️', category: 'location' },
-        { id: '7', text: "I'm in a white car", emoji: '🚙', category: 'help' },
-        { id: '8', text: "Delivery complete. Thank you!", emoji: '✅', category: 'greeting' },
-        { id: '9', text: "On my way to pickup the part", emoji: '🏭', category: 'status' },
-        { id: '10', text: "Traffic delay, will be there in 10 min", emoji: '🚦', category: 'time' },
+        { id: '1', translationKey: 'quickReplies.fiveMinAway', emoji: '🚗', category: 'time' },
+        { id: '2', translationKey: 'quickReplies.arrivedLocation', emoji: '📍', category: 'location' },
+        { id: '3', translationKey: 'quickReplies.comeOutside', emoji: '🚶', category: 'help' },
+        { id: '4', translationKey: 'quickReplies.waitingAtGate', emoji: '🚪', category: 'location' },
+        { id: '5', translationKey: 'quickReplies.triedCalling', emoji: '📞', category: 'status' },
+        { id: '6', translationKey: 'quickReplies.shareExactLocation', emoji: '🗺️', category: 'location' },
+        { id: '7', translationKey: 'quickReplies.inWhiteCar', emoji: '🚙', category: 'help' },
+        { id: '8', translationKey: 'quickReplies.deliveryComplete', emoji: '✅', category: 'greeting' },
+        { id: '9', translationKey: 'quickReplies.onMyWayPickup', emoji: '🏭', category: 'status' },
+        { id: '10', translationKey: 'quickReplies.trafficDelay', emoji: '🚦', category: 'time' },
     ],
 };
 
@@ -79,20 +80,20 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     recipientType,
     onSelectReply,
 }) => {
+    const { t } = useTranslation();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     // Get appropriate replies based on recipient
-    const getReplies = () => {
-        switch (recipientType) {
-            case 'driver':
-                return QUICK_REPLIES.forDriver;
-            case 'garage':
-                return QUICK_REPLIES.forGarage;
-            case 'customer':
-                return QUICK_REPLIES.forCustomer;
-            default:
-                return QUICK_REPLIES.forDriver;
-        }
+    const getReplies = (): QuickReply[] => {
+        const keySet = recipientType === 'driver' ? QUICK_REPLY_KEYS.forDriver
+            : recipientType === 'garage' ? QUICK_REPLY_KEYS.forGarage
+                : QUICK_REPLY_KEYS.forCustomer;
+        return keySet.map(item => ({
+            id: item.id,
+            text: t(item.translationKey),
+            emoji: item.emoji,
+            category: item.category as QuickReply['category'],
+        }));
     };
 
     const replies = getReplies();
@@ -106,11 +107,11 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     };
 
     const categories = [
-        { key: null, label: 'All', emoji: '📝' },
-        { key: 'status', label: 'Status', emoji: '📊' },
-        { key: 'location', label: 'Location', emoji: '📍' },
-        { key: 'time', label: 'Time', emoji: '⏱️' },
-        { key: 'help', label: 'Help', emoji: '💡' },
+        { key: null, label: t('quickReplies.all'), emoji: '📝' },
+        { key: 'status', label: t('quickReplies.status'), emoji: '📊' },
+        { key: 'location', label: t('quickReplies.location'), emoji: '📍' },
+        { key: 'time', label: t('quickReplies.time'), emoji: '⏱️' },
+        { key: 'help', label: t('quickReplies.help'), emoji: '💡' },
     ];
 
     return (

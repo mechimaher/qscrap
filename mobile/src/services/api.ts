@@ -831,7 +831,7 @@ class ApiService {
             total: number;
         };
     }> {
-        return this.request(`/payments/deposit/${orderId}`, {
+        return this.request(API_ENDPOINTS.CREATE_DEPOSIT_INTENT(orderId), {
             method: 'POST',
             body: JSON.stringify({ loyaltyDiscount: loyaltyDiscount || 0 }),
         });
@@ -839,7 +839,7 @@ class ApiService {
 
     // Confirm delivery fee payment - updates order from pending_payment to confirmed
     async confirmDeliveryFeePayment(intentId: string): Promise<{ success: boolean; message: string }> {
-        return this.request(`/payments/deposit/confirm/${intentId}`, {
+        return this.request(API_ENDPOINTS.CONFIRM_DEPOSIT(intentId), {
             method: 'POST',
         });
     }
@@ -861,7 +861,7 @@ class ApiService {
             total: number;
         };
     }> {
-        return this.request(`/payments/full/${orderId}`, {
+        return this.request(API_ENDPOINTS.CREATE_FULL_PAYMENT_INTENT(orderId), {
             method: 'POST',
             body: JSON.stringify({ loyaltyDiscount: loyaltyDiscount || 0 }),
         });
@@ -873,7 +873,7 @@ class ApiService {
         message: string;
         order_id: string;
     }> {
-        return this.request(`/payments/free/${orderId}`, {
+        return this.request(API_ENDPOINTS.CONFIRM_FREE_ORDER(orderId), {
             method: 'POST',
             body: JSON.stringify({ loyaltyDiscount }),
         });

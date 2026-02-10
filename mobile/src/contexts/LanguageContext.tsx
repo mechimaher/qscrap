@@ -14,6 +14,7 @@ import {
     Language,
     isRTLLanguage
 } from '../i18n';
+import { initI18nHelper, setI18nLanguage } from '../utils/i18nHelper';
 
 const LANGUAGE_KEY = 'qscrap_language';
 const LANGUAGE_INITIALIZED_KEY = 'qscrap_language_initialized';
@@ -84,6 +85,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 // Use saved preference
                 setLanguageState(savedLanguage);
                 setIsRTL(savedLanguage === 'ar');
+                setI18nLanguage(savedLanguage);
 
                 // Sync RTL state with React Native
                 syncRTLState(savedLanguage === 'ar');
@@ -92,6 +94,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 const detectedLanguage = detectDeviceLanguage();
                 setLanguageState(detectedLanguage);
                 setIsRTL(detectedLanguage === 'ar');
+                setI18nLanguage(detectedLanguage);
 
                 // Save the detected language
                 await AsyncStorage.setItem(LANGUAGE_KEY, detectedLanguage);
@@ -143,6 +146,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             // Update state
             setLanguageState(lang);
             setIsRTL(shouldBeRTL);
+            setI18nLanguage(lang);
 
             // ALWAYS update I18nManager to ensure RTL state is correct
             // This fixes the bug where switching AR → EN didn't properly revert RTL

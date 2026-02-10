@@ -176,11 +176,11 @@ export default function RequestDetailScreen() {
         Alert.alert(
             t('alerts.acceptBidTitle'),
             t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }) +
-            `\n\nTotal: ${priceToShow + deliveryFee} QAR\n(Part: ${priceToShow} QAR + Delivery: ${deliveryFee} QAR)\n\nYou can choose payment method on the next screen.`,
+            `\n\n${t('alerts.totalBreakdown', { total: priceToShow + deliveryFee, price: priceToShow, fee: deliveryFee, currency: t('common.currency') })}\n\n${t('alerts.chooseMethodHint')}`,
             [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Continue to Payment',
+                    text: t('alerts.continueToPayment'),
                     onPress: () => {
                         // CRITICAL: Navigate to Payment screen with bid details
                         // Using unique key to force fresh screen instance (cache-busting)

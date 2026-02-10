@@ -49,7 +49,7 @@ const ActiveRequestCard = ({
     showSwipeHint?: boolean;
     onSwipeHintDismiss?: () => void;
 }) => {
-    const { t, isRTL } = useTranslation();
+    const { t, isRTL, language } = useTranslation();
     const glowAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const swipeHintAnim = useRef(new Animated.Value(0)).current;
@@ -109,7 +109,7 @@ const ActiveRequestCard = ({
         const expires = new Date(item.expires_at);
         const diff = expires.getTime() - now.getTime();
 
-        if (diff <= 0) return { text: 'Expired', urgency: 'expired' };
+        if (diff <= 0) return { text: t('common.expired'), urgency: 'expired' };
 
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const days = Math.floor(hours / 24);
@@ -120,9 +120,9 @@ const ActiveRequestCard = ({
         else if (hours <= 24) urgency = 'warning';
 
         if (days > 0) {
-            return { text: `${days}d ${remainingHours}h left`, urgency };
+            return { text: t('requests.daysHoursLeft', { days, hours: remainingHours }), urgency };
         }
-        return { text: `${hours}h left`, urgency };
+        return { text: t('requests.hoursLeft', { hours }), urgency };
     };
 
     const timeRemaining = item.status === 'active' ? getTimeRemaining() : null;
@@ -317,7 +317,7 @@ const ActiveRequestCard = ({
                             {item.bid_count >= 2 && item.lowest_bid_price && (
                                 <View style={styles.bidPreviewContainer}>
                                     <Text style={[styles.bidPreviewLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.bestPrice')}:</Text>
-                                    <Text style={styles.bidPreviewPrice}>{item.lowest_bid_price} QAR</Text>
+                                    <Text style={styles.bidPreviewPrice}>{item.lowest_bid_price} {t('common.currency')}</Text>
                                 </View>
                             )}
 
@@ -361,7 +361,7 @@ const ActiveRequestCard = ({
                                         <View style={styles.bestBid}>
                                             <Text style={styles.bestBidLabel}>{t('requests.bestOffer')}</Text>
                                             <Text style={styles.bestBidPrice}>
-                                                QAR {item.lowest_bid_price.toLocaleString()}
+                                                {t('common.currency')} {item.lowest_bid_price.toLocaleString()}
                                             </Text>
                                         </View>
                                     ) : (
@@ -376,7 +376,7 @@ const ActiveRequestCard = ({
                                     )}
                                 </View>
                                 <Text style={styles.dateText}>
-                                    {new Date(item.created_at).toLocaleDateString('en-US', {
+                                    {new Date(item.created_at).toLocaleDateString(language === 'ar' ? 'ar-QA' : 'en-US', {
                                         month: 'short',
                                         day: 'numeric'
                                     })}
@@ -411,7 +411,7 @@ const ActiveRequestCard = ({
 export default function RequestsScreen() {
     const navigation = useNavigation<RequestsScreenNavigationProp>();
     const { colors } = useTheme();
-    const { t, isRTL } = useTranslation();
+    const { t, isRTL, language } = useTranslation();
     const toast = useToast();
     const [requests, setRequests] = useState<Request[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -449,18 +449,18 @@ export default function RequestsScreen() {
 
     const handleDeleteRequest = async (request: Request, closeSwipeable: () => void) => {
         if (request.status === 'accepted') {
-            Alert.alert('Cannot Delete', 'This request has been accepted and cannot be deleted.');
+            Alert.alert(t('requests.cannotDelete'), t('requests.cannotDeleteAccepted'));
             closeSwipeable();
             return;
         }
 
         Alert.alert(
-            'Delete Request',
-            `Delete request for ${request.car_make} ${request.car_model}?\n\nThis will remove all bids and cannot be undone.`,
+            t('requests.deleteRequest'),
+            t('requests.deleteConfirmMsg', { car: `${request.car_make} ${request.car_model}` }),
             [
-                { text: 'Cancel', style: 'cancel', onPress: closeSwipeable },
+                { text: t('common.cancel'), style: 'cancel', onPress: closeSwipeable },
                 {
-                    text: 'Delete',
+                    text: t('common.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
@@ -468,7 +468,7 @@ export default function RequestsScreen() {
                             await api.deleteRequest(request.request_id);
                             setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            toast.success('Deleted', 'Request deleted successfully');
+                            toast.success(t('requests.deleted'), t('requests.deletedSuccess'));
                         } catch (error: any) {
                             handleApiError(error, toast);
                         }

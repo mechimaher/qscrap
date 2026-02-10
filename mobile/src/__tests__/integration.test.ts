@@ -94,6 +94,78 @@ describe('Integration: Critical User Flows', () => {
     });
 
     // ============================================================================
+    // FLOW 2b: Request → Accept Bid → Payment Intent → Confirm Payment
+    // ============================================================================
+    describe('Request → Accept Bid → Payment → Tracking', () => {
+        it('should complete full payment flow from bid acceptance to confirmation', async () => {
+            // Step 1: Accept bid (creates order in pending_payment)
+            mockFetch({ success: true, order_id: 'order-1', undo_deadline: '2026-02-10T20:00:30Z' });
+            const acceptResult = await api.acceptBid('bid-1', 'card');
+            expect(acceptResult.order_id).toBe('order-1');
+
+            // Step 2: Create delivery fee payment intent
+            mockFetch({
+                success: true,
+                intent: { id: 'pi_test_123', clientSecret: 'pi_test_123_secret_xxx', amount: 2500, currency: 'qar' },
+                breakdown: { partPrice: 100, deliveryFee: 25, loyaltyDiscount: 0, originalTotal: 125, codAmount: 100, total: 25 },
+            });
+            const intentResult = await api.createDeliveryFeeIntent('order-1', 0);
+            expect(intentResult.intent.clientSecret).toBeTruthy();
+            expect(intentResult.breakdown!.deliveryFee).toBe(25);
+
+            // Step 3: Confirm payment on backend (after Stripe confirmPayment succeeds)
+            mockFetch({ success: true, message: 'Payment confirmed' });
+            const confirmResult = await api.confirmDeliveryFeePayment('pi_test_123');
+            expect(confirmResult.success).toBe(true);
+
+            // Step 4: Get order details (now confirmed)
+            mockFetch({
+                order: {
+                    order_id: 'order-1',
+                    order_status: 'confirmed',
+                    deposit_status: 'paid',
+                    total_amount: 125,
+                },
+            });
+            const orderResult = await api.getOrderDetails('order-1');
+            expect(orderResult.order.order_status).toBe('confirmed');
+
+            expect(global.fetch).toHaveBeenCalledTimes(4);
+        });
+    });
+
+    // ============================================================================
+    // FLOW 2c: Free Order via Loyalty Discount
+    // ============================================================================
+    describe('Accept Bid → Free Order (Loyalty Covers All)', () => {
+        it('should complete free order flow when loyalty discount covers entire amount', async () => {
+            // Step 1: Accept bid
+            mockFetch({ success: true, order_id: 'order-2' });
+            const acceptResult = await api.acceptBid('bid-2', 'card');
+            expect(acceptResult.order_id).toBe('order-2');
+
+            // Step 2: Confirm free order (no Stripe needed)
+            mockFetch({ success: true, message: 'Free order confirmed', order_id: 'order-2' });
+            const freeResult = await api.confirmFreeOrder('order-2', 125);
+            expect(freeResult.success).toBe(true);
+
+            // Step 3: Order is now confirmed without payment
+            mockFetch({
+                order: {
+                    order_id: 'order-2',
+                    order_status: 'confirmed',
+                    total_amount: 125,
+                    loyalty_discount: 125,
+                },
+            });
+            const orderResult = await api.getOrderDetails('order-2');
+            expect(orderResult.order.order_status).toBe('confirmed');
+
+            expect(global.fetch).toHaveBeenCalledTimes(3);
+        });
+    });
+
+    // ============================================================================
     // FLOW 3: Order → Delivery → Confirmation → Review
     // ============================================================================
     describe('Order → Confirm Delivery → Submit Review', () => {
@@ -192,7 +264,7 @@ describe('Integration: Critical User Flows', () => {
             // Step 1: Get negotiation history
             mockFetch({ history: [] });
             const history = await api.request(API_ENDPOINTS.NEGOTIATION_HISTORY('bid-1'));
-            expect(history.history).toEqual([]);
+            expect((history as any).history).toEqual([]);
 
             // Step 2: Send counter-offer
             mockFetch({ success: true, counter_offer_id: 'co-1' });

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface Props {
     children: ReactNode;
@@ -19,6 +20,57 @@ interface State {
     hasError: boolean;
     error: Error | null;
     errorInfo: ErrorInfo | null;
+}
+
+/** Functional fallback UI that can use hooks for i18n */
+function ErrorFallbackUI({ error, errorInfo, onRestart }: { error: Error | null; errorInfo: ErrorInfo | null; onRestart: () => void }) {
+    const { t } = useTranslation();
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.content}>
+                {/* Error Icon */}
+                <View style={styles.iconContainer}>
+                    <Ionicons name="warning-outline" size={64} color={Colors.dark.warning} />
+                </View>
+
+                {/* Error Message */}
+                <Text style={styles.title}>{t('errorBoundary.title')}</Text>
+                <Text style={styles.message}>
+                    {t('errorBoundary.message')}
+                </Text>
+
+                {/* Error Details (Dev Mode) */}
+                {__DEV__ && error && (
+                    <ScrollView style={styles.errorDetails} nestedScrollEnabled>
+                        <Text style={styles.errorText}>
+                            {error.toString()}
+                        </Text>
+                        {errorInfo && (
+                            <Text style={styles.stackTrace}>
+                                {errorInfo.componentStack}
+                            </Text>
+                        )}
+                    </ScrollView>
+                )}
+
+                {/* Retry Button */}
+                <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={onRestart}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="refresh" size={20} color="#fff" />
+                    <Text style={styles.retryText}>{t('errorBoundary.tryAgain')}</Text>
+                </TouchableOpacity>
+
+                {/* Help Text */}
+                <Text style={styles.helpText}>
+                    {t('errorBoundary.helpText')}
+                </Text>
+            </View>
+        </View>
+    );
 }
 
 /**
@@ -65,49 +117,11 @@ export class ErrorBoundary extends Component<Props, State> {
             }
 
             return (
-                <View style={styles.container}>
-                    <View style={styles.content}>
-                        {/* Error Icon */}
-                        <View style={styles.iconContainer}>
-                            <Ionicons name="warning-outline" size={64} color={Colors.dark.warning} />
-                        </View>
-
-                        {/* Error Message */}
-                        <Text style={styles.title}>Oops! Something went wrong</Text>
-                        <Text style={styles.message}>
-                            We apologize for the inconvenience. The app encountered an unexpected error.
-                        </Text>
-
-                        {/* Error Details (Dev Mode) */}
-                        {__DEV__ && this.state.error && (
-                            <ScrollView style={styles.errorDetails} nestedScrollEnabled>
-                                <Text style={styles.errorText}>
-                                    {this.state.error.toString()}
-                                </Text>
-                                {this.state.errorInfo && (
-                                    <Text style={styles.stackTrace}>
-                                        {this.state.errorInfo.componentStack}
-                                    </Text>
-                                )}
-                            </ScrollView>
-                        )}
-
-                        {/* Retry Button */}
-                        <TouchableOpacity
-                            style={styles.retryButton}
-                            onPress={this.handleRestart}
-                            activeOpacity={0.8}
-                        >
-                            <Ionicons name="refresh" size={20} color="#fff" />
-                            <Text style={styles.retryText}>Try Again</Text>
-                        </TouchableOpacity>
-
-                        {/* Help Text */}
-                        <Text style={styles.helpText}>
-                            If the problem persists, please contact support.
-                        </Text>
-                    </View>
-                </View>
+                <ErrorFallbackUI
+                    error={this.state.error}
+                    errorInfo={this.state.errorInfo}
+                    onRestart={this.handleRestart}
+                />
             );
         }
 

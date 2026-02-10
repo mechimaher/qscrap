@@ -84,21 +84,6 @@ const getStatusColor = (status: string): string => {
     }
 };
 
-const formatTimeAgo = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-};
-
 export default function SupportScreen() {
     const navigation = useNavigation();
     const { colors } = useTheme();
@@ -108,6 +93,21 @@ export default function SupportScreen() {
     const [loadingTickets, setLoadingTickets] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [ticketsExpanded, setTicketsExpanded] = useState(true);
+
+    const formatTimeAgo = useCallback((dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return t('support.timeAgo.justNow');
+        if (diffMins < 60) return t('support.timeAgo.minutesAgo', { count: diffMins });
+        if (diffHours < 24) return t('support.timeAgo.hoursAgo', { count: diffHours });
+        if (diffDays < 7) return t('support.timeAgo.daysAgo', { count: diffDays });
+        return date.toLocaleDateString();
+    }, [t]);
 
     const fetchTickets = useCallback(async (isRefresh = false) => {
         try {
@@ -215,7 +215,7 @@ export default function SupportScreen() {
                 <View style={[styles.ticketAction, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <Text style={styles.whatsappIcon}>💬</Text>
                     <Text style={[styles.ticketActionText, { color: Colors.primary }]}>
-                        {t('support.followUpWhatsApp') || 'Follow up on WhatsApp'}
+                        {t('support.followUpWhatsApp')}
                     </Text>
                 </View>
             </TouchableOpacity>
@@ -248,7 +248,7 @@ export default function SupportScreen() {
                     <View style={[styles.ticketsSectionTitleRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={styles.ticketsSectionIcon}>🎫</Text>
                         <Text style={[styles.ticketsSectionTitle, { color: colors.text }]}>
-                            {t('support.myTickets') || 'My Support Tickets'}
+                            {t('support.myTickets')}
                         </Text>
                         <View style={[styles.ticketCountBadge, { backgroundColor: '#f59e0b' }]}>
                             <Text style={styles.ticketCountText}>{activeTickets.length}</Text>
@@ -262,7 +262,7 @@ export default function SupportScreen() {
                 {ticketsExpanded && (
                     <View style={styles.ticketsList}>
                         <Text style={[styles.ticketsHint, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('support.ticketsHint') || 'Tap a ticket to follow up on WhatsApp'}
+                            {t('support.ticketsHint')}
                         </Text>
                         {activeTickets.map(renderTicketCard)}
                     </View>

@@ -106,19 +106,19 @@ export default function SettingsScreen() {
     const handleAppearanceChange = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Alert.alert(
-            t('settings.appearance') || 'Appearance',
-            t('settings.chooseTheme') || 'Choose your preferred theme',
+            t('settings.appearance'),
+            t('settings.chooseTheme'),
             [
                 {
-                    text: `☀️ ${t('settings.light') || 'Light'}`,
+                    text: `☀️ ${t('settings.light')}`,
                     onPress: () => setTheme('light')
                 },
                 {
-                    text: `🌙 ${t('settings.dark') || 'Dark'}`,
+                    text: `🌙 ${t('settings.dark')}`,
                     onPress: () => setTheme('dark')
                 },
                 {
-                    text: `🔄 ${t('settings.system') || 'System'}`,
+                    text: `🔄 ${t('settings.system')}`,
                     onPress: () => setTheme('system')
                 },
                 { text: t('common.cancel'), style: 'cancel' },
@@ -128,10 +128,10 @@ export default function SettingsScreen() {
 
     const getAppearanceLabel = () => {
         switch (themeMode) {
-            case 'light': return `☀️ ${t('settings.light') || 'Light'}`;
-            case 'dark': return `🌙 ${t('settings.dark') || 'Dark'}`;
-            case 'system': return `🔄 ${t('settings.system') || 'System'}`;
-            default: return t('settings.system') || 'System';
+            case 'light': return `☀️ ${t('settings.light')}`;
+            case 'dark': return `🌙 ${t('settings.dark')}`;
+            case 'system': return `🔄 ${t('settings.system')}`;
+            default: return t('settings.system');
         }
     };
 
@@ -156,7 +156,7 @@ export default function SettingsScreen() {
     // GOOGLE PLAY 2026 REQUIREMENT: Delete Account
     const handleDeleteAccount = useCallback(async () => {
         if (!deletePassword.trim()) {
-            Alert.alert(t('common.error'), t('settings.enterPasswordToDelete') || 'Please enter your password to confirm');
+            Alert.alert(t('common.error'), t('settings.enterPasswordToDelete'));
             return;
         }
 
@@ -178,15 +178,15 @@ export default function SettingsScreen() {
 
             // Log out and redirect to login
             Alert.alert(
-                t('settings.accountDeleted') || 'Account Deleted',
-                t('settings.accountDeletedMessage') || 'Your account and data have been permanently deleted.',
+                t('settings.accountDeleted'),
+                t('settings.accountDeletedMessage'),
                 [{ text: t('common.ok'), onPress: () => logout() }]
             );
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(
                 t('common.error'),
-                error.message || t('settings.deleteAccountFailed') || 'Failed to delete account. Please try again.'
+                error.message || t('settings.deleteAccountFailed')
             );
         } finally {
             setIsDeleting(false);
@@ -311,11 +311,11 @@ export default function SettingsScreen() {
 
                 {/* Appearance - VVIP 2026 Dark Mode */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.appearance') || 'Appearance'}</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.appearance')}</Text>
 
                     <ActionRow
                         icon="🎨"
-                        title={t('settings.theme') || 'Theme'}
+                        title={t('settings.theme')}
                         value={getAppearanceLabel()}
                         onPress={handleAppearanceChange}
                     />

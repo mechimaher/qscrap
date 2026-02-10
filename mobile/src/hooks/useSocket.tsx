@@ -6,6 +6,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SOCKET_URL } from '../config/api';
 import { api, Bid, Order } from '../services/api';
+import { t } from '../utils/i18nHelper';
 
 // Event Types
 interface BidNotification {
@@ -124,9 +125,14 @@ export function useSocket() {
                         ?.replace('_', ' ')
                         ?.replace(/\b\w/g, c => c.toUpperCase()) || 'Used';
 
+                    const currency = t('common.currency');
+                    const body = data.warranty_days
+                        ? t('notifications.push.newBidBodyWarranty', { garage: data.garage_name, condition: conditionLabel, days: data.warranty_days })
+                        : t('notifications.push.newBidBody', { garage: data.garage_name, condition: conditionLabel });
+
                     scheduleLocalNotification(
-                        `💰 New Bid: ${data.bid_amount} QAR`,
-                        `${data.garage_name} • ${conditionLabel}${data.warranty_days ? ` • ${data.warranty_days} days warranty` : ''}`,
+                        `💰 ${t('notifications.push.newBidTitle', { amount: data.bid_amount, currency })}`,
+                        body,
                         {
                             type: 'new_bid',
                             bidId: data.bid_id,
@@ -158,9 +164,10 @@ export function useSocket() {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                     import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                        const currency = t('common.currency');
                         scheduleLocalNotification(
-                            '💰 Bid Updated',
-                            `A garage revised their offer to ${data.bid_amount} QAR`,
+                            `💰 ${t('notifications.push.bidUpdatedTitle')}`,
+                            t('notifications.push.bidUpdatedBody', { amount: data.bid_amount ?? 0, currency }),
                             {
                                 type: 'bid_updated',
                                 bidId: data.bid_id,
@@ -189,9 +196,10 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    const currency = t('common.currency');
                     scheduleLocalNotification(
-                        '🔄 Counter-Offer Received',
-                        data.notification || `Garage proposed ${data.proposed_amount} QAR`,
+                        `🔄 ${t('notifications.push.counterOfferTitle')}`,
+                        data.notification || t('notifications.push.counterOfferBody', { amount: data.proposed_amount, currency }),
                         {
                             type: 'counter_offer',
                             bidId: data.bid_id,
@@ -207,9 +215,10 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                    const currency = t('common.currency');
                     scheduleLocalNotification(
-                        '✅ Offer Accepted!',
-                        data.notification || `Your offer of ${data.agreed_amount} QAR was accepted`,
+                        `✅ ${t('notifications.push.offerAcceptedTitle')}`,
+                        data.notification || t('notifications.push.offerAcceptedBody', { amount: data.agreed_amount, currency }),
                         {
                             type: 'counter_offer_accepted',
                             bidId: data.bid_id,
@@ -229,9 +238,10 @@ export function useSocket() {
 
                     // Show rich notification guiding customer to accept or decline
                     import('../services/notifications').then(({ scheduleLocalNotification }) => {
+                        const currency = t('common.currency');
                         scheduleLocalNotification(
-                            '⚠️ Final Offer Decision Needed',
-                            data.notification || `Your offer was declined. Accept ${data.original_bid_amount} QAR or choose another bid.`,
+                            `⚠️ ${t('notifications.push.finalOfferTitle')}`,
+                            data.notification || t('notifications.push.finalOfferBody', { amount: data.original_bid_amount, currency }),
                             {
                                 type: 'counter_offer_final',
                                 bidId: data.bid_id,
@@ -253,38 +263,39 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Schedule rich local notification for background/locked phone
+                const garageName = data.garage_name || 'Garage';
                 const statusMessages: Record<string, { emoji: string; title: string; body: string }> = {
                     'preparing': {
                         emoji: '🔧',
-                        title: 'Part Being Prepared',
-                        body: `${data.garage_name || 'Garage'} is preparing your part`
+                        title: t('notifications.push.preparingTitle'),
+                        body: t('notifications.push.preparingBody', { garage: garageName })
                     },
                     'ready_for_pickup': {
                         emoji: '📦',
-                        title: 'Part Ready',
-                        body: `Your part from ${data.garage_name || 'the garage'} is ready for collection`
+                        title: t('notifications.push.readyTitle'),
+                        body: t('notifications.push.readyBody', { garage: garageName })
                     },
                     'collected': {
                         emoji: '✅',
-                        title: 'Part Collected',
-                        body: 'QScrap has collected your part for quality check'
+                        title: t('notifications.push.collectedTitle'),
+                        body: t('notifications.push.collectedBody')
                     },
                     'qc_passed': {
                         emoji: '✨',
-                        title: 'Quality Check Passed!',
-                        body: 'Your part passed inspection - Ready for delivery'
+                        title: t('notifications.push.qcPassedTitle'),
+                        body: t('notifications.push.qcPassedBody')
                     },
                     'in_transit': {
                         emoji: '🚗',
-                        title: 'Out for Delivery',
+                        title: t('notifications.push.inTransitTitle'),
                         body: data.driver_name
-                            ? `${data.driver_name} is on the way with your part`
-                            : 'Your part is on its way!'
+                            ? t('notifications.push.inTransitBodyDriver', { driver: data.driver_name })
+                            : t('notifications.push.inTransitBody')
                     },
                     'delivered': {
                         emoji: '🎉',
-                        title: 'Part Delivered!',
-                        body: 'Your order has been delivered. Enjoy!'
+                        title: t('notifications.push.deliveredTitle'),
+                        body: t('notifications.push.deliveredBody')
                     },
                 };
 
@@ -325,10 +336,10 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        '🚗 Driver Assigned!',
+                        `🚗 ${t('notifications.push.driverAssignedTitle')}`,
                         data.driver?.name
-                            ? `${data.driver.name} is heading to pick up your order`
-                            : 'A driver has been assigned to your order',
+                            ? t('notifications.push.driverAssignedBodyDriver', { driver: data.driver.name })
+                            : t('notifications.push.driverAssignedBody'),
                         {
                             type: 'driver_assigned',
                             orderId: data.order_id,
@@ -353,8 +364,8 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        '🎉 Package Delivered!',
-                        `Order #${data.order_number} has arrived. Please confirm receipt.`,
+                        `🎉 ${t('notifications.push.packageDeliveredTitle')}`,
+                        t('notifications.push.packageDeliveredBody', { orderNumber: data.order_number }),
                         {
                             type: 'order_delivered',
                             orderId: data.order_id,
@@ -373,10 +384,10 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        '⏰ Request Expired',
+                        `⏰ ${t('notifications.push.requestExpiredTitle')}`,
                         data.part_description
-                            ? `Your request for "${data.part_description}" has expired`
-                            : 'Your part request has expired. Create a new one to get quotes.',
+                            ? t('notifications.push.requestExpiredBodyPart', { part: data.part_description })
+                            : t('notifications.push.requestExpiredBody'),
                         {
                             type: 'request_expired',
                             requestId: data.request_id,
@@ -392,8 +403,8 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        '📤 Bid Withdrawn',
-                        data.message || 'A garage has withdrawn their bid on your request',
+                        `📤 ${t('notifications.push.bidWithdrawnTitle')}`,
+                        data.message || t('notifications.push.bidWithdrawnBody'),
                         {
                             type: 'bid_withdrawn',
                             requestId: data.request_id,
@@ -409,8 +420,8 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        '💬 Support Reply',
-                        data.message?.content || 'QScrap support has replied to your ticket',
+                        `💬 ${t('notifications.push.supportReplyTitle')}`,
+                        data.message?.content || t('notifications.push.supportReplyBody'),
                         {
                             type: 'support_reply',
                             ticketId: data.ticket_id,
@@ -425,12 +436,14 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const cancelledBy = data.cancelled_by === 'garage' ? 'The garage' : 'Your order';
+                    const cancelledBy = data.cancelled_by === 'garage'
+                        ? t('notifications.push.theGarage')
+                        : t('notifications.push.yourOrder');
                     scheduleLocalNotification(
-                        '❌ Order Cancelled',
+                        `❌ ${t('notifications.push.orderCancelledTitle')}`,
                         data.reason
-                            ? `${cancelledBy} cancelled: ${data.reason}`
-                            : `Order #${data.order_number || 'N/A'} has been cancelled`,
+                            ? t('notifications.push.orderCancelledBodyReason', { cancelledBy, reason: data.reason })
+                            : t('notifications.push.orderCancelledBody', { orderNumber: data.order_number || 'N/A' }),
                         {
                             type: 'order_cancelled',
                             orderId: data.order_id,
@@ -457,10 +470,12 @@ export function useSocket() {
                 });
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const senderLabel = data.sender_type === 'driver' ? '🚗 Driver' : '🔧 Garage';
+                    const senderLabel = data.sender_type === 'driver'
+                        ? `🚗 ${t('notifications.push.chatDriverLabel')}`
+                        : `🔧 ${t('notifications.push.chatGarageLabel')}`;
                     scheduleLocalNotification(
-                        `${senderLabel} Message`,
-                        data.message || 'You have a new message',
+                        senderLabel,
+                        data.message || t('notifications.push.chatDefaultBody'),
                         {
                             type: 'chat_message',
                             orderId: data.order_id,

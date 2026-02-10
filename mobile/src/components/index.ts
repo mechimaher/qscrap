@@ -11,7 +11,6 @@ export { Toast, ToastProvider, useToast } from './Toast';
 export { Badge } from './Badge';
 export { default as HowItWorksCarousel } from './HowItWorksCarousel';
 export { BidComparisonModal } from './BidComparisonModal';
-export { AnimatedNumber } from './AnimatedNumber';
 export { SocialProofBadges } from './SocialProofBadges';
 export { DeliveryLocationWidget } from './DeliveryLocationWidget';
 export { MapLocationPicker } from './MapLocationPicker';

@@ -53,7 +53,7 @@ export default function RegisterScreen() {
 
         // Email validation
         if (!validateEmail(email)) {
-            setError('Please enter a valid email address');
+            setError(t('auth.invalidEmail'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -94,7 +94,7 @@ export default function RegisterScreen() {
             });
         } catch (error: any) {
             setIsLoading(false);
-            setError(error.message || 'Registration failed. Please try again.');
+            setError(error.message || t('auth.registrationFailedRetry'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
     };
@@ -156,7 +156,7 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📧 Email Address</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📧 {t('auth.emailAddress')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder="name@company.qa"

@@ -2,7 +2,9 @@
  * Formatting Utilities for QScrap Mobile App
  * Handles dates, currencies, phone numbers, and relative time.
  */
+import { t, getCurrentLanguage } from './i18nHelper';
 
+const getLocale = () => getCurrentLanguage() === 'ar' ? 'ar-QA' : 'en-US';
 /**
  * Format a date to a human-readable string
  */
@@ -15,8 +17,8 @@ export const formatDate = (
     }
 ): string => {
     const d = new Date(date);
-    if (isNaN(d.getTime())) return 'Invalid date';
-    return d.toLocaleDateString('en-US', options);
+    if (isNaN(d.getTime())) return t('common.invalidDate');
+    return d.toLocaleDateString(getLocale(), options);
 };
 
 /**
@@ -33,8 +35,8 @@ export const formatDateTime = (
     }
 ): string => {
     const d = new Date(date);
-    if (isNaN(d.getTime())) return 'Invalid date';
-    return d.toLocaleString('en-US', options);
+    if (isNaN(d.getTime())) return t('common.invalidDate');
+    return d.toLocaleString(getLocale(), options);
 };
 
 /**
@@ -48,8 +50,8 @@ export const formatTime = (
     }
 ): string => {
     const d = new Date(date);
-    if (isNaN(d.getTime())) return 'Invalid time';
-    return d.toLocaleTimeString('en-US', options);
+    if (isNaN(d.getTime())) return t('common.invalidTime');
+    return d.toLocaleTimeString(getLocale(), options);
 };
 
 /**
@@ -57,7 +59,7 @@ export const formatTime = (
  */
 export const formatRelativeTime = (date: Date | string | number): string => {
     const d = new Date(date);
-    if (isNaN(d.getTime())) return 'Invalid date';
+    if (isNaN(d.getTime())) return t('common.invalidDate');
 
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
@@ -73,26 +75,38 @@ export const formatRelativeTime = (date: Date | string | number): string => {
     const abs = (val: number) => Math.abs(val);
 
     if (abs(diffSec) < 60) {
-        return 'Just now';
+        return t('time.justNow');
     } else if (abs(diffMin) < 60) {
         const mins = abs(diffMin);
-        return isFuture ? `In ${mins} minute${mins > 1 ? 's' : ''}` : `${mins} minute${mins > 1 ? 's' : ''} ago`;
+        return isFuture
+            ? t('time.inMinutes', { count: mins })
+            : t('time.minutesAgo', { count: mins });
     } else if (abs(diffHour) < 24) {
         const hours = abs(diffHour);
-        return isFuture ? `In ${hours} hour${hours > 1 ? 's' : ''}` : `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        return isFuture
+            ? t('time.inHours', { count: hours })
+            : t('time.hoursAgo', { count: hours });
     } else if (abs(diffDay) < 7) {
         const days = abs(diffDay);
-        if (days === 1) return isFuture ? 'Tomorrow' : 'Yesterday';
-        return isFuture ? `In ${days} days` : `${days} days ago`;
+        if (days === 1) return isFuture ? t('time.tomorrow') : t('time.yesterday');
+        return isFuture
+            ? t('time.inDays', { count: days })
+            : t('time.daysAgo', { count: days });
     } else if (abs(diffWeek) < 4) {
         const weeks = abs(diffWeek);
-        return isFuture ? `In ${weeks} week${weeks > 1 ? 's' : ''}` : `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+        return isFuture
+            ? t('time.inWeeks', { count: weeks })
+            : t('time.weeksAgo', { count: weeks });
     } else if (abs(diffMonth) < 12) {
         const months = abs(diffMonth);
-        return isFuture ? `In ${months} month${months > 1 ? 's' : ''}` : `${months} month${months > 1 ? 's' : ''} ago`;
+        return isFuture
+            ? t('time.inMonths', { count: months })
+            : t('time.monthsAgo', { count: months });
     } else {
         const years = abs(diffYear);
-        return isFuture ? `In ${years} year${years > 1 ? 's' : ''}` : `${years} year${years > 1 ? 's' : ''} ago`;
+        return isFuture
+            ? t('time.inYears', { count: years })
+            : t('time.yearsAgo', { count: years });
     }
 };
 
@@ -105,9 +119,9 @@ export const formatCurrency = (
     showSymbol: boolean = true
 ): string => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (isNaN(num)) return '0.00 QAR';
+    if (isNaN(num)) return `0.00 ${currency}`;
 
-    const formatted = num.toLocaleString('en-US', {
+    const formatted = num.toLocaleString(getLocale(), {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
@@ -144,7 +158,7 @@ export const formatNumber = (num: number | string, decimals: number = 0): string
     const n = typeof num === 'string' ? parseFloat(num) : num;
     if (isNaN(n)) return '0';
 
-    return n.toLocaleString('en-US', {
+    return n.toLocaleString(getLocale(), {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     });

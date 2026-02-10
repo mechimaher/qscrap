@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontSizes, Spacing, BorderRadius, Shadows } from '../constants/theme';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface SocialProofBadgesProps {
     avgResponseTime?: number; // in minutes
@@ -15,13 +16,14 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     ratingAverage,
     totalTransactions,
 }) => {
+    const { t } = useTranslation();
     const badges: Array<{ icon: string; text: string; gradient: string[] }> = [];
 
     // Fast Response Badge (< 60 min)
     if (avgResponseTime && avgResponseTime < 60) {
         badges.push({
             icon: '⚡',
-            text: 'Fast Response',
+            text: t('socialProof.fastResponse'),
             gradient: ['#F59E0B', '#D97706'],
         });
     }
@@ -30,7 +32,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     if (ratingAverage && ratingAverage >= 4.5) {
         badges.push({
             icon: '⭐',
-            text: 'Top Rated',
+            text: t('socialProof.topRated'),
             gradient: ['#8D1B3D', '#C9A227'],
         });
     }
@@ -39,7 +41,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     if (totalTransactions && totalTransactions >= 100) {
         badges.push({
             icon: '🏆',
-            text: 'Trusted Seller',
+            text: t('socialProof.trustedSeller'),
             gradient: ['#3B82F6', '#2563EB'],
         });
     }

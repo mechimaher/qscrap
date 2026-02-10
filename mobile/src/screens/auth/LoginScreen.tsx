@@ -192,7 +192,7 @@ export default function LoginScreen() {
                                 keyboardType="phone-pad"
                                 autoCapitalize="none"
                                 accessibilityLabel={t('auth.phone')}
-                                accessibilityHint="Enter your phone number to log in"
+                                accessibilityHint={t('auth.phoneHint')}
                             />
                         </View>
 
@@ -213,7 +213,7 @@ export default function LoginScreen() {
                                 onChangeText={setPassword}
                                 secureTextEntry
                                 accessibilityLabel={t('auth.password')}
-                                accessibilityHint="Enter your password"
+                                accessibilityHint={t('auth.passwordHint')}
                             />
                         </View>
 

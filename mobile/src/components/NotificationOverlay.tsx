@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSocketContext } from '../hooks/useSocket';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { RootStackParamList } from '../../App';
+import { useTranslation } from '../contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ interface BidNotification {
 export default function NotificationOverlay() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { newBids, dismissBid, clearBidsForRequest } = useSocketContext();
+    const { t } = useTranslation();
     const [currentBid, setCurrentBid] = useState<BidNotification | null>(null);
     const [shownBidIds, setShownBidIds] = useState<Set<string>>(new Set());
 
@@ -185,13 +187,13 @@ export default function NotificationOverlay() {
 
                 {/* Content */}
                 <View style={styles.content}>
-                    <Text style={styles.title}>🔔 New Bid Received!</Text>
+                    <Text style={styles.title}>{t('notifications.newBidReceived')}</Text>
                     <Text style={styles.garageName}>{currentBid.garage_name}</Text>
                     <View style={styles.priceRow}>
-                        <Text style={styles.price}>{currentBid.bid_amount} QAR</Text>
+                        <Text style={styles.price}>{currentBid.bid_amount} {t('common.currency')}</Text>
                         {currentBid.warranty_days > 0 && (
                             <Text style={styles.warranty}>
-                                • {currentBid.warranty_days}d warranty
+                                • {t('notifications.warrantyDays', { days: currentBid.warranty_days })}
                             </Text>
                         )}
                     </View>
@@ -204,7 +206,7 @@ export default function NotificationOverlay() {
             </TouchableOpacity>
 
             {/* Tap to view hint */}
-            <Text style={styles.tapHint}>👆 Tap to view all bids</Text>
+            <Text style={styles.tapHint}>{t('notifications.tapToViewBids')}</Text>
         </Animated.View>
     );
 }

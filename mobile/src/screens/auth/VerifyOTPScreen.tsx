@@ -18,6 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { useTranslation } from '../../contexts/LanguageContext';
 
 export default function VerifyOTPScreen() {
     const navigation = useNavigation<any>();
@@ -25,6 +26,7 @@ export default function VerifyOTPScreen() {
     const { refreshUser } = useAuth();
 
     const { email, full_name, phone_number, password } = route.params;
+    const { t } = useTranslation();
 
     const [otp, setOTP] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(600); // 10 minutes
@@ -99,11 +101,11 @@ export default function VerifyOTPScreen() {
             await refreshUser();
 
             Alert.alert(
-                '✅ Success!',
-                'Your account has been created successfully!',
+                t('auth.registrationSuccess'),
+                t('auth.accountCreated'),
                 [
                     {
-                        text: 'Get Started',
+                        text: t('auth.getStarted'),
                         onPress: () => {
                             // Navigation is now automatic via AuthContext
                         }
@@ -114,7 +116,7 @@ export default function VerifyOTPScreen() {
             setIsVerifying(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
-            Alert.alert('Verification Failed', error.message || 'Invalid code. Please try again.');
+            Alert.alert(t('auth.verificationFailed'), error.message || t('auth.invalidCode'));
 
             // Clear OTP
             setOTP(['', '', '', '', '', '']);
@@ -134,7 +136,7 @@ export default function VerifyOTPScreen() {
             setIsResending(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
+            Alert.alert(t('auth.codeSent'), t('auth.codeSentMsg'));
 
             // Reset timer
             setTimer(600);
@@ -143,7 +145,7 @@ export default function VerifyOTPScreen() {
         } catch (error: any) {
             setIsResending(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', error.message || 'Failed to resend code. Please try again.');
+            Alert.alert(t('common.error'), error.message || t('auth.resendFailed'));
         }
     };
 
