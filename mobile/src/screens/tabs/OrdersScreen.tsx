@@ -39,21 +39,21 @@ const getStatusConfig = (status: string, t: any) => {
             color: '#3B82F6',
             bg: '#DBEAFE',
             icon: '✓',
-            label: 'Confirmed',
+            label: t('status.confirmed'),
             gradient: ['#3B82F6', '#2563EB'] as const
         };
         case 'preparing': return {
             color: '#F59E0B',
             bg: '#FEF3C7',
             icon: '🔧',
-            label: 'Preparing',
+            label: t('status.preparing'),
             gradient: ['#F59E0B', '#D97706'] as const
         };
         case 'ready_for_pickup': return {
             color: '#8B5CF6',
             bg: '#EDE9FE',
             icon: '📦',
-            label: 'Ready',
+            label: t('status.ready'),
             gradient: ['#8B5CF6', '#7C3AED'] as const
         };
         case 'collected':
@@ -63,21 +63,21 @@ const getStatusConfig = (status: string, t: any) => {
             color: '#22C55E',
             bg: '#DCFCE7',
             icon: '🚚',
-            label: 'On The Way',
+            label: t('status.onTheWay'),
             gradient: ['#22C55E', '#16A34A'] as const
         };
         case 'qc_failed': return {
             color: '#F59E0B',
             bg: '#FEF3C7',
             icon: '⏳',
-            label: 'Processing',
+            label: t('status.processing'),
             gradient: ['#F59E0B', '#D97706'] as const
         };
         case 'delivered': return {
             color: '#06B6D4',
             bg: '#CFFAFE',
             icon: '📍',
-            label: 'Delivered',
+            label: t('status.delivered'),
             gradient: ['#06B6D4', '#0891B2'] as const
         };
         case 'completed': return {
@@ -134,7 +134,7 @@ const PremiumOrderCard = ({
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const pulseAnim = useRef(new Animated.Value(0)).current;
-    const { t, isRTL } = useTranslation();
+    const { t, isRTL, language } = useTranslation();
 
     const statusConfig = getStatusConfig(item.order_status, t);
     const isInTransit = ['in_transit', 'collected', 'qc_in_progress', 'qc_passed'].includes(item.order_status);
@@ -270,7 +270,7 @@ const PremiumOrderCard = ({
                             <View>
                                 <Text style={[styles.priceLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.total')}</Text>
                                 <Text style={[styles.priceAmount, { color: statusConfig.color }]}>
-                                    {item.total_amount} QAR
+                                    {item.total_amount} {t('common.currency')}
                                 </Text>
                             </View>
                             {/* Escrow Protection Badge */}
@@ -281,7 +281,7 @@ const PremiumOrderCard = ({
                             <View style={styles.dateSection}>
                                 <Text style={[styles.dateLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.ordered')}</Text>
                                 <Text style={[styles.dateText, { color: colors.text }]}>
-                                    {new Date(item.created_at).toLocaleDateString('en-US', {
+                                    {new Date(item.created_at).toLocaleDateString(language === 'ar' ? 'ar-QA' : 'en-US', {
                                         month: 'short',
                                         day: 'numeric'
                                     })}
@@ -305,7 +305,7 @@ const PremiumOrderCard = ({
                                     style={styles.trackGradient}
                                 >
                                     <Animated.View style={[styles.liveDot, { opacity: pulseOpacity }]} />
-                                    <Text style={styles.trackText}>🗺️ Track Live Delivery</Text>
+                                    <Text style={styles.trackText}>🗺️ {t('orders.trackLiveDelivery')}</Text>
                                     <Text style={styles.trackArrow}>→</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -319,7 +319,7 @@ const PremiumOrderCard = ({
                                     end={{ x: 1, y: 0 }}
                                     style={styles.confirmGradient}
                                 >
-                                    <Text style={styles.confirmText}>📍 Tap to Confirm Delivery</Text>
+                                    <Text style={styles.confirmText}>📍 {t('orders.tapToConfirmDelivery')}</Text>
                                 </LinearGradient>
                             </View>
                         )}
@@ -368,7 +368,7 @@ const SkeletonCard = ({ index }: { index: number }) => {
 export default function OrdersScreen() {
     const navigation = useNavigation<OrdersScreenNavigationProp>();
     const { colors } = useTheme();
-    const { t, isRTL } = useTranslation();
+    const { t, isRTL, language } = useTranslation();
     const { orderUpdates } = useSocketContext();
     const toast = useToast();
     const [orders, setOrders] = useState<Order[]>([]);

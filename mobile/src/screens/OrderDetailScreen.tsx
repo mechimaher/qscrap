@@ -186,13 +186,13 @@ export default function OrderDetailScreen() {
                                 method: 'POST',
                                 body: JSON.stringify({
                                     reason_code: 'changed_mind',
-                                    reason_text: 'Customer cancelled from app'
+                                    reason_text: t('cancel.customerCancelledReason')
                                 })
                             });
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             Alert.alert(
-                                t('cancel.success') || 'Order Cancelled',
-                                t('cancel.successMessage') || 'Your order has been cancelled. Refund will be processed if applicable.',
+                                t('cancel.success'),
+                                t('cancel.successMessage'),
                                 [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
                             );
                         } catch (error: any) {
@@ -363,7 +363,7 @@ export default function OrderDetailScreen() {
                     {order.part_description && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.detailValue, { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={3}>
-                                {t('order.customerNotes') || 'Customer Notes'}  <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
+                                {t('order.customerNotes')}  <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
                             </Text>
                         </View>
                     )}
@@ -391,7 +391,7 @@ export default function OrderDetailScreen() {
                     {(order.loyalty_discount ?? 0) > 0 && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.detailLabel, { color: '#10B981' }]}>
-                                🎁 {t('order.loyaltyDiscount') || 'Loyalty Discount'}
+                                🎁 {t('order.loyaltyDiscount')}
                             </Text>
                             <Text style={[styles.detailValue, { color: '#10B981', fontWeight: '700' }]}>
                                 -{order.loyalty_discount} {t('common.currency')}
@@ -474,7 +474,7 @@ export default function OrderDetailScreen() {
                     !order.pod_photo_url.startsWith('file://') && (
                         <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                📸 {t('order.proofOfDelivery') || 'Proof of Delivery'}
+                                📸 {t('order.proofOfDelivery')}
                             </Text>
                             <Image
                                 source={{
@@ -526,7 +526,7 @@ export default function OrderDetailScreen() {
                     >
                         <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.confirmGradient}>
                             <Text style={styles.confirmIcon}>💳</Text>
-                            <Text style={styles.confirmText}>{t('payment.payNow') || 'Continue Payment'}</Text>
+                            <Text style={styles.confirmText}>{t('payment.payNow')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 )}
@@ -543,7 +543,7 @@ export default function OrderDetailScreen() {
                         ) : (
                             <>
                                 <Text style={styles.cancelOrderIcon}>✕</Text>
-                                <Text style={styles.cancelOrderText}>{t('order.cancelOrder') || 'Cancel Order'}</Text>
+                                <Text style={styles.cancelOrderText}>{t('order.cancelOrder')}</Text>
                             </>
                         )}
                     </TouchableOpacity>

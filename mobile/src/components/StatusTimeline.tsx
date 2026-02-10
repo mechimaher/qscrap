@@ -7,6 +7,8 @@ import {
     Easing,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from '../contexts/LanguageContext';
+import { rtlTextAlign } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 
 interface TimelineStep {
@@ -21,16 +23,13 @@ interface StatusTimelineProps {
     steps?: TimelineStep[];
 }
 
-const DEFAULT_STEPS: TimelineStep[] = [
-    { key: 'confirmed', label: 'Order Confirmed', icon: '✓' },
-    { key: 'preparing', label: 'Preparing', icon: '📦' },
-    { key: 'ready_for_pickup', label: 'Ready for Pickup', icon: '🏭' },
-    { key: 'picked_up', label: 'Picked Up', icon: '🚗' },
-    { key: 'in_transit', label: 'In Transit', icon: '🛣️' },
-    { key: 'arriving', label: 'Arriving Soon', icon: '🏁' },
-    { key: 'delivered', label: 'Delivered', icon: '📬' },
-    { key: 'completed', label: 'Completed', icon: '👑' },
+// Default step keys — labels come from i18n, provided at runtime
+const DEFAULT_STEP_KEYS = [
+    'confirmed', 'preparing', 'ready_for_pickup', 'picked_up',
+    'in_transit', 'arriving', 'delivered', 'completed',
 ];
+
+const DEFAULT_ICONS = ['✓', '📦', '🏭', '🚗', '🛣️', '🏁', '📬', '👑'];
 
 // Map order statuses to timeline index
 // Premium 8-step journey: confirmed → preparing → ready → picked → transit → arriving → delivered → completed
@@ -55,9 +54,30 @@ const STATUS_MAP: Record<string, number> = {
  */
 export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     currentStatus,
-    steps = DEFAULT_STEPS,
+    steps,
 }) => {
     const { colors } = useTheme();
+    const { t, isRTL } = useTranslation();
+
+    // Explicit i18n key map — avoids fragile camelCase conversion
+    const LABEL_KEYS: Record<string, string> = {
+        confirmed: 'tracking.statusOrderConfirmed',
+        preparing: 'tracking.statusPreparing',
+        ready_for_pickup: 'tracking.statusReadyForPickup',
+        picked_up: 'tracking.statusPickedUp',
+        in_transit: 'tracking.statusInTransit',
+        arriving: 'tracking.statusArrivingSoon',
+        delivered: 'tracking.statusDelivered',
+        completed: 'tracking.statusCompleted',
+    };
+
+    // Build localized steps if not provided externally
+    const localizedSteps: TimelineStep[] = steps || DEFAULT_STEP_KEYS.map((key, i) => ({
+        key,
+        label: t(LABEL_KEYS[key] as any) || key,
+        icon: DEFAULT_ICONS[i],
+    }));
+
     const currentIndex = STATUS_MAP[currentStatus] ?? 0;
 
     // Animation for the current step indicator
@@ -114,10 +134,10 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
 
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Order Progress</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t('tracking.orderProgress')}</Text>
 
             <View style={styles.timeline}>
-                {steps.map((step, index) => {
+                {localizedSteps.map((step, index) => {
                     const isCompleted = index < currentIndex;
                     const isCurrent = index === currentIndex;
                     const isPending = index > currentIndex;
@@ -190,7 +210,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                         <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{step.timestamp}</Text>
                                     )}
                                     {isCurrent && (
-                                        <Text style={styles.currentLabel}>Now</Text>
+                                        <Text style={styles.currentLabel}>{t('tracking.statusNow')}</Text>
                                     )}
                                 </View>
                             </View>
@@ -204,7 +224,6 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: Colors.dark.surface,
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
         marginTop: Spacing.md,
@@ -212,7 +231,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 16,
         fontWeight: '600',
-        color: Colors.dark.text,
         marginBottom: Spacing.lg,
     },
     timeline: {
@@ -231,7 +249,6 @@ const styles = StyleSheet.create({
     connector: {
         width: 2,
         height: '100%',
-        backgroundColor: Colors.dark.border,
     },
     connectorCompleted: {
         backgroundColor: Colors.primary,
@@ -262,7 +279,6 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: Colors.dark.border,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1,
@@ -276,9 +292,7 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.3)',
     },
     nodePending: {
-        backgroundColor: Colors.dark.surface,
         borderWidth: 2,
-        borderColor: Colors.dark.border,
     },
     nodeIcon: {
         fontSize: 14,
@@ -293,10 +307,8 @@ const styles = StyleSheet.create({
     stepLabel: {
         fontSize: 14,
         fontWeight: '500',
-        color: Colors.dark.text,
     },
     stepLabelCompleted: {
-        color: Colors.dark.text,
     },
     stepLabelCurrent: {
         color: Colors.primary,
@@ -307,7 +319,6 @@ const styles = StyleSheet.create({
     },
     timestamp: {
         fontSize: 11,
-        color: Colors.dark.textSecondary,
         marginTop: 2,
     },
     currentLabel: {

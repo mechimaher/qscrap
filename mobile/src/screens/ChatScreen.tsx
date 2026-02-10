@@ -348,7 +348,7 @@ export default function ChatScreen() {
                         onPress={sendMessage}
                         disabled={!newMessage.trim() || isSending}
                         accessibilityRole="button"
-                        accessibilityLabel={t('chat.send') || 'Send message'}
+                        accessibilityLabel={t('chat.send')}
                         accessibilityState={{ disabled: !newMessage.trim() || isSending }}
                     >
                         <LinearGradient

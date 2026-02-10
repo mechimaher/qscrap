@@ -74,6 +74,12 @@ export const API_ENDPOINTS = {
     // Catalog (Featured Products)
     CATALOG_SEARCH: '/showcase/parts',
 
+    // Payments
+    CREATE_DEPOSIT_INTENT: (orderId: string) => `/payments/deposit/${orderId}`,
+    CONFIRM_DEPOSIT: (intentId: string) => `/payments/deposit/confirm/${intentId}`,
+    CREATE_FULL_PAYMENT_INTENT: (orderId: string) => `/payments/full/${orderId}`,
+    CONFIRM_FREE_ORDER: (orderId: string) => `/payments/free/${orderId}`,
+
 };
 
 // App Info

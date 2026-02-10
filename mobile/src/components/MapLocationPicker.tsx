@@ -66,7 +66,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     initialLocation,
 }) => {
     const { colors } = useTheme();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const mapRef = useRef<MapView>(null);
     const searchInputRef = useRef<TextInput>(null);
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -105,7 +105,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
         setIsSearching(true);
         try {
-            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${KEYS.GOOGLE_MAPS_API_KEY}&components=country:qa&language=en&types=geocode|establishment`;
+            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${KEYS.GOOGLE_MAPS_API_KEY}&components=country:qa&language=${language}&types=geocode|establishment`;
 
             const response = await fetch(url);
             const data = await response.json();
@@ -178,7 +178,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             setIsLoading(true);
 
             // Use Google Maps Geocoding API for reliable results
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${KEYS.GOOGLE_MAPS_API_KEY}&language=en`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${KEYS.GOOGLE_MAPS_API_KEY}&language=${language}`;
 
             const response = await fetch(url);
             const data = await response.json();

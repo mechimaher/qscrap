@@ -11,6 +11,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { api } from './api';
 import * as storage from '../utils/storage';
+import { t } from '../utils/i18nHelper';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -75,7 +76,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         if (Platform.OS === 'android') {
             // Default channel - maximum importance
             await Notifications.setNotificationChannelAsync('default', {
-                name: 'QScrap Notifications',
+                name: t('notifications.channels.defaultName'),
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 400, 200, 400],
                 lightColor: '#8D1B3D',
@@ -85,8 +86,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
             // Orders channel - HIGH priority with strong vibration
             await Notifications.setNotificationChannelAsync('orders', {
-                name: 'Order Updates',
-                description: 'Updates about your orders',
+                name: t('notifications.channels.ordersName'),
+                description: t('notifications.channels.ordersDesc'),
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 500, 250, 500],
                 enableVibrate: true,
@@ -95,8 +96,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
             // Delivery channel - CRITICAL for real-time tracking
             await Notifications.setNotificationChannelAsync('delivery', {
-                name: 'Delivery Tracking',
-                description: 'Real-time delivery updates',
+                name: t('notifications.channels.deliveryName'),
+                description: t('notifications.channels.deliveryDesc'),
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 500, 250, 500, 250, 500],
                 enableVibrate: true,
@@ -107,8 +108,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
             // Bids channel - MAX priority for heads-up alerts
             await Notifications.setNotificationChannelAsync('bids', {
-                name: 'New Bids',
-                description: 'Notifications when you receive new bids',
+                name: t('notifications.channels.bidsName'),
+                description: t('notifications.channels.bidsDesc'),
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 300, 150, 300],
                 enableVibrate: true,
@@ -117,8 +118,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
             // Messages channel - for chat with drivers/garages
             await Notifications.setNotificationChannelAsync('messages', {
-                name: 'Messages',
-                description: 'Chat messages from drivers and garages',
+                name: t('notifications.channels.messagesName'),
+                description: t('notifications.channels.messagesDesc'),
                 importance: Notifications.AndroidImportance.HIGH,
                 vibrationPattern: [0, 200, 100, 200],
                 enableVibrate: true,
@@ -134,12 +135,12 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
             await Notifications.setNotificationCategoryAsync('bids', [
                 {
                     identifier: 'view',
-                    buttonTitle: 'View Bid',
+                    buttonTitle: t('notifications.iosActions.viewBid'),
                     options: { opensAppToForeground: true },
                 },
                 {
                     identifier: 'ignore',
-                    buttonTitle: 'Ignore',
+                    buttonTitle: t('notifications.iosActions.ignore'),
                     options: { isDestructive: true },
                 },
             ]);
@@ -147,12 +148,12 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
             await Notifications.setNotificationCategoryAsync('orders', [
                 {
                     identifier: 'track',
-                    buttonTitle: 'Track Order',
+                    buttonTitle: t('notifications.iosActions.trackOrder'),
                     options: { opensAppToForeground: true },
                 },
                 {
                     identifier: 'details',
-                    buttonTitle: 'View Details',
+                    buttonTitle: t('notifications.iosActions.viewDetails'),
                     options: { opensAppToForeground: true },
                 },
             ]);
@@ -160,12 +161,12 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
             await Notifications.setNotificationCategoryAsync('counter_offer', [
                 {
                     identifier: 'accept',
-                    buttonTitle: 'Accept',
+                    buttonTitle: t('notifications.iosActions.accept'),
                     options: { opensAppToForeground: true },
                 },
                 {
                     identifier: 'view',
-                    buttonTitle: 'View Details',
+                    buttonTitle: t('notifications.iosActions.viewDetails'),
                     options: { opensAppToForeground: true },
                 },
             ]);

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface Props {
     children: ReactNode;
@@ -27,6 +28,64 @@ interface State {
     error: Error | null;
     errorInfo: React.ErrorInfo | null;
 }
+
+// Functional wrapper to use hooks in class component's render
+const ErrorFallbackContent: React.FC<{
+    screenName?: string;
+    error: Error | null;
+    onRetry: () => void;
+}> = ({ screenName, error, onRetry }) => {
+    const { t } = useTranslation();
+    return (
+        <View
+            style={styles.container}
+            accessible={true}
+            accessibilityRole="alert"
+            accessibilityLabel={t('screenError.errorOccurred')}
+        >
+            <View style={styles.content}>
+                <View style={styles.iconContainer} accessibilityElementsHidden={true}>
+                    <MaterialCommunityIcons
+                        name="alert-circle-outline"
+                        size={64}
+                        color={Colors.primary}
+                    />
+                </View>
+                <Text style={styles.title} accessibilityRole="header">
+                    {t('errorBoundary.title')}
+                </Text>
+                <Text style={styles.subtitle}>
+                    {screenName
+                        ? t('screenError.couldNotLoad', { screen: screenName })
+                        : t('screenError.couldNotDisplay')}
+                </Text>
+                {__DEV__ && error && (
+                    <ScrollView style={styles.errorDetails} horizontal>
+                        <Text style={styles.errorText}>{error.toString()}</Text>
+                    </ScrollView>
+                )}
+                <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={onRetry}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('errorBoundary.tryAgain')}
+                >
+                    <MaterialCommunityIcons
+                        name="refresh"
+                        size={20}
+                        color="#FFF"
+                        style={styles.retryIcon}
+                    />
+                    <Text style={styles.retryText}>{t('errorBoundary.tryAgain')}</Text>
+                </TouchableOpacity>
+                <Text style={styles.helpText}>
+                    {t('screenError.restartHint')}
+                </Text>
+            </View>
+        </View>
+    );
+};
 
 export class ScreenErrorBoundary extends Component<Props, State> {
     constructor(props: Props) {
@@ -65,71 +124,11 @@ export class ScreenErrorBoundary extends Component<Props, State> {
             const { error } = this.state;
 
             return (
-                <View
-                    style={styles.container}
-                    accessible={true}
-                    accessibilityRole="alert"
-                    accessibilityLabel={`Error: ${screenName ? `${screenName} could not be loaded` : 'Screen error occurred'}`}
-                >
-                    <View style={styles.content}>
-                        {/* Error Icon */}
-                        <View
-                            style={styles.iconContainer}
-                            accessibilityElementsHidden={true}
-                        >
-                            <MaterialCommunityIcons
-                                name="alert-circle-outline"
-                                size={64}
-                                color={Colors.primary}
-                            />
-                        </View>
-
-                        {/* Error Message */}
-                        <Text
-                            style={styles.title}
-                            accessibilityRole="header"
-                        >
-                            Something went wrong
-                        </Text>
-                        <Text style={styles.subtitle}>
-                            {screenName
-                                ? `We couldn't load ${screenName}`
-                                : "This screen couldn't be displayed"}
-                        </Text>
-
-                        {/* Error Details (Development Only) */}
-                        {__DEV__ && error && (
-                            <ScrollView style={styles.errorDetails} horizontal>
-                                <Text style={styles.errorText}>
-                                    {error.toString()}
-                                </Text>
-                            </ScrollView>
-                        )}
-
-                        {/* Retry Button */}
-                        <TouchableOpacity
-                            style={styles.retryButton}
-                            onPress={this.handleRetry}
-                            activeOpacity={0.8}
-                            accessibilityRole="button"
-                            accessibilityLabel="Try again"
-                            accessibilityHint="Attempts to reload the screen"
-                        >
-                            <MaterialCommunityIcons
-                                name="refresh"
-                                size={20}
-                                color="#FFF"
-                                style={styles.retryIcon}
-                            />
-                            <Text style={styles.retryText}>Try Again</Text>
-                        </TouchableOpacity>
-
-                        {/* Help Text */}
-                        <Text style={styles.helpText}>
-                            If this problem persists, please restart the app
-                        </Text>
-                    </View>
-                </View>
+                <ErrorFallbackContent
+                    screenName={screenName}
+                    error={error}
+                    onRetry={this.handleRetry}
+                />
             );
         }
 

@@ -3,6 +3,7 @@ import { log, warn, error as logError } from '../utils/logger';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, User } from '../services/api';
 import { initializePushNotifications } from '../services/notifications';
+import { t } from '../utils/i18nHelper';
 
 interface AuthContextType {
     user: User | null;
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (response.userType !== 'customer') {
                 await api.clearToken();
-                return { success: false, error: 'Please use the customer app' };
+                return { success: false, error: t('auth.useCustomerApp') };
             }
 
             // Fetch full profile to ensure we have the name and details
@@ -94,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             return { success: true };
         } catch (error: any) {
-            return { success: false, error: error.message || 'Login failed' };
+            return { success: false, error: error.message || t('auth.loginFailed') };
         }
     };
 
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await api.register(name, phone, password);
             return { success: true };
         } catch (error: any) {
-            return { success: false, error: error.message || 'Registration failed' };
+            return { success: false, error: error.message || t('auth.registrationFailed') };
         }
     };
 

@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { StripeProvider, CardField, useStripe } from '@stripe/stripe-react-native';
 
 import { Colors, FontSizes, Spacing, BorderRadius, Shadows } from '../constants/theme';
@@ -88,6 +89,7 @@ export default function PaymentScreen() {
     } : null;
     const [applyDiscount, setApplyDiscount] = useState(false);
     const [discountAmount, setDiscountAmount] = useState(0);
+    const [intentError, setIntentError] = useState<string | null>(null);
 
     // Track if initialization is in progress to prevent race conditions
     const isInitializing = useRef(false);
@@ -199,7 +201,7 @@ export default function PaymentScreen() {
                     setClientSecret(paymentResult.intent.clientSecret);
                 } else {
                     const result = paymentResult as any;
-                    const errorMsg = result.error?.message || result.message || 'Failed to create payment intent';
+                    const errorMsg = result.error?.message || result.message || t('payment.failed');
                     logError('[Payment] Intent creation failed:', errorMsg);
                     toast.error(t('common.error'), errorMsg);
                 }
@@ -219,7 +221,6 @@ export default function PaymentScreen() {
     const initializePayment = async () => {
         // Prevent concurrent initialization calls
         if (isInitializing.current) {
-            log('[Payment] ⚠️ Initialization already in progress, skipping...');
             return;
         }
 
@@ -232,7 +233,7 @@ export default function PaymentScreen() {
             if (!orderIdToUse) {
                 const orderResult = await api.acceptBid(bidId, 'card');
                 if (!orderResult.order_id) {
-                    throw new Error('Failed to create order');
+                    throw new Error(t('payment.failed'));
                 }
                 orderIdToUse = orderResult.order_id;
                 setOrderId(orderIdToUse || null);
@@ -272,18 +273,78 @@ export default function PaymentScreen() {
                 const result = paymentResult as any;
                 const errorMsg = typeof result.error === 'string'
                     ? result.error
-                    : (result.error?.message || result.message || 'Failed to create payment intent');
+                    : (result.error?.message || result.message || t('payment.failed'));
                 throw new Error(errorMsg);
             }
 
             setClientSecret(paymentResult.intent.clientSecret);
+            setIntentError(null);
         } catch (error: any) {
-            handleApiError(error, toast, { useAlert: true, onDismiss: () => navigation.goBack() });
+            const errorMsg = error?.message || t('payment.failed');
+            setIntentError(errorMsg);
+            // If we have an orderId, stay on screen so user can retry
+            // If we don't even have an orderId, we must go back
+            if (!orderId) {
+                handleApiError(error, toast, { useAlert: true, onDismiss: () => navigation.goBack() });
+            } else {
+                toast.error(t('common.error'), errorMsg);
+            }
         } finally {
             setIsCreatingOrder(false);
             isInitializing.current = false;
         }
     };
+
+    // Retry payment intent creation (reuses existing orderId)
+    const retryPaymentIntent = useCallback(async () => {
+        if (!orderId) {
+            // No order was created — full re-initialization needed
+            setIntentError(null);
+            initializePayment();
+            return;
+        }
+
+        setIsCreatingOrder(true);
+        setIntentError(null);
+
+        try {
+
+            let currentDiscount = 0;
+            if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
+                currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
+            }
+
+            let paymentResult;
+            if (paymentType === 'full') {
+                paymentResult = await api.createFullPaymentIntent(orderId, currentDiscount);
+                setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
+                setDiscountAmount(currentDiscount);
+            } else {
+                const partDiscount = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
+                    ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
+                    : 0;
+                paymentResult = await api.createDeliveryFeeIntent(orderId, partDiscount);
+                setPaymentAmount(deliveryFee);
+            }
+
+            if (!paymentResult.intent?.clientSecret) {
+                const result = paymentResult as any;
+                const errorMsg = typeof result.error === 'string'
+                    ? result.error
+                    : (result.error?.message || result.message || t('payment.failed'));
+                throw new Error(errorMsg);
+            }
+
+            setClientSecret(paymentResult.intent.clientSecret);
+            log('[Payment] Retry successful, got clientSecret');
+        } catch (error: any) {
+            const errorMsg = error?.message || t('payment.failed');
+            setIntentError(errorMsg);
+            toast.error(t('common.error'), errorMsg);
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    }, [orderId, paymentType, applyDiscount, loyaltyData, totalAmount, partPrice, deliveryFee, toast, t]);
 
     const handlePayment = useCallback(async () => {
         if (!clientSecret || !cardComplete) {
@@ -295,7 +356,6 @@ export default function PaymentScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            log('[Payment] Starting confirmPayment with clientSecret:', clientSecret?.substring(0, 20) + '...');
             const { error, paymentIntent } = await confirmPayment(clientSecret, {
                 paymentMethodType: 'Card',
             });
@@ -310,20 +370,12 @@ export default function PaymentScreen() {
 
             // Check for success status (case-insensitive)
             const status = paymentIntent?.status?.toLowerCase();
-            log('[Payment] Stripe status:', status, 'orderId:', orderId, 'paymentIntent:', JSON.stringify(paymentIntent));
 
             if (status === 'succeeded') {
                 // Confirm payment on backend to update order status
-                log('[Payment] ✅ Stripe payment succeeded, confirming with backend...');
-                log('[Payment] Payment Intent ID:', paymentIntent.id);
                 try {
-                    const confirmResult = await api.confirmDeliveryFeePayment(paymentIntent.id);
-                    log('[Payment] ✅ Backend confirmed successfully:', confirmResult);
+                    await api.confirmDeliveryFeePayment(paymentIntent.id);
                 } catch (confirmError: any) {
-                    logError('[Payment] ⚠️ Backend confirm FAILED (webhook will retry):', confirmError);
-                    logError('[Payment] Backend error type:', typeof confirmError);
-                    logError('[Payment] Backend error message:', confirmError?.message);
-                    logError('[Payment] Backend error details:', JSON.stringify(confirmError));
                     // Continue anyway - Stripe webhook will handle it as fallback
                 }
 
@@ -332,16 +384,14 @@ export default function PaymentScreen() {
 
                 toast.show({
                     type: 'success',
-                    title: '✅ Payment Successful',
-                    message: 'Your order has been confirmed!',
+                    title: `✅ ${t('payment.paymentSuccessTitle')}`,
+                    message: t('payment.paymentSuccessMsg'),
                 });
 
-                // Navigate immediately - don't wait for setIsLoading
-                log('[Payment] SUCCESS - Navigating now. orderId:', orderId);
+                // Navigate immediately
 
                 // Use shorter delay and ensure navigation happens
                 const navigateToOrder = () => {
-                    log('[Payment] Executing navigation reset...');
                     if (orderId) {
                         navigation.reset({
                             index: 1,
@@ -351,7 +401,6 @@ export default function PaymentScreen() {
                             ],
                         });
                     } else {
-                        warn('[Payment] No orderId, navigating to Orders tab');
                         navigation.reset({
                             index: 0,
                             routes: [{ name: 'Main', params: { screen: 'Orders' } }],
@@ -367,8 +416,8 @@ export default function PaymentScreen() {
                 warn('[Payment] Unexpected status:', paymentIntent?.status);
                 toast.show({
                     type: 'info',
-                    title: 'Payment Processing',
-                    message: `Status: ${paymentIntent?.status}. Please check your orders.`,
+                    title: t('payment.paymentProcessing'),
+                    message: t('payment.paymentProcessingMsg', { status: paymentIntent?.status }),
                 });
                 setTimeout(() => {
                     navigation.reset({
@@ -395,7 +444,7 @@ export default function PaymentScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         try {
-            log('[Payment] 🎉 Processing FREE order via loyalty discount');
+            // Confirm order with zero payment (loyalty covers it)
 
             // Confirm order with zero payment (loyalty covers it)
             const { discountOnTotal } = calculateDiscount;
@@ -404,8 +453,8 @@ export default function PaymentScreen() {
             // CELEBRATION!
             toast.show({
                 type: 'success',
-                title: '🎊 FREE Order Confirmed!',
-                message: 'Your loyalty rewards covered this order!',
+                title: `🎊 ${t('payment.freeOrderTitle')}`,
+                message: t('payment.freeOrderMsg'),
             });
 
             // Navigate to tracking
@@ -427,18 +476,18 @@ export default function PaymentScreen() {
 
     const handleCancel = useCallback(() => {
         Alert.alert(
-            'Cancel Order',
-            'Are you sure you want to cancel? Your order will not be placed.',
+            t('cancel.title'),
+            t('payment.cancelConfirm'),
             [
-                { text: 'Stay', style: 'cancel' },
+                { text: t('cancel.keepOrder'), style: 'cancel' },
                 {
-                    text: 'Cancel Order',
+                    text: t('cancel.yesCancel'),
                     style: 'destructive',
                     onPress: () => navigation.goBack(),
                 },
             ]
         );
-    }, [navigation]);
+    }, [navigation, t]);
 
     if (isCreatingOrder) {
         return (
@@ -446,8 +495,39 @@ export default function PaymentScreen() {
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.primary} />
                     <Text style={[styles.loadingText, { color: colors.text }]}>
-                        Preparing your order...
+                        {t('payment.preparing')}
                     </Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    if (intentError && !clientSecret) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={styles.loadingContainer}>
+                    <Ionicons name="cloud-offline-outline" size={56} color={Colors.error || '#e74c3c'} />
+                    <Text style={[styles.loadingText, { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>
+                        {t('payment.intentFailed')}
+                    </Text>
+                    <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: 14, marginTop: 8, paddingHorizontal: 32, textAlign: 'center' }]}>
+                        {intentError}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={retryPaymentIntent}
+                        style={[styles.retryButton, { backgroundColor: Colors.primary }]}
+                    >
+                        <Ionicons name="refresh-outline" size={20} color="#fff" />
+                        <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={styles.retryCancel}
+                    >
+                        <Text style={[styles.retryCancelText, { color: colors.textSecondary }]}>
+                            {t('common.cancel')}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
@@ -459,10 +539,10 @@ export default function PaymentScreen() {
                 {/* Header */}
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-                        <Text style={styles.backText}>← Cancel</Text>
+                        <Text style={styles.backText}>← {t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        💳 {paymentType === 'full' ? 'Pay Full Amount' : 'Pay Delivery Fee'}
+                        💳 {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
                     </Text>
                     <View style={{ width: 60 }} />
                 </View>
@@ -485,7 +565,7 @@ export default function PaymentScreen() {
 
                             {/* Part Info - Clean & Minimal */}
                             <View style={styles.vvipPartRow}>
-                                <Text style={styles.vvipPartLabel}>🔧 Part</Text>
+                                <Text style={styles.vvipPartLabel}>🔧 {t('payment.part')}</Text>
                                 <Text style={styles.vvipPartValue} numberOfLines={1}>
                                     {partDescription}
                                 </Text>
@@ -495,16 +575,16 @@ export default function PaymentScreen() {
                             <View style={styles.vvipDivider} />
 
                             <View style={styles.vvipPriceRow}>
-                                <Text style={styles.vvipPriceLabel}>Part Price</Text>
-                                <Text style={styles.vvipPriceValue}>{partPrice.toFixed(0)} QAR</Text>
+                                <Text style={styles.vvipPriceLabel}>{t('order.partPrice')}</Text>
+                                <Text style={styles.vvipPriceValue}>{partPrice.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                             <View style={styles.vvipPriceRow}>
-                                <Text style={styles.vvipPriceLabel}>Delivery</Text>
-                                <Text style={styles.vvipPriceValue}>{deliveryFee.toFixed(0)} QAR</Text>
+                                <Text style={styles.vvipPriceLabel}>{t('order.deliveryFee')}</Text>
+                                <Text style={styles.vvipPriceValue}>{deliveryFee.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                             <View style={[styles.vvipPriceRow, { marginTop: Spacing.sm }]}>
-                                <Text style={styles.vvipTotalLabel}>Total</Text>
-                                <Text style={styles.vvipTotalValue}>{totalAmount.toFixed(0)} QAR</Text>
+                                <Text style={styles.vvipTotalLabel}>{t('common.total')}</Text>
+                                <Text style={styles.vvipTotalValue}>{totalAmount.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                         </LinearGradient>
 
@@ -532,13 +612,13 @@ export default function PaymentScreen() {
                                         <Text style={styles.vvipPaymentEmoji}>🚚</Text>
                                     </View>
                                     <View>
-                                        <Text style={styles.vvipPaymentTitle}>Pay Delivery Only</Text>
-                                        <Text style={styles.vvipPaymentSubtitle}>Cash on delivery for part</Text>
+                                        <Text style={styles.vvipPaymentTitle}>{t('payment.payDeliveryOnly')}</Text>
+                                        <Text style={styles.vvipPaymentSubtitle}>{t('payment.cashOnDeliveryForPart')}</Text>
                                     </View>
                                 </View>
                                 <View style={styles.vvipPaymentRight}>
                                     <Text style={styles.vvipPaymentAmount}>{deliveryFee.toFixed(0)}</Text>
-                                    <Text style={styles.vvipPaymentCurrency}>QAR</Text>
+                                    <Text style={styles.vvipPaymentCurrency}>{t('common.currency')}</Text>
                                 </View>
                             </TouchableOpacity>
 
@@ -562,13 +642,13 @@ export default function PaymentScreen() {
                                         <Text style={styles.vvipPaymentEmoji}>💳</Text>
                                     </View>
                                     <View>
-                                        <Text style={styles.vvipPaymentTitle}>Pay Full Amount</Text>
-                                        <Text style={styles.vvipPaymentSubtitle}>No cash at delivery</Text>
+                                        <Text style={styles.vvipPaymentTitle}>{t('payment.payFullOption')}</Text>
+                                        <Text style={styles.vvipPaymentSubtitle}>{t('payment.noCashAtDelivery')}</Text>
                                     </View>
                                 </View>
                                 <View style={styles.vvipPaymentRight}>
                                     <Text style={[styles.vvipPaymentAmount, { color: '#22C55E' }]}>{totalAmount.toFixed(0)}</Text>
-                                    <Text style={styles.vvipPaymentCurrency}>QAR</Text>
+                                    <Text style={styles.vvipPaymentCurrency}>{t('common.currency')}</Text>
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -588,10 +668,10 @@ export default function PaymentScreen() {
                                         </Text>
                                         <View>
                                             <Text style={styles.vvipLoyaltyTier}>
-                                                {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% OFF
+                                                {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% {t('payment.off')}
                                             </Text>
                                             <Text style={styles.vvipLoyaltySavings}>
-                                                {applyDiscount ? `Save ${paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart} QAR` : 'Tap to apply'}
+                                                {applyDiscount ? t('payment.save', { amount: paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart }) : t('payment.tapToApply')}
                                             </Text>
                                         </View>
                                     </View>
@@ -612,7 +692,7 @@ export default function PaymentScreen() {
                                         colors={['#22C55E', '#16A34A']}
                                         style={styles.vvipFreeOrderBanner}
                                     >
-                                        <Text style={styles.vvipFreeOrderText}>🎊 FREE ORDER! 🎊</Text>
+                                        <Text style={styles.vvipFreeOrderText}>🎊 {t('payment.freeOrderBanner')} 🎊</Text>
                                     </LinearGradient>
                                 )}
 
@@ -620,14 +700,14 @@ export default function PaymentScreen() {
                                 {applyDiscount && (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 && !freeOrder && (
                                     <View style={styles.vvipDiscountSummary}>
                                         <Text style={styles.vvipDiscountLabel}>
-                                            {paymentType === 'full' ? 'You Pay' : 'COD Amount'}
+                                            {paymentType === 'full' ? t('payment.youPay') : t('payment.codAmount')}
                                         </Text>
                                         <View style={{ alignItems: 'flex-end' }}>
                                             <Text style={styles.vvipDiscountOld}>
-                                                {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} QAR
+                                                {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} {t('common.currency')}
                                             </Text>
                                             <Text style={styles.vvipDiscountNew}>
-                                                {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} QAR
+                                                {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} {t('common.currency')}
                                             </Text>
                                         </View>
                                     </View>
@@ -640,8 +720,8 @@ export default function PaymentScreen() {
                             <View style={styles.vvipInfoBanner}>
                                 <Text style={styles.vvipInfoText}>
                                     {paymentType === 'full'
-                                        ? '✓ No cash needed at delivery'
-                                        : `💵 ${applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0)} QAR cash at delivery`
+                                        ? `✓ ${t('payment.noCashNeeded')}`
+                                        : `💵 ${t('payment.cashAtDelivery', { amount: applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0) })}`
                                     }
                                 </Text>
                             </View>
@@ -650,11 +730,11 @@ export default function PaymentScreen() {
                         {/* Card Input */}
                         <View style={[styles.cardSection, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                💳 Card Details
+                                💳 {t('payment.cardDetails')}
                             </Text>
 
                             <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>
-                                Enter your card information
+                                {t('payment.enterCardInfo')}
                             </Text>
 
                             <View style={styles.cardFieldWrapper}>
@@ -685,7 +765,7 @@ export default function PaymentScreen() {
                             <View style={styles.cardSecurityRow}>
                                 <Text style={styles.securityIcon}>🔒</Text>
                                 <Text style={[styles.securityText, { color: colors.textSecondary }]}>
-                                    Your card details are encrypted and secure
+                                    {t('payment.cardSecure')}
                                 </Text>
                             </View>
                         </View>
@@ -711,7 +791,7 @@ export default function PaymentScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={[styles.payButtonText, { color: '#1a1a2e' }]}>
-                                        🎊 Claim FREE Order! 🎊
+                                        🎊 {t('payment.freeOrderClaim')} 🎊
                                     </Text>
                                 )}
                             </LinearGradient>
@@ -731,7 +811,7 @@ export default function PaymentScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={styles.payButtonText}>
-                                        🔒 Pay {payNowAmount.toFixed(2)} QAR
+                                        🔒 {t('payment.pay', { amount: payNowAmount.toFixed(2) })}
                                     </Text>
                                 )}
                             </LinearGradient>
@@ -739,7 +819,7 @@ export default function PaymentScreen() {
                     )}
 
                     <Text style={styles.secureText}>
-                        {freeOrder ? '✨ Your loyalty rewards at work!' : '🔐 Secured by Stripe'}
+                        {freeOrder ? `✨ ${t('payment.loyaltyAtWork')}` : `🔐 ${t('payment.securedByStripe')}`}
                     </Text>
                 </View>
             </SafeAreaView >
@@ -758,6 +838,30 @@ const styles = StyleSheet.create({
         marginTop: Spacing.lg,
         fontSize: FontSizes.lg,
         fontWeight: '600',
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: 24,
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 12,
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+    },
+    retryCancel: {
+        marginTop: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+    },
+    retryCancelText: {
+        fontSize: FontSizes.md,
+        fontWeight: '500',
     },
     header: {
         flexDirection: 'row',

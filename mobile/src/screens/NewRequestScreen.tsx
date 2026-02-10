@@ -358,7 +358,7 @@ export default function NewRequestScreen() {
 
             // Append quantity if more than 1
             if (quantity > 1) {
-                finalDescription += `\n\n📦 ${t('newRequest.quantity')}: ${quantity} ${t('newRequest.pcs')}`;
+                finalDescription += `\n\n${t('newRequest.quantity')}: ${quantity} ${t('newRequest.pcs')}`;
             }
 
             // Append side/position if specified
@@ -368,7 +368,7 @@ export default function NewRequestScreen() {
                     right: t('newRequest.rightPassenger'),
                     both: t('newRequest.bothSides')
                 };
-                finalDescription += `\n📍 ${t('newRequest.position')}: ${sideLabels[side]}`;
+                finalDescription += `\n${t('newRequest.position')}: ${sideLabels[side]}`;
             }
 
             formData.append('part_description', finalDescription);

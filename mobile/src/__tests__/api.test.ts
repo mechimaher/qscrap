@@ -150,14 +150,30 @@ describe('API Service', () => {
             );
         });
 
-        it('acceptBid should POST to /orders/accept-bid/:bidId', async () => {
+        it('acceptBid should POST to /orders/accept-bid/:bidId with payment method', async () => {
+            mockFetchSuccess({ success: true, order_id: 'order-1' });
+
+            await api.acceptBid('bid-123', 'card');
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${API_BASE_URL}${API_ENDPOINTS.ACCEPT_BID('bid-123')}`,
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({ payment_method: 'card' }),
+                })
+            );
+        });
+
+        it('acceptBid should default to cash payment method', async () => {
             mockFetchSuccess({ success: true, order_id: 'order-1' });
 
             await api.acceptBid('bid-123');
 
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}${API_ENDPOINTS.ACCEPT_BID('bid-123')}`,
-                expect.objectContaining({ method: 'POST' })
+                expect.objectContaining({
+                    body: JSON.stringify({ payment_method: 'cash' }),
+                })
             );
         });
 
@@ -476,6 +492,99 @@ describe('API Service', () => {
             (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
             await expect(api.getMyRequests()).rejects.toThrow('Network error');
+        });
+    });
+
+    // ============================================================================
+    // PAYMENT FLOW
+    // ============================================================================
+    describe('Payment Flow', () => {
+        it('createDeliveryFeeIntent should POST to /payments/deposit/:orderId', async () => {
+            mockFetchSuccess({
+                success: true,
+                intent: { id: 'pi_123', clientSecret: 'cs_123', amount: 2500, currency: 'qar' },
+                breakdown: { partPrice: 100, deliveryFee: 25, loyaltyDiscount: 0, originalTotal: 125, codAmount: 100, total: 25 },
+            });
+
+            const result = await api.createDeliveryFeeIntent('order-123', 5);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${API_BASE_URL}/payments/deposit/order-123`,
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({ loyaltyDiscount: 5 }),
+                })
+            );
+            expect(result.intent.clientSecret).toBe('cs_123');
+        });
+
+        it('createDeliveryFeeIntent should default loyaltyDiscount to 0', async () => {
+            mockFetchSuccess({
+                success: true,
+                intent: { id: 'pi_123', clientSecret: 'cs_123', amount: 2500, currency: 'qar' },
+            });
+
+            await api.createDeliveryFeeIntent('order-123');
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${API_BASE_URL}/payments/deposit/order-123`,
+                expect.objectContaining({
+                    body: JSON.stringify({ loyaltyDiscount: 0 }),
+                })
+            );
+        });
+
+        it('createFullPaymentIntent should POST to /payments/full/:orderId', async () => {
+            mockFetchSuccess({
+                success: true,
+                intent: { id: 'pi_456', clientSecret: 'cs_456', amount: 12500, currency: 'qar' },
+                breakdown: { partPrice: 100, deliveryFee: 25, total: 125 },
+            });
+
+            const result = await api.createFullPaymentIntent('order-123', 10);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${API_BASE_URL}/payments/full/order-123`,
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({ loyaltyDiscount: 10 }),
+                })
+            );
+            expect(result.breakdown.total).toBe(125);
+        });
+
+        it('confirmDeliveryFeePayment should POST to /payments/deposit/confirm/:intentId', async () => {
+            mockFetchSuccess({ success: true, message: 'Payment confirmed' });
+
+            const result = await api.confirmDeliveryFeePayment('pi_test_123');
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${API_BASE_URL}/payments/deposit/confirm/pi_test_123`,
+                expect.objectContaining({ method: 'POST' })
+            );
+            expect(result.success).toBe(true);
+        });
+
+        it('confirmFreeOrder should POST to /payments/free/:orderId with discount', async () => {
+            mockFetchSuccess({ success: true, message: 'Free order confirmed', order_id: 'order-123' });
+
+            const result = await api.confirmFreeOrder('order-123', 125);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                `${API_BASE_URL}/payments/free/order-123`,
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({ loyaltyDiscount: 125 }),
+                })
+            );
+            expect(result.success).toBe(true);
+            expect(result.order_id).toBe('order-123');
+        });
+
+        it('should handle payment intent creation error', async () => {
+            mockFetchError(400, { error: 'Invalid order status' });
+
+            await expect(api.createDeliveryFeeIntent('order-123')).rejects.toThrow();
         });
     });
 

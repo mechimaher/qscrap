@@ -194,63 +194,6 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
     }
 }
 
-async function notifyOrderCreation(order: any, garageId: string, customerId: string, requestId: string, partDesc: string, totalAmount: number) {
-    // Send push notification to garage
-    try {
-        const { pushService } = await import('./push.service');
-        await pushService.sendToUser(
-            garageId,
-            '🎉 Bid Accepted!',
-            'Congratulations! Customer accepted your bid. Start preparing the part.',
-            {
-                type: 'bid_accepted',
-                orderId: order.order_id,
-                orderNumber: order.order_number,
-            },
-            { channelId: 'orders', sound: true }
-        );
-    } catch (pushErr) {
-        logger.error('Push notification to garage failed', { error: pushErr });
-    }
-
-    // Notify winning garage (in-app)
-    await import('../services/notification.service').then(ns => ns.createNotification({
-        userId: garageId,
-        type: 'bid_accepted',
-        title: 'Bid Accepted! 🎉',
-        message: "Congratulations! Your bid was accepted.",
-        data: {
-            order_id: order.order_id,
-            order_number: order.order_number,
-            request_id: requestId
-        },
-        target_role: 'garage'
-    }));
-
-    emitToGarage(garageId, 'bid_accepted', {
-        bid_id: order.bid_id, // Note: order doesn't have bid_id in return, might need to pass it or fetch it. 
-        // Logic fix: The emit used `bid_id` in controller. We need to be careful.
-        // For now, let's stick to the critical Notification logic.
-        request_id: requestId,
-        garage_id: garageId,
-        part_description: partDesc,
-        notification: "Bid accepted! Order created."
-    });
-
-    // Notify customer
-    await import('../services/notification.service').then(ns => ns.createNotification({
-        userId: customerId,
-        type: 'order_created',
-        title: 'Order Created ✅',
-        message: `Order #${order.order_number} created! The garage will start preparing your part.`,
-        data: {
-            order_id: order.order_id,
-            order_number: order.order_number,
-            total_amount: totalAmount
-        },
-        target_role: 'customer'
-    }));
-}
 
 /**
  * CRITICAL FIX: Customer-only notification for order creation

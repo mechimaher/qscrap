@@ -7,6 +7,7 @@ import {
     Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from '../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 interface LiveETACardProps {
@@ -26,6 +27,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
     driverStatus,
     driverName,
 }) => {
+    const { t } = useTranslation();
     const [countdown, setCountdown] = useState<number>(0);
     const [displayMinutes, setDisplayMinutes] = useState<number>(0);
     const [displaySeconds, setDisplaySeconds] = useState<number>(0);
@@ -126,15 +128,15 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
     const getStatusText = () => {
         switch (driverStatus) {
             case 'picking_up':
-                return 'Driver is picking up your part';
+                return t('tracking.etaPickingUp');
             case 'in_transit':
-                return 'On the way to you';
+                return t('tracking.etaOnTheWay');
             case 'arriving':
-                return 'Driver is almost there!';
+                return t('tracking.etaArriving');
             case 'delivered':
-                return 'Delivered! ✓';
+                return t('tracking.etaDelivered');
             default:
-                return 'Tracking your order';
+                return t('tracking.etaTracking');
         }
     };
 
@@ -190,24 +192,24 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                                 <Text style={styles.countdownText}>
                                     {displayMinutes}
                                 </Text>
-                                <Text style={styles.countdownUnit}>min</Text>
+                                <Text style={styles.countdownUnit}>{t('tracking.etaMin')}</Text>
                                 <Text style={styles.countdownSeparator}>:</Text>
                                 <Text style={styles.countdownText}>
                                     {displaySeconds.toString().padStart(2, '0')}
                                 </Text>
-                                <Text style={styles.countdownUnit}>sec</Text>
+                                <Text style={styles.countdownUnit}>{t('tracking.etaSec')}</Text>
                             </>
                         ) : etaMinutes === null ? (
-                            <Text style={styles.calculatingText}>Calculating...</Text>
+                            <Text style={styles.calculatingText}>{t('tracking.etaCalculating')}</Text>
                         ) : (
-                            <Text style={styles.arrivedText}>Arriving now!</Text>
+                            <Text style={styles.arrivedText}>{t('tracking.etaArrivingNow')}</Text>
                         )}
                     </View>
 
                     {distance && (
                         <View style={styles.distanceRow}>
                             <Text style={styles.distanceIcon}>📍</Text>
-                            <Text style={styles.distanceText}>{distance} away</Text>
+                            <Text style={styles.distanceText}>{t('tracking.etaDistanceAway', { distance })}</Text>
                         </View>
                     )}
                 </View>
@@ -239,9 +241,9 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                     />
                 </View>
                 <View style={styles.progressLabels}>
-                    <Text style={styles.progressLabel}>Picked up</Text>
-                    <Text style={styles.progressLabel}>On the way</Text>
-                    <Text style={styles.progressLabel}>Delivered</Text>
+                    <Text style={styles.progressLabel}>{t('tracking.etaPickedUp')}</Text>
+                    <Text style={styles.progressLabel}>{t('tracking.etaOnWay')}</Text>
+                    <Text style={styles.progressLabel}>{t('tracking.statusDelivered')}</Text>
                 </View>
             </View>
 
@@ -249,7 +251,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
             {driverName && (
                 <View style={styles.driverRow}>
                     <Text style={styles.driverNameText}>
-                        {driverName} is on their way
+                        {t('tracking.etaDriverOnWay', { name: driverName })}
                     </Text>
                 </View>
             )}

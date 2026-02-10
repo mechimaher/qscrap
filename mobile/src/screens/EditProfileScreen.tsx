@@ -101,7 +101,7 @@ export default function EditProfileScreen() {
                     { text: t('common.ok'), onPress: () => navigation.goBack() }
                 ]);
             } else {
-                throw new Error(data.error || data.message || 'Failed to update profile');
+                throw new Error(data.error || data.message || t('profile.updateFailed'));
             }
         } catch (error: any) {
             handleApiError(error, toast, { useAlert: true });
@@ -153,7 +153,7 @@ export default function EditProfileScreen() {
                 setConfirmPassword('');
             } else {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to change password');
+                throw new Error(data.error || t('profile.passwordChangeFailed'));
             }
         } catch (error: any) {
             handleApiError(error, toast, { useAlert: true });

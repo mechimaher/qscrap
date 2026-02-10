@@ -10,6 +10,7 @@ import {
     Animated,
     Easing,
 } from 'react-native';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface ViewerBadgeProps {
     viewerCount: number;
@@ -26,6 +27,7 @@ export const ViewerBadge: React.FC<ViewerBadgeProps> = ({
     showAnimation = true,
     size = 'medium',
 }) => {
+    const { t } = useTranslation();
     const blinkAnim = useRef(new Animated.Value(1)).current;
     const pulseAnim = useRef(new Animated.Value(0)).current;
     const [displayCount, setDisplayCount] = useState(viewerCount);
@@ -113,7 +115,7 @@ export const ViewerBadge: React.FC<ViewerBadgeProps> = ({
                 👀
             </Animated.Text>
             <Text style={currentSize.text}>
-                {displayCount} {displayCount === 1 ? 'garage' : 'garages'} viewing
+                {displayCount === 1 ? t('viewerBadge.garageViewing', { count: displayCount }) : t('viewerBadge.garagesViewing', { count: displayCount })}
             </Text>
         </Animated.View>
     );
@@ -142,6 +144,7 @@ export const ViewerBadgeLive: React.FC<ViewerBadgeProps & { isLive?: boolean }> 
     viewerCount,
     isLive = true,
 }) => {
+    const { t } = useTranslation();
     const pulseAnim = useRef(new Animated.Value(0.5)).current;
 
     useEffect(() => {
@@ -179,7 +182,7 @@ export const ViewerBadgeLive: React.FC<ViewerBadgeProps & { isLive?: boolean }> 
             )}
             <Text style={styles.liveIcon}>👀</Text>
             <Text style={styles.liveText}>
-                {viewerCount} {viewerCount === 1 ? 'garage' : 'garages'} viewing
+                {viewerCount === 1 ? t('viewerBadge.garageViewing', { count: viewerCount }) : t('viewerBadge.garagesViewing', { count: viewerCount })}
             </Text>
         </View>
     );

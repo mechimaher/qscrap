@@ -32,8 +32,6 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
-import LiveETACard from '../components/LiveETACard';
-import StatusTimeline from '../components/StatusTimeline';
 import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 import { KEYS } from '../config/keys';
 
@@ -239,9 +237,7 @@ export default function TrackingScreen() {
             });
 
             socket.current.on('order_status_update', (data: any) => {
-                log('[TrackingScreen] Socket order_status_update:', data);
                 if (data.order_id === orderId) {
-                    log('[TrackingScreen] Updating order status to:', data.status);
                     // Update order status
                     setOrderDetails(prev => prev ? { ...prev, order_status: data.status } : null);
 
@@ -321,7 +317,6 @@ export default function TrackingScreen() {
                 }
 
                 // Set order details for display
-                log('[TrackingScreen] Loading order details, status:', order.order_status);
                 setOrderDetails({
                     garage_name: order.garage_name || 'Unknown Garage',
                     part_description: order.part_description || order.part_name || 'Part',
@@ -362,7 +357,7 @@ export default function TrackingScreen() {
                 setRouteCoordinates(points);
             }
         } catch (error) {
-            log('Route fetch failed, falling back to straight line:', error);
+            log('Route fetch error:', error);
         }
     }, []);
 
@@ -395,7 +390,7 @@ export default function TrackingScreen() {
                     }
                 );
             } catch (error) {
-                log('Location error:', error);
+                log('Location watch error:', error);
             }
         };
 
@@ -408,12 +403,12 @@ export default function TrackingScreen() {
 
     const handleShareLocation = async () => {
         if (!myLocation) {
-            Alert.alert('Location not ready', 'Please wait for your location to be detected.');
+            Alert.alert(t('tracking.locationNotReady'), t('tracking.locationNotReadyMsg'));
             return;
         }
 
         if (!driverInfo) { // Need driver to share with
-            Alert.alert('No Driver', 'Driver information not available yet.');
+            Alert.alert(t('tracking.noDriver'), t('tracking.noDriverMsg'));
             return;
         }
 
@@ -452,13 +447,13 @@ export default function TrackingScreen() {
             // Let's assume we can get driver_id.
 
             Alert.alert(
-                'Location Shared',
-                'Your current location has been sent to the driver.',
-                [{ text: 'OK' }]
+                t('tracking.locationShared'),
+                t('tracking.locationSharedMsg'),
+                [{ text: t('common.ok') }]
             );
 
         } catch (error) {
-            Alert.alert('Error', 'Failed to share location');
+            Alert.alert(t('common.error'), t('tracking.shareError'));
         }
     };
 
@@ -591,7 +586,7 @@ export default function TrackingScreen() {
                             <Text style={styles.chatBannerFrom}>{newChatMessage.from}</Text>
                             <Text style={styles.chatBannerMessage} numberOfLines={1}>{newChatMessage.text}</Text>
                         </View>
-                        <Text style={styles.chatBannerAction}>View →</Text>
+                        <Text style={styles.chatBannerAction}>{t('tracking.view')} {isRTL ? '←' : '→'}</Text>
                     </View>
                 </TouchableOpacity>
             )}
@@ -686,7 +681,7 @@ export default function TrackingScreen() {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                     Linking.openURL(`tel:${driverInfo.phone}`);
                                 } else {
-                                    Alert.alert('No Phone', 'Driver phone number not available');
+                                    Alert.alert(t('tracking.noPhone'), t('tracking.noPhoneMsg'));
                                 }
                             }}
                         >
@@ -718,7 +713,7 @@ export default function TrackingScreen() {
                                 const statusIdx = getStatusIndex(orderDetails.order_status);
                                 const isCompleted = statusIdx > index;
                                 const isCurrent = statusIdx === index;
-                                const labels = ['Prepared', 'In Transit', 'Delivered', 'Completed'];
+                                const labels = [t('tracking.timelinePrepared'), t('tracking.timelineInTransit'), t('tracking.timelineDelivered'), t('tracking.timelineCompleted')];
                                 const icons = ['✓', '🚗', '📦', '⭐'];
 
                                 return (
@@ -758,7 +753,7 @@ export default function TrackingScreen() {
                         {/* Garage & Part Info */}
                         <View style={styles.orderInfoRow}>
                             <View style={styles.garageSection}>
-                                <Text style={styles.orderLabel}>🏭 FROM</Text>
+                                <Text style={[styles.orderLabel, { textAlign: rtlTextAlign(isRTL) }]}>🏭 {t('tracking.from')}</Text>
                                 <Text style={styles.garageName}>{orderDetails.garage_name}</Text>
                             </View>
                             <View style={styles.partSection}>
@@ -774,7 +769,7 @@ export default function TrackingScreen() {
                                     {orderDetails.warranty_days > 0 && (
                                         <View style={styles.warrantyBadge}>
                                             <Text style={styles.warrantyText}>
-                                                {orderDetails.warranty_days}d warranty
+                                                {t('tracking.warranty', { days: orderDetails.warranty_days })}
                                             </Text>
                                         </View>
                                     )}
@@ -784,24 +779,24 @@ export default function TrackingScreen() {
 
                         {/* Pricing */}
                         <View style={styles.pricingSection}>
-                            <View style={styles.priceRow}>
-                                <Text style={styles.priceLabel}>Part</Text>
-                                <Text style={styles.priceValue}>{orderDetails.part_price.toFixed(0)} QAR</Text>
+                            <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <Text style={styles.priceLabel}>{t('order.partPrice')}</Text>
+                                <Text style={styles.priceValue}>{orderDetails.part_price.toFixed(0)} {t('common.currency')}</Text>
                             </View>
-                            <View style={styles.priceRow}>
-                                <Text style={styles.priceLabel}>Delivery</Text>
-                                <Text style={styles.priceValue}>{orderDetails.delivery_fee.toFixed(0)} QAR</Text>
+                            <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <Text style={styles.priceLabel}>{t('order.deliveryFee')}</Text>
+                                <Text style={styles.priceValue}>{orderDetails.delivery_fee.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                             {orderDetails.loyalty_discount > 0 && (
-                                <View style={styles.priceRow}>
-                                    <Text style={[styles.priceLabel, { color: '#22c55e' }]}>🎁 Loyalty Discount</Text>
-                                    <Text style={[styles.priceValue, { color: '#22c55e' }]}>-{orderDetails.loyalty_discount.toFixed(0)} QAR</Text>
+                                <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <Text style={[styles.priceLabel, { color: '#22c55e' }]}>🎁 {t('order.loyaltyDiscount')}</Text>
+                                    <Text style={[styles.priceValue, { color: '#22c55e' }]}>-{orderDetails.loyalty_discount.toFixed(0)} {t('common.currency')}</Text>
                                 </View>
                             )}
                             <View style={styles.priceDivider} />
-                            <View style={styles.priceRow}>
-                                <Text style={styles.totalLabel}>Total</Text>
-                                <Text style={styles.totalValue}>{orderDetails.total_amount.toFixed(0)} QAR</Text>
+                            <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <Text style={styles.totalLabel}>{t('common.total')}</Text>
+                                <Text style={styles.totalValue}>{orderDetails.total_amount.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                         </View>
                     </View>
@@ -817,8 +812,8 @@ export default function TrackingScreen() {
                     >
                         <Text style={styles.shareLocationIcon}>📍</Text>
                         <View style={styles.shareLocationText}>
-                            <Text style={styles.shareLocationTitle}>Share My Location</Text>
-                            <Text style={styles.shareLocationSubtitle}>Help driver find you easily</Text>
+                            <Text style={styles.shareLocationTitle}>{t('tracking.shareLocation')}</Text>
+                            <Text style={styles.shareLocationSubtitle}>{t('tracking.shareLocationHint')}</Text>
                         </View>
                         <Text style={styles.shareLocationArrow}>→</Text>
                     </LinearGradient>
@@ -840,24 +835,14 @@ const getStatusIndex = (status: string): number => {
         'qc_in_progress': 0,
         'qc_passed': 0,
         'in_transit': 1,
+        'arriving': 1,
         'delivered': 2,
         'completed': 3,
     };
     return statusMapping[status] ?? 0;
 };
 
-// Dark map style for premium look
-const darkMapStyle = [
-    { elementType: 'geometry', stylers: [{ color: '#1d1d1d' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#1d1d1d' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2c2c' }] },
-    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1d1d1d' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3c3c3c' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e171d' }] },
-    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-];
+
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8F9FA' },

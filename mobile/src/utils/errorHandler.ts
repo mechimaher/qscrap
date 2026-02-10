@@ -1,6 +1,7 @@
 import { log, warn, error as logError } from './logger';
 import * as Haptics from 'expo-haptics';
 import { Alert } from 'react-native';
+import { t } from './i18nHelper';
 
 export interface ErrorContext {
     error: (title: string, message?: string) => void;
@@ -36,7 +37,7 @@ export const extractErrorMessage = (error: any): string => {
     }
 
     // Fallback
-    return 'An unexpected error occurred';
+    return t('common.unexpectedError');
 };
 
 export interface HandleApiErrorOptions {
@@ -72,11 +73,11 @@ export const handleApiError = (
 
     if (opts.useAlert) {
         Alert.alert(
-            'Error',
+            t('common.error'),
             message,
-            [{ text: 'OK', onPress: opts.onDismiss }]
+            [{ text: t('common.ok'), onPress: opts.onDismiss }]
         );
     } else {
-        toast.error('Error', message);
+        toast.error(t('common.error'), message);
     }
 };

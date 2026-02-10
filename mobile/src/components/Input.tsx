@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
 import { Spacing, BorderRadius, FontSize } from '../constants';
+import { t } from '../utils/i18nHelper';
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
     label?: string;
@@ -177,7 +178,7 @@ export const Input: React.FC<InputProps> = ({
                         <TouchableOpacity
                             onPress={() => setShowPassword(!showPassword)}
                             style={styles.iconButton}
-                            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                            accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                         >
                             <Ionicons
                                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
