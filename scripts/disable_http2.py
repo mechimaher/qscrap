@@ -1,8 +1,9 @@
+import os
 import paramiko
 
 host = "147.93.89.153"
 user = "root"
-password = "***REDACTED***"
+password = os.environ.get("VPS_PASSWORD", "")
 
 try:
     client = paramiko.SSHClient()

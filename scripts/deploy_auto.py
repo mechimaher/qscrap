@@ -7,7 +7,7 @@ from datetime import datetime
 # Configuration
 VPS_IP = "147.93.89.153"
 VPS_USER = "root"
-VPS_PASS = "***REDACTED***"
+VPS_PASS = os.environ.get("VPS_PASSWORD", "")
 REPO_URL = "https://github.com/mechimaher/qscrap.git"
 PROJECT_DIR = "/opt/qscrap"
 

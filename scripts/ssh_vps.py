@@ -1,3 +1,4 @@
+import os
 import pexpect
 import sys
 
@@ -20,9 +21,9 @@ def run_ssh_command(host, user, password, command):
         return "ERROR: Timeout or unexpected response"
 
 if __name__ == "__main__":
-    host = "147.93.89.153"
-    user = "root"
-    password = "***REDACTED***"
+    host = os.environ.get("VPS_HOST", "147.93.89.153")
+    user = os.environ.get("VPS_USER", "root")
+    password = os.environ.get("VPS_PASSWORD", "")
     
     if len(sys.argv) > 1:
         cmd = sys.argv[1]

@@ -23,9 +23,9 @@ def scp_file(host, user, password, local_path, remote_path):
         return "ERROR: Timeout or unexpected response"
 
 if __name__ == "__main__":
-    host = "147.93.89.153"
-    user = "root"
-    password = "***REDACTED***"
+    host = os.environ.get("VPS_HOST", "147.93.89.153")
+    user = os.environ.get("VPS_USER", "root")
+    password = os.environ.get("VPS_PASSWORD", "")
     
     if len(sys.argv) < 3:
         print("Usage: python3 scp_vps.py <local_path> <remote_path>")
