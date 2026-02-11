@@ -45,3 +45,6 @@ wget-log
 
 # Credentials
 VPS_CREDENTIALS.md
+
+# Python cache
+__pycache__/

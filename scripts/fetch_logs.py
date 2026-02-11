@@ -5,7 +5,7 @@ import os
 # VPS Details
 VPS_IP = "147.93.89.153"
 VPS_USER = "root"
-VPS_PASS = "QScrap@2026byMaher"
+VPS_PASS = os.environ.get("VPS_PASSWORD", "")
 
 def fetch_logs():
     print(f"🔌 Connecting to {VPS_IP}...")
