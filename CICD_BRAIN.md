@@ -1,6 +1,6 @@
 # 🏆 QScrap CI/CD Brain - Enterprise Gold Standard
 
-**Version:** 1.0 | **Certified:** February 3, 2026 | **Maturity:** 9.5/10
+**Version:** 1.1 | **Certified:** February 11, 2026 | **Maturity:** 9.6/10
 
 ---
 
@@ -63,6 +63,7 @@ scripts/
 - Postgres + Redis service containers
 - Coverage report upload
 - Docker Buildx caching
+- **Path Filter:** Ignores `mobile/**` and `driver-mobile/**` (Backend only)
 
 ---
 
