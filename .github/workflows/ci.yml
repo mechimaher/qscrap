@@ -3,8 +3,14 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'mobile/**'
+      - 'driver-mobile/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'mobile/**'
+      - 'driver-mobile/**'
 
 permissions:
   contents: read
