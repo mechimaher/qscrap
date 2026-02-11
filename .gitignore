@@ -42,3 +42,6 @@ temp/
 QScrap.apk
 QScrap-Premium.apk
 wget-log
+
+# Credentials
+VPS_CREDENTIALS.md
