@@ -17,7 +17,7 @@ SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=apikey
-SMTP_PASS=***REDACTED***
+SMTP_PASS=${SENDGRID_API_KEY:?ERROR: Set SENDGRID_API_KEY env var before running}
 SMTP_FROM=noreply@qscrap.qa
 EOF
 
