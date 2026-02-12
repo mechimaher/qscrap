@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Colors as ThemeColors } from '../../constants/theme';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 interface HeroWelcomeProps {
     user: any;
@@ -38,21 +39,21 @@ const HeroWelcome = ({
     const loyaltyGlow = useRef(new Animated.Value(0.8)).current;
     const { t, isRTL } = useTranslation();
 
-    const getTimeEmoji = () => {
+    const getTimeIcon = (): keyof typeof Ionicons.glyphMap => {
         const hour = new Date().getHours();
-        if (hour < 6) return '🌙';
-        if (hour < 12) return '☀️';
-        if (hour < 17) return '🌤️';
-        if (hour < 20) return '🌅';
-        return '🌙';
+        if (hour < 6) return 'moon-outline';
+        if (hour < 12) return 'sunny-outline';
+        if (hour < 17) return 'partly-sunny-outline';
+        if (hour < 20) return 'sunny-outline';
+        return 'moon-outline';
     };
 
-    const getTierEmoji = (tier: string) => {
+    const getTierIcon = (tier: string): keyof typeof Ionicons.glyphMap => {
         switch (tier?.toLowerCase()) {
-            case 'platinum': return '💎';
-            case 'gold': return '🏆';
-            case 'silver': return '🥈';
-            default: return '🏅';
+            case 'platinum': return 'diamond-outline';
+            case 'gold': return 'trophy-outline';
+            case 'silver': return 'medal-outline';
+            default: return 'ribbon-outline';
         }
     };
 
@@ -97,9 +98,12 @@ const HeroWelcome = ({
                             />
                         </View>
                         <View style={styles.heroTextContainer}>
-                            <Text style={[styles.heroGreeting, { textAlign: rtlTextAlign(isRTL) }]}>
-                                {getTimeEmoji()} {greeting}
-                            </Text>
+                            <View style={[{ flexDirection: rtlFlexDirection(isRTL), alignItems: 'center' }]}>
+                                <Ionicons name={getTimeIcon()} size={14} color="rgba(255,255,255,0.85)" style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+                                <Text style={[styles.heroGreeting, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {greeting}
+                                </Text>
+                            </View>
                             <Text style={[styles.heroName, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {user?.full_name || customerLabel || t('common.customer')}
                             </Text>
@@ -112,7 +116,7 @@ const HeroWelcome = ({
                         accessibilityHint={t('accessibility.viewNotifications') || 'View your notifications'}
                         accessibilityRole="button"
                     >
-                        <Text style={styles.notificationIcon}>🔔</Text>
+                        <Ionicons name="notifications-outline" size={18} color="#fff" />
                         {unreadCount > 0 && (
                             <Animated.View style={[
                                 styles.notificationBadge,
@@ -138,7 +142,7 @@ const HeroWelcome = ({
                         accessibilityRole="button"
                     >
                         <Animated.View style={[styles.heroLoyaltyBadge, { opacity: loyaltyGlow, alignSelf: isRTL ? 'flex-end' : 'flex-start', marginLeft: isRTL ? 0 : Spacing.lg, marginRight: isRTL ? Spacing.lg : 0, flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.heroLoyaltyEmoji}>{getTierEmoji(loyalty.tier)}</Text>
+                            <Ionicons name={getTierIcon(loyalty.tier)} size={14} color="#fff" />
                             <Text style={styles.heroLoyaltyTier}>{t('loyalty.tierLabel', { tier: t(`loyalty.${loyalty.tier.toLowerCase()}`) })}</Text>
                             <View style={styles.heroLoyaltyDot} />
                             <Text style={styles.heroLoyaltyPoints}>{loyalty.points.toLocaleString()} {t('home.pts')}</Text>
@@ -160,7 +164,7 @@ const HeroWelcome = ({
                 >
                     <View style={[styles.locationContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <View style={styles.locationIconContainer}>
-                            <Text style={styles.locationIcon}>📍</Text>
+                            <Ionicons name="location" size={18} color={Colors.secondary} />
                         </View>
                         <View style={{ flex: 1, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                             <Text style={styles.locationLabel}>{t('home.deliveringTo')}</Text>

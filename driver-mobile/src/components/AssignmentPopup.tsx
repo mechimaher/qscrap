@@ -15,10 +15,13 @@ import {
     Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
+import { useI18n } from '../i18n';
 import { Colors } from '../constants/theme';
 import { Assignment } from '../services/api';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COUNTDOWN_SECONDS = 30;
@@ -38,7 +41,9 @@ export default function AssignmentPopup({
     onReject,
     onTimeout,
 }: AssignmentPopupProps) {
-    const { colors, isDarkMode } = useTheme();
+    const { colors } = useTheme();
+    const { t } = useI18n();
+    const alertSoundRef = useRef<Audio.Sound | null>(null);
     const [timeLeft, setTimeLeft] = useState(COUNTDOWN_SECONDS);
     const progressAnim = useRef(new Animated.Value(1)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -82,9 +87,26 @@ export default function AssignmentPopup({
                 ])
             ).start();
 
-            // Vibration pattern for notification
+            // Vibration pattern + alert sound for notification
             Vibration.vibrate([0, 500, 200, 500]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+            // Play alert sound (audible even in silent mode on iOS)
+            (async () => {
+                try {
+                    await Audio.setAudioModeAsync({
+                        playsInSilentModeIOS: true,
+                        shouldDuckAndroid: true,
+                    });
+                    const { sound } = await Audio.Sound.createAsync(
+                        require('../../assets/sounds/new_assignment.mp3'),
+                        { shouldPlay: true, volume: 1.0 }
+                    );
+                    alertSoundRef.current = sound;
+                } catch (e) {
+                    console.warn('[AssignmentPopup] Could not play alert sound:', e);
+                }
+            })();
         } else {
             scaleAnim.setValue(0.8);
         }
@@ -112,15 +134,25 @@ export default function AssignmentPopup({
         return () => clearInterval(interval);
     }, [visible, assignment, onTimeout]);
 
-    const handleAccept = () => {
+    const handleAccept = async () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Vibration.cancel();
+        if (alertSoundRef.current) {
+            await alertSoundRef.current.stopAsync().catch(() => { });
+            await alertSoundRef.current.unloadAsync().catch(() => { });
+            alertSoundRef.current = null;
+        }
         onAccept();
     };
 
-    const handleReject = () => {
+    const handleReject = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         Vibration.cancel();
+        if (alertSoundRef.current) {
+            await alertSoundRef.current.stopAsync().catch(() => { });
+            await alertSoundRef.current.unloadAsync().catch(() => { });
+            alertSoundRef.current = null;
+        }
         onReject();
     };
 
@@ -157,7 +189,7 @@ export default function AssignmentPopup({
                                 {timeLeft}
                             </Text>
                             <Text style={[styles.timerLabel, { color: colors.textMuted }]}>
-                                seconds
+                                {t('seconds')}
                             </Text>
                         </View>
                     </Animated.View>
@@ -177,7 +209,7 @@ export default function AssignmentPopup({
 
                     {/* Title */}
                     <Text style={[styles.title, { color: colors.text }]}>
-                        🚗 New Assignment!
+                        <Ionicons name="car-sport" size={22} color={Colors.primary} /> {t('new_assignment')}
                     </Text>
 
                     {/* Order Info Card */}
@@ -192,7 +224,7 @@ export default function AssignmentPopup({
                         {/* Vehicle Info */}
                         {(assignment.car_make || assignment.car_model) && (
                             <View style={styles.vehicleRow}>
-                                <Text style={styles.vehicleIcon}>🚙</Text>
+                                <Ionicons name="car-outline" size={16} color={colors.textSecondary} />
                                 <Text style={[styles.vehicleText, { color: colors.textSecondary }]}>
                                     {[assignment.car_make, assignment.car_model].filter(Boolean).join(' ')}
                                 </Text>
@@ -205,11 +237,11 @@ export default function AssignmentPopup({
                         {/* Pickup */}
                         <View style={styles.locationItem}>
                             <View style={[styles.locationDot, { backgroundColor: Colors.warning }]}>
-                                <Text style={styles.locationIcon}>📦</Text>
+                                <Ionicons name="cube" size={18} color="#fff" />
                             </View>
                             <View style={styles.locationInfo}>
                                 <Text style={[styles.locationLabel, { color: colors.textMuted }]}>
-                                    PICKUP FROM
+                                    {t('pickup_from').toUpperCase()}
                                 </Text>
                                 <Text style={[styles.locationName, { color: colors.text }]} numberOfLines={1}>
                                     {assignment.garage_name}
@@ -222,17 +254,17 @@ export default function AssignmentPopup({
 
                         {/* Arrow */}
                         <View style={styles.arrowContainer}>
-                            <Text style={[styles.arrow, { color: colors.textMuted }]}>↓</Text>
+                            <Ionicons name="arrow-down" size={16} color={colors.textMuted} />
                         </View>
 
                         {/* Delivery */}
                         <View style={styles.locationItem}>
                             <View style={[styles.locationDot, { backgroundColor: Colors.success }]}>
-                                <Text style={styles.locationIcon}>🏠</Text>
+                                <Ionicons name="home" size={18} color="#fff" />
                             </View>
                             <View style={styles.locationInfo}>
                                 <Text style={[styles.locationLabel, { color: colors.textMuted }]}>
-                                    DELIVER TO
+                                    {t('deliver_to').toUpperCase()}
                                 </Text>
                                 <Text style={[styles.locationName, { color: colors.text }]} numberOfLines={1}>
                                     {assignment.customer_name}
@@ -253,7 +285,7 @@ export default function AssignmentPopup({
                             activeOpacity={0.7}
                         >
                             <Text style={[styles.rejectButtonText, { color: Colors.danger }]}>
-                                ✕ Reject
+                                <Ionicons name="close" size={16} color={Colors.danger} /> {t('reject')}
                             </Text>
                         </TouchableOpacity>
 
@@ -269,7 +301,7 @@ export default function AssignmentPopup({
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                             >
-                                <Text style={styles.acceptButtonText}>✓ Accept</Text>
+                                <Text style={styles.acceptButtonText}><Ionicons name="checkmark" size={18} color="#fff" /> {t('accept')}</Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>

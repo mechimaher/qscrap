@@ -16,7 +16,6 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const { locations } = data as { locations: Location.LocationObject[] };
         const location = locations[0];
         if (location) {
-            console.log('[LocationService] Background location:', location.coords);
             try {
                 // Use offline queue for guaranteed delivery
                 await offlineQueue.enqueue(
@@ -58,7 +57,6 @@ class LocationService {
         const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
         if (isStarted) return;
 
-        console.log('[LocationService] Starting background tracking');
         await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
             accuracy: Location.Accuracy.Balanced,
             timeInterval: 60 * 1000, // 60 seconds
@@ -75,7 +73,6 @@ class LocationService {
     async stopTracking() {
         const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
         if (isStarted) {
-            console.log('[LocationService] Stopping background tracking');
             await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
         }
     }

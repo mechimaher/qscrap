@@ -77,7 +77,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const setupEventListeners = () => {
         // NEW ASSIGNMENT - Vibrate and show alert
         onNewAssignment((data) => {
-            console.log('[SocketContext] New assignment:', data);
 
             // Strong haptic feedback
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -89,17 +88,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
         // ASSIGNMENT UPDATED
         onAssignmentUpdated((data) => {
-            console.log('[SocketContext] Assignment updated:', data);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         });
 
         // ASSIGNMENT CANCELLED
         onAssignmentCancelled((data) => {
-            console.log('[SocketContext] Assignment cancelled:', data);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
             Alert.alert(
-                '⚠️ Assignment Cancelled',
+                'Assignment Cancelled',
                 `Order #${data.order_number} has been cancelled.\n\nReason: ${data.reason || 'No reason provided'}`,
                 [{ text: 'OK' }]
             );
@@ -107,7 +104,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
         // NEW MESSAGE
         onNewMessage((data) => {
-            console.log('[SocketContext] New message:', data);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setUnreadMessages((prev) => prev + 1);
         });

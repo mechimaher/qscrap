@@ -8,6 +8,7 @@ import { useTranslation } from '../../contexts/LanguageContext';
 import { Stats } from '../../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, FontFamily } from '../../constants/theme';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
@@ -119,7 +120,7 @@ const AnimatedStats = ({
                     accessibilityRole="button"
                 >
                     <LinearGradient colors={cardColors} style={styles.statCardInner}>
-                        <Text style={styles.statEmoji}>{emoji}</Text>
+                        <Ionicons name={emoji as any} size={20} color="#525252" style={{ marginBottom: 2 }} />
                         <AnimatedNumber value={value} delay={500 + index * 150} />
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
                     </LinearGradient>
@@ -130,11 +131,11 @@ const AnimatedStats = ({
 
     return (
         <View style={styles.statsSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>📊 {t('home.yourActivity')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.yourActivity')}</Text>
             <View style={[styles.statsRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <StatCard
                     index={0}
-                    emoji="🔍"
+                    emoji="search"
                     value={stats?.active_requests || 0}
                     label={t('home.activeRequests')}
                     colors={['#FFF9E6', '#FFF3CC']}
@@ -142,7 +143,7 @@ const AnimatedStats = ({
                 />
                 <StatCard
                     index={1}
-                    emoji="🚚"
+                    emoji="car-sport"
                     value={stats?.pending_deliveries || 0}
                     label={t('home.inProgress')}
                     colors={['#E6F7FF', '#CCF0FF']}
@@ -162,7 +163,7 @@ const AnimatedStats = ({
                         style={[styles.statCardWideInner, { flexDirection: rtlFlexDirection(isRTL) }]}
                     >
                         <View style={[styles.wideCardLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.wideCardEmoji, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>📦</Text>
+                            <Ionicons name="cube" size={28} color={Colors.primary} style={isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }} />
                             <View style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                                 <AnimatedNumber value={stats?.total_orders || 0} delay={700} />
                                 <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>{t('home.totalOrders')}</Text>

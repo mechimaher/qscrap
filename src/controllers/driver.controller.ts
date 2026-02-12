@@ -206,45 +206,6 @@ export const getMyStats = async (req: AuthRequest, res: Response) => {
     }
 };
 
-export const getWallet = async (req: AuthRequest, res: Response) => {
-    try {
-        const wallet = await driverService.getWallet(req.user!.userId);
-        res.json({ wallet });
-    } catch (err) {
-        logger.error('getWallet Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
-
-export const getWalletHistory = async (req: AuthRequest, res: Response) => {
-    try {
-        const history = await driverService.getWalletHistory(req.user!.userId);
-        res.json({ history });
-    } catch (err) {
-        logger.error('getWalletHistory Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
-
-export const getEarningsTrend = async (req: AuthRequest, res: Response) => {
-    try {
-        const trend = await driverService.getEarningsTrend(req.user!.userId);
-        res.json({ trend });
-    } catch (err) {
-        logger.error('getEarningsTrend Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
-
-export const getPayoutHistory = async (req: AuthRequest, res: Response) => {
-    try {
-        const payouts = await driverService.getPayoutHistory(req.user!.userId);
-        res.json({ payouts });
-    } catch (err) {
-        logger.error('getPayoutHistory Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
     try {

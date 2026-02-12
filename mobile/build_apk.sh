@@ -1,121 +1,240 @@
 #!/bin/bash
 # ================================================================
 # QScrap Customer App — Enterprise Clean APK Build Script
-# One-click: clears ALL caches, installs deps, builds fresh APK
+# Senior Android Engineering Standards — Feb 2026
+# 
+# One-click: validates → cleans → installs → prebuilds → builds
+# Produces a verified, signed release APK with build manifest
 # ================================================================
-set -e
+set -euo pipefail
+IFS=$'\n\t'
+
+# ---- Build Timer ----
+BUILD_START=$(date +%s)
+BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+# ---- Color Output ----
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+step() { echo -e "\n${BLUE}${BOLD}[$1/8]${NC} ${BOLD}$2${NC}"; }
+ok()   { echo -e "  ${GREEN}✓${NC} $1"; }
+warn() { echo -e "  ${YELLOW}⚠${NC} $1"; }
+fail() { echo -e "  ${RED}✗${NC} $1"; exit 1; }
 
 # ---- Environment Setup ----
-export ANDROID_HOME=/home/user/Android/Sdk
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export PATH=$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+export ANDROID_HOME="${ANDROID_HOME:-/home/user/Android/Sdk}"
+export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ulimit -n 65536 2>/dev/null || true
 
 # Navigate to mobile dir if run from repo root
-if [ -d "mobile" ]; then cd mobile; fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
+# ---- Banner ----
 echo ""
+echo -e "${BOLD}=============================================="
+echo "  QScrap Customer APK — Enterprise Clean Build"
+echo "==============================================${NC}"
+echo "  Directory : $(pwd)"
+echo "  Time      : $BUILD_DATE"
+echo "  Node      : $(node -v 2>/dev/null || echo 'NOT FOUND')"
+echo "  Java      : $(java -version 2>&1 | head -1)"
+echo "  NPM       : $(npm -v 2>/dev/null || echo 'NOT FOUND')"
 echo "=============================================="
-echo "  QScrap Customer APK — Clean Build"
-echo "=============================================="
-echo "Directory : $(pwd)"
-echo "Time      : $(date)"
-echo "Node      : $(node -v 2>/dev/null || echo 'NOT FOUND')"
-echo "Java      : $(java -version 2>&1 | head -1)"
-echo "=============================================="
-echo ""
 
-# ---- Step 1: Nuke ALL Caches ----
-echo "🧹 [1/7] Clearing ALL caches..."
-rm -rf .expo/ android/ ios/ 2>/dev/null || true
-rm -rf /tmp/metro-* /tmp/expo-* /tmp/haste-* 2>/dev/null || true
-rm -rf /tmp/react-native-* 2>/dev/null || true
-rm -rf $HOME/.gradle/caches/transforms-* 2>/dev/null || true
-rm -rf $HOME/.gradle/daemon 2>/dev/null || true
+# ---- Step 1: Pre-Build Validation ----
+step 1 "Pre-build validation..."
+
+# Check Java
+if ! java -version 2>&1 | grep -q "17"; then
+    fail "Java 17 required. Found: $(java -version 2>&1 | head -1)"
+fi
+ok "Java 17 verified"
+
+# Check Android SDK
+if [ ! -d "$ANDROID_HOME/platforms" ]; then
+    fail "Android SDK not found at $ANDROID_HOME"
+fi
+ok "Android SDK found"
+
+# Check Node
+if ! command -v node &>/dev/null; then
+    fail "Node.js not found in PATH"
+fi
+ok "Node.js $(node -v) verified"
+
+# TypeScript pre-flight check
+echo "  Checking TypeScript compilation..."
+if npx tsc --noEmit 2>&1 | grep -q "error TS"; then
+    fail "TypeScript errors found! Fix before building."
+fi
+ok "TypeScript — 0 errors"
+
+# Read version from app.json
+APP_VERSION=$(node -e "console.log(require('./app.json').expo.version)" 2>/dev/null || echo "unknown")
+APP_NAME=$(node -e "console.log(require('./app.json').expo.name)" 2>/dev/null || echo "QScrap")
+ok "App: $APP_NAME v$APP_VERSION"
+
+# ---- Step 2: Nuke ALL Caches ----
+step 2 "Clearing ALL caches (deep clean)..."
+
+# Android build artifacts
+rm -rf android/ ios/ 2>/dev/null || true
+ok "Native project directories removed"
+
+# Expo & Metro caches
+rm -rf .expo/ 2>/dev/null || true
+rm -rf /tmp/metro-* /tmp/expo-* /tmp/haste-* /tmp/react-native-* 2>/dev/null || true
+ok "Metro/Expo caches cleared"
+
+# Gradle global caches (transforms only — keeps downloaded deps)
+rm -rf "$HOME/.gradle/caches/transforms-"* 2>/dev/null || true
+rm -rf "$HOME/.gradle/daemon" 2>/dev/null || true
+ok "Gradle transform caches cleared"
+
+# Node module caches
 rm -rf node_modules/.cache 2>/dev/null || true
-echo "   ✓ Caches cleared"
+ok "Node module caches cleared"
 
-# ---- Step 2: Install ALL Dependencies ----
-echo ""
-echo "📦 [2/7] Installing dependencies (fresh)..."
+# ---- Step 3: Install Dependencies ----
+step 3 "Installing dependencies (clean install)..."
+
 rm -rf node_modules package-lock.json 2>/dev/null || true
-npm install --legacy-peer-deps
-echo "   ✓ Dependencies installed"
+npm install --legacy-peer-deps 2>&1 | tail -3
+ok "Dependencies installed"
 
-# ---- Step 3: Expo Prebuild ----
-echo ""
-echo "📱 [3/7] Running Expo Prebuild (generates Android project)..."
-npx expo prebuild --platform android --clean
-echo "   ✓ Android project generated"
+# ---- Step 4: Expo Prebuild ----
+step 4 "Running Expo Prebuild (generating Android project)..."
 
-# ---- Step 4: Configure Gradle Memory ----
-echo ""
-echo "🔧 [4/7] Configuring Gradle for optimal build..."
-mkdir -p android
+npx expo prebuild --platform android --clean 2>&1 | tail -5
+ok "Android project generated from app.json"
+
+# ---- Step 5: Configure Gradle for Optimal Build ----
+step 5 "Configuring Gradle build environment..."
+
+if [ ! -d "android" ]; then
+    fail "android/ directory not found after prebuild!"
+fi
+
+# Optimize Gradle properties
 GRADLE_PROPS="android/gradle.properties"
 if [ -f "$GRADLE_PROPS" ]; then
-    # Remove existing jvmargs line and add optimized one
+    # Remove existing JVM args to avoid duplicates
     sed -i '/org.gradle.jvmargs/d' "$GRADLE_PROPS"
+    sed -i '/org.gradle.parallel/d' "$GRADLE_PROPS"
 fi
-echo "" >> "$GRADLE_PROPS"
-echo "# Enterprise build optimization" >> "$GRADLE_PROPS"
-echo "org.gradle.jvmargs=-Xmx8192m -XX:MaxMetaspaceSize=2048m" >> "$GRADLE_PROPS"
-echo "   ✓ Gradle memory configured (8GB heap)"
 
-# ---- Step 5: Setup Build Temp Directory ----
-echo ""
-echo "📂 [5/7] Setting up build environment..."
+# Use printf to ensure newline before appending (prevents concatenation with last line)
+printf '\n\n# Enterprise Build Optimization (auto-generated)\norg.gradle.jvmargs=-Xmx8192m -XX:MaxMetaspaceSize=2048m -XX:+HeapDumpOnOutOfMemoryError\norg.gradle.parallel=false\norg.gradle.caching=false\n' >> "$GRADLE_PROPS"
+ok "Gradle JVM: 8GB heap, 2GB metaspace"
+
+# Setup temp build directory (avoid /tmp exhaustion)
 mkdir -p android/temp_build
 export GRADLE_OPTS="-Djava.io.tmpdir=$(pwd)/android/temp_build -Dorg.gradle.vfs.watch=false"
-echo "   ✓ Build environment ready"
+ok "Build temp directory configured"
 
-# ---- Step 6: Build APK ----
-echo ""
-echo "🔨 [6/7] Building Release APK (this takes 5-15 minutes)..."
-echo "   (Using: no-daemon, no-cache, controlled parallelism)"
-cd android || { echo "❌ android/ directory not found!"; exit 1; }
+# ---- Step 6: Stop Existing Gradle Daemons ----
+step 6 "Stopping stale Gradle daemons..."
+
+cd android
+./gradlew --stop 2>/dev/null || true
+ok "Gradle daemons cleared"
+
+# ---- Step 7: Build Release APK ----
+step 7 "Building Release APK (this takes 5-15 minutes)..."
+
+GRADLE_START=$(date +%s)
 
 ./gradlew assembleRelease \
     --console=plain \
     --no-daemon \
     --no-build-cache \
-    -Dorg.gradle.parallel=false \
+    --warning-mode=none \
     -Dorg.gradle.workers.max=2
 
-BUILD_RESULT=$?
+GRADLE_EXIT=$?
+GRADLE_END=$(date +%s)
+GRADLE_DURATION=$((GRADLE_END - GRADLE_START))
+
 cd ..
 
-# ---- Step 7: Verify & Copy APK ----
-echo ""
-echo "=============================================="
-if [ $BUILD_RESULT -eq 0 ]; then
-    APK_SOURCE="android/app/build/outputs/apk/release/app-release.apk"
-    if [ -f "$APK_SOURCE" ]; then
-        cp "$APK_SOURCE" "../QScrapCustomer.apk"
-        APK_SIZE=$(ls -lh "../QScrapCustomer.apk" | awk '{print $5}')
-        echo "✅ [7/7] BUILD SUCCESS!"
-        echo ""
-        echo "   APK Location : ../QScrapCustomer.apk"
-        echo "   APK Size     : $APK_SIZE"
-        echo "   Built at     : $(date)"
-        echo ""
-        echo "   Ready to install on device!"
-    else
-        echo "⚠️  Gradle succeeded but APK file not found at:"
-        echo "   $APK_SOURCE"
-        echo ""
-        echo "   Searching for APK..."
-        find android/ -name "*.apk" 2>/dev/null
-        exit 1
-    fi
-else
-    echo "❌ BUILD FAILED (exit code: $BUILD_RESULT)"
-    echo ""
-    echo "   Check the build output above for errors."
-    echo "   Common fixes:"
-    echo "   - Run: rm -rf android/ && npx expo prebuild --platform android --clean"
-    echo "   - Check JAVA_HOME: $JAVA_HOME"
-    echo "   - Check ANDROID_HOME: $ANDROID_HOME"
-    exit 1
+if [ $GRADLE_EXIT -ne 0 ]; then
+    fail "Gradle build failed (exit code: $GRADLE_EXIT). Check output above."
 fi
+ok "Gradle build completed in ${GRADLE_DURATION}s"
+
+# ---- Step 8: Verify, Copy & Generate Build Manifest ----
+step 8 "Verifying and packaging APK..."
+
+APK_SOURCE="android/app/build/outputs/apk/release/app-release.apk"
+
+if [ ! -f "$APK_SOURCE" ]; then
+    warn "APK not found at expected path. Searching..."
+    APK_SOURCE=$(find android/ -name "*.apk" -path "*/release/*" 2>/dev/null | head -1)
+    if [ -z "$APK_SOURCE" ]; then
+        fail "No release APK found anywhere in android/build/"
+    fi
+    ok "Found APK at: $APK_SOURCE"
+fi
+
+# Copy to project root with versioned name
+APK_OUTPUT="../QScrapCustomer-v${APP_VERSION}.apk"
+cp "$APK_SOURCE" "$APK_OUTPUT"
+
+# Also copy without version for convenience
+cp "$APK_SOURCE" "../QScrapCustomer.apk"
+
+# Calculate metrics
+APK_SIZE=$(ls -lh "$APK_OUTPUT" | awk '{print $5}')
+APK_SIZE_BYTES=$(stat -c%s "$APK_OUTPUT" 2>/dev/null || stat -f%z "$APK_OUTPUT" 2>/dev/null)
+APK_SHA256=$(sha256sum "$APK_OUTPUT" | awk '{print $1}')
+BUILD_END=$(date +%s)
+TOTAL_DURATION=$((BUILD_END - BUILD_START))
+TOTAL_MINUTES=$((TOTAL_DURATION / 60))
+TOTAL_SECONDS=$((TOTAL_DURATION % 60))
+
+# Generate build manifest
+BUILD_MANIFEST="../QScrapCustomer-build-manifest.txt"
+cat > "$BUILD_MANIFEST" << MANIFEST
+===========================================
+ QScrap Customer APK — Build Manifest
+===========================================
+App Name      : $APP_NAME
+Version       : $APP_VERSION
+Build Date    : $BUILD_DATE
+Build Duration: ${TOTAL_MINUTES}m ${TOTAL_SECONDS}s
+-------------------------------------------
+APK File      : QScrapCustomer-v${APP_VERSION}.apk
+APK Size      : $APK_SIZE ($APK_SIZE_BYTES bytes)
+SHA-256       : $APK_SHA256
+-------------------------------------------
+Node.js       : $(node -v)
+Java          : $(java -version 2>&1 | head -1)
+Expo SDK      : $(node -e "console.log(require('./package.json').dependencies.expo)" 2>/dev/null)
+React Native  : $(node -e "console.log(require('./package.json').dependencies['react-native'])" 2>/dev/null)
+-------------------------------------------
+Build Machine : $(hostname)
+Build User    : $(whoami)
+===========================================
+MANIFEST
+
+# ---- Final Summary ----
+echo ""
+echo -e "${GREEN}${BOLD}=============================================="
+echo "  BUILD SUCCESS"
+echo "==============================================${NC}"
+echo ""
+echo -e "  ${BOLD}APK:${NC}       QScrapCustomer-v${APP_VERSION}.apk"
+echo -e "  ${BOLD}Size:${NC}      $APK_SIZE"
+echo -e "  ${BOLD}SHA-256:${NC}   ${APK_SHA256:0:16}..."
+echo -e "  ${BOLD}Duration:${NC}  ${TOTAL_MINUTES}m ${TOTAL_SECONDS}s"
+echo -e "  ${BOLD}Manifest:${NC}  QScrapCustomer-build-manifest.txt"
+echo ""
+echo -e "  ${GREEN}Ready to install on device!${NC}"
 echo "=============================================="

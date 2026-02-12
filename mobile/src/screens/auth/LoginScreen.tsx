@@ -23,6 +23,7 @@ import { useTranslation } from '../../contexts/LanguageContext';
 import { Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 const { width } = Dimensions.get('window');
@@ -169,14 +170,14 @@ export default function LoginScreen() {
                                     flexDirection: rtlFlexDirection(isRTL)
                                 }
                             ]}>
-                                <Text style={[styles.errorIcon, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}>⚠️</Text>
+                                <Ionicons name="alert-circle" size={16} color={colors.error} style={[isRTL && { marginRight: 0, marginLeft: Spacing.sm }, !isRTL && { marginRight: Spacing.sm }]} />
                                 <Text style={[styles.errorText, { color: colors.error, textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
                             <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                📱 {t('auth.phone')}
+                                {t('auth.phone')}
                             </Text>
                             <TextInput
                                 style={[styles.input, {
@@ -198,7 +199,7 @@ export default function LoginScreen() {
 
                         <View style={styles.inputContainer}>
                             <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                🔒 {t('auth.password')}
+                                {t('auth.password')}
                             </Text>
                             <TextInput
                                 style={[styles.input, {

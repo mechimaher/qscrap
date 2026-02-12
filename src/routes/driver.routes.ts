@@ -11,8 +11,6 @@ import {
 import {
     uploadDeliveryProof,
     getMyStats,
-    getEarningsTrend,
-    getPayoutHistory,
     updateProfile,
     toggleAvailability,
     getMyProfile,
@@ -22,8 +20,6 @@ import {
     rejectAssignment,
     updateAssignmentStatus,
     updateMyLocation,
-    getWallet,
-    getWalletHistory
 } from '../controllers/driver.controller';
 
 const router = Router();
@@ -42,17 +38,6 @@ router.get('/me', getMyProfile as unknown as RequestHandler);
 // Get driver's statistics
 router.get('/stats', getMyStats as unknown as RequestHandler);
 
-// Get earnings trend (last 7 days)
-router.get('/stats/trend', getEarningsTrend as unknown as RequestHandler);
-
-// Get payout history
-router.get('/payouts', getPayoutHistory as unknown as RequestHandler);
-
-// Get Wallet Balance
-router.get('/wallet', getWallet as unknown as RequestHandler);
-
-// Get Wallet History
-router.get('/wallet/history', getWalletHistory as unknown as RequestHandler);
 
 // Update profile (including bank details)
 router.patch('/profile', updateProfile as unknown as RequestHandler);

@@ -1,0 +1,20 @@
+===========================================
+ QScrap Driver APK — Build Manifest
+===========================================
+App Name      : QScrap Driver
+Version       : 1.2.3
+Build Date    : 2026-02-12 16:17:31
+Build Duration: ~25m
+-------------------------------------------
+APK File      : QScrapDriver-v1.2.3.apk
+APK Size      : 119M (124706187 bytes)
+SHA-256       : 6324988a18e993874a972886ec7e4a6543a87ec8915db096e33104e256a23e32
+-------------------------------------------
+Node.js       : v20.20.0
+Java          : openjdk version "17.0.18" 2026-01-20
+Expo SDK      : ~54.0.30
+React Native  : 0.81.5
+-------------------------------------------
+Build Machine : qscrap
+Build User    : user
+===========================================

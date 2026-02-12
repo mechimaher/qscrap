@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const WelcomeNewUser = ({ onGetStarted }: { onGetStarted: () => void }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -33,7 +34,7 @@ const WelcomeNewUser = ({ onGetStarted }: { onGetStarted: () => void }) => {
                 colors={['rgba(141, 27, 61, 0.05)', 'rgba(201, 162, 39, 0.1)']}
                 style={styles.welcomeGradient}
             >
-                <Text style={styles.welcomeEmoji}>🎉</Text>
+                <Ionicons name="sparkles" size={48} color={Colors.primary} style={{ marginBottom: Spacing.sm }} />
                 <Text style={[styles.welcomeTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                     {t('home.welcomeNewUser') || 'Welcome to QScrap!'}
                 </Text>
@@ -47,7 +48,7 @@ const WelcomeNewUser = ({ onGetStarted }: { onGetStarted: () => void }) => {
                     accessibilityRole="button"
                 >
                     <Text style={styles.welcomeButtonText}>
-                        {t('home.getStarted') || 'Get Started'} 🚀
+                        {t('home.getStarted') || 'Get Started'}
                     </Text>
                 </TouchableOpacity>
             </LinearGradient>

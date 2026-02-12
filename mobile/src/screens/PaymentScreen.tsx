@@ -56,15 +56,15 @@ export default function PaymentScreen() {
     const params = route.params as RouteParams;
     const { bidId, garageName, partDescription, orderId: existingOrderId } = params;
 
-    // 🔍 CRITICAL DEBUG: Log screen mount to diagnose cache issues
+    // CRITICAL DEBUG: Log screen mount to diagnose cache issues
     useEffect(() => {
         log('========================================');
-        log(`🏦 PAYMENT SCREEN MOUNTED - ${SCREEN_VERSION}`);
-        log(`📦 Params: bidId=${bidId}, garageName=${garageName}`);
-        log(`💰 partPrice=${params.partPrice}, deliveryFee=${params.deliveryFee}`);
+        log(`[Payment] SCREEN MOUNTED - ${SCREEN_VERSION}`);
+        log(`[Payment] Params: bidId=${bidId}, garageName=${garageName}`);
+        log(`[Payment] partPrice=${params.partPrice}, deliveryFee=${params.deliveryFee}`);
         log('========================================');
         return () => {
-            log(`🏦 PAYMENT SCREEN UNMOUNTED - ${SCREEN_VERSION}`);
+            log(`[Payment] SCREEN UNMOUNTED - ${SCREEN_VERSION}`);
         };
     }, []);
 
@@ -174,7 +174,7 @@ export default function PaymentScreen() {
 
                 // If FREE order, no need for payment intent
                 if (finalAmount <= 0) {
-                    log('[Payment] 🎉 FREE ORDER - No payment needed!');
+                    log('[Payment] FREE ORDER - No payment needed!');
                     setClientSecret('FREE_ORDER');
                     setPaymentAmount(0);
                     setIsCreatingOrder(false);
@@ -384,7 +384,7 @@ export default function PaymentScreen() {
 
                 toast.show({
                     type: 'success',
-                    title: `✅ ${t('payment.paymentSuccessTitle')}`,
+                    title: t('payment.paymentSuccessTitle'),
                     message: t('payment.paymentSuccessMsg'),
                 });
 
@@ -453,7 +453,7 @@ export default function PaymentScreen() {
             // CELEBRATION!
             toast.show({
                 type: 'success',
-                title: `🎊 ${t('payment.freeOrderTitle')}`,
+                title: t('payment.freeOrderTitle'),
                 message: t('payment.freeOrderMsg'),
             });
 
@@ -542,7 +542,7 @@ export default function PaymentScreen() {
                         <Text style={styles.backText}>← {t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        💳 {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
+                        {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
                     </Text>
                     <View style={{ width: 60 }} />
                 </View>
@@ -565,7 +565,7 @@ export default function PaymentScreen() {
 
                             {/* Part Info - Clean & Minimal */}
                             <View style={styles.vvipPartRow}>
-                                <Text style={styles.vvipPartLabel}>🔧 {t('payment.part')}</Text>
+                                <Text style={styles.vvipPartLabel}>{t('payment.part')}</Text>
                                 <Text style={styles.vvipPartValue} numberOfLines={1}>
                                     {partDescription}
                                 </Text>
@@ -609,7 +609,7 @@ export default function PaymentScreen() {
                             >
                                 <View style={styles.vvipPaymentLeft}>
                                     <View style={[styles.vvipPaymentIcon, { backgroundColor: '#3B82F6' }]}>
-                                        <Text style={styles.vvipPaymentEmoji}>🚚</Text>
+                                        <Ionicons name="car-sport" size={20} color="#fff" />
                                     </View>
                                     <View>
                                         <Text style={styles.vvipPaymentTitle}>{t('payment.payDeliveryOnly')}</Text>
@@ -639,7 +639,7 @@ export default function PaymentScreen() {
                             >
                                 <View style={styles.vvipPaymentLeft}>
                                     <View style={[styles.vvipPaymentIcon, { backgroundColor: '#22C55E' }]}>
-                                        <Text style={styles.vvipPaymentEmoji}>💳</Text>
+                                        <Ionicons name="card" size={20} color="#fff" />
                                     </View>
                                     <View>
                                         <Text style={styles.vvipPaymentTitle}>{t('payment.payFullOption')}</Text>
@@ -663,9 +663,7 @@ export default function PaymentScreen() {
                             ]}>
                                 <View style={styles.vvipLoyaltyRow}>
                                     <View style={styles.vvipLoyaltyLeft}>
-                                        <Text style={styles.vvipLoyaltyBadge}>
-                                            {loyaltyData.tier === 'platinum' ? '💎' : loyaltyData.tier === 'gold' ? '🥇' : '🥈'}
-                                        </Text>
+                                        <Ionicons name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'} size={28} color={loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0'} />
                                         <View>
                                             <Text style={styles.vvipLoyaltyTier}>
                                                 {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% {t('payment.off')}
@@ -692,7 +690,7 @@ export default function PaymentScreen() {
                                         colors={['#22C55E', '#16A34A']}
                                         style={styles.vvipFreeOrderBanner}
                                     >
-                                        <Text style={styles.vvipFreeOrderText}>🎊 {t('payment.freeOrderBanner')} 🎊</Text>
+                                        <Text style={styles.vvipFreeOrderText}>{t('payment.freeOrderBanner')}</Text>
                                     </LinearGradient>
                                 )}
 
@@ -721,7 +719,7 @@ export default function PaymentScreen() {
                                 <Text style={styles.vvipInfoText}>
                                     {paymentType === 'full'
                                         ? `✓ ${t('payment.noCashNeeded')}`
-                                        : `💵 ${t('payment.cashAtDelivery', { amount: applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0) })}`
+                                        : t('payment.cashAtDelivery', { amount: applyDiscount && discountAmount > 0 ? codAmount.toFixed(0) : partPrice.toFixed(0) })
                                     }
                                 </Text>
                             </View>
@@ -730,7 +728,7 @@ export default function PaymentScreen() {
                         {/* Card Input */}
                         <View style={[styles.cardSection, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                                💳 {t('payment.cardDetails')}
+                                {t('payment.cardDetails')}
                             </Text>
 
                             <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>
@@ -763,7 +761,7 @@ export default function PaymentScreen() {
                             </View>
 
                             <View style={styles.cardSecurityRow}>
-                                <Text style={styles.securityIcon}>🔒</Text>
+                                <Ionicons name="lock-closed" size={16} color="#22c55e" />
                                 <Text style={[styles.securityText, { color: colors.textSecondary }]}>
                                     {t('payment.cardSecure')}
                                 </Text>
@@ -791,7 +789,7 @@ export default function PaymentScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={[styles.payButtonText, { color: '#1a1a2e' }]}>
-                                        🎊 {t('payment.freeOrderClaim')} 🎊
+                                        {t('payment.freeOrderClaim')}
                                     </Text>
                                 )}
                             </LinearGradient>
@@ -811,7 +809,7 @@ export default function PaymentScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={styles.payButtonText}>
-                                        🔒 {t('payment.pay', { amount: payNowAmount.toFixed(2) })}
+                                        {t('payment.pay', { amount: payNowAmount.toFixed(2) })}
                                     </Text>
                                 )}
                             </LinearGradient>
@@ -819,7 +817,7 @@ export default function PaymentScreen() {
                     )}
 
                     <Text style={styles.secureText}>
-                        {freeOrder ? `✨ ${t('payment.loyaltyAtWork')}` : `🔐 ${t('payment.securedByStripe')}`}
+                        {freeOrder ? t('payment.loyaltyAtWork') : t('payment.securedByStripe')}
                     </Text>
                 </View>
             </SafeAreaView >
@@ -1187,7 +1185,7 @@ const styles = StyleSheet.create({
     vvipPaymentIcon: {
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: BorderRadius.xl,
         alignItems: 'center',
         justifyContent: 'center',
     },

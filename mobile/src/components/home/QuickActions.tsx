@@ -7,6 +7,7 @@ import { useTranslation } from '../../contexts/LanguageContext';
 import { Spacing, BorderRadius, FontSizes, FontFamily } from '../../constants/theme';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { CONTACT } from '../../constants/contacts';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
@@ -59,7 +60,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
             >
                 <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }], backgroundColor: colors.surface }]}>
                     <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
-                        <Text style={styles.actionEmoji}>{emoji}</Text>
+                        <Ionicons name={emoji as any} size={22} color="#525252" />
                     </View>
                     <Text style={[styles.actionLabel, { color: colors.textSecondary, textAlign: 'center' }]}>{label}</Text>
                 </Animated.View>
@@ -72,28 +73,28 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
             styles.actionsSection,
             { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
         ]}>
-            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>⚡ {t('home.quickActions')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.quickActions')}</Text>
             <View style={[styles.actionsGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <ActionButton
-                    emoji="📋"
+                    emoji="clipboard-outline"
                     label={t('nav.newRequest')}
                     bgColor="#E8F5E9"
                     onPress={() => navigation.navigate('NewRequest')}
                 />
                 <ActionButton
-                    emoji="🚗"
+                    emoji="car-sport-outline"
                     label={t('nav.myVehicles')}
                     bgColor="#E3F2FD"
                     onPress={() => navigation.navigate('MyVehicles')}
                 />
                 <ActionButton
-                    emoji="💬"
+                    emoji="chatbubble-ellipses-outline"
                     label={t('nav.support')}
                     bgColor="#FFF3E0"
                     onPress={() => Linking.openURL(`https://wa.me/${CONTACT.SUPPORT_PHONE_RAW}?text=Hi%20QScrap%20Support`)}
                 />
                 <ActionButton
-                    emoji="⚙️"
+                    emoji="settings-outline"
                     label={t('nav.settings')}
                     bgColor="#F3E5F5"
                     onPress={() => navigation.navigate('Settings')}

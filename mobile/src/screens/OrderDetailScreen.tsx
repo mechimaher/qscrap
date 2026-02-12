@@ -30,6 +30,7 @@ import { handleApiError } from '../utils/errorHandler';
 import { useToast } from '../components/Toast';
 import { RootStackParamList } from '../../App';
 import { useSocketContext } from '../hooks/useSocket';
+import { Ionicons } from '@expo/vector-icons';
 
 // Extracted components
 import { getStatusConfig } from '../components/order/statusConfig';
@@ -274,7 +275,7 @@ export default function OrderDetailScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                        <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                     <View style={{ width: 60 }} />
@@ -300,7 +301,7 @@ export default function OrderDetailScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                 <View style={{ width: 60 }} />
@@ -314,7 +315,7 @@ export default function OrderDetailScreen() {
                 {isInTransit && (
                     <TouchableOpacity style={styles.trackButton} onPress={handleTrackLive}>
                         <LinearGradient colors={['#3B82F6', '#1D4ED8']} style={styles.trackGradient}>
-                            <Text style={styles.trackIcon}>🗺️</Text>
+                            <Ionicons name="map" size={24} color="#fff" style={{ marginRight: Spacing.sm }} />
                             <Text style={styles.trackText}>{t('order.openLiveMap')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
@@ -332,9 +333,9 @@ export default function OrderDetailScreen() {
                 <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
                     {/* Premium Order Summary Header */}
                     <View style={[styles.summaryHeader, { justifyContent: isRTL ? 'flex-end' : 'flex-start' }]}>
-                        {!isRTL && <Text style={[styles.summaryIcon, { marginRight: Spacing.sm }]}>📋</Text>}
+                        {!isRTL && <Ionicons name="clipboard-outline" size={24} color={colors.text} style={{ marginRight: Spacing.sm }} />}
                         <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL), marginBottom: 0 }]}>{t('common.orderSummary')}</Text>
-                        {isRTL && <Text style={[styles.summaryIcon, { marginLeft: Spacing.sm }]}>📋</Text>}
+                        {isRTL && <Ionicons name="clipboard-outline" size={24} color={colors.text} style={{ marginLeft: Spacing.sm }} />}
                     </View>
                     <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
@@ -372,7 +373,7 @@ export default function OrderDetailScreen() {
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                            🔧 {t('order.partPrice')}
+                            {t('order.partPrice')}
                         </Text>
                         <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
                             {order.part_price} {t('common.currency')}
@@ -380,7 +381,7 @@ export default function OrderDetailScreen() {
                     </View>
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                            🚚 {t('order.deliveryFee')}
+                            {t('order.deliveryFee')}
                         </Text>
                         <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
                             {order.delivery_fee} {t('common.currency')}
@@ -390,10 +391,10 @@ export default function OrderDetailScreen() {
                     {/* Show loyalty discount if applied */}
                     {(order.loyalty_discount ?? 0) > 0 && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.detailLabel, { color: '#10B981' }]}>
-                                🎁 {t('order.loyaltyDiscount')}
+                            <Text style={[styles.detailLabel, { color: Colors.success }]}>
+                                {t('order.loyaltyDiscount')}
                             </Text>
-                            <Text style={[styles.detailValue, { color: '#10B981', fontWeight: '700' }]}>
+                            <Text style={[styles.detailValue, { color: Colors.success, fontWeight: '700' }]}>
                                 -{order.loyalty_discount} {t('common.currency')}
                             </Text>
                         </View>
@@ -420,7 +421,7 @@ export default function OrderDetailScreen() {
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (
                                         <>
-                                            <Text style={styles.invoiceIcon}>📄</Text>
+                                            <Ionicons name="document-text" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
                                             <Text style={styles.invoiceText}>{t('order.downloadInvoice')}</Text>
                                         </>
                                     )}
@@ -449,7 +450,7 @@ export default function OrderDetailScreen() {
                                     end={{ x: 1, y: 0 }}
                                     style={styles.reorderGradient}
                                 >
-                                    <Text style={styles.reorderIcon}>🔄</Text>
+                                    <Ionicons name="refresh" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
                                     <Text style={styles.reorderText}>{t('order.orderAgain')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -462,7 +463,7 @@ export default function OrderDetailScreen() {
                     <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.deliveryAddress')}</Text>
                         <View style={[styles.addressRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.addressIcon}>📍</Text>
+                            <Ionicons name="location" size={20} color={colors.textSecondary} style={{ marginRight: Spacing.sm }} />
                             <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
                         </View>
                     </View>
@@ -474,7 +475,7 @@ export default function OrderDetailScreen() {
                     !order.pod_photo_url.startsWith('file://') && (
                         <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                📸 {t('order.proofOfDelivery')}
+                                {t('order.proofOfDelivery')}
                             </Text>
                             <Image
                                 source={{
@@ -500,7 +501,7 @@ export default function OrderDetailScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Text style={styles.confirmIcon}>✅</Text>
+                                    <Ionicons name="checkmark-circle" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
                                     <Text style={styles.confirmText}>{t('order.confirmReceived')}</Text>
                                 </>
                             )}
@@ -525,7 +526,7 @@ export default function OrderDetailScreen() {
                         }}
                     >
                         <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.confirmGradient}>
-                            <Text style={styles.confirmIcon}>💳</Text>
+                            <Ionicons name="card" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
                             <Text style={styles.confirmText}>{t('payment.payNow')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
@@ -542,7 +543,7 @@ export default function OrderDetailScreen() {
                             <ActivityIndicator color="#EF4444" />
                         ) : (
                             <>
-                                <Text style={styles.cancelOrderIcon}>✕</Text>
+                                <Ionicons name="close-circle" size={18} color="#EF4444" />
                                 <Text style={styles.cancelOrderText}>{t('order.cancelOrder')}</Text>
                             </>
                         )}
@@ -563,7 +564,7 @@ export default function OrderDetailScreen() {
             <Modal visible={showReviewModal} transparent animationType="slide" onRequestClose={() => setShowReviewModal(false)}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text, textAlign: 'center' }]}>⭐ {t('review.title')}</Text>
+                        <Text style={[styles.modalTitle, { color: colors.text, textAlign: 'center' }]}>{t('review.title')}</Text>
                         <Text style={[styles.modalSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
                             {t('review.howWasExp', { garage: order?.garage_name })}
                         </Text>
@@ -616,14 +617,14 @@ export default function OrderDetailScreen() {
 // STYLES (main screen only — hero, timeline, driver styles moved to components)
 // ============================================
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
+    container: { flex: 1, backgroundColor: Colors.light.background },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: Colors.light.borderLight,
     },
     backButton: { padding: Spacing.sm, borderRadius: BorderRadius.md },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
@@ -646,9 +647,9 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
-        backgroundColor: '#fff',
+        backgroundColor: Colors.light.surface,
         borderWidth: 1,
-        borderColor: '#F0F0F0',
+        borderColor: Colors.light.borderLight,
         ...Shadows.md
     },
     summaryHeader: {
@@ -659,13 +660,13 @@ const styles = StyleSheet.create({
     summaryIcon: { fontSize: 24 },
     summaryDivider: {
         height: 1,
-        backgroundColor: '#E8E8E8',
+        backgroundColor: Colors.light.border,
         marginBottom: Spacing.lg,
     },
     detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md, paddingVertical: Spacing.sm },
-    detailLabel: { fontSize: FontSizes.md, color: '#737373', fontWeight: '500' },
-    detailValue: { fontSize: FontSizes.md, fontWeight: '700', color: '#333', textAlign: 'right' },
-    divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: Spacing.md },
+    detailLabel: { fontSize: FontSizes.md, color: Colors.light.textMuted, fontWeight: '500' },
+    detailValue: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.light.text, textAlign: 'right' },
+    divider: { height: 1, backgroundColor: Colors.light.borderLight, marginVertical: Spacing.md },
     totalLabel: { fontSize: FontSizes.lg, fontWeight: '700' },
     totalValue: { fontSize: FontSizes.xl, fontWeight: '800' },
     invoiceButton: { marginTop: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
@@ -693,7 +694,7 @@ const styles = StyleSheet.create({
     confirmText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
 
     metaInfo: { alignItems: 'center', marginTop: Spacing.md },
-    metaText: { fontSize: FontSizes.sm, color: '#737373' },
+    metaText: { fontSize: FontSizes.sm, color: Colors.light.textMuted },
 
     // Skeleton
     skeletonContainer: { padding: Spacing.lg },

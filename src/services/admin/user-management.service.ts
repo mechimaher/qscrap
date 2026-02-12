@@ -188,8 +188,7 @@ export class UserManagementService {
                     vehicle_plate: driverData.rows[0].vehicle_plate,
                     vehicle_model: driverData.rows[0].vehicle_model,
                     status: driverData.rows[0].status,
-                    rating: driverData.rows[0].rating_average,
-                    total_earnings: driverData.rows[0].total_earnings
+                    rating: driverData.rows[0].rating_average
                 };
                 activity = {
                     deliveries_count: parseInt(driverData.rows[0].total_deliveries || 0),

@@ -26,7 +26,6 @@ class OfflineQueueService {
             const json = storage.getString(QUEUE_KEY);
             if (json) {
                 this.queue = JSON.parse(json);
-                console.log(`[OfflineQueue] Loaded ${this.queue.length} pending requests`);
             }
         } catch (e) {
             console.warn('[OfflineQueue] Failed to load queue', e);
@@ -51,7 +50,6 @@ class OfflineQueueService {
 
         this.queue.push(request);
         this.saveQueue();
-        console.log(`[OfflineQueue] Enqueued request: ${method} ${endpoint}`);
 
         // Try to process immediately if online
         const state = await NetInfo.fetch();
@@ -66,11 +64,9 @@ class OfflineQueueService {
 
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
-            console.log('[OfflineQueue] Offline, pausing queue processing');
             return;
         }
 
-        console.log('[OfflineQueue] Processing queue...');
         this.isProcessing = true;
 
         // Process sequentially to maintain order consistency
@@ -108,19 +104,17 @@ class OfflineQueueService {
                     continue;
                 }
 
-                console.log(`[OfflineQueue] Processing: ${req.method} ${req.endpoint} (Attempt ${req.retryCount + 1})`);
                 await api.request(req.endpoint, {
                     method: req.method,
                     body: JSON.stringify(bodyToSend)
                 });
 
-                console.log(`[OfflineQueue] ✅ Success: ${req.endpoint}`);
 
                 // Success: remove from queue
                 this.queue.shift();
                 this.saveQueue();
             } catch (err: any) {
-                console.error(`[OfflineQueue] ❌ Failed ${req.endpoint}:`, err.message || err);
+                console.error(`[OfflineQueue] Failed Failed ${req.endpoint}:`, err.message || err);
 
                 // If it's a 4xx error (client error), we should probably drop it 
                 // as retrying won't fix a bad request (e.g. invalid status transition)
@@ -149,7 +143,6 @@ class OfflineQueueService {
                 } else {
                     // Exponential backoff: 2s, 4s, 8s, 16s, 32s
                     const backoffMs = Math.pow(2, req.retryCount) * 1000;
-                    console.log(`[OfflineQueue] Backing off ${backoffMs / 1000}s before retry`);
                     // Update the queue with the incremented retry count
                     this.saveQueue();
                     // Wait before retrying
@@ -161,7 +154,6 @@ class OfflineQueueService {
         this.isProcessing = false;
 
         if (this.queue.length === 0) {
-            console.log('[OfflineQueue] Queue flushed successfully');
         }
     }
 

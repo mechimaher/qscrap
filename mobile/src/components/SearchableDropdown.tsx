@@ -11,6 +11,7 @@ import {
     KeyboardAvoidingView,
 } from 'react-native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -106,7 +107,7 @@ export default function SearchableDropdown({
                         {!isCustom ? (
                             <>
                                 <View style={[styles.searchContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    <Text style={[styles.searchIcon, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm }]}>🔍</Text>
+                                    <Ionicons name="search" size={16} color="#9CA3AF" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                                     <TextInput
                                         style={[styles.searchInput, { textAlign: rtlTextAlign(isRTL) }]}
                                         placeholder={t('common.searchPlaceholder')}

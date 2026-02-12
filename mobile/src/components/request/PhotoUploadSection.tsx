@@ -6,6 +6,7 @@ import { log } from '../../utils/logger';
 import React, { memo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
@@ -56,14 +57,14 @@ function PhotoUploadSection({
                             onPress={onPickImage}
                             style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                         >
-                            <Text style={styles.addPhotoIcon}>📁</Text>
+                            <Ionicons name="images-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
                             <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={onTakePhoto}
                             style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                         >
-                            <Text style={styles.addPhotoIcon}>📸</Text>
+                            <Ionicons name="camera-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
                             <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
                         </TouchableOpacity>
                     </View>
@@ -92,7 +93,7 @@ function PhotoUploadSection({
                     onPress={onPickImage}
                     style={[styles.addPhotoButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 >
-                    <Text style={styles.addPhotoIcon}>📁</Text>
+                    <Ionicons name="images-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
                     <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
                         {t('common.gallery')}
                     </Text>
@@ -104,7 +105,7 @@ function PhotoUploadSection({
                     onPress={onTakePhoto}
                     style={[styles.addPhotoButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 >
-                    <Text style={styles.addPhotoIcon}>📸</Text>
+                    <Ionicons name="camera-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
                     <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
                         {t('common.camera')}
                     </Text>

@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -18,12 +19,14 @@ import { GlassCard } from '../../components/common/GlassCard';
 
 import { api, Assignment } from '../../services/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing } from '../../constants/theme';
+import { useI18n } from '../../i18n';
 
 type FilterType = 'active' | 'completed' | 'all';
 
 export default function AssignmentsScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
+    const { t } = useI18n();
 
     // Store access
     const assignments = useJobStore(state => state.assignments);
@@ -44,7 +47,6 @@ export default function AssignmentsScreen() {
     // FIX: Auto-reload when screen comes into focus (e.g., navigating back from details)
     useFocusEffect(
         useCallback(() => {
-            console.log('[Assignments] Screen focused, loading assignments...');
             loadAssignments();
         }, [filter])
     );
@@ -103,14 +105,14 @@ export default function AssignmentsScreen() {
                                 #{item.order_number}
                             </Text>
                             <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '15' }]}>
-                                <Text>{typeConfig?.icon}</Text>
+                                <Ionicons name={(typeConfig?.icon || 'cube-outline') as any} size={12} color={typeConfig?.color} />
                                 <Text style={[styles.typeText, { color: typeConfig?.color }]}>
                                     {typeConfig?.label}
                                 </Text>
                             </View>
                         </View>
                         <View style={[styles.statusBadge, { backgroundColor: statusConfig?.color + '20' }]}>
-                            <Text style={styles.statusIcon}>{statusConfig?.icon}</Text>
+                            <Ionicons name={(statusConfig?.icon || 'ellipse') as any} size={12} color={statusConfig?.color} />
                             <Text style={[styles.statusText, { color: statusConfig?.color }]}>
                                 {statusConfig?.label}
                             </Text>
@@ -119,7 +121,7 @@ export default function AssignmentsScreen() {
 
                     {/* Part Category - simplified for drivers */}
                     <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                        📦 {item.part_category || 'Auto Part'}
+                        <Ionicons name="cube-outline" size={14} color={colors.textSecondary} /> {item.part_category || 'Auto Part'}
                     </Text>
 
                     {/* Locations */}
@@ -127,7 +129,7 @@ export default function AssignmentsScreen() {
                         <View style={styles.locationItem}>
                             <View style={[styles.locationDot, { backgroundColor: Colors.primary }]} />
                             <View style={styles.locationContent}>
-                                <Text style={[styles.locationLabel, { color: colors.textMuted }]}>Pickup</Text>
+                                <Text style={[styles.locationLabel, { color: colors.textMuted }]}>{t('pickup')}</Text>
                                 <Text style={[styles.locationAddress, { color: colors.text }]} numberOfLines={1}>
                                     {item.garage_name}
                                 </Text>
@@ -137,7 +139,7 @@ export default function AssignmentsScreen() {
                         <View style={styles.locationItem}>
                             <View style={[styles.locationDot, { backgroundColor: Colors.success }]} />
                             <View style={styles.locationContent}>
-                                <Text style={[styles.locationLabel, { color: colors.textMuted }]}>Delivery</Text>
+                                <Text style={[styles.locationLabel, { color: colors.textMuted }]}>{t('delivery')}</Text>
                                 <Text style={[styles.locationAddress, { color: colors.text }]} numberOfLines={1}>
                                     {item.customer_name}
                                 </Text>
@@ -158,7 +160,7 @@ export default function AssignmentsScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>Assignments</Text>
+                <Text style={[styles.title, { color: colors.text }]}>{t('assignments')}</Text>
             </View>
 
             {/* Filter Tabs */}
@@ -196,7 +198,7 @@ export default function AssignmentsScreen() {
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyIcon}>
-                            {filter === 'active' ? '📭' : filter === 'completed' ? '✅' : '📋'}
+                            <Ionicons name={filter === 'active' ? 'mail-open-outline' : filter === 'completed' ? 'checkmark-circle-outline' : 'clipboard-outline'} size={48} color={colors.textMuted} />
                         </Text>
                         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                             No {filter} assignments

@@ -21,7 +21,6 @@ export interface Driver {
     status: 'available' | 'busy' | 'offline';
     total_deliveries: number;
     rating_average: number;
-    total_earnings?: number;
     bank_name?: string;
     bank_account_iban?: string;
     bank_account_name?: string;
@@ -76,11 +75,8 @@ export interface Assignment {
 
 export interface DriverStats {
     today_deliveries: number;
-    today_earnings: number;
     week_deliveries: number;
-    week_earnings: number;
     total_deliveries: number;
-    total_earnings: number;
     rating_average: number;
     rating_count: number;
     active_assignments: number;
@@ -93,22 +89,6 @@ export interface AuthResponse {
     driver?: Driver;
 }
 
-export interface Wallet {
-    wallet_id: string;
-    balance: number;
-    total_earned: number;
-    cash_collected: number;
-    last_updated: string;
-}
-
-export interface WalletTransaction {
-    transaction_id: string;
-    amount: number;
-    type: 'earning' | 'cash_collection' | 'payout' | 'adjustment' | 'bonus';
-    reference_id?: string;
-    description?: string;
-    created_at: string;
-}
 
 // API Service
 class DriverApiService {
@@ -137,17 +117,14 @@ class DriverApiService {
 
     async getToken(): Promise<string | null> {
         if (this.token) {
-            console.log('[API] Using cached token');
             return this.token;
         }
         try {
-            console.log('[API] Fetching token from SecureStore...');
             this.token = await this.withTimeout(
                 SecureStore.getItemAsync(TOKEN_KEY),
                 5000, // 5 second timeout
                 null
             );
-            console.log('[API] Token retrieved:', this.token ? 'exists' : 'null');
             return this.token;
         } catch (error) {
             console.error('[API] getToken error:', error);
@@ -156,43 +133,36 @@ class DriverApiService {
     }
 
     async setToken(token: string): Promise<void> {
-        console.log('[API] Setting token (in-memory)...');
         this.token = token; // Set in-memory immediately
 
-        console.log('[API] Persisting token to SecureStore...');
         try {
             await this.withTimeout(
                 SecureStore.setItemAsync(TOKEN_KEY, token),
                 5000, // 5 second timeout
                 undefined
             );
-            console.log('[API] Token persisted successfully');
         } catch (error) {
             console.warn('[API] Failed to persist token, continuing with in-memory only:', error);
         }
     }
 
     async clearToken(): Promise<void> {
-        console.log('[API] Clearing tokens...');
         this.token = null;
         try {
             await this.withTimeout(SecureStore.deleteItemAsync(TOKEN_KEY), 5000, undefined);
             await this.withTimeout(SecureStore.deleteItemAsync(USER_KEY), 5000, undefined);
-            console.log('[API] Tokens cleared');
         } catch (error) {
             console.warn('[API] Error clearing tokens:', error);
         }
     }
 
     async saveDriver(driver: Driver): Promise<void> {
-        console.log('[API] Saving driver data...');
         try {
             await this.withTimeout(
                 SecureStore.setItemAsync(USER_KEY, JSON.stringify(driver)),
                 5000,
                 undefined
             );
-            console.log('[API] Driver data saved');
         } catch (error) {
             console.warn('[API] Failed to save driver data:', error);
         }
@@ -200,14 +170,12 @@ class DriverApiService {
 
     async getDriver(): Promise<Driver | null> {
         try {
-            console.log('[API] Fetching driver from SecureStore...');
             const driverData = await this.withTimeout(
                 SecureStore.getItemAsync(USER_KEY),
                 5000,
                 null
             );
             const driver = driverData ? JSON.parse(driverData) : null;
-            console.log('[API] Driver retrieved:', driver?.full_name || 'null');
             return driver;
         } catch (error) {
             console.error('[API] getDriver error:', error);
@@ -228,7 +196,6 @@ class DriverApiService {
         };
 
         const url = `${API_BASE_URL}${endpoint}`;
-        console.log('[API] Request:', options.method || 'GET', url);
 
         // Add timeout to prevent infinite hangs on stalled connections
         const controller = new AbortController();
@@ -277,33 +244,24 @@ class DriverApiService {
 
     // ========== AUTH ==========
     async login(phone: string, password: string): Promise<AuthResponse> {
-        console.log('[API] ========== LOGIN START ==========');
-        console.log('[API] Phone:', phone);
 
-        console.log('[API] Calling login endpoint...');
         const data = await this.request<AuthResponse>(API_ENDPOINTS.LOGIN, {
             method: 'POST',
             body: JSON.stringify({ phone_number: phone, password }),
         });
-        console.log('[API] Login response received:', JSON.stringify({ userType: data.userType, userId: data.userId, hasToken: !!data.token }));
 
         // Verify this is a driver account
-        console.log('[API] Checking userType:', data.userType);
         if (data.userType !== 'driver') {
             console.error('[API] userType mismatch! Expected "driver", got:', data.userType);
             throw new Error('This app is for drivers only. Please use the customer app.');
         }
-        console.log('[API] userType verified as driver ✓');
 
         if (data.token) {
-            console.log('[API] Setting token...');
             await this.setToken(data.token);
-            console.log('[API] Token set successfully ✓');
         } else {
             console.warn('[API] No token in response!');
         }
 
-        console.log('[API] ========== LOGIN SUCCESS ==========');
         return data;
     }
 
@@ -414,22 +372,6 @@ class DriverApiService {
         });
     }
 
-    // ========== NEW ENTERPRISE FEATURES ==========
-    async getEarningsTrend(): Promise<{ trend: any[] }> {
-        return this.request('/driver/stats/trend');
-    }
-
-    async getPayoutHistory(): Promise<{ payouts: any[] }> {
-        return this.request('/driver/payouts');
-    }
-
-    async getWallet(): Promise<{ wallet: Wallet }> {
-        return this.request('/driver/wallet');
-    }
-
-    async getWalletHistory(): Promise<{ history: WalletTransaction[] }> {
-        return this.request('/driver/wallet/history');
-    }
 
     async updateProfile(data: Partial<Driver>): Promise<{ success: boolean; driver: Driver }> {
         return this.request('/driver/profile', {

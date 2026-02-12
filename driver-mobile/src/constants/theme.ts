@@ -255,37 +255,37 @@ export const AssignmentStatusConfig = {
     assigned: {
         label: 'Assigned',
         color: Colors.assigned,
-        icon: '📋',
+        icon: 'clipboard-outline',
         actionLabel: 'Start Pickup',
     },
     picked_up: {
         label: 'Picked Up',
         color: Colors.pickedUp,
-        icon: '📦',
+        icon: 'cube',
         actionLabel: 'Start Delivery',
     },
     in_transit: {
         label: 'In Transit',
         color: Colors.inTransit,
-        icon: '🚚',
+        icon: 'car',
         actionLabel: 'Complete Delivery',
     },
     delivered: {
         label: 'Delivered',
         color: Colors.delivered,
-        icon: '✅',
+        icon: 'checkmark-circle',
         actionLabel: null,
     },
     failed: {
         label: 'Failed',
         color: Colors.failed,
-        icon: '❌',
+        icon: 'close-circle',
         actionLabel: null,
     },
     cancelled: {
         label: 'Cancelled',
         color: '#9CA3AF', // Gray for cancelled
-        icon: '🚫',
+        icon: 'ban',
         actionLabel: null,
     },
 };
@@ -294,19 +294,19 @@ export const AssignmentTypeConfig = {
     collection: {
         label: 'Collection',
         description: 'Pick up from garage',
-        icon: '🏪',
+        icon: 'storefront-outline',
         color: Colors.primary,
     },
     delivery: {
         label: 'Delivery',
         description: 'Deliver to customer',
-        icon: '📦',
+        icon: 'cube-outline',
         color: Colors.secondary,
     },
     return_to_garage: {
         label: 'Return',
         description: 'Return to garage',
-        icon: '↩️',
+        icon: 'return-down-back',
         color: Colors.warning,
     },
 };

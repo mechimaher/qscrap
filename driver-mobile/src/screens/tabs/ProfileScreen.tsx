@@ -14,6 +14,7 @@ import {
     Linking,
     ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -25,22 +26,21 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { useI18n } from '../../i18n';
 import { api } from '../../services/api';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants/theme';
-import { LEGAL_DOCS } from '../../constants/legal';
 
-const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.0.0';
+
+const APP_VERSION = Constants.expoConfig?.version || (Constants.manifest as any)?.version || '1.0.0';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<any>();
     const { driver, logout, refreshDriver } = useAuth();
     const { colors } = useTheme();
-    const { t, isRTL, language, setLanguage } = useI18n();
+    const { t } = useI18n();
     const {
         navApp, setNavApp,
         notificationsEnabled, setNotificationsEnabled
     } = useSettings();
 
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const [isBankModalVisible, setIsBankModalVisible] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const [editForm, setEditForm] = useState({
@@ -50,11 +50,6 @@ export default function ProfileScreen() {
         vehicle_plate: driver?.vehicle_plate || '',
     });
 
-    const [bankForm, setBankForm] = useState({
-        bank_name: driver?.bank_name || '',
-        bank_account_iban: driver?.bank_account_iban || '',
-        bank_account_name: driver?.bank_account_name || '',
-    });
 
     useEffect(() => {
         if (driver) {
@@ -63,11 +58,6 @@ export default function ProfileScreen() {
                 email: driver.email || '',
                 vehicle_model: driver.vehicle_model || '',
                 vehicle_plate: driver.vehicle_plate || '',
-            });
-            setBankForm({
-                bank_name: driver.bank_name || '',
-                bank_account_iban: driver.bank_account_iban || '',
-                bank_account_name: driver.bank_account_name || '',
             });
         }
     }, [driver]);
@@ -79,7 +69,6 @@ export default function ProfileScreen() {
             await api.updateProfile(data);
             await refreshDriver();
             setIsEditModalVisible(false);
-            setIsBankModalVisible(false);
             Alert.alert(t('success'), t('profile_updated'));
         } catch (err) {
             console.error('[Profile] Update error:', err);
@@ -104,11 +93,11 @@ export default function ProfileScreen() {
     };
 
     const handleTerms = () => {
-        navigation.navigate('WebView', { html: LEGAL_DOCS.TERMS, title: t('terms_conditions') });
+        navigation.navigate('WebView', { url: 'https://qscrap.qa/terms.html', title: t('terms_conditions') });
     };
 
     const handlePrivacyPolicy = () => {
-        navigation.navigate('WebView', { html: LEGAL_DOCS.PRIVACY, title: t('privacy_policy') });
+        navigation.navigate('WebView', { url: 'https://qscrap.qa/privacy.html', title: t('privacy_policy') });
     };
 
     const handleDeleteAccount = () => {
@@ -171,18 +160,7 @@ export default function ProfileScreen() {
         );
     };
 
-    const handleLanguageChange = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        Alert.alert(
-            t('language'),
-            t('choose_language'),
-            [
-                { text: t('english'), onPress: () => setLanguage('en') },
-                { text: t('arabic'), onPress: () => setLanguage('ar') },
-                { text: t('cancel'), style: 'cancel' }
-            ]
-        );
-    };
+
 
     const toggleNotifications = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -226,7 +204,7 @@ export default function ProfileScreen() {
         toggle = false,
         toggleValue = false,
     }: {
-        icon: string;
+        icon: React.ComponentProps<typeof Ionicons>['name'];
         label: string;
         onPress: () => void;
         showArrow?: boolean;
@@ -236,7 +214,7 @@ export default function ProfileScreen() {
         toggleValue?: boolean;
     }) => (
         <TouchableOpacity
-            style={[styles.menuItem, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+            style={styles.menuItem}
             onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onPress();
@@ -244,12 +222,12 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
         >
             <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger]}>
-                <Text style={styles.menuIcon}>{icon}</Text>
+                <Ionicons name={icon} size={20} color={danger ? '#EF4444' : Colors.primary} />
             </View>
             <Text style={[
                 styles.menuLabel,
                 { color: danger ? '#EF4444' : colors.text },
-                isRTL && { textAlign: 'right', marginRight: 12, marginLeft: 0 }
+
             ]}>{label}</Text>
             {value ? (
                 <Text style={[styles.menuValue, { color: Colors.primary }]}>{value}</Text>
@@ -265,7 +243,7 @@ export default function ProfileScreen() {
                     ]} />
                 </View>
             ) : showArrow ? (
-                <Text style={styles.menuArrow}>{isRTL ? '‹' : '›'}</Text>
+                <Text style={styles.menuArrow}>›</Text>
             ) : null}
         </TouchableOpacity>
     );
@@ -281,7 +259,7 @@ export default function ProfileScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface }]}>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile')}</Text>
                 <TouchableOpacity
                     style={styles.editButton}
@@ -310,7 +288,7 @@ export default function ProfileScreen() {
                         {/* Avatar with Status Indicator */}
                         <View style={styles.avatarContainer}>
                             <Text style={styles.avatar}>
-                                {driver.full_name?.charAt(0)?.toUpperCase() || '👨‍✈️'}
+                                {driver.full_name?.charAt(0)?.toUpperCase() || 'D'}
                             </Text>
                             <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
                         </View>
@@ -318,7 +296,7 @@ export default function ProfileScreen() {
                         <Text style={styles.userPhone}>{driver.phone || ''}</Text>
 
                         {/* Stats Row */}
-                        <View style={[styles.profileStats, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                        <View style={styles.profileStats}>
                             <View style={styles.profileStat}>
                                 <Text style={styles.profileStatNumber}>
                                     {String(driver.total_deliveries || 0)}
@@ -348,17 +326,10 @@ export default function ProfileScreen() {
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('driver_info')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="🚗"
+                            icon="car-outline"
                             label={t('vehicle_details')}
                             value={driver.vehicle_type || ''}
                             onPress={() => setIsEditModalVisible(true)}
-                        />
-                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
-                        <MenuItem
-                            icon="🏦"
-                            label={t('bank_details')}
-                            value={driver.bank_name ? `***${driver.bank_account_iban?.slice(-4) || ''}` : ''}
-                            onPress={() => setIsBankModalVisible(true)}
                         />
                     </View>
                 </View>
@@ -368,23 +339,17 @@ export default function ProfileScreen() {
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('settings')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="🔔"
+                            icon="notifications-outline"
                             label={t('notifications')}
                             onPress={toggleNotifications}
                             showArrow={false}
                             toggle={true}
                             toggleValue={notificationsEnabled}
                         />
+
                         <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
                         <MenuItem
-                            icon="🌐"
-                            label={t('language')}
-                            value={language === 'en' ? 'English' : 'العربية'}
-                            onPress={handleLanguageChange}
-                        />
-                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
-                        <MenuItem
-                            icon="🗺️"
+                            icon="map-outline"
                             label={t('navigation_app')}
                             value={getNavAppName()}
                             onPress={handleNavAppChange}
@@ -397,7 +362,7 @@ export default function ProfileScreen() {
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('support')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="📞"
+                            icon="call-outline"
                             label={t('contact_support')}
                             onPress={handleContactSupport}
                         />
@@ -409,13 +374,13 @@ export default function ProfileScreen() {
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('legal')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="📄"
+                            icon="document-text-outline"
                             label={t('terms_conditions')}
                             onPress={handleTerms}
                         />
                         <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
                         <MenuItem
-                            icon="🔒"
+                            icon="lock-closed-outline"
                             label={t('privacy_policy')}
                             onPress={handlePrivacyPolicy}
                         />
@@ -426,7 +391,7 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="🚪"
+                            icon="log-out-outline"
                             label={t('sign_out')}
                             onPress={handleLogout}
                             showArrow={false}
@@ -434,7 +399,7 @@ export default function ProfileScreen() {
                         />
                         <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
                         <MenuItem
-                            icon="🗑️"
+                            icon="trash-outline"
                             label={t('delete_account')}
                             onPress={handleDeleteAccount}
                             showArrow={false}
@@ -515,61 +480,6 @@ export default function ProfileScreen() {
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.saveButton]}
                                 onPress={() => handleUpdateProfile(editForm)}
-                                disabled={isSaving}
-                            >
-                                <Text style={styles.saveButtonText}>{isSaving ? t('loading') : t('save')}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Bank Details Modal */}
-            <Modal visible={isBankModalVisible} animationType="slide" transparent>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>{t('bank_details')}</Text>
-
-                        <ScrollView style={styles.modalForm}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('bank_name')}</Text>
-                            <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-                                value={bankForm.bank_name}
-                                onChangeText={(val) => setBankForm({ ...bankForm, bank_name: val })}
-                                placeholder="e.g. QNB"
-                                placeholderTextColor={colors.textMuted}
-                            />
-
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('account_name')}</Text>
-                            <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-                                value={bankForm.bank_account_name}
-                                onChangeText={(val) => setBankForm({ ...bankForm, bank_account_name: val })}
-                                placeholder={t('account_name')}
-                                placeholderTextColor={colors.textMuted}
-                            />
-
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('iban')}</Text>
-                            <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-                                value={bankForm.bank_account_iban}
-                                onChangeText={(val) => setBankForm({ ...bankForm, bank_account_iban: val })}
-                                placeholder="QA..."
-                                placeholderTextColor={colors.textMuted}
-                                autoCapitalize="characters"
-                            />
-                        </ScrollView>
-
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.cancelButton]}
-                                onPress={() => setIsBankModalVisible(false)}
-                            >
-                                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.saveButton]}
-                                onPress={() => handleUpdateProfile(bankForm)}
                                 disabled={isSaving}
                             >
                                 <Text style={styles.saveButtonText}>{isSaving ? t('loading') : t('save')}</Text>

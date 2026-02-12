@@ -66,18 +66,15 @@ export const executeWithOfflineFallback = async (
 
         // 2. Success
         if (options.successMessage) {
-            console.log(`[Sync] Success: ${options.successMessage}`);
         }
         options.onSuccess?.(result);
         return { status: 'success', data: result };
 
     } catch (error: any) {
-        console.log('[Sync] Direct call failed:', error.message);
 
         // 3. Check if this is actually a network error
         if (!isNetworkError(error)) {
             // It's a server error (400, 500, etc.) - show actual error, don't offer offline queue
-            console.log('[Sync] Server error, not offering offline fallback');
             options.onError?.(error);
             throw error; // Re-throw so caller can handle it properly
         }

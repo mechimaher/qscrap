@@ -9,6 +9,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { api, Address } from '../services/api';
+import { Ionicons } from '@expo/vector-icons';
 import { MapLocationPicker } from './MapLocationPicker';
 
 interface DeliveryLocationWidgetProps {
@@ -128,7 +129,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
             >
                 <View style={styles.content}>
                     <View style={styles.header}>
-                        <Text style={styles.locationIcon}>📍</Text>
+                        <Ionicons name="location" size={20} color={Colors.primary} />
                         <View style={{ flex: 1 }}>
                             <Text style={[styles.label, { color: colors.textSecondary }]}>
                                 {t('home.deliveryWidget.deliveringTo')}
@@ -174,7 +175,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     {isDetecting ? (
                                         <ActivityIndicator size="small" color="#fff" />
                                     ) : (
-                                        <Text style={styles.addressIconText}>📍</Text>
+                                        <Ionicons name="navigate" size={20} color="#fff" />
                                     )}
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
@@ -200,7 +201,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     colors={[Colors.primary, '#B31D4A']}
                                     style={styles.addressIconBg}
                                 >
-                                    <Text style={styles.addressIconText}>🗺️</Text>
+                                    <Ionicons name="map-outline" size={20} color="#fff" />
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.addressLabel, { color: colors.text }]}>
@@ -226,7 +227,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     colors={['#F59E0B', '#D97706']}
                                     style={styles.addressIconBg}
                                 >
-                                    <Text style={styles.addressIconText}>🔧</Text>
+                                    <Ionicons name="construct-outline" size={20} color="#fff" />
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.addressLabel, { color: colors.text }]}>
@@ -250,9 +251,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     onPress={() => handleAddressSelect(addr)}
                                 >
                                     <View style={[styles.addressIconBg, { backgroundColor: Colors.primary + '15' }]}>
-                                        <Text style={styles.addressIconText}>
-                                            {addr.is_default ? '🏠' : '📍'}
-                                        </Text>
+                                        <Ionicons name={addr.is_default ? 'home' : 'location'} size={20} color={Colors.primary} />
                                     </View>
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.addressLabel, { color: colors.text }]}>

@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { getTimelineSteps } from './statusConfig';
 
 const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t: any }) => {
@@ -38,12 +39,11 @@ const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t:
                                 isCompleted && styles.timelineDotCompleted,
                                 isCurrent && styles.timelineDotCurrent,
                             ]}>
-                                <Text style={[
-                                    styles.timelineDotIcon,
-                                    (isCompleted || isCurrent) && { opacity: 1 }
-                                ]}>
-                                    {isCompleted ? '✓' : step.icon}
-                                </Text>
+                                <Ionicons
+                                    name={(isCompleted ? 'checkmark' : step.icon) as any}
+                                    size={14}
+                                    color={isCompleted || isCurrent ? '#fff' : '#9CA3AF'}
+                                />
                             </View>
                             {!isLast && (
                                 <View style={styles.timelineLineContainer}>

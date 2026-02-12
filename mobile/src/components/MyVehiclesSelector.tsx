@@ -16,6 +16,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useTheme } from '../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 // SavedVehicle is imported from api.ts as Vehicle
 export type { SavedVehicle };
@@ -92,7 +93,7 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                 }}
             >
                 <View style={[styles.headerLeft, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Text style={[styles.headerIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]}>🚗</Text>
+                    <Ionicons name="car-sport" size={20} color={Colors.primary} style={isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
                         {t('home.myVehicles')}
                     </Text>
@@ -130,9 +131,7 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                 ]}
                                 onPress={() => handleSelect(vehicle)}
                             >
-                                <Text style={styles.vehicleEmoji}>
-                                    {vehicle.is_primary ? '⭐' : '🚗'}
-                                </Text>
+                                <Ionicons name={vehicle.is_primary ? 'star' : 'car-sport-outline'} size={28} color={vehicle.is_primary ? '#F59E0B' : Colors.primary} style={{ marginBottom: Spacing.xs }} />
                                 <Text
                                     style={[
                                         styles.vehicleName,
@@ -165,7 +164,7 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                             navigation.navigate('MyVehicles');
                         }}
                     >
-                        <Text style={styles.addHintIcon}>➕</Text>
+                        <Ionicons name="add-circle-outline" size={20} color={Colors.primary} style={{ marginBottom: 4 }} />
                         <Text style={[styles.addHintText, { color: Colors.primary }]}>
                             {t('common.addVehicle')}
                         </Text>

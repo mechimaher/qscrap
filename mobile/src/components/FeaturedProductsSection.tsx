@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { api, Product } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL, UPLOAD_BASE_URL } from '../config/api';
 
 const { width } = Dimensions.get('window');
@@ -97,7 +98,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
                     colors={['#eab308', '#f59e0b']}
                     style={[styles.featuredBadge, isRTL ? { left: 'auto', right: 0, borderTopLeftRadius: 0, borderBottomRightRadius: 0, borderTopRightRadius: BorderRadius.lg, borderBottomLeftRadius: BorderRadius.lg } : {}]}
                 >
-                    <Text style={styles.featuredBadgeText}>⭐ {t('home.featured')}</Text>
+                    <Text style={styles.featuredBadgeText}>{t('home.featured')}</Text>
                 </LinearGradient>
             )}
 
@@ -128,7 +129,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
     return (
         <View style={styles.container}>
             <View style={[styles.header, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>🏆 {t('home.featuredParts')}</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.featuredParts')}</Text>
                 <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('home.premiumGarages')}</Text>
             </View>
 

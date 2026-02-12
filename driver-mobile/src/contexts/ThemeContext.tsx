@@ -19,11 +19,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     // These are no-ops for backward compatibility with existing code
     const toggleTheme = () => {
-        console.log('[Theme] Dark mode disabled - using unified VVIP theme');
     };
 
     const setTheme = (_mode: 'light' | 'dark' | 'system') => {
-        console.log('[Theme] Theme switching disabled - using unified VVIP theme');
     };
 
     return (

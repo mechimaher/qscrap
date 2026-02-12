@@ -9,6 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface LiveETACardProps {
     etaMinutes: number | null; // null = calculating
@@ -140,18 +141,18 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
         }
     };
 
-    const getStatusIcon = () => {
+    const getStatusIcon = (): keyof typeof Ionicons.glyphMap => {
         switch (driverStatus) {
             case 'picking_up':
-                return '📦';
+                return 'cube-outline';
             case 'in_transit':
-                return '🚗';
+                return 'car-sport';
             case 'arriving':
-                return '🏁';
+                return 'flag';
             case 'delivered':
-                return '✅';
+                return 'checkmark-circle';
             default:
-                return '🚗';
+                return 'car-sport';
         }
     };
 
@@ -208,7 +209,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
 
                     {distance && (
                         <View style={styles.distanceRow}>
-                            <Text style={styles.distanceIcon}>📍</Text>
+                            <Ionicons name="location" size={12} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
                             <Text style={styles.distanceText}>{t('tracking.etaDistanceAway', { distance })}</Text>
                         </View>
                     )}
@@ -226,7 +227,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                         }
                     ]}
                 >
-                    <Text style={styles.statusIcon}>{getStatusIcon()}</Text>
+                    <Ionicons name={getStatusIcon()} size={36} color="#fff" />
                 </Animated.View>
             </View>
 

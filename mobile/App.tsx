@@ -1,11 +1,13 @@
 // QScrap Customer App - Premium React Native with Full Features
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import * as NotificationService from './src/services/notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import {
@@ -93,7 +95,6 @@ export type RootStackParamList = {
   CounterOffer: { bidId: string; garageName: string; currentAmount: number; partDescription: string; garageCounterId?: string | null; requestId: string };
   Notifications: undefined;
   Support: undefined;
-  TicketChat: { ticketId: string };
   // VIN Scanner - removed (unused)
   // Payment & Escrow
   Payment: {
@@ -136,6 +137,9 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+// Navigation ref for deep linking from notification taps
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 // Tab Navigator with premium styling and badge counts
 function MainTabs() {
   const { colors } = useTheme();
@@ -176,7 +180,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           tabBarLabel: t('nav.home'),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🏠</Text>,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -184,7 +188,7 @@ function MainTabs() {
         component={RequestsScreen}
         options={{
           tabBarLabel: t('nav.requests'),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>🔍</Text>,
+          tabBarIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
           tabBarBadge: requestsBadge,
         }}
       />
@@ -193,7 +197,7 @@ function MainTabs() {
         component={OrdersScreen}
         options={{
           tabBarLabel: t('nav.orders'),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>📦</Text>,
+          tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
           tabBarBadge: ordersBadge,
         }}
       />
@@ -202,7 +206,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: t('nav.profile'),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24, color }}>👤</Text>,
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
           tabBarBadge: profileBadge,
         }}
       />
@@ -383,7 +387,7 @@ export default function App() {
               <SocketProvider>
                 <BadgeCountsProvider>
                   <ToastProvider>
-                    <NavigationContainer>
+                    <NavigationContainer ref={navigationRef}>
                       <ThemedApp />
                     </NavigationContainer>
                   </ToastProvider>
@@ -411,6 +415,51 @@ function ThemedApp() {
       disconnect();
     }
   }, [isAuthenticated, connect, disconnect]);
+
+  // Notification tap deep linking — navigate to relevant screen
+  React.useEffect(() => {
+    const subscription = NotificationService.addNotificationResponseListener(response => {
+      const data = response.notification.request.content.data as Record<string, any> | undefined;
+      if (!data?.type || !navigationRef.isReady()) return;
+
+      switch (data.type) {
+        case 'new_bid':
+        case 'bid_updated':
+        case 'counter_offer':
+        case 'counter_offer_accepted':
+        case 'counter_offer_final':
+        case 'request_expired':
+        case 'bid_withdrawn':
+          if (data.requestId) {
+            navigationRef.navigate('RequestDetail', { requestId: data.requestId });
+          }
+          break;
+        case 'order_update':
+        case 'driver_assigned':
+        case 'order_delivered':
+        case 'order_cancelled':
+          if (data.orderId) {
+            navigationRef.navigate('OrderDetail', { orderId: data.orderId });
+          }
+          break;
+        case 'chat_message':
+          if (data.orderId) {
+            navigationRef.navigate('Chat', {
+              orderId: data.orderId,
+              orderNumber: data.orderNumber || '',
+              recipientName: data.senderName || '',
+              recipientType: data.senderType === 'driver' ? 'driver' : 'garage',
+            });
+          }
+          break;
+        case 'support_reply':
+          navigationRef.navigate('Support');
+          break;
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   return (
     <>

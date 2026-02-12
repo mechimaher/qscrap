@@ -21,6 +21,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
 import { LoadingList } from '../components/SkeletonLoading';
 
@@ -122,13 +123,13 @@ export default function NotificationsScreen() {
         );
     };
 
-    const getNotificationIcon = (type: string) => {
+    const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
         switch (type) {
-            case 'bid': return '💰';
-            case 'order': return '📦';
-            case 'delivery': return '🚚';
-            case 'counter_offer': return '🤝';
-            default: return '🔔';
+            case 'bid': return 'pricetag-outline';
+            case 'order': return 'cube-outline';
+            case 'delivery': return 'car-outline';
+            case 'counter_offer': return 'swap-horizontal-outline';
+            default: return 'notifications-outline';
         }
     };
 
@@ -157,7 +158,7 @@ export default function NotificationsScreen() {
             activeOpacity={0.7}
         >
             <View style={[styles.iconContainer, !item.is_read && styles.unreadIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
-                <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
+                <Ionicons name={getNotificationIcon(item.type)} size={22} color={!item.is_read ? Colors.primary : '#737373'} />
             </View>
             <View style={styles.content}>
                 <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
@@ -175,7 +176,7 @@ export default function NotificationsScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('notifications.title')}</Text>
                 <View style={[styles.headerActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -196,7 +197,7 @@ export default function NotificationsScreen() {
                 <LoadingList count={5} />
             ) : notifications.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyIcon}>🔔</Text>
+                    <Ionicons name="notifications-outline" size={64} color="#ccc" style={{ marginBottom: Spacing.lg }} />
                     <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('notifications.noNotifications')}</Text>
                     <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('notifications.allCaughtUp')}</Text>
                 </View>
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
     unreadDot: {
         width: 10,
         height: 10,
-        borderRadius: 5,
+        borderRadius: BorderRadius.sm,
         backgroundColor: Colors.primary,
         alignSelf: 'center',
     },

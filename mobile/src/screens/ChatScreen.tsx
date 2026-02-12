@@ -29,6 +29,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import QuickReplies from '../components/QuickReplies';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Message {
     message_id: string;
@@ -278,17 +279,17 @@ export default function ChatScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />
                 </TouchableOpacity>
                 <View style={[styles.headerInfo, isRTL && { marginLeft: 0, marginRight: Spacing.md }]}>
                     <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{recipientName}</Text>
                     <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                        {t('orders.orderNumber', { number: orderNumber })} • {isConnected ? `🟢 ${t('chat.online')}` : `⚪ ${t('chat.connecting')}`}
+                        {t('orders.orderNumber', { number: orderNumber })} • {isConnected ? t('chat.online') : t('chat.connecting')}
                     </Text>
                 </View>
                 <View style={styles.headerIcon}>
                     <Text style={styles.avatarEmoji}>
-                        {recipientType === 'driver' ? '🚗' : '🔧'}
+                        <Ionicons name={recipientType === 'driver' ? 'car-sport' : 'construct'} size={24} color={Colors.primary} />
                     </Text>
                 </View>
             </View>
@@ -312,7 +313,7 @@ export default function ChatScreen() {
                         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyIcon}>💬</Text>
+                                <Ionicons name="chatbubble-outline" size={60} color="#ccc" style={{ marginBottom: Spacing.md }} />
                                 <Text style={[styles.emptyText, { color: colors.text }]}>{t('chat.noMessages')}</Text>
                                 <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
                                     {t('chat.sendMessageTo', { name: recipientName })}
@@ -410,7 +411,7 @@ const styles = StyleSheet.create({
     headerIcon: {
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: BorderRadius.xl,
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',

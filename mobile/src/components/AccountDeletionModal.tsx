@@ -23,6 +23,7 @@ import { api } from '../services/api';
 import { toast } from '../utils/toast';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 interface DeletionBlocker {
     type: string;
@@ -107,12 +108,12 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
 
     const getBlockerIcon = (type: string): string => {
         switch (type) {
-            case 'active_orders': return '📦';
-            case 'open_tickets': return '🎫';
-            case 'active_disputes': return '⚠️';
-            case 'pending_refunds': return '💰';
-            case 'active_requests': return '📝';
-            default: return '❗';
+            case 'active_orders': return 'cube-outline';
+            case 'open_tickets': return 'ticket-outline';
+            case 'active_disputes': return 'warning-outline';
+            case 'pending_refunds': return 'cash-outline';
+            case 'active_requests': return 'document-text-outline';
+            default: return 'alert-circle-outline';
         }
     };
 
@@ -139,7 +140,7 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
         <View style={styles.content}>
             {/* Header */}
             <View style={styles.iconContainer}>
-                <Text style={styles.icon}>🛡️</Text>
+                <Ionicons name="shield-checkmark" size={36} color={Colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                 {t('deletion.cannotDelete')}
@@ -160,7 +161,7 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
                         }]}
                     >
                         <View style={[styles.blockerInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.blockerIcon}>{getBlockerIcon(blocker.type)}</Text>
+                            <Ionicons name={getBlockerIcon(blocker.type) as any} size={24} color={Colors.primary} style={{ marginRight: Spacing.sm }} />
                             <View style={styles.blockerTextContainer}>
                                 <Text style={[styles.blockerMessage, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                                     {t(`deletion.${blocker.type}`, { count: blocker.count }) || blocker.message}
@@ -193,7 +194,7 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
         <View style={styles.content}>
             {/* Warning Icon */}
             <View style={[styles.iconContainer, { backgroundColor: Colors.error + '15' }]}>
-                <Text style={styles.icon}>⚠️</Text>
+                <Ionicons name="warning" size={36} color={Colors.error} />
             </View>
             <Text style={[styles.title, { color: Colors.error, textAlign: rtlTextAlign(isRTL) }]}>
                 {t('deletion.confirmTitle')}

@@ -26,6 +26,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
@@ -179,7 +180,7 @@ export default function EditProfileScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.editProfile')}</Text>
                 <View style={{ width: 60 }} />
@@ -190,7 +191,7 @@ export default function EditProfileScreen() {
                 <View style={styles.avatarSection}>
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>
-                            {fullName.charAt(0).toUpperCase() || '👤'}
+                            {fullName.charAt(0).toUpperCase() || '?'}
                         </Text>
                     </View>
                 </View>

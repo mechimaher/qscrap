@@ -22,6 +22,7 @@ import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
 import { api } from '../../services/api';
+import { Ionicons } from '@expo/vector-icons';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
@@ -118,7 +119,7 @@ export default function RegisterScreen() {
                     {/* Header */}
                     <View style={[styles.header, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                            <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                            <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -138,13 +139,13 @@ export default function RegisterScreen() {
                     <View style={styles.formCard}>
                         {error ? (
                             <View style={[styles.errorContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Text style={[styles.errorIcon, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}>⚠️</Text>
+                                <Ionicons name="alert-circle" size={16} color="#EF4444" style={[isRTL && { marginRight: 0, marginLeft: Spacing.sm }, !isRTL && { marginRight: Spacing.sm }]} />
                                 <Text style={[styles.errorText, { textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>👤 {t('auth.fullName')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.fullName')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.enterFullName')}
@@ -156,7 +157,7 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📧 {t('auth.emailAddress')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.emailAddress')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder="name@company.qa"
@@ -170,7 +171,7 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>📱 {t('auth.phoneNumber')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.phoneNumber')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder="+974 XXXX XXXX"
@@ -182,7 +183,7 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>🔒 {t('auth.password')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.password')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.minCharacters', { count: 6 })}
@@ -194,7 +195,7 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>🔒 {t('auth.confirmPassword')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.confirmPassword')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.repeatPassword')}

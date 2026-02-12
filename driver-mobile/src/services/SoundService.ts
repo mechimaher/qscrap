@@ -31,7 +31,6 @@ export async function initSoundService(): Promise<void> {
             shouldDuckAndroid: true,
         });
         isInitialized = true;
-        console.log('[Sound] Audio mode configured for driver alerts');
     } catch (err) {
         console.warn('[Sound] Failed to configure audio mode:', err);
     }
@@ -79,7 +78,6 @@ export async function playAssignmentAlert(): Promise<void> {
             }
         });
 
-        console.log('[Sound] 🔊 Assignment alert played');
     } catch (err) {
         console.warn('[Sound] Failed to play alert:', err);
         // Don't throw — sound failure should never block assignment flow

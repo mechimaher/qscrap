@@ -19,11 +19,9 @@ export const initSocket = async (): Promise<Socket | null> => {
 
     const token = await SecureStore.getItemAsync('qscrap_driver_token');
     if (!token) {
-        console.log('[Socket] No token, skipping connection');
         return null;
     }
 
-    console.log('[Socket] Connecting to:', SOCKET_URL);
 
     socket = io(SOCKET_URL, {
         auth: { token },
@@ -35,7 +33,6 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('connect', async () => {
-        console.log('[Socket] Connected:', socket?.id);
 
         // Join driver room for targeted notifications
         const driverJson = await SecureStore.getItemAsync('qscrap_driver_user');
@@ -43,7 +40,6 @@ export const initSocket = async (): Promise<Socket | null> => {
             try {
                 const driver = JSON.parse(driverJson);
                 socket?.emit('join_driver_room', driver.user_id);
-                console.log('[Socket] Joined driver room:', driver.user_id);
             } catch (e) {
                 console.error('[Socket] Failed to parse driver:', e);
             }
@@ -57,7 +53,6 @@ export const initSocket = async (): Promise<Socket | null> => {
                 if (Array.isArray(activeOrders)) {
                     activeOrders.forEach((orderId: string) => {
                         socket?.emit('join_room', `order_${orderId}`);
-                        console.log('[Socket] Auto-joined chat room: order_' + orderId);
                     });
                 }
             } catch (e) {
@@ -67,7 +62,6 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('disconnect', (reason) => {
-        console.log('[Socket] Disconnected:', reason);
     });
 
     socket.on('connect_error', (error) => {
@@ -75,7 +69,6 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('reconnect', (attemptNumber) => {
-        console.log('[Socket] Reconnected after', attemptNumber, 'attempts');
     });
 
     // ==============================
@@ -83,12 +76,8 @@ export const initSocket = async (): Promise<Socket | null> => {
     // ==============================
 
     socket.on('new_assignment', async (data: any) => {
-        console.log('========================================');
-        console.log('🚨 NEW ASSIGNMENT RECEIVED VIA SOCKET!');
-        console.log('📦 Order:', data.order_number, 'Type:', data.assignment_type);
-        console.log('========================================');
 
-        // 🔊 ENTERPRISE ALERT: Play assignment chime (Facebook Messenger-style)
+        // ENTERPRISE ALERT: Play assignment chime (Facebook Messenger-style)
         playAssignmentAlert();
 
         // Strong haptic feedback - triple notification pattern
@@ -96,12 +85,12 @@ export const initSocket = async (): Promise<Socket | null> => {
         setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning), 200);
         setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 400);
 
-        // 🔊 Play loud vibration pattern for urgent alert
+        // Play loud vibration pattern for urgent alert
         Vibration.vibrate([0, 500, 200, 500, 200, 500]); // Three long vibrations
 
         // Schedule high-priority push notification (visible when phone locked)
         scheduleLocalNotification(
-            '🚨 NEW DELIVERY ASSIGNMENT!',
+            'NEW DELIVERY ASSIGNMENT!',
             data.order_number
                 ? `Order #${data.order_number} — ${data.part_description || data.pickup_address || 'Tap to view'}`
                 : `New assignment — URGENT: Tap to view!`,
@@ -114,16 +103,25 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('assignment_updated', (data: any) => {
-        console.log('[Socket] Assignment updated:', data.assignment_id);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Vibration.vibrate([0, 250, 250, 250]);
+
+        scheduleLocalNotification(
+            'Assignment Updated',
+            data.message || `Order #${data.order_number || 'Unknown'} has been updated`,
+            {
+                type: 'assignment_updated',
+                assignmentId: data.assignment_id,
+            },
+            'status'
+        );
     });
 
     socket.on('assignment_cancelled', (data: any) => {
-        console.log('[Socket] Assignment cancelled:', data.assignment_id);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
         scheduleLocalNotification(
-            '❌ Assignment Cancelled',
+            'Assignment Cancelled',
             data.reason || `Order #${data.order_number || 'Unknown'} has been cancelled`,
             {
                 type: 'assignment_cancelled',
@@ -133,11 +131,10 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('assignment_removed', (data: any) => {
-        console.log('[Socket] Assignment removed:', data.assignment_id);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
         scheduleLocalNotification(
-            '⚠️ Assignment Reassigned',
+            'Assignment Reassigned',
             data.message || 'Your assignment has been reassigned to another driver',
             {
                 type: 'assignment_removed',
@@ -151,7 +148,6 @@ export const initSocket = async (): Promise<Socket | null> => {
     // ==============================
 
     socket.on('new_message', (data: any) => {
-        console.log('[Socket] New message:', data.message_id);
         // Play sound + vibration for incoming messages
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Vibration.vibrate([0, 200, 100, 200]); // Double short vibration
@@ -160,7 +156,7 @@ export const initSocket = async (): Promise<Socket | null> => {
         if (data.sender_type !== 'driver') {
             playAssignmentAlert(); // Reuse chime for now (attention-grabbing)
             scheduleLocalNotification(
-                '💬 New Message',
+                'New Message',
                 data.message?.substring(0, 100) || 'You have a new message',
                 {
                     type: 'chat_message',
@@ -172,13 +168,12 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('chat_notification', (data: any) => {
-        console.log('[Socket] Chat notification:', data.order_number);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Vibration.vibrate([0, 200, 100, 200]);
         playAssignmentAlert();
 
         scheduleLocalNotification(
-            '💬 Customer Message',
+            'Customer Message',
             data.message || 'You have a new message',
             {
                 type: 'chat_message',
@@ -190,7 +185,6 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('chat_message', (data: any) => {
-        console.log('[Socket] Chat message received:', data.message_id);
         if (data.sender_type === 'customer') {
             // Customer sent a message — alert the driver with sound + vibration
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -198,7 +192,7 @@ export const initSocket = async (): Promise<Socket | null> => {
             playAssignmentAlert();
 
             scheduleLocalNotification(
-                '💬 Customer Message',
+                'Customer Message',
                 data.message?.substring(0, 100) || 'Tap to reply',
                 {
                     type: 'chat_message',
@@ -210,11 +204,29 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     // ==============================
-    // STATUS UPDATE LISTENERS
+    // ORDER STATUS EVENTS
+    // ==============================
+
+    socket.on('order_status_updated', (data: any) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Vibration.vibrate([0, 200, 100, 200]);
+
+        scheduleLocalNotification(
+            'Order Status Update',
+            data.message || `Order #${data.order_number || ''} status changed`,
+            {
+                type: 'order_status_updated',
+                orderId: data.order_id,
+            },
+            'status'
+        );
+    });
+
+    // ==============================
+    // DRIVER STATUS LISTENERS
     // ==============================
 
     socket.on('driver_status_changed', (data: any) => {
-        console.log('[Socket] Driver status changed:', data.status);
     });
 
     return socket;
@@ -224,7 +236,6 @@ export const getSocket = (): Socket | null => socket;
 
 export const disconnectSocket = () => {
     if (socket) {
-        console.log('[Socket] Disconnecting');
         socket.disconnect();
         socket = null;
     }
@@ -267,7 +278,6 @@ export const joinChatRoom = (orderId: string) => {
     // Join via both methods to ensure we receive messages
     socket?.emit('join_order_chat', { order_id: orderId });  // Match customer app format
     socket?.emit('join_room', `order_${orderId}`);           // Direct room join
-    console.log('[Socket] Joined chat room:', orderId);
 };
 
 export const leaveChatRoom = (orderId: string) => {
@@ -333,7 +343,6 @@ export const updateActiveOrders = async (orderIds: string[]) => {
         // Join chat rooms for each order
         orderIds.forEach((orderId) => {
             socket?.emit('join_room', `order_${orderId}`);
-            console.log('[Socket] Joined chat room for active order:', orderId);
         });
     } catch (e) {
         console.error('[Socket] Failed to update active orders:', e);

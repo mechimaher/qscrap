@@ -10,6 +10,7 @@ import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme'
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 export type PartSide = 'left' | 'right' | 'both' | 'na';
 
@@ -47,10 +48,10 @@ function PartSpecsCard({
     const { colors } = useTheme();
 
     const sideOptions = [
-        { value: 'left' as const, label: t('newRequest.leftSide'), icon: '◀️' },
-        { value: 'right' as const, label: t('newRequest.rightSide'), icon: '▶️' },
-        { value: 'both' as const, label: t('newRequest.bothSides'), icon: '⇆' },
-        { value: 'na' as const, label: t('newRequest.notApplicable'), icon: '⚙️' },
+        { value: 'left' as const, label: t('newRequest.leftSide'), icon: 'chevron-back' as const },
+        { value: 'right' as const, label: t('newRequest.rightSide'), icon: 'chevron-forward' as const },
+        { value: 'both' as const, label: t('newRequest.bothSides'), icon: 'swap-horizontal' as const },
+        { value: 'na' as const, label: t('newRequest.notApplicable'), icon: 'settings-outline' as const },
     ];
 
     return (
@@ -58,7 +59,7 @@ function PartSpecsCard({
             {/* Part Specifications Card */}
             <View style={[styles.specsCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <View style={[styles.specsHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Text style={styles.specsIcon}>📋</Text>
+                    <Ionicons name="clipboard-outline" size={20} color={colors.text} />
                     <Text style={[styles.specsTitle, { color: colors.text }]}>{t('newRequest.partSpecs')}</Text>
                 </View>
 
@@ -119,7 +120,7 @@ function PartSpecsCard({
                                 },
                             ]}
                         >
-                            <Text style={styles.sideIcon}>{opt.icon}</Text>
+                            <Ionicons name={opt.icon} size={20} color={side === opt.value ? Colors.primary : colors.text} />
                             <Text style={[styles.sideLabel, { color: side === opt.value ? Colors.primary : colors.text }]}>
                                 {opt.label}
                             </Text>
@@ -172,7 +173,7 @@ function PartSpecsCard({
                             },
                         ]}
                     >
-                        <Text style={styles.conditionIcon}>{opt.icon}</Text>
+                        <Ionicons name={opt.icon as any} size={24} color={condition === opt.value ? opt.color : colors.text} />
                         <Text
                             style={[
                                 styles.conditionLabel,

@@ -16,6 +16,7 @@ import { useSocketContext } from '../hooks/useSocket';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { RootStackParamList } from '../../App';
 import { useTranslation } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -182,7 +183,7 @@ export default function NotificationOverlay() {
             >
                 {/* Animated Icon */}
                 <View style={styles.iconContainer}>
-                    <Text style={styles.icon}>💰</Text>
+                    <Ionicons name="cash-outline" size={30} color={Colors.primary} />
                 </View>
 
                 {/* Content */}

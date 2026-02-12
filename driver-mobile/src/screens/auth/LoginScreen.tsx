@@ -18,6 +18,7 @@ import {
     Animated,
     Dimensions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -155,7 +156,7 @@ export default function LoginScreen() {
                     <View style={styles.formSection}>
                         <View style={styles.inputContainer}>
                             <View style={styles.inputIconContainer}>
-                                <Text style={styles.inputIcon}>📱</Text>
+                                <Ionicons name="call-outline" size={20} color="rgba(255,255,255,0.7)" />
                             </View>
                             {/* P1 FIX: Qatar Country Code Display */}
                             <View style={styles.countryCodeContainer}>
@@ -175,7 +176,7 @@ export default function LoginScreen() {
 
                         <View style={styles.inputContainer}>
                             <View style={styles.inputIconContainer}>
-                                <Text style={styles.inputIcon}>🔒</Text>
+                                <Ionicons name="lock-closed-outline" size={20} color="rgba(255,255,255,0.7)" />
                             </View>
                             <TextInput
                                 style={styles.input}
@@ -191,9 +192,7 @@ export default function LoginScreen() {
                                 onPress={() => setShowPassword(!showPassword)}
                                 style={styles.showPasswordBtn}
                             >
-                                <Text style={styles.showPasswordText}>
-                                    {showPassword ? '🙈' : '👁️'}
-                                </Text>
+                                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="rgba(255,255,255,0.7)" />
                             </TouchableOpacity>
                         </View>
 
@@ -258,7 +257,7 @@ export default function LoginScreen() {
                     </View>
                 </KeyboardAvoidingView>
             </SafeAreaView>
-        </LinearGradient>
+        </LinearGradient >
     );
 }
 

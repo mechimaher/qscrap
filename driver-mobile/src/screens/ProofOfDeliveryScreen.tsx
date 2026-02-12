@@ -13,6 +13,7 @@ import {
     ScrollView,
     ActivityIndicator
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 // SignatureScreen removed for faster delivery flow
@@ -26,6 +27,7 @@ import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/t
 import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
 import { executeWithOfflineFallback } from '../utils/syncHelper';
+import { useI18n } from '../i18n';
 
 type WizardStep = 'photo' | 'payment' | 'success';
 
@@ -33,6 +35,7 @@ export default function ProofOfDeliveryScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { t } = useI18n();
     const { assignmentId, orderId } = route.params;
 
     const [step, setStep] = useState<WizardStep>('photo');
@@ -84,26 +87,13 @@ export default function ProofOfDeliveryScreen() {
                         codAmount = effectivePartPrice + deliveryFee; // Collect both at delivery
                     }
 
-                    console.log('[POD] Loaded assignment:', {
-                        assignmentId,
-                        partPrice,
-                        effectivePartPrice,
-                        loyaltyDiscount,
-                        deliveryFee,
-                        total,
-                        paymentMethod,
-                        codAmount,
-                        fullPaidOnline: paymentMethod === 'card_full',
-                        deliveryFeePaidOnline: paymentMethod === 'card' || paymentMethod === 'card_full'
-                    });
-
                     setOrderDetails({
                         total_amount: total,
                         part_price: effectivePartPrice,
                         delivery_fee: deliveryFee,
                         loyalty_discount: loyaltyDiscount,
                         cod_amount: codAmount,
-                        payment_method: paymentMethod
+                        payment_method: paymentMethod,
                     });
 
                     // Set payment method based on order payment status
@@ -122,7 +112,7 @@ export default function ProofOfDeliveryScreen() {
                     'Could not load order information. Please try again.',
                     [
                         { text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack() },
-                        { text: 'Retry', onPress: () => loadOrderDetails() }
+                        { text: 'Retry', onPress: () => loadOrderDetails() },
                     ]
                 );
             } finally {
@@ -169,7 +159,6 @@ export default function ProofOfDeliveryScreen() {
                 encoding: 'base64'
             });
 
-            console.log('[POD] Uploading photo to server...');
 
             // 3. Upload photo to server and get public URL
             const uploadResponse = await executeWithOfflineFallback(
@@ -203,7 +192,6 @@ export default function ProofOfDeliveryScreen() {
                 { successMessage: 'Proof uploaded' }
             );
 
-            console.log('[POD] Upload response:', uploadResponse);
 
             // 4. Extract photo URL from response
             // executeWithOfflineFallback wraps result in { status, data }
@@ -215,12 +203,10 @@ export default function ProofOfDeliveryScreen() {
                 throw new Error('Failed to upload photo - no URL returned from server');
             }
 
-            console.log('[POD] Photo uploaded successfully:', podPhotoUrl);
 
-            // 5. Complete order with POD (creates payout immediately!)
+            // 5. Complete order with POD
             await executeWithOfflineFallback(
                 async () => {
-                    console.log('[POD] Completing delivery with photo URL:', podPhotoUrl);
                     return api.request(API_ENDPOINTS.COMPLETE_WITH_POD, {
                         method: 'POST',
                         body: JSON.stringify({
@@ -234,7 +220,7 @@ export default function ProofOfDeliveryScreen() {
                     method: 'POST',
                     body: { order_id: orderId, pod_photo_url: podPhotoUrl }
                 },
-                { successMessage: 'Order completed! Payout created.' }
+                { successMessage: 'Order completed successfully.' }
             );
 
             // 6. Update local store
@@ -263,7 +249,7 @@ export default function ProofOfDeliveryScreen() {
         if (!permission?.granted) {
             return (
                 <View style={styles.center}>
-                    <Text style={{ color: colors.text, marginBottom: 20 }}>Camera permission needed</Text>
+                    <Text style={{ color: colors.text, marginBottom: 20 }}>{t('camera_permission_needed')}</Text>
                     <TouchableOpacity
                         style={styles.btnGradientWrapper}
                         onPress={requestPermission}
@@ -272,7 +258,7 @@ export default function ProofOfDeliveryScreen() {
                             colors={Colors.gradients.primary}
                             style={styles.btnGradient}
                         >
-                            <Text style={styles.btnText}>Grant Permission</Text>
+                            <Text style={styles.btnText}>{t('grant_permission')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -282,14 +268,14 @@ export default function ProofOfDeliveryScreen() {
         if (photoUri) {
             return (
                 <View style={styles.stepContainer}>
-                    <Text style={[styles.title, { color: colors.text }]}>Confirm Photo</Text>
+                    <Text style={[styles.title, { color: colors.text }]}>{t('confirm_photo')}</Text>
                     <Image source={{ uri: photoUri }} style={styles.previewImage} />
                     <View style={styles.row}>
                         <TouchableOpacity
                             style={styles.btnOutline}
                             onPress={retakePhoto}
                         >
-                            <Text style={[styles.btnTextOutline, { color: colors.text }]}>Retake</Text>
+                            <Text style={[styles.btnTextOutline, { color: colors.text }]}>{t('retake')}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -305,7 +291,7 @@ export default function ProofOfDeliveryScreen() {
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                             >
-                                <Text style={styles.btnText}>Next: Confirm Payment →</Text>
+                                <Text style={styles.btnText}>{t('next_confirm_payment')}</Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
@@ -327,7 +313,7 @@ export default function ProofOfDeliveryScreen() {
                         </TouchableOpacity>
                     </View>
                 </CameraView>
-                <Text style={styles.overlayText}>Take photo of package</Text>
+                <Text style={styles.overlayText}>{t('photo_of_package')}</Text>
             </View>
         );
     };
@@ -336,15 +322,15 @@ export default function ProofOfDeliveryScreen() {
 
     const renderPaymentStep = () => (
         <View style={styles.stepContainer}>
-            <Text style={[styles.title, { color: colors.text }]}>Payment Collection</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t('payment_collection')}</Text>
 
             {/* Clear breakdown of what to collect */}
             {isLoadingOrder ? (
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Loading...</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('loading')}</Text>
             ) : orderDetails?.payment_method === 'card_full' ? (
                 // Full payment already collected - no COD needed
                 <View style={{ marginBottom: 24, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 48, marginBottom: 16 }}>✅</Text>
+                    <Ionicons name="checkmark-circle" size={48} color={Colors.success} />
                     <Text style={{ fontSize: 20, color: Colors.success, fontWeight: '700', textAlign: 'center' }}>
                         Full Payment Already Collected
                     </Text>
@@ -364,7 +350,7 @@ export default function ProofOfDeliveryScreen() {
                     )}
                     {(orderDetails?.loyalty_discount ?? 0) > 0 && (
                         <Text style={{ fontSize: 14, color: '#F59E0B', textAlign: 'center', marginBottom: 8 }}>
-                            🏷️ Loyalty discount of {orderDetails?.loyalty_discount?.toFixed(0)} QAR applied
+                            <Ionicons name="pricetag-outline" size={14} color="#F59E0B" /> Loyalty discount of {orderDetails?.loyalty_discount?.toFixed(0)} QAR applied
                         </Text>
                     )}
                     <Text style={[styles.subtitle, { color: colors.text, marginBottom: 0 }]}>
@@ -398,11 +384,11 @@ export default function ProofOfDeliveryScreen() {
                                 setPaymentMethod('cash');
                             }}
                         >
-                            <Text style={{ fontSize: 32 }}>💵</Text>
+                            <Ionicons name="cash-outline" size={32} color="#10B981" />
                             <Text style={[
                                 styles.paymentText,
                                 { color: paymentMethod === 'cash' ? Colors.primary : colors.text }
-                            ]}>Cash</Text>
+                            ]}>{t('cash')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -415,11 +401,11 @@ export default function ProofOfDeliveryScreen() {
                                 setPaymentMethod('online');
                             }}
                         >
-                            <Text style={{ fontSize: 32 }}>💳</Text>
+                            <Ionicons name="card-outline" size={32} color="#3B82F6" />
                             <Text style={[
                                 styles.paymentText,
                                 { color: paymentMethod === 'online' ? Colors.primary : colors.text }
-                            ]}>Card / Transfer</Text>
+                            ]}>{t('card_transfer')}</Text>
                         </TouchableOpacity>
                     </View>
                 </>
@@ -439,7 +425,7 @@ export default function ProofOfDeliveryScreen() {
                     {isSubmitting ? (
                         <ActivityIndicator color="#fff" />
                     ) : (
-                        <Text style={styles.btnText}>Complete Delivery ✓</Text>
+                        <Text style={styles.btnText}>{t('complete_delivery_button')}</Text>
                     )}
                 </LinearGradient>
             </TouchableOpacity>
@@ -448,19 +434,19 @@ export default function ProofOfDeliveryScreen() {
 
     const renderSuccessStep = () => (
         <View style={styles.center}>
-            <Text style={{ fontSize: 64 }}>✅</Text>
-            <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>Delivery Complete!</Text>
+            <Ionicons name="checkmark-circle" size={64} color={Colors.success} />
+            <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>{t('delivery_complete')}</Text>
 
             {/* Delivery summary */}
             {orderDetails && (
                 <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginTop: 16, marginBottom: 24, width: '100%' }}>
                     {(orderDetails.payment_method === 'cod' || orderDetails.payment_method === 'cash') && (
                         <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>
-                            💵 COD Collected: QAR {orderDetails.cod_amount?.toFixed(0) || orderDetails.total_amount?.toFixed(0)}
+                            <Ionicons name="cash" size={16} color="#10B981" /> COD Collected: QAR {orderDetails.cod_amount?.toFixed(0) || orderDetails.total_amount?.toFixed(0)}
                         </Text>
                     )}
                     <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>
-                        Payout has been created for this delivery
+                        This delivery has been confirmed
                     </Text>
                 </View>
             )}
@@ -481,7 +467,7 @@ export default function ProofOfDeliveryScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                 >
-                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Done ✓</Text>
+                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{t('done_check')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
         </View>
@@ -493,7 +479,7 @@ export default function ProofOfDeliveryScreen() {
             {step !== 'success' && (
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
-                        <Text style={{ fontSize: 24, color: colors.text }}>✕</Text>
+                        <Ionicons name="close" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <View style={styles.stepIndicators}>
                         <View style={[styles.dot, step === 'photo' && styles.dotActive]} />
@@ -517,7 +503,7 @@ const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, height: 60 },
     stepIndicators: { flexDirection: 'row', gap: 8 },
-    dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#ddd' },
+    dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#D4D4D4' },
     dotActive: { backgroundColor: Colors.primary },
 
     content: { flex: 1 },

@@ -131,7 +131,7 @@ export function useSocket() {
                         : t('notifications.push.newBidBody', { garage: data.garage_name, condition: conditionLabel });
 
                     scheduleLocalNotification(
-                        `💰 ${t('notifications.push.newBidTitle', { amount: data.bid_amount, currency })}`,
+                        `${t('notifications.push.newBidTitle', { amount: data.bid_amount, currency })}`,
                         body,
                         {
                             type: 'new_bid',
@@ -166,7 +166,7 @@ export function useSocket() {
                     import('../services/notifications').then(({ scheduleLocalNotification }) => {
                         const currency = t('common.currency');
                         scheduleLocalNotification(
-                            `💰 ${t('notifications.push.bidUpdatedTitle')}`,
+                            `${t('notifications.push.bidUpdatedTitle')}`,
                             t('notifications.push.bidUpdatedBody', { amount: data.bid_amount ?? 0, currency }),
                             {
                                 type: 'bid_updated',
@@ -198,7 +198,7 @@ export function useSocket() {
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const currency = t('common.currency');
                     scheduleLocalNotification(
-                        `🔄 ${t('notifications.push.counterOfferTitle')}`,
+                        `${t('notifications.push.counterOfferTitle')}`,
                         data.notification || t('notifications.push.counterOfferBody', { amount: data.proposed_amount, currency }),
                         {
                             type: 'counter_offer',
@@ -217,7 +217,7 @@ export function useSocket() {
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const currency = t('common.currency');
                     scheduleLocalNotification(
-                        `✅ ${t('notifications.push.offerAcceptedTitle')}`,
+                        `${t('notifications.push.offerAcceptedTitle')}`,
                         data.notification || t('notifications.push.offerAcceptedBody', { amount: data.agreed_amount, currency }),
                         {
                             type: 'counter_offer_accepted',
@@ -240,7 +240,7 @@ export function useSocket() {
                     import('../services/notifications').then(({ scheduleLocalNotification }) => {
                         const currency = t('common.currency');
                         scheduleLocalNotification(
-                            `⚠️ ${t('notifications.push.finalOfferTitle')}`,
+                            `${t('notifications.push.finalOfferTitle')}`,
                             data.notification || t('notifications.push.finalOfferBody', { amount: data.original_bid_amount, currency }),
                             {
                                 type: 'counter_offer_final',
@@ -264,36 +264,30 @@ export function useSocket() {
 
                 // Schedule rich local notification for background/locked phone
                 const garageName = data.garage_name || 'Garage';
-                const statusMessages: Record<string, { emoji: string; title: string; body: string }> = {
+                const statusMessages: Record<string, { title: string; body: string }> = {
                     'preparing': {
-                        emoji: '🔧',
                         title: t('notifications.push.preparingTitle'),
                         body: t('notifications.push.preparingBody', { garage: garageName })
                     },
                     'ready_for_pickup': {
-                        emoji: '📦',
                         title: t('notifications.push.readyTitle'),
                         body: t('notifications.push.readyBody', { garage: garageName })
                     },
                     'collected': {
-                        emoji: '✅',
                         title: t('notifications.push.collectedTitle'),
                         body: t('notifications.push.collectedBody')
                     },
                     'qc_passed': {
-                        emoji: '✨',
                         title: t('notifications.push.qcPassedTitle'),
                         body: t('notifications.push.qcPassedBody')
                     },
                     'in_transit': {
-                        emoji: '🚗',
                         title: t('notifications.push.inTransitTitle'),
                         body: data.driver_name
                             ? t('notifications.push.inTransitBodyDriver', { driver: data.driver_name })
                             : t('notifications.push.inTransitBody')
                     },
                     'delivered': {
-                        emoji: '🎉',
                         title: t('notifications.push.deliveredTitle'),
                         body: t('notifications.push.deliveredBody')
                     },
@@ -303,7 +297,7 @@ export function useSocket() {
                 if (statusInfo) {
                     import('../services/notifications').then(({ scheduleLocalNotification }) => {
                         scheduleLocalNotification(
-                            `${statusInfo.emoji} QScrap | ${statusInfo.title}`,
+                            `QScrap | ${statusInfo.title}`,
                             statusInfo.body,
                             {
                                 type: 'order_update',
@@ -336,7 +330,7 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        `🚗 ${t('notifications.push.driverAssignedTitle')}`,
+                        `${t('notifications.push.driverAssignedTitle')}`,
                         data.driver?.name
                             ? t('notifications.push.driverAssignedBodyDriver', { driver: data.driver.name })
                             : t('notifications.push.driverAssignedBody'),
@@ -364,7 +358,7 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        `🎉 ${t('notifications.push.packageDeliveredTitle')}`,
+                        `${t('notifications.push.packageDeliveredTitle')}`,
                         t('notifications.push.packageDeliveredBody', { orderNumber: data.order_number }),
                         {
                             type: 'order_delivered',
@@ -384,7 +378,7 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        `⏰ ${t('notifications.push.requestExpiredTitle')}`,
+                        `${t('notifications.push.requestExpiredTitle')}`,
                         data.part_description
                             ? t('notifications.push.requestExpiredBodyPart', { part: data.part_description })
                             : t('notifications.push.requestExpiredBody'),
@@ -403,7 +397,7 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        `📤 ${t('notifications.push.bidWithdrawnTitle')}`,
+                        `${t('notifications.push.bidWithdrawnTitle')}`,
                         data.message || t('notifications.push.bidWithdrawnBody'),
                         {
                             type: 'bid_withdrawn',
@@ -420,7 +414,7 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     scheduleLocalNotification(
-                        `💬 ${t('notifications.push.supportReplyTitle')}`,
+                        `${t('notifications.push.supportReplyTitle')}`,
                         data.message?.content || t('notifications.push.supportReplyBody'),
                         {
                             type: 'support_reply',
@@ -440,7 +434,7 @@ export function useSocket() {
                         ? t('notifications.push.theGarage')
                         : t('notifications.push.yourOrder');
                     scheduleLocalNotification(
-                        `❌ ${t('notifications.push.orderCancelledTitle')}`,
+                        `${t('notifications.push.orderCancelledTitle')}`,
                         data.reason
                             ? t('notifications.push.orderCancelledBodyReason', { cancelledBy, reason: data.reason })
                             : t('notifications.push.orderCancelledBody', { orderNumber: data.order_number || 'N/A' }),
@@ -471,8 +465,8 @@ export function useSocket() {
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const senderLabel = data.sender_type === 'driver'
-                        ? `🚗 ${t('notifications.push.chatDriverLabel')}`
-                        : `🔧 ${t('notifications.push.chatGarageLabel')}`;
+                        ? `${t('notifications.push.chatDriverLabel')}`
+                        : `${t('notifications.push.chatGarageLabel')}`;
                     scheduleLocalNotification(
                         senderLabel,
                         data.message || t('notifications.push.chatDefaultBody'),

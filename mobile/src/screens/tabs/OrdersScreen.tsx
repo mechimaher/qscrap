@@ -27,6 +27,7 @@ import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
 import { useAppStateRefresh } from '../../hooks/useAppStateRefresh';
 import { useToast } from '../../components/Toast';
+import { Ionicons } from '@expo/vector-icons';
 
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -38,21 +39,21 @@ const getStatusConfig = (status: string, t: any) => {
         case 'confirmed': return {
             color: '#3B82F6',
             bg: '#DBEAFE',
-            icon: '✓',
+            icon: 'checkmark-circle' as const,
             label: t('status.confirmed'),
             gradient: ['#3B82F6', '#2563EB'] as const
         };
         case 'preparing': return {
             color: '#F59E0B',
             bg: '#FEF3C7',
-            icon: '🔧',
+            icon: 'settings' as const,
             label: t('status.preparing'),
             gradient: ['#F59E0B', '#D97706'] as const
         };
         case 'ready_for_pickup': return {
             color: '#8B5CF6',
             bg: '#EDE9FE',
-            icon: '📦',
+            icon: 'cube' as const,
             label: t('status.ready'),
             gradient: ['#8B5CF6', '#7C3AED'] as const
         };
@@ -62,28 +63,28 @@ const getStatusConfig = (status: string, t: any) => {
         case 'in_transit': return {
             color: '#22C55E',
             bg: '#DCFCE7',
-            icon: '🚚',
+            icon: 'car-sport' as const,
             label: t('status.onTheWay'),
             gradient: ['#22C55E', '#16A34A'] as const
         };
         case 'qc_failed': return {
             color: '#F59E0B',
             bg: '#FEF3C7',
-            icon: '⏳',
+            icon: 'hourglass' as const,
             label: t('status.processing'),
             gradient: ['#F59E0B', '#D97706'] as const
         };
         case 'delivered': return {
             color: '#06B6D4',
             bg: '#CFFAFE',
-            icon: '📍',
+            icon: 'checkmark-done' as const,
             label: t('status.delivered'),
             gradient: ['#06B6D4', '#0891B2'] as const
         };
         case 'completed': return {
             color: '#22C55E',
             bg: '#DCFCE7',
-            icon: '✅',
+            icon: 'checkmark-circle' as const,
             label: t('status.completed'),
             gradient: ['#22C55E', '#16A34A'] as const
         };
@@ -93,21 +94,21 @@ const getStatusConfig = (status: string, t: any) => {
         case 'cancelled_by_ops': return {
             color: '#EF4444',
             bg: '#FEE2E2',
-            icon: '✕',
+            icon: 'close-circle' as const,
             label: t('status.cancelled'),
             gradient: ['#EF4444', '#DC2626'] as const
         };
         case 'refunded': return {
             color: '#6B7280',
             bg: '#F3F4F6',
-            icon: '💸',
+            icon: 'return-down-back' as const,
             label: t('status.refunded'),
             gradient: ['#6B7280', '#4B5563'] as const
         };
         default: return {
             color: '#6B7280',
             bg: '#F3F4F6',
-            icon: '•',
+            icon: 'ellipse' as const,
             label: status.replace(/_/g, ' '),
             gradient: ['#6B7280', '#4B5563'] as const
         };
@@ -236,7 +237,7 @@ const PremiumOrderCard = ({
                                     { backgroundColor: statusConfig.bg },
                                     isInTransit && { opacity: pulseOpacity }
                                 ]}>
-                                    <Text style={styles.orderIcon}>{statusConfig.icon}</Text>
+                                    <Ionicons name={statusConfig.icon} size={20} color={statusConfig.color} />
                                 </Animated.View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.orderNumber, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
@@ -256,7 +257,7 @@ const PremiumOrderCard = ({
 
                         {/* Car Info Chip */}
                         <View style={[styles.carChip, { backgroundColor: colors.background }]}>
-                            <Text style={styles.carEmoji}>🚗</Text>
+                            <Ionicons name="car-sport" size={16} color={colors.textSecondary} style={{ marginRight: Spacing.sm }} />
                             <Text style={[styles.carText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {item.car_make} {item.car_model} ({item.car_year})
                             </Text>
@@ -275,7 +276,7 @@ const PremiumOrderCard = ({
                             </View>
                             {/* Escrow Protection Badge */}
                             <View style={styles.escrowBadge}>
-                                <Text style={styles.escrowIcon}>🛡️</Text>
+                                <Ionicons name="shield-checkmark" size={12} color="#2E7D32" />
                                 <Text style={styles.escrowText}>{t('common.protected')}</Text>
                             </View>
                             <View style={styles.dateSection}>
@@ -305,8 +306,8 @@ const PremiumOrderCard = ({
                                     style={styles.trackGradient}
                                 >
                                     <Animated.View style={[styles.liveDot, { opacity: pulseOpacity }]} />
-                                    <Text style={styles.trackText}>🗺️ {t('orders.trackLiveDelivery')}</Text>
-                                    <Text style={styles.trackArrow}>→</Text>
+                                    <Text style={styles.trackText}>{t('orders.trackLiveDelivery')}</Text>
+                                    <Ionicons name="chevron-forward" size={18} color="#fff" />
                                 </LinearGradient>
                             </TouchableOpacity>
                         )}
@@ -319,7 +320,7 @@ const PremiumOrderCard = ({
                                     end={{ x: 1, y: 0 }}
                                     style={styles.confirmGradient}
                                 >
-                                    <Text style={styles.confirmText}>📍 {t('orders.tapToConfirmDelivery')}</Text>
+                                    <Text style={styles.confirmText}>{t('orders.tapToConfirmDelivery')}</Text>
                                 </LinearGradient>
                             </View>
                         )}
@@ -433,7 +434,7 @@ export default function OrdersScreen() {
     const EmptyState = () => (
         <View style={styles.emptyState}>
             <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
-                <Text style={styles.emptyIcon}>📦</Text>
+                <Ionicons name="cube-outline" size={48} color="#999" />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('orders.noOrders')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>

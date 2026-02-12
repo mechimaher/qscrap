@@ -18,6 +18,7 @@ import {
     Linking,
     Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -48,7 +49,7 @@ interface Message {
 export default function ChatScreen() {
     const { colors } = useTheme();
     const { driver } = useAuth();
-    const { t, isRTL } = useI18n();
+    const { t } = useI18n();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { orderId, orderNumber, recipientName, customerPhone } = route.params || {};
@@ -113,7 +114,7 @@ export default function ChatScreen() {
     const loadMessages = async () => {
         try {
             // Use centralized API service (timeouts, error handling, token management)
-            const data = await api.request(`/chat/order/${orderId}`);
+            const data = await api.request<{ messages?: Message[] }>(`/chat/order/${orderId}`);
             if (data.messages) {
                 setMessages(data.messages);
             }
@@ -172,7 +173,6 @@ export default function ChatScreen() {
                 'POST',
                 { message: messageText }
             );
-            console.log('[Chat] Message queued for retry');
         } finally {
             setIsSending(false);
         }
@@ -224,7 +224,7 @@ export default function ChatScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backIcon}>←</Text>
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View style={styles.headerInfo}>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{recipientName}</Text>
@@ -239,9 +239,9 @@ export default function ChatScreen() {
                                     Alert.alert('Error', 'Could not make call')
                                 );
                             }}
-                            style={{ padding: 8, marginRight: 4 }}
+                            style={{ padding: 12 }}
                         >
-                            <Text style={{ fontSize: 20 }}>📞</Text>
+                            <Ionicons name="call" size={20} color={Colors.primary} />
                         </TouchableOpacity>
                     )}
                     <View style={[styles.onlineIndicator, { backgroundColor: getSocket()?.connected ? Colors.success : colors.textMuted }]} />
@@ -270,7 +270,7 @@ export default function ChatScreen() {
                         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
                         ListEmptyComponent={
                             <View style={styles.emptyState}>
-                                <Text style={styles.emptyIcon}>💬</Text>
+                                <Ionicons name="chatbubbles-outline" size={48} color={colors.textMuted} />
                                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                                     {t('start_conversation')}
                                 </Text>
@@ -296,7 +296,7 @@ export default function ChatScreen() {
                             <View style={[styles.typingDot, styles.typingDotDelayed2, { backgroundColor: Colors.primary }]} />
                         </View>
                         <Text style={[styles.typingText, { color: colors.textMuted }]}>
-                            {typingUser} is typing...
+                            {t('user_typing', { user: typingUser })}
                         </Text>
                     </View>
                 )}
@@ -304,7 +304,7 @@ export default function ChatScreen() {
                 {/* Input */}
                 <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
                     <TextInput
-                        style={[styles.input, { backgroundColor: colors.background, color: colors.text, textAlign: isRTL ? 'right' : 'left' }]}
+                        style={[styles.input, { backgroundColor: colors.background, color: colors.text }]}
                         placeholder={t('type_message')}
                         placeholderTextColor={colors.textMuted}
                         value={inputText}
@@ -328,7 +328,7 @@ export default function ChatScreen() {
                         }}
                         disabled={!inputText.trim() || isSending}
                     >
-                        <Text style={styles.sendIcon}>➤</Text>
+                        <Ionicons name="send" size={18} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>

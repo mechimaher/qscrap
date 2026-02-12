@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { AnimatedNumber, AnimatedRating } from '../index';
+import { Ionicons } from '@expo/vector-icons';
 
 interface StatCardProps {
-    icon: string;
+    icon: React.ComponentProps<typeof Ionicons>['name'];
     value: number | string;
     label: string;
     color: string;
@@ -79,7 +80,7 @@ export function StatCard({
                 styles.card,
                 { backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }
             ]}>
-                <Text style={styles.icon}>{icon}</Text>
+                <Ionicons name={icon} size={24} color={color} />
                 {isRating ? (
                     <AnimatedRating value={numericValue} delay={delay} style={{ color: colors.text }} />
                 ) : (

@@ -19,6 +19,7 @@ import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function VerifyOTPScreen() {
     const navigation = useNavigation<any>();
@@ -175,7 +176,7 @@ export default function VerifyOTPScreen() {
 
                 {/* Content */}
                 <View style={styles.content}>
-                    <Text style={styles.titleEmoji}>📧</Text>
+                    <Ionicons name="mail-outline" size={64} color="#fff" style={{ marginBottom: Spacing.md }} />
                     <Text style={styles.title}>Verify Your Email</Text>
                     <Text style={styles.subtitle}>
                         We sent a 6-digit code to{'\n'}
@@ -206,9 +207,9 @@ export default function VerifyOTPScreen() {
                     {/* Timer */}
                     <Text style={[styles.timer, timer === 0 && styles.timerExpired]}>
                         {timer > 0 ? (
-                            <>🕐 Code expires in {formatTime(timer)}</>
+                            <>Code expires in {formatTime(timer)}</>
                         ) : (
-                            <>⏰ Code expired - Please request a new one</>
+                            <>Code expired - Please request a new one</>
                         )}
                     </Text>
 
@@ -230,7 +231,7 @@ export default function VerifyOTPScreen() {
                             <ActivityIndicator color="#fff" size="small" />
                         ) : (
                             <Text style={styles.resendText}>
-                                {canResend ? '🔄 Resend Code' : '⏱️ Please wait 30s'}
+                                {canResend ? 'Resend Code' : 'Please wait 30s'}
                             </Text>
                         )}
                     </TouchableOpacity>

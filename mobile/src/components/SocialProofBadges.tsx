@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontSizes, Spacing, BorderRadius, Shadows } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../contexts/LanguageContext';
 
 interface SocialProofBadgesProps {
@@ -17,12 +18,12 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     totalTransactions,
 }) => {
     const { t } = useTranslation();
-    const badges: Array<{ icon: string; text: string; gradient: string[] }> = [];
+    const badges: Array<{ icon: React.ComponentProps<typeof Ionicons>['name']; text: string; gradient: string[] }> = [];
 
     // Fast Response Badge (< 60 min)
     if (avgResponseTime && avgResponseTime < 60) {
         badges.push({
-            icon: '⚡',
+            icon: 'flash' as const,
             text: t('socialProof.fastResponse'),
             gradient: ['#F59E0B', '#D97706'],
         });
@@ -31,7 +32,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     // Top Rated Badge (>= 4.5 stars)
     if (ratingAverage && ratingAverage >= 4.5) {
         badges.push({
-            icon: '⭐',
+            icon: 'star' as const,
             text: t('socialProof.topRated'),
             gradient: ['#8D1B3D', '#C9A227'],
         });
@@ -40,7 +41,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     // Trusted Seller Badge (>= 100 transactions)
     if (totalTransactions && totalTransactions >= 100) {
         badges.push({
-            icon: '🏆',
+            icon: 'trophy' as const,
             text: t('socialProof.trustedSeller'),
             gradient: ['#3B82F6', '#2563EB'],
         });
@@ -58,7 +59,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
                     end={{ x: 1, y: 0 }}
                     style={styles.badge}
                 >
-                    <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                    <Ionicons name={badge.icon} size={12} color="#fff" />
                     <Text style={styles.badgeText}>{badge.text}</Text>
                 </LinearGradient>
             ))}

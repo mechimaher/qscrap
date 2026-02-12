@@ -20,6 +20,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Request, Bid } from '../services/api';
 import { BidComparisonModal } from '../components/BidComparisonModal';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
@@ -193,8 +194,8 @@ export default function RequestDetailScreen() {
                         };
 
                         log('========================================');
-                        log('🚀 NAVIGATING TO PAYMENT SCREEN');
-                        log('📦 Params:', JSON.stringify(navigationParams, null, 2));
+                        log('[Payment] NAVIGATING TO PAYMENT SCREEN');
+                        log('[Payment] Params:', JSON.stringify(navigationParams, null, 2));
                         log('========================================');
 
                         navigation.navigate('Payment', {
@@ -257,7 +258,7 @@ export default function RequestDetailScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                        <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                     <View style={{ width: 60 }} />
@@ -293,7 +294,7 @@ export default function RequestDetailScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -314,7 +315,7 @@ export default function RequestDetailScreen() {
                 <View style={styles.bidsSection}>
                     <View style={[styles.bidsHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.bidsTitle, { color: colors.text }]}>
-                            {bids.length === 0 ? t('requestDetail.waitingForBids') : `📬 ${t('requestDetail.bidCount', { count: bids.length })}`}
+                            {bids.length === 0 ? t('requestDetail.waitingForBids') : t('requestDetail.bidCount', { count: bids.length })}
                         </Text>
                         {bids.length >= 2 && (
                             <TouchableOpacity
@@ -330,7 +331,7 @@ export default function RequestDetailScreen() {
                                     end={{ x: 1, y: 0 }}
                                     style={styles.compareGradient}
                                 >
-                                    <Text style={styles.compareButtonText}>⚖️ {t('common.compare')}</Text>
+                                    <Text style={styles.compareButtonText}>{t('common.compare')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
                         )}

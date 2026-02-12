@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../contexts/LanguageContext';
 import { ViewerBadge } from './ViewerBadge';
+import { Ionicons } from '@expo/vector-icons';
 
 interface WaitStateReassuranceProps {
     createdAt: string;
@@ -24,17 +25,17 @@ interface WaitStateReassuranceProps {
 }
 
 // Rotating encouraging messages
-const getReassuranceMessage = (elapsedMinutes: number, t: (key: string) => string): { emoji: string; message: string } => {
+const getReassuranceMessage = (elapsedMinutes: number, t: (key: string) => string): { icon: keyof typeof Ionicons.glyphMap; message: string } => {
     if (elapsedMinutes < 5) {
-        return { emoji: '🔍', message: t('waitState.searchingGarages') };
+        return { icon: 'search-outline', message: t('waitState.searchingGarages') };
     } else if (elapsedMinutes < 15) {
-        return { emoji: '🛠️', message: t('waitState.garagesReviewing') };
+        return { icon: 'construct-outline', message: t('waitState.garagesReviewing') };
     } else if (elapsedMinutes < 30) {
-        return { emoji: '📋', message: t('waitState.preparingQuotes') };
+        return { icon: 'clipboard-outline', message: t('waitState.preparingQuotes') };
     } else if (elapsedMinutes < 60) {
-        return { emoji: '⏳', message: t('waitState.stillSearching') };
+        return { icon: 'hourglass-outline', message: t('waitState.stillSearching') };
     } else {
-        return { emoji: '🔔', message: t('waitState.notifyWhenReady') };
+        return { icon: 'notifications-outline', message: t('waitState.notifyWhenReady') };
     }
 };
 
@@ -65,7 +66,7 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
     const pulseAnim = useRef(new Animated.Value(0.3)).current;
     const dotAnim = useRef(new Animated.Value(0)).current;
     const [elapsedTime, setElapsedTime] = useState('');
-    const [reassurance, setReassurance] = useState({ emoji: '🔍', message: '' });
+    const [reassurance, setReassurance] = useState<{ icon: keyof typeof Ionicons.glyphMap; message: string }>({ icon: 'search-outline', message: '' });
 
     // Pulse animation for the searching indicator
     useEffect(() => {
@@ -125,7 +126,7 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
                     colors={['#8D1B3D', '#C9A227']}
                     style={styles.pulseCircle}
                 >
-                    <Text style={styles.pulseEmoji}>{reassurance.emoji}</Text>
+                    <Ionicons name={reassurance.icon} size={36} color="#fff" />
                 </LinearGradient>
             </Animated.View>
 
@@ -159,7 +160,7 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
             {/* Helpful tips */}
             <View style={[styles.tipContainer, { borderTopColor: colors.textSecondary + '20' }]}>
                 <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                    💡 {t('waitState.tip')}
+                    {t('waitState.tip')}
                 </Text>
             </View>
         </View>

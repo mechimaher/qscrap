@@ -30,6 +30,7 @@ import { MapLocationPicker } from '../components/MapLocationPicker';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
+import { Ionicons } from '@expo/vector-icons';
 
 type AddressScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -276,11 +277,13 @@ export default function AddressBookScreen() {
             activeOpacity={isSelectionMode ? 0.7 : 1}
         >
             <View style={styles.cardIcon}>
-                <Text style={styles.cardIconText}>
-                    {item.label?.toLowerCase().includes('home') ? '🏠' :
-                        item.label?.toLowerCase().includes('office') ? '🏢' :
-                            item.label?.toLowerCase().includes('work') ? '💼' : '📍'}
-                </Text>
+                <Ionicons
+                    name={item.label?.toLowerCase().includes('home') ? 'home' :
+                        item.label?.toLowerCase().includes('office') ? 'business' :
+                            item.label?.toLowerCase().includes('work') ? 'briefcase' : 'location'}
+                    size={22}
+                    color={Colors.primary}
+                />
             </View>
             <View style={{ flex: 1 }}>
                 <View style={[styles.cardHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -292,7 +295,7 @@ export default function AddressBookScreen() {
                 </Text>
                 {item.latitude && item.longitude && (
                     <Text style={[styles.coordsText, { textAlign: rtlTextAlign(isRTL) }]}>
-                        📍 {parseFloat(String(item.latitude)).toFixed(4)}, {parseFloat(String(item.longitude)).toFixed(4)}
+                        <Ionicons name="location" size={12} color="#9CA3AF" /> {parseFloat(String(item.latitude)).toFixed(4)}, {parseFloat(String(item.longitude)).toFixed(4)}
                     </Text>
                 )}
             </View>
@@ -300,7 +303,7 @@ export default function AddressBookScreen() {
             {!isSelectionMode && (
                 <View style={styles.cardActions}>
                     <TouchableOpacity onPress={() => handleEdit(item)} style={styles.editButton}>
-                        <Text style={styles.editText}>✏️</Text>
+                        <Ionicons name="create-outline" size={18} color={Colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(item.address_id)} style={styles.deleteButton}>
                         <Text style={styles.deleteText}>✕</Text>
@@ -337,7 +340,7 @@ export default function AddressBookScreen() {
                         <ActivityIndicator color="#22C55E" size="small" />
                     ) : (
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Text style={styles.quickActionIcon}>📍</Text>
+                            <Ionicons name="navigate" size={18} color="#22C55E" />
                             <Text style={[styles.quickActionText, { color: '#22C55E' }]}>{t('profile.useGPS')}</Text>
                         </View>
                     )}
@@ -347,7 +350,7 @@ export default function AddressBookScreen() {
             {/* Quick-Pick Zones */}
             <View style={[styles.zonesContainer, { backgroundColor: colors.background }]}>
                 <Text style={[styles.zonesTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                    🏙️ {t('profile.popularAreas')}
+                    {t('profile.popularAreas')}
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {QATAR_ZONES.map((zone) => (
@@ -388,7 +391,7 @@ export default function AddressBookScreen() {
                 {/* Header */}
                 <View style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => setFlowStep('map')} style={styles.flowBackBtn}>
-                        <Text style={styles.flowBackText}>{isRTL ? '→' : '←'}</Text>
+                        <Ionicons name="arrow-back" size={20} color={Colors.primary} />
                     </TouchableOpacity>
                     <Text style={[styles.flowTitle, { color: colors.text }]}>{t('profile.confirmAddress')}</Text>
                     <View style={{ width: 40 }} />
@@ -400,7 +403,7 @@ export default function AddressBookScreen() {
                         colors={Colors.gradients.primary as [string, string]}
                         style={styles.previewGradient}
                     >
-                        <Text style={styles.previewIcon}>📍</Text>
+                        <Ionicons name="location" size={32} color="#fff" />
                         <View style={{ flex: 1, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                             <Text style={styles.previewLabel}>{t('profile.selectedLocation')}</Text>
                             <Text style={[styles.previewAddress, { textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>
@@ -444,7 +447,7 @@ export default function AddressBookScreen() {
                                     styles.labelChipText,
                                     { color: label === preset ? '#fff' : colors.text }
                                 ]}>
-                                    {preset === 'Home' ? '🏠' : preset === 'Office' ? '🏢' : preset === 'Work' ? '💼' : '📍'} {preset}
+                                    {preset === 'Home' ? '' : preset === 'Office' ? '' : preset === 'Work' ? '' : ''}{preset}
                                 </Text>
                             </TouchableOpacity>
                         ))}
@@ -501,7 +504,7 @@ export default function AddressBookScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.title, { color: colors.text }]}>
                     {isSelectionMode ? t('profile.selectAddress') : t('profile.addressBook')}
@@ -524,7 +527,7 @@ export default function AddressBookScreen() {
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyEmoji}>📍</Text>
+                            <Ionicons name="location-outline" size={48} color="#9CA3AF" />
                             <Text style={styles.emptyText}>{t('profile.noAddressesSaved')}</Text>
                             <TouchableOpacity onPress={handleStartAdd} style={styles.emptyButton}>
                                 <Text style={styles.emptyButtonText}>+ {t('profile.addFirstAddress')}</Text>

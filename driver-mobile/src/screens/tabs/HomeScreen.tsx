@@ -30,10 +30,11 @@ import { getSocket, updateActiveOrders } from '../../services/socket';
 import { Colors, Spacing } from '../../constants/theme';
 import { HomeScreenSkeleton, LiveMapView, AssignmentPopup, StatCard, AssignmentCard } from '../../components';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
-import { startShift, endShift, checkAndShowFatigueAlert, loadShiftData, getFatigueStatus, getFatigueColor } from '../../utils/fatigueMonitor';
+import { useI18n } from '../../i18n';
 
 export default function HomeScreen() {
     const setStoreAssignments = useJobStore(state => state.setAssignments);
+    const { t } = useI18n();
     const { driver, refreshDriver } = useAuth();
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
@@ -59,12 +60,6 @@ export default function HomeScreen() {
     useFocusEffect(
         useCallback(() => {
             loadData();
-            // P2: Load shift data and check for fatigue alerts
-            loadShiftData().then(() => {
-                if (isAvailable) {
-                    checkAndShowFatigueAlert();
-                }
-            });
         }, [isAvailable])
     );
 
@@ -75,16 +70,13 @@ export default function HomeScreen() {
         const socket = getSocket();
         if (!socket) return;
 
-        console.log('[Home] Setting up socket listeners');
 
         const handleUpdate = () => {
-            console.log('[Home] Received update event, reloading data...');
             loadData();
         };
 
         // VVIP: Show accept/reject popup for new assignments — INSTANT (Talabat/Uber pattern)
         const handleNewAssignment = (data: any) => {
-            console.log('[Home] 🚨 New assignment received via socket:', data?.assignment_id);
 
             // Direct state injection — no API round-trip (0ms vs 200-2000ms)
             const assignmentData = data?.assignment || (data?.assignment_id ? data : null);
@@ -106,7 +98,6 @@ export default function HomeScreen() {
         };
 
         const handleDriverStatusChange = (data: any) => {
-            console.log('[Home] Driver status changed:', data.status);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             refreshDriver();
             loadData();
@@ -119,7 +110,6 @@ export default function HomeScreen() {
         socket.on('driver_status_changed', handleDriverStatusChange);
 
         return () => {
-            console.log('[Home] Cleaning up socket listeners');
             socket.off('new_assignment', handleNewAssignment);
             socket.off('assignment_cancelled', handleUpdate);
             socket.off('assignment_removed', handleUpdate);
@@ -144,7 +134,6 @@ export default function HomeScreen() {
         };
 
         const interval = getPollingInterval();
-        console.log(`[Home] Starting smart polling interval (${interval / 1000}s, socket: ${isConnected ? 'healthy' : 'disconnected'})`);
 
         const intervalId = setInterval(() => {
             // Silent refresh - don't show loading spinner
@@ -152,7 +141,6 @@ export default function HomeScreen() {
         }, interval);
 
         return () => {
-            console.log('[Home] Clearing polling interval');
             clearInterval(intervalId);
         };
     }, [isAvailable, isConnected]); // Re-initialize when socket status changes
@@ -165,7 +153,6 @@ export default function HomeScreen() {
     // Without this, GPS shows "Acquiring..." forever when reopening the app
     useEffect(() => {
         if (driver?.status === 'available' && !isTracking && hasPermission) {
-            console.log('[Home] Auto-starting location tracking (driver already available)');
             startTracking();
         }
     }, [driver?.status, hasPermission]);
@@ -180,7 +167,6 @@ export default function HomeScreen() {
                 const assignments = assignmentsRes.assignments || [];
                 setActiveAssignments(assignments);
                 setStoreAssignments(assignments);
-                console.log('[Home] Assignments synced:', assignments.length);
 
                 // FIX: Auto-join chat rooms for all active orders (real-time messages)
                 const activeOrderIds = assignments.map((a: Assignment) => a.order_id).filter(Boolean);
@@ -256,13 +242,9 @@ export default function HomeScreen() {
                 // Start/stop location tracking
                 if (newStatus === 'available') {
                     await startTracking();
-                    // P2: Start shift for fatigue monitoring
-                    await startShift();
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 } else {
                     await stopTracking();
-                    // P2: End shift for fatigue monitoring
-                    await endShift();
                 }
 
                 await refreshDriver();
@@ -281,15 +263,14 @@ export default function HomeScreen() {
     };
 
     const getStatusText = () => {
-        if (driver?.status === 'busy') return 'On Delivery';
-        return isAvailable ? 'Available' : 'Offline';
+        if (driver?.status === 'busy') return t('on_delivery');
+        return isAvailable ? t('available') : t('offline');
     };
 
     // VVIP: Accept/Reject/Timeout handlers
     const handleAcceptAssignment = async () => {
         if (!pendingAssignment?.assignment_id) return;
 
-        console.log('[Home] Accepting assignment:', pendingAssignment.assignment_id);
         setShowAssignmentPopup(false);
 
         try {
@@ -301,17 +282,17 @@ export default function HomeScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
             Alert.alert(
-                'Assignment Accepted!',
-                'You can now start the delivery. Good luck!',
-                [{ text: 'OK' }]
+                t('assignment_accepted'),
+                t('assignment_accepted_message'),
+                [{ text: t('ok') }]
             );
         } catch (err: any) {
             console.error('[Home] Failed to accept assignment:', err);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(
-                'Error',
-                err.message || 'Failed to accept assignment. Please try again.',
-                [{ text: 'OK' }]
+                t('error'),
+                err.message || t('something_went_wrong'),
+                [{ text: t('ok') }]
             );
             // Reset popup state so user can retry
             setPendingAssignment(null);
@@ -321,7 +302,6 @@ export default function HomeScreen() {
     const handleRejectAssignment = async () => {
         if (!pendingAssignment?.assignment_id) return;
 
-        console.log('[Home] Rejecting assignment:', pendingAssignment.assignment_id);
         setShowAssignmentPopup(false);
 
         try {
@@ -330,17 +310,17 @@ export default function HomeScreen() {
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             Alert.alert(
-                'Assignment Rejected',
-                'This assignment has been declined. Operations will reassign it to another driver.',
-                [{ text: 'OK' }]
+                t('assignment_rejected'),
+                t('assignment_rejected_message'),
+                [{ text: t('ok') }]
             );
         } catch (err: any) {
             console.error('[Home] Failed to reject assignment:', err);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(
-                'Error',
-                err.message || 'Failed to reject assignment. Please try again.',
-                [{ text: 'OK' }]
+                t('error'),
+                err.message || t('something_went_wrong'),
+                [{ text: t('ok') }]
             );
             // Reset popup state
             setPendingAssignment(null);
@@ -348,14 +328,13 @@ export default function HomeScreen() {
     };
 
     const handleAssignmentTimeout = () => {
-        console.log('[Home] Assignment timed out');
         setShowAssignmentPopup(false);
         setPendingAssignment(null);
 
         Alert.alert(
-            'Assignment Expired',
-            'You did not respond in time. The assignment may be reassigned.',
-            [{ text: 'OK' }]
+            t('assignment_expired'),
+            t('assignment_expired_message'),
+            [{ text: t('ok') }]
         );
     };
 
@@ -374,7 +353,12 @@ export default function HomeScreen() {
             <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
                 <View>
                     <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                        {getGreeting()},
+                        {(() => {
+                            const hour = new Date().getHours();
+                            if (hour < 12) return t('good_morning');
+                            if (hour < 17) return t('good_afternoon');
+                            return t('good_evening');
+                        })()},
                     </Text>
                     <Text style={[styles.driverName, { color: colors.text }]}>
                         {driver?.full_name || 'Driver'}
@@ -425,8 +409,8 @@ export default function HomeScreen() {
                     <View style={styles.mapContainer}>
                         <ErrorBoundary name="LiveMap" fallback={
                             <View style={[styles.mapContainer, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', height: 180 }]}>
-                                <Text style={{ fontSize: 24 }}>🗺️</Text>
-                                <Text style={{ color: colors.textMuted, marginTop: 8 }}>Map unavailable</Text>
+                                <Ionicons name="map-outline" size={24} color={colors.textMuted} />
+                                <Text style={{ color: colors.textMuted, marginTop: 8 }}>{t('map_unavailable')}</Text>
                             </View>
                         }>
                             <LiveMapView
@@ -442,8 +426,8 @@ export default function HomeScreen() {
                 {/* Location loading placeholder - shows when available but no location yet */}
                 {isAvailable && !location && (
                     <View style={[styles.mapContainer, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', height: 180, borderRadius: 16 }]}>
-                        <Text style={{ fontSize: 32 }}>📍</Text>
-                        <Text style={{ color: colors.textMuted, marginTop: 8 }}>Acquiring GPS...</Text>
+                        <Ionicons name="location" size={32} color={Colors.primary} />
+                        <Text style={{ color: colors.textMuted, marginTop: 8 }}>{t('acquiring_gps')}</Text>
                     </View>
                 )}
 
@@ -451,37 +435,36 @@ export default function HomeScreen() {
                 <View style={styles.statsGrid}>
                     <View style={styles.statsRow}>
                         <StatCard
-                            icon="📦"
+                            icon="cube-outline"
                             value={stats?.today_deliveries || 0}
-                            label="Today"
+                            label={t('today')}
                             color={Colors.primary}
                             colors={colors}
                             delay={0}
                         />
                         <StatCard
-                            icon="💰"
-                            value={stats?.today_earnings || 0}
-                            label="Earnings"
+                            icon="bar-chart-outline"
+                            value={stats?.week_deliveries || 0}
+                            label={t('this_week')}
                             color={Colors.success}
                             colors={colors}
                             delay={100}
-                            isCurrency={true}
                         />
                     </View>
                     <View style={styles.statsRow}>
                         <StatCard
-                            icon="⭐"
+                            icon="star"
                             value={parseFloat(formatRating(stats?.rating_average))}
-                            label="Rating"
+                            label={t('rating')}
                             color={Colors.warning}
                             colors={colors}
                             delay={200}
                             isRating={true}
                         />
                         <StatCard
-                            icon="📋"
+                            icon="clipboard-outline"
                             value={stats?.active_assignments || 0}
-                            label="Active"
+                            label={t('active')}
                             color={Colors.info}
                             colors={colors}
                             delay={300}
@@ -494,19 +477,19 @@ export default function HomeScreen() {
                 {/* Active Assignments */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                        Active Assignments
+                        {t('active_assignments')}
                     </Text>
 
                     {activeAssignments.length === 0 ? (
                         <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
-                            <Text style={styles.emptyIcon}>📭</Text>
+                            <Ionicons name="mail-open-outline" size={32} color={colors.textMuted} />
                             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                                No active assignments
+                                {t('no_assignments')}
                             </Text>
                             <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
                                 {isAvailable
-                                    ? 'New assignments will appear here'
-                                    : 'Go online to receive assignments'
+                                    ? t('new_assignments_message')
+                                    : t('go_online_message')
                                 }
                             </Text>
                         </View>
@@ -542,12 +525,6 @@ function formatRating(value: any): string {
     return isNaN(num) ? '0.0' : num.toFixed(1);
 }
 
-function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-}
 
 const styles = StyleSheet.create({
     container: {

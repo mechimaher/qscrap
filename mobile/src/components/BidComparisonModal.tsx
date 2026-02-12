@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { Bid } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -91,7 +92,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             style={[styles.sortTab, sortBy === 'price' && styles.sortTabActive]}
                         >
                             <Text style={[styles.sortTabText, sortBy === 'price' && styles.sortTabTextActive]}>
-                                💰 {t('bidComparison.price')}
+                                {t('bidComparison.price')}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -99,7 +100,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             style={[styles.sortTab, sortBy === 'rating' && styles.sortTabActive]}
                         >
                             <Text style={[styles.sortTabText, sortBy === 'rating' && styles.sortTabTextActive]}>
-                                ⭐ {t('bidComparison.rating')}
+                                {t('bidComparison.rating')}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -107,7 +108,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             style={[styles.sortTab, sortBy === 'warranty' && styles.sortTabActive]}
                         >
                             <Text style={[styles.sortTabText, sortBy === 'warranty' && styles.sortTabTextActive]}>
-                                🛡️ {t('bidComparison.warranty')}
+                                {t('bidComparison.warranty')}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -152,7 +153,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                     <View style={styles.bidColumn}>
                                         <Text style={styles.columnLabel}>{t('bidComparison.rating')}</Text>
                                         <View style={styles.ratingRow}>
-                                            <Text style={styles.ratingStar}>⭐</Text>
+                                            <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 4 }} />
                                             <Text style={[
                                                 styles.ratingText,
                                                 isBestRating && styles.ratingTextBest

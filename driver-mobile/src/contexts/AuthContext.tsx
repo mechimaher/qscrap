@@ -19,7 +19,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        console.log('[Auth] ========== APP STARTING ==========');
 
         // Failsafe: Force app to load after 10 seconds even if auth check hangs
         const safetyTimer = setTimeout(() => {
@@ -33,20 +32,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const checkAuth = async () => {
-        console.log('[Auth] checkAuth started');
         try {
-            console.log('[Auth] Getting token...');
             const token = await api.getToken();
-            console.log('[Auth] Token:', token ? 'exists' : 'null');
 
             if (token) {
                 // LOCAL-FIRST: Use cached driver data (like Customer App)
                 // This prevents hanging on network issues during startup
-                console.log('[Auth] Token found, loading cached driver...');
                 const savedDriver = await api.getDriver();
 
                 if (savedDriver) {
-                    console.log('[Auth] Cached driver found:', savedDriver.full_name);
                     setDriver(savedDriver);
 
                     // Start location tracking (non-blocking)
@@ -57,11 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // Refresh profile in BACKGROUND after UI loads
                     // This verifies token validity without blocking startup
                     setTimeout(() => {
-                        console.log('[Auth] Background profile refresh starting...');
                         api.getProfile()
                             .then(response => {
                                 if (response.driver) {
-                                    console.log('[Auth] Profile refreshed:', response.driver.full_name);
                                     setDriver(response.driver);
                                     api.saveDriver(response.driver);
                                 }
@@ -70,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 console.warn('[Auth] Background refresh failed:', error?.message);
                                 // Token might be invalid - clear it and force re-login
                                 if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
-                                    console.log('[Auth] Token invalid, clearing...');
                                     api.clearToken();
                                     setDriver(null);
                                 }
@@ -78,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }, 1000); // 1 second delay to let UI render first
                 } else {
                     // Have token but no cached driver - must verify with network
-                    console.log('[Auth] No cached driver, verifying token...');
                     try {
                         const profilePromise = api.getProfile();
                         const timeoutPromise = new Promise((_, reject) =>
@@ -94,17 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             );
                         }
                     } catch (error: any) {
-                        console.log('[Auth] Token verification failed:', error?.message);
                         await api.clearToken();
                     }
                 }
             } else {
-                console.log('[Auth] No token, user needs to login');
             }
         } catch (error) {
-            console.log('[Auth] Check failed:', error);
         } finally {
-            console.log('[Auth] ========== AUTH CHECK COMPLETE, showing UI ==========');
             setIsLoading(false);
         }
     };
@@ -146,7 +132,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             await api.clearToken();
             setDriver(null);
-            console.log('[Auth] Logout complete');
         } catch (error) {
             console.error('[Auth] Logout error:', error);
             setDriver(null);
@@ -161,7 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 await api.saveDriver(response.driver);
             }
         } catch (error) {
-            console.log('[Auth] Refresh failed:', error);
         }
     };
 

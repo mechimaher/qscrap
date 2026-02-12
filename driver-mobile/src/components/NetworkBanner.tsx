@@ -1,104 +1,71 @@
-import React, { useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    Animated,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Spacing, BorderRadius, FontSize } from '../constants/theme';
-import { useNetwork } from '../hooks/useNetwork';
+// QScrap Driver App - Network Status Banner
+// Shows a subtle warning banner when the device loses internet connectivity
 
-/**
- * Network status banner that shows when device is offline.
- * Automatically appears/disappears based on connectivity.
- */
-export const NetworkBanner: React.FC<{ onRetry?: () => void }> = ({ onRetry }) => {
-    const { isConnected, isInternetReachable } = useNetwork();
-    const insets = useSafeAreaInsets();
-    const slideAnim = useRef(new Animated.Value(-60)).current;
-    const isOffline = !isConnected || isInternetReachable === false;
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../constants/theme';
+import { useI18n } from '../i18n';
+
+export function NetworkBanner() {
+    const { t } = useI18n();
+    const [isConnected, setIsConnected] = useState(true);
+    const slideAnim = useRef(new Animated.Value(-50)).current;
 
     useEffect(() => {
-        Animated.spring(slideAnim, {
-            toValue: isOffline ? 0 : -60,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 10,
-        }).start();
-    }, [isOffline, slideAnim]);
+        const unsubscribe = NetInfo.addEventListener((state) => {
+            const connected = state.isConnected ?? true;
+            setIsConnected(connected);
 
-    if (!isOffline) return null;
+            Animated.timing(slideAnim, {
+                toValue: connected ? -50 : 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    if (isConnected) return null;
 
     return (
         <Animated.View
             style={[
-                styles.container,
-                {
-                    paddingTop: insets.top + Spacing.sm,
-                    transform: [{ translateY: slideAnim }]
-                },
+                styles.banner,
+                { transform: [{ translateY: slideAnim }] },
             ]}
         >
-            <View style={styles.content}>
-                <Text style={styles.icon}>📡</Text>
-                <View style={styles.textContainer}>
-                    <Text style={styles.title}>No Internet Connection</Text>
-                    <Text style={styles.message}>Please check your connection</Text>
-                </View>
-                {onRetry && (
-                    <TouchableOpacity onPress={onRetry} style={styles.retryButton}>
-                        <Text style={styles.retryText}>Retry</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
+            <Ionicons name="cloud-offline-outline" size={16} color="#fff" />
+            <Text style={styles.text}>{t('no_internet')}</Text>
         </Animated.View>
     );
-};
+}
 
 const styles = StyleSheet.create({
-    container: {
+    banner: {
         position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
+        top: Platform.OS === 'ios' ? 50 : 30,
+        left: 20,
+        right: 20,
         backgroundColor: Colors.danger,
-        zIndex: 9998,
-    },
-    content: {
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.md,
+        gap: 8,
+        zIndex: 9999,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 5,
     },
-    icon: {
-        fontSize: 20,
-        marginRight: Spacing.md,
-    },
-    textContainer: {
-        flex: 1,
-    },
-    title: {
+    text: {
         color: '#fff',
-        fontSize: FontSize.md,
-        fontWeight: '600',
-    },
-    message: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: FontSize.sm,
-    },
-    retryButton: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: BorderRadius.sm,
-    },
-    retryText: {
-        color: '#fff',
-        fontSize: FontSize.sm,
+        fontSize: 14,
         fontWeight: '600',
     },
 });
-
-export default NetworkBanner;

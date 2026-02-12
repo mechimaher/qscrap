@@ -10,6 +10,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 interface QuickReply {
     id: string;
@@ -27,40 +28,40 @@ interface QuickRepliesProps {
 const QUICK_REPLY_KEYS: Record<string, Array<{ id: string; translationKey: string; emoji: string; category: string }>> = {
     // Customer sending to Driver
     forDriver: [
-        { id: '1', translationKey: 'quickReplies.waitingOutside', emoji: '🏠', category: 'location' },
-        { id: '2', translationKey: 'quickReplies.callWhenArrive', emoji: '📞', category: 'help' },
-        { id: '3', translationKey: 'quickReplies.meetAtGate', emoji: '🚪', category: 'location' },
-        { id: '4', translationKey: 'quickReplies.howLongUntilArrive', emoji: '⏱️', category: 'time' },
-        { id: '5', translationKey: 'quickReplies.onSecondFloor', emoji: '🏢', category: 'location' },
-        { id: '6', translationKey: 'quickReplies.deliverToSecurity', emoji: '👮', category: 'location' },
-        { id: '7', translationKey: 'quickReplies.ringDoorbell', emoji: '🔔', category: 'help' },
-        { id: '8', translationKey: 'quickReplies.thankYou', emoji: '🙏', category: 'greeting' },
+        { id: '1', translationKey: 'quickReplies.waitingOutside', emoji: 'home-outline', category: 'location' },
+        { id: '2', translationKey: 'quickReplies.callWhenArrive', emoji: 'call-outline', category: 'help' },
+        { id: '3', translationKey: 'quickReplies.meetAtGate', emoji: 'enter-outline', category: 'location' },
+        { id: '4', translationKey: 'quickReplies.howLongUntilArrive', emoji: 'time-outline', category: 'time' },
+        { id: '5', translationKey: 'quickReplies.onSecondFloor', emoji: 'business-outline', category: 'location' },
+        { id: '6', translationKey: 'quickReplies.deliverToSecurity', emoji: 'shield-outline', category: 'location' },
+        { id: '7', translationKey: 'quickReplies.ringDoorbell', emoji: 'notifications-outline', category: 'help' },
+        { id: '8', translationKey: 'quickReplies.thankYou', emoji: 'heart-outline', category: 'greeting' },
     ],
 
     // Customer sending to Garage
     forGarage: [
-        { id: '1', translationKey: 'quickReplies.partStillAvailable', emoji: '❓', category: 'status' },
-        { id: '2', translationKey: 'quickReplies.confirmPartNumber', emoji: '🔢', category: 'help' },
-        { id: '3', translationKey: 'quickReplies.whenReadyPickup', emoji: '⏱️', category: 'time' },
-        { id: '4', translationKey: 'quickReplies.includeWarranty', emoji: '📋', category: 'help' },
-        { id: '5', translationKey: 'quickReplies.sendMorePhotos', emoji: '📸', category: 'help' },
-        { id: '6', translationKey: 'quickReplies.whatCondition', emoji: '🔍', category: 'status' },
-        { id: '7', translationKey: 'quickReplies.priceNegotiable', emoji: '💰', category: 'help' },
-        { id: '8', translationKey: 'quickReplies.thankYouHelp', emoji: '🙏', category: 'greeting' },
+        { id: '1', translationKey: 'quickReplies.partStillAvailable', emoji: 'help-circle-outline', category: 'status' },
+        { id: '2', translationKey: 'quickReplies.confirmPartNumber', emoji: 'keypad-outline', category: 'help' },
+        { id: '3', translationKey: 'quickReplies.whenReadyPickup', emoji: 'time-outline', category: 'time' },
+        { id: '4', translationKey: 'quickReplies.includeWarranty', emoji: 'clipboard-outline', category: 'help' },
+        { id: '5', translationKey: 'quickReplies.sendMorePhotos', emoji: 'camera-outline', category: 'help' },
+        { id: '6', translationKey: 'quickReplies.whatCondition', emoji: 'search-outline', category: 'status' },
+        { id: '7', translationKey: 'quickReplies.priceNegotiable', emoji: 'cash-outline', category: 'help' },
+        { id: '8', translationKey: 'quickReplies.thankYouHelp', emoji: 'heart-outline', category: 'greeting' },
     ],
 
     // Driver/Staff sending to Customer  
     forCustomer: [
-        { id: '1', translationKey: 'quickReplies.fiveMinAway', emoji: '🚗', category: 'time' },
-        { id: '2', translationKey: 'quickReplies.arrivedLocation', emoji: '📍', category: 'location' },
-        { id: '3', translationKey: 'quickReplies.comeOutside', emoji: '🚶', category: 'help' },
-        { id: '4', translationKey: 'quickReplies.waitingAtGate', emoji: '🚪', category: 'location' },
-        { id: '5', translationKey: 'quickReplies.triedCalling', emoji: '📞', category: 'status' },
-        { id: '6', translationKey: 'quickReplies.shareExactLocation', emoji: '🗺️', category: 'location' },
-        { id: '7', translationKey: 'quickReplies.inWhiteCar', emoji: '🚙', category: 'help' },
-        { id: '8', translationKey: 'quickReplies.deliveryComplete', emoji: '✅', category: 'greeting' },
-        { id: '9', translationKey: 'quickReplies.onMyWayPickup', emoji: '🏭', category: 'status' },
-        { id: '10', translationKey: 'quickReplies.trafficDelay', emoji: '🚦', category: 'time' },
+        { id: '1', translationKey: 'quickReplies.fiveMinAway', emoji: 'car-sport-outline', category: 'time' },
+        { id: '2', translationKey: 'quickReplies.arrivedLocation', emoji: 'location-outline', category: 'location' },
+        { id: '3', translationKey: 'quickReplies.comeOutside', emoji: 'walk-outline', category: 'help' },
+        { id: '4', translationKey: 'quickReplies.waitingAtGate', emoji: 'enter-outline', category: 'location' },
+        { id: '5', translationKey: 'quickReplies.triedCalling', emoji: 'call-outline', category: 'status' },
+        { id: '6', translationKey: 'quickReplies.shareExactLocation', emoji: 'map-outline', category: 'location' },
+        { id: '7', translationKey: 'quickReplies.inWhiteCar', emoji: 'car-outline', category: 'help' },
+        { id: '8', translationKey: 'quickReplies.deliveryComplete', emoji: 'checkmark-circle-outline', category: 'greeting' },
+        { id: '9', translationKey: 'quickReplies.onMyWayPickup', emoji: 'navigate-outline', category: 'status' },
+        { id: '10', translationKey: 'quickReplies.trafficDelay', emoji: 'warning-outline', category: 'time' },
     ],
 };
 
@@ -107,11 +108,11 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     };
 
     const categories = [
-        { key: null, label: t('quickReplies.all'), emoji: '📝' },
-        { key: 'status', label: t('quickReplies.status'), emoji: '📊' },
-        { key: 'location', label: t('quickReplies.location'), emoji: '📍' },
-        { key: 'time', label: t('quickReplies.time'), emoji: '⏱️' },
-        { key: 'help', label: t('quickReplies.help'), emoji: '💡' },
+        { key: null, label: t('quickReplies.all'), icon: 'chatbubbles-outline' as const },
+        { key: 'status', label: t('quickReplies.status'), icon: 'information-circle-outline' as const },
+        { key: 'location', label: t('quickReplies.location'), icon: 'location-outline' as const },
+        { key: 'time', label: t('quickReplies.time'), icon: 'time-outline' as const },
+        { key: 'help', label: t('quickReplies.help'), icon: 'bulb-outline' as const },
     ];
 
     return (
@@ -135,7 +136,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
                             setSelectedCategory(cat.key);
                         }}
                     >
-                        <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                        <Ionicons name={cat.icon} size={14} color={selectedCategory === cat.key ? Colors.primary : '#525252'} style={{ marginRight: 4 }} />
                         <Text style={[
                             styles.categoryLabel,
                             selectedCategory === cat.key && styles.categoryLabelActive,
@@ -163,7 +164,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
                         onPress={() => handleSelect(reply)}
                         activeOpacity={0.7}
                     >
-                        <Text style={styles.replyEmoji}>{reply.emoji}</Text>
+                        <Ionicons name={reply.emoji as any} size={16} color={CATEGORY_COLORS[reply.category]} style={{ marginRight: Spacing.xs }} />
                         <Text style={styles.replyText} numberOfLines={1}>
                             {reply.text}
                         </Text>

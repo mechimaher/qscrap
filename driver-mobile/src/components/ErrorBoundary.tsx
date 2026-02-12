@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Colors } from '../constants/theme';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
     children: ReactNode;
@@ -45,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
             return (
                 <View style={styles.container}>
                     <View style={styles.content}>
-                        <Text style={styles.icon}>⚠️</Text>
+                        <Ionicons name="warning" size={48} color={Colors.danger} />
                         <Text style={styles.title}>Something went wrong</Text>
                         <Text style={styles.subtitle}>
                             {this.props.name ? `Error in ${this.props.name}` : 'An unexpected error occurred'}

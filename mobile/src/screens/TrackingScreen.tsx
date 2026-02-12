@@ -32,6 +32,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
+import { Ionicons } from '@expo/vector-icons';
 import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 import { KEYS } from '../config/keys';
 
@@ -84,7 +85,7 @@ export default function TrackingScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute();
     const { t, isRTL } = useTranslation();
-    const { isDark } = useTheme();
+    const { isDark, colors } = useTheme();
     const toast = useToast();
     // Support both full params (from OrderDetail) and orderId-only (from PaymentScreen)
     const { orderId, orderNumber, deliveryAddress } = route.params as any;
@@ -416,7 +417,7 @@ export default function TrackingScreen() {
 
         try {
             const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${myLocation.latitude},${myLocation.longitude}`;
-            const message = `📍 My Live Location:\n${mapsUrl}`;
+            const message = `My Live Location:\n${mapsUrl}`;
 
             // Send to driver via chat API
             // We use the driver ID from order or find it. 
@@ -520,7 +521,7 @@ export default function TrackingScreen() {
                         <Animated.View style={[styles.driverMarker, { transform: [{ scale: pulseAnim }] }]}>
                             <View style={styles.driverMarkerPulse} />
                             <View style={styles.driverMarkerInner}>
-                                <Text style={styles.driverMarkerIcon}>🚗</Text>
+                                <Ionicons name="car-sport" size={24} color="#fff" />
                             </View>
                         </Animated.View>
                     </Marker>
@@ -535,7 +536,7 @@ export default function TrackingScreen() {
                         }}
                     >
                         <View style={[styles.locationMarker, { backgroundColor: Colors.success }]}>
-                            <Text style={styles.markerIcon}>🏠</Text>
+                            <Ionicons name="home" size={20} color="#fff" />
                         </View>
                     </Marker>
                 )}
@@ -581,12 +582,12 @@ export default function TrackingScreen() {
                     }}
                 >
                     <View style={styles.chatBannerContent}>
-                        <Text style={styles.chatBannerIcon}>💬</Text>
+                        <Ionicons name="chatbubble" size={18} color="#fff" style={{ marginRight: 6 }} />
                         <View style={styles.chatBannerText}>
                             <Text style={styles.chatBannerFrom}>{newChatMessage.from}</Text>
                             <Text style={styles.chatBannerMessage} numberOfLines={1}>{newChatMessage.text}</Text>
                         </View>
-                        <Text style={styles.chatBannerAction}>{t('tracking.view')} {isRTL ? '←' : '→'}</Text>
+                        <Text style={styles.chatBannerAction}>{t('tracking.view')} <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={12} color="#fff" /></Text>
                     </View>
                 </TouchableOpacity>
             )}
@@ -595,7 +596,7 @@ export default function TrackingScreen() {
             <SafeAreaView style={styles.header} edges={['top']}>
                 <View style={[styles.headerContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backIcon}>{isRTL ? '→' : '←'}</Text>
+                        <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color="#1a1a1a" />
                     </TouchableOpacity>
                     <View style={styles.headerInfo}>
                         <Text style={[styles.headerTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.liveTracking')}</Text>
@@ -613,7 +614,7 @@ export default function TrackingScreen() {
                                 });
                             }}
                         >
-                            <Text style={styles.supportIcon}>💬</Text>
+                            <Ionicons name="chatbubble-outline" size={20} color={Colors.primary} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -623,10 +624,10 @@ export default function TrackingScreen() {
             {canShowDriver && (
                 <View style={styles.mapControls}>
                     <TouchableOpacity style={styles.mapButton} onPress={centerOnDriver}>
-                        <Text style={styles.mapButtonIcon}>🚗</Text>
+                        <Ionicons name="car-sport-outline" size={22} color={Colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.mapButton} onPress={fitAllMarkers}>
-                        <Text style={styles.mapButtonIcon}>⊡</Text>
+                        <Ionicons name="scan-outline" size={22} color={Colors.primary} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -660,7 +661,7 @@ export default function TrackingScreen() {
                         </View>
                     </View>
                     <View style={styles.etaIcon}>
-                        <Text style={{ fontSize: 40 }}>🚗</Text>
+                        <Ionicons name="car-sport" size={40} color="#fff" />
                     </View>
                 </LinearGradient>
 
@@ -668,7 +669,7 @@ export default function TrackingScreen() {
                 {driverInfo && (
                     <View style={styles.driverCard}>
                         <View style={styles.driverAvatar}>
-                            <Text style={styles.driverAvatarIcon}>👤</Text>
+                            <Ionicons name="person" size={24} color={Colors.primary} />
                         </View>
                         <View style={styles.driverDetails}>
                             <Text style={styles.driverName}>{driverInfo.name}</Text>
@@ -685,7 +686,7 @@ export default function TrackingScreen() {
                                 }
                             }}
                         >
-                            <Text style={styles.callDriverIcon}>📞</Text>
+                            <Ionicons name="call-outline" size={20} color="#fff" />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.messageDriverButton}
@@ -699,7 +700,7 @@ export default function TrackingScreen() {
                                 });
                             }}
                         >
-                            <Text style={styles.messageDriverIcon}>💬</Text>
+                            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
                         </TouchableOpacity>
                     </View>
                 )}
@@ -714,7 +715,7 @@ export default function TrackingScreen() {
                                 const isCompleted = statusIdx > index;
                                 const isCurrent = statusIdx === index;
                                 const labels = [t('tracking.timelinePrepared'), t('tracking.timelineInTransit'), t('tracking.timelineDelivered'), t('tracking.timelineCompleted')];
-                                const icons = ['✓', '🚗', '📦', '⭐'];
+                                const icons: (keyof typeof Ionicons.glyphMap)[] = ['checkmark', 'car-sport', 'cube', 'star'];
 
                                 return (
                                     <React.Fragment key={step}>
@@ -728,7 +729,7 @@ export default function TrackingScreen() {
                                                     styles.timelineIcon,
                                                     (isCompleted || isCurrent) && styles.timelineIconActive,
                                                 ]}>
-                                                    {isCompleted || isCurrent ? icons[index] : '○'}
+                                                    {isCompleted || isCurrent ? <Ionicons name={icons[index]} size={14} color="#fff" /> : <Text style={styles.timelineIcon}>○</Text>}
                                                 </Text>
                                             </View>
                                             <Text style={[
@@ -753,7 +754,7 @@ export default function TrackingScreen() {
                         {/* Garage & Part Info */}
                         <View style={styles.orderInfoRow}>
                             <View style={styles.garageSection}>
-                                <Text style={[styles.orderLabel, { textAlign: rtlTextAlign(isRTL) }]}>🏭 {t('tracking.from')}</Text>
+                                <Text style={[styles.orderLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.from')}</Text>
                                 <Text style={styles.garageName}>{orderDetails.garage_name}</Text>
                             </View>
                             <View style={styles.partSection}>
@@ -789,8 +790,8 @@ export default function TrackingScreen() {
                             </View>
                             {orderDetails.loyalty_discount > 0 && (
                                 <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    <Text style={[styles.priceLabel, { color: '#22c55e' }]}>🎁 {t('order.loyaltyDiscount')}</Text>
-                                    <Text style={[styles.priceValue, { color: '#22c55e' }]}>-{orderDetails.loyalty_discount.toFixed(0)} {t('common.currency')}</Text>
+                                    <Text style={[styles.priceLabel, { color: Colors.success }]}>{t('order.loyaltyDiscount')}</Text>
+                                    <Text style={[styles.priceValue, { color: Colors.success }]}>-{orderDetails.loyalty_discount.toFixed(0)} {t('common.currency')}</Text>
                                 </View>
                             )}
                             <View style={styles.priceDivider} />
@@ -810,12 +811,12 @@ export default function TrackingScreen() {
                         end={{ x: 1, y: 0 }}
                         style={styles.shareLocationGradient}
                     >
-                        <Text style={styles.shareLocationIcon}>📍</Text>
+                        <Ionicons name="location" size={24} color="#fff" style={{ marginRight: 8 }} />
                         <View style={styles.shareLocationText}>
                             <Text style={styles.shareLocationTitle}>{t('tracking.shareLocation')}</Text>
                             <Text style={styles.shareLocationSubtitle}>{t('tracking.shareLocationHint')}</Text>
                         </View>
-                        <Text style={styles.shareLocationArrow}>→</Text>
+                        <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#fff" />
                     </LinearGradient>
                 </TouchableOpacity>
             </Animated.View>
@@ -845,7 +846,7 @@ const getStatusIndex = (status: string): number => {
 
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8F9FA' },
+    container: { flex: 1, backgroundColor: Colors.light.background },
     map: { ...StyleSheet.absoluteFillObject },
     header: {
         position: 'absolute',
@@ -862,15 +863,15 @@ const styles = StyleSheet.create({
     backButton: {
         width: 44,
         height: 44,
-        borderRadius: 22,
-        backgroundColor: '#FFFFFF',
+        borderRadius: BorderRadius.xl,
+        backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
         ...Shadows.md,
     },
-    backIcon: { fontSize: 24, color: '#1a1a1a' },
+    backIcon: { fontSize: 24, color: Colors.light.text },
     headerInfo: { flex: 1, marginLeft: Spacing.md },
-    headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' },
+    headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.light.text },
     orderNumber: { fontSize: FontSizes.sm, color: Colors.primary },
     connectionDot: {
         width: 12,
@@ -888,7 +889,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
         ...Shadows.md,
@@ -905,7 +906,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: Spacing.sm,
@@ -988,7 +989,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: height * 0.75, // Fixed height for proper animation
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.light.surface,
         borderTopLeftRadius: BorderRadius.xl,
         borderTopRightRadius: BorderRadius.xl,
         padding: Spacing.lg,
@@ -999,7 +1000,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#D1D5DB',
+        backgroundColor: Colors.border,
         alignSelf: 'center',
         marginBottom: Spacing.lg,
     },
@@ -1023,7 +1024,7 @@ const styles = StyleSheet.create({
     driverCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F5F5F5',
+        backgroundColor: Colors.surfaceSecondary,
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
         marginBottom: Spacing.md,
@@ -1032,18 +1033,18 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
     },
     driverAvatarIcon: { fontSize: 24 },
     driverDetails: { flex: 1, marginLeft: Spacing.md },
-    driverName: { fontSize: FontSizes.lg, fontWeight: '600', color: '#1a1a1a' },
-    driverVehicle: { fontSize: FontSizes.sm, color: '#525252' },
+    driverName: { fontSize: FontSizes.lg, fontWeight: '600', color: Colors.light.text },
+    driverVehicle: { fontSize: FontSizes.sm, color: Colors.light.textSecondary },
     callDriverButton: {
         width: 44,
         height: 44,
-        borderRadius: 22,
+        borderRadius: BorderRadius.xl,
         backgroundColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
@@ -1053,20 +1054,20 @@ const styles = StyleSheet.create({
     messageDriverButton: {
         width: 44,
         height: 44,
-        borderRadius: 22,
-        backgroundColor: '#FFFFFF',
+        borderRadius: BorderRadius.xl,
+        backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
     },
     messageDriverIcon: { fontSize: 20 },
     // Premium Order Card Styles
     orderCard: {
-        backgroundColor: '#F5F5F5',
+        backgroundColor: Colors.surfaceSecondary,
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderColor: Colors.border,
     },
     statusTimeline: {
         flexDirection: 'row',
@@ -1082,11 +1083,11 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#E0E0E0',
+        borderColor: Colors.light.border,
     },
     timelineNodeCompleted: {
         backgroundColor: Colors.primary,
@@ -1098,11 +1099,11 @@ const styles = StyleSheet.create({
     },
     timelineIcon: {
         fontSize: 16,
-        color: '#1a1a1a',
+        color: Colors.light.text,
     },
     timelineLabel: {
         fontSize: FontSizes.xs,
-        color: '#737373',
+        color: Colors.light.textMuted,
         marginTop: Spacing.xs,
         fontWeight: '500',
     },
@@ -1113,7 +1114,7 @@ const styles = StyleSheet.create({
     timelineConnector: {
         flex: 1,
         height: 3,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: Colors.light.border,
         marginHorizontal: Spacing.xs,
         marginBottom: Spacing.lg,
     },
@@ -1128,14 +1129,14 @@ const styles = StyleSheet.create({
     },
     orderLabel: {
         fontSize: FontSizes.xs,
-        color: '#737373',
+        color: Colors.light.textMuted,
         fontWeight: '700',
         letterSpacing: 0.5,
     },
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: Colors.light.text,
         marginTop: Spacing.xs,
     },
     partSection: {
@@ -1143,7 +1144,7 @@ const styles = StyleSheet.create({
     },
     partName: {
         fontSize: FontSizes.md,
-        color: '#525252',
+        color: Colors.light.textSecondary,
         marginBottom: Spacing.xs,
     },
     partBadges: {
@@ -1174,7 +1175,7 @@ const styles = StyleSheet.create({
     },
     pricingSection: {
         borderTopWidth: 1,
-        borderTopColor: '#E0E0E0',
+        borderTopColor: Colors.light.border,
         paddingTop: Spacing.sm,
         marginTop: Spacing.sm,
     },
@@ -1185,21 +1186,21 @@ const styles = StyleSheet.create({
     },
     priceLabel: {
         fontSize: FontSizes.sm,
-        color: '#737373',
+        color: Colors.light.textMuted,
     },
     priceValue: {
         fontSize: FontSizes.sm,
-        color: '#525252',
+        color: Colors.light.textSecondary,
     },
     priceDivider: {
         height: 1,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: Colors.light.border,
         marginVertical: Spacing.xs,
     },
     totalLabel: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: Colors.light.text,
     },
     totalValue: {
         fontSize: FontSizes.lg,
@@ -1213,8 +1214,8 @@ const styles = StyleSheet.create({
     },
     addressIcon: { fontSize: 24, marginRight: Spacing.sm },
     addressContent: { flex: 1 },
-    addressLabel: { fontSize: FontSizes.sm, color: '#525252' },
-    addressText: { fontSize: FontSizes.md, color: '#1a1a1a', marginTop: Spacing.xs },
+    addressLabel: { fontSize: FontSizes.sm, color: Colors.light.textSecondary },
+    addressText: { fontSize: FontSizes.md, color: Colors.light.text, marginTop: Spacing.xs },
     statusRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1245,12 +1246,12 @@ const styles = StyleSheet.create({
     qcTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: Colors.light.text,
         marginTop: Spacing.md,
     },
     qcSubtitle: {
         fontSize: FontSizes.sm,
-        color: '#525252',
+        color: Colors.light.textSecondary,
         marginTop: Spacing.xs,
     },
     // Chat Banner Styles
@@ -1279,11 +1280,11 @@ const styles = StyleSheet.create({
     chatBannerFrom: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: '#1a1a1a',
+        color: Colors.light.text,
     },
     chatBannerMessage: {
         fontSize: FontSizes.sm,
-        color: '#525252',
+        color: Colors.light.textSecondary,
         marginTop: 2,
     },
     chatBannerAction: {

@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const ProTipCard = ({ navigation }: { navigation: any }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -40,7 +41,9 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
                 { opacity: fadeAnim, backgroundColor: colors.surface, transform: [{ scale: scaleAnim }], flexDirection: rtlFlexDirection(isRTL) }
             ]}>
                 <View style={[styles.proTipIconWrapper, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>
-                    <Animated.Text style={[styles.proTipIcon, { opacity: glowAnim }]}>💡</Animated.Text>
+                    <Animated.View style={{ opacity: glowAnim }}>
+                        <Ionicons name="bulb-outline" size={22} color={Colors.secondary} />
+                    </Animated.View>
                 </View>
                 <View style={styles.proTipContent}>
                     <Text style={[styles.proTipTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.proTip')}</Text>

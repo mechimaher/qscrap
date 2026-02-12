@@ -23,6 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron, rtlMarginHorizontal } from '../utils/rtl';
 import { APP_VERSION } from '../config/api';
+import { Ionicons } from '@expo/vector-icons';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -110,15 +111,15 @@ export default function SettingsScreen() {
             t('settings.chooseTheme'),
             [
                 {
-                    text: `☀️ ${t('settings.light')}`,
+                    text: t('settings.light'),
                     onPress: () => setTheme('light')
                 },
                 {
-                    text: `🌙 ${t('settings.dark')}`,
+                    text: t('settings.dark'),
                     onPress: () => setTheme('dark')
                 },
                 {
-                    text: `🔄 ${t('settings.system')}`,
+                    text: t('settings.system'),
                     onPress: () => setTheme('system')
                 },
                 { text: t('common.cancel'), style: 'cancel' },
@@ -128,9 +129,9 @@ export default function SettingsScreen() {
 
     const getAppearanceLabel = () => {
         switch (themeMode) {
-            case 'light': return `☀️ ${t('settings.light')}`;
-            case 'dark': return `🌙 ${t('settings.dark')}`;
-            case 'system': return `🔄 ${t('settings.system')}`;
+            case 'light': return t('settings.light');
+            case 'dark': return t('settings.dark');
+            case 'system': return t('settings.system');
             default: return t('settings.system');
         }
     };
@@ -208,7 +209,7 @@ export default function SettingsScreen() {
         onToggle: () => void;
     }) => (
         <View style={[styles.settingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-            <Text style={[styles.settingIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.md } : {}]}>{icon}</Text>
+            <Ionicons name={icon as any} size={22} color={colors.text} style={isRTL ? { marginRight: 0, marginLeft: Spacing.md } : { marginRight: Spacing.md }} />
             <View style={styles.settingInfo}>
                 <Text style={[styles.settingTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
                 {subtitle && <Text style={[styles.settingSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{subtitle}</Text>}
@@ -237,7 +238,7 @@ export default function SettingsScreen() {
         onPress: () => void;
     }) => (
         <TouchableOpacity style={[styles.settingRow, { flexDirection: rtlFlexDirection(isRTL) }]} onPress={onPress} accessibilityRole="button" accessibilityLabel={title}>
-            <Text style={[styles.settingIcon, isRTL ? { marginRight: 0, marginLeft: Spacing.md } : {}]}>{icon}</Text>
+            <Ionicons name={icon as any} size={22} color={colors.text} style={isRTL ? { marginRight: 0, marginLeft: Spacing.md } : { marginRight: Spacing.md }} />
             <View style={styles.settingInfo}>
                 <Text style={[styles.settingTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
             </View>
@@ -253,7 +254,7 @@ export default function SettingsScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('settings.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -265,7 +266,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.notifications')}</Text>
 
                     <SettingRow
-                        icon="🔔"
+                        icon="notifications-outline"
                         title={t('settings.pushNotifications')}
                         subtitle={t('settings.receiveNotifications')}
                         value={settings.pushNotifications}
@@ -273,7 +274,7 @@ export default function SettingsScreen() {
                     />
 
                     <SettingRow
-                        icon="💰"
+                        icon="cash-outline"
                         title={t('settings.bidAlerts')}
                         subtitle={t('settings.bidAlertsDesc')}
                         value={settings.bidNotifications}
@@ -281,7 +282,7 @@ export default function SettingsScreen() {
                     />
 
                     <SettingRow
-                        icon="📦"
+                        icon="cube-outline"
                         title={t('settings.orderUpdates')}
                         subtitle={t('settings.orderUpdatesDesc')}
                         value={settings.orderNotifications}
@@ -289,7 +290,7 @@ export default function SettingsScreen() {
                     />
 
                     <SettingRow
-                        icon="🚗"
+                        icon="car-outline"
                         title={t('settings.deliveryTracking')}
                         subtitle={t('settings.deliveryTrackingDesc')}
                         value={settings.deliveryNotifications}
@@ -302,7 +303,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.language')}</Text>
 
                     <ActionRow
-                        icon="🌐"
+                        icon="globe-outline"
                         title={t('settings.language')}
                         value={language === 'en' ? 'English' : 'العربية'}
                         onPress={handleLanguageChange}
@@ -314,7 +315,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.appearance')}</Text>
 
                     <ActionRow
-                        icon="🎨"
+                        icon="color-palette-outline"
                         title={t('settings.theme')}
                         value={getAppearanceLabel()}
                         onPress={handleAppearanceChange}
@@ -326,7 +327,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.storage')}</Text>
 
                     <ActionRow
-                        icon="🗑️"
+                        icon="trash-outline"
                         title={t('settings.clearCache')}
                         onPress={handleClearCache}
                     />
@@ -337,26 +338,26 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : {}]}>{t('settings.about')}</Text>
 
                     <ActionRow
-                        icon="ℹ️"
+                        icon="information-circle-outline"
                         title={t('settings.appVersion')}
                         value={APP_VERSION || '1.0.0'}
-                        onPress={() => Alert.alert('QScrap', `${t('settings.appVersion')}: ${APP_VERSION}\n\n🇶🇦 ${t('profile.madeInQatar')}`)}
+                        onPress={() => Alert.alert('QScrap', `${t('settings.appVersion')}: ${APP_VERSION}\n\n${t('profile.madeInQatar')}`)}
                     />
 
                     <ActionRow
-                        icon="📄"
+                        icon="document-text-outline"
                         title={t('settings.termsOfService')}
                         onPress={() => (navigation as any).navigate('Terms')}
                     />
 
                     <ActionRow
-                        icon="🔒"
+                        icon="lock-closed-outline"
                         title={t('settings.privacyPolicy')}
                         onPress={() => (navigation as any).navigate('PrivacyPolicy')}
                     />
 
                     <ActionRow
-                        icon="📧"
+                        icon="mail-outline"
                         title={t('settings.contactSupport')}
                         onPress={() => Alert.alert(t('settings.contactSupport'), t('profile.contactInfo'))}
                     />

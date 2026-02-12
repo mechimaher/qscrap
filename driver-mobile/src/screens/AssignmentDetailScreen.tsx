@@ -16,6 +16,7 @@ import {
     Image,
     Dimensions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -29,6 +30,7 @@ import { useJobStore } from '../stores/useJobStore';
 import { API_ENDPOINTS, SOCKET_URL } from '../config/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Shadows } from '../constants/theme';
 import { LiveMapView, SwipeToComplete, TimelineItem } from '../components';
+import { useI18n } from '../i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,6 +38,7 @@ export default function AssignmentDetailScreen() {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const { t } = useI18n();
     const { assignmentId } = route.params || {};
     const { location, startTracking, stopTracking } = useLocation();
 
@@ -53,14 +56,12 @@ export default function AssignmentDetailScreen() {
 
     useEffect(() => {
         if (assignmentFromStore) {
-            console.log('[Detail] Found assignment in store', assignmentId);
             setAssignment(assignmentFromStore);
             setIsLoading(false);
         }
     }, [assignmentFromStore]);
 
     useEffect(() => {
-        console.log('[Detail] Mounted with assignmentId:', assignmentId);
         if (!assignmentId) {
             Alert.alert('Error', 'Invalid Assignment ID');
             navigation.goBack();
@@ -85,7 +86,6 @@ export default function AssignmentDetailScreen() {
             // VVIP: Removed OfflineQueue pending check to prevent 'Stacked' state
             // relying on backend truth regardless of local queue status
         } catch (err: any) {
-            console.log('[Detail] Load error (offline?):', err.message);
             // If we have store data, we are good. If not, show error.
             if (!assignmentFromStore) {
                 Alert.alert('Error', 'Could not load assignment details');
@@ -120,31 +120,6 @@ export default function AssignmentDetailScreen() {
         openExternalMap(lat, lng, label);
     };
 
-    // Emergency SOS — calls Qatar 999 or dispatch
-    const emergencySOS = () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        Alert.alert(
-            '🆘 EMERGENCY SOS',
-            'Call Emergency Services (999) or QScrap Dispatch?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'QScrap Dispatch',
-                    onPress: () => Linking.openURL('tel:+97444000000').catch(() =>
-                        Alert.alert('Error', 'Could not call dispatch')
-                    ),
-                },
-                {
-                    text: 'CALL 999',
-                    style: 'destructive',
-                    onPress: () => Linking.openURL('tel:999').catch(() =>
-                        Alert.alert('Error', 'Could not call emergency')
-                    ),
-                },
-            ]
-        );
-    };
-
     const callContact = (phone: string, name: string) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         Linking.openURL(`tel:${phone}`).catch(() => {
@@ -173,7 +148,7 @@ export default function AssignmentDetailScreen() {
     if (!assignment) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <Text style={[styles.errorText, { color: colors.text }]}>Assignment not found</Text>
+                <Text style={[styles.errorText, { color: colors.text }]}>{t('assignment_not_found')}</Text>
             </SafeAreaView>
         );
     }
@@ -188,11 +163,11 @@ export default function AssignmentDetailScreen() {
     const getNextAction = () => {
         switch (assignment.status) {
             case 'assigned':
-                return { status: 'picked_up' as const, label: '📦 Confirm Pickup', color: Colors.primary };
+                return { status: 'picked_up' as const, label: 'Confirm Pickup', color: Colors.primary, icon: 'cube' as const };
             case 'picked_up':
-                return { status: 'in_transit' as const, label: '🚚 Start Delivery', color: Colors.info };
+                return { status: 'in_transit' as const, label: 'Start Delivery', color: Colors.info, icon: 'car' as const };
             case 'in_transit':
-                return { status: 'delivered' as const, label: '✅ Complete Delivery', color: Colors.success };
+                return { status: 'delivered' as const, label: 'Complete Delivery', color: Colors.success, icon: 'checkmark-circle' as const };
             default:
                 return null;
         }
@@ -221,7 +196,7 @@ export default function AssignmentDetailScreen() {
                 style={styles.header}
             >
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backIcon}>←</Text>
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
                     <Text style={styles.orderNumber}>#{assignment.order_number}</Text>
@@ -248,9 +223,7 @@ export default function AssignmentDetailScreen() {
                         backgroundColor: isCompleted ? '#dcfce7' : '#fee2e2',
                         borderColor: isCompleted ? '#22c55e' : '#ef4444'
                     }]}>
-                        <Text style={[styles.completedIcon, { color: isCompleted ? '#16a34a' : '#dc2626' }]}>
-                            {isCompleted ? '✅' : '❌'}
-                        </Text>
+                        <Ionicons name={isCompleted ? 'checkmark-circle' : 'close-circle'} size={28} color={isCompleted ? '#16a34a' : '#dc2626'} />
                         <View style={styles.completedInfo}>
                             <Text style={[styles.completedTitle, { color: isCompleted ? '#166534' : '#991b1b' }]}>
                                 {isCompleted ? 'Delivery Completed' : 'Delivery Failed'}
@@ -274,7 +247,7 @@ export default function AssignmentDetailScreen() {
 
                 {/* Assignment Type Badge */}
                 <View style={[styles.typeCard, { backgroundColor: typeConfig?.color + '15' }]}>
-                    <Text style={styles.typeIcon}>{typeConfig?.icon}</Text>
+                    <Ionicons name={typeConfig?.icon as any} size={24} color={typeConfig?.color} />
                     <View style={{ flex: 1 }}>
                         <Text style={[styles.typeLabel, { color: typeConfig?.color }]}>{typeConfig?.label}</Text>
                         <Text style={[styles.typeDesc, { color: colors.textSecondary }]}>{typeConfig?.description}</Text>
@@ -283,15 +256,15 @@ export default function AssignmentDetailScreen() {
 
                 {/* Part Information - Simplified for drivers (full details are for garages) */}
                 <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>📦 Part Info</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}><Ionicons name="cube" size={16} color={Colors.primary} /> {t('part_info')}</Text>
                     {assignment.part_category && (
                         <Text style={[styles.carInfo, { color: Colors.primary, fontWeight: '600', marginBottom: 4 }]}>
-                            📂 {assignment.part_category}{assignment.part_subcategory ? ` > ${assignment.part_subcategory}` : ''}
+                            <Ionicons name="folder-outline" size={14} color={Colors.primary} /> {assignment.part_category}{assignment.part_subcategory ? ` > ${assignment.part_subcategory}` : ''}
                         </Text>
                     )}
                     {assignment.car_make && (
                         <Text style={[styles.carInfo, { color: colors.textMuted }]}>
-                            🚗 {assignment.car_make} {assignment.car_model} ({assignment.car_year})
+                            <Ionicons name="car-outline" size={14} color={colors.textMuted} /> {assignment.car_make} {assignment.car_model} ({assignment.car_year})
                         </Text>
                     )}
                 </View>
@@ -300,7 +273,7 @@ export default function AssignmentDetailScreen() {
                 <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.locationDot, { backgroundColor: Colors.warning }]} />
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Pickup Location</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pickup_location')}</Text>
                     </View>
                     <Text style={[styles.locationName, { color: colors.text }]}>{assignment.garage_name}</Text>
                     <Text style={[styles.locationAddress, { color: colors.textSecondary }]} numberOfLines={2}>
@@ -314,7 +287,7 @@ export default function AssignmentDetailScreen() {
                                 style={[styles.actionButton, styles.actionButtonPrimary]}
                                 onPress={() => openNavigation(assignment.pickup_address, assignment.pickup_lat, assignment.pickup_lng, 'pickup')}
                             >
-                                <Text style={styles.actionButtonTextWhite}>🧭 Navigate</Text>
+                                <Text style={styles.actionButtonTextWhite}><Ionicons name="navigate" size={14} color="#fff" /> {t('navigate')}</Text>
                             </TouchableOpacity>
                         )}
                         {isActive && assignment.garage_phone && (
@@ -322,7 +295,7 @@ export default function AssignmentDetailScreen() {
                                 style={[styles.actionButton, { backgroundColor: Colors.success + '20' }]}
                                 onPress={() => callContact(assignment.garage_phone!, assignment.garage_name)}
                             >
-                                <Text style={[styles.actionButtonText, { color: Colors.success }]}>📞 Call Garage</Text>
+                                <Text style={[styles.actionButtonText, { color: Colors.success }]}><Ionicons name="call" size={14} color={Colors.success} /> {t('call_garage')}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -332,7 +305,7 @@ export default function AssignmentDetailScreen() {
                 <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.locationDot, { backgroundColor: Colors.success }]} />
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Location</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('delivery_location')}</Text>
                     </View>
                     <Text style={[styles.locationName, { color: colors.text }]}>{assignment.customer_name}</Text>
                     <Text style={[styles.locationAddress, { color: colors.textSecondary }]} numberOfLines={2}>
@@ -351,9 +324,9 @@ export default function AssignmentDetailScreen() {
                         );
                         return (
                             <View style={[styles.etaBadge, { backgroundColor: getETAColor(eta.durationMinutes) + '15' }]}>
-                                <Text style={{ fontSize: 16 }}>🕒</Text>
+                                <Ionicons name="time-outline" size={16} color={colors.textMuted} />
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.etaLabel, { color: colors.textMuted }]}>Estimated Arrival</Text>
+                                    <Text style={[styles.etaLabel, { color: colors.textMuted }]}>{t('estimated_arrival')}</Text>
                                     <Text style={[styles.etaTime, { color: getETAColor(eta.durationMinutes) }]}>
                                         {eta.countdownText} • {eta.formattedETA}
                                     </Text>
@@ -372,7 +345,7 @@ export default function AssignmentDetailScreen() {
                                 style={[styles.actionButton, styles.actionButtonPrimary]}
                                 onPress={() => openNavigation(assignment.delivery_address, assignment.delivery_lat, assignment.delivery_lng, 'delivery')}
                             >
-                                <Text style={styles.actionButtonTextWhite}>🧭 Navigate</Text>
+                                <Text style={styles.actionButtonTextWhite}><Ionicons name="navigate" size={14} color="#fff" /> {t('navigate')}</Text>
                             </TouchableOpacity>
                         )}
                         {isActive && assignment.customer_phone && (
@@ -380,7 +353,7 @@ export default function AssignmentDetailScreen() {
                                 style={[styles.actionButton, { backgroundColor: Colors.success + '20' }]}
                                 onPress={() => callContact(assignment.customer_phone!, assignment.customer_name)}
                             >
-                                <Text style={[styles.actionButtonText, { color: Colors.success }]}>📞 Call</Text>
+                                <Text style={[styles.actionButtonText, { color: Colors.success }]}><Ionicons name="call" size={14} color={Colors.success} /> {t('call')}</Text>
                             </TouchableOpacity>
                         )}
                         {isActive && (
@@ -388,7 +361,7 @@ export default function AssignmentDetailScreen() {
                                 style={[styles.actionButton, { backgroundColor: Colors.primary + '20' }]}
                                 onPress={openChat}
                             >
-                                <Text style={[styles.actionButtonText, { color: Colors.primary }]}>💬 Chat</Text>
+                                <Text style={[styles.actionButtonText, { color: Colors.primary }]}><Ionicons name="chatbubble" size={14} color={Colors.primary} /> {t('chat')}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -399,7 +372,7 @@ export default function AssignmentDetailScreen() {
                    ===================================================== */}
                 {isCompleted && (
                     <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>📸 Delivery Proof</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}><Ionicons name="camera" size={16} color={Colors.primary} /> {t('delivery_proof')}</Text>
 
                         {assignment.delivery_photo_url ? (
                             <Image
@@ -413,7 +386,7 @@ export default function AssignmentDetailScreen() {
                             />
                         ) : (
                             <View style={styles.noProofPlaceholder}>
-                                <Text style={styles.noProofIcon}>📷</Text>
+                                <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
                                 <Text style={[styles.noProofText, { color: colors.textMuted }]}>
                                     No delivery photo
                                 </Text>
@@ -422,7 +395,7 @@ export default function AssignmentDetailScreen() {
 
                         {assignment.signature_url && (
                             <>
-                                <Text style={[styles.proofSubtitle, { color: colors.text }]}>✍️ Customer Signature</Text>
+                                <Text style={[styles.proofSubtitle, { color: colors.text }]}><Ionicons name="create-outline" size={14} color={colors.text} /> {t('customer_signature')}</Text>
                                 <Image
                                     source={{
                                         uri: assignment.signature_url.startsWith('http')
@@ -437,7 +410,7 @@ export default function AssignmentDetailScreen() {
 
                         {assignment.driver_notes && (
                             <>
-                                <Text style={[styles.proofSubtitle, { color: colors.text }]}>📝 Notes</Text>
+                                <Text style={[styles.proofSubtitle, { color: colors.text }]}><Ionicons name="document-text-outline" size={14} color={colors.text} /> {t('notes')}</Text>
                                 <Text style={[styles.notesText, { color: colors.textSecondary }]}>
                                     {assignment.driver_notes}
                                 </Text>
@@ -448,11 +421,11 @@ export default function AssignmentDetailScreen() {
 
                 {/* Assignment Timeline - Always visible for premium history tracking */}
                 <View style={[styles.section, { backgroundColor: colors.surface, marginBottom: 24 }, Shadows.sm]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}>📅 Assignment Timeline</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}><Ionicons name="calendar" size={16} color={Colors.primary} /> {t('assignment_timeline')}</Text>
 
                     <TimelineItem
                         dotColor={Colors.primary}
-                        label="Driver Assigned"
+                        label={t('driver_assigned')}
                         value={formatDate(assignment.created_at)}
                         textColor={colors.text}
                         mutedColor={colors.textMuted}
@@ -461,7 +434,7 @@ export default function AssignmentDetailScreen() {
                     {assignment.pickup_at && (
                         <TimelineItem
                             dotColor={Colors.warning}
-                            label="Part Picked Up"
+                            label={t('part_picked_up')}
                             value={formatDate(assignment.pickup_at)}
                             textColor={colors.text}
                             mutedColor={colors.textMuted}
@@ -471,7 +444,7 @@ export default function AssignmentDetailScreen() {
                     {assignment.delivered_at && (
                         <TimelineItem
                             dotColor={isCompleted ? Colors.success : Colors.danger}
-                            label={isCompleted ? 'Successfully Delivered' : 'Delivery Failed'}
+                            label={isCompleted ? t('successfully_delivered') : t('delivery_failed_label')}
                             value={formatDate(assignment.delivered_at)}
                             textColor={colors.text}
                             mutedColor={colors.textMuted}
@@ -483,152 +456,129 @@ export default function AssignmentDetailScreen() {
                 {isActive && <View style={{ height: 100 }} />}
             </ScrollView>
 
-            {/* VVIP Bottom Action Bar - Only for active orders */}
-            {isActive && (
-                <TouchableOpacity
-                    style={{
-                        position: 'absolute',
-                        bottom: 110,
-                        left: 20,
-                        width: 56,
-                        height: 56,
-                        borderRadius: 28,
-                        backgroundColor: '#DC2626',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        elevation: 8,
-                        shadowColor: '#DC2626',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.4,
-                        shadowRadius: 8,
-                        zIndex: 100,
-                    }}
-                    onPress={emergencySOS}
-                >
-                    <Text style={{ fontSize: 24 }}>🆘</Text>
-                </TouchableOpacity>
-            )}
 
             {/* Bottom Action Bar - Only for active orders */}
-            {isActive && nextAction && (
-                <View style={[styles.bottomBar, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity
-                        style={styles.failButton}
-                        onPress={() => {
-                            Alert.alert(
-                                'Mark as Failed',
-                                'Are you sure this delivery cannot be completed?',
-                                [
-                                    { text: 'Cancel', style: 'cancel' },
-                                    {
-                                        text: 'Confirm',
-                                        style: 'destructive',
-                                        onPress: async () => {
-                                            setIsUpdating(true);
-                                            try {
-                                                // 1. Optimistic Update
-                                                updateLocalStatus(assignment.assignment_id, 'failed');
+            {
+                isActive && nextAction && (
+                    <View style={[styles.bottomBar, { backgroundColor: colors.surface }]}>
+                        <TouchableOpacity
+                            style={styles.failButton}
+                            onPress={() => {
+                                Alert.alert(
+                                    t('confirm_failed_title'),
+                                    t('confirm_failed_message'),
+                                    [
+                                        { text: t('cancel'), style: 'cancel' },
+                                        {
+                                            text: t('confirm'),
+                                            style: 'destructive',
+                                            onPress: async () => {
+                                                setIsUpdating(true);
+                                                try {
+                                                    // 1. Optimistic Update
+                                                    updateLocalStatus(assignment.assignment_id, 'failed');
 
-                                                // 2. Hybrid Sync
-                                                await executeWithOfflineFallback(
-                                                    async () => api.updateAssignmentStatus(assignment.assignment_id, 'failed'),
-                                                    {
-                                                        endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                                        method: 'PATCH',
-                                                        body: { status: 'failed' }
-                                                    },
-                                                    { successMessage: 'Marked as failed' }
-                                                );
+                                                    // 2. Hybrid Sync
+                                                    await executeWithOfflineFallback(
+                                                        async () => api.updateAssignmentStatus(assignment.assignment_id, 'failed'),
+                                                        {
+                                                            endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                                            method: 'PATCH',
+                                                            body: { status: 'failed' }
+                                                        },
+                                                        { successMessage: 'Marked as failed' }
+                                                    );
 
-                                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                                                navigation.goBack();
-                                            } catch (err: any) {
-                                                Alert.alert('Error', err.message);
-                                            } finally {
-                                                setIsUpdating(false);
-                                            }
+                                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                                                    navigation.goBack();
+                                                } catch (err: any) {
+                                                    Alert.alert(t('error'), err.message);
+                                                } finally {
+                                                    setIsUpdating(false);
+                                                }
+                                            },
                                         },
-                                    },
-                                ]
-                            );
-                        }}
-                        disabled={isUpdating}
-                    >
-                        <Text style={styles.failButtonText}>❌</Text>
-                    </TouchableOpacity>
-                    <View style={styles.swipeContainer}>
-                        <SwipeToComplete
-                            onComplete={async () => {
-                                setIsUpdating(true);
-                                try {
-                                    // 1. Determine if we need specialized flow
-                                    if (nextAction.status === 'picked_up') {
-                                        // SIMPLIFIED: Direct pickup confirmation (no inspection)
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    ]
+                                );
+                            }}
+                            disabled={isUpdating}
+                        >
+                            <Ionicons name="close-circle" size={20} color="#EF4444" />
+                        </TouchableOpacity>
+                        <View style={styles.swipeContainer}>
+                            <SwipeToComplete
+                                onComplete={async () => {
+                                    setIsUpdating(true);
+                                    try {
+                                        // 1. Determine if we need specialized flow
+                                        if (nextAction.status === 'picked_up') {
+                                            // SIMPLIFIED: Direct pickup confirmation (no inspection)
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-                                        // Optimistic update
-                                        updateLocalStatus(assignment.assignment_id, 'picked_up');
+                                            // Optimistic update
+                                            updateLocalStatus(assignment.assignment_id, 'picked_up');
 
-                                        // Sync to backend
+                                            // Sync to backend
+                                            await executeWithOfflineFallback(
+                                                async () => api.updateAssignmentStatus(assignment.assignment_id, 'picked_up'),
+                                                {
+                                                    endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                                    method: 'PATCH',
+                                                    body: { status: 'picked_up' }
+                                                },
+                                                { successMessage: 'Part picked up!' }
+                                            );
+
+                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                            setIsUpdating(false);
+                                            return;
+                                        }
+
+                                        if (nextAction.status === 'delivered') {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                            // Navigate to POD
+                                            navigation.navigate('ProofOfDelivery', {
+                                                assignmentId: assignment.assignment_id,
+                                                orderId: assignment.order_id
+                                            });
+                                            setIsUpdating(false);
+                                            return;
+                                        }
+
+                                        // 2. Default Optimistic Update (e.g. Start Delivery -> In Transit)
+                                        // Update store first so UI reflects change immediately
+                                        updateLocalStatus(assignment.assignment_id, nextAction.status);
+
+                                        // 3. Hybrid Sync
                                         await executeWithOfflineFallback(
-                                            async () => api.updateAssignmentStatus(assignment.assignment_id, 'picked_up'),
+                                            async () => api.updateAssignmentStatus(assignment.assignment_id, nextAction.status),
                                             {
                                                 endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
                                                 method: 'PATCH',
-                                                body: { status: 'picked_up' }
+                                                body: { status: nextAction.status }
                                             },
-                                            { successMessage: 'Part picked up!' }
+                                            { successMessage: 'Status updated' }
                                         );
 
                                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                    } catch (err: any) {
+                                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                                        Alert.alert(t('error'), err.message || t('something_went_wrong'));
+                                    } finally {
                                         setIsUpdating(false);
-                                        return;
                                     }
-
-                                    if (nextAction.status === 'delivered') {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                        // Navigate to POD
-                                        navigation.navigate('ProofOfDelivery', {
-                                            assignmentId: assignment.assignment_id,
-                                            orderId: assignment.order_id
-                                        });
-                                        setIsUpdating(false);
-                                        return;
-                                    }
-
-                                    // 2. Default Optimistic Update (e.g. Start Delivery -> In Transit)
-                                    // Update store first so UI reflects change immediately
-                                    updateLocalStatus(assignment.assignment_id, nextAction.status);
-
-                                    // 3. Hybrid Sync
-                                    await executeWithOfflineFallback(
-                                        async () => api.updateAssignmentStatus(assignment.assignment_id, nextAction.status),
-                                        {
-                                            endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                            method: 'PATCH',
-                                            body: { status: nextAction.status }
-                                        },
-                                        { successMessage: 'Status updated' }
-                                    );
-
-                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                } catch (err: any) {
-                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                                    Alert.alert('Error', err.message || 'Failed to update');
-                                } finally {
-                                    setIsUpdating(false);
-                                }
-                            }}
-                            label={nextAction.label}
-                            type={nextAction.status === 'delivered' ? 'success' : 'primary'}
-                            icon="→"
-                            completeIcon="✓"
-                            disabled={isUpdating}
-                        />
+                                }}
+                                label={nextAction.label}
+                                type={nextAction.status === 'delivered' ? 'success' : 'primary'}
+                                icon="→"
+                                completeIcon="✓"
+                                disabled={isUpdating}
+                            />
+                        </View>
                     </View>
-                </View>
-            )}
-        </SafeAreaView>
+                )
+            }
+        </SafeAreaView >
     );
 }
 
@@ -645,7 +595,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         paddingTop: 8,
     },
-    backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+    backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
     backIcon: { fontSize: 24, color: '#fff' },
     headerCenter: { flex: 1, alignItems: 'center' },
     orderNumber: { fontSize: 20, fontWeight: '700', color: '#fff' },

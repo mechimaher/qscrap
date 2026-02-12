@@ -3,7 +3,6 @@ import { getWritePool } from '../config/db';
 import { driverRepository } from '../repositories/driver.repository';
 import { AssignmentState } from '../state/assignment.state';
 import { storageService } from './storage.service';
-import { walletService } from './wallet.service';
 import { pushService } from './push.service';
 import logger from '../utils/logger';
 import { getIO } from '../utils/socketIO';
@@ -33,34 +32,8 @@ export class DriverService {
         return await driverRepository.getDriverStats(userId);
     }
 
-    async getEarningsTrend(userId: string) {
-        return await driverRepository.getEarningsTrend(userId);
-    }
-
-    async getPayoutHistory(userId: string) {
-        return await driverRepository.getPayoutHistory(userId);
-    }
-
     async updateProfile(userId: string, data: any) {
         return await driverRepository.updateDriverProfile(userId, data);
-    }
-
-    async getWallet(userId: string) {
-        // Lookup driver_id first - wallet is keyed by driver_id, not user_id
-        const driver = await driverRepository.findDriverByUserId(userId);
-        if (!driver) {
-            throw new Error('Driver profile not found');
-        }
-        return await walletService.getWallet(driver.driver_id);
-    }
-
-    async getWalletHistory(userId: string) {
-        // Lookup driver_id first - wallet history is keyed by driver_id, not user_id
-        const driver = await driverRepository.findDriverByUserId(userId);
-        if (!driver) {
-            throw new Error('Driver profile not found');
-        }
-        return await walletService.getHistory(driver.driver_id);
     }
 
     async updateMyLocation(userId: string, lat: number, lng: number, accuracy: any, heading: any, speed: any) {
@@ -336,55 +309,8 @@ export class DriverService {
                     await driverRepository.updateDriverStatus(assignment.driver_id, 'available', client);
                 }
 
-                await driverRepository.incrementDeliveryCount(assignment.driver_id, client);
-
                 if (status === 'delivered') {
-                    const order = await driverRepository.getOrderTotal(assignment.order_id, client);
-                    // Flat 5 QAR per delivery (driver bonus, base salary via payroll)
-                    // Qatar market rate: 1,500-2,000 QAR/month, MOCI delivery fee cap 20 QAR
-                    const DRIVER_DELIVERY_BONUS = 5; // QAR flat per delivery
-                    const payoutAmount = DRIVER_DELIVERY_BONUS;
-                    const orderTotal = parseFloat(order.total_amount) || 0; // needed for COD cash collection
-
-                    await driverRepository.createPayout(
-                        assignment.driver_id,
-                        assignmentId,
-                        assignment.order_id,
-                        order.order_number,
-                        payoutAmount,
-                        client
-                    );
-
-                    await driverRepository.updateDriverEarnings(assignment.driver_id, payoutAmount, client);
-
-                    // --- WALLET INTEGRATION (Gig Economy Model) ---
-                    try {
-                        // 1. Credit Earnings
-                        await walletService.addTransaction(
-                            assignment.driver_id,
-                            payoutAmount,
-                            'earning',
-                            assignment.order_id,
-                            `Delivery Earning #${order.order_number}`
-                        );
-
-                        // 2. Debit Cash Collection (if COD)
-                        // Assuming 'cash' is the payment method key. Verify with order data.
-                        // For now, we check if payment_status is 'pending' which usually implies COD for delivered items
-                        if (order.payment_method === 'cash' || order.payment_status === 'pending') {
-                            await walletService.addTransaction(
-                                assignment.driver_id,
-                                -orderTotal, // Negative amount
-                                'cash_collection',
-                                assignment.order_id,
-                                `Cash Collected #${order.order_number}`
-                            );
-                        }
-                    } catch (walletErr) {
-                        logger.error('Wallet transaction failed', { error: walletErr });
-                        // Don't fail the whole request, but log it critical
-                    }
-                    // ---------------------------------------------
+                    await driverRepository.incrementDeliveryCount(assignment.driver_id, client);
                 }
             }
 

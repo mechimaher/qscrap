@@ -27,6 +27,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../App';
 import { rtlFlexDirection, rtlChevron, rtlMarginHorizontal } from '../../utils/rtl';
 import { CONTACT } from '../../constants/contacts';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -136,7 +137,7 @@ export default function ProfileScreen() {
         >
             <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger, rtlMarginHorizontal(isRTL, 0, Spacing.md)]}
             >
-                <Text style={styles.menuIcon}>{icon}</Text>
+                <Ionicons name={icon as any} size={18} color={danger ? '#EF4444' : '#525252'} />
             </View>
             <Text style={[styles.menuLabel, { color: danger ? '#EF4444' : colors.text }]}>{label}</Text>
             {badge ? (
@@ -184,7 +185,7 @@ export default function ProfileScreen() {
                     >
                         <View style={styles.avatarContainer}>
                             <Text style={styles.avatar}>
-                                {(profile?.user?.full_name || user?.full_name)?.charAt(0)?.toUpperCase() || '👤'}
+                                {(profile?.user?.full_name || user?.full_name)?.charAt(0)?.toUpperCase() || '?'}
                             </Text>
                         </View>
                         <Text style={styles.userName}>{profile?.user?.full_name || user?.full_name || t('common.customer')}</Text>
@@ -207,7 +208,7 @@ export default function ProfileScreen() {
                             </View>
                             <View style={styles.profileStatDivider} />
                             <View style={styles.profileStat}>
-                                <Text style={styles.profileStatNumber}>⭐</Text>
+                                <Text style={styles.profileStatNumber}><Ionicons name="star" size={22} color="#FFD700" /></Text>
                                 <Text style={styles.profileStatLabel}>{t('profile.vip')}</Text>
                             </View>
                         </View>
@@ -218,9 +219,9 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.account')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="📋" label={t('profile.myAddresses')} onPress={() => navigation.navigate('Addresses')} />
-                        <MenuItem icon="🔔" label={t('profile.notifications')} onPress={() => navigation.navigate('Notifications')} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
-                        <MenuItem icon="🎨" label={t('profile.appearance')} onPress={() => navigation.navigate('Settings')} />
+                        <MenuItem icon="location-outline" label={t('profile.myAddresses')} onPress={() => navigation.navigate('Addresses')} />
+                        <MenuItem icon="notifications-outline" label={t('profile.notifications')} onPress={() => navigation.navigate('Notifications')} badge={unreadNotifications > 0 ? String(unreadNotifications) : ''} />
+                        <MenuItem icon="color-palette-outline" label={t('profile.appearance')} onPress={() => navigation.navigate('Settings')} />
                     </View>
                 </View>
 
@@ -228,8 +229,8 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.support')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="🎫" label={t('profile.supportTickets')} onPress={() => navigation.navigate('Support')} />
-                        <MenuItem icon="📞" label={t('profile.contactUs')} onPress={() => Alert.alert(
+                        <MenuItem icon="chatbubbles-outline" label={t('profile.supportTickets')} onPress={() => navigation.navigate('Support')} />
+                        <MenuItem icon="call-outline" label={t('profile.contactUs')} onPress={() => Alert.alert(
                             t('profile.contactUs'),
                             t('profile.chooseContact'),
                             [
@@ -246,8 +247,8 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('profile.legal')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem icon="🔒" label={t('settings.privacyPolicy')} onPress={() => navigation.navigate('PrivacyPolicy')} />
-                        <MenuItem icon="📄" label={t('settings.termsOfService')} onPress={() => navigation.navigate('Terms')} />
+                        <MenuItem icon="lock-closed-outline" label={t('settings.privacyPolicy')} onPress={() => navigation.navigate('PrivacyPolicy')} />
+                        <MenuItem icon="document-text-outline" label={t('settings.termsOfService')} onPress={() => navigation.navigate('Terms')} />
                     </View>
                 </View>
 
@@ -255,7 +256,7 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="🚪"
+                            icon="log-out-outline"
                             label={t('profile.signOut')}
                             onPress={handleLogout}
                             showArrow={false}
@@ -263,7 +264,7 @@ export default function ProfileScreen() {
                         />
                         <View style={{ height: 1, backgroundColor: colors.border }} />
                         <MenuItem
-                            icon="🗑️"
+                            icon="trash-outline"
                             label={t('profile.deleteAccount')}
                             onPress={handleDeleteAccount}
                             showArrow={false}

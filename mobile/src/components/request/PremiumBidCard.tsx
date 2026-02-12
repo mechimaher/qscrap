@@ -19,6 +19,7 @@ import { SocialProofBadges } from '../../components/SocialProofBadges';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 // Helper function
 const getConditionLabel = (condition: string, t: any) => {
@@ -154,7 +155,7 @@ const PremiumBidCard = ({
             {/* Superseded Badge - Has been replaced */}
             {isSuperseded && (
                 <View style={[styles.supersededBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
-                    <Text style={styles.supersededBadgeText}>🔄 {t('bids.flag.statusCorrected')}</Text>
+                    <Text style={styles.supersededBadgeText}>{t('bids.flag.statusCorrected')}</Text>
                 </View>
             )}
 
@@ -168,7 +169,7 @@ const PremiumBidCard = ({
                         />
                     ) : (
                         <View style={[styles.garagePhoto, styles.garagePhotoFallback]}>
-                            <Text style={styles.garagePhotoEmoji}>🏪</Text>
+                            <Ionicons name="storefront-outline" size={28} color="#737373" />
                         </View>
                     )}
                 </View>
@@ -176,7 +177,7 @@ const PremiumBidCard = ({
                     <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
                     {bid.rating_average && (
                         <View style={[styles.garageRatingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.ratingStarSmall}>⭐</Text>
+                            <Ionicons name="star" size={14} color="#F59E0B" />
                             <Text style={styles.ratingValueSmall}>{bid.rating_average.toFixed(1)}</Text>
                         </View>
                     )}
@@ -195,7 +196,7 @@ const PremiumBidCard = ({
                     <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
                     {bid.rating_average && (
                         <View style={[styles.ratingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.ratingStar}>⭐</Text>
+                            <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 4 }} />
                             <Text style={styles.ratingText}>
                                 {bid.rating_average.toFixed(1)} ({bid.rating_count})
                             </Text>
@@ -239,7 +240,7 @@ const PremiumBidCard = ({
                     {negotiationRounds >= 3 && !isNegotiationAgreed && !isAccepted && (
                         <View style={styles.finalRoundWarning}>
                             <Text style={styles.finalRoundWarningText}>
-                                ⚠️ {t('bidCard.finalRoundWarning')}
+                                {t('bidCard.finalRoundWarning')}
                             </Text>
                         </View>
                     )}
@@ -258,7 +259,7 @@ const PremiumBidCard = ({
                             ]}>
                                 {customerCounterAmount} {t('common.qar')}
                                 {customerCounterStatus === 'countered' && ` ${t('bidCard.counteredStatus')}`}
-                                {customerCounterStatus === 'rejected' && ` ❌`}
+                                {customerCounterStatus === 'rejected' && ''}
                             </Text>
                         </View>
                     )}
@@ -306,7 +307,7 @@ const PremiumBidCard = ({
                         end={{ x: 1, y: 0 }}
                         style={[styles.warrantyBadgeGradient, { flexDirection: rtlFlexDirection(isRTL) }]}
                     >
-                        <Text style={styles.warrantyIcon}>🛡️</Text>
+                        <Ionicons name="shield-checkmark" size={14} color="#fff" />
                         <Text style={styles.warrantyBadgeText}>
                             {t('bidCard.warrantyDays', { count: bid.warranty_days })}
                         </Text>
@@ -352,7 +353,7 @@ const PremiumBidCard = ({
                 <View style={styles.conditionSection}>
                     <View style={[styles.conditionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.conditionTitle, { color: colors.text }]}>
-                            📸 {t('bidCard.conditionPhotos')}
+                            {t('bidCard.conditionPhotos')}
                         </Text>
                         <Text style={styles.conditionCount}>
                             {t('bidCard.photoCount', { count: bid.condition_photos.length })}
@@ -377,7 +378,7 @@ const PremiumBidCard = ({
                                     >
                                         <Image source={{ uri: fullUrl }} style={styles.conditionPhoto} />
                                         <View style={styles.photoOverlay}>
-                                            <Text style={styles.photoOverlayIcon}>🔍</Text>
+                                            <Ionicons name="search" size={20} color="#fff" />
                                         </View>
                                     </TouchableOpacity>
                                 );
@@ -417,7 +418,7 @@ const PremiumBidCard = ({
                                 colors={['#9CA3AF', '#6B7280']}
                                 style={styles.acceptGradient}
                             >
-                                <Text style={styles.acceptBtnText}>⏳ {t('bidCard.waitingForGarage')}</Text>
+                                <Text style={styles.acceptBtnText}>{t('bidCard.waitingForGarage')}</Text>
                             </LinearGradient>
                         </View>
                     )}

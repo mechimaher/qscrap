@@ -11,6 +11,7 @@ import {
     Easing,
 } from 'react-native';
 import { useTranslation } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ViewerBadgeProps {
     viewerCount: number;
@@ -111,9 +112,9 @@ export const ViewerBadge: React.FC<ViewerBadgeProps> = ({
                 { transform: [{ scale: scaleValue }] },
             ]}
         >
-            <Animated.Text style={[currentSize.icon, { opacity: blinkAnim }]}>
-                👀
-            </Animated.Text>
+            <Animated.View style={{ opacity: blinkAnim }}>
+                <Ionicons name="eye-outline" size={size === 'small' ? 12 : size === 'large' ? 18 : 14} color="#B45309" />
+            </Animated.View>
             <Text style={currentSize.text}>
                 {displayCount === 1 ? t('viewerBadge.garageViewing', { count: displayCount }) : t('viewerBadge.garagesViewing', { count: displayCount })}
             </Text>
@@ -131,7 +132,7 @@ export const ViewerBadgeCompact: React.FC<ViewerBadgeProps> = ({
 
     return (
         <View style={styles.compactContainer}>
-            <Text style={styles.compactIcon}>👀</Text>
+            <Ionicons name="eye-outline" size={12} color="#D97706" />
             <Text style={styles.compactText}>{viewerCount}</Text>
         </View>
     );
@@ -180,7 +181,7 @@ export const ViewerBadgeLive: React.FC<ViewerBadgeProps & { isLive?: boolean }> 
                     ]}
                 />
             )}
-            <Text style={styles.liveIcon}>👀</Text>
+            <Ionicons name="eye-outline" size={14} color="#166534" />
             <Text style={styles.liveText}>
                 {viewerCount === 1 ? t('viewerBadge.garageViewing', { count: viewerCount }) : t('viewerBadge.garagesViewing', { count: viewerCount })}
             </Text>

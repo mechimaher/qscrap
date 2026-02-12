@@ -8,10 +8,11 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface QuickReply {
     text: string;
-    emoji?: string;
+    icon?: React.ComponentProps<typeof Ionicons>['name'];
 }
 
 interface QuickRepliesProps {
@@ -20,21 +21,21 @@ interface QuickRepliesProps {
 }
 
 const DRIVER_QUICK_REPLIES: QuickReply[] = [
-    { text: "I'm on my way!", emoji: '🚗' },
-    { text: 'Arrived at pickup location', emoji: '📍' },
-    { text: 'Package picked up successfully', emoji: '📦' },
-    { text: 'On my way to delivery address', emoji: '🛣️' },
-    { text: "I'm nearby, please come outside", emoji: '🏠' },
-    { text: 'Delivered successfully!', emoji: '✅' },
-    { text: 'Please call me', emoji: '📞' },
-    { text: 'Can you share your location?', emoji: '📍' },
-    { text: 'Traffic delay, will be there soon', emoji: '🚦' },
-    { text: 'Having trouble finding the address', emoji: '🤔' },
+    { text: "I'm on my way!", icon: 'car-outline' },
+    { text: 'Arrived at pickup location', icon: 'location-outline' },
+    { text: 'Package picked up successfully', icon: 'cube-outline' },
+    { text: 'On my way to delivery address', icon: 'navigate-outline' },
+    { text: "I'm nearby, please come outside", icon: 'home-outline' },
+    { text: 'Delivered successfully!', icon: 'checkmark-circle-outline' },
+    { text: 'Please call me', icon: 'call-outline' },
+    { text: 'Can you share your location?', icon: 'location-outline' },
+    { text: 'Traffic delay, will be there soon', icon: 'warning-outline' },
+    { text: 'Having trouble finding the address', icon: 'help-circle-outline' },
 ];
 
 const CUSTOMER_SPECIFIC: QuickReply[] = [
-    { text: 'Thank you for your order!', emoji: '🙏' },
-    { text: 'I will wait for 5 minutes', emoji: '⏱️' },
+    { text: 'Thank you for your order!', icon: 'heart-outline' },
+    { text: 'I will wait for 5 minutes', icon: 'time-outline' },
 ];
 
 /**
@@ -69,7 +70,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
                         onPress={() => handlePress(reply.text)}
                         activeOpacity={0.7}
                     >
-                        {reply.emoji && <Text style={styles.emoji}>{reply.emoji}</Text>}
+                        {reply.icon && <Ionicons name={reply.icon} size={14} color={Colors.primary} />}
                         <Text style={styles.replyText} numberOfLines={1}>
                             {reply.text}
                         </Text>

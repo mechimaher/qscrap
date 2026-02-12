@@ -1,0 +1,20 @@
+===========================================
+ QScrap Customer APK — Build Manifest
+===========================================
+App Name      : QScrap
+Version       : 1.1.0
+Build Date    : 2026-02-12 14:31:36
+Build Duration: 27m 22s
+-------------------------------------------
+APK File      : QScrapCustomer-v1.1.0.apk
+APK Size      : 135M (140959556 bytes)
+SHA-256       : 80d47520a0920ab1172e1a831e36f55a0d7fe6a9d966f84ef7dd742de8a74322
+-------------------------------------------
+Node.js       : v20.20.0
+Java          : openjdk version "17.0.18" 2026-01-20
+Expo SDK      : ~54.0.30
+React Native  : 0.81.5
+-------------------------------------------
+Build Machine : qscrap
+Build User    : user
+===========================================

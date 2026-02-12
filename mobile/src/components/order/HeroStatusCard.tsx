@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Order } from '../../services/api';
 import { Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const HeroStatusCard = ({ order, statusConfig }: { order: Order; statusConfig: any }) => {
     const { t } = useTranslation();
@@ -42,12 +43,12 @@ const HeroStatusCard = ({ order, statusConfig }: { order: Order; statusConfig: a
             end={{ x: 1, y: 1 }}
             style={styles.heroCard}
         >
-            <Animated.Text style={[
-                styles.heroIcon,
+            <Animated.View style={[
+                styles.heroIconContainer,
                 { transform: [{ scale: iconScale }] }
             ]}>
-                {statusConfig.icon}
-            </Animated.Text>
+                <Ionicons name={statusConfig.icon as any} size={56} color="#fff" />
+            </Animated.View>
             <Text style={styles.heroLabel}>{statusConfig.label}</Text>
             <Text style={styles.heroDescription}>{statusConfig.description}</Text>
             <View style={styles.heroOrderNumber}>
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         ...Shadows.lg,
     },
-    heroIcon: { fontSize: 64, marginBottom: Spacing.sm },
+    heroIconContainer: { marginBottom: Spacing.sm, alignItems: 'center' },
     heroLabel: { fontSize: FontSizes.xxl, fontWeight: '800', color: '#fff' },
     heroDescription: { fontSize: FontSizes.md, color: 'rgba(255,255,255,0.85)', marginTop: Spacing.xs, textAlign: 'center' },
     heroOrderNumber: { marginTop: Spacing.lg, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.full },

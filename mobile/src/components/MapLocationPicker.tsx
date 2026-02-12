@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { KEYS } from '../config/keys';
@@ -265,7 +266,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             onPress={() => getPlaceDetails(item.place_id)}
             activeOpacity={0.7}
         >
-            <Text style={styles.predictionIcon}>📍</Text>
+            <Ionicons name="location" size={18} color={Colors.primary} />
             <View style={{ flex: 1 }}>
                 <Text style={[styles.predictionMain, { color: colors.text }]} numberOfLines={1}>
                     {item.structured_formatting.main_text}
@@ -320,7 +321,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             {/* Search Bar - Google Places Autocomplete */}
             <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
                 <View style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={styles.searchIcon}>🔍</Text>
+                    <Ionicons name="search" size={18} color="#9CA3AF" />
                     <TextInput
                         ref={searchInputRef}
                         style={[styles.searchInput, { color: colors.text }]}
@@ -374,7 +375,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             {/* Address Preview Card */}
             <View style={[styles.addressCard, { backgroundColor: colors.background }]}>
                 <View style={styles.addressHeader}>
-                    <Text style={styles.addressIcon}>📍</Text>
+                    <Ionicons name="location" size={24} color={Colors.primary} />
                     <View style={{ flex: 1 }}>
                         <Text style={[styles.addressLabel, { color: colors.textSecondary }]}>
                             {t('home.mapPicker.selectedLocation')}
@@ -400,7 +401,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     colors={['#22C55E', '#16A34A']}
                     style={styles.currentLocationGradient}
                 >
-                    <Text style={styles.currentLocationIcon}>🎯</Text>
+                    <Ionicons name="locate" size={28} color="#fff" />
                 </LinearGradient>
             </TouchableOpacity>
 
@@ -414,7 +415,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 activeOpacity={0.8}
             >
                 <Text style={styles.mapTypeIcon}>
-                    {mapType === 'standard' ? '🛰️' : '🗺️'}
+                    <Ionicons name={mapType === 'standard' ? 'globe-outline' : 'map-outline'} size={18} color="#fff" />
                 </Text>
                 <Text style={styles.mapTypeLabel}>
                     {mapType === 'standard' ? t('home.mapPicker.satellite') : t('home.mapPicker.map')}

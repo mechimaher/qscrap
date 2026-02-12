@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Order } from '../../services/api';
 import { Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const DriverCard = ({ order, onCall, t, isRTL }: { order: Order; onCall: () => void; t: any; isRTL: boolean }) => {
     const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -26,7 +27,7 @@ const DriverCard = ({ order, onCall, t, isRTL }: { order: Order; onCall: () => v
             >
                 <View style={styles.driverInfo}>
                     <View style={styles.driverAvatar}>
-                        <Text style={styles.driverAvatarText}>🚗</Text>
+                        <Ionicons name="car-sport" size={24} color="#22C55E" />
                         <Animated.View style={[
                             styles.liveDot,
                             { opacity: pulseAnim }
@@ -39,7 +40,7 @@ const DriverCard = ({ order, onCall, t, isRTL }: { order: Order; onCall: () => v
                     {
                         order.driver_phone && (
                             <TouchableOpacity style={[styles.callButton, { marginLeft: isRTL ? 0 : 'auto', marginRight: isRTL ? 'auto' : 0 }]} onPress={onCall}>
-                                <Text style={styles.callIcon}>📞</Text>
+                                <Ionicons name="call" size={16} color="#fff" style={{ marginRight: Spacing.xs }} />
                                 <Text style={styles.callText}>{t('common.call')}</Text>
                             </TouchableOpacity>
                         )

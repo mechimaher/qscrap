@@ -127,7 +127,7 @@
       "expo-font"
     ],
     "extra": {
-      "privacyPolicyUrl": "https://qscrap.qa/privacy",
+      "privacyPolicyUrl": "https://qscrap.qa/privacy.html",
       "termsOfServiceUrl": "https://qscrap.qa/terms",
       "supportEmail": "support@qscrap.qa",
       "eas": {

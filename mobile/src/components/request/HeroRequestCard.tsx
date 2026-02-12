@@ -16,6 +16,7 @@ import { UPLOAD_BASE_URL } from '../../config/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const HeroRequestCard = ({
     request,
@@ -91,10 +92,10 @@ const HeroRequestCard = ({
 
     const getStatusConfig = (status: string) => {
         switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: t('status.active') };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: t('status.accepted') };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: t('status.expired') };
-            default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
+            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: 'ellipse' as const, label: t('status.active') };
+            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: 'checkmark' as const, label: t('status.accepted') };
+            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: 'time-outline' as const, label: t('status.expired') };
+            default: return { color: '#6B7280', bg: '#F3F4F6', icon: 'ellipse' as const, label: status };
         }
     };
 
@@ -126,7 +127,7 @@ const HeroRequestCard = ({
                     { backgroundColor: statusConfig.bg },
                     isActive && { opacity: pulseOpacity }
                 ]}>
-                    <Text style={styles.heroStatusIcon}>{statusConfig.icon}</Text>
+                    <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} style={{ marginRight: Spacing.xs }} />
                     <Text style={[styles.heroStatusText, { color: statusConfig.color }]}>
                         {statusConfig.label}
                     </Text>
@@ -151,7 +152,7 @@ const HeroRequestCard = ({
 
             {/* Car Info */}
             <View style={[styles.heroCarInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Text style={[styles.heroCarEmoji, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }]}>🚗</Text>
+                <Ionicons name="car-sport" size={48} color={isActive ? '#C9A227' : Colors.primary} style={isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }} />
                 <View style={styles.heroCarDetails}>
                     <Text style={[styles.heroCarName, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {request.car_make} {request.car_model}
@@ -237,7 +238,7 @@ const HeroRequestCard = ({
             {((request as any).car_front_image_url || (request as any).car_rear_image_url) && (
                 <>
                     <Text style={[styles.heroLabel, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
-                        🚗 {t('newRequest.vehicleIdPhotos')}
+                        {t('newRequest.vehicleIdPhotos')}
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heroImages}>
                         {(request as any).car_front_image_url && (

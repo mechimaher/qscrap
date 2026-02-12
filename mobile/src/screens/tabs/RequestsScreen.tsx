@@ -29,6 +29,7 @@ import { RootStackParamList } from '../../../App';
 import { LoadingList } from '../../components/SkeletonLoading';
 import { useToast } from '../../components/Toast';
 import { useAppStateRefresh } from '../../hooks/useAppStateRefresh';
+import { Ionicons } from '@expo/vector-icons';
 
 type RequestsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -142,12 +143,12 @@ const ActiveRequestCard = ({
 
     const getStatusConfig = (status: string, t: any) => {
         switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: '🟢', label: t('status.active') };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: '✓', label: t('status.accepted') };
-            case 'completed': return { color: '#8B5CF6', bg: '#EDE9FE', icon: '🎉', label: t('status.completed') };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: '⏰', label: t('status.expired') };
-            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: '✕', label: t('status.cancelled') };
-            default: return { color: '#6B7280', bg: '#F3F4F6', icon: '•', label: status };
+            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: 'radio-button-on' as const, label: t('status.active') };
+            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: 'checkmark-circle' as const, label: t('status.accepted') };
+            case 'completed': return { color: '#8B5CF6', bg: '#EDE9FE', icon: 'checkmark-circle' as const, label: t('status.completed') };
+            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: 'time' as const, label: t('status.expired') };
+            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: 'close-circle' as const, label: t('status.cancelled') };
+            default: return { color: '#6B7280', bg: '#F3F4F6', icon: 'ellipse' as const, label: status };
         }
     };
 
@@ -172,7 +173,7 @@ const ActiveRequestCard = ({
                     colors={['#EF4444', '#DC2626']}
                     style={styles.deleteGradient}
                 >
-                    <Text style={styles.deleteIcon}>🗑️</Text>
+                    <Ionicons name="trash-outline" size={24} color="#fff" />
                     <Text style={styles.deleteText}>{t('common.delete')}</Text>
                 </LinearGradient>
             </TouchableOpacity>
@@ -263,7 +264,7 @@ const ActiveRequestCard = ({
                             {/* Header with Status */}
                             <View style={styles.cardHeader}>
                                 <View style={styles.carInfo}>
-                                    <Text style={styles.carEmoji}>🚗</Text>
+                                    <Ionicons name="car-sport" size={28} color="#6B7280" style={{ marginRight: Spacing.md }} />
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.carName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
                                             {item.car_make || 'Unknown'} {item.car_model || ''}
@@ -291,7 +292,7 @@ const ActiveRequestCard = ({
                                     {/* Status Badge */}
                                     <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
                                         <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                                            {statusConfig.icon} {statusConfig.label}
+                                            <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} /> {statusConfig.label}
                                         </Text>
                                     </View>
                                 </View>
@@ -343,7 +344,7 @@ const ActiveRequestCard = ({
                                     {/* New Bids Badge */}
                                     {hasNewBids && (
                                         <View style={styles.newBidsBadge}>
-                                            <Text style={styles.fireIcon}>🔥</Text>
+                                            <Ionicons name="flame" size={12} color="#D97706" style={{ marginRight: 4 }} />
                                             <Text style={styles.newBidsText}>
                                                 {t('requests.bidsCount', { count: item.bid_count })}
                                             </Text>
@@ -367,7 +368,7 @@ const ActiveRequestCard = ({
                                     ) : (
                                         <View style={styles.bidCount}>
                                             <View style={styles.bidIconBg}>
-                                                <Text style={styles.bidIcon}>💬</Text>
+                                                <Ionicons name="chatbubble" size={14} color="#6B7280" />
                                             </View>
                                             <Text style={styles.bidCountText}>
                                                 {t('requests.bidsReceived', { count: item.bid_count })}
@@ -396,7 +397,9 @@ const ActiveRequestCard = ({
                                                 }),
                                             }],
                                         }
-                                    ]}>←</Animated.Text>
+                                    ]}>
+                                        <Ionicons name="arrow-back" size={16} color="#EF4444" />
+                                    </Animated.Text>
                                     <Text style={styles.swipeHintText}>{t('requests.swipeToCancel')}</Text>
                                 </View>
                             )}
@@ -493,7 +496,7 @@ export default function RequestsScreen() {
     const EmptyState = () => (
         <View style={styles.emptyState}>
             <View style={[styles.emptyIconContainer, { backgroundColor: colors.surfaceElevated }]}>
-                <Text style={styles.emptyIcon}>📋</Text>
+                <Ionicons name="clipboard-outline" size={48} color="#999" />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('requests.noRequests')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>

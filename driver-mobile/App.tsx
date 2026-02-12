@@ -1,7 +1,7 @@
 // QScrap Driver App - Main Entry Point
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
@@ -26,25 +26,24 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import BiometricSetupScreen from './src/screens/auth/BiometricSetupScreen';
 import HomeScreen from './src/screens/tabs/HomeScreen';
 import AssignmentsScreen from './src/screens/tabs/AssignmentsScreen';
-import EarningsScreen from './src/screens/tabs/EarningsScreen';
 import ProfileScreen from './src/screens/tabs/ProfileScreen';
 import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ChatScreen from './src/screens/ChatScreen';
-import PartInspectionScreen from './src/screens/PartInspectionScreen';
+
 
 import ProofOfDeliveryScreen from './src/screens/ProofOfDeliveryScreen';
 import WebViewScreen from './src/screens/WebViewScreen';
 
 // Navigation Types
+// Navigation ref for deep linking from push notifications
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 export type RootStackParamList = {
     Auth: undefined;
     Main: undefined;
     AssignmentDetail: { assignmentId: string };
     Chat: { orderId: string; orderNumber: string; recipientName: string };
-    DeliveryConfirmation: { assignmentId: string };
     ProofOfDelivery: { assignmentId: string };
-    PartInspection: { assignmentId: string; orderId?: string; orderNumber?: string; partDescription?: string };
-
     Settings: undefined;
     WebView: { url: string; title: string };
 };
@@ -103,7 +102,6 @@ function MainTabs() {
                     let iconName: any;
                     if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
                     else if (route.name === 'Assignments') iconName = focused ? 'briefcase' : 'briefcase-outline';
-                    else if (route.name === 'Earnings') iconName = focused ? 'stats-chart' : 'stats-chart-outline';
                     else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
 
                     return (
@@ -130,7 +128,6 @@ function MainTabs() {
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
             <Tab.Screen name="Assignments" component={AssignmentsScreen} options={{ title: 'Jobs' }} />
-            <Tab.Screen name="Earnings" component={EarningsScreen} options={{ title: 'Earnings' }} />
             <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
         </Tab.Navigator>
     );
@@ -163,10 +160,32 @@ function RootNavigator() {
             console.log('Notification Received:', notification);
         });
 
-        // Handle background/tap notifications
+        // Handle background/tap notifications — deep link to relevant screen
         const responseListener = NotificationService.addNotificationResponseListener(response => {
-            console.log('Notification Tapped:', response);
-            // Logic to navigate to deep link could go here
+            const data = response.notification.request.content.data;
+            console.log('[App] Notification tapped:', data?.type);
+
+            // Wait for navigation to be ready
+            setTimeout(() => {
+                if (!navigationRef.isReady()) return;
+
+                if (data?.type === 'new_assignment' || data?.type === 'assignment_updated' || data?.type === 'assignment_cancelled') {
+                    if (data?.assignmentId) {
+                        navigationRef.navigate('AssignmentDetail' as any, { assignmentId: data.assignmentId });
+                    }
+                } else if (data?.type === 'chat_message') {
+                    if (data?.orderId) {
+                        navigationRef.navigate('Chat' as any, {
+                            orderId: data.orderId,
+                            orderNumber: data.orderNumber || '',
+                            recipientName: 'Customer',
+                        });
+                    }
+                } else if (data?.type === 'order_status_updated') {
+                    // Reload home screen (already on Main tab)
+                    // Navigation handled by HomeScreen focus listener
+                }
+            }, 300);
         });
 
         return () => {
@@ -194,7 +213,7 @@ function RootNavigator() {
                     <RootStack.Screen name="Main" component={MainTabs} />
                     <RootStack.Screen name="AssignmentDetail" component={AssignmentDetailScreen} />
                     <RootStack.Screen name="Chat" component={ChatScreen} />
-                    <RootStack.Screen name="PartInspection" component={PartInspectionScreen} />
+
 
                     {/* VVIP POD Wizard */}
                     <RootStack.Screen
@@ -240,7 +259,7 @@ export default function App() {
                                 <ToastProvider>
                                     <AuthProvider>
                                         <SocketProvider>
-                                            <NavigationContainer>
+                                            <NavigationContainer ref={navigationRef}>
                                                 <ThemedApp />
                                             </NavigationContainer>
                                         </SocketProvider>

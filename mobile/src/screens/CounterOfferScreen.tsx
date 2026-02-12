@@ -26,6 +26,7 @@ import { useSocketContext } from '../hooks/useSocket';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 interface CounterOffer {
@@ -316,7 +317,7 @@ export default function CounterOfferScreen() {
                     </Text>
                 </View>
                 <Text style={[styles.historyBy, { textAlign: rtlTextAlign(isRTL) }]}>
-                    {isCustomer ? `👤 ${t('offers.you')}` : `🔧 ${garageName}`}
+                    {isCustomer ? t('offers.you') : garageName}
                 </Text>
                 <Text style={[styles.historyAmount, { textAlign: rtlTextAlign(isRTL) }]}>{item.proposed_amount} {t('common.currency')}</Text>
                 {item.message && (
@@ -345,7 +346,7 @@ export default function CounterOfferScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('offers.negotiatePrice')}</Text>
                 <View style={{ width: 60 }} />
@@ -386,7 +387,7 @@ export default function CounterOfferScreen() {
                     {/* Pending Offer Response */}
                     {pendingOffer && (
                         <View style={styles.pendingCard}>
-                            <Text style={[styles.pendingTitle, { textAlign: rtlTextAlign(isRTL) }]}>🔔 {t('offers.garageCounterOffer')}</Text>
+                            <Text style={[styles.pendingTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.garageCounterOffer')}</Text>
                             <Text style={[styles.pendingAmount, { textAlign: rtlTextAlign(isRTL) }]}>{pendingOffer.proposed_amount} {t('common.currency')}</Text>
                             {pendingOffer.message && (
                                 <Text style={[styles.pendingMessage, { textAlign: rtlTextAlign(isRTL) }]}>"{pendingOffer.message}"</Text>
@@ -401,7 +402,7 @@ export default function CounterOfferScreen() {
                                         colors={['#22c55e', '#16a34a'] as const}
                                         style={styles.responseGradient}
                                     >
-                                        <Text style={styles.responseText}>✓ {t('common.accept')}</Text>
+                                        <Text style={styles.responseText}><Ionicons name="checkmark" size={18} color="#fff" /> {t('common.accept')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
 
@@ -418,7 +419,7 @@ export default function CounterOfferScreen() {
                                     style={styles.rejectOfferButton}
                                     onPress={() => handleRespondToOffer('reject')}
                                 >
-                                    <Text style={styles.rejectButtonText}>✕ {t('common.reject')}</Text>
+                                    <Text style={styles.rejectButtonText}><Ionicons name="close" size={18} color="#EF4444" /> {t('common.reject')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -476,7 +477,7 @@ export default function CounterOfferScreen() {
                     {/* Maximum Rounds Reached */}
                     {currentRound >= MAX_ROUNDS && !pendingOffer && (
                         <View style={styles.maxRoundsCard}>
-                            <Text style={styles.maxRoundsIcon}>🏁</Text>
+                            <Ionicons name="flag" size={40} color="#525252" />
                             <Text style={styles.maxRoundsTitle}>{t('offers.negotiationComplete')}</Text>
                             <Text style={[styles.maxRoundsText, { textAlign: 'center' }]}>
                                 {t('offers.maxRoundsReached')}
@@ -547,7 +548,7 @@ const styles = StyleSheet.create({
     roundDot: {
         width: 14,
         height: 14,
-        borderRadius: 7,
+        borderRadius: BorderRadius.sm,
         backgroundColor: '#E8E8E8',
     },
     roundDotActive: { backgroundColor: Colors.primary },

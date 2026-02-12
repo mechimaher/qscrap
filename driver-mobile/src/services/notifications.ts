@@ -29,7 +29,6 @@ Notifications.setNotificationHandler({
 export const registerForPushNotifications = async (): Promise<string | null> => {
     // Check if running on a physical device
     if (!Device.isDevice) {
-        console.log('[Notifications] Must use physical device for push notifications');
         return null;
     }
 
@@ -43,7 +42,6 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         }
 
         if (finalStatus !== 'granted') {
-            console.log('[Notifications] Permission not granted');
             return null;
         }
 
@@ -54,7 +52,6 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
         const token = tokenData.data;
         // C4 FIX: Don't log full push token in production
-        console.log('[Notifications] Push token registered successfully');
 
         // Setup Android notification channels
         if (Platform.OS === 'android') {
@@ -99,16 +96,13 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 importance: Notifications.AndroidImportance.DEFAULT,
             });
 
-            console.log('[Notifications] Android channels configured');
         }
 
         // Register with backend
-        console.log('[Notifications] Registering token with backend...', token.substring(0, 30));
         try {
             const result = await api.registerPushToken(token, Platform.OS as 'ios' | 'android');
-            console.log('[Notifications] ✅ Token registered with backend successfully', result);
         } catch (e: any) {
-            console.error('[Notifications] ❌ CRITICAL: Failed to register token with backend');
+            console.error('[Notifications] CRITICAL: Failed to register token with backend');
             console.error('[Notifications] Error details:', e?.message || e);
             console.error('[Notifications] Full error:', JSON.stringify(e));
             // Don't throw - allow app to continue but log critical error
@@ -116,7 +110,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
         return token;
     } catch (error: any) {
-        console.error('[Notifications] ❌ CRITICAL: Registration error');
+        console.error('[Notifications] CRITICAL: Registration error');
         console.error('[Notifications] Error:', error?.message || error);
         console.error('[Notifications] Full:', JSON.stringify(error));
         return null;
@@ -146,7 +140,6 @@ export const scheduleLocalNotification = async (
             trigger: null, // Immediate
         });
 
-        console.log('[Notifications] Scheduled:', id, title);
         return id;
     } catch (error) {
         console.error('[Notifications] Schedule error:', error);

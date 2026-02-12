@@ -9,6 +9,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { Assignment } from '../services/api';
 import { VVIP_MIDNIGHT_STYLE, VVIP_LIGHT_STYLE } from '../constants/mapStyle';
+import { Ionicons } from '@expo/vector-icons';
 
 interface DriverLocation {
     latitude: number;
@@ -68,27 +69,25 @@ export default function LiveMapView({
 
             setIsLoadingRoute(true);
             try {
-                const { getRoute, formatDistance, formatDuration } = await import('../services/routing.service');
-                const result = await getRoute(
+                const { calculateStraightLineDistance, formatDistance, formatDuration } = await import('../services/routing.service');
+
+                // Straight line between driver and destination (no in-app routing engine)
+                const coordinates = [
+                    { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
+                    { latitude: destLat, longitude: destLng },
+                ];
+                setRouteCoordinates(coordinates);
+
+                const distMeters = calculateStraightLineDistance(
                     { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
                     { latitude: destLat, longitude: destLng }
                 );
-
-                if (result.success && result.route) {
-                    // Google Maps format is already {latitude, longitude}
-                    setRouteCoordinates(result.route.coordinates);
-                    setRouteInfo({
-                        distance: formatDistance(result.route.distance),
-                        duration: formatDuration(result.route.duration),
-                    });
-                } else {
-                    // Fallback to straight line
-                    setRouteCoordinates([
-                        { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-                        { latitude: destLat, longitude: destLng },
-                    ]);
-                    setRouteInfo(null);
-                }
+                // Rough ETA: assume 30 km/h avg in Doha traffic
+                const etaSeconds = (distMeters / 1000 / 30) * 3600;
+                setRouteInfo({
+                    distance: formatDistance(distMeters),
+                    duration: formatDuration(etaSeconds),
+                });
             } catch (err) {
                 console.error('[LiveMapView] Route error:', err);
                 setRouteCoordinates([
@@ -172,7 +171,7 @@ export default function LiveMapView({
                     <View style={styles.driverMarker}>
                         <View style={styles.driverMarkerPulse} />
                         <View style={styles.driverMarkerInner}>
-                            <Text style={styles.driverMarkerIcon}>🚗</Text>
+                            <Ionicons name="car-sport" size={20} color={Colors.primary} />
                         </View>
                     </View>
                 </Marker>
@@ -186,7 +185,7 @@ export default function LiveMapView({
                         }}
                     >
                         <View style={[styles.locationMarker, { backgroundColor: Colors.warning }]}>
-                            <Text style={styles.markerIcon}>📦</Text>
+                            <Ionicons name="cube" size={18} color="#fff" />
                         </View>
                     </Marker>
                 )}
@@ -200,7 +199,7 @@ export default function LiveMapView({
                         }}
                     >
                         <View style={[styles.locationMarker, { backgroundColor: Colors.success }]}>
-                            <Text style={styles.markerIcon}>🏠</Text>
+                            <Ionicons name="home" size={18} color="#fff" />
                         </View>
                     </Marker>
                 )}
@@ -229,7 +228,7 @@ export default function LiveMapView({
                             </Text>
                         ) : (
                             <Text style={[styles.statusText, { color: Colors.primary }]}>
-                                📍 Live Tracking
+                                <Ionicons name="location" size={14} color={Colors.primary} /> Live Tracking
                             </Text>
                         )}
                     </View>

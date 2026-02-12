@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Assignment } from '../../services/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig } from '../../constants/theme';
 import { GlassCard } from '../common/GlassCard';
+import { Ionicons } from '@expo/vector-icons';
 
 interface AssignmentCardProps {
     assignment: Assignment;
@@ -66,7 +67,7 @@ export function AssignmentCard({ assignment, colors, onPress }: AssignmentCardPr
                         gap: 4,
                     }}>
                         <Text style={{ fontSize: 12 }}>
-                            {assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? '💵' : '💳'}
+                            <Ionicons name={assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? 'cash-outline' : 'card-outline'} size={12} color={assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? '#10B981' : '#3B82F6'} />
                         </Text>
                         <Text style={{
                             fontSize: 13,
@@ -83,12 +84,12 @@ export function AssignmentCard({ assignment, colors, onPress }: AssignmentCardPr
 
                 {/* Part Category - simplified for drivers */}
                 <Text style={[styles.partDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                    📦 {assignment.part_category || 'Auto Part'}
+                    <Ionicons name="cube-outline" size={14} color={colors.textSecondary} /> {assignment.part_category || 'Auto Part'}
                 </Text>
 
                 {/* Locations */}
                 <View style={styles.locationRow}>
-                    <Text style={styles.locationEmoji}>🏪</Text>
+                    <Ionicons name="storefront-outline" size={14} color={Colors.primary} />
                     <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
                         {assignment.pickup_address}
                     </Text>
@@ -97,7 +98,7 @@ export function AssignmentCard({ assignment, colors, onPress }: AssignmentCardPr
                     <Text style={{ color: colors.textMuted }}>↓</Text>
                 </View>
                 <View style={styles.locationRow}>
-                    <Text style={styles.locationEmoji}>📍</Text>
+                    <Ionicons name="location" size={14} color={Colors.primary} />
                     <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
                         {assignment.delivery_address}
                     </Text>

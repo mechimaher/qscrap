@@ -127,7 +127,7 @@ export default function HomeScreen() {
     const detectLocationFallback = useCallback(async () => {
         try {
             setIsDetectingLocation(true);
-            setDeliveryAddress(`📍 ${t('common.detecting')}...`);
+            setDeliveryAddress(`${t('common.detecting')}...`);
 
             // Check permissions silently
             const { status } = await Location.requestForegroundPermissionsAsync();

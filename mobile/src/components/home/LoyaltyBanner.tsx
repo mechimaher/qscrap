@@ -8,6 +8,7 @@ import { useTranslation } from '../../contexts/LanguageContext';
 import { useLoyalty } from '../../hooks/useLoyalty';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme';
 import { rtlTextAlign } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -38,10 +39,10 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
 
     const getTierConfig = (tier: string) => {
         switch (tier) {
-            case 'silver': return { emoji: '🥈', color: '#94A3B8', bg: ['#E2E8F0', '#F1F5F9'] };
-            case 'gold': return { emoji: '🥇', color: '#D4AF37', bg: ['#FEF3C7', '#FFFBEB'] };
-            case 'platinum': return { emoji: '💎', color: '#8B5CF6', bg: ['#EDE9FE', '#F5F3FF'] };
-            default: return { emoji: '🏅', color: '#CD7F32', bg: ['#FFEDD5', '#FFF7ED'] };
+            case 'silver': return { icon: 'medal-outline' as const, color: '#94A3B8', bg: ['#E2E8F0', '#F1F5F9'] };
+            case 'gold': return { icon: 'trophy-outline' as const, color: '#D4AF37', bg: ['#FEF3C7', '#FFFBEB'] };
+            case 'platinum': return { icon: 'diamond-outline' as const, color: '#8B5CF6', bg: ['#EDE9FE', '#F5F3FF'] };
+            default: return { icon: 'ribbon-outline' as const, color: '#CD7F32', bg: ['#FFEDD5', '#FFF7ED'] };
         }
     };
 
@@ -76,7 +77,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                     }} />
 
                     <View style={styles.tierIconContainer}>
-                        <Text style={{ fontSize: 22 }}>{tierConfig.emoji}</Text>
+                        <Ionicons name={tierConfig.icon} size={22} color={tierConfig.color} />
                     </View>
 
                     <View style={{ flex: 1 }}>
@@ -89,7 +90,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                     </View>
 
                     <View style={styles.rewardsButton}>
-                        <Text style={styles.rewardsButtonText}>🎁 {t('home.rewards')}</Text>
+                        <Text style={styles.rewardsButtonText}>{t('home.rewards')}</Text>
                     </View>
                 </LinearGradient>
             </TouchableOpacity>

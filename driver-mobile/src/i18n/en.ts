@@ -35,7 +35,7 @@ export const en = {
     on_delivery: 'On Delivery',
     location_active: 'Location Active',
     today: 'Today',
-    earnings: 'Earnings',
+    this_week: 'This Week',
     rating: 'Rating',
     active: 'Active',
     active_assignments: 'Active Assignments',
@@ -51,6 +51,7 @@ export const en = {
     collection: 'Collection',
     delivery: 'Delivery',
     return_to_garage: 'Return',
+    pickup: 'Pickup',
     pickup_from: 'Pick up from',
     deliver_to: 'Deliver to',
     order_number: 'Order #',
@@ -60,6 +61,11 @@ export const en = {
     assignment_rejected_message: 'This assignment has been declined. Operations will reassign it to another driver.',
     assignment_expired: 'Assignment Expired',
     assignment_expired_message: 'You did not respond in time. The assignment may be reassigned.',
+    assignment_not_found: 'Assignment not found',
+    new_assignment: 'New Assignment!',
+    accept: 'Accept',
+    reject: 'Reject',
+    seconds: 'seconds',
 
     // Status
     assigned: 'Assigned',
@@ -72,12 +78,35 @@ export const en = {
     complete_delivery: 'Complete Delivery',
     mark_failed: 'Mark as Failed',
 
+    // Assignment Detail
+    part_info: 'Part Info',
+    pickup_location: 'Pickup Location',
+    delivery_location: 'Delivery Location',
+    call_garage: 'Call Garage',
+    call: 'Call',
+    estimated_arrival: 'Estimated Arrival',
+    delivery_proof: 'Delivery Proof',
+    customer_signature: 'Customer Signature',
+    notes: 'Notes',
+    assignment_timeline: 'Assignment Timeline',
+    driver_assigned: 'Driver Assigned',
+    part_picked_up: 'Part Picked Up',
+    successfully_delivered: 'Successfully Delivered',
+    delivery_failed_label: 'Delivery Failed',
+    confirm_failed_title: 'Mark as Failed',
+    confirm_failed_message: 'Are you sure this delivery cannot be completed?',
+    next_confirm_payment: 'Next: Confirm Payment →',
+
     // POD (Proof of Delivery)
     pod_title: 'Proof of Delivery',
     take_photo: 'Take Photo',
     retake_photo: 'Retake Photo',
+    retake: 'Retake',
     photo_required: 'Photo Required',
     photo_of_package: 'Take a photo of the delivered package',
+    confirm_photo: 'Confirm Photo',
+    camera_permission_needed: 'Camera permission needed',
+    grant_permission: 'Grant Permission',
     payment_collection: 'Payment Collection',
     collect_amount: 'Collect {{amount}} QAR',
     how_did_customer_pay: 'How did customer pay?',
@@ -89,23 +118,14 @@ export const en = {
     part_price_only: 'Part price only',
     part_plus_delivery: 'Part {{part}} + Delivery {{delivery}}',
     delivery_fee_paid_online: 'Delivery fee ({{amount}} QAR) paid online',
+    loyalty_discount_applied: 'Loyalty discount of {{amount}} QAR applied',
     complete_delivery_button: 'Complete Delivery ✓',
     delivery_completed: 'Delivery Completed!',
+    delivery_complete: 'Delivery Complete!',
     delivery_completed_message: 'Great job! The delivery has been confirmed.',
 
-    // Earnings
-    today_earnings: "Today's Earnings",
-    this_week: 'This Week',
-    this_month: 'This Month',
-    total_earnings: 'Total Earnings',
+    // Deliveries
     total_deliveries: 'Total Deliveries',
-    earning_history: 'Earning History',
-    no_earnings: 'No earnings yet',
-    pending_payout: 'Pending Payout',
-    payout_history: 'Payout History',
-    wallet: 'Wallet',
-    balance: 'Balance',
-    withdraw: 'Withdraw',
 
     // Profile
     profile: 'Profile',
@@ -140,7 +160,7 @@ export const en = {
     in_app_map: 'In-App Map',
     google_maps: 'Google Maps',
     waze: 'Waze',
-    choose_language: 'Select your preferred language:',
+
     contact_support: 'Contact Support',
     choose_contact: 'How would you like to contact us?',
     whatsapp: 'WhatsApp',
@@ -155,14 +175,14 @@ export const en = {
     // Settings
     language: 'Language',
     english: 'English',
-    arabic: 'العربية',
+
     notifications: 'Notifications',
     support: 'Support',
 
     // Footer
     version_text: 'QScrap Driver v{{version}}',
     all_rights_reserved: '© {{year}} QScrap. All rights reserved.',
-    made_in_qatar: '🇶🇦 Made in Qatar',
+    made_in_qatar: 'Made in Qatar',
 
     // Chat
     chat: 'Chat',
@@ -170,6 +190,7 @@ export const en = {
     start_conversation: 'Start the conversation',
     send: 'Send',
     no_messages: 'No messages yet',
+    user_typing: '{{user}} is typing...',
     customer: 'Customer',
     driver: 'Driver',
 
@@ -195,6 +216,9 @@ export const en = {
     arrived_at_pickup: 'Arrived at Pickup',
     arrived_at_delivery: 'Arrived at Delivery',
     confirm_arrived: 'Confirm Arrived',
+
+    // Done
+    done_check: 'Done ✓',
 };
 
 export default en;

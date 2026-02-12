@@ -23,11 +23,12 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { api } from '../services/api';
 import { CONTACT } from '../constants/contacts';
+import { Ionicons } from '@expo/vector-icons';
 
 
 interface SupportOption {
     id: string;
-    icon: string;
+    icon: keyof typeof Ionicons.glyphMap;
     titleKey: string;
     descriptionKey: string;
     messagePrefix: string;
@@ -46,28 +47,28 @@ interface Ticket {
 const SUPPORT_OPTIONS: SupportOption[] = [
     {
         id: 'general',
-        icon: '💬',
+        icon: 'chatbubble-ellipses-outline',
         titleKey: 'support.generalInquiry',
         descriptionKey: 'support.generalDesc',
         messagePrefix: 'Hi QScrap! I have a question: ',
     },
     {
         id: 'order',
-        icon: '📦',
+        icon: 'cube-outline',
         titleKey: 'support.orderHelp',
         descriptionKey: 'support.orderHelpDesc',
         messagePrefix: 'Hi QScrap! I need help with my order: ',
     },
     {
         id: 'payment',
-        icon: '💳',
+        icon: 'card-outline',
         titleKey: 'support.paymentIssue',
         descriptionKey: 'support.paymentDesc',
         messagePrefix: 'Hi QScrap! I have a payment issue: ',
     },
     {
         id: 'complaint',
-        icon: '⚠️',
+        icon: 'warning-outline',
         titleKey: 'support.fileComplaint',
         descriptionKey: 'support.complaintDesc',
         messagePrefix: 'Hi QScrap! I would like to report an issue: ',
@@ -213,7 +214,7 @@ export default function SupportScreen() {
                     )}
                 </View>
                 <View style={[styles.ticketAction, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Text style={styles.whatsappIcon}>💬</Text>
+                    <Ionicons name="logo-whatsapp" size={14} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
                     <Text style={[styles.ticketActionText, { color: Colors.primary }]}>
                         {t('support.followUpWhatsApp')}
                     </Text>
@@ -246,7 +247,7 @@ export default function SupportScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={[styles.ticketsSectionTitleRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={styles.ticketsSectionIcon}>🎫</Text>
+                        <Ionicons name="ticket-outline" size={20} color={Colors.primary} />
                         <Text style={[styles.ticketsSectionTitle, { color: colors.text }]}>
                             {t('support.myTickets')}
                         </Text>
@@ -280,7 +281,7 @@ export default function SupportScreen() {
         >
             <View style={[styles.optionContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.iconContainer}>
-                    <Text style={styles.optionIcon}>{option.icon}</Text>
+                    <Ionicons name={option.icon} size={24} color={Colors.primary} />
                 </View>
                 <View style={styles.textContainer}>
                     <Text style={[styles.optionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
@@ -290,7 +291,7 @@ export default function SupportScreen() {
                         {t(option.descriptionKey)}
                     </Text>
                 </View>
-                <Text style={[styles.arrow, { color: Colors.primary }]}>{isRTL ? '←' : '→'}</Text>
+                <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color={Colors.primary} />
             </View>
         </TouchableOpacity>
     );
@@ -300,7 +301,7 @@ export default function SupportScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('support.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -326,7 +327,7 @@ export default function SupportScreen() {
                         end={{ x: 1, y: 1 }}
                         style={styles.heroGradient}
                     >
-                        <Text style={styles.heroIcon}>💬</Text>
+                        <Ionicons name="logo-whatsapp" size={48} color="#fff" style={{ marginBottom: Spacing.md }} />
                         <Text style={[styles.heroTitle, { textAlign: 'center' }]}>{t('support.whatsappTitle')}</Text>
                         <Text style={[styles.heroSubtitle, { textAlign: 'center' }]}>{t('support.whatsappSubtitle')}</Text>
 
@@ -335,7 +336,7 @@ export default function SupportScreen() {
                             onPress={() => openWhatsApp('Hi QScrap! ')}
                             activeOpacity={0.9}
                         >
-                            <Text style={styles.mainChatIcon}>📱</Text>
+                            <Ionicons name="chatbubble-outline" size={20} color="#25D366" style={{ marginRight: Spacing.sm }} />
                             <Text style={styles.mainChatText}>{t('support.startChat')}</Text>
                         </TouchableOpacity>
                     </LinearGradient>
@@ -354,7 +355,7 @@ export default function SupportScreen() {
 
                 {/* Business Hours Info */}
                 <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={styles.infoIcon}>🕐</Text>
+                    <Ionicons name="time-outline" size={32} color={Colors.primary} style={{ marginRight: Spacing.md }} />
                     <View style={styles.infoTextContainer}>
                         <Text style={[styles.infoTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('support.businessHours')}
@@ -367,7 +368,7 @@ export default function SupportScreen() {
 
                 {/* Response Time Promise */}
                 <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={styles.infoIcon}>⚡</Text>
+                    <Ionicons name="flash-outline" size={32} color={Colors.primary} style={{ marginRight: Spacing.md }} />
                     <View style={styles.infoTextContainer}>
                         <Text style={[styles.infoTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('support.fastResponse')}

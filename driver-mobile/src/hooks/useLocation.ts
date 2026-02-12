@@ -102,7 +102,6 @@ export function useLocation(): UseLocationResult {
 
         // P0: Filter out low-accuracy GPS readings (drift prevention)
         if (state.accuracy && state.accuracy > GPS_ACCURACY_THRESHOLD) {
-            console.log(`[Location] Skipping low accuracy update (${state.accuracy?.toFixed(0)}m > ${GPS_ACCURACY_THRESHOLD}m threshold)`);
             return;
         }
 
@@ -116,7 +115,6 @@ export function useLocation(): UseLocationResult {
 
         setLocation(state);
         const accuracyStr = state.accuracy ? ` (±${state.accuracy.toFixed(0)}m)` : '';
-        console.log(`[Location] Updated via ${source}:`, state.latitude.toFixed(6), state.longitude.toFixed(6), accuracyStr);
 
         // Also send to API (fire and forget)
         // Send to OfflineQueue (guaranteed delivery)
@@ -130,9 +128,8 @@ export function useLocation(): UseLocationResult {
                 heading: state.heading ?? undefined,
                 speed: state.speed ?? undefined,
                 timestamp: state.timestamp,
-
             }
-        ).catch((err) => console.log('[Location] Queue failed:', err));
+        );
     }, []);
 
     const pollLocation = useCallback(async () => {
@@ -160,7 +157,6 @@ export function useLocation(): UseLocationResult {
     }, [updateLocation]);
 
     const startTracking = async (): Promise<boolean> => {
-        console.log('[Location] startTracking: Polling Strategy');
         try {
             setError(null);
 
@@ -201,7 +197,6 @@ export function useLocation(): UseLocationResult {
 
             // 4. Start polling
             pollIntervalRef.current = setInterval(pollLocation, POLL_INTERVAL);
-            console.log('[Location] Polling started (every 10s)');
 
             if (isMountedRef.current) setIsTracking(true);
             return true;
@@ -223,7 +218,6 @@ export function useLocation(): UseLocationResult {
                 pollIntervalRef.current = null;
             }
             if (isMountedRef.current) setIsTracking(false);
-            console.log('[Location] Polling stopped');
         } catch (err) {
             console.error(err);
         }

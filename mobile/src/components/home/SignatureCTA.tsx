@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from '../../constants/theme';
 import { rtlFlexDirection } from '../../utils/rtl';
+import { Ionicons } from '@expo/vector-icons';
 
 const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -97,21 +98,21 @@ const SignatureCTA = ({ onPress }: { onPress: () => void }) => {
                                     elevation: 8,
                                 }
                             ]}>
-                                <Text style={[styles.ctaButtonText, { color: '#FFFFFF' }]}>{t('home.requestPart')} ✨</Text>
+                                <Text style={[styles.ctaButtonText, { color: '#FFFFFF' }]}>{t('home.requestPart')}</Text>
                             </Animated.View>
 
                             {/* 3-Tier Supplier Badges */}
                             <View style={[styles.supplierBadges, { marginTop: Spacing.md, flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <View style={[styles.supplierBadge, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
-                                    <Text style={styles.badgeIcon}>♻️</Text>
+                                    <Ionicons name="leaf-outline" size={12} color="#15803d" />
                                     <Text style={[styles.badgeText, { color: '#15803d' }]}>{t('condition.used')}</Text>
                                 </View>
                                 <View style={[styles.supplierBadge, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-                                    <Text style={styles.badgeIcon}>🔩</Text>
+                                    <Ionicons name="construct-outline" size={12} color="#1d4ed8" />
                                     <Text style={[styles.badgeText, { color: '#1d4ed8' }]}>{t('condition.commercial')}</Text>
                                 </View>
                                 <View style={[styles.supplierBadge, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
-                                    <Text style={styles.badgeIcon}>⭐</Text>
+                                    <Ionicons name="star" size={12} color="#b45309" />
                                     <Text style={[styles.badgeText, { color: '#b45309' }]}>{t('condition.genuine')}</Text>
                                 </View>
                             </View>

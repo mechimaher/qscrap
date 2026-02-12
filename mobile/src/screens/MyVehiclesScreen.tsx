@@ -224,7 +224,7 @@ export default function MyVehiclesScreen() {
                 >
                     <View style={[styles.cardLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <View style={[styles.iconBg, item.is_primary && styles.iconBgPrimary, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }]}>
-                            <Text style={styles.carEmoji}>🚗</Text>
+                            <Ionicons name="car-sport" size={22} color="#1976D2" />
                         </View>
                         <View style={[styles.cardInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                             <View style={[styles.nameRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -269,7 +269,7 @@ export default function MyVehiclesScreen() {
     const EmptyState = () => (
         <View style={styles.emptyState}>
             <View style={[styles.emptyIconBg, { backgroundColor: colors.surfaceElevated }]}>
-                <Text style={styles.emptyIcon}>🚗</Text>
+                <Ionicons name="car-sport" size={36} color="#999" />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('vehicles.noVehicles')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -360,7 +360,7 @@ export default function MyVehiclesScreen() {
                             contentContainerStyle={{ paddingBottom: 20 }}
                         >
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>🚗 {t('profile.carMake')} {editingVehicle ? '' : '*'}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.carMake')} {editingVehicle ? '' : '*'}</Text>
                             {editingVehicle ? (
                                 <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
                                     <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newMake}</Text>
@@ -377,7 +377,7 @@ export default function MyVehiclesScreen() {
                                 </TouchableOpacity>
                             )}
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>📋 {t('profile.carModel')} {editingVehicle ? '' : '*'}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.carModel')} {editingVehicle ? '' : '*'}</Text>
                             {editingVehicle ? (
                                 <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
                                     <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newModel}</Text>
@@ -395,7 +395,7 @@ export default function MyVehiclesScreen() {
                                 </TouchableOpacity>
                             )}
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>📅 {t('profile.carYear')} {editingVehicle ? '' : '*'}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.carYear')} {editingVehicle ? '' : '*'}</Text>
                             {editingVehicle ? (
                                 <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
                                     <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newYear}</Text>
@@ -413,7 +413,7 @@ export default function MyVehiclesScreen() {
                             )}
 
                             {/* VIN Entry - Manual or Scan */}
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>🔑 {t('vehicles.vinTitle')} *</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('vehicles.vinTitle')} *</Text>
                             <View style={{ gap: Spacing.sm }}>
                                 <TextInput
                                     style={[
@@ -436,11 +436,11 @@ export default function MyVehiclesScreen() {
                                     editable={!editingVehicle && !isAdding}
                                 />
                                 <Text style={[styles.inputLabel, { color: colors.textSecondary, fontSize: 11, textAlign: rtlTextAlign(isRTL) }]}>
-                                    💡 {t('vehicles.vinHelp')}
+                                    {t('vehicles.vinHelp')}
                                 </Text>
                             </View>
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>💬 {t('profile.nicknameOptional')}</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.nicknameOptional')}</Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
                                 value={newNickname}
@@ -473,7 +473,7 @@ export default function MyVehiclesScreen() {
                 <View style={styles.pickerOverlay}>
                     <View style={[styles.pickerContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.pickerHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.pickerTitle, { color: colors.text }]}>🚗 {t('profile.selectMake')}</Text>
+                            <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('profile.selectMake')}</Text>
                             <TouchableOpacity onPress={() => setShowMakePicker(false)}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
@@ -515,7 +515,7 @@ export default function MyVehiclesScreen() {
                 <View style={styles.pickerOverlay}>
                     <View style={[styles.pickerContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.pickerHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.pickerTitle, { color: colors.text }]}>📋 {t('profile.selectModel')}</Text>
+                            <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('profile.selectModel')}</Text>
                             <TouchableOpacity onPress={() => setShowModelPicker(false)}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
@@ -560,7 +560,7 @@ export default function MyVehiclesScreen() {
                 <View style={styles.pickerOverlay}>
                     <View style={[styles.pickerContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.pickerHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.pickerTitle, { color: colors.text }]}>📅 {t('profile.selectYear')}</Text>
+                            <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('profile.selectYear')}</Text>
                             <TouchableOpacity onPress={() => setShowYearPicker(false)}>
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.secondary,
         width: 18,
         height: 18,
-        borderRadius: 9,
+        borderRadius: BorderRadius.sm,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
     editBtn: {
         width: 34,
         height: 34,
-        borderRadius: 17,
+        borderRadius: BorderRadius.lg,
         backgroundColor: Colors.primary + '15',
         alignItems: 'center',
         justifyContent: 'center',
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     deleteBtn: {
         width: 34,
         height: 34,
-        borderRadius: 17,
+        borderRadius: BorderRadius.lg,
         backgroundColor: Colors.error + '15',
         alignItems: 'center',
         justifyContent: 'center',

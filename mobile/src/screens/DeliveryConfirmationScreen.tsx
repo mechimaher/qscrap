@@ -174,7 +174,7 @@ export default function DeliveryConfirmationScreen() {
                 {/* Photo Capture */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                        📸 {t('delivery.captureCondition')}
+                        {t('delivery.captureCondition')}
                     </Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('delivery.takePhotosPrompt')}
@@ -209,7 +209,7 @@ export default function DeliveryConfirmationScreen() {
                 {/* Checklist */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                        ✅ {t('delivery.beforeConfirming')}
+                        {t('delivery.beforeConfirming')}
                     </Text>
                     <View style={[styles.checklist, { backgroundColor: colors.surface }]}>
                         {[t('delivery.check1'), t('delivery.check2'), t('delivery.check3'), t('delivery.check4')].map((item, i) => (
@@ -252,7 +252,7 @@ export default function DeliveryConfirmationScreen() {
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
 

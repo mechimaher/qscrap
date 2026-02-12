@@ -279,37 +279,9 @@ export class DriverRepository {
         `, [driverId]);
     }
 
-    async getOrderTotal(orderId: string, client: PoolClient) {
-        const result = await client.query(
-            'SELECT total_amount, order_number FROM orders WHERE order_id = $1',
-            [orderId]
-        );
-        return result.rows[0];
-    }
 
-    async createPayout(
-        driverId: string,
-        assignmentId: string,
-        orderId: string,
-        orderNumber: string,
-        amount: number,
-        client: PoolClient
-    ) {
-        await client.query(`
-            INSERT INTO driver_payouts 
-                (driver_id, assignment_id, order_id, order_number, amount, status)
-            VALUES ($1, $2, $3, $4, $5, 'pending')
-        `, [driverId, assignmentId, orderId, orderNumber, amount.toFixed(2)]);
-    }
 
-    async updateDriverEarnings(driverId: string, amount: number, client: PoolClient) {
-        await client.query(`
-            UPDATE drivers SET 
-                total_earnings = COALESCE(total_earnings, 0) + $1,
-                updated_at = NOW()
-            WHERE driver_id = $2
-        `, [amount.toFixed(2), driverId]);
-    }
+
 
     async saveDeliveryProof(
         assignmentId: string,
@@ -335,54 +307,18 @@ export class DriverRepository {
                 d.total_deliveries,
                 d.rating_average::FLOAT as rating_average,
                 d.rating_count,
-                d.total_earnings::FLOAT as total_earnings,
-                COALESCE(SUM(dp.amount) FILTER (WHERE DATE(dp.created_at) = CURRENT_DATE), 0)::FLOAT as today_earnings,
-                COALESCE(SUM(dp.amount) FILTER (WHERE dp.created_at >= CURRENT_DATE - INTERVAL '7 days'), 0)::FLOAT as week_earnings,
                 COUNT(*) FILTER (WHERE da.status = 'delivered' AND DATE(da.delivered_at) = CURRENT_DATE) as today_deliveries,
                 COUNT(*) FILTER (WHERE da.status = 'delivered' AND da.delivered_at >= CURRENT_DATE - INTERVAL '7 days') as week_deliveries,
                 COUNT(*) FILTER (WHERE da.status IN ('assigned', 'picked_up', 'in_transit')) as active_assignments
             FROM drivers d
             LEFT JOIN delivery_assignments da ON d.driver_id = da.driver_id
-            LEFT JOIN driver_payouts dp ON d.driver_id = dp.driver_id
             WHERE d.user_id = $1
-            GROUP BY d.driver_id, d.total_deliveries, d.rating_average, d.rating_count, d.total_earnings
+            GROUP BY d.driver_id, d.total_deliveries, d.rating_average, d.rating_count
         `, [userId]);
         return result.rows[0];
     }
 
-    async getEarningsTrend(userId: string) {
-        const result = await this.pool.query(`
-            WITH RECURSIVE days AS (
-                SELECT CURRENT_DATE - INTERVAL '6 days' as d
-                UNION ALL
-                SELECT d + INTERVAL '1 day' FROM days WHERE d < CURRENT_DATE
-            )
-            SELECT 
-                TO_CHAR(days.d, 'D') as day_index,
-                TO_CHAR(days.d, 'Dy') as day_label,
-                COALESCE(SUM(dp.amount), 0)::FLOAT as amount
-            FROM days
-            JOIN drivers d ON d.user_id = $1
-            LEFT JOIN driver_payouts dp ON d.driver_id = dp.driver_id AND DATE(dp.created_at) = days.d
-            GROUP BY days.d
-            ORDER BY days.d
-        `, [userId]);
-        return result.rows;
-    }
 
-    async getPayoutHistory(userId: string) {
-        const result = await this.pool.query(`
-            SELECT 
-                dp.payout_id, dp.order_number, dp.amount::FLOAT as amount, 
-                dp.status, dp.created_at, dp.paid_at
-            FROM driver_payouts dp
-            JOIN drivers d ON dp.driver_id = d.driver_id
-            WHERE d.user_id = $1
-            ORDER BY dp.created_at DESC
-            LIMIT 50
-        `, [userId]);
-        return result.rows;
-    }
 
     async updateDriverProfile(userId: string, data: any) {
         const {

@@ -27,6 +27,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
@@ -61,9 +62,9 @@ export default function NewRequestScreen() {
 
     // Condition options with translations
     const CONDITION_OPTIONS = [
-        { value: 'any', label: t('newRequest.anyCondition'), icon: '🔄', color: '#6B7280' },
-        { value: 'new', label: t('newRequest.newOnly'), icon: '✨', color: '#22C55E' },
-        { value: 'used', label: t('newRequest.usedOnly'), icon: '♻️', color: '#F59E0B' },
+        { value: 'any', label: t('newRequest.anyCondition'), icon: 'sync-outline', color: '#6B7280' },
+        { value: 'new', label: t('newRequest.newOnly'), icon: 'sparkles', color: '#22C55E' },
+        { value: 'used', label: t('newRequest.usedOnly'), icon: 'leaf-outline', color: '#F59E0B' },
     ];
 
     // Extract prefill data from route params (for Order Again)
@@ -454,7 +455,7 @@ export default function NewRequestScreen() {
                         onPress={() => navigation.goBack()}
                         style={styles.closeButton}
                     >
-                        <Text style={[styles.closeIcon, { color: colors.text }]}>{isRTL ? '→' : '←'}</Text>
+                        <Ionicons name="arrow-back" size={22} color={colors.text} />
                     </TouchableOpacity>
                     <View style={styles.headerCenter}>
                         <Text style={[styles.headerTitle, { color: colors.text }]}>{t('newRequest.title')}</Text>
@@ -478,7 +479,7 @@ export default function NewRequestScreen() {
                     >
                         {/* Pro Tip Header Banner - Just-in-time guidance */}
                         <Animated.View style={[styles.proTipBanner, { backgroundColor: '#FFF8E1', flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>💡</Text>
+                            <Text style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}></Text>
                             <View style={styles.proTipContent}>
                                 <Text style={[styles.proTipTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.proTipTitle')}</Text>
                                 <Text style={[styles.proTipText, { textAlign: rtlTextAlign(isRTL) }]}>
@@ -509,7 +510,7 @@ export default function NewRequestScreen() {
 
                             {selectedVehicle && (
                                 <View style={[styles.selectedVehicleBadge, { backgroundColor: Colors.primary + '10' }]}>
-                                    <Text style={styles.checkIcon}>✓</Text>
+                                    <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.selectedText, { color: Colors.primary }]}>
                                             {selectedVehicle.car_make} {selectedVehicle.car_model} ({selectedVehicle.car_year})
@@ -661,7 +662,7 @@ export default function NewRequestScreen() {
                             </View>
 
                             <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
-                                🚗 {t('newRequest.frontView')}
+                                {t('newRequest.frontView')}
                             </Text>
                             <PhotoUploadSection
                                 images={carFrontImage ? [carFrontImage] : []}
@@ -673,7 +674,7 @@ export default function NewRequestScreen() {
                             />
 
                             <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
-                                🚙 {t('newRequest.rearView')}
+                                {t('newRequest.rearView')}
                             </Text>
                             <PhotoUploadSection
                                 images={carRearImage ? [carRearImage] : []}
@@ -713,7 +714,7 @@ export default function NewRequestScreen() {
                             ) : (
                                 <>
                                     <Text style={styles.submitText}>{t('newRequest.submitRequest')}</Text>
-                                    <Text style={styles.submitIcon}>{isRTL ? '←' : '→'}</Text>
+                                    <Ionicons name="arrow-forward" size={20} color="#fff" />
                                 </>
                             )}
                         </LinearGradient>

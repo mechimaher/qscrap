@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useIsFocused } from '@react-navigation/native';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
@@ -24,7 +25,7 @@ const SLIDE_WIDTH = width - (Spacing.lg * 2);
 const AUTO_SWIPE_INTERVAL = 4000; // 4 seconds
 
 interface Step {
-    icon: string;
+    icon: React.ComponentProps<typeof Ionicons>['name'];
     title: string;
     subtitle: string;
     color: string;
@@ -50,28 +51,28 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
 
     const STEPS: Step[] = [
         {
-            icon: '📋',
+            icon: 'clipboard-outline' as const,
             title: t('home.howItWorksSteps.step1.title'),
             subtitle: t('home.howItWorksSteps.step1.subtitle'),
             color: '#3B82F6',
             gradient: ['#3B82F6', '#2563EB'],
         },
         {
-            icon: '💰',
+            icon: 'cash-outline' as const,
             title: t('home.howItWorksSteps.step2.title'),
             subtitle: t('home.howItWorksSteps.step2.subtitle'),
             color: '#F59E0B',
             gradient: ['#F59E0B', '#D97706'],
         },
         {
-            icon: '✅',
+            icon: 'checkmark-circle' as const,
             title: t('home.howItWorksSteps.step3.title'),
             subtitle: t('home.howItWorksSteps.step3.subtitle'),
             color: '#22C55E',
             gradient: ['#22C55E', '#16A34A'],
         },
         {
-            icon: '🚗',
+            icon: 'car-sport' as const,
             title: t('home.howItWorksSteps.step4.title'),
             subtitle: t('home.howItWorksSteps.step4.subtitle'),
             color: Colors.primary,
@@ -246,7 +247,7 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                         },
                     ]}
                 >
-                    <Text style={styles.icon}>{currentStep.icon}</Text>
+                    <Ionicons name={currentStep.icon} size={40} color={currentStep.color} />
                 </View>
 
                 {/* Step number */}

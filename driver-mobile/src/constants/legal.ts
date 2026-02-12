@@ -60,7 +60,7 @@ export const LEGAL_DOCS = {
         <ul>
             <li>Dispatch nearby assignments to you.</li>
             <li>Provide real-time tracking to customers and garages.</li>
-            <li>Calculate accurate delivery times and payouts.</li>
+            <li>Calculate accurate delivery times.</li>
         </ul>
         <p>You may disable location services when you are "Offline", but you will not be able to receive new assignments.</p>
 
@@ -68,7 +68,7 @@ export const LEGAL_DOCS = {
         <p>Your use of the App is also governed by our Privacy Policy. You understand that your name, photo, and vehicle details will be shared with Customers and Garages for identification purposes.</p>
 
         <h2>7. Liability</h2>
-        <p>You are liable for any loss or damage to the parts while they are in your custody (from Pickup to Delivery). QScrap reserves the right to deduct the cost of damaged goods from your earnings if negligence is proven.</p>
+        <p>You are liable for any loss or damage to the parts while they are in your custody (from Pickup to Delivery). QScrap reserves the right to deduct the cost of damaged goods from your compensation if negligence is proven.</p>
 
         <h2>8. Termination</h2>
         <p>QScrap reserves the right to suspend or terminate your account for violations of these Terms, including but not limited to: repeated failed deliveries, low ratings, unsafe driving, or fraudulent activity.</p>
@@ -115,7 +115,7 @@ export const LEGAL_DOCS = {
         <ul>
             <li>Connect you with Garages and Customers for pickup and delivery jobs.</li>
             <li>Navigate you to pickup and drop-off locations.</li>
-            <li>Process your earnings and payouts.</li>
+            <li>Process your compensation.</li>
             <li>Ensure safety and prevent fraud.</li>
             <li>Comply with legal obligations under Qatar law.</li>
         </ul>

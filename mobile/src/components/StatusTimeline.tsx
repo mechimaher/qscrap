@@ -10,6 +10,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlTextAlign } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface TimelineStep {
     key: string;
@@ -29,7 +30,7 @@ const DEFAULT_STEP_KEYS = [
     'in_transit', 'arriving', 'delivered', 'completed',
 ];
 
-const DEFAULT_ICONS = ['✓', '📦', '🏭', '🚗', '🛣️', '🏁', '📬', '👑'];
+const DEFAULT_ICONS = ['checkmark', 'cube-outline', 'business-outline', 'car-sport', 'trail-sign-outline', 'flag', 'mail-outline', 'ribbon'];
 
 // Map order statuses to timeline index
 // Premium 8-step journey: confirmed → preparing → ready → picked → transit → arriving → delivered → completed
@@ -185,12 +186,12 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                             isPending && [styles.nodePending, { backgroundColor: colors.surface, borderColor: colors.border }],
                                         ]}
                                     >
-                                        <Text style={[
-                                            styles.nodeIcon,
-                                            isPending && styles.nodeIconPending,
-                                        ]}>
-                                            {isCompleted ? '✓' : step.icon}
-                                        </Text>
+                                        <Ionicons
+                                            name={(isCompleted ? 'checkmark' : step.icon) as any}
+                                            size={14}
+                                            color={isPending ? '#9CA3AF' : '#fff'}
+                                            style={isPending ? { opacity: 0.5 } : undefined}
+                                        />
                                     </View>
                                 </Animated.View>
 
