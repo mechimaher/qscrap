@@ -1,10 +1,11 @@
+import os
 
 import paramiko
 import time
 
 host = "147.93.89.153"
 user = "root"
-password = "QScrap@2026byMaher"
+password = os.environ.get("VPS_PASSWORD", "")
 
 # Robust Nginx configuration with dedicated socket.io block
 nginx_config = """

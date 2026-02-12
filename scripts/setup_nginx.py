@@ -1,9 +1,10 @@
+import os
 import paramiko
 import time
 
 host = "147.93.89.153"
 user = "root"
-password = "QScrap@2026byMaher"
+password = os.environ.get("VPS_PASSWORD", "")
 
 # Nginx configuration for QScrap
 nginx_config = """

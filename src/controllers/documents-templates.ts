@@ -120,7 +120,6 @@ export function generateBilingualCustomerInvoiceHTML(
         <div class="header">
             <div class="logo-section">
                 ${logoBase64 ? `<img src="${logoBase64}" alt="QScrap">` : ''}
-                <span class="brand-name">QSCRAP</span>
             </div>
             <div class="title-section">
                 <div class="title-en">${L.customer_invoice_title?.en || 'TAX INVOICE'}</div>
@@ -298,7 +297,6 @@ export function generateGaragePayoutStatementHTML(
         <div class="header">
             <div class="logo-section">
                 ${logoBase64 ? `<img src="${logoBase64}" alt="QScrap">` : ''}
-                <span class="brand-name">QSCRAP</span>
             </div>
             <div class="title-section">
                 <div class="title-en">${L.garage_invoice_title?.en || 'PAYOUT STATEMENT'}</div>
