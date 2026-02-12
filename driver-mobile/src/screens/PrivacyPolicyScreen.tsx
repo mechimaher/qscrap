@@ -12,16 +12,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '../contexts';
-import { useTranslation } from '../contexts/LanguageContext';
-import { rtlFlexDirection } from '../utils/rtl';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants';
+import { useTheme } from '../contexts/ThemeContext';
+import { useI18n } from '../i18n';
+import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
-// ============================================
-// SECTION TYPE
-// ============================================
 interface Section {
     num: number;
     title: string;
@@ -33,9 +29,6 @@ interface Section {
     highlight?: { type: 'gold' | 'default'; text: string };
 }
 
-// ============================================
-// PRIVACY CONTENT — mirrors public/privacy.html
-// ============================================
 const SECTIONS: Section[] = [
     {
         num: 1,
@@ -47,7 +40,7 @@ const SECTIONS: Section[] = [
             'Garage Partners: Businesses providing spare parts through our marketplace',
             'Drivers: Delivery personnel using the QScrap Driver App',
         ],
-        footnote: 'By using our Apps or services, you consent to the collection, use, and disclosure of your information as described in this Privacy Policy. This policy complies with Qatar\'s Law No. 13 of 2016 on Personal Data Protection.',
+        footnote: 'By using our Apps or services, you consent to the collection, use, and disclosure of your information as described in this Privacy Policy.',
     },
     {
         num: 2,
@@ -61,7 +54,6 @@ const SECTIONS: Section[] = [
                     'Profile Information: Profile picture (optional), preferred language',
                     'Vehicle Information: VIN, make, model, year for parts matching',
                     'Payment Information: Payment method preferences (Cash on Delivery, Card)',
-                    'Business Information (Garages): CR number, IBAN, business address',
                     'Driver Information: Qatar ID, driver\'s license, vehicle registration',
                 ],
             },
@@ -71,12 +63,11 @@ const SECTIONS: Section[] = [
                     'Device Information: Device type, OS version, unique identifiers, push tokens',
                     'Location Data: GPS coordinates for delivery zones, real-time tracking',
                     'Usage Data: App interactions, features used, session duration',
-                    'Log Data: IP address, access times, app crashes, system activity',
                     'Photos & Media: Images uploaded for part requests and proof of delivery',
                 ],
             },
         ],
-        highlight: { type: 'default', text: 'Our Apps require location access to function properly. We use it for delivery fee calculation, nearby garage matching, real-time tracking, and route optimization. You may disable it in settings, but this will impact functionality.' },
+        highlight: { type: 'default', text: 'Our Apps require location access to function properly. You may disable it in settings, but this will impact functionality.' },
     },
     {
         num: 3,
@@ -87,11 +78,9 @@ const SECTIONS: Section[] = [
                 title: '3.1 Service Provision',
                 items: [
                     'Processing and fulfilling spare part requests and orders',
-                    'Facilitating bidding between customers and garages',
                     'Calculating delivery fees based on your location',
                     'Providing real-time order tracking and notifications',
                     'Processing payments and payouts',
-                    'Managing warranties, returns, and refunds',
                 ],
             },
             {
@@ -100,7 +89,6 @@ const SECTIONS: Section[] = [
                     'Sending order confirmations, updates, and delivery notifications',
                     'Customer support and dispute resolution',
                     'Important service announcements and policy updates',
-                    'Marketing communications (with your consent)',
                 ],
             },
             {
@@ -109,7 +97,6 @@ const SECTIONS: Section[] = [
                     'Analyzing usage patterns to improve our services',
                     'Fraud detection and prevention',
                     'Ensuring platform safety and security',
-                    'Compliance with legal obligations',
                 ],
             },
         ],
@@ -132,7 +119,6 @@ const SECTIONS: Section[] = [
                 title: '4.2 Third-Party Service Providers',
                 items: [
                     'Cloud Infrastructure: Secure data storage',
-                    'Analytics: Usage analysis',
                     'Maps & Location: Google Maps for location services',
                     'Push Notifications: Firebase Cloud Messaging for notifications',
                 ],
@@ -154,10 +140,8 @@ const SECTIONS: Section[] = [
             'Secure Storage: Encrypted databases with access controls',
             'Authentication: OTP-based verification for account access',
             'Access Control: Role-based restrictions for employees',
-            'Regular Audits: Security assessments and vulnerability testing',
             'Incident Response: Data breach notification within 72 hours',
         ],
-        footnote: 'While we strive to protect your data, no method of transmission over the Internet is 100% secure.',
     },
     {
         num: 6,
@@ -168,7 +152,6 @@ const SECTIONS: Section[] = [
             'Provide our services and fulfill orders',
             'Comply with Qatar\'s legal requirements (10-year retention for commercial records)',
             'Resolve disputes and enforce agreements',
-            'Maintain audit trails for regulatory compliance',
         ],
         footnote: 'When data is no longer needed, we securely delete or anonymize it.',
     },
@@ -176,14 +159,13 @@ const SECTIONS: Section[] = [
         num: 7,
         title: 'Your Rights',
         icon: 'hand-left',
-        content: 'Under Qatar\'s data protection laws and our policies, you have the right to:',
+        content: 'Under Qatar\'s data protection laws, you have the right to:',
         items: [
             'Access: Request a copy of your personal data',
             'Correction: Update or correct inaccurate information',
-            'Deletion: Request deletion of your account and data (subject to legal retention)',
-            'Portability: Request an export of your data in a common format',
+            'Deletion: Request deletion of your account and data',
+            'Portability: Request an export of your data',
             'Opt-out: Unsubscribe from marketing communications',
-            'Withdraw Consent: Revoke permissions for optional data processing',
         ],
         footnote: 'To exercise these rights, contact us at privacy@qscrap.qa. We will respond within 30 days.',
     },
@@ -195,29 +177,17 @@ const SECTIONS: Section[] = [
         items: [
             'Your profile and personal data will be removed or anonymized',
             'Order history may be retained in anonymized form for legal/audit purposes',
-            'Data required by law (invoices, transaction records) will be retained per Qatar Commercial Law',
+            'Data required by law will be retained per Qatar Commercial Law',
         ],
     },
     {
         num: 9,
         title: 'Children\'s Privacy',
         icon: 'people',
-        content: 'Our Apps are not intended for users under 18 years of age. We do not knowingly collect personal information from children under 18. If you believe a child has provided us with personal information, please contact us immediately.',
+        content: 'Our Apps are not intended for users under 18 years of age. We do not knowingly collect personal information from children under 18.',
     },
     {
         num: 10,
-        title: 'Third-Party Links',
-        icon: 'link',
-        content: 'Our Apps may contain links to third-party websites or services. We are not responsible for the privacy practices of these third parties. We encourage you to read their privacy policies before providing any personal information.',
-    },
-    {
-        num: 11,
-        title: 'International Data Transfers',
-        icon: 'earth',
-        content: 'Your information may be transferred to and processed on servers located outside Qatar. We ensure appropriate safeguards are in place to protect your data in accordance with Qatar\'s Law No. 13 of 2016.',
-    },
-    {
-        num: 12,
         title: 'Changes to This Policy',
         icon: 'create',
         content: 'We may update this Privacy Policy periodically. We will notify you of significant changes through:',
@@ -229,51 +199,45 @@ const SECTIONS: Section[] = [
         footnote: 'Continued use of our Apps after changes constitutes acceptance of the updated policy.',
     },
     {
-        num: 13,
+        num: 11,
         title: 'Governing Law',
         icon: 'scale',
         content: 'This Privacy Policy is governed by the laws of the State of Qatar, including Law No. 13 of 2016 on Personal Data Protection. Any disputes shall be subject to the exclusive jurisdiction of Qatar courts.',
     },
 ];
 
-/**
- * Privacy Policy Screen
- * Premium native layout — instant load, offline support, dark mode, RTL.
- */
 export default function PrivacyPolicyScreen() {
     const navigation = useNavigation();
-    const { colors, isDark } = useTheme();
-    const { t, isRTL } = useTranslation();
+    const { colors, isDarkMode } = useTheme();
+    const { t } = useI18n();
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
             {/* Premium Header */}
             <LinearGradient
-                colors={isDark ? ['#0A1628', '#0D1117'] : ['#1E3A5F', '#0F1F33']}
+                colors={isDarkMode ? ['#0A1628', '#0D1117'] : ['#1E3A5F', '#0F1F33']}
                 style={styles.heroGradient}
             >
-                {/* Back button row */}
-                <View style={[styles.headerRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View style={styles.headerRow}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
                         style={styles.backButton}
                         accessibilityRole="button"
-                        accessibilityLabel={t('common.back')}
+                        accessibilityLabel="Go back"
                     >
-                        <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={22} color="#fff" />
+                        <Ionicons name="arrow-back" size={22} color="#fff" />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }} />
                 </View>
 
-                {/* Hero content */}
                 <View style={styles.heroContent}>
                     <View style={styles.heroBadge}>
                         <Ionicons name="shield-checkmark" size={14} color="#4ADE80" />
                         <Text style={styles.heroBadgeText}>Your Data is Protected</Text>
                     </View>
-                    <Text style={styles.heroTitle}>{t('settings.privacyPolicy')}</Text>
+                    <Text style={styles.heroTitle}>{t('privacy_policy')}</Text>
                     <Text style={styles.heroArabic}>سياسة الخصوصية</Text>
                     <Text style={styles.heroDate}>Last updated: January 31, 2026</Text>
                 </View>
@@ -286,7 +250,7 @@ export default function PrivacyPolicyScreen() {
             >
                 {/* Summary Card */}
                 <LinearGradient
-                    colors={isDark ? ['#0A1628', '#0D1117'] : ['#1E3A5F', '#0F1F33']}
+                    colors={isDarkMode ? ['#0A1628', '#0D1117'] : ['#1E3A5F', '#0F1F33']}
                     style={styles.summaryCard}
                 >
                     <View style={styles.summaryIconWrap}>
@@ -294,15 +258,14 @@ export default function PrivacyPolicyScreen() {
                     </View>
                     <Text style={styles.summaryTitle}>Your Privacy is Our Priority</Text>
                     <Text style={styles.summaryText}>
-                        This Privacy Policy explains how QScrap Services & Trading L.L.C collects, uses, shares, and protects your personal information. We are committed to transparency and compliance with Qatar's Law No. 13 of 2016 on Personal Data Protection.
+                        This Privacy Policy explains how QScrap Services & Trading L.L.C collects, uses, shares, and protects your personal information. We are committed to transparency and compliance with Qatar's data protection laws.
                     </Text>
                 </LinearGradient>
 
                 {/* Sections */}
                 {SECTIONS.map((section) => (
                     <View key={section.num} style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-                        {/* Section Header */}
-                        <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <View style={styles.sectionHeader}>
                             <View style={[styles.sectionNumBadge, { backgroundColor: '#1E3A5F' }]}>
                                 <Text style={styles.sectionNumText}>{section.num}</Text>
                             </View>
@@ -312,56 +275,51 @@ export default function PrivacyPolicyScreen() {
                             <Ionicons name={section.icon as any} size={20} color="#1E3A5F" style={{ opacity: 0.35 }} />
                         </View>
 
-                        {/* Content */}
                         {section.content && (
                             <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
                                 {section.content}
                             </Text>
                         )}
 
-                        {/* List items (top-level) */}
                         {section.items && section.items.map((item, idx) => (
-                            <View key={idx} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Ionicons name="checkmark" size={16} color="#1E3A5F" style={[styles.listIcon, isRTL && { marginLeft: Spacing.sm, marginRight: 0 }]} />
-                                <Text style={[styles.listText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+                            <View key={idx} style={styles.listItem}>
+                                <Ionicons name="checkmark" size={16} color="#1E3A5F" style={styles.listIcon} />
+                                <Text style={[styles.listText, { color: colors.textSecondary }]}>{item}</Text>
                             </View>
                         ))}
 
                         {/* Subsections */}
                         {section.subsections && section.subsections.map((sub, idx) => (
                             <View key={idx} style={styles.subsection}>
-                                <View style={[styles.subsectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <View style={styles.subsectionHeader}>
                                     <View style={styles.subsectionBar} />
-                                    <Text style={[styles.subsectionTitle, { color: isDark ? '#6BA3D6' : '#1E3A5F' }]}>{sub.title}</Text>
+                                    <Text style={[styles.subsectionTitle, { color: isDarkMode ? '#6BA3D6' : '#1E3A5F' }]}>{sub.title}</Text>
                                 </View>
                                 {sub.content && (
                                     <Text style={[styles.sectionText, { color: colors.textSecondary }]}>{sub.content}</Text>
                                 )}
                                 {sub.items && sub.items.map((item, i) => (
-                                    <View key={i} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                        <Ionicons name="checkmark" size={16} color={Colors.secondary} style={[styles.listIcon, isRTL && { marginLeft: Spacing.sm, marginRight: 0 }]} />
-                                        <Text style={[styles.listText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+                                    <View key={i} style={styles.listItem}>
+                                        <Ionicons name="checkmark" size={16} color={Colors.secondary} style={styles.listIcon} />
+                                        <Text style={[styles.listText, { color: colors.textSecondary }]}>{item}</Text>
                                     </View>
                                 ))}
                             </View>
                         ))}
 
-                        {/* Footnote */}
                         {section.footnote && (
                             <Text style={[styles.footnote, { color: colors.textMuted }]}>{section.footnote}</Text>
                         )}
 
-                        {/* Highlight box */}
                         {section.highlight && (
                             <View style={[
                                 styles.highlightBox,
                                 {
-                                    backgroundColor: isDark
+                                    backgroundColor: isDarkMode
                                         ? (section.highlight.type === 'gold' ? 'rgba(201,162,39,0.1)' : 'rgba(30,58,95,0.15)')
                                         : (section.highlight.type === 'gold' ? '#FFF9E6' : '#EFF6FF'),
                                     borderLeftColor: section.highlight.type === 'gold' ? Colors.secondary : '#1E3A5F',
                                 },
-                                isRTL && styles.highlightBoxRTL,
                             ]}>
                                 <Ionicons
                                     name={section.highlight.type === 'gold' ? 'lock-closed' : 'information-circle'}
@@ -379,15 +337,15 @@ export default function PrivacyPolicyScreen() {
 
                 {/* Contact Card */}
                 <LinearGradient
-                    colors={isDark ? ['#141416', '#1C1C1F'] : ['#1A1A1A', '#2A2A2A']}
+                    colors={isDarkMode ? ['#141416', '#1C1C1F'] : ['#1A1A1A', '#2A2A2A']}
                     style={styles.contactCard}
                 >
                     <Text style={styles.contactTitle}>Contact Us</Text>
                     <View style={styles.contactGrid}>
-                        <ContactItem icon="shield" label="Data Protection Officer" value="privacy@qscrap.qa" isRTL={isRTL} />
-                        <ContactItem icon="mail" label="General Support" value="support@qscrap.qa" isRTL={isRTL} />
-                        <ContactItem icon="call" label="Phone" value="+974 5026 7974" isRTL={isRTL} />
-                        <ContactItem icon="location" label="Address" value="Industrial Area, Street 10, Doha, Qatar" isRTL={isRTL} />
+                        <ContactItem icon="shield" label="Data Protection Officer" value="privacy@qscrap.qa" />
+                        <ContactItem icon="mail" label="General Support" value="support@qscrap.qa" />
+                        <ContactItem icon="call" label="Phone" value="+974 5026 7974" />
+                        <ContactItem icon="location" label="Address" value="Industrial Area, Street 10, Doha, Qatar" />
                     </View>
                     <View style={styles.contactLegal}>
                         <Text style={styles.companyName}>QScrap Services & Trading L.L.C</Text>
@@ -396,24 +354,20 @@ export default function PrivacyPolicyScreen() {
                     </View>
                 </LinearGradient>
 
-                {/* Footer */}
                 <Text style={[styles.footerText, { color: colors.textMuted }]}>
                     © 2026 QScrap Services & Trading L.L.C. All rights reserved.
                 </Text>
                 <Text style={[styles.footerCompliance, { color: colors.textMuted }]}>
-                    Compliant with Google Play Developer Program Policies and Qatar's Personal Data Protection Law.
+                    Compliant with Google Play Policies and Qatar's Personal Data Protection Law.
                 </Text>
             </ScrollView>
         </SafeAreaView>
     );
 }
 
-// ============================================
-// CONTACT ITEM COMPONENT
-// ============================================
-function ContactItem({ icon, label, value, isRTL }: { icon: string; label: string; value: string; isRTL: boolean }) {
+function ContactItem({ icon, label, value }: { icon: string; label: string; value: string }) {
     return (
-        <View style={[styles.contactItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
+        <View style={styles.contactItem}>
             <View style={styles.contactIconWrap}>
                 <Ionicons name={icon as any} size={18} color="#4ADE80" />
             </View>
@@ -425,261 +379,60 @@ function ContactItem({ icon, label, value, isRTL }: { icon: string; label: strin
     );
 }
 
-// ============================================
-// STYLES
-// ============================================
 const styles = StyleSheet.create({
     container: { flex: 1 },
-
-    // Hero
-    heroGradient: {
-        paddingBottom: Spacing.xl,
-        paddingHorizontal: Spacing.lg,
-    },
-    headerRow: {
-        alignItems: 'center',
-        paddingTop: Spacing.sm,
-        marginBottom: Spacing.md,
-    },
+    heroGradient: { paddingBottom: Spacing.xl, paddingHorizontal: Spacing.lg },
+    headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: Spacing.sm, marginBottom: Spacing.md },
     backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: BorderRadius.xl,
-        backgroundColor: 'rgba(255,255,255,0.12)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: 40, height: 40, borderRadius: BorderRadius.xl,
+        backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center',
     },
     heroContent: { alignItems: 'center' },
     heroBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        backgroundColor: 'rgba(74,222,128,0.15)',
-        borderWidth: 1,
-        borderColor: 'rgba(74,222,128,0.4)',
-        borderRadius: BorderRadius.full,
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        paddingHorizontal: 16, paddingVertical: 6,
+        backgroundColor: 'rgba(74,222,128,0.15)', borderWidth: 1,
+        borderColor: 'rgba(74,222,128,0.4)', borderRadius: BorderRadius.full,
         marginBottom: Spacing.md,
     },
-    heroBadgeText: {
-        fontSize: FontSizes.xs,
-        fontWeight: '600',
-        color: '#4ADE80',
-        letterSpacing: 0.5,
-    },
-    heroTitle: {
-        fontSize: width < 380 ? 26 : 32,
-        fontWeight: '800',
-        color: '#fff',
-        textAlign: 'center',
-        marginBottom: Spacing.xs,
-    },
-    heroArabic: {
-        fontSize: width < 380 ? 18 : 22,
-        fontWeight: '600',
-        color: '#4ADE80',
-        textAlign: 'center',
-        marginBottom: Spacing.sm,
-    },
-    heroDate: {
-        fontSize: FontSizes.xs,
-        color: 'rgba(255,255,255,0.65)',
-    },
-
-    // Scroll
+    heroBadgeText: { fontSize: FontSizes.xs, fontWeight: '600', color: '#4ADE80', letterSpacing: 0.5 },
+    heroTitle: { fontSize: width < 380 ? 26 : 32, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: Spacing.xs },
+    heroArabic: { fontSize: width < 380 ? 18 : 22, fontWeight: '600', color: '#4ADE80', textAlign: 'center', marginBottom: Spacing.sm },
+    heroDate: { fontSize: FontSizes.xs, color: 'rgba(255,255,255,0.65)' },
     scrollView: { flex: 1 },
     scrollContent: { padding: Spacing.lg, paddingBottom: Spacing.xxxl },
-
-    // Summary card
-    summaryCard: {
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.xl,
-        marginBottom: Spacing.lg,
-        overflow: 'hidden',
-    },
-    summaryIconWrap: {
-        position: 'absolute',
-        top: 16,
-        right: 20,
-    },
-    summaryTitle: {
-        fontSize: FontSizes.lg,
-        fontWeight: '700',
-        color: '#4ADE80',
-        marginBottom: Spacing.sm,
-    },
-    summaryText: {
-        fontSize: FontSizes.md,
-        lineHeight: 22,
-        color: 'rgba(255,255,255,0.88)',
-    },
-
-    // Section cards
-    sectionCard: {
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.xl,
-        marginBottom: Spacing.md,
-        borderWidth: 1,
-        ...Shadows.sm,
-    },
-    sectionHeader: {
-        alignItems: 'center',
-        marginBottom: Spacing.md,
-        gap: Spacing.sm,
-    },
-    sectionNumBadge: {
-        width: 36,
-        height: 36,
-        borderRadius: BorderRadius.md,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    sectionNumText: {
-        fontSize: FontSizes.md,
-        fontWeight: '700',
-        color: '#fff',
-    },
+    summaryCard: { borderRadius: BorderRadius.xl, padding: Spacing.xl, marginBottom: Spacing.lg, overflow: 'hidden' },
+    summaryIconWrap: { position: 'absolute', top: 16, right: 20 },
+    summaryTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#4ADE80', marginBottom: Spacing.sm },
+    summaryText: { fontSize: FontSizes.md, lineHeight: 22, color: 'rgba(255,255,255,0.88)' },
+    sectionCard: { borderRadius: BorderRadius.xl, padding: Spacing.xl, marginBottom: Spacing.md, borderWidth: 1, ...Shadows.sm },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md, gap: Spacing.sm },
+    sectionNumBadge: { width: 36, height: 36, borderRadius: BorderRadius.md, justifyContent: 'center', alignItems: 'center' },
+    sectionNumText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
     sectionTitleWrap: { flex: 1 },
-    sectionTitle: {
-        fontSize: width < 380 ? FontSizes.lg : 18,
-        fontWeight: '700',
-    },
-
-    // Content
-    sectionText: {
-        fontSize: FontSizes.md,
-        lineHeight: 24,
-        marginBottom: Spacing.sm,
-    },
-    listItem: {
-        alignItems: 'flex-start',
-        marginBottom: Spacing.sm,
-    },
-    listIcon: {
-        marginRight: Spacing.sm,
-        marginTop: 3,
-    },
-    listText: {
-        flex: 1,
-        fontSize: FontSizes.md,
-        lineHeight: 22,
-    },
-    footnote: {
-        fontSize: FontSizes.sm,
-        fontStyle: 'italic',
-        marginTop: Spacing.sm,
-        lineHeight: 20,
-    },
-
-    // Subsections
-    subsection: {
-        marginTop: Spacing.md,
-    },
-    subsectionHeader: {
-        alignItems: 'center',
-        gap: Spacing.sm,
-        marginBottom: Spacing.sm,
-    },
-    subsectionBar: {
-        width: 4,
-        height: 20,
-        backgroundColor: Colors.secondary,
-        borderRadius: 2,
-    },
-    subsectionTitle: {
-        fontSize: FontSizes.md,
-        fontWeight: '600',
-        flex: 1,
-    },
-
-    // Highlight box
-    highlightBox: {
-        flexDirection: 'row',
-        borderLeftWidth: 4,
-        borderRadius: BorderRadius.sm,
-        padding: Spacing.md,
-        marginTop: Spacing.md,
-    },
-    highlightBoxRTL: {
-        borderLeftWidth: 0,
-        borderRightWidth: 4,
-    },
-    highlightText: {
-        fontSize: FontSizes.sm,
-        lineHeight: 20,
-        fontWeight: '500',
-    },
-
-    // Contact card
-    contactCard: {
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.xl,
-        marginTop: Spacing.lg,
-    },
-    contactTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#4ADE80',
-        marginBottom: Spacing.lg,
-    },
+    sectionTitle: { fontSize: width < 380 ? FontSizes.lg : 18, fontWeight: '700' },
+    sectionText: { fontSize: FontSizes.md, lineHeight: 24, marginBottom: Spacing.sm },
+    listItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.sm },
+    listIcon: { marginRight: Spacing.sm, marginTop: 3 },
+    listText: { flex: 1, fontSize: FontSizes.md, lineHeight: 22 },
+    footnote: { fontSize: FontSizes.sm, fontStyle: 'italic', marginTop: Spacing.sm, lineHeight: 20 },
+    subsection: { marginTop: Spacing.md },
+    subsectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
+    subsectionBar: { width: 4, height: 20, backgroundColor: Colors.secondary, borderRadius: 2 },
+    subsectionTitle: { fontSize: FontSizes.md, fontWeight: '600', flex: 1 },
+    highlightBox: { flexDirection: 'row', borderLeftWidth: 4, borderRadius: BorderRadius.sm, padding: Spacing.md, marginTop: Spacing.md },
+    highlightText: { fontSize: FontSizes.sm, lineHeight: 20, fontWeight: '500' },
+    contactCard: { borderRadius: BorderRadius.xl, padding: Spacing.xl, marginTop: Spacing.lg },
+    contactTitle: { fontSize: 20, fontWeight: '700', color: '#4ADE80', marginBottom: Spacing.lg },
     contactGrid: { gap: Spacing.md },
-    contactItem: {
-        alignItems: 'center',
-        gap: Spacing.sm,
-    },
-    contactIconWrap: {
-        width: 40,
-        height: 40,
-        borderRadius: BorderRadius.md,
-        backgroundColor: 'rgba(74,222,128,0.12)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    contactLabel: {
-        fontSize: FontSizes.xs,
-        color: '#9A9A9A',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        marginBottom: 2,
-    },
-    contactValue: {
-        fontSize: FontSizes.md,
-        color: '#fff',
-    },
-    contactLegal: {
-        marginTop: Spacing.lg,
-        paddingTop: Spacing.lg,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.1)',
-        alignItems: 'center',
-    },
-    companyName: {
-        fontSize: FontSizes.lg,
-        fontWeight: '600',
-        color: '#fff',
-        marginBottom: 4,
-    },
-    companyArabic: {
-        fontSize: FontSizes.md,
-        color: '#4ADE80',
-        marginBottom: Spacing.sm,
-    },
-    companyCR: {
-        fontSize: FontSizes.sm,
-        color: '#9A9A9A',
-    },
-
-    // Footer
-    footerText: {
-        fontSize: FontSizes.sm,
-        textAlign: 'center',
-        marginTop: Spacing.xl,
-    },
-    footerCompliance: {
-        fontSize: FontSizes.xs,
-        textAlign: 'center',
-        marginTop: Spacing.xs,
-        lineHeight: 18,
-    },
+    contactItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    contactIconWrap: { width: 40, height: 40, borderRadius: BorderRadius.md, backgroundColor: 'rgba(74,222,128,0.12)', justifyContent: 'center', alignItems: 'center' },
+    contactLabel: { fontSize: FontSizes.xs, color: '#9A9A9A', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+    contactValue: { fontSize: FontSizes.md, color: '#fff' },
+    contactLegal: { marginTop: Spacing.lg, paddingTop: Spacing.lg, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', alignItems: 'center' },
+    companyName: { fontSize: FontSizes.lg, fontWeight: '600', color: '#fff', marginBottom: 4 },
+    companyArabic: { fontSize: FontSizes.md, color: '#4ADE80', marginBottom: Spacing.sm },
+    companyCR: { fontSize: FontSizes.sm, color: '#9A9A9A' },
+    footerText: { fontSize: FontSizes.sm, textAlign: 'center', marginTop: Spacing.xl },
+    footerCompliance: { fontSize: FontSizes.xs, textAlign: 'center', marginTop: Spacing.xs, lineHeight: 18 },
 });

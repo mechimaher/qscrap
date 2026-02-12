@@ -93,11 +93,11 @@ export default function ProfileScreen() {
     };
 
     const handleTerms = () => {
-        navigation.navigate('WebView', { url: 'https://qscrap.qa/terms.html', title: t('terms_conditions') });
+        navigation.navigate('Terms' as never);
     };
 
     const handlePrivacyPolicy = () => {
-        navigation.navigate('WebView', { url: 'https://qscrap.qa/privacy.html', title: t('privacy_policy') });
+        navigation.navigate('PrivacyPolicy' as never);
     };
 
     const handleDeleteAccount = () => {

@@ -35,7 +35,7 @@ export function AssignmentCard({ assignment, colors, onPress }: AssignmentCardPr
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={[styles.typeBadge, { backgroundColor: typeConfig?.color + '20' }]}>
-                        <Text>{typeConfig?.icon}</Text>
+                        <Ionicons name={(typeConfig?.icon || 'cube-outline') as any} size={14} color={typeConfig?.color} />
                         <Text style={[styles.typeText, { color: typeConfig?.color }]}>
                             {typeConfig?.label}
                         </Text>

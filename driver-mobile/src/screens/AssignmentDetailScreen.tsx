@@ -201,8 +201,9 @@ export default function AssignmentDetailScreen() {
                 <View style={styles.headerCenter}>
                     <Text style={styles.orderNumber}>#{assignment.order_number}</Text>
                     <View style={styles.statusBadge}>
+                        {statusConfig?.icon && <Ionicons name={statusConfig.icon as any} size={14} color="#fff" style={{ marginRight: 4 }} />}
                         <Text style={styles.statusText}>
-                            {statusConfig?.icon} {statusConfig?.label}
+                            {statusConfig?.label}
                         </Text>
                     </View>
                 </View>

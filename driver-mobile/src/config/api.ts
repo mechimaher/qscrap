@@ -33,7 +33,7 @@ export const API_ENDPOINTS = {
 
     // Notifications
     NOTIFICATIONS: '/notifications',
-    NOTIFICATIONS_REGISTER: '/notifications/register',
+    NOTIFICATIONS_REGISTER: '/notifications/register-token',
     MARK_NOTIFICATION_READ: (id: string) => `/notifications/${id}/read`,
 
     // Chat

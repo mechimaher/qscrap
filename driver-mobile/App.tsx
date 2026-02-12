@@ -32,7 +32,8 @@ import ChatScreen from './src/screens/ChatScreen';
 
 
 import ProofOfDeliveryScreen from './src/screens/ProofOfDeliveryScreen';
-import WebViewScreen from './src/screens/WebViewScreen';
+import TermsScreen from './src/screens/TermsScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 
 // Navigation Types
 // Navigation ref for deep linking from push notifications
@@ -224,9 +225,14 @@ function RootNavigator() {
 
 
                     <RootStack.Screen
-                        name="WebView"
-                        component={WebViewScreen}
-                        options={{ animation: 'slide_from_bottom' }}
+                        name="Terms"
+                        component={TermsScreen}
+                        options={{ animation: 'slide_from_right' }}
+                    />
+                    <RootStack.Screen
+                        name="PrivacyPolicy"
+                        component={PrivacyPolicyScreen}
+                        options={{ animation: 'slide_from_right' }}
                     />
                 </>
             )}

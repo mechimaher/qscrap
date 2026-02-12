@@ -1000,7 +1000,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: Colors.border,
+        backgroundColor: Colors.light.border,
         alignSelf: 'center',
         marginBottom: Spacing.lg,
     },
@@ -1024,7 +1024,7 @@ const styles = StyleSheet.create({
     driverCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.surfaceSecondary,
+        backgroundColor: Colors.light.surfaceSecondary,
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
         marginBottom: Spacing.md,
@@ -1062,12 +1062,12 @@ const styles = StyleSheet.create({
     messageDriverIcon: { fontSize: 20 },
     // Premium Order Card Styles
     orderCard: {
-        backgroundColor: Colors.surfaceSecondary,
+        backgroundColor: Colors.light.surfaceSecondary,
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.border,
+        borderColor: Colors.light.border,
     },
     statusTimeline: {
         flexDirection: 'row',
