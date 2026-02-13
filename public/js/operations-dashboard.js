@@ -279,7 +279,7 @@ function setupSocketListeners() {
     socket.on('order_status_updated', () => { loadStats(); loadOrders(); });
     socket.on('delivery_status_updated', (data) => {
         if (data.new_status === 'delivered') {
-            showToast(`📦 Order #${data.order_number} delivered by driver!`, 'success');
+            showToast(`Order #${data.order_number} delivered by driver!`, 'success');
         }
         loadStats();
         loadOrders();
@@ -290,22 +290,22 @@ function setupSocketListeners() {
 
     // Order cancelled by customer/garage - CRITICAL for ops awareness
     socket.on('order_cancelled', (data) => {
-        const by = data.cancelled_by === 'customer' ? '👤 Customer' : data.cancelled_by === 'garage' ? '🔧 Garage' : '⚙️ System';
-        showToast(`❌ Order #${data.order_number || ''} cancelled by ${by}`, 'warning');
+        const by = data.cancelled_by === 'customer' ? 'Customer' : data.cancelled_by === 'garage' ? 'Garage' : 'System';
+        showToast(`Order #${data.order_number || ''} cancelled by ${by}`, 'warning');
         loadStats();
         loadOrders();
     });
 
     // New return request - needs ops review
     socket.on('new_return_request', (data) => {
-        showToast(`🔄 Return request for Order #${data.order_number || ''}`, 'warning');
+        showToast(`Return request for Order #${data.order_number || ''}`, 'warning');
         loadStats();
         loadReturns();
     });
 
     // Order collected - ready for driver assignment
     socket.on('order_collected', (data) => {
-        showToast(`📦 Order #${data.order_number || ''} collected - ready for delivery!`, 'info');
+        showToast(`Order #${data.order_number || ''} collected - ready for delivery!`, 'info');
         loadOrders();
         loadDeliveryData();
     });
@@ -313,7 +313,7 @@ function setupSocketListeners() {
 
     // Order ready for pickup notification (from garage)
     socket.on('order_ready_for_pickup', (data) => {
-        showToast(data.notification || '📦 Order ready for collection!', 'warning');
+        showToast(data.notification || 'Order ready for collection!', 'warning');
         loadStats();
         loadOrders();
         // Update orders badge
@@ -327,7 +327,7 @@ function setupSocketListeners() {
 
     // Payment/Payout Real-time Events
     socket.on('payment_confirmed', (data) => {
-        showToast(data.notification || '✅ Garage confirmed payment receipt!', 'success');
+        showToast(data.notification || 'Garage confirmed payment receipt!', 'success');
         // Refresh finance data if on finance section
         const activeSection = document.querySelector('.section.active');
         if (activeSection && activeSection.id === 'sectionFinance') {
@@ -344,7 +344,7 @@ function setupSocketListeners() {
     });
 
     socket.on('payout_completed', (data) => {
-        showToast(data.notification || '✅ Payout completed!', 'success');
+        showToast(data.notification || 'Payout completed!', 'success');
         loadStats();
         const activeSection = document.querySelector('.section.active');
         if (activeSection && activeSection.id === 'sectionFinance') {
@@ -365,7 +365,7 @@ function setupSocketListeners() {
 
     // NEW: Payout pending notification - shows finance badge
     socket.on('payout_pending', (data) => {
-        showToast(data.notification || '💰 New payout pending for garage', 'warning');
+        showToast(data.notification || 'New payout pending for garage', 'warning');
         // Update the finance badge
         const badge = document.getElementById('financeBadge');
         if (badge) {
@@ -382,7 +382,7 @@ function setupSocketListeners() {
 
     // NEW: Review moderation notification
     socket.on('new_review_pending', (data) => {
-        showToast(data.notification || '⭐ New review submitted - pending moderation', 'info');
+        showToast(data.notification || 'New review submitted - pending moderation', 'info');
         // Update the reviews badge
         const badge = document.getElementById('reviewModerationBadge');
         if (badge) {
@@ -417,7 +417,7 @@ function setupSocketListeners() {
     // Return assignment created - when refund approved and part needs to go back to garage
     socket.on('return_assignment_created', (data) => {
         console.log('[SOCKET] Return assignment created:', data);
-        showToast(data.notification || `📦 Return pending: Order #${data.order_number} needs driver`, 'warning');
+        showToast(data.notification || `Return pending: Order #${data.order_number} needs driver`, 'warning');
         // Update delivery badge
         const badge = document.getElementById('deliveryBadge');
         if (badge) {
@@ -630,33 +630,36 @@ function getOrderActions(order) {
 
 // Cancel stuck/orphan order (operations)
 async function cancelStuckOrder(orderId, orderNumber) {
-    if (!confirm(`Cancel order #${orderNumber}? This will mark it as cancelled by operations.`)) {
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/operations/orders/${orderId}/cancel`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason: 'Cancelled by operations - stuck payment' })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast(`Order #${orderNumber} cancelled successfully`, 'success');
-            loadStats();
-            loadOrders();
-        } else {
-            showToast(data.error || 'Failed to cancel order', 'error');
+    QScrapModal.confirm({
+        title: 'Cancel Order',
+        message: `Cancel order #${orderNumber}? This will mark it as cancelled by operations.`,
+        confirmText: 'Cancel Order',
+        cancelText: 'Keep Order',
+        variant: 'danger',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/operations/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: 'Cancelled by operations - stuck payment' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Order #${orderNumber} cancelled successfully`, 'success');
+                    loadStats();
+                    loadOrders();
+                } else {
+                    showToast(data.error || 'Failed to cancel order', 'error');
+                }
+            } catch (err) {
+                console.error('Cancel order error:', err);
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        console.error('Cancel order error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 
@@ -885,7 +888,7 @@ async function loadOrders(page = 1) {
             document.getElementById('ordersTable').innerHTML = data.orders.map(o => {
                 const hasDiscount = parseFloat(o.loyalty_discount) > 0;
                 const discountBadge = hasDiscount
-                    ? `<span style="display:inline-block; background:#10B981; color:white; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px;" title="Loyalty Discount: -${o.loyalty_discount} QAR">🎁 -${o.loyalty_discount}</span>`
+                    ? `<span style="display:inline-block; background:#10B981; color:white; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px;" title="Loyalty Discount: -${o.loyalty_discount} QAR"><i class="bi bi-gift"></i> -${o.loyalty_discount}</span>`
                     : '';
                 return `
                         <tr class="${getRowClass(o)}">
@@ -925,78 +928,6 @@ async function loadOrders(page = 1) {
     }
 }
 
-// Pagination state for disputes
-let currentDisputesPage = 1;
-const DISPUTES_PER_PAGE = 20;
-
-async function loadDisputes(page = 1) {
-    try {
-        currentDisputesPage = page;
-        const res = await fetch(`${API_URL}/operations/disputes?status=${currentDisputeStatus}&page=${page}&limit=${DISPUTES_PER_PAGE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const reasonLabels = {
-            wrong_part: 'Wrong Part',
-            doesnt_fit: "Doesn't Fit",
-            damaged: 'Damaged',
-            not_as_described: 'Not as Described',
-            changed_mind: 'Changed Mind'
-        };
-
-        if (data.disputes && data.disputes.length) {
-            document.getElementById('orderDisputesTable').innerHTML = data.disputes.map(d => {
-                // Determine row highlighting
-                let rowClass = '';
-                if (d.status === 'pending' || d.status === 'contested') {
-                    rowClass = 'needs-attention-red';
-                }
-
-                // Determine action column based on status
-                let actionCol = '';
-                if (d.status === 'pending' || d.status === 'contested') {
-                    actionCol = `
-                                <button class="btn btn-success btn-sm" id="approveBtn-${d.dispute_id}" onclick="resolveDispute('${d.dispute_id}', 'refund_approved')">
-                                    <i class="bi bi-check-lg"></i> Approve
-                                </button>
-                                <button class="btn btn-danger btn-sm" id="denyBtn-${d.dispute_id}" onclick="resolveDispute('${d.dispute_id}', 'refund_denied')" style="margin-left: 5px;">
-                                    <i class="bi bi-x-lg"></i> Deny
-                                </button>
-                            `;
-                } else if (d.status === 'resolved') {
-                    const resolutionBadge = d.resolution === 'refund_approved'
-                        ? '<span class="status-badge completed"><i class="bi bi-check-circle"></i> Refund Approved</span>'
-                        : '<span class="status-badge cancelled"><i class="bi bi-x-circle"></i> Refund Denied</span>';
-                    actionCol = resolutionBadge;
-                } else {
-                    actionCol = `<span class="status-badge ${d.status}">${d.status}</span>`;
-                }
-
-                return `
-                            <tr id="dispute-row-${d.dispute_id}" class="${rowClass}">
-                                <td><strong>#${d.order_number}</strong></td>
-                                <td>${escapeHTML(d.customer_name)}<br><small style="color: var(--text-muted);">${escapeHTML(d.customer_phone)}</small></td>
-                                <td>${escapeHTML(reasonLabels[d.reason] || d.reason)}</td>
-                                <td><span class="status-badge ${d.status}">${d.status}</span></td>
-                                <td><strong>${d.refund_amount} QAR</strong></td>
-                                <td>${actionCol}</td>
-                            </tr>
-                        `;
-            }).join('');
-
-            // Render pagination controls
-            if (data.pagination) {
-                renderPagination('disputesPagination', data.pagination, 'loadDisputes');
-            }
-        } else {
-            document.getElementById('orderDisputesTable').innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i><h4>No disputes</h4></td></tr>';
-            document.getElementById('disputesPagination').innerHTML = '';
-        }
-    } catch (err) {
-        console.error('Failed to load disputes:', err);
-    }
-}
 
 // ============================================
 // ESCALATIONS (from Support Dashboard)
@@ -1082,30 +1013,37 @@ async function loadEscalations() {
 }
 
 async function resolveEscalation(escalationId) {
-    const notes = prompt('Resolution notes (optional):');
-
-    try {
-        const res = await fetch(`${API_URL}/operations/escalations/${escalationId}/resolve`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ resolution_notes: notes || 'Resolved by operations' })
-        });
-
-        if (res.ok) {
-            showToast('Escalation resolved', 'success');
-            loadEscalations();
-            loadStats();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to resolve', 'error');
+    QScrapModal.prompt({
+        title: 'Resolve Escalation',
+        message: 'Add resolution notes (optional):',
+        inputType: 'textarea',
+        placeholder: 'Resolution notes...',
+        confirmText: 'Resolve',
+        variant: 'success',
+        onConfirm: async (notes) => {
+            try {
+                const res = await fetch(`${API_URL}/operations/escalations/${escalationId}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ resolution_notes: notes || 'Resolved by operations' })
+                });
+                if (res.ok) {
+                    showToast('Escalation resolved', 'success');
+                    loadEscalations();
+                    loadStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to resolve', 'error');
+                }
+            } catch (err) {
+                console.error('Resolve escalation error:', err);
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        console.error('Resolve escalation error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 // View ticket details from escalation
@@ -1199,50 +1137,6 @@ function formatTimeAgo(dateStr) {
     return `${diffDays}d ago`;
 }
 
-// Pagination state for users
-let currentUsersPage = 1;
-const USERS_PER_PAGE = 20;
-
-async function loadUsers(page = 1) {
-    currentUsersPage = page;
-    try {
-        const res = await fetch(`${API_URL}/operations/users?type=${currentUserType}&page=${page}&limit=${USERS_PER_PAGE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.users && data.users.length) {
-            document.getElementById('usersTable').innerHTML = data.users.map(u => {
-                const userId = currentUserType === 'garage' ? u.garage_id : u.user_id;
-                const name = currentUserType === 'garage' ? u.garage_name : u.full_name;
-                const contact = u.phone || u.phone_number || u.email || 'N/A';
-                return `
-                            <tr>
-                                <td><strong>${name}</strong></td>
-                                <td>${contact}</td>
-                                <td>${u.total_orders || 0} orders</td>
-                                <td>${new Date(u.created_at || u.user_created).toLocaleDateString()}</td>
-                                <td>
-                                    <button class="btn btn-ghost btn-sm" onclick="viewUser('${userId}', '${currentUserType}')">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-            }).join('');
-
-            // Render pagination controls
-            if (data.pagination) {
-                renderPagination('usersPagination', data.pagination, 'loadUsers');
-            }
-        } else {
-            document.getElementById('usersTable').innerHTML = '<tr><td colspan="5" class="empty-state"><i class="bi bi-people"></i><h4>No users found</h4></td></tr>';
-            document.getElementById('usersPagination').innerHTML = '';
-        }
-    } catch (err) {
-        console.error('Failed to load users:', err);
-    }
-}
 
 // View User Detail Modal
 async function viewUser(userId, userType) {
@@ -1339,24 +1233,33 @@ async function viewUser(userId, userType) {
 }
 
 async function suspendUser(userId) {
-    const reason = prompt('Suspension reason (optional):');
-    try {
-        const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason: reason || 'Suspended by operations team' })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showToast(data.message || 'User suspended', 'success');
-            document.getElementById('userDetailModal')?.remove();
-            loadUsers();
-        } else {
-            showToast(data.error || 'Failed to suspend user', 'error');
+    QScrapModal.prompt({
+        title: 'Suspend User',
+        message: 'Provide a reason for suspension (optional):',
+        inputType: 'textarea',
+        placeholder: 'Suspension reason...',
+        confirmText: 'Suspend',
+        variant: 'danger',
+        onConfirm: async (reason) => {
+            try {
+                const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: reason || 'Suspended by operations team' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'User suspended', 'success');
+                    document.getElementById('userDetailModal')?.remove();
+                    loadUsers();
+                } else {
+                    showToast(data.error || 'Failed to suspend user', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 async function activateUser(userId) {
@@ -1807,16 +1710,16 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
 
         // Generate driver options with distance badges
         const getDistanceBadge = (km) => {
-            if (km === null) return '<span class="badge" style="background: #6b7280; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">📍 No GPS</span>';
-            if (km < 3) return `<span class="badge" style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">🟢 ${km} km</span>`;
-            if (km < 8) return `<span class="badge" style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">🟡 ${km} km</span>`;
-            return `<span class="badge" style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">🔴 ${km} km</span>`;
+            if (km === null) return '<span class="badge" style="background: #6b7280; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;"><i class="bi bi-geo-alt"></i> No GPS</span>';
+            if (km < 3) return `<span class="badge" style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;"><i class="bi bi-circle-fill" style="font-size:6px;vertical-align:middle"></i> ${km} km</span>`;
+            if (km < 8) return `<span class="badge" style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;"><i class="bi bi-circle-fill" style="font-size:6px;vertical-align:middle"></i> ${km} km</span>`;
+            return `<span class="badge" style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;"><i class="bi bi-circle-fill" style="font-size:6px;vertical-align:middle"></i> ${km} km</span>`;
         };
 
         const driverOptions = drivers.map((d, idx) => {
             const isRecommended = idx === 0 && d.distance_km !== null;
-            const recommendedLabel = isRecommended ? ' ⭐ Recommended' : '';
-            const statusIcon = d.status === 'available' ? '🟢' : '🟡';
+            const recommendedLabel = isRecommended ? ' <i class="bi bi-star-fill"></i> Recommended' : '';
+            const statusIcon = d.status === 'available' ? '<i class="bi bi-circle-fill" style="color:#22c55e;font-size:8px"></i>' : '<i class="bi bi-circle-fill" style="color:#f59e0b;font-size:8px"></i>';
             return `<option value="${d.driver_id}" ${isRecommended ? 'selected' : ''}>
                 ${statusIcon} ${d.full_name} (${d.vehicle_type || 'Car'}) - ${d.distance_km !== null ? d.distance_km + ' km' : 'No GPS'}${recommendedLabel}
             </option>`;
@@ -1834,8 +1737,8 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
                         ${d.full_name.charAt(0)}
                     </div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(d.full_name)} ${isFirst ? '⭐' : ''}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">${d.vehicle_type || 'Car'} • ${d.total_deliveries || 0} deliveries • ⭐ ${d.rating_average?.toFixed(1) || 'N/A'}</div>
+                        <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(d.full_name)} ${isFirst ? '<i class="bi bi-star-fill" style="color:#f59e0b"></i>' : ''}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${d.vehicle_type || 'Car'} • ${d.total_deliveries || 0} deliveries • <i class="bi bi-star-fill" style="color:#f59e0b;font-size:10px"></i> ${d.rating_average?.toFixed(1) || 'N/A'}</div>
                     </div>
                     <div>
                         ${getDistanceBadge(d.distance_km)}
@@ -1846,7 +1749,7 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
 
         document.getElementById('driverSelectContainer').innerHTML = `
             <div style="margin-bottom: 15px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border-left: 4px solid #22c55e;">
-                <small style="color: var(--text-muted);">📍 Pickup from: <strong>${escapeHTML(garage.garage_name)}</strong></small>
+                <small style="color: var(--text-muted);"><i class="bi bi-geo-alt-fill"></i> Pickup from: <strong>${escapeHTML(garage.garage_name)}</strong></small>
             </div>
             <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
                 ${driverCards}
@@ -1931,7 +1834,7 @@ async function submitUnifiedAssignment() {
         const data = await res.json();
 
         if (res.ok) {
-            showToast(`✅ Driver assigned successfully for ${type}`, 'success');
+            showToast(`Driver assigned successfully for ${type}`, 'success');
             document.getElementById('unifiedAssignModal').remove();
 
             // Refresh all relevant sections
@@ -1953,44 +1856,39 @@ async function submitUnifiedAssignment() {
 
 // Order Action Functions - Reusing existing patterns
 
-// NOTE: QC-related functions removed (2026-02-01)
-// handleQCFailed, requestReplacement, issueRefund, retryQCInspection
-// QC workflow was cancelled - these functions were never used in production.
+
 
 // Confirm delivery completed
 async function confirmDelivery(orderId) {
-    if (!confirm('Confirm this order has been delivered to the customer?')) return;
-    try {
-        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ new_status: 'delivered', notes: 'Delivery confirmed by operations' })
-        });
-        if (res.ok) {
-            showToast('Delivery confirmed!', 'success');
-            loadOrders();
-            loadDeliveryData();
-            loadStats();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to confirm delivery', 'error');
+    QScrapModal.confirm({
+        title: 'Confirm Delivery',
+        message: 'Confirm this order has been delivered to the customer?',
+        confirmText: 'Confirm Delivery',
+        variant: 'success',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_status: 'delivered', notes: 'Delivery confirmed by operations' })
+                });
+                if (res.ok) {
+                    showToast('Delivery confirmed!', 'success');
+                    loadOrders();
+                    loadDeliveryData();
+                    loadStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to confirm delivery', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
-// ==========================================
-// QC SECTION CODE - REMOVED
-// QC module has been removed. Order goes from 'collected' directly to 'in_transit'
-// ==========================================
 
-
-// ==========================================
-// QC SECTION - REMOVED (2026-02-01)
-// QC workflow was cancelled. Orders go from 'collected' directly to 'in_transit'.
-// All inspection functions removed as dead code.
-// ==========================================
 
 
 // openInspection function removed - QC workflow cancelled
@@ -2205,10 +2103,16 @@ async function resolveDisputeFromModal(resolution) {
         ? 'Are you sure you want to approve this refund?'
         : 'Are you sure you want to deny this refund?';
 
-    if (!confirm(confirmMsg)) return;
-
-    await resolveDispute(currentModalDisputeId, resolution, true); // skipConfirm since we already confirmed
-    closeOrderModal();
+    QScrapModal.confirm({
+        title: resolution === 'refund_approved' ? 'Approve Refund' : 'Deny Refund',
+        message: confirmMsg,
+        confirmText: resolution === 'refund_approved' ? 'Approve' : 'Deny',
+        variant: resolution === 'refund_approved' ? 'success' : 'danger',
+        onConfirm: async () => {
+            await resolveDispute(currentModalDisputeId, resolution, true);
+            closeOrderModal();
+        }
+    });
 }
 
 
@@ -2221,7 +2125,18 @@ async function resolveDispute(disputeId, resolution, skipConfirm = false) {
         const confirmMsg = resolution === 'refund_approved'
             ? 'Are you sure you want to approve this refund?'
             : 'Are you sure you want to deny this refund?';
-        if (!confirm(confirmMsg)) return;
+        return new Promise(resolve => {
+            QScrapModal.confirm({
+                title: resolution === 'refund_approved' ? 'Approve Refund' : 'Deny Refund',
+                message: confirmMsg,
+                confirmText: resolution === 'refund_approved' ? 'Approve' : 'Deny',
+                variant: resolution === 'refund_approved' ? 'success' : 'danger',
+                onConfirm: async () => {
+                    await resolveDispute(disputeId, resolution, true);
+                    resolve();
+                }
+            });
+        });
     }
 
     isResolvingDispute = true;
@@ -2424,7 +2339,7 @@ function initDeliveryMap(deliveries) {
             const icon = L.divIcon({
                 className: 'driver-marker',
                 html: `<div style="width: 36px; height: 36px; background: #8D1B3D; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); border: 3px solid white;">
-                            <span style="font-size: 18px;">🚚</span>
+                            <span style="font-size: 18px;"><i class="bi bi-truck" style="color:white"></i></span>
                         </div>`,
                 iconSize: [36, 36],
                 iconAnchor: [18, 18]
@@ -2451,68 +2366,74 @@ function initDeliveryMap(deliveries) {
 
 // Mark order as delivered - THE CRITICAL MISSING FUNCTION
 async function markAsDelivered(assignmentId, orderNumber) {
-    if (!confirm(`Mark order ${orderNumber} as delivered?`)) return;
-
-    try {
-        const res = await fetch(`${API_URL}/delivery/assignment/${assignmentId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                status: 'delivered',
-                driver_notes: 'Marked as delivered by operations'
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast(`✅ Order ${orderNumber} marked as delivered!`, 'success');
-            // Refresh all delivery data
-            await loadDeliveryData();
-            await loadStats();
-        } else {
-            showToast(data.error || 'Failed to mark as delivered', 'error');
+    QScrapModal.confirm({
+        title: 'Mark as Delivered',
+        message: `Mark order ${orderNumber} as delivered?`,
+        confirmText: 'Mark Delivered',
+        variant: 'success',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/delivery/assignment/${assignmentId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: 'delivered',
+                        driver_notes: 'Marked as delivered by operations'
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Order ${orderNumber} marked as delivered!`, 'success');
+                    await loadDeliveryData();
+                    await loadStats();
+                } else {
+                    showToast(data.error || 'Failed to mark as delivered', 'error');
+                }
+            } catch (err) {
+                console.error('markAsDelivered error:', err);
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        console.error('markAsDelivered error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 // Mark order as delivered via operations order status update (for orders without assignment)
 async function markOrderDelivered(orderId, orderNumber) {
-    if (!confirm(`Mark order ${orderNumber} as delivered?`)) return;
-
-    try {
-        const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                new_status: 'delivered',
-                notes: 'Marked as delivered by operations (no driver assignment)'
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast(`✅ Order ${orderNumber} marked as delivered!`, 'success');
-            // Refresh all delivery data
-            await loadDeliveryData();
-            await loadStats();
-        } else {
-            showToast(data.error || 'Failed to mark as delivered', 'error');
+    QScrapModal.confirm({
+        title: 'Mark as Delivered',
+        message: `Mark order ${orderNumber} as delivered?`,
+        confirmText: 'Mark Delivered',
+        variant: 'success',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        new_status: 'delivered',
+                        notes: 'Marked as delivered by operations (no driver assignment)'
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Order ${orderNumber} marked as delivered!`, 'success');
+                    await loadDeliveryData();
+                    await loadStats();
+                } else {
+                    showToast(data.error || 'Failed to mark as delivered', 'error');
+                }
+            } catch (err) {
+                console.error('markOrderDelivered error:', err);
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        console.error('markOrderDelivered error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 // NOTE: openLocationModal() and updateDriverLocation() functions removed (2026-02-01)
@@ -2813,7 +2734,7 @@ async function submitCollectOrder(orderId) {
         const data = await res.json();
 
         if (res.ok) {
-            showToast(`📦 Order ${data.order_number || ''} collected!`, 'success');
+            showToast(`Order ${data.order_number || ''} collected!`, 'success');
             document.getElementById('collectOrderModal').remove();
             loadDeliveryData();
             loadStats();
@@ -3368,79 +3289,89 @@ function switchDisputeTab(tab) {
 
 async function resolveOrderDisputeAction(disputeId, resolution, refundAmount) {
     const resolutionLabels = {
-        refund_approved: `Approve refund of ${refundAmount} QAR to customer ? `,
+        refund_approved: `Approve refund of ${refundAmount} QAR to customer?`,
         refund_declined: 'Reject this dispute? Customer will not receive a refund.'
     };
 
-    if (!confirm(resolutionLabels[resolution] || 'Proceed?')) return;
-
-    const notes = prompt('Add resolution notes (optional):') || '';
-
-    try {
-        const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                resolution: resolution,
-                refund_amount: refundAmount,
-                notes: notes
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('Dispute resolved successfully', 'success');
-            loadDisputes();
-        } else {
-            showToast(data.error || 'Failed to resolve dispute', 'error');
+    QScrapModal.prompt({
+        title: resolution === 'refund_approved' ? 'Approve Refund' : 'Reject Dispute',
+        message: resolutionLabels[resolution] || 'Proceed with this action?',
+        inputType: 'textarea',
+        placeholder: 'Resolution notes (optional)...',
+        confirmText: resolution === 'refund_approved' ? 'Approve Refund' : 'Reject Dispute',
+        variant: resolution === 'refund_approved' ? 'success' : 'danger',
+        onConfirm: async (notes) => {
+            try {
+                const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        resolution: resolution,
+                        refund_amount: refundAmount,
+                        notes: notes || ''
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('Dispute resolved successfully', 'success');
+                    loadDisputes();
+                } else {
+                    showToast(data.error || 'Failed to resolve dispute', 'error');
+                }
+            } catch (err) {
+                console.error('Resolve order dispute error:', err);
+                showToast('Failed to resolve dispute', 'error');
+            }
         }
-    } catch (err) {
-        console.error('Resolve order dispute error:', err);
-        showToast('Failed to resolve dispute', 'error');
-    }
+    });
 }
 
 async function resolvePaymentDisputeAction(payoutId, resolution, amount) {
     const resolutionLabels = {
-        resent_payment: `Resend payment of ${amount} QAR ? (Garage will need to confirm again)`,
+        resent_payment: `Resend payment of ${amount} QAR? (Garage will need to confirm again)`,
         confirmed_received: 'Mark as received? (Garage already confirmed they got it)',
         cancelled: 'Cancel this payout permanently?'
     };
 
-    if (!confirm(resolutionLabels[resolution] || 'Proceed?')) return;
+    const variantMap = { resent_payment: 'warning', confirmed_received: 'success', cancelled: 'danger' };
 
-    const notes = prompt('Add resolution notes (optional):') || '';
-
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                resolution: resolution,
-                notes: notes,
-                resend_payment: resolution === 'resent_payment'
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast(`Payment dispute resolved: ${resolution.replace(/_/g, ' ')}`, 'success');
-            loadDisputes();
-        } else {
-            showToast(data.error || 'Failed to resolve dispute', 'error');
+    QScrapModal.prompt({
+        title: 'Resolve Payment Dispute',
+        message: resolutionLabels[resolution] || 'Proceed with this action?',
+        inputType: 'textarea',
+        placeholder: 'Resolution notes (optional)...',
+        confirmText: 'Confirm',
+        variant: variantMap[resolution] || 'primary',
+        onConfirm: async (notes) => {
+            try {
+                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        resolution: resolution,
+                        notes: notes || '',
+                        resend_payment: resolution === 'resent_payment'
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Payment dispute resolved: ${resolution.replace(/_/g, ' ')}`, 'success');
+                    loadDisputes();
+                } else {
+                    showToast(data.error || 'Failed to resolve dispute', 'error');
+                }
+            } catch (err) {
+                console.error('Resolve payment dispute error:', err);
+                showToast('Failed to resolve dispute', 'error');
+            }
         }
-    } catch (err) {
-        console.error('Resolve payment dispute error:', err);
-        showToast('Failed to resolve dispute', 'error');
-    }
+    });
 }
 
 // ==========================================
@@ -3498,7 +3429,7 @@ async function submitSendPayment() {
         const data = await res.json();
 
         if (res.ok) {
-            showToast('✅ Payment marked as sent! Awaiting garage confirmation.', 'success');
+            showToast('Payment marked as sent! Awaiting garage confirmation.', 'success');
             closeSendPaymentModal();
             loadPendingPayouts();
             loadFinance();
@@ -3576,72 +3507,96 @@ async function loadTransactions(page = 1) {
 }
 
 async function processPayout(payoutId) {
-    if (!confirm('Process this payout?')) return;
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/process`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-            showToast('Payout processed!', 'success');
-            loadFinance();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to process payout', 'error');
+    QScrapModal.confirm({
+        title: 'Process Payout',
+        message: 'Process this payout? Payment will be sent to the garage.',
+        confirmText: 'Process',
+        variant: 'success',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/process`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    showToast('Payout processed!', 'success');
+                    loadFinance();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to process payout', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 async function holdPayout(payoutId) {
-    const reason = prompt('Reason for holding payout:');
-    if (!reason) return;
-
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason })
-        });
-        if (res.ok) {
-            showToast('Payout held', 'success');
-            loadFinance();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to hold payout', 'error');
+    QScrapModal.prompt({
+        title: 'Hold Payout',
+        message: 'Provide a reason for holding this payout:',
+        inputType: 'textarea',
+        placeholder: 'Reason for hold...',
+        required: true,
+        confirmText: 'Hold Payout',
+        variant: 'warning',
+        onConfirm: async (reason) => {
+            if (!reason || !reason.trim()) {
+                showToast('Reason is required', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                if (res.ok) {
+                    showToast('Payout held', 'success');
+                    loadFinance();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to hold payout', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to hold payout', 'error');
+            }
         }
-    } catch (err) {
-        showToast('Failed to hold payout', 'error');
-    }
+    });
 }
 
 async function releasePayout(payoutId) {
-    if (!confirm('Release this payout back to pending status?')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/release`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({})
-        });
-
-        if (res.ok) {
-            showToast('Payout released', 'success');
-            loadFinance();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to release payout', 'error');
+    QScrapModal.confirm({
+        title: 'Release Payout',
+        message: 'Release this payout back to pending status?',
+        confirmText: 'Release',
+        variant: 'warning',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/release`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                if (res.ok) {
+                    showToast('Payout released', 'success');
+                    loadFinance();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to release payout', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to release payout', 'error');
+            }
         }
-    } catch (err) {
-        showToast('Failed to release payout', 'error');
-    }
+    });
 }
 
 // ============================================
@@ -4378,7 +4333,7 @@ function renderGaragesReport(data) {
                     <tr>
                         <td><strong>#${i + 1}</strong></td>
                         <td><strong>${g.garage_name}</strong></td>
-                        <td>${parseFloat(g.rating_average || 0).toFixed(1)} ⭐ (${g.rating_count || 0})</td>
+                        <td>${parseFloat(g.rating_average || 0).toFixed(1)} <i class="bi bi-star-fill" style="color:#f59e0b;font-size:11px"></i> (${g.rating_count || 0})</td>
                         <td>${g.period_orders || 0}</td>
                         <td><strong>${parseFloat(g.period_earnings || 0).toLocaleString()} QAR</strong></td>
                         <td>${g.completion_rate || 0}%</td>
@@ -4416,70 +4371,74 @@ function loadReports() {
 
 
 async function processAllPayouts() {
-    if (!confirm('Process all pending payouts now? This will send payments to all garages with pending payouts.')) {
-        return;
-    }
+    QScrapModal.confirm({
+        title: 'Process All Payouts',
+        message: 'Process all pending payouts now? This will send payments to all garages with pending payouts.',
+        confirmText: 'Process All',
+        variant: 'danger',
+        onConfirm: async () => {
 
-    showToast('Processing all payouts...', 'info');
+            showToast('Processing all payouts...', 'info');
 
-    try {
-        // Get all pending payouts
-        const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (!data.payouts || data.payouts.length === 0) {
-            showToast('No pending payouts to process', 'info');
-            return;
-        }
-
-        let successCount = 0;
-        let failCount = 0;
-        const batchId = `BATCH-${Date.now()}`;
-
-        for (let i = 0; i < data.payouts.length; i++) {
-            const payout = data.payouts[i];
             try {
-                const sendRes = await fetch(`${API_URL}/finance/payouts/${payout.payout_id}/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        payout_method: 'bank_transfer',
-                        payout_reference: `${batchId}-${i + 1}`,
-                        notes: 'Bulk processed by operations'
-                    })
+                // Get all pending payouts
+                const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
+                const data = await res.json();
 
-                if (sendRes.ok) {
-                    successCount++;
-                } else {
-                    const errData = await sendRes.json();
-                    console.error(`Payout ${payout.payout_id} failed:`, errData.error);
-                    failCount++;
+                if (!data.payouts || data.payouts.length === 0) {
+                    showToast('No pending payouts to process', 'info');
+                    return;
                 }
+
+                let successCount = 0;
+                let failCount = 0;
+                const batchId = `BATCH-${Date.now()}`;
+
+                for (let i = 0; i < data.payouts.length; i++) {
+                    const payout = data.payouts[i];
+                    try {
+                        const sendRes = await fetch(`${API_URL}/finance/payouts/${payout.payout_id}/send`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                payout_method: 'bank_transfer',
+                                payout_reference: `${batchId}-${i + 1}`,
+                                notes: 'Bulk processed by operations'
+                            })
+                        });
+
+                        if (sendRes.ok) {
+                            successCount++;
+                        } else {
+                            const errData = await sendRes.json();
+                            console.error(`Payout ${payout.payout_id} failed:`, errData.error);
+                            failCount++;
+                        }
+                    } catch (err) {
+                        console.error(`Payout ${payout.payout_id} error:`, err);
+                        failCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    showToast(`${successCount} payment(s) sent successfully!${failCount > 0 ? ` (${failCount} failed)` : ''}`, 'success');
+                } else {
+                    showToast('Failed to process payouts', 'error');
+                }
+
+                loadFinance(); // Refresh
             } catch (err) {
-                console.error(`Payout ${payout.payout_id} error:`, err);
-                failCount++;
+                console.error('Process all payouts error:', err);
+                showToast('Failed to process payouts', 'error');
             }
         }
-
-        if (successCount > 0) {
-            showToast(`✅ ${successCount} payment(s) sent successfully!${failCount > 0 ? ` (${failCount} failed)` : ''}`, 'success');
-        } else {
-            showToast('Failed to process payouts', 'error');
-        }
-
-        loadFinance(); // Refresh
-    } catch (err) {
-        console.error('Process all payouts error:', err);
-        showToast('Failed to process payouts', 'error');
-    }
+    });
 }
-
 // ========================================
 // REVIEW MODERATION
 // ========================================
@@ -4606,10 +4565,20 @@ async function approveReview(reviewId) {
 }
 
 function openRejectReviewModal(reviewId) {
-    const reason = prompt('Enter rejection reason (required for transparency):');
-    if (reason && reason.trim()) {
-        rejectReview(reviewId, reason.trim());
-    }
+    QScrapModal.prompt({
+        title: 'Reject Review',
+        message: 'Enter rejection reason (required for transparency):',
+        inputType: 'textarea',
+        placeholder: 'Rejection reason...',
+        required: true,
+        confirmText: 'Reject Review',
+        variant: 'danger',
+        onConfirm: (reason) => {
+            if (reason && reason.trim()) {
+                rejectReview(reviewId, reason.trim());
+            }
+        }
+    });
 }
 
 async function rejectReview(reviewId, reason) {
@@ -4791,7 +4760,7 @@ async function submitReassignment(assignmentId) {
         const data = await res.json();
 
         if (res.ok && data.success) {
-            showToast(`✅ ${data.message}`, 'success');
+            showToast(`${data.message}`, 'success');
             document.getElementById('reassignDriverModal').remove();
             // Refresh delivery data
             await loadActiveDeliveries();
@@ -4813,14 +4782,14 @@ async function submitReassignment(assignmentId) {
 // Listen for driver reassignment socket events
 if (typeof socket !== 'undefined' && socket) {
     socket.on('driver_reassigned', (data) => {
-        showToast(`🔄 Driver reassigned: ${data.old_driver} → ${data.new_driver} for Order #${data.order_number}`, 'info');
+        showToast(`Driver reassigned: ${data.old_driver} → ${data.new_driver} for Order #${data.order_number}`, 'info');
         loadActiveDeliveries();
         loadDeliveryStats();
     });
 
     socket.on('driver_changed', (data) => {
         if (data.new_driver) {
-            showToast(`🔄 Driver changed for Order #${data.order_number}: ${data.new_driver.name}`, 'info');
+            showToast(`Driver changed for Order #${data.order_number}: ${data.new_driver.name}`, 'info');
         }
     });
 }
@@ -4868,10 +4837,7 @@ function getTimeAgo(dateStr) {
     return `${diffDays}d ago`;
 }
 
-// ==========================================
-// QC SOCKET EVENT LISTENERS - REMOVED
-// QC module has been removed. Order goes from 'collected' directly to 'in_transit'
-// ==========================================
+
 
 // Support ticket created
 if (typeof socket !== 'undefined' && socket) {
@@ -5328,7 +5294,7 @@ function checkInactivity() {
         showToast('Session expired due to inactivity', 'error');
         logout();
     } else if (inactiveTime >= warningTime) {
-        showToast('⚠️ Session will expire in 5 minutes due to inactivity', 'warning');
+        showToast('Session will expire in 5 minutes due to inactivity', 'warning');
     }
 }
 
@@ -5461,72 +5427,82 @@ async function loadReturnRequests() {
  * Approve a return request
  */
 async function approveReturn(returnId) {
-    if (!confirm('Approve this return request? Customer will receive refund minus 20% fee + delivery.')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/approve`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+    QScrapModal.confirm({
+        title: 'Approve Return',
+        message: 'Approve this return request? Customer will receive refund minus 20% fee + delivery.',
+        confirmText: 'Approve Return',
+        variant: 'success',
+        onConfirm: async () => {
+            try {
+                const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    showToast('Return approved - Refund processing', 'success');
+                    loadReturnRequests();
+                    loadFraudStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to approve return', 'error');
+                }
+            } catch (err) {
+                console.error('Approve return error:', err);
+                showToast('Connection error', 'error');
             }
-        });
-
-        if (res.ok) {
-            showToast('Return approved - Refund processing', 'success');
-            loadReturnRequests();
-            loadFraudStats();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to approve return', 'error');
         }
-    } catch (err) {
-        console.error('Approve return error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 /**
  * Reject a return request
  */
 async function rejectReturn(returnId) {
-    const reason = prompt('Enter rejection reason (required):');
-    if (!reason || reason.trim().length < 5) {
-        showToast('Please provide a reason (min 5 characters)', 'error');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/reject`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ rejection_reason: reason.trim() })
-        });
-
-        if (res.ok) {
-            showToast('Return rejected', 'success');
-            loadReturnRequests();
-            loadFraudStats();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to reject return', 'error');
+    QScrapModal.prompt({
+        title: 'Reject Return',
+        message: 'Enter rejection reason (required, min 5 characters):',
+        inputType: 'textarea',
+        placeholder: 'Rejection reason...',
+        required: true,
+        confirmText: 'Reject Return',
+        variant: 'danger',
+        onConfirm: async (reason) => {
+            if (!reason || reason.trim().length < 5) {
+                showToast('Please provide a reason (min 5 characters)', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rejection_reason: reason.trim() })
+                });
+                if (res.ok) {
+                    showToast('Return rejected', 'success');
+                    loadReturnRequests();
+                    loadFraudStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to reject return', 'error');
+                }
+            } catch (err) {
+                console.error('Reject return error:', err);
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        console.error('Reject return error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 /**
  * View return photos in modal
  */
-function viewReturnPhotos(returnId) {
-    // Open modal with photos - simple implementation
-    showToast('Photo viewer not implemented yet', 'info');
-}
+
 
 /**
  * Load customer abuse tracking data
@@ -5601,38 +5577,47 @@ async function loadAbuseTracking() {
  */
 async function editCustomerFlag(customerId, currentFlag) {
     const flags = ['none', 'watchlist', 'high_risk', 'blocked'];
-    const newFlag = prompt(`Change fraud flag from "${currentFlag}" to:\n\nOptions: ${flags.join(', ')}`);
+    const flagLabels = { none: 'None (Clear)', watchlist: 'Watchlist', high_risk: 'High Risk', blocked: 'Blocked' };
 
-    if (!newFlag || !flags.includes(newFlag.toLowerCase())) {
-        if (newFlag !== null) showToast('Invalid flag. Use: ' + flags.join(', '), 'error');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/cancellation/abuse-flag`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                customer_id: customerId,
-                fraud_flag: newFlag.toLowerCase()
-            })
-        });
-
-        if (res.ok) {
-            showToast(`Customer flag updated to ${newFlag}`, 'success');
-            loadAbuseTracking();
-            loadFraudStats();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to update flag', 'error');
+    QScrapModal.prompt({
+        title: 'Change Fraud Flag',
+        message: `Current flag: <strong>${currentFlag || 'none'}</strong>. Select a new flag:`,
+        inputType: 'select',
+        selectOptions: flags.map(f => ({ value: f, label: flagLabels[f] || f })),
+        defaultValue: currentFlag || 'none',
+        confirmText: 'Update Flag',
+        variant: 'warning',
+        onConfirm: async (newFlag) => {
+            if (!newFlag || !flags.includes(newFlag.toLowerCase())) {
+                showToast('Invalid flag selection', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/cancellation/abuse-flag`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        customer_id: customerId,
+                        fraud_flag: newFlag.toLowerCase()
+                    })
+                });
+                if (res.ok) {
+                    showToast(`Customer flag updated to ${newFlag}`, 'success');
+                    loadAbuseTracking();
+                    loadFraudStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to update flag', 'error');
+                }
+            } catch (err) {
+                console.error('Edit flag error:', err);
+                showToast('Connection error', 'error');
+            }
         }
-    } catch (err) {
-        console.error('Edit flag error:', err);
-        showToast('Connection error', 'error');
-    }
+    });
 }
 
 /**

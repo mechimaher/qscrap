@@ -142,6 +142,7 @@ function switchSection(section) {
     document.getElementById(`section${section.charAt(0).toUpperCase() + section.slice(1)}`)?.classList.add('active');
 
     if (section === 'reviews') loadReviews();
+    if (section === 'tickets' && typeof ticketsQueueLoaded !== 'undefined' && !ticketsQueueLoaded) loadTicketsQueue();
 }
 
 // ==========================================
@@ -152,12 +153,9 @@ function setupSocket() {
     try {
         socket = io({ auth: { token } });
         socket.on('connect', () => {
-            console.log('[Socket] Connected - refreshing data');
             loadStats();
         });
-        socket.on('disconnect', () => {
-            console.log('[Socket] Disconnected');
-        });
+        socket.on('disconnect', () => { });
         socket.emit('join_room', 'operations');
         socket.emit('join_room', 'support');
 
@@ -196,7 +194,7 @@ function setupSocket() {
         });
 
     } catch (e) {
-        console.log('Socket not available');
+        // Socket not available
     }
 
     // Load canned responses for chat templates
@@ -209,10 +207,12 @@ function setupSocket() {
 
 async function loadStats() {
     try {
-        const [statsRes, slaRes, reviewsRes] = await Promise.all([
+        const [statsRes, slaRes, reviewsRes, escalationsRes, urgentRes] = await Promise.all([
             fetch(`${API_URL}/support/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
             fetch(`${API_URL}/support/sla-stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
-            fetch(`${API_URL}/reviews/moderation?status=pending&limit=100`, { headers: { 'Authorization': `Bearer ${token}` } })
+            fetch(`${API_URL}/reviews/moderation?status=pending&limit=100`, { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch(`${API_URL}/support/my-escalations`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+            fetch(`${API_URL}/support/urgent`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
         ]);
 
         const stats = await statsRes.json();
@@ -238,6 +238,28 @@ async function loadStats() {
             if (reviewBadge) {
                 reviewBadge.textContent = pendingCount;
                 reviewBadge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
+            }
+        }
+
+        // My escalations count
+        if (escalationsRes && escalationsRes.ok) {
+            const escData = await escalationsRes.json();
+            const pending = escData.pending_count || 0;
+            const escEl = document.getElementById('statMyEscalations');
+            if (escEl) {
+                escEl.textContent = pending;
+                escEl.style.color = pending > 0 ? '#f59e0b' : 'var(--text-primary)';
+            }
+        }
+
+        // Urgent items count
+        if (urgentRes && urgentRes.ok) {
+            const urgentData = await urgentRes.json();
+            const urgentCount = (urgentData.items || []).length;
+            const urgentEl = document.getElementById('statUrgent');
+            if (urgentEl) {
+                urgentEl.textContent = urgentCount;
+                urgentEl.style.color = urgentCount > 0 ? '#ef4444' : 'var(--text-primary)';
             }
         }
     } catch (err) {
@@ -323,8 +345,8 @@ function renderCustomerProfile(data) {
         <div class="customer-profile">
             <div class="customer-name">${escapeHTML(c.full_name)}</div>
             <div class="customer-contact">
-                📱 <a href="tel:${c.phone_number}">${c.phone_number}</a>
-                ${c.email ? `<br>📧 ${escapeHTML(c.email)}` : ''}
+                <i class="bi bi-phone"></i> <a href="tel:${c.phone_number}">${c.phone_number}</a>
+                ${c.email ? `<br><i class="bi bi-envelope"></i> ${escapeHTML(c.email)}` : ''}
             </div>
             
             <div class="customer-stats">
@@ -346,7 +368,7 @@ function renderCustomerProfile(data) {
                 </div>
             </div>
             
-            ${c.loyalty_tier ? `<span class="loyalty-badge loyalty-${loyaltyClass}">🏆 ${c.loyalty_tier}</span>` : ''}
+            ${c.loyalty_tier ? `<span class="loyalty-badge loyalty-${loyaltyClass}"><i class="bi bi-trophy"></i> ${c.loyalty_tier}</span>` : ''}
             
             <div class="contact-buttons">
                 <button class="contact-btn whatsapp" onclick="openWhatsApp('${c.phone_number}')">
@@ -419,39 +441,39 @@ function renderOrders(orders) {
                 <div class="order-meta">
                     ${o.car_make || ''} ${o.car_model || ''} ${o.car_year || ''} • ${formatCurrency(o.total_amount)} • ${timeAgo(o.created_at)}
                 </div>
-                ${o.garage_name ? `<div class="order-meta">🏭 ${escapeHTML(o.garage_name)}</div>` : ''}
-                ${o.driver_name ? `<div class="order-meta">🚗 ${escapeHTML(o.driver_name)}</div>` : ''}
+                ${o.garage_name ? `<div class="order-meta"><i class="bi bi-shop"></i> ${escapeHTML(o.garage_name)}</div>` : ''}
+                ${o.driver_name ? `<div class="order-meta"><i class="bi bi-car-front"></i> ${escapeHTML(o.driver_name)}</div>` : ''}
                 
                 ${o.order_status === 'refunded' || o.order_status === 'cancelled' ? `
                     <div class="order-meta" style="color: #6b7280; text-decoration: line-through;">
-                        🛡️ Warranty: Void (${o.order_status})
+                        <i class="bi bi-shield-x"></i> Warranty: Void (${o.order_status})
                     </div>
                 ` : (hasWarranty ? `
                     <div class="order-meta" style="color: #10b981; font-weight: 600;">
-                        🛡️ Warranty: ${o.warranty_days_remaining} days left
+                        <i class="bi bi-shield-check"></i> Warranty: ${o.warranty_days_remaining} days left
                     </div>
                 ` : '')}
                 
                 ${hasPayout ? `
                     <div class="order-meta" style="color: ${o.payout_status === 'confirmed' ? '#10b981' : '#f59e0b'};">
-                        💰 Payout: ${o.payout_status}
+                        <i class="bi bi-cash-stack"></i> Payout: ${o.payout_status}
                     </div>
                 ` : ''}
                 
                 ${hasIssue ? `
                     <div class="order-issue">
-                        <strong>⚠️ Issue:</strong> ${escapeHTML(o.dispute_reason || 'Dispute reported')}
+                        <strong><i class="bi bi-exclamation-triangle"></i> Issue:</strong> ${escapeHTML(o.dispute_reason || 'Dispute reported')}
                     </div>
                 ` : ''}
                 
                 <div class="order-actions">
-                    <button class="order-action-btn" onclick="event.stopPropagation(); openOrderDetailsModal('${o.order_id}')" style="background: var(--primary); color: white; border-color: var(--primary);">📋 Details</button>
-                    ${isActive ? `<button class="order-action-btn" onclick="event.stopPropagation(); trackOrder('${o.order_id}')">📍 Track</button>` : ''}
-                    ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')">🏭 Garage</button>` : ''}
-                    ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')">🚗 Driver</button>` : ''}
+                    <button class="order-action-btn" onclick="event.stopPropagation(); openOrderDetailsModal('${o.order_id}')" style="background: var(--primary); color: white; border-color: var(--primary);"><i class="bi bi-file-text"></i> Details</button>
+                    ${isActive ? `<button class="order-action-btn" onclick="event.stopPropagation(); trackOrder('${o.order_id}')"><i class="bi bi-geo-alt"></i> Track</button>` : ''}
+                    ${o.garage_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.garage_phone}')"><i class="bi bi-shop"></i> Garage</button>` : ''}
+                    ${o.driver_phone ? `<button class="order-action-btn" onclick="event.stopPropagation(); openWhatsApp('${o.driver_phone}')"><i class="bi bi-car-front"></i> Driver</button>` : ''}
                     ${o.order_status === 'refunded' || o.payment_status === 'refunded'
-                ? `<button class="order-action-btn danger" disabled title="Already refunded">💰 Refunded</button>`
-                : (hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('request_refund', '${o.order_id}')">💰 Request Refund</button>` : '')}
+                ? `<button class="order-action-btn danger" disabled title="Already refunded"><i class="bi bi-cash-stack"></i> Refunded</button>`
+                : (hasWarranty || o.order_status === 'completed' ? `<button class="order-action-btn danger" onclick="event.stopPropagation(); quickAction('request_refund', '${o.order_id}')"><i class="bi bi-cash-stack"></i> Request Refund</button>` : '')}
                 </div>
             </div>
         `;
@@ -504,8 +526,7 @@ function getStatusColor(status) {
 }
 
 function trackOrder(orderId) {
-    // Could open tracking modal or redirect
-    showToast('Opening tracking...', 'info');
+    openOrderDetailsModal(orderId);
 }
 
 // ==========================================
@@ -576,7 +597,7 @@ function quickAction(actionType, orderId = null) {
         if (rule.allowedStatuses && !rule.allowedStatuses.includes(orderStatus)) {
             QScrapModal.create({
                 id: 'status-error-modal',
-                title: '⚠️ Action Not Available',
+                title: 'Action Not Available',
                 headerIcon: 'bi-exclamation-triangle',
                 headerClass: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 content: `
@@ -600,7 +621,7 @@ function quickAction(actionType, orderId = null) {
         if (rule.blockedStatuses && rule.blockedStatuses.includes(orderStatus)) {
             QScrapModal.create({
                 id: 'status-error-modal',
-                title: '⚠️ Action Not Available',
+                title: 'Action Not Available',
                 headerIcon: 'bi-exclamation-triangle',
                 headerClass: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 content: `
@@ -747,20 +768,20 @@ function quickAction(actionType, orderId = null) {
                     style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
                     <option value="">-- Select Reason --</option>
                     <optgroup label="Full Refund (No Fees)">
-                        <option value="Defective Part">🔧 Defective Part</option>
-                        <option value="Wrong Part Delivered">❌ Wrong Part Delivered</option>
-                        <option value="Part Does Not Match Description">📋 Part Does Not Match Description</option>
+                        <option value="Defective Part">Defective Part</option>
+                        <option value="Wrong Part Delivered">Wrong Part Delivered</option>
+                        <option value="Part Does Not Match Description">Part Does Not Match Description</option>
                     </optgroup>
                     <optgroup label="Partial Refund (Stage 7 Fees Apply)">
-                        <option value="Part Does Not Fit Vehicle">🚗 Part Does Not Fit Vehicle</option>
-                        <option value="Quality Not As Expected">⭐ Quality Not As Expected</option>
-                        <option value="Changed Mind - No Longer Needed">💭 Changed Mind - No Longer Needed</option>
-                        <option value="Found Better Alternative">🔄 Found Better Alternative</option>
+                        <option value="Part Does Not Fit Vehicle">Part Does Not Fit Vehicle</option>
+                        <option value="Quality Not As Expected">Quality Not As Expected</option>
+                        <option value="Changed Mind - No Longer Needed">Changed Mind - No Longer Needed</option>
+                        <option value="Found Better Alternative">Found Better Alternative</option>
                     </optgroup>
-                    <option value="Other">📝 Other (Specify in notes)</option>
+                    <option value="Other">Other (Specify in notes)</option>
                 </select>
                 <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
-                    ⚠️ Selecting "Defective/Wrong Part" qualifies for FULL refund (no deductions)
+                    <i class="bi bi-info-circle"></i> Selecting "Defective/Wrong Part" qualifies for FULL refund (no deductions)
                 </small>
             </div>
         `;
@@ -968,7 +989,7 @@ function renderTickets(tickets) {
 
     tickets.forEach(t => {
         const statusColor = t.status === 'open' ? '#f59e0b' : (t.status === 'in_progress' ? '#3b82f6' : '#10b981');
-        const slaBadge = t.sla_breached ? '<span class="sla-breach">⏰ SLA!</span>' : '';
+        const slaBadge = t.sla_breached ? '<span class="sla-breach"><i class="bi bi-alarm"></i> SLA!</span>' : '';
         const priorityColors = { urgent: '#ef4444', high: '#f59e0b', normal: '#3b82f6', low: '#6b7280' };
         const priorityColor = priorityColors[t.priority] || '#6b7280';
         const priorityBadge = t.priority ? `<span style="background:${priorityColor};color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">${(t.priority || 'normal').toUpperCase()}</span>` : '';
@@ -1178,7 +1199,7 @@ function renderChatMessages(messages) {
             ? 'background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px dashed #f59e0b;'
             : '';
         const internalBadge = isInternal
-            ? '<span style="font-size:9px;background:#f59e0b;color:white;padding:1px 5px;border-radius:3px;margin-left:4px;">🔒 Internal</span>'
+            ? '<span style="font-size:9px;background:#f59e0b;color:white;padding:1px 5px;border-radius:3px;margin-left:4px;"><i class="bi bi-lock"></i> Internal</span>'
             : '';
 
         html += `
@@ -1350,7 +1371,7 @@ function createNewTicket() {
             <textarea id="ticketMessage" class="form-control" rows="4" placeholder="Describe the customer's issue..."
                 style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;"></textarea>
         </div>
-        ${currentOrder ? `<p style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">📦 Linked to selected order</p>` : ''}
+        ${currentOrder ? `<p style="margin-top: 12px; font-size: 11px; color: var(--text-muted);"><i class="bi bi-box-seam"></i> Linked to selected order</p>` : ''}
     `;
 
     QScrapModal.create({
@@ -1437,11 +1458,8 @@ function closeChat() {
 // Calls: GET /api/support/resolution-logs
 // ==========================================
 
-function renderNotes(notes) {
-    // Notes are internal and not displayed in current UI
-    // Future: Add a notes panel in HTML for agent-only internal notes
-    console.log(`Loaded ${notes?.length || 0} internal notes`);
-}
+// renderNotes is already defined at L891 — this is the authoritative definition
+// The duplicate stub that was here has been removed.
 
 function renderResolutionLog(logs) {
     if (!logs || logs.length === 0) {
@@ -1450,13 +1468,13 @@ function renderResolutionLog(logs) {
     }
 
     const actionLabels = {
-        'request_refund': '💰 Request Refund',
+        'request_refund': 'Request Refund',
 
-        'goodwill_credit': '🎁 Goodwill Credit',
-        'cancel_order': '❌ Cancel Order',
-        'reassign_driver': '🔄 Reassign Driver',
-        'rush_delivery': '⚡ Rush Delivery',
-        'escalate_to_ops': '⚠️ Escalated'
+        'goodwill_credit': 'Goodwill Credit',
+        'cancel_order': 'Cancel Order',
+        'reassign_driver': 'Reassign Driver',
+        'rush_delivery': 'Rush Delivery',
+        'escalate_to_ops': 'Escalated'
     };
 
     let html = '';
@@ -1588,13 +1606,13 @@ function renderReviews(reviews) {
         <tr>
             <td>${escapeHTML(r.customer_name || '-')}</td>
             <td>${escapeHTML(r.garage_name || '-')}</td>
-            <td>${'⭐'.repeat(r.rating || 0)}</td>
+            <td>${Array(r.rating || 0).fill('<i class="bi bi-star-fill" style="color:#f59e0b;"></i>').join('')}</td>
             <td style="max-width: 300px;">${escapeHTML(r.review_text || '-')}</td>
             <td>${timeAgo(r.created_at)}</td>
             <td>
                 ${reviewStatus === 'pending' ? `
-                    <button class="btn btn-sm btn-primary" onclick="moderateReview('${r.review_id}', 'approved')">✓</button>
-                    <button class="btn btn-sm btn-danger" onclick="moderateReview('${r.review_id}', 'rejected')">✗</button>
+                    <button class="btn btn-sm btn-primary" onclick="moderateReview('${r.review_id}', 'approved')"><i class="bi bi-check-lg"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="moderateReview('${r.review_id}', 'rejected')"><i class="bi bi-x-lg"></i></button>
                 ` : `<span class="status-badge status-${r.moderation_status}">${r.moderation_status}</span>`}
             </td>
         </tr>
@@ -1669,7 +1687,7 @@ async function showCancellationPreview(orderId) {
 
         let content = `
             <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                <h4 style="margin: 0 0 12px 0; color: var(--text-primary);">📊 Fee Breakdown (BRAIN v3.0)</h4>
+                <h4 style="margin: 0 0 12px 0; color: var(--text-primary);"><i class="bi bi-graph-up"></i> Fee Breakdown (BRAIN v3.0)</h4>
                 
                 <div style="display: grid; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
@@ -1681,17 +1699,17 @@ async function showCancellationPreview(orderId) {
                         <strong>${formatCurrency(preview.delivery_fee || 0)}</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #ef4444;">
-                        <span>❌ Cancellation Fee (${(preview.fee_percentage || 0)}%)</span>
+                        <span>Cancellation Fee (${(preview.fee_percentage || 0)}%)</span>
                         <strong>-${formatCurrency(preview.cancellation_fee)}</strong>
                     </div>
                     ${preview.delivery_fee_retained ? `
                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #f59e0b;">
-                        <span>⚠️ Delivery Fee (Non-refundable)</span>
+                        <span>Delivery Fee (Non-refundable)</span>
                         <strong>-${formatCurrency(preview.delivery_fee_retained)}</strong>
                     </div>
                     ` : ''}
                     <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; color: #10b981;">
-                        <span>💰 Customer Refund</span>
+                        <span>Customer Refund</span>
                         <strong>${formatCurrency(preview.refund_amount)}</strong>
                     </div>
                 </div>
@@ -1827,7 +1845,7 @@ async function showReturnRequest(orderId) {
             </div>
             
             <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                <h4 style="margin: 0 0 12px 0;">💰 Return Fee Breakdown</h4>
+                <h4 style="margin: 0 0 12px 0;"><i class="bi bi-receipt"></i> Return Fee Breakdown</h4>
                 
                 <div style="display: grid; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: #ef4444;">
@@ -1865,7 +1883,7 @@ async function showReturnRequest(orderId) {
             </div>
             
             <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-radius: 8px; font-size: 11px; color: #92400e;">
-                <strong>⚠️ Note:</strong> Customer must provide 3+ photos of the part. This request will be reviewed by Operations.
+                <strong><i class="bi bi-exclamation-triangle"></i> Note:</strong> Customer must provide 3+ photos of the part. This request will be reviewed by Operations.
             </div>
         `;
 
@@ -1974,21 +1992,21 @@ async function showCustomerAbuseStatus() {
         };
 
         const flagLabels = {
-            'none': '🟢 Good Standing',
-            'yellow': '🟡 Watch List',
-            'orange': '🟠 High Risk',
-            'red': '🔴 Under Review',
-            'black': '⚫ Suspended'
+            'none': 'Good Standing',
+            'yellow': 'Watch List',
+            'orange': 'High Risk',
+            'red': 'Under Review',
+            'black': 'Suspended'
         };
 
         const flagLevel = status.flag_level || 'none';
         const flagColor = flagColors[flagLevel] || '#6b7280';
         const flagLabel = flagLabels[flagLevel] || 'Unknown';
-        const flagIcon = flagLevel === 'none' ? '✅' : flagLevel === 'black' ? '🚫' : '⚠️';
+        const flagIconClass = flagLevel === 'none' ? 'bi-check-circle-fill' : flagLevel === 'black' ? 'bi-slash-circle-fill' : 'bi-exclamation-triangle-fill';
 
         let content = `
             <div style="background: ${flagColor}20; border: 2px solid ${flagColor}; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 16px;">
-                <div style="font-size: 40px; margin-bottom: 8px;">${flagIcon}</div>
+                <div style="font-size: 40px; margin-bottom: 8px;"><i class="bi ${flagIconClass}" style="color: ${flagColor};"></i></div>
                 <div style="font-size: 20px; font-weight: 700; color: ${flagColor};">${flagLabel}</div>
             </div>
             
@@ -2006,14 +2024,14 @@ async function showCustomerAbuseStatus() {
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Cancellations</div>
                 </div>
                 <div style="background: var(--bg-secondary); padding: 16px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 28px; font-weight: 700; color: ${status.can_return ? '#10b981' : '#ef4444'};">${status.can_return ? '✓' : '✗'}</div>
+                    <div style="font-size: 28px; font-weight: 700; color: ${status.can_return ? '#10b981' : '#ef4444'};">${status.can_return ? '<i class="bi bi-check-lg"></i>' : '<i class="bi bi-x-lg"></i>'}</div>
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Can Return</div>
                 </div>
             </div>
             
             ${flagLevel !== 'none' ? `
             <div style="padding: 12px; background: #fef2f2; border-radius: 8px; color: #991b1b; font-size: 12px;">
-                <strong>⚠️ Warning:</strong> This customer has elevated fraud flags. Exercise caution with refunds and returns.
+                <strong><i class="bi bi-exclamation-triangle"></i> Warning:</strong> This customer has elevated fraud flags. Exercise caution with refunds and returns.
             </div>
             ` : ''}
         `;
@@ -2039,7 +2057,7 @@ async function showCustomerAbuseStatus() {
     }
 }
 
-console.log('Customer Resolution Center loaded - v3.0 BRAIN Compliant');
+
 
 // ==========================================
 // TICKETS QUEUE (Professional Ticket Management)
@@ -2128,10 +2146,10 @@ function calculateSLAStatus(created_at) {
  */
 function getPriorityIndicator(priority) {
     const indicators = {
-        'urgent': { color: '#ef4444', icon: '🔴', label: 'Urgent' },
-        'high': { color: '#f59e0b', icon: '🟠', label: 'High' },
-        'normal': { color: '#10b981', icon: '🟢', label: 'Normal' },
-        'low': { color: '#6b7280', icon: '⚪', label: 'Low' }
+        'urgent': { color: '#ef4444', icon: '<i class="bi bi-circle-fill" style="color:#ef4444;font-size:10px;"></i>', label: 'Urgent' },
+        'high': { color: '#f59e0b', icon: '<i class="bi bi-circle-fill" style="color:#f59e0b;font-size:10px;"></i>', label: 'High' },
+        'normal': { color: '#10b981', icon: '<i class="bi bi-circle-fill" style="color:#10b981;font-size:10px;"></i>', label: 'Normal' },
+        'low': { color: '#6b7280', icon: '<i class="bi bi-circle-fill" style="color:#6b7280;font-size:10px;"></i>', label: 'Low' }
     };
     return indicators[priority] || indicators.normal;
 }
@@ -2433,15 +2451,7 @@ function assignTicketModal(ticketId, ticketSubject) {
     });
 }
 
-// Update switchSection to load tickets when switching to tickets section
-const originalSwitchSection = switchSection;
-switchSection = function (section) {
-    originalSwitchSection(section);
 
-    if (section === 'tickets' && !ticketsQueueLoaded) {
-        loadTicketsQueue();
-    }
-};
 
 // Load ticket queue badge on dashboard load
 document.addEventListener('DOMContentLoaded', function () {
@@ -2461,12 +2471,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         } catch (err) {
-            console.log('Could not pre-load ticket badge');
+            // Silent badge pre-load failure
         }
     }, 2000);
 });
 
-console.log('Tickets Queue Module loaded - v1.0');
+
 
 // ==========================================
 // ORDER DETAILS MODAL (Full details for Support)
@@ -2532,7 +2542,7 @@ function closeOrderDetailsModal() {
  * Render full order details in modal
  */
 function renderOrderDetailsModal(data) {
-    console.log('[Order Details] Rendering modal with data:', data);
+
     const { order, status_history, payout, refund, tickets } = data;
     const content = document.getElementById('orderDetailsContent');
 
@@ -2712,7 +2722,7 @@ function renderOrderDetailsModal(data) {
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                 <!-- Customer -->
                 <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px; border: 1px solid var(--border);">
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">👤 CUSTOMER</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><i class="bi bi-person"></i> CUSTOMER</div>
                     <div style="font-weight: 700; font-size: 14px;">${escapeHTML(order.customer_name || 'N/A')}</div>
                     <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.customer_phone || 'N/A')}</div>
                     ${order.customer_email ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(order.customer_email)}</div>` : ''}
@@ -2725,10 +2735,10 @@ function renderOrderDetailsModal(data) {
                 
                 <!-- Garage -->
                 <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px; border: 1px solid var(--border);">
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">🏭 GARAGE</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><i class="bi bi-shop"></i> GARAGE</div>
                     <div style="font-weight: 700; font-size: 14px;">${escapeHTML(order.garage_name || 'N/A')}</div>
                     <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.garage_phone || 'N/A')}</div>
-                    ${order.garage_rating ? `<div style="font-size: 11px; color: #f59e0b;">⭐ ${order.garage_rating} (${order.garage_rating_count || 0})</div>` : ''}
+                    ${order.garage_rating ? `<div style="font-size: 11px; color: #f59e0b;"><i class="bi bi-star-fill"></i> ${order.garage_rating} (${order.garage_rating_count || 0})</div>` : ''}
                     <div style="font-size: 10px; color: var(--text-muted);">Plan: ${escapeHTML(order.garage_plan || 'N/A')}</div>
                     ${order.garage_phone ? `
                         <button onclick="openWhatsApp('${order.garage_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
@@ -2739,7 +2749,7 @@ function renderOrderDetailsModal(data) {
                 
                 <!-- Driver -->
                 <div style="background: var(--bg-secondary); border-radius: 12px; padding: 12px; border: 1px solid var(--border);">
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">🚗 DRIVER</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><i class="bi bi-car-front"></i> DRIVER</div>
                     ${order.driver_name ? `
                         <div style="font-weight: 700; font-size: 14px;">${escapeHTML(order.driver_name)}</div>
                         <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.driver_phone || 'N/A')}</div>
@@ -2881,7 +2891,7 @@ function renderOrderDetailsModal(data) {
 
     try {
         content.innerHTML = html;
-        console.log('[Order Details] Modal HTML set successfully, length:', html.length);
+
     } catch (renderErr) {
         console.error('[Order Details] Error setting innerHTML:', renderErr);
         content.innerHTML = `<div style="padding: 40px; color: red;">Error rendering: ${renderErr.message}</div>`;
@@ -2902,4 +2912,4 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
-console.log('Order Details Modal loaded - v1.0');
+

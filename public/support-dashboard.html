@@ -786,7 +786,6 @@
             width: 220px !important;
         }
 
-        .sidebar-compact .logo-text,
         .sidebar-compact .logo-subtitle,
         .sidebar-compact .nav-item span,
         .sidebar-compact .user-name,
@@ -794,12 +793,118 @@
             display: none;
         }
 
-        .sidebar-compact:hover .logo-text,
         .sidebar-compact:hover .logo-subtitle,
         .sidebar-compact:hover .nav-item span,
         .sidebar-compact:hover .user-name,
         .sidebar-compact:hover .user-role {
             display: block;
+        }
+
+        /* WhatsApp Business Card */
+        .whatsapp-business-card {
+            position: relative;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 50%, #075E54 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.25);
+        }
+
+        .whatsapp-business-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(37, 211, 102, 0.35);
+        }
+
+        .wa-card-glow {
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+            opacity: 0.4;
+        }
+
+        .wa-card-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .wa-card-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .wa-card-info {
+            flex: 1;
+        }
+
+        .wa-card-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .wa-card-subtitle {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        .wa-card-arrow {
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+
+        .whatsapp-business-card:hover .wa-card-arrow {
+            transform: translateX(4px);
+        }
+
+        .wa-card-contacts {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .wa-contact {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wa-contact:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        .wa-contact i {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 4px;
         }
     </style>
 </head>
@@ -897,6 +1002,14 @@
                         <div class="hero-stat-value" id="statAvgTime">--</div>
                         <div class="hero-stat-label">Avg Response</div>
                     </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value" id="statMyEscalations">0</div>
+                        <div class="hero-stat-label">My Escalations</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value" id="statUrgent" style="color: var(--text-primary);">0</div>
+                        <div class="hero-stat-label">Urgent</div>
+                    </div>
                 </div>
             </div>
 
@@ -984,114 +1097,6 @@
                                         </div>
                                     </div>
 
-                                    <style>
-                                        .whatsapp-business-card {
-                                            position: relative;
-                                            background: linear-gradient(135deg, #25D366 0%, #128C7E 50%, #075E54 100%);
-                                            border-radius: 16px;
-                                            padding: 20px;
-                                            margin-bottom: 20px;
-                                            cursor: pointer;
-                                            overflow: hidden;
-                                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                                            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.25);
-                                        }
-
-                                        .whatsapp-business-card:hover {
-                                            transform: translateY(-4px);
-                                            box-shadow: 0 16px 48px rgba(37, 211, 102, 0.35);
-                                        }
-
-                                        /* Gold Standard: Static glow - no infinite animation */
-                                        .wa-card-glow {
-                                            position: absolute;
-                                            top: -50%;
-                                            right: -50%;
-                                            width: 200%;
-                                            height: 200%;
-                                            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
-                                            opacity: 0.4;
-                                        }
-
-                                        .wa-card-content {
-                                            display: flex;
-                                            align-items: center;
-                                            gap: 16px;
-                                            color: white;
-                                            position: relative;
-                                            z-index: 1;
-                                        }
-
-                                        .wa-card-icon {
-                                            width: 56px;
-                                            height: 56px;
-                                            background: rgba(255, 255, 255, 0.2);
-                                            backdrop-filter: blur(10px);
-                                            border-radius: 14px;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                            font-size: 28px;
-                                        }
-
-                                        .wa-card-info {
-                                            flex: 1;
-                                        }
-
-                                        .wa-card-title {
-                                            font-size: 16px;
-                                            font-weight: 700;
-                                        }
-
-                                        .wa-card-subtitle {
-                                            font-size: 12px;
-                                            opacity: 0.85;
-                                            margin-top: 2px;
-                                        }
-
-                                        .wa-card-arrow {
-                                            font-size: 20px;
-                                            transition: transform 0.2s;
-                                        }
-
-                                        .whatsapp-business-card:hover .wa-card-arrow {
-                                            transform: translateX(4px);
-                                        }
-
-                                        .wa-card-contacts {
-                                            display: flex;
-                                            gap: 12px;
-                                            margin-top: 14px;
-                                            position: relative;
-                                            z-index: 1;
-                                        }
-
-                                        .wa-contact {
-                                            flex: 1;
-                                            padding: 10px;
-                                            background: rgba(255, 255, 255, 0.15);
-                                            backdrop-filter: blur(5px);
-                                            border-radius: 10px;
-                                            text-align: center;
-                                            color: white;
-                                            font-size: 11px;
-                                            font-weight: 600;
-                                            cursor: pointer;
-                                            transition: all 0.2s;
-                                            border: 1px solid rgba(255, 255, 255, 0.1);
-                                        }
-
-                                        .wa-contact:hover {
-                                            background: rgba(255, 255, 255, 0.3);
-                                            transform: scale(1.02);
-                                        }
-
-                                        .wa-contact i {
-                                            display: block;
-                                            font-size: 18px;
-                                            margin-bottom: 4px;
-                                        }
-                                    </style>
 
                                     <!-- Recent Orders -->
                                     <div style="margin-bottom: 16px;">
@@ -1134,7 +1139,7 @@
                                     <!-- Quick Actions - Simplified per Senior Support Expert Review -->
                                     <div
                                         style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase;">
-                                        💼 Quick Actions
+                                        <i class="bi bi-briefcase"></i> Quick Actions
                                     </div>
                                     <div class="actions-grid">
                                         <div class="action-btn-premium" onclick="quickAction('request_refund')">
@@ -1146,7 +1151,7 @@
                                     <!-- Escalation -->
                                     <div
                                         style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
-                                        ⚠️ Escalation
+                                        <i class="bi bi-exclamation-triangle"></i> Escalation
                                     </div>
                                     <div class="actions-grid">
                                         <div class="action-btn-premium danger" onclick="quickAction('escalate_to_ops')">
@@ -1162,7 +1167,7 @@
                                     <!-- Internal Notes -->
                                     <div
                                         style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
-                                        📝 Internal Notes
+                                        <i class="bi bi-journal-text"></i> Internal Notes
                                     </div>
                                     <div id="notesList" style="margin-bottom: 12px;"></div>
                                     <div style="display: flex; gap: 8px;">
@@ -1177,7 +1182,7 @@
                                     <!-- Resolution Log -->
                                     <div
                                         style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 20px 0 12px; text-transform: uppercase;">
-                                        📊 Resolution Log
+                                        <i class="bi bi-graph-up"></i> Resolution Log
                                     </div>
                                     <div id="resolutionLog"></div>
                                 </div>
@@ -1207,10 +1212,10 @@
                                 <select id="ticketQueuePriority" onchange="loadTicketsQueue()"
                                     style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--bg-secondary);">
                                     <option value="">All Priorities</option>
-                                    <option value="urgent">🔴 Urgent</option>
-                                    <option value="high">🟠 High</option>
-                                    <option value="normal">🟢 Normal</option>
-                                    <option value="low">⚪ Low</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="high">High</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="low">Low</option>
                                 </select>
                                 <button onclick="loadTicketsQueue()"
                                     style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
