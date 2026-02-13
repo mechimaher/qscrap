@@ -353,11 +353,15 @@ export class RefundService {
 
             let stripeRefundId: string | undefined = undefined;
             let refundMethod = 'stripe';
+            let stripeRefundAmount = 0;
+            let manualRefundAmount = 0;
+            const totalRefundAmount = parseFloat(refund.refund_amount);
 
             if (!refund.stripe_payment_intent_id) {
                 // No Stripe payment found - mark as manual refund (COD, test order, etc.)
                 logger.info('No Stripe payment for order - processing as manual refund', { orderNumber: refund.order_number });
                 refundMethod = 'manual';
+                manualRefundAmount = totalRefundAmount;
             } else {
                 // Initialize Stripe and process refund
                 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -368,24 +372,75 @@ export class RefundService {
                 const Stripe = require('stripe');
                 const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
 
-                // Execute Stripe refund
-                // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
-                const refundAmountCents = Math.round(parseFloat(refund.refund_amount) * 100);
-                const stripeRefund = await stripe.refunds.create({
-                    payment_intent: refund.stripe_payment_intent_id,
-                    amount: refundAmountCents,
-                    metadata: {
-                        refund_id: refundId,
-                        order_number: refund.order_number,
-                        processed_by: processedBy
-                    }
-                }, {
-                    idempotencyKey: `manual_refund_${refundId}_${refundAmountCents}`
-                });
-                stripeRefundId = stripeRefund.id;
+                // CRITICAL: Get actual charge amount from Stripe to avoid refunding more than was charged
+                // This handles deposit-based orders (e.g., 10 QAR Stripe deposit + 310 QAR COD)
+                const paymentIntent = await stripe.paymentIntents.retrieve(refund.stripe_payment_intent_id);
+                const chargeAmountCents = paymentIntent.amount_received || paymentIntent.amount || 0;
+                const chargeAmountQAR = chargeAmountCents / 100;
+
+                // Also check existing refunds on this payment intent
+                const existingRefunds = paymentIntent.amount_received - (paymentIntent.amount_received - (chargeAmountCents - (paymentIntent.amount || 0)));
+                const refundableAmountCents = chargeAmountCents; // Stripe tracks refundable internally
+
+                const requestedRefundCents = Math.round(totalRefundAmount * 100);
+
+                if (chargeAmountCents === 0) {
+                    // Zero charge (fully COD) - process as manual
+                    logger.info('Zero Stripe charge - processing as manual refund', { orderNumber: refund.order_number });
+                    refundMethod = 'manual';
+                    manualRefundAmount = totalRefundAmount;
+                } else if (requestedRefundCents <= chargeAmountCents) {
+                    // Refund amount fits within Stripe charge - refund full amount via Stripe
+                    stripeRefundAmount = totalRefundAmount;
+                    const stripeRefund = await stripe.refunds.create({
+                        payment_intent: refund.stripe_payment_intent_id,
+                        amount: requestedRefundCents,
+                        metadata: {
+                            refund_id: refundId,
+                            order_number: refund.order_number,
+                            processed_by: processedBy
+                        }
+                    }, {
+                        idempotencyKey: `manual_refund_${refundId}_${requestedRefundCents}`
+                    });
+                    stripeRefundId = stripeRefund.id;
+                } else {
+                    // SPLIT REFUND: Refund amount exceeds Stripe charge (deposit + COD order)
+                    // Refund the Stripe portion via Stripe, mark COD portion for manual/cash refund
+                    stripeRefundAmount = chargeAmountQAR;
+                    manualRefundAmount = totalRefundAmount - chargeAmountQAR;
+
+                    logger.info('Split refund: Stripe + manual (COD)', {
+                        orderNumber: refund.order_number,
+                        totalRefund: totalRefundAmount,
+                        stripeRefund: stripeRefundAmount,
+                        manualRefund: manualRefundAmount,
+                        stripeCharge: chargeAmountQAR
+                    });
+
+                    // Refund the full Stripe charge
+                    const stripeRefund = await stripe.refunds.create({
+                        payment_intent: refund.stripe_payment_intent_id,
+                        amount: chargeAmountCents,
+                        metadata: {
+                            refund_id: refundId,
+                            order_number: refund.order_number,
+                            processed_by: processedBy,
+                            split_refund: 'true',
+                            manual_portion: manualRefundAmount.toFixed(2)
+                        }
+                    }, {
+                        idempotencyKey: `manual_refund_${refundId}_${chargeAmountCents}`
+                    });
+                    stripeRefundId = stripeRefund.id;
+                    refundMethod = 'split';
+                }
             }
 
             // Update refund record
+            const refundNote = refundMethod === 'manual' ? ' [Manual refund - COD/cash]'
+                : refundMethod === 'split' ? ` [Split: ${stripeRefundAmount.toFixed(2)} QAR Stripe + ${manualRefundAmount.toFixed(2)} QAR manual/cash]`
+                    : '';
             await client.query(
                 `UPDATE refunds SET
                     refund_status = 'completed',
@@ -394,7 +449,7 @@ export class RefundService {
                     processed_at = NOW(),
                     refund_reason = COALESCE(refund_reason, '') || $4
                  WHERE refund_id = $1`,
-                [refundId, stripeRefundId, processedBy, refundMethod === 'manual' ? ' [Manual refund]' : '']
+                [refundId, stripeRefundId, processedBy, refundNote]
             );
 
             // Update order payment status
@@ -432,21 +487,44 @@ export class RefundService {
 
             // Notify customer (import would be at top of file)
             const { createNotification } = require('../notification.service');
+
+            let customerMessage = `Your refund of ${refund.refund_amount} QAR for Order #${refund.order_number} has been processed.`;
+            if (refundMethod === 'split') {
+                customerMessage = `Your refund for Order #${refund.order_number} has been processed: ${stripeRefundAmount.toFixed(2)} QAR refunded to your card (5-10 business days), ${manualRefundAmount.toFixed(2)} QAR will be returned in cash.`;
+            } else if (refundMethod === 'manual') {
+                customerMessage = `Your refund of ${refund.refund_amount} QAR for Order #${refund.order_number} has been approved. The cash refund will be arranged by our team.`;
+            } else {
+                customerMessage += ' It may take 5-10 business days to appear in your account.';
+            }
+
             await createNotification({
                 userId: refund.customer_id,
                 type: 'refund_completed',
-                title: '💰 Refund Processed',
-                message: `Your refund of ${refund.refund_amount} QAR for Order #${refund.order_number} has been processed. It may take 5-10 business days to appear in your account.`,
+                title: 'Refund Processed',
+                message: customerMessage,
                 data: { order_id: refund.order_id, refund_amount: refund.refund_amount },
                 target_role: 'customer'
             });
 
-            logger.info('Refund processed', { stripeRefundId: stripeRefundId || 'MANUAL', amount: refund.refund_amount });
+            logger.info('Refund processed', {
+                stripeRefundId: stripeRefundId || 'MANUAL',
+                refundMethod,
+                totalAmount: totalRefundAmount,
+                stripeAmount: stripeRefundAmount,
+                manualAmount: manualRefundAmount
+            });
+
+            let resultMessage = `Refund of ${refund.refund_amount} QAR processed successfully`;
+            if (refundMethod === 'split') {
+                resultMessage = `Split refund processed: ${stripeRefundAmount.toFixed(2)} QAR via Stripe + ${manualRefundAmount.toFixed(2)} QAR manual/cash`;
+            } else if (refundMethod === 'manual') {
+                resultMessage = `Manual refund of ${refund.refund_amount} QAR approved (cash/COD order)`;
+            }
 
             return {
                 success: true,
                 stripe_refund_id: stripeRefundId,
-                message: `Refund of ${refund.refund_amount} QAR processed successfully${refundMethod === 'manual' ? ' (manual)' : ''}`
+                message: resultMessage
             };
         } catch (err: any) {
             await client.query('ROLLBACK');
