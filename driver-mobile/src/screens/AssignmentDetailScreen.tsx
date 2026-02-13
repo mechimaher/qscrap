@@ -420,6 +420,100 @@ export default function AssignmentDetailScreen() {
                     </View>
                 )}
 
+                {/* Payment Summary - For completed orders (driver cash reconciliation) */}
+                {isCompleted && (assignment.part_price || assignment.delivery_fee || assignment.total_amount) && (
+                    <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                            <Ionicons name="wallet" size={16} color={Colors.primary} /> {t('payment_summary') || 'Payment Summary'}
+                        </Text>
+
+                        {/* Payment Method Badge */}
+                        {assignment.payment_method && (
+                            <View style={[styles.paymentMethodBadge, {
+                                backgroundColor: assignment.payment_method === 'cod' || assignment.payment_method === 'cash'
+                                    ? '#fef3c7' : '#dcfce7'
+                            }]}>
+                                <Ionicons
+                                    name={assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? 'cash-outline' : 'card-outline'}
+                                    size={16}
+                                    color={assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? '#d97706' : '#16a34a'}
+                                />
+                                <Text style={[styles.paymentMethodText, {
+                                    color: assignment.payment_method === 'cod' || assignment.payment_method === 'cash' ? '#92400e' : '#166534'
+                                }]}>
+                                    {assignment.payment_method === 'cod' ? 'Cash on Delivery' :
+                                        assignment.payment_method === 'cash' ? 'Cash' :
+                                            assignment.payment_method === 'card_full' ? 'Card (Full)' :
+                                                assignment.payment_method === 'card' ? 'Card' :
+                                                    assignment.payment_method === 'wallet' ? 'Wallet' : assignment.payment_method}
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* Price Breakdown */}
+                        <View style={styles.priceBreakdown}>
+                            {assignment.part_price != null && (
+                                <View style={styles.priceRow}>
+                                    <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
+                                        <Ionicons name="cube-outline" size={14} color={colors.textMuted} /> Spare Part Price
+                                    </Text>
+                                    <Text style={[styles.priceValue, { color: colors.text }]}>
+                                        {Number(assignment.part_price).toFixed(2)} QAR
+                                    </Text>
+                                </View>
+                            )}
+                            {assignment.delivery_fee != null && (
+                                <View style={styles.priceRow}>
+                                    <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
+                                        <Ionicons name="bicycle-outline" size={14} color={colors.textMuted} /> Delivery Fee
+                                    </Text>
+                                    <Text style={[styles.priceValue, { color: colors.text }]}>
+                                        {Number(assignment.delivery_fee).toFixed(2)} QAR
+                                    </Text>
+                                </View>
+                            )}
+                            {assignment.loyalty_discount != null && Number(assignment.loyalty_discount) > 0 && (
+                                <View style={styles.priceRow}>
+                                    <Text style={[styles.priceLabel, { color: '#16a34a' }]}>
+                                        <Ionicons name="gift-outline" size={14} color="#16a34a" /> Loyalty Discount
+                                    </Text>
+                                    <Text style={[styles.priceValue, { color: '#16a34a' }]}>
+                                        -{Number(assignment.loyalty_discount).toFixed(2)} QAR
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Divider */}
+                            <View style={[styles.priceDivider, { backgroundColor: colors.textMuted + '30' }]} />
+
+                            {/* Total */}
+                            {assignment.total_amount != null && (
+                                <View style={styles.priceRow}>
+                                    <Text style={[styles.totalLabel, { color: colors.text }]}>
+                                        Total Amount
+                                    </Text>
+                                    <Text style={[styles.totalValue, {
+                                        color: assignment.payment_method === 'cod' || assignment.payment_method === 'cash'
+                                            ? '#d97706' : Colors.primary
+                                    }]}>
+                                        {Number(assignment.total_amount).toFixed(2)} QAR
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* Cash reminder for COD */}
+                        {(assignment.payment_method === 'cod' || assignment.payment_method === 'cash') && (
+                            <View style={styles.cashReminder}>
+                                <Ionicons name="information-circle" size={16} color="#d97706" />
+                                <Text style={styles.cashReminderText}>
+                                    Collect {assignment.total_amount ? `${Number(assignment.total_amount).toFixed(2)} QAR` : 'payment'} from customer and hand to finance
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+
                 {/* Assignment Timeline - Always visible for premium history tracking */}
                 <View style={[styles.section, { backgroundColor: colors.surface, marginBottom: 24 }, Shadows.sm]}>
                     <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 16 }]}><Ionicons name="calendar" size={16} color={Colors.primary} /> {t('assignment_timeline')}</Text>
@@ -727,6 +821,67 @@ const styles = StyleSheet.create({
     },
     noProofIcon: { fontSize: 40, opacity: 0.5 },
     noProofText: { marginTop: 8, fontSize: 14 },
+
+    // Payment Summary
+    paymentMethodBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 6,
+        marginTop: 12,
+        marginBottom: 4,
+    },
+    paymentMethodText: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    priceBreakdown: {
+        marginTop: 12,
+        gap: 8,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    priceLabel: {
+        fontSize: 14,
+    },
+    priceValue: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    priceDivider: {
+        height: 1,
+        marginVertical: 6,
+    },
+    totalLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    totalValue: {
+        fontSize: 18,
+        fontWeight: '800',
+    },
+    cashReminder: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fef3c7',
+        padding: 12,
+        borderRadius: 10,
+        gap: 8,
+        marginTop: 12,
+    },
+    cashReminderText: {
+        flex: 1,
+        fontSize: 13,
+        color: '#92400e',
+        fontWeight: '500',
+    },
+
 
     // Timeline
     timelineItem: {

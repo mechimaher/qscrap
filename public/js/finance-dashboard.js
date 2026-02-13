@@ -288,7 +288,7 @@ async function loadOverview() {
         const stats = data.stats || data;
 
         document.getElementById('statTotalRevenue').textContent = formatCurrency(stats.total_revenue || 0);
-        document.getElementById('statPendingPayouts').textContent = formatCurrency(stats.pending_payouts || stats.total_pending || 0);
+        document.getElementById('statPendingPayouts').textContent = formatCurrency(stats.eligible_pending_payouts || 0);
         document.getElementById('statAwaitingConfirm').textContent = formatCurrency(stats.processing_payouts || stats.total_sent || 0);
         document.getElementById('statCompletedPayouts').textContent = formatCurrency(stats.total_paid || stats.total_confirmed || 0);
 
@@ -925,11 +925,10 @@ async function loadRevenue() {
         // Access nested metrics object
         const metrics = data.metrics || {};
         document.getElementById('revTotalOrders').textContent = metrics.orders_completed || 0;
-        document.getElementById('revTotalRevenue').textContent = formatCurrency(metrics.total_revenue);
-        document.getElementById('revPlatformFees').textContent = formatCurrency(metrics.platform_fees);
-        // Net revenue = total_revenue - platform_fees (since total_revenue includes both platform + delivery fees)
-        const netRevenue = (metrics.total_revenue || 0) - (metrics.platform_fees || 0);
-        document.getElementById('revNetRevenue').textContent = formatCurrency(netRevenue);
+        document.getElementById('revTotalRevenue').textContent = formatCurrency(metrics.gross_revenue || 0);
+        document.getElementById('revPlatformFees').textContent = formatCurrency(metrics.platform_fees || 0);
+        // Net revenue is already computed by backend (gross_revenue - refunds)
+        document.getElementById('revNetRevenue').textContent = formatCurrency(metrics.total_revenue || 0);
     } catch (err) {
         console.error('Failed to load revenue:', err);
     }

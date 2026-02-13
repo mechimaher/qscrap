@@ -145,6 +145,21 @@ export class BidManagementService {
             target_role: 'customer'
         });
 
+        // Send Expo push notification
+        try {
+            const { pushService } = await import('../push.service');
+            await pushService.sendToUser(
+                bid.customer_id,
+                'Bid Updated 🔄',
+                `A garage updated their bid for ${bid.car_make} ${bid.car_model}`,
+                { type: 'bid_updated', bid_id: bidId, request_id: bid.request_id, new_amount: updates.bid_amount },
+                { channelId: 'bids', sound: true }
+            );
+        } catch (pushErr) {
+            // Non-critical: log and continue
+            console.error('Bid update push failed:', pushErr);
+        }
+
         emitToUser(bid.customer_id, 'bid_updated', {
             request_id: bid.request_id,
             message: `A garage updated their bid for ${bid.car_make} ${bid.car_model}`,

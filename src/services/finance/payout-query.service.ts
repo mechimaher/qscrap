@@ -36,6 +36,22 @@ export class PayoutQueryService {
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('completed', 'confirmed') AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as total_paid,
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'pending' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as pending_payouts,
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status IN ('processing', 'awaiting_confirmation') AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as processing_payouts,
+                -- Eligible pending payouts: only those past 7-day warranty window
+                (SELECT COALESCE(SUM(gp2.net_amount), 0) FROM garage_payouts gp2
+                 LEFT JOIN orders o2 ON gp2.order_id = o2.order_id
+                 WHERE gp2.payout_status = 'pending' 
+                 AND (gp2.payout_type IS NULL OR gp2.payout_type != 'reversal')
+                 AND COALESCE(o2.delivered_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
+                 ${whereClause ? whereClause.replace('garage_id', 'gp2.garage_id') : ''}
+                ) as eligible_pending_payouts,
+                -- In-warranty total: payouts still within 7-day window
+                (SELECT COALESCE(SUM(gp3.net_amount), 0) FROM garage_payouts gp3
+                 LEFT JOIN orders o3 ON gp3.order_id = o3.order_id
+                 WHERE gp3.payout_status = 'pending' 
+                 AND (gp3.payout_type IS NULL OR gp3.payout_type != 'reversal')
+                 AND COALESCE(o3.delivered_at, o3.completed_at, gp3.created_at) > NOW() - INTERVAL '7 days'
+                 ${whereClause ? whereClause.replace('garage_id', 'gp3.garage_id') : ''}
+                ) as in_warranty_total,
                 -- CRITICAL: Only count payouts past 7-day warranty window (eligible for processing)
                 (SELECT COUNT(*) FROM garage_payouts gp2
                  LEFT JOIN orders o2 ON gp2.order_id = o2.order_id

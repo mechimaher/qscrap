@@ -338,7 +338,8 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
 }
 
 /**
- * Send socket notifications for order status changes
+ * Send notifications for order status changes
+ * Sends push notification, in-app record, and WebSocket events
  */
 function notifyOrderStatusChange(
     order: { order_id: string; customer_id: string; garage_id: string; order_number: string; garage_payout_amount?: number },
@@ -353,6 +354,29 @@ function notifyOrderStatusChange(
         ? `✅ Order #${order.order_number} has been completed.`
         : `Order #${order.order_number} status updated to ${newStatus}`;
 
+    // Push notification to customer (async, fire-and-forget)
+    import('./push.service').then(({ pushService }) => {
+        pushService.sendOrderStatusNotification(
+            order.customer_id,
+            order.order_number,
+            newStatus,
+            order.order_id
+        );
+    }).catch(err => logger.error('Order status push failed', { error: err }));
+
+    // In-app notification record for customer
+    import('../services/notification.service').then(ns => {
+        ns.createNotification({
+            userId: order.customer_id,
+            type: 'order_status',
+            title: isCompleted ? '✅ Order Completed' : `Order #${order.order_number} Update`,
+            message: customerMsg,
+            data: { order_id: order.order_id, order_number: order.order_number, new_status: newStatus },
+            target_role: 'customer'
+        });
+    }).catch(err => logger.error('Order status in-app notification failed', { error: err }));
+
+    // WebSocket to customer
     emitToUser(order.customer_id, 'order_status_updated', {
         order_id: order.order_id,
         order_number: order.order_number,

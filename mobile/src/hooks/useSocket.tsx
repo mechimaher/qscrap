@@ -118,6 +118,11 @@ export function useSocket() {
 
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+                // Strong vibration so customer notices even with phone on desk
+                import('react-native').then(({ Vibration }) => {
+                    Vibration.vibrate([0, 400, 200, 400]);
+                });
+
                 // Schedule rich local notification for background/locked phone
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const conditionLabel = data.part_condition
@@ -139,7 +144,9 @@ export function useSocket() {
                             requestId: data.request_id,
                             garageName: data.garage_name,
                             bidAmount: data.bid_amount,
-                        }
+                        },
+                        undefined,
+                        'bids'
                     );
                 });
 
@@ -163,6 +170,11 @@ export function useSocket() {
                 if (data.bid_amount !== undefined && data.bid_amount !== null) {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+                    // Strong vibration for bid price change
+                    import('react-native').then(({ Vibration }) => {
+                        Vibration.vibrate([0, 300, 150, 300]);
+                    });
+
                     import('../services/notifications').then(({ scheduleLocalNotification }) => {
                         const currency = t('common.currency');
                         scheduleLocalNotification(
@@ -173,7 +185,9 @@ export function useSocket() {
                                 bidId: data.bid_id,
                                 requestId: data.request_id,
                                 bidAmount: data.bid_amount,
-                            }
+                            },
+                            undefined,
+                            'bids'
                         );
                     });
 
@@ -195,6 +209,11 @@ export function useSocket() {
                 log('[Socket] Garage counter-offer:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+                // Strong vibration for counter-offer
+                import('react-native').then(({ Vibration }) => {
+                    Vibration.vibrate([0, 400, 200, 400]);
+                });
+
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const currency = t('common.currency');
                     scheduleLocalNotification(
@@ -204,7 +223,9 @@ export function useSocket() {
                             type: 'counter_offer',
                             bidId: data.bid_id,
                             proposedAmount: data.proposed_amount,
-                        }
+                        },
+                        undefined,
+                        'bids'
                     );
                 });
             });
@@ -213,6 +234,11 @@ export function useSocket() {
             socket.current.on('counter_offer_accepted', (data: any) => {
                 log('[Socket] Counter-offer accepted:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                // Vibration for accepted counter-offer
+                import('react-native').then(({ Vibration }) => {
+                    Vibration.vibrate([0, 300, 150, 300]);
+                });
 
                 import('../services/notifications').then(({ scheduleLocalNotification }) => {
                     const currency = t('common.currency');
