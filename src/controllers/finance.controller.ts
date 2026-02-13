@@ -606,19 +606,20 @@ export const rejectRefund = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Rejection reason required' });
         }
 
-        // Update refund status to rejected
-        await pool.query(`
-            UPDATE refunds SET
-                refund_status = 'rejected',
-                processed_by = $2,
-                processed_at = NOW(),
-                refund_reason = refund_reason || ' | REJECTED: ' || $3
-            WHERE refund_id = $1
-        `, [refund_id, rejectedBy, reason]);
+        // Use service method which handles the full rejection lifecycle:
+        // 1. Updates refund status to 'rejected'
+        // 2. Restores order payment_status to 'paid' (from 'refund_pending')
+        // 3. Unfreezes garage payout (from 'on_hold' back to 'pending')
+        // 4. Notifies customer
+        // All within a single transaction
+        const result = await refundService.rejectRefund(refund_id, rejectedBy, reason);
 
-        res.json({ success: true, message: 'Refund request rejected' });
+        res.json(result);
     } catch (err: any) {
         logger.error('rejectRefund Error:', { error: (err as any).message });
+        if (isFinanceError(err)) {
+            return res.status(getHttpStatusForError(err)).json({ error: err.message });
+        }
         res.status(500).json({ error: err.message || 'Failed to reject refund' });
     }
 };
