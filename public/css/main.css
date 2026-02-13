@@ -2156,3 +2156,40 @@
         .footer-links a:hover .footer-contact-icon {
             stroke: var(--gold);
         }
+
+        /* ===== Scroll Reveal Animations ===== */
+        .step-card,
+        .value-card {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .step-card.active,
+        .value-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Trust counter subtle glow on animation */
+        .hero-stat-value {
+            transition: color 0.3s ease;
+        }
+
+        /* ===== Accessibility: Reduced Motion ===== */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+
+            .step-card,
+            .value-card {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }

@@ -18,19 +18,86 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Reveal on scroll animations
-const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
-const revealOnScroll = () => {
-    reveals.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        if (rect.top < windowHeight - 100) {
-            el.classList.add('active');
-        }
+// ===== SCROLL REVEAL SYSTEM (IntersectionObserver) =====
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (!prefersReducedMotion) {
+    // Staggered card reveal — each card delays 100ms more
+    const staggerContainers = document.querySelectorAll('.steps-grid, .value-grid');
+    staggerContainers.forEach(container => {
+        const cards = container.children;
+        Array.from(cards).forEach((card, i) => {
+            card.style.transitionDelay = `${i * 100}ms`;
+        });
     });
-};
-window.addEventListener('scroll', revealOnScroll);
-window.addEventListener('load', revealOnScroll);
+
+    // IntersectionObserver for all reveal elements
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                revealObserver.unobserve(entry.target); // only trigger once
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .step-card, .value-card').forEach(el => {
+        revealObserver.observe(el);
+    });
+
+    // ===== TRUST COUNTER ANIMATION =====
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCounters();
+                counterObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    const heroStats = document.querySelector('.hero-stats');
+    if (heroStats) counterObserver.observe(heroStats);
+
+    function animateCounters() {
+        const statValues = document.querySelectorAll('.hero-stat-value');
+        statValues.forEach(el => {
+            const text = el.textContent.trim();
+            // Parse target: "5,000+" → 5000, "50+" → 50, "4.8★" → 4.8
+            const numStr = text.replace(/[^\d.]/g, '');
+            const target = parseFloat(numStr);
+            const suffix = text.replace(/[\d.,]/g, ''); // "+", "★"
+            const hasComma = text.includes(',');
+            const isDecimal = text.includes('.');
+            const duration = 2000;
+            const startTime = performance.now();
+
+            function update(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = eased * target;
+
+                let formatted;
+                if (isDecimal) {
+                    formatted = current.toFixed(1);
+                } else {
+                    const rounded = Math.floor(current);
+                    formatted = hasComma ? rounded.toLocaleString() : String(rounded);
+                }
+                el.textContent = formatted + suffix;
+
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        });
+    }
+} else {
+    // Reduced motion: show everything immediately
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .step-card, .value-card').forEach(el => {
+        el.classList.add('active');
+    });
+}
 
 // ===== 2026 BILINGUAL I18N SYSTEM =====
 // Professional Arabic translations for Qatari market
