@@ -571,10 +571,9 @@ export class RefundService {
             await client.query(`
                 UPDATE refunds 
                 SET refund_status = 'rejected',
-                    rejection_reason = $1,
+                    refund_reason = refund_reason || ' | REJECTED: ' || $1,
                     processed_by = $2,
-                    processed_at = NOW(),
-                    updated_at = NOW()
+                    processed_at = NOW()
                 WHERE refund_id = $3
             `, [rejectionReason, rejectedBy, refundId]);
 
