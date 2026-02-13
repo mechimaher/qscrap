@@ -51,6 +51,72 @@ export class SupportActionsService {
     constructor(private pool: Pool) { }
 
     /**
+     * Enterprise Pattern: Ensure a support ticket exists for an order.
+     * If an open ticket exists → return its ID.
+     * If none exists → auto-create one.
+     * This ensures every support action has a traceable ticket trail.
+     */
+    private async ensureTicketForOrder(
+        orderId: string,
+        customerId: string,
+        agentId: string,
+        actionSubject: string,
+        category: string,
+        client: PoolClient
+    ): Promise<string> {
+        // Check for existing open ticket linked to this order
+        const existing = await client.query(`
+            SELECT ticket_id FROM support_tickets
+            WHERE order_id = $1 AND status NOT IN ('closed', 'resolved')
+            ORDER BY created_at DESC LIMIT 1
+        `, [orderId]);
+
+        if (existing.rows.length > 0) {
+            return existing.rows[0].ticket_id;
+        }
+
+        // Auto-create ticket
+        const slaHours = category === 'billing' ? 8 : category === 'delivery' ? 12 : 24;
+        const result = await client.query(`
+            INSERT INTO support_tickets (
+                customer_id, requester_id, requester_type, subject, priority,
+                category, order_id, status, sla_deadline, assigned_to
+            ) VALUES ($1, $2, 'support', $3, 'high', $4, $5, 'open', NOW() + INTERVAL '${slaHours} hours', $2)
+            RETURNING ticket_id
+        `, [customerId, agentId, actionSubject, category, orderId]);
+
+        logger.info('Auto-created ticket for support action', {
+            ticketId: result.rows[0].ticket_id,
+            orderId,
+            action: actionSubject
+        });
+
+        return result.rows[0].ticket_id;
+    }
+
+    /**
+     * Post an action update to a ticket's chat timeline.
+     * This creates a system message visible to all agents viewing the ticket.
+     */
+    private async postTicketUpdate(
+        ticketId: string,
+        agentId: string,
+        message: string,
+        client: PoolClient
+    ): Promise<void> {
+        await client.query(`
+            INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
+            VALUES ($1, $2, 'system', $3, false)
+        `, [ticketId, agentId, message]);
+
+        // Update ticket's last_message_at
+        await client.query(`
+            UPDATE support_tickets SET last_message_at = NOW(), updated_at = NOW()
+            WHERE ticket_id = $1
+        `, [ticketId]);
+    }
+
+    /**
      * Get full context for an order before taking action
      * Shows payout status, warranty status, payment info
      */
@@ -233,7 +299,25 @@ export class SupportActionsService {
                 [params.orderId]
             );
 
-            // 4. Log resolution (as REQUEST, not completed action)
+            // 4. Ensure ticket exists and post action to timeline
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId, params.customerId, params.agentId,
+                `Refund Request — Order #${context.order.order_number}`,
+                'billing', client
+            );
+
+            let ticketMessage = `🔄 **Refund Requested**\n\n`;
+            ticketMessage += `Order #${context.order.order_number}\n`;
+            ticketMessage += `Amount: ${refundCalc.refundableAmount.toFixed(2)} QAR`;
+            if (refundCalc.platformFee > 0) {
+                ticketMessage += ` (${refundCalc.feePercentage}% fee applied)`;
+            }
+            ticketMessage += `\nReason: ${params.reason}\n`;
+            ticketMessage += `Status: ⏳ Awaiting Finance approval`;
+
+            await this.postTicketUpdate(ticketId, params.agentId, ticketMessage, client);
+
+            // 5. Log resolution (as REQUEST, not completed action)
             await this.logResolution({
                 orderId: params.orderId,
                 customerId: params.customerId,
@@ -249,7 +333,8 @@ export class SupportActionsService {
                     platform_fee: refundCalc.platformFee,
                     delivery_fee_retained: refundCalc.deliveryFeeRetained,
                     status: 'pending_finance_approval',
-                    warranty_days_remaining: context.warrantyDaysRemaining
+                    warranty_days_remaining: context.warrantyDaysRemaining,
+                    ticket_id: ticketId
                 },
                 notes: params.reason
             }, client);
@@ -404,13 +489,28 @@ export class SupportActionsService {
                 VALUES ($1, $2, 'cancelled_by_ops', $3, 'support', $4)
             `, [params.orderId, context.order.order_status, params.agentId, params.reason]);
 
+            // Ensure ticket and post action to timeline
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId, params.customerId, params.agentId,
+                `Order Cancellation — Order #${context.order.order_number}`,
+                'billing', client
+            );
+
+            let ticketMsg = `❌ **Order Cancelled**\n\n`;
+            ticketMsg += `Order #${context.order.order_number}\n`;
+            ticketMsg += `Reason: ${params.reason}\n`;
+            if (payoutAction) ticketMsg += `Payout: Cancelled\n`;
+            if (refundAction) ticketMsg += `Refund: ${refundAction.amount} QAR initiated`;
+
+            await this.postTicketUpdate(ticketId, params.agentId, ticketMsg, client);
+
             // Log resolution
             await this.logResolution({
                 orderId: params.orderId,
                 customerId: params.customerId,
                 agentId: params.agentId,
                 actionType: 'cancel_order',
-                actionDetails: { payout_action: payoutAction, refund_action: refundAction },
+                actionDetails: { payout_action: payoutAction, refund_action: refundAction, ticket_id: ticketId },
                 notes: params.reason
             }, client);
 
@@ -481,13 +581,25 @@ export class SupportActionsService {
                 WHERE order_id = $1
             `, [params.orderId]);
 
+            // Ensure ticket and post action to timeline
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId, params.customerId, params.agentId,
+                `Driver Reassignment — Order #${context.order.order_number}`,
+                'delivery', client
+            );
+
+            await this.postTicketUpdate(ticketId, params.agentId,
+                `🔄 **Driver Reassignment Requested**\n\nOrder #${context.order.order_number}\nReason: ${params.reason}\nOps team has been notified.`,
+                client
+            );
+
             // Log
             await this.logResolution({
                 orderId: params.orderId,
                 customerId: params.customerId,
                 agentId: params.agentId,
                 actionType: 'reassign_driver',
-                actionDetails: { previous_driver_id: context.order.driver_id },
+                actionDetails: { previous_driver_id: context.order.driver_id, ticket_id: ticketId },
                 notes: params.reason
             }, client);
 
@@ -544,7 +656,14 @@ export class SupportActionsService {
 
             const context = await this.getActionContextInternal(params.orderId, client);
 
-            // Create escalation record with optional ticket link
+            // Ensure ticket exists (escalation ALWAYS needs a ticket)
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId, params.customerId, params.agentId,
+                `Escalation — Order #${context.order.order_number}`,
+                'billing', client
+            );
+
+            // Create escalation record linked to ticket
             await client.query(`
                 INSERT INTO support_escalations 
                 (order_id, customer_id, escalated_by, reason, priority, status, ticket_id)
@@ -555,8 +674,14 @@ export class SupportActionsService {
                 params.agentId,
                 params.reason,
                 params.priority || 'normal',
-                params.ticketId || null
+                ticketId
             ]);
+
+            const priorityIcon = params.priority === 'urgent' ? '🔴' : params.priority === 'high' ? '🟠' : '🟡';
+            await this.postTicketUpdate(ticketId, params.agentId,
+                `${priorityIcon} **Escalated to Operations**\n\nOrder #${context.order.order_number}\nPriority: ${(params.priority || 'normal').toUpperCase()}\nReason: ${params.reason}`,
+                client
+            );
 
             // Log
             await this.logResolution({
@@ -564,7 +689,7 @@ export class SupportActionsService {
                 customerId: params.customerId,
                 agentId: params.agentId,
                 actionType: 'escalate_to_ops',
-                actionDetails: { priority: params.priority || 'normal' },
+                actionDetails: { priority: params.priority || 'normal', ticket_id: ticketId },
                 notes: params.reason
             }, client);
 
@@ -577,7 +702,8 @@ export class SupportActionsService {
                     reason: params.reason,
                     priority: params.priority || 'normal',
                     customer_name: context.customer.name,
-                    escalated_by: 'support'
+                    escalated_by: 'support',
+                    ticket_id: ticketId
                 });
             }
 
