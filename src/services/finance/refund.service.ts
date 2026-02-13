@@ -692,7 +692,7 @@ export class RefundService {
                     const { createNotification } = await import('../notification.service');
                     await createNotification({
                         userId: ticket.assigned_to,
-                        target_role: 'admin',
+                        target_role: 'operations',
                         type: `refund_${decision}`,
                         title: `Refund ${statusText} - Order #${orderNumber}`,
                         message: details,
@@ -722,7 +722,7 @@ export class RefundService {
                     const icon = decision === 'approved' ? '✅' : '❌';
                     await createNotification({
                         userId: initiatorId,
-                        target_role: 'admin',
+                        target_role: 'operations',
                         type: `refund_${decision}`,
                         title: `${icon} Refund ${decision === 'approved' ? 'Approved' : 'Rejected'} - #${orderNumber}`,
                         message: details,
