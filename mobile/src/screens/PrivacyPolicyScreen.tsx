@@ -36,7 +36,7 @@ interface Section {
 // ============================================
 // PRIVACY CONTENT — mirrors public/privacy.html
 // ============================================
-const SECTIONS: Section[] = [
+const SECTIONS_EN: Section[] = [
     {
         num: 1,
         title: 'Introduction & Scope',
@@ -236,14 +236,263 @@ const SECTIONS: Section[] = [
     },
 ];
 
+// ============================================
+// PRIVACY CONTENT — Arabic
+// ============================================
+const SECTIONS_AR: Section[] = [
+    {
+        num: 1,
+        title: 'المقدمة والنطاق',
+        icon: 'globe',
+        content: 'تدير شركة كيوسكراب للخدمات والتجارة ذ.م.م (السجل التجاري: 155892) تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين. تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
+        items: [
+            'العملاء: المستخدمون الباحثون عن قطع غيار السيارات',
+            'شركاء الكراجات: الشركات التي توفر قطع الغيار عبر منصتنا',
+            'السائقون: موظفو التوصيل الذين يستخدمون تطبيق كيوسكراب للسائقين',
+        ],
+        footnote: 'باستخدامك لتطبيقاتنا أو خدماتنا، فإنك توافق على جمع واستخدام والإفصاح عن معلوماتك كما هو موضح في سياسة الخصوصية هذه. تتوافق هذه السياسة مع القانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.',
+    },
+    {
+        num: 2,
+        title: 'المعلومات التي نجمعها',
+        icon: 'layers',
+        subsections: [
+            {
+                title: '2.1 المعلومات الشخصية التي تقدمها',
+                items: [
+                    'معلومات الحساب: الاسم الكامل، رقم الهاتف، البريد الإلكتروني',
+                    'معلومات الملف الشخصي: صورة الملف الشخصي (اختيارية)، اللغة المفضلة',
+                    'معلومات المركبة: رقم الهيكل، الشركة المصنعة، الطراز، سنة الصنع لمطابقة القطع',
+                    'معلومات الدفع: تفضيلات طريقة الدفع (الدفع عند الاستلام، البطاقة)',
+                    'معلومات الأعمال (للكراجات): رقم السجل التجاري، رقم الآيبان، عنوان العمل',
+                    'معلومات السائق: الهوية القطرية، رخصة القيادة، تسجيل المركبة',
+                ],
+            },
+            {
+                title: '2.2 المعلومات المجمّعة تلقائيًا',
+                items: [
+                    'معلومات الجهاز: نوع الجهاز، إصدار نظام التشغيل، المعرّفات الفريدة، رموز الإشعارات',
+                    'بيانات الموقع: إحداثيات GPS لمناطق التوصيل، التتبع في الوقت الفعلي',
+                    'بيانات الاستخدام: تفاعلات التطبيق، الميزات المستخدمة، مدة الجلسة',
+                    'بيانات السجل: عنوان IP، أوقات الوصول، أعطال التطبيق، نشاط النظام',
+                    'الصور والوسائط: الصور المرفوعة لطلبات القطع وإثبات التسليم',
+                ],
+            },
+        ],
+        highlight: { type: 'default', text: 'تتطلب تطبيقاتنا الوصول إلى الموقع لتعمل بشكل صحيح. نستخدمه لحساب رسوم التوصيل ومطابقة الكراجات القريبة والتتبع في الوقت الفعلي وتحسين المسارات. يمكنك تعطيله في الإعدادات، لكن ذلك سيؤثر على الوظائف.' },
+    },
+    {
+        num: 3,
+        title: 'كيف نستخدم معلوماتك',
+        icon: 'analytics',
+        subsections: [
+            {
+                title: '3.1 تقديم الخدمة',
+                items: [
+                    'معالجة وتنفيذ طلبات قطع الغيار والطلبات',
+                    'تسهيل المزايدة بين العملاء والكراجات',
+                    'حساب رسوم التوصيل بناءً على موقعك',
+                    'توفير تتبع الطلبات والإشعارات في الوقت الفعلي',
+                    'معالجة المدفوعات والتحويلات',
+                    'إدارة الضمانات والمرتجعات والاسترداد',
+                ],
+            },
+            {
+                title: '3.2 التواصل',
+                items: [
+                    'إرسال تأكيدات الطلبات والتحديثات وإشعارات التوصيل',
+                    'دعم العملاء وحل النزاعات',
+                    'إعلانات الخدمة المهمة وتحديثات السياسات',
+                    'الاتصالات التسويقية (بموافقتك)',
+                ],
+            },
+            {
+                title: '3.3 التحسين والأمان',
+                items: [
+                    'تحليل أنماط الاستخدام لتحسين خدماتنا',
+                    'كشف ومنع الاحتيال',
+                    'ضمان أمان وسلامة المنصة',
+                    'الامتثال للالتزامات القانونية',
+                ],
+            },
+        ],
+    },
+    {
+        num: 4,
+        title: 'مشاركة البيانات والإفصاح',
+        icon: 'share-social',
+        content: 'قد نشارك معلوماتك مع:',
+        subsections: [
+            {
+                title: '4.1 شركاء الخدمة',
+                items: [
+                    'الكراجات: اسمك ورقم هاتفك وعنوان التوصيل لتنفيذ الطلب',
+                    'السائقون: اسمك ورقم هاتفك وموقع التوصيل لتسليم الطلب',
+                    'معالجو الدفع: تفاصيل المعاملات لمعالجة الدفع',
+                ],
+            },
+            {
+                title: '4.2 مزودو الخدمات الخارجيون',
+                items: [
+                    'البنية التحتية السحابية: تخزين آمن للبيانات',
+                    'التحليلات: تحليل الاستخدام',
+                    'الخرائط والموقع: خرائط جوجل لخدمات الموقع',
+                    'الإشعارات الفورية: Firebase Cloud Messaging للإشعارات',
+                ],
+            },
+            {
+                title: '4.3 المتطلبات القانونية',
+                content: 'قد نفصح عن معلوماتك عندما يتطلب ذلك القانون القطري أو أوامر المحكمة أو اللوائح الحكومية.',
+            },
+        ],
+        highlight: { type: 'gold', text: 'نحن لا نبيع معلوماتك الشخصية لأطراف ثالثة لأغراض الإعلان أو التسويق.' },
+    },
+    {
+        num: 5,
+        title: 'أمن البيانات',
+        icon: 'lock-closed',
+        content: 'نطبّق إجراءات أمنية وفق المعايير المعتمدة لحماية بياناتك:',
+        items: [
+            'التشفير: جميع عمليات نقل البيانات تستخدم SSL/TLS (HTTPS)',
+            'التخزين الآمن: قواعد بيانات مشفرة مع ضوابط الوصول',
+            'المصادقة: التحقق عبر OTP للوصول إلى الحساب',
+            'التحكم في الوصول: قيود قائمة على الأدوار للموظفين',
+            'التدقيق المنتظم: تقييمات أمنية واختبارات الثغرات',
+            'الاستجابة للحوادث: إخطار بانتهاك البيانات خلال 72 ساعة',
+        ],
+        footnote: 'بينما نسعى لحماية بياناتك، لا توجد طريقة لنقل البيانات عبر الإنترنت آمنة بنسبة 100%.',
+    },
+    {
+        num: 6,
+        title: 'الاحتفاظ بالبيانات',
+        icon: 'time',
+        content: 'نحتفظ بمعلوماتك الشخصية طالما كان ذلك ضروريًا من أجل:',
+        items: [
+            'تقديم خدماتنا وتنفيذ الطلبات',
+            'الامتثال للمتطلبات القانونية في قطر (الاحتفاظ لمدة 10 سنوات للسجلات التجارية)',
+            'حل النزاعات وإنفاذ الاتفاقيات',
+            'الحفاظ على سجلات المراجعة للامتثال التنظيمي',
+        ],
+        footnote: 'عندما لا تعود البيانات مطلوبة، نحذفها بشكل آمن أو نجعلها مجهولة الهوية.',
+    },
+    {
+        num: 7,
+        title: 'حقوقك',
+        icon: 'hand-left',
+        content: 'بموجب قوانين حماية البيانات القطرية وسياساتنا، لديك الحق في:',
+        items: [
+            'الوصول: طلب نسخة من بياناتك الشخصية',
+            'التصحيح: تحديث أو تصحيح المعلومات غير الدقيقة',
+            'الحذف: طلب حذف حسابك وبياناتك (وفقًا للاحتفاظ القانوني)',
+            'النقل: طلب تصدير بياناتك بتنسيق شائع',
+            'إلغاء الاشتراك: إلغاء الاشتراك من الاتصالات التسويقية',
+            'سحب الموافقة: إلغاء الأذونات لمعالجة البيانات الاختيارية',
+        ],
+        footnote: 'لممارسة هذه الحقوق، تواصل معنا على privacy@qscrap.qa. سنرد خلال 30 يومًا.',
+    },
+    {
+        num: 8,
+        title: 'حذف الحساب',
+        icon: 'trash',
+        content: 'يمكنك طلب حذف حسابك من خلال التطبيق أو بالتواصل معنا. عند الحذف:',
+        items: [
+            'سيتم إزالة ملفك الشخصي وبياناتك الشخصية أو جعلها مجهولة الهوية',
+            'قد يتم الاحتفاظ بسجل الطلبات بشكل مجهول لأغراض قانونية/المراجعة',
+            'البيانات المطلوبة قانونيًا (الفواتير، سجلات المعاملات) سيتم الاحتفاظ بها وفقًا للقانون التجاري القطري',
+        ],
+    },
+    {
+        num: 9,
+        title: 'خصوصية الأطفال',
+        icon: 'people',
+        content: 'تطبيقاتنا غير مخصصة للمستخدمين الذين تقل أعمارهم عن 18 عامًا. نحن لا نجمع عمدًا معلومات شخصية من الأطفال دون سن 18 عامًا. إذا كنت تعتقد أن طفلاً قدم لنا معلومات شخصية، يرجى التواصل معنا فورًا.',
+    },
+    {
+        num: 10,
+        title: 'روابط الأطراف الثالثة',
+        icon: 'link',
+        content: 'قد تحتوي تطبيقاتنا على روابط لمواقع أو خدمات أطراف ثالثة. نحن غير مسؤولين عن ممارسات الخصوصية لهذه الأطراف. ننصحك بقراءة سياسات الخصوصية الخاصة بهم قبل تقديم أي معلومات شخصية.',
+    },
+    {
+        num: 11,
+        title: 'نقل البيانات الدولي',
+        icon: 'earth',
+        content: 'قد يتم نقل معلوماتك ومعالجتها على خوادم موجودة خارج قطر. نضمن وجود ضمانات مناسبة لحماية بياناتك وفقًا للقانون القطري رقم 13 لسنة 2016.',
+    },
+    {
+        num: 12,
+        title: 'التغييرات على هذه السياسة',
+        icon: 'create',
+        content: 'قد نحدّث سياسة الخصوصية هذه بشكل دوري. سنخطرك بالتغييرات الجوهرية من خلال:',
+        items: [
+            'إشعارات داخل التطبيق',
+            'بريد إلكتروني إلى عنوان بريدك الإلكتروني المسجل',
+            'إشعار بارز على موقعنا الإلكتروني',
+        ],
+        footnote: 'استمرارك في استخدام تطبيقاتنا بعد التغييرات يعني قبولك للسياسة المحدّثة.',
+    },
+    {
+        num: 13,
+        title: 'القانون المعمول به',
+        icon: 'scale',
+        content: 'تخضع سياسة الخصوصية هذه لقوانين دولة قطر، بما في ذلك القانون رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية. تخضع أي نزاعات للاختصاص الحصري لمحاكم دولة قطر.',
+    },
+];
+
+// ============================================
+// UI CHROME TRANSLATIONS
+// ============================================
+const CHROME = {
+    en: {
+        badge: 'Your Data is Protected',
+        summaryTitle: 'Your Privacy is Our Priority',
+        summaryText: 'This Privacy Policy explains how QScrap Services & Trading L.L.C collects, uses, shares, and protects your personal information. We are committed to transparency and compliance with Qatar\'s Law No. 13 of 2016 on Personal Data Protection.',
+        lastUpdated: 'Last updated: January 31, 2026',
+        contactTitle: 'Contact Us',
+        contactItems: [
+            { icon: 'shield', label: 'Data Protection Officer', value: 'privacy@qscrap.qa' },
+            { icon: 'mail', label: 'General Support', value: 'support@qscrap.qa' },
+            { icon: 'call', label: 'Phone', value: '+974 5026 7974' },
+            { icon: 'location', label: 'Address', value: 'Industrial Area, Street 10, Doha, Qatar' },
+        ],
+        companyName: 'QScrap Services & Trading L.L.C',
+        companyArabic: 'كيوسكراب للخدمات والتجارة ذ.م.م',
+        companyCR: 'Commercial Registration: 155892 | State of Qatar',
+        footer: '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
+        compliance: 'Compliant with Google Play Developer Program Policies and Qatar\'s Personal Data Protection Law.',
+    },
+    ar: {
+        badge: 'بياناتك محمية',
+        summaryTitle: 'خصوصيتك هي أولويتنا',
+        summaryText: 'توضح سياسة الخصوصية هذه كيف تجمع شركة كيوسكراب للخدمات والتجارة ذ.م.م معلوماتك الشخصية وتستخدمها وتشاركها وتحميها. نحن ملتزمون بالشفافية والامتثال للقانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.',
+        lastUpdated: 'آخر تحديث: 31 يناير 2026',
+        contactTitle: 'تواصل معنا',
+        contactItems: [
+            { icon: 'shield', label: 'مسؤول حماية البيانات', value: 'privacy@qscrap.qa' },
+            { icon: 'mail', label: 'الدعم العام', value: 'support@qscrap.qa' },
+            { icon: 'call', label: 'الهاتف', value: '+974 5026 7974' },
+            { icon: 'location', label: 'العنوان', value: 'المنطقة الصناعية، شارع 10، الدوحة، قطر' },
+        ],
+        companyName: 'كيوسكراب للخدمات والتجارة ذ.م.م',
+        companyArabic: 'QScrap Services & Trading L.L.C',
+        companyCR: 'السجل التجاري: 155892 | دولة قطر',
+        footer: '© 2026 كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.',
+        compliance: 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية القطري.',
+    },
+};
+
 /**
  * Privacy Policy Screen
  * Premium native layout — instant load, offline support, dark mode, RTL.
+ * Fully bilingual: EN/AR with RTL layout support.
  */
 export default function PrivacyPolicyScreen() {
     const navigation = useNavigation();
     const { colors, isDark } = useTheme();
-    const { t, isRTL } = useTranslation();
+    const { t, language, isRTL } = useTranslation();
+    const sections = language === 'ar' ? SECTIONS_AR : SECTIONS_EN;
+    const chrome = CHROME[language] || CHROME.en;
+    const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -271,11 +520,11 @@ export default function PrivacyPolicyScreen() {
                 <View style={styles.heroContent}>
                     <View style={styles.heroBadge}>
                         <Ionicons name="shield-checkmark" size={14} color="#4ADE80" />
-                        <Text style={styles.heroBadgeText}>Your Data is Protected</Text>
+                        <Text style={styles.heroBadgeText}>{chrome.badge}</Text>
                     </View>
                     <Text style={styles.heroTitle}>{t('settings.privacyPolicy')}</Text>
-                    <Text style={styles.heroArabic}>سياسة الخصوصية</Text>
-                    <Text style={styles.heroDate}>Last updated: January 31, 2026</Text>
+                    <Text style={styles.heroArabic}>{isRTL ? 'Privacy Policy' : 'سياسة الخصوصية'}</Text>
+                    <Text style={styles.heroDate}>{chrome.lastUpdated}</Text>
                 </View>
             </LinearGradient>
 
@@ -292,14 +541,14 @@ export default function PrivacyPolicyScreen() {
                     <View style={styles.summaryIconWrap}>
                         <Ionicons name="lock-closed" size={28} color="rgba(255,255,255,0.2)" />
                     </View>
-                    <Text style={styles.summaryTitle}>Your Privacy is Our Priority</Text>
-                    <Text style={styles.summaryText}>
-                        This Privacy Policy explains how QScrap Services & Trading L.L.C collects, uses, shares, and protects your personal information. We are committed to transparency and compliance with Qatar's Law No. 13 of 2016 on Personal Data Protection.
+                    <Text style={[styles.summaryTitle, { textAlign }]}>{chrome.summaryTitle}</Text>
+                    <Text style={[styles.summaryText, { textAlign }]}>
+                        {chrome.summaryText}
                     </Text>
                 </LinearGradient>
 
                 {/* Sections */}
-                {SECTIONS.map((section) => (
+                {sections.map((section) => (
                     <View key={section.num} style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                         {/* Section Header */}
                         <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -307,14 +556,14 @@ export default function PrivacyPolicyScreen() {
                                 <Text style={styles.sectionNumText}>{section.num}</Text>
                             </View>
                             <View style={styles.sectionTitleWrap}>
-                                <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.text, textAlign }]}>{section.title}</Text>
                             </View>
                             <Ionicons name={section.icon as any} size={20} color="#1E3A5F" style={{ opacity: 0.35 }} />
                         </View>
 
                         {/* Content */}
                         {section.content && (
-                            <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
+                            <Text style={[styles.sectionText, { color: colors.textSecondary, textAlign }]}>
                                 {section.content}
                             </Text>
                         )}
@@ -323,7 +572,7 @@ export default function PrivacyPolicyScreen() {
                         {section.items && section.items.map((item, idx) => (
                             <View key={idx} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Ionicons name="checkmark" size={16} color="#1E3A5F" style={[styles.listIcon, isRTL && { marginLeft: Spacing.sm, marginRight: 0 }]} />
-                                <Text style={[styles.listText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+                                <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
                             </View>
                         ))}
 
@@ -332,15 +581,15 @@ export default function PrivacyPolicyScreen() {
                             <View key={idx} style={styles.subsection}>
                                 <View style={[styles.subsectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                     <View style={styles.subsectionBar} />
-                                    <Text style={[styles.subsectionTitle, { color: isDark ? '#6BA3D6' : '#1E3A5F' }]}>{sub.title}</Text>
+                                    <Text style={[styles.subsectionTitle, { color: isDark ? '#6BA3D6' : '#1E3A5F', textAlign }]}>{sub.title}</Text>
                                 </View>
                                 {sub.content && (
-                                    <Text style={[styles.sectionText, { color: colors.textSecondary }]}>{sub.content}</Text>
+                                    <Text style={[styles.sectionText, { color: colors.textSecondary, textAlign }]}>{sub.content}</Text>
                                 )}
                                 {sub.items && sub.items.map((item, i) => (
                                     <View key={i} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                         <Ionicons name="checkmark" size={16} color={Colors.secondary} style={[styles.listIcon, isRTL && { marginLeft: Spacing.sm, marginRight: 0 }]} />
-                                        <Text style={[styles.listText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+                                        <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
                                     </View>
                                 ))}
                             </View>
@@ -348,7 +597,7 @@ export default function PrivacyPolicyScreen() {
 
                         {/* Footnote */}
                         {section.footnote && (
-                            <Text style={[styles.footnote, { color: colors.textMuted }]}>{section.footnote}</Text>
+                            <Text style={[styles.footnote, { color: colors.textMuted, textAlign }]}>{section.footnote}</Text>
                         )}
 
                         {/* Highlight box */}
@@ -367,9 +616,9 @@ export default function PrivacyPolicyScreen() {
                                     name={section.highlight.type === 'gold' ? 'lock-closed' : 'information-circle'}
                                     size={18}
                                     color={section.highlight.type === 'gold' ? Colors.secondary : '#1E3A5F'}
-                                    style={{ marginRight: Spacing.sm, marginTop: 2 }}
+                                    style={isRTL ? { marginLeft: Spacing.sm, marginTop: 2 } : { marginRight: Spacing.sm, marginTop: 2 }}
                                 />
-                                <Text style={[styles.highlightText, { color: colors.text, flex: 1 }]}>
+                                <Text style={[styles.highlightText, { color: colors.text, flex: 1, textAlign }]}>
                                     {section.highlight.text}
                                 </Text>
                             </View>
@@ -382,26 +631,25 @@ export default function PrivacyPolicyScreen() {
                     colors={isDark ? ['#141416', '#1C1C1F'] : ['#1A1A1A', '#2A2A2A']}
                     style={styles.contactCard}
                 >
-                    <Text style={styles.contactTitle}>Contact Us</Text>
+                    <Text style={[styles.contactTitle, { textAlign }]}>{chrome.contactTitle}</Text>
                     <View style={styles.contactGrid}>
-                        <ContactItem icon="shield" label="Data Protection Officer" value="privacy@qscrap.qa" isRTL={isRTL} />
-                        <ContactItem icon="mail" label="General Support" value="support@qscrap.qa" isRTL={isRTL} />
-                        <ContactItem icon="call" label="Phone" value="+974 5026 7974" isRTL={isRTL} />
-                        <ContactItem icon="location" label="Address" value="Industrial Area, Street 10, Doha, Qatar" isRTL={isRTL} />
+                        {chrome.contactItems.map((item, idx) => (
+                            <ContactItem key={idx} icon={item.icon} label={item.label} value={item.value} isRTL={isRTL} />
+                        ))}
                     </View>
                     <View style={styles.contactLegal}>
-                        <Text style={styles.companyName}>QScrap Services & Trading L.L.C</Text>
-                        <Text style={styles.companyArabic}>كيوسكراب للخدمات والتجارة ذ.م.م</Text>
-                        <Text style={styles.companyCR}>Commercial Registration: 155892 | State of Qatar</Text>
+                        <Text style={styles.companyName}>{chrome.companyName}</Text>
+                        <Text style={styles.companyArabic}>{chrome.companyArabic}</Text>
+                        <Text style={styles.companyCR}>{chrome.companyCR}</Text>
                     </View>
                 </LinearGradient>
 
                 {/* Footer */}
                 <Text style={[styles.footerText, { color: colors.textMuted }]}>
-                    © 2026 QScrap Services & Trading L.L.C. All rights reserved.
+                    {chrome.footer}
                 </Text>
                 <Text style={[styles.footerCompliance, { color: colors.textMuted }]}>
-                    Compliant with Google Play Developer Program Policies and Qatar's Personal Data Protection Law.
+                    {chrome.compliance}
                 </Text>
             </ScrollView>
         </SafeAreaView>

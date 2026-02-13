@@ -20,9 +20,9 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants'
 const { width } = Dimensions.get('window');
 
 // ============================================
-// LEGAL CONTENT — Single source of truth
+// LEGAL CONTENT — English
 // ============================================
-const SECTIONS = [
+const SECTIONS_EN = [
     {
         num: 1,
         title: 'Acceptance of Terms',
@@ -126,15 +126,166 @@ const SECTIONS = [
     },
 ];
 
+// ============================================
+// LEGAL CONTENT — Arabic
+// ============================================
+const SECTIONS_AR = [
+    {
+        num: 1,
+        title: 'قبول الشروط',
+        icon: 'document-text' as const,
+        content: 'بتحميلك أو وصولك أو استخدامك لتطبيق كيوسكراب للعملاء أو تطبيق كيوسكراب للسائقين أو أي خدمات ذات صلة ("المنصة")، فإنك توافق على الالتزام بشروط الخدمة هذه. إذا لم توافق على أي جزء من هذه الشروط، فلا يحق لك استخدام خدماتنا.',
+        highlight: { type: 'gold' as const, text: 'استمرارك في استخدام المنصة بعد أي تغييرات على هذه الشروط يعني قبولك للشروط المحدّثة.' },
+    },
+    {
+        num: 2,
+        title: 'وصف الخدمة',
+        icon: 'construct' as const,
+        content: 'كيوسكراب للخدمات والتجارة ذ.م.م هي سوق إلكتروني يربط العملاء الباحثين عن قطع غيار السيارات بالكراجات ومحلات التشليح المحلية في قطر. نحن نسهّل:',
+        items: [
+            'طلبات القطع والمزايدة التنافسية من كراجات متعددة',
+            'معالجة الطلبات والدفع بشكل آمن',
+            'فحص الجودة والتحقق من القطع',
+            'توصيل قطع الغيار مباشرة إلى العملاء',
+            'إدارة الضمان وحل النزاعات',
+        ],
+    },
+    {
+        num: 3,
+        title: 'حسابات المستخدمين',
+        icon: 'person-circle' as const,
+        content: 'لاستخدام خدماتنا، يجب عليك:',
+        items: [
+            'أن يكون عمرك 18 عامًا على الأقل أو السن القانوني في نطاقك القضائي',
+            'تقديم معلومات تسجيل دقيقة وكاملة',
+            'الحفاظ على أمان وسرية بيانات حسابك',
+            'تحمّل المسؤولية عن جميع الأنشطة التي تتم من خلال حسابك',
+            'إبلاغنا فورًا عن أي وصول غير مصرّح به لحسابك',
+        ],
+        footnote: 'نحتفظ بالحق في تعليق أو إنهاء الحسابات التي تنتهك هذه الشروط أو تشارك في أنشطة احتيالية.',
+    },
+    {
+        num: 4,
+        title: 'الطلبات والمدفوعات',
+        icon: 'card' as const,
+        items: [
+            'جميع الأسعار معروضة بالريال القطري (ر.ق)',
+            'رسوم التوصيل تُحسب بناءً على المسافة إلى موقعك',
+            'الطلبات ملزمة بمجرد قبولك لعرض الكراج',
+            'خيارات الدفع تشمل الدفع عند الاستلام والدفع بالبطاقة',
+            'رسوم المنصة معروضة بشفافية قبل تأكيد الطلب',
+            'الاسترداد يخضع لسياسة الإلغاء والاسترداد لدينا',
+        ],
+        highlight: { type: 'default' as const, text: 'كيوسكراب يعمل كوسيط بين العملاء والكراجات. عقد البيع الفعلي يكون بينك وبين الكراج المزوّد للقطعة.' },
+    },
+    {
+        num: 5,
+        title: 'الضمانات والمرتجعات',
+        icon: 'shield-checkmark' as const,
+        items: [
+            'ضمانات القطع مقدّمة من الكراجات الفردية عبر منصة كيوسكراب',
+            'القطع الجديدة: ضمان 30 يومًا',
+            'القطع المستعملة (ممتازة/جيدة): ضمان 14 يومًا',
+            'القطع المستعملة (مقبولة): ضمان 7 أيام',
+            'يجب رفع النزاعات خلال فترة الضمان المعمول بها',
+            'كيوسكراب سيتوسط في النزاعات بين العملاء والكراجات',
+        ],
+    },
+    {
+        num: 6,
+        title: 'الأنشطة المحظورة',
+        icon: 'ban' as const,
+        content: 'لا يجوز لك:',
+        items: [
+            'استخدام المنصة لأي أغراض غير قانونية أو غير مصرّح بها',
+            'تقديم معلومات كاذبة أو مضللة أو احتيالية',
+            'مضايقة أو إساءة أو تهديد المستخدمين الآخرين أو الكراجات أو السائقين',
+            'محاولة التحايل على رسوم المنصة أو هيكل العمولة',
+            'التلاعب بالأسعار أو التواطؤ في المزايدات',
+            'إنشاء حسابات متعددة لاستغلال العروض الترويجية',
+            'الهندسة العكسية أو محاولة استخراج الكود المصدري من تطبيقاتنا',
+        ],
+    },
+    {
+        num: 7,
+        title: 'تحديد المسؤولية',
+        icon: 'alert-circle' as const,
+        content: 'كيوسكراب يعمل كوسيط في السوق. إلى أقصى حد يسمح به القانون القطري:',
+        items: [
+            'لسنا مسؤولين عن جودة أو حالة القطع المباعة من قبل الكراجات',
+            'لسنا مسؤولين عن التأخيرات الناتجة عن الكراجات أو مشاكل التوصيل الخارجة عن سيطرتنا',
+            'نسهّل النزاعات لكن لا نضمن حلها بين المستخدمين والكراجات',
+            'مسؤوليتنا محدودة بمبلغ الرسوم المدفوعة لكيوسكراب عن المعاملة المعنية',
+        ],
+        highlight: { type: 'gold' as const, text: 'لا شيء في هذه الشروط يؤثر على حقوقك القانونية بموجب قانون حماية المستهلك القطري (قانون رقم 8 لسنة 2008).' },
+    },
+    {
+        num: 8,
+        title: 'الملكية الفكرية',
+        icon: 'bulb' as const,
+        content: 'جميع المحتويات والعلامات التجارية والشعارات والملكية الفكرية على المنصة مملوكة لشركة كيوسكراب للخدمات والتجارة ذ.م.م أو المرخّصين لها. لا يجوز لك النسخ أو التعديل أو التوزيع أو إنشاء أعمال مشتقة دون إذن كتابي صريح منا.',
+    },
+    {
+        num: 9,
+        title: 'القانون المعمول به والنزاعات',
+        icon: 'scale' as const,
+        content: 'تخضع شروط الخدمة هذه لقوانين دولة قطر. أي نزاعات ناشئة عن هذه الشروط أو استخدامك للمنصة تُحل في محاكم دولة قطر.\n\nللشكاوى أو الاستفسارات، يرجى التواصل معنا أولاً. سنحاول حل المشكلات من خلال عملية حل النزاعات الداخلية قبل اتخاذ أي إجراء قانوني.',
+    },
+];
+
+// ============================================
+// UI CHROME TRANSLATIONS
+// ============================================
+const CHROME = {
+    en: {
+        badge: 'Legal Agreement',
+        summaryTitle: 'Agreement Overview',
+        summaryText: 'These Terms of Service govern your use of the QScrap platform operated by QScrap Services & Trading L.L.C. By downloading or using our apps and services, you agree to be bound by these terms.',
+        lastUpdated: 'Last updated: February 1, 2026',
+        contactTitle: 'Contact Us',
+        contactItems: [
+            { icon: 'mail', label: 'General Inquiries', value: 'support@qscrap.qa' },
+            { icon: 'call', label: 'Customer Service', value: '+974 5026 7974' },
+            { icon: 'location', label: 'Headquarters', value: 'Doha, State of Qatar' },
+            { icon: 'globe', label: 'Website', value: 'qscrap.qa' },
+        ],
+        companyName: 'QScrap Services & Trading L.L.C',
+        companyArabic: 'كيوسكراب للخدمات والتجارة ذ.م.م',
+        companyCR: 'Commercial Registration: 155892 | State of Qatar',
+        footer: '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
+    },
+    ar: {
+        badge: 'اتفاقية قانونية',
+        summaryTitle: 'نظرة عامة على الاتفاقية',
+        summaryText: 'تحكم شروط الخدمة هذه استخدامك لمنصة كيوسكراب التي تديرها شركة كيوسكراب للخدمات والتجارة ذ.م.م. بتحميلك أو استخدامك لتطبيقاتنا وخدماتنا، فإنك توافق على الالتزام بهذه الشروط.',
+        lastUpdated: 'آخر تحديث: 1 فبراير 2026',
+        contactTitle: 'تواصل معنا',
+        contactItems: [
+            { icon: 'mail', label: 'استفسارات عامة', value: 'support@qscrap.qa' },
+            { icon: 'call', label: 'خدمة العملاء', value: '+974 5026 7974' },
+            { icon: 'location', label: 'المقر الرئيسي', value: 'الدوحة، دولة قطر' },
+            { icon: 'globe', label: 'الموقع الإلكتروني', value: 'qscrap.qa' },
+        ],
+        companyName: 'كيوسكراب للخدمات والتجارة ذ.م.م',
+        companyArabic: 'QScrap Services & Trading L.L.C',
+        companyCR: 'السجل التجاري: 155892 | دولة قطر',
+        footer: '© 2026 كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.',
+    },
+};
+
 /**
  * Terms of Service Screen
  * Premium native layout with sectioned cards, highlight boxes, and responsive design.
  * Content is hardcoded for instant load + offline support + dark mode.
+ * Fully bilingual: EN/AR with RTL layout support.
  */
 export default function TermsScreen() {
     const navigation = useNavigation();
     const { colors, isDark } = useTheme();
-    const { t, isRTL } = useTranslation();
+    const { t, language, isRTL } = useTranslation();
+    const sections = language === 'ar' ? SECTIONS_AR : SECTIONS_EN;
+    const chrome = CHROME[language] || CHROME.en;
+    const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -162,11 +313,11 @@ export default function TermsScreen() {
                 <View style={styles.heroContent}>
                     <View style={styles.heroBadge}>
                         <Ionicons name="document-text" size={14} color={Colors.secondary} />
-                        <Text style={styles.heroBadgeText}>Legal Agreement</Text>
+                        <Text style={styles.heroBadgeText}>{chrome.badge}</Text>
                     </View>
                     <Text style={styles.heroTitle}>{t('settings.termsOfService')}</Text>
-                    <Text style={styles.heroArabic}>شروط الخدمة</Text>
-                    <Text style={styles.heroDate}>Last updated: February 1, 2026</Text>
+                    <Text style={styles.heroArabic}>{isRTL ? 'Terms of Service' : 'شروط الخدمة'}</Text>
+                    <Text style={styles.heroDate}>{chrome.lastUpdated}</Text>
                 </View>
             </LinearGradient>
 
@@ -183,14 +334,14 @@ export default function TermsScreen() {
                     <View style={styles.summaryIconWrap}>
                         <Ionicons name="clipboard" size={28} color="rgba(255,255,255,0.3)" />
                     </View>
-                    <Text style={styles.summaryTitle}>Agreement Overview</Text>
-                    <Text style={styles.summaryText}>
-                        These Terms of Service govern your use of the QScrap platform operated by QScrap Services & Trading L.L.C. By downloading or using our apps and services, you agree to be bound by these terms.
+                    <Text style={[styles.summaryTitle, { textAlign }]}>{chrome.summaryTitle}</Text>
+                    <Text style={[styles.summaryText, { textAlign }]}>
+                        {chrome.summaryText}
                     </Text>
                 </LinearGradient>
 
                 {/* Sections */}
-                {SECTIONS.map((section) => (
+                {sections.map((section) => (
                     <View key={section.num} style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                         {/* Section Header */}
                         <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -198,14 +349,14 @@ export default function TermsScreen() {
                                 <Text style={styles.sectionNumText}>{section.num}</Text>
                             </View>
                             <View style={styles.sectionTitleWrap}>
-                                <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.text, textAlign }]}>{section.title}</Text>
                             </View>
                             <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />
                         </View>
 
                         {/* Content */}
                         {section.content && (
-                            <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
+                            <Text style={[styles.sectionText, { color: colors.textSecondary, textAlign }]}>
                                 {section.content}
                             </Text>
                         )}
@@ -214,13 +365,13 @@ export default function TermsScreen() {
                         {section.items && section.items.map((item, idx) => (
                             <View key={idx} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Ionicons name="checkmark" size={16} color={Colors.secondary} style={[styles.listIcon, isRTL && { marginLeft: Spacing.sm, marginRight: 0 }]} />
-                                <Text style={[styles.listText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{item}</Text>
+                                <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
                             </View>
                         ))}
 
                         {/* Footnote */}
                         {section.footnote && (
-                            <Text style={[styles.footnote, { color: colors.textMuted }]}>{section.footnote}</Text>
+                            <Text style={[styles.footnote, { color: colors.textMuted, textAlign }]}>{section.footnote}</Text>
                         )}
 
                         {/* Highlight box */}
@@ -239,9 +390,9 @@ export default function TermsScreen() {
                                     name={section.highlight.type === 'gold' ? 'information-circle' : 'flag'}
                                     size={18}
                                     color={section.highlight.type === 'gold' ? Colors.secondary : Colors.primary}
-                                    style={{ marginRight: Spacing.sm, marginTop: 2 }}
+                                    style={isRTL ? { marginLeft: Spacing.sm, marginTop: 2 } : { marginRight: Spacing.sm, marginTop: 2 }}
                                 />
-                                <Text style={[styles.highlightText, { color: colors.text, flex: 1 }]}>
+                                <Text style={[styles.highlightText, { color: colors.text, flex: 1, textAlign }]}>
                                     {section.highlight.text}
                                 </Text>
                             </View>
@@ -254,23 +405,22 @@ export default function TermsScreen() {
                     colors={isDark ? ['#141416', '#1C1C1F'] : ['#1A1A1A', '#2A2A2A']}
                     style={styles.contactCard}
                 >
-                    <Text style={styles.contactTitle}>Contact Us</Text>
+                    <Text style={[styles.contactTitle, { textAlign }]}>{chrome.contactTitle}</Text>
                     <View style={styles.contactGrid}>
-                        <ContactItem icon="mail" label="General Inquiries" value="support@qscrap.qa" isRTL={isRTL} />
-                        <ContactItem icon="call" label="Customer Service" value="+974 5026 7974" isRTL={isRTL} />
-                        <ContactItem icon="location" label="Headquarters" value="Doha, State of Qatar" isRTL={isRTL} />
-                        <ContactItem icon="globe" label="Website" value="qscrap.qa" isRTL={isRTL} />
+                        {chrome.contactItems.map((item, idx) => (
+                            <ContactItem key={idx} icon={item.icon} label={item.label} value={item.value} isRTL={isRTL} />
+                        ))}
                     </View>
                     <View style={styles.contactLegal}>
-                        <Text style={styles.companyName}>QScrap Services & Trading L.L.C</Text>
-                        <Text style={styles.companyArabic}>كيوسكراب للخدمات والتجارة ذ.م.م</Text>
-                        <Text style={styles.companyCR}>Commercial Registration: 155892 | State of Qatar</Text>
+                        <Text style={styles.companyName}>{chrome.companyName}</Text>
+                        <Text style={styles.companyArabic}>{chrome.companyArabic}</Text>
+                        <Text style={styles.companyCR}>{chrome.companyCR}</Text>
                     </View>
                 </LinearGradient>
 
                 {/* Footer */}
                 <Text style={[styles.footer, { color: colors.textMuted }]}>
-                    © 2026 QScrap Services & Trading L.L.C. All rights reserved.
+                    {chrome.footer}
                 </Text>
             </ScrollView>
         </SafeAreaView>
