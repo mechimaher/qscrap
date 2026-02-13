@@ -259,6 +259,7 @@ async function loadBadges() {
         const stats = data.stats || data;
 
         updateBadge('pendingBadge', stats.pending_count || 0);
+        updateBadge('inWarrantyBadge', stats.in_warranty_count || 0);
         updateBadge('awaitingBadge', stats.awaiting_count || stats.sent_count || 0);
         updateBadge('disputedBadge', stats.disputed_count || 0);
     } catch (err) {
@@ -442,8 +443,7 @@ async function loadInWarrantyPayouts() {
         const payouts = data.in_warranty_payouts || [];
 
         // Update badge
-        const badge = document.getElementById('inWarrantyCount');
-        if (badge) badge.textContent = payouts.length;
+        updateBadge('inWarrantyBadge', payouts.length);
 
         if (payouts.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-shield-check"></i> No orders currently in warranty period</td></tr>';
@@ -635,9 +635,57 @@ function closeSendPaymentModal() {
 
 
 async function holdPayout(payoutId) {
-    const reason = prompt('Reason for holding this payout:');
-    if (!reason) return;
+    const modalContent = `
+        <div style="padding: 8px 0;">
+            <p style="color: var(--text-secondary); margin-bottom: 12px;">This will temporarily hold the payout from processing.</p>
+            <div class="form-group">
+                <label style="font-weight: 600;">Hold Reason *</label>
+                <textarea id="holdReasonInput" class="form-control" rows="3" 
+                    placeholder="e.g., Awaiting order verification, customer dispute pending..."
+                    style="margin-top: 6px;"></textarea>
+            </div>
+        </div>
+    `;
 
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'hold-payout-modal',
+            title: 'Hold Payout',
+            headerIcon: 'bi-pause-circle',
+            headerClass: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            content: modalContent,
+            size: 'sm',
+            actions: [
+                {
+                    id: 'cancel-hold-btn',
+                    text: 'Cancel',
+                    class: 'btn btn-ghost',
+                    onclick: () => QScrapModal.close('hold-payout-modal')
+                },
+                {
+                    id: 'confirm-hold-btn',
+                    text: 'Place on Hold',
+                    class: 'btn btn-warning',
+                    onclick: async () => {
+                        const reason = document.getElementById('holdReasonInput')?.value?.trim();
+                        if (!reason) {
+                            showToast('Please enter a reason', 'error');
+                            return;
+                        }
+                        QScrapModal.close('hold-payout-modal');
+                        await executeHoldPayout(payoutId, reason);
+                    }
+                }
+            ]
+        });
+    } else {
+        const reason = prompt('Reason for holding this payout:');
+        if (!reason) return;
+        await executeHoldPayout(payoutId, reason);
+    }
+}
+
+async function executeHoldPayout(payoutId, reason) {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
             method: 'POST',
@@ -891,26 +939,6 @@ async function loadCompletedPayouts(page = 1) {
     }
 }
 
-function exportCompletedPayouts() {
-    const fromDate = document.getElementById('completedFromDate')?.value || '';
-    const toDate = document.getElementById('completedToDate')?.value || '';
-
-    let url = `${API_URL}/finance/payouts/export?format=csv&status=confirmed`;
-    if (fromDate) url += `&from_date=${fromDate}`;
-    if (toDate) url += `&to_date=${toDate}`;
-
-    showToast('Downloading CSV export...', 'info');
-
-    // Create temporary link to trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `payouts_${fromDate || 'all'}_${toDate || 'all'}.csv`);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
 // ==========================================
 // REVENUE
 // ==========================================
@@ -929,6 +957,14 @@ async function loadRevenue() {
         document.getElementById('revPlatformFees').textContent = formatCurrency(metrics.platform_fees || 0);
         // Net revenue is already computed by backend (gross_revenue - refunds)
         document.getElementById('revNetRevenue').textContent = formatCurrency(metrics.total_revenue || 0);
+
+        // Revenue breakdown row
+        const deliveryFeesEl = document.getElementById('revDeliveryFees');
+        const refundsEl = document.getElementById('revRefunds');
+        const avgOrderEl = document.getElementById('revAvgOrder');
+        if (deliveryFeesEl) deliveryFeesEl.textContent = formatCurrency(metrics.delivery_fees || 0);
+        if (refundsEl) refundsEl.textContent = metrics.total_refunds > 0 ? `-${formatCurrency(metrics.total_refunds)}` : '0 QAR';
+        if (avgOrderEl) avgOrderEl.textContent = formatCurrency(metrics.average_order_value || 0);
     } catch (err) {
         console.error('Failed to load revenue:', err);
     }
@@ -1709,107 +1745,6 @@ function downloadTaxInvoice(format) {
             console.error('Invoice download failed:', err);
             showToast(err.message || 'Failed to download invoice', 'error');
         });
-}
-
-// ============================================
-// REFUNDS MANAGEMENT (BRAIN v3.0)
-// ============================================
-// DUPLICATE REMOVED - loadRefunds is defined at line 1039
-// ============================================
-
-async function loadPendingRefunds() {
-    try {
-        const res = await fetch(`${API_URL}/finance/refunds/pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('pendingRefundsTable');
-        if (!tbody) return;
-
-        const refunds = data.refunds || [];
-
-        // Update badge
-        const badge = document.getElementById('pendingRefundsBadge');
-        if (badge) {
-            badge.textContent = refunds.length;
-            badge.style.display = refunds.length > 0 ? 'inline' : 'none';
-        }
-
-        if (refunds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle"></i> No pending refunds</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = refunds.map(r => `
-            <tr>
-                <td>#${escapeHTML(r.order_number || '-')}</td>
-                <td>${escapeHTML(r.customer_name || '-')}</td>
-                <td>${formatCurrency(r.refund_amount)}</td>
-                <td>${escapeHTML(r.refund_reason || '-')}</td>
-                <td>${formatDate(r.created_at)}</td>
-                <td>
-                    <button class="btn btn-success btn-sm" onclick="approveRefund('${r.refund_id}')">
-                        <i class="bi bi-send-check"></i> Process
-                    </button>
-                    <button class="btn btn-ghost btn-sm" onclick="rejectRefund('${r.refund_id}')">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error('Failed to load pending refunds:', err);
-    }
-}
-
-async function approveRefund(refundId) {
-    if (!confirm('Process this refund via payment gateway?')) return;
-
-    try {
-        const res = await fetch(`${API_URL}/finance/refunds/${refundId}/process`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            showToast('Refund processed successfully', 'success');
-            loadPendingRefunds();
-            loadRefunds();
-            loadBadges();
-        } else {
-            showToast(data.message || data.error || 'Failed to process refund', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-async function rejectRefund(refundId) {
-    const reason = prompt('Reason for rejecting this refund:');
-    if (!reason) return;
-
-    try {
-        const res = await fetch(`${API_URL}/finance/refunds/${refundId}/reject`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showToast('Refund rejected', 'success');
-            loadPendingRefunds();
-            loadRefunds();
-        } else {
-            showToast(data.error || 'Failed to reject refund', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
 }
 
 // ============================================

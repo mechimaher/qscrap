@@ -65,7 +65,7 @@ export class RevenueService {
          ${whereClause}
          AND o.order_id NOT IN (
              SELECT order_id FROM refunds 
-             WHERE refund_status = 'processed' 
+             WHERE refund_status = 'completed' 
              AND refund_amount >= (SELECT total_amount FROM orders WHERE order_id = refunds.order_id)
          )`,
             params
@@ -76,7 +76,7 @@ export class RevenueService {
             `SELECT COALESCE(SUM(refund_amount), 0) as total_refunds,
                 COUNT(*) as refund_count
          FROM refunds 
-         WHERE refund_status = 'processed'
+         WHERE refund_status = 'completed'
          AND created_at >= $1 AND created_at <= $2`,
             [fromDate, toDate]
         );

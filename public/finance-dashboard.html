@@ -593,9 +593,31 @@
                         <div class="stat-value" id="revPlatformFees">0 QAR</div>
                         <div class="stat-label">Platform Fees</div>
                     </div>
-                    <div class="stat-card" style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid rgba(16, 185, 129, 0.5);">
+                    <div class="stat-card"
+                        style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid rgba(16, 185, 129, 0.5);">
                         <div class="stat-value" id="revNetRevenue" style="color: #059669;">0 QAR</div>
                         <div class="stat-label">Net Revenue</div>
+                    </div>
+                </div>
+
+                <!-- Revenue Breakdown -->
+                <div class="content-card" style="margin-top: 16px; padding: 16px 20px;">
+                    <div style="display: flex; gap: 32px; flex-wrap: wrap; font-size: 14px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-truck" style="color: var(--accent);"></i>
+                            <span style="color: var(--text-secondary);">Delivery Fees:</span>
+                            <strong id="revDeliveryFees" style="color: var(--text-primary);">0 QAR</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-arrow-return-left" style="color: var(--danger);"></i>
+                            <span style="color: var(--text-secondary);">Refunds Deducted:</span>
+                            <strong id="revRefunds" style="color: var(--danger);">0 QAR</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-receipt" style="color: var(--text-secondary);"></i>
+                            <span style="color: var(--text-secondary);">Avg. Order Value:</span>
+                            <strong id="revAvgOrder" style="color: var(--text-primary);">0 QAR</strong>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -754,10 +776,10 @@
                     <label>Payment Method *</label>
                     <select id="spPaymentMethod" class="form-control" required>
                         <option value="">Select method...</option>
-                        <option value="bank_transfer">🏦 Bank Transfer</option>
-                        <option value="cash">💵 Cash</option>
-                        <option value="check">📝 Check</option>
-                        <option value="mobile_transfer">📱 Mobile Transfer</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="check">Check</option>
+                        <option value="mobile_transfer">Mobile Transfer</option>
                     </select>
                 </div>
 
@@ -987,10 +1009,10 @@
                     <label>Resolution Type *</label>
                     <select id="rdResolutionType" class="form-control" required onchange="toggleAmountCorrection()">
                         <option value="">Select resolution...</option>
-                        <option value="confirmed">✅ Confirmed - Garage received payment (dispute invalid)</option>
-                        <option value="corrected">🔧 Corrected - Resend with fix</option>
-                        <option value="resent">🔄 Resent - Payment resent</option>
-                        <option value="cancelled">❌ Cancelled - Cancel payout (order cancelled)</option>
+                        <option value="confirmed">Confirmed - Garage received payment (dispute invalid)</option>
+                        <option value="corrected">Corrected - Resend with fix</option>
+                        <option value="resent">Resent - Payment resent</option>
+                        <option value="cancelled">Cancelled - Cancel payout (order cancelled)</option>
                     </select>
                 </div>
 
@@ -1008,9 +1030,9 @@
                     <label>Payment Method (for resend)</label>
                     <select id="rdPaymentMethod" class="form-control">
                         <option value="">Same as before</option>
-                        <option value="bank_transfer">🏦 Bank Transfer</option>
-                        <option value="cash">💵 Cash</option>
-                        <option value="mobile_transfer">📱 Mobile Transfer</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="mobile_transfer">Mobile Transfer</option>
                     </select>
                 </div>
 
@@ -1049,7 +1071,7 @@
     <script src="js/shared/toast.js?v=20260115d"></script>
     <script src="js/shared/modal.js?v=20260115d"></script>
     <script src="js/pagination-utils.js?v=20260115d"></script>
-    <script src="js/finance-dashboard.js?v=20260208b"></script>
+    <script src="js/finance-dashboard.js?v=20260213a"></script>
 </body>
 
 </html>
