@@ -216,8 +216,22 @@ export class SupportActionsService {
 
             const refundId = refundResult.rows[0]?.refund_id;
 
-            // 3. DO NOT change order status to 'refunded' - Finance will do that
-            // Only log the request in resolution logs
+            // 3. Flag order and freeze payout while refund is pending
+            // This prevents garage from getting paid for an order being refunded
+            await client.query(
+                `UPDATE orders SET payment_status = 'refund_pending' WHERE order_id = $1`,
+                [params.orderId]
+            );
+
+            // Put garage payout on hold (if not already paid out)
+            await client.query(
+                `UPDATE garage_payouts 
+                 SET payout_status = 'on_hold',
+                     adjustment_reason = 'Refund request pending Finance approval',
+                     updated_at = NOW()
+                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                [params.orderId]
+            );
 
             // 4. Log resolution (as REQUEST, not completed action)
             await this.logResolution({

@@ -452,9 +452,10 @@ export class RefundService {
                 [refundId, stripeRefundId, processedBy, refundNote]
             );
 
-            // Update order payment status
+            // Update order status — both order_status AND payment_status
+            // This ensures the order shows as 'refunded' across ALL dashboards
             await client.query(
-                `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
+                `UPDATE orders SET order_status = 'refunded', payment_status = 'refunded' WHERE order_id = $1`,
                 [refund.order_id]
             );
 
@@ -577,8 +578,23 @@ export class RefundService {
                 WHERE refund_id = $3
             `, [rejectionReason, rejectedBy, refundId]);
 
+            // Restore order payment status (was set to 'refund_pending' when request was created)
+            await client.query(`
+                UPDATE orders SET payment_status = 'paid' 
+                WHERE order_id = $1 AND payment_status = 'refund_pending'
+            `, [refund.order_id]);
+
+            // Unfreeze garage payout (was put on_hold when request was created)
+            await client.query(`
+                UPDATE garage_payouts 
+                SET payout_status = 'pending',
+                    adjustment_reason = NULL,
+                    updated_at = NOW()
+                WHERE order_id = $1 AND payout_status = 'on_hold'
+            `, [refund.order_id]);
+
             // Log the rejection
-            logger.info('Refund rejected', { refundId, rejectedBy, reason: rejectionReason });
+            logger.info('Refund rejected - order and payout restored', { refundId, rejectedBy, reason: rejectionReason });
 
             await client.query('COMMIT');
 
