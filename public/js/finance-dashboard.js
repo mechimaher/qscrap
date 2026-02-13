@@ -964,10 +964,52 @@ async function loadRevenue() {
         const avgOrderEl = document.getElementById('revAvgOrder');
         if (deliveryFeesEl) deliveryFeesEl.textContent = formatCurrency(metrics.delivery_fees || 0);
         if (refundsEl) refundsEl.textContent = metrics.total_refunds > 0 ? `-${formatCurrency(metrics.total_refunds)}` : '0 QAR';
-        if (avgOrderEl) avgOrderEl.textContent = formatCurrency(metrics.average_order_value || 0);
+        if (avgOrderEl) avgOrderEl.textContent = formatCurrency(Math.round((metrics.average_order_value || 0) * 100) / 100);
+
+        // Render daily trend chart
+        const breakdown = data.breakdown || {};
+        renderRevenueTrend(breakdown.by_day || []);
     } catch (err) {
         console.error('Failed to load revenue:', err);
     }
+}
+
+function renderRevenueTrend(dailyData) {
+    const container = document.getElementById('revenueTrendChart');
+    if (!container) return;
+
+    if (!dailyData.length) {
+        container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px; text-align: center; width: 100%; padding: 30px 0;">No data for this period</div>';
+        return;
+    }
+
+    const maxRevenue = Math.max(...dailyData.map(d => parseFloat(d.revenue) || 0), 1);
+    const chartHeight = 120;
+
+    const periodLabel = document.getElementById('revTrendPeriod');
+    if (periodLabel && dailyData.length > 1) {
+        const first = new Date(dailyData[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const last = new Date(dailyData[dailyData.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        periodLabel.textContent = `${first} — ${last}`;
+    }
+
+    container.innerHTML = dailyData.map(d => {
+        const revenue = parseFloat(d.revenue) || 0;
+        const orders = parseInt(d.orders) || 0;
+        const height = Math.max(4, (revenue / maxRevenue) * chartHeight);
+        const dateLabel = new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const isToday = new Date(d.date).toDateString() === new Date().toDateString();
+        const barColor = isToday ? 'var(--success)' : 'var(--accent)';
+
+        return `
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0;" title="${dateLabel}: ${formatCurrency(revenue)} (${orders} orders)">
+                <div style="font-size: 9px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${revenue > 0 ? formatCurrency(revenue) : ''}</div>
+                <div style="width: 100%; max-width: 40px; height: ${height}px; background: ${barColor}; border-radius: 4px 4px 0 0; opacity: ${revenue > 0 ? 0.85 : 0.2}; transition: opacity 0.2s; cursor: pointer;"
+                     onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=${revenue > 0 ? 0.85 : 0.2}"></div>
+                <div style="font-size: 9px; color: var(--text-secondary); white-space: nowrap;">${dateLabel.split(' ')[1]}</div>
+            </div>
+        `;
+    }).join('');
 }
 
 // Period tabs
@@ -1107,9 +1149,62 @@ async function executeRefundApproval(refundId) {
 }
 
 async function rejectRefund(refundId) {
-    const reason = prompt('Enter rejection reason:');
-    if (!reason) return;
+    const modalContent = `
+        <div style="padding: 8px 0;">
+            <div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                <div style="display: flex; align-items: center; gap: 8px; color: #dc2626; font-size: 13px;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>This refund will be permanently rejected. The customer will be notified.</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label style="font-weight: 600;">Rejection Reason *</label>
+                <textarea id="rejectReasonInput" class="form-control" rows="3"
+                    placeholder="e.g., Part was delivered in good condition, customer confirmed receipt..."
+                    style="margin-top: 6px;"></textarea>
+            </div>
+        </div>
+    `;
 
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'reject-refund-modal',
+            title: 'Reject Refund',
+            headerIcon: 'bi-x-circle',
+            headerClass: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            content: modalContent,
+            size: 'sm',
+            actions: [
+                {
+                    id: 'cancel-reject-btn',
+                    text: 'Cancel',
+                    class: 'btn btn-ghost',
+                    onclick: () => QScrapModal.close('reject-refund-modal')
+                },
+                {
+                    id: 'confirm-reject-btn',
+                    text: 'Reject Refund',
+                    class: 'btn btn-danger',
+                    onclick: async () => {
+                        const reason = document.getElementById('rejectReasonInput')?.value?.trim();
+                        if (!reason) {
+                            showToast('Please enter a rejection reason', 'error');
+                            return;
+                        }
+                        QScrapModal.close('reject-refund-modal');
+                        await executeRejectRefund(refundId, reason);
+                    }
+                }
+            ]
+        });
+    } else {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason) return;
+        await executeRejectRefund(refundId, reason);
+    }
+}
+
+async function executeRejectRefund(refundId, reason) {
     try {
         const res = await fetch(`${API_URL}/finance/refunds/${refundId}/reject`, {
             method: 'POST',
