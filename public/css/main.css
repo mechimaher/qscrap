@@ -1067,10 +1067,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
+            color: var(--qatar-maroon);
             margin: 0 auto 24px;
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
+        }
+
+        .step-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: currentColor;
+            flex-shrink: 0;
         }
 
         .step-number-badge {
@@ -1240,13 +1247,21 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 24px;
-            font-size: 40px;
+            color: var(--qatar-maroon);
             transition: all 0.4s ease;
+        }
+
+        .value-icon svg {
+            width: 36px;
+            height: 36px;
+            stroke: currentColor;
+            flex-shrink: 0;
         }
 
         .value-card:hover .value-icon {
             transform: scale(1.1) rotate(5deg);
             background: linear-gradient(135deg, var(--qatar-maroon) 0%, var(--qatar-maroon-dark) 100%);
+            color: var(--gold);
         }
 
         .value-title {
@@ -2125,4 +2140,19 @@
             .lang-switcher {
                 display: none;
             }
+        }
+
+        /* Footer Contact SVG Icons */
+        .footer-contact-icon {
+            display: inline-block;
+            vertical-align: middle;
+            width: 16px;
+            height: 16px;
+            margin-inline-end: 6px;
+            stroke: rgba(255, 255, 255, 0.6);
+            transition: stroke 0.3s ease;
+        }
+
+        .footer-links a:hover .footer-contact-icon {
+            stroke: var(--gold);
         }

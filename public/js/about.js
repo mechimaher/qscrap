@@ -9,7 +9,7 @@ const translations = {
         'nav.contact': 'Contact Us',
 
         // Hero Section
-        'hero.badge': '🏢 About Us',
+        'hero.badge': 'About Us',
         'hero.title1': 'Transforming',
         'hero.title2': "Qatar's Automotive",
         'hero.title3': 'Parts Industry',
@@ -20,7 +20,7 @@ const translations = {
         'mission.p1': "We're on a mission to revolutionize how Qatar sources automotive parts. By connecting customers directly with verified garages, we eliminate the middlemen, reduce costs, and ensure quality parts reach you faster.",
         'mission.p2': "Our platform handles everything from discovery to delivery, providing a seamless experience backed by Qatar's strongest consumer protections including a <strong>7-day return guarantee</strong> and secure escrow payments.",
         'mission.p3': 'Whether you need a rare OEM part or a standard replacement, QScrap connects you with the right garage in minutes, not days.',
-        'mission.visual.title': '🎯 Connecting Parts to People',
+        'mission.visual.title': 'Connecting Parts to People',
         'mission.visual.subtitle': 'Technology-powered marketplace for the modern automotive industry',
 
         // Values Section
@@ -50,25 +50,25 @@ const translations = {
         'company.subtitle': 'Registered and operating in the State of Qatar',
 
         // Info Cards - Legal Identity
-        'info.legal.title': '📋 Legal Identity',
+        'info.legal.title': 'Legal Identity',
         'info.legal.company': '<strong>Company Name:</strong><br>QScrap Services & Trading L.L.C<br>كيوسكراب للخدمات والتجارة ذ.م.م',
         'info.legal.cr': '<strong>Commercial Registration:</strong><br>CR Number: 155892',
         'info.legal.address': '<strong>Registered Address:</strong><br>P.O. Box 32544<br>Industrial Area Street 10<br>Doha, Qatar',
 
         // Info Cards - Contact Us
-        'info.contact.title': '📞 Contact Us',
+        'info.contact.title': 'Contact Us',
         'info.contact.support': '<strong>Customer Support:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
         'info.contact.mobile': '<strong>Mobile:</strong><br><a href="tel:+97450267974">+974 5026 7974</a><br><a href="tel:+97455906912">+974 5590 6912</a>',
         'info.contact.landline': '<strong>Landline:</strong><br>+974 5026 7974',
         'info.contact.hours': '<strong>Business Hours:</strong><br>Sunday - Thursday: 8:00 AM - 5:00 PM<br>Saturday: 8:00 AM - 3:00 PM<br>Friday: Closed',
 
         // Info Cards - Consumer Protection
-        'info.protection.title': '🔒 Consumer Protection',
+        'info.protection.title': 'Consumer Protection',
         'info.protection.intro': "QScrap operates in full compliance with Qatar's consumer protection laws:",
         'info.protection.laws': '<strong>Law No. 8 of 2008</strong> - Consumer Protection<br><strong>Law No. 13 of 2016</strong> - Personal Data Protection<br><strong>MOCI Decision 25/2024</strong> - E-Commerce Regulations',
 
         // Info Cards - Download App
-        'info.app.title': '📱 Download Our App',
+        'info.app.title': 'Download Our App',
         'info.app.intro': 'Get the QScrap mobile app for the best experience:',
         'info.app.customers': '<strong>For Customers:</strong><br>Find parts, track orders, and enjoy same-day delivery.',
         'info.app.drivers': '<strong>For Drivers:</strong><br>Join our delivery network and earn more.',
@@ -92,9 +92,9 @@ const translations = {
         'footer.terms': 'Terms of Service',
         'footer.refund': 'Refund Policy',
         'footer.contactTitle': 'Contact',
-        'footer.email': '📧 support@qscrap.qa',
-        'footer.phone': '📞 +974 5026 7974',
-        'footer.whatsapp': '💬 WhatsApp Support',
+        'footer.email': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> support@qscrap.qa',
+        'footer.phone': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> +974 5026 7974',
+        'footer.whatsapp': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Support',
         'footer.legalInfo': 'QScrap Services & Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar',
         'footer.copyright': '© 2026 QScrap. All rights reserved.'
     },
@@ -105,7 +105,7 @@ const translations = {
         'nav.contact': 'تواصل معنا',
 
         // Hero Section
-        'hero.badge': '🏢 من نحن',
+        'hero.badge': 'من نحن',
         'hero.title1': 'نحوّل',
         'hero.title2': 'قطاع قطع غيار',
         'hero.title3': 'السيارات في قطر',
@@ -116,7 +116,7 @@ const translations = {
         'mission.p1': 'نحن في مهمة لإحداث ثورة في كيفية الحصول على قطع غيار السيارات في قطر. من خلال ربط العملاء مباشرة بالكراجات المعتمدة، نتخلص من الوسطاء ونخفض التكاليف ونضمن وصول القطع عالية الجودة إليك بشكل أسرع.',
         'mission.p2': 'منصتنا تتولى كل شيء من البحث إلى التوصيل، مع تجربة سلسة مدعومة بأقوى حماية للمستهلك في قطر بما في ذلك <strong>ضمان إرجاع 7 أيام</strong> ومدفوعات ضمان آمنة.',
         'mission.p3': 'سواء كنت بحاجة إلى قطعة أصلية نادرة أو بديل قياسي، كيوسكراب يربطك بالكراج المناسب في دقائق وليس أيام.',
-        'mission.visual.title': '🎯 نربط القطع بالناس',
+        'mission.visual.title': 'نربط القطع بالناس',
         'mission.visual.subtitle': 'سوق مدعوم بالتكنولوجيا لصناعة السيارات الحديثة',
 
         // Values Section
@@ -146,25 +146,25 @@ const translations = {
         'company.subtitle': 'مسجلة وتعمل في دولة قطر',
 
         // Info Cards - Legal Identity
-        'info.legal.title': '📋 الهوية القانونية',
+        'info.legal.title': 'الهوية القانونية',
         'info.legal.company': '<strong>اسم الشركة:</strong><br>QScrap Services & Trading L.L.C<br>كيوسكراب للخدمات والتجارة ذ.م.م',
         'info.legal.cr': '<strong>السجل التجاري:</strong><br>رقم السجل: 155892',
         'info.legal.address': '<strong>العنوان المسجل:</strong><br>ص.ب: 32544<br>شارع 10، المنطقة الصناعية<br>الدوحة، قطر',
 
         // Info Cards - Contact Us
-        'info.contact.title': '📞 تواصل معنا',
+        'info.contact.title': 'تواصل معنا',
         'info.contact.support': '<strong>دعم العملاء:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
         'info.contact.mobile': '<strong>الجوال:</strong><br><a href="tel:+97450267974" dir="ltr">+974 5026 7974</a><br><a href="tel:+97455906912" dir="ltr">+974 5590 6912</a>',
         'info.contact.landline': '<strong>الهاتف الثابت:</strong><br><span dir="ltr">+974 5026 7974</span>',
         'info.contact.hours': '<strong>ساعات العمل:</strong><br>الأحد - الخميس: 8:00 صباحاً - 5:00 مساءً<br>السبت: 8:00 صباحاً - 3:00 مساءً<br>الجمعة: مغلق',
 
         // Info Cards - Consumer Protection
-        'info.protection.title': '🔒 حماية المستهلك',
+        'info.protection.title': 'حماية المستهلك',
         'info.protection.intro': 'كيوسكراب تعمل بالامتثال الكامل لقوانين حماية المستهلك في قطر:',
         'info.protection.laws': '<strong>القانون رقم 8 لسنة 2008</strong> - حماية المستهلك<br><strong>القانون رقم 13 لسنة 2016</strong> - حماية البيانات الشخصية<br><strong>قرار وزارة التجارة 25/2024</strong> - لوائح التجارة الإلكترونية',
 
         // Info Cards - Download App
-        'info.app.title': '📱 حمّل تطبيقنا',
+        'info.app.title': 'حمّل تطبيقنا',
         'info.app.intro': 'احصل على تطبيق كيوسكراب للحصول على أفضل تجربة:',
         'info.app.customers': '<strong>للعملاء:</strong><br>ابحث عن القطع، تتبع الطلبات، واستمتع بالتوصيل في نفس اليوم.',
         'info.app.drivers': '<strong>للسائقين:</strong><br>انضم إلى شبكة التوصيل لدينا واكسب المزيد.',
@@ -188,9 +188,9 @@ const translations = {
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد',
         'footer.contactTitle': 'تواصل معنا',
-        'footer.email': '📧 support@qscrap.qa',
-        'footer.phone': '<span dir="ltr">+974 5026 7974</span> 📞',
-        'footer.whatsapp': '💬 دعم واتساب',
+        'footer.email': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> support@qscrap.qa',
+        'footer.phone': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <span dir="ltr">+974 5026 7974</span>',
+        'footer.whatsapp': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> دعم واتساب',
         'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | سجل تجاري: 155892 | ص.ب: 32544، الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
     }
