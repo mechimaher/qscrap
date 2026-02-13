@@ -1779,13 +1779,13 @@ async function submitCreateUser() {
 // ============================================
 
 const STAFF_ROLE_ICONS = {
-    operations: '🎯',
-    finance: '💰',
-    customer_service: '🎧',
-    quality_control: '✅',
-    logistics: '🚚',
-    hr: '👥',
-    management: '📊'
+    operations: '<i class="bi bi-bullseye"></i>',
+    finance: '<i class="bi bi-cash-stack"></i>',
+    customer_service: '<i class="bi bi-headset"></i>',
+    quality_control: '<i class="bi bi-clipboard-check"></i>',
+    logistics: '<i class="bi bi-truck"></i>',
+    hr: '<i class="bi bi-people"></i>',
+    management: '<i class="bi bi-bar-chart-line"></i>'
 };
 
 function debounceStaffSearch() {
@@ -1854,7 +1854,7 @@ async function loadStaff(page = 1) {
 
 function renderStaffCard(staff) {
     const role = staff.staff_role || 'operations';
-    const roleIcon = STAFF_ROLE_ICONS[role] || '👤';
+    const roleIcon = STAFF_ROLE_ICONS[role] || '<i class="bi bi-person"></i>';
     const roleLabel = role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     const statusClass = staff.is_suspended ? 'suspended' : (staff.is_active ? 'active' : 'inactive');
 
@@ -1911,6 +1911,7 @@ async function loadDrivers(page = 1) {
     try {
         const params = new URLSearchParams({
             user_type: 'driver',
+            status: statusFilter !== 'all' ? statusFilter : '',
             search,
             page,
             limit: 25
@@ -1948,7 +1949,13 @@ async function loadDrivers(page = 1) {
 function renderDriverRow(driver) {
     const statusClass = driver.is_suspended ? 'suspended' : (driver.is_active ? 'active' : 'inactive');
     const statusLabel = driver.is_suspended ? 'Offline' : (driver.is_active ? 'Available' : 'Inactive');
-    const statusIcon = driver.is_suspended ? '⚫' : (driver.is_active ? '🟢' : '🔴');
+
+    // Use real data from API, fallback to sensible defaults
+    const vehicleType = driver.vehicle_type || 'Motorcycle';
+    const vehicleIcon = vehicleType.toLowerCase().includes('car') ? 'bi-car-front' :
+        vehicleType.toLowerCase().includes('van') ? 'bi-truck' : 'bi-bicycle';
+    const deliveryCount = driver.total_deliveries ?? driver.delivery_count ?? '-';
+    const rating = driver.average_rating ? `${parseFloat(driver.average_rating).toFixed(1)}` : '-';
 
     return `
         <tr>
@@ -1962,10 +1969,10 @@ function renderDriverRow(driver) {
                 </div>
             </td>
             <td>${driver.phone_number || '-'}</td>
-            <td><span class="vehicle-badge">🏍️ Motorcycle</span></td>
-            <td><span class="status-badge ${statusClass}">${statusIcon} ${statusLabel}</span></td>
-            <td>0</td>
-            <td>⭐ -</td>
+            <td><span class="vehicle-badge"><i class="bi ${vehicleIcon}"></i> ${escapeHtml(vehicleType)}</span></td>
+            <td><span class="status-badge ${statusClass}"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> ${statusLabel}</span></td>
+            <td>${deliveryCount}</td>
+            <td>${rating !== '-' ? `<i class="bi bi-star-fill" style="color: #f59e0b;"></i> ${rating}` : '<span style="color: var(--text-muted);">-</span>'}</td>
             <td>
                 <button class="btn btn-sm btn-outline" onclick="viewUserDetails('${driver.user_id}')">
                     <i class="bi bi-eye"></i>
@@ -2635,7 +2642,7 @@ function renderRequestCard(req) {
         <div class="garage-card request-card">
             <div class="garage-card-header">
                 <div>
-                    <h3>${req.garage_name || 'Unknown Garage'}</h3>
+                    <h3>${escapeHtml(req.garage_name || 'Unknown Garage')}</h3>
                     <div class="garage-meta">
                         <i class="bi bi-clock"></i> ${new Date(req.created_at).toLocaleDateString()}
                     </div>
@@ -2646,25 +2653,25 @@ function renderRequestCard(req) {
             <div class="garage-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
                 <div class="detail-item">
                     <label>Current Plan</label>
-                    <div class="value">${req.from_plan_name || '-'}</div>
+                    <div class="value">${escapeHtml(req.from_plan_name || '-')}</div>
                 </div>
                 <div class="detail-item">
                     <label>Requested Plan</label>
                     <div class="value" style="color: var(--primary-color); font-weight: bold;">
-                        ${req.target_plan_name || req.to_plan_name || 'New Plan'} <i class="bi bi-arrow-right"></i>
+                        ${escapeHtml(req.target_plan_name || req.to_plan_name || 'New Plan')} <i class="bi bi-arrow-right"></i>
                     </div>
                 </div>
             </div>
 
             <div class="detail-item full">
                 <label>Reason</label>
-                <div class="value">${req.request_reason || 'No reason provided'}</div>
+                <div class="value">${escapeHtml(req.request_reason || 'No reason provided')}</div>
             </div>
 
             ${req.admin_notes ? `
             <div class="detail-item full" style="margin-top: 10px; background: #f9fafb; padding: 8px; border-radius: 6px;">
                 <label>Admin Notes</label>
-                <div class="value small text-muted">${req.admin_notes}</div>
+                <div class="value small text-muted">${escapeHtml(req.admin_notes)}</div>
             </div>` : ''}
 
             <div class="garage-actions" style="margin-top: 20px;">
