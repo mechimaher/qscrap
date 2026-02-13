@@ -455,8 +455,13 @@ function renderOrders(orders) {
                 ` : '')}
                 
                 ${hasPayout ? `
-                    <div class="order-meta" style="color: ${o.payout_status === 'confirmed' ? '#10b981' : '#f59e0b'};">
+                    <div class="order-meta" style="color: ${getPayoutColor ? getPayoutColor(o.payout_status) : (o.payout_status === 'confirmed' ? '#10b981' : '#f59e0b')};">
                         <i class="bi bi-cash-stack"></i> Payout: ${o.payout_status}
+                    </div>
+                ` : ''}
+                ${o.payment_status === 'refund_pending' ? `
+                    <div class="order-meta" style="color: #f97316; font-weight: 600;">
+                        <i class="bi bi-hourglass-split"></i> Refund Pending (Finance Review)
                     </div>
                 ` : ''}
                 
@@ -520,7 +525,20 @@ function getStatusColor(status) {
         'delivered': '#10b981',
         'completed': '#10b981',
         'cancelled': '#6b7280',
-        'refunded': '#ef4444'
+        'refunded': '#ef4444',
+        'refund_pending': '#f97316'
+    };
+    return colors[status] || '#6b7280';
+}
+
+function getPayoutColor(status) {
+    const colors = {
+        'pending': '#f59e0b',
+        'processing': '#3b82f6',
+        'confirmed': '#10b981',
+        'paid': '#10b981',
+        'on_hold': '#f97316',
+        'cancelled': '#ef4444'
     };
     return colors[status] || '#6b7280';
 }
@@ -2561,7 +2579,8 @@ function renderOrderDetailsModal(data) {
         'in_transit': '#8b5cf6',
         'out_for_delivery': '#8b5cf6',
         'cancelled': '#ef4444',
-        'refunded': '#6b7280'
+        'refunded': '#6b7280',
+        'refund_pending': '#f97316'
     };
 
     const statusColor = statusColors[order.order_status] || '#6b7280';
@@ -2714,7 +2733,7 @@ function renderOrderDetailsModal(data) {
                 </div>
                 <div style="margin-top: 12px; padding: 10px; background: var(--bg-primary); border-radius: 8px; font-size: 12px;">
                     <strong>Payment:</strong> ${escapeHTML(order.payment_method || 'N/A')} 
-                    <span style="color: ${order.payment_status === 'paid' ? '#10b981' : '#f59e0b'};">(${order.payment_status || 'pending'})</span>
+                    <span style="color: ${order.payment_status === 'paid' ? '#10b981' : order.payment_status === 'refunded' ? '#ef4444' : order.payment_status === 'refund_pending' ? '#f97316' : '#f59e0b'}; font-weight: 600;">(${(order.payment_status || 'pending').replace(/_/g, ' ')})</span>
                 </div>
             </div>
             
@@ -2788,31 +2807,42 @@ function renderOrderDetailsModal(data) {
             </div>
             
             <!-- Payout Info -->
-            ${payout ? `
-            <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #10b981;">
-                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #047857; display: flex; align-items: center; gap: 8px;">
+            ${payout ? (() => {
+            const payoutBg = payout.payout_status === 'cancelled' ? 'linear-gradient(135deg, #fef2f2, #fecaca)'
+                : payout.payout_status === 'on_hold' ? 'linear-gradient(135deg, #fff7ed, #fed7aa)'
+                    : 'linear-gradient(135deg, #ecfdf5, #d1fae5)';
+            const payoutBorder = payout.payout_status === 'cancelled' ? '#ef4444'
+                : payout.payout_status === 'on_hold' ? '#f97316'
+                    : '#10b981';
+            const payoutText = payout.payout_status === 'cancelled' ? '#991b1b'
+                : payout.payout_status === 'on_hold' ? '#9a3412'
+                    : '#047857';
+            return `
+            <div style="background: ${payoutBg}; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid ${payoutBorder};">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: ${payoutText}; display: flex; align-items: center; gap: 8px;">
                     <i class="bi bi-wallet2"></i> Garage Payout
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
                     <div>
-                        <div style="font-size: 11px; color: #047857;">Status</div>
-                        <div style="font-weight: 700; text-transform: uppercase;">${escapeHTML(payout.payout_status)}</div>
+                        <div style="font-size: 11px; color: ${payoutText};">Status</div>
+                        <div style="font-weight: 700; text-transform: uppercase; color: ${payoutBorder};">${escapeHTML(payout.payout_status)}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; color: #047857;">Gross</div>
+                        <div style="font-size: 11px; color: ${payoutText};">Gross</div>
                         <div style="font-weight: 700;">${formatCurrency(payout.gross_amount)}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; color: #047857;">Commission</div>
+                        <div style="font-size: 11px; color: ${payoutText};">Commission</div>
                         <div style="font-weight: 700;">-${formatCurrency(payout.commission_amount)}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; color: #047857;">Net</div>
+                        <div style="font-size: 11px; color: ${payoutText};">Net</div>
                         <div style="font-weight: 700;">${formatCurrency(payout.net_amount)}</div>
                     </div>
                 </div>
-            </div>
-            ` : ''}
+                ${payout.adjustment_reason ? `<div style="margin-top: 8px; font-size: 11px; color: ${payoutText};"><i class="bi bi-info-circle"></i> ${escapeHTML(payout.adjustment_reason)}</div>` : ''}
+            </div>`;
+        })() : ''}
             
             <!-- Refund Info -->
             ${refund ? `
@@ -2874,14 +2904,29 @@ function renderOrderDetailsModal(data) {
             </div>
             ` : ''}
             
-            <!-- Actions Footer -->
+            <!-- Actions Footer (status-aware) -->
             <div style="display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
-                <button onclick="quickAction('cancel_order', '${order.order_id}')" class="btn btn-danger" style="flex: 1;">
-                    <i class="bi bi-x-circle"></i> Cancel Order
-                </button>
-                <button onclick="quickAction('request_refund', '${order.order_id}')" class="btn btn-warning" style="flex: 1;">
-                    <i class="bi bi-arrow-return-left"></i> Refund
-                </button>
+                ${['refunded', 'cancelled'].includes(order.order_status) ? `
+                    <div style="flex: 1; padding: 10px; text-align: center; background: var(--bg-secondary); border-radius: 8px; color: var(--text-muted); font-size: 13px;">
+                        <i class="bi bi-lock"></i> Order ${order.order_status} — no actions available
+                    </div>
+                ` : `
+                    ${['pending', 'confirmed', 'processing', 'awaiting_pickup'].includes(order.order_status) ? `
+                        <button onclick="quickAction('cancel_order', '${order.order_id}')" class="btn btn-danger" style="flex: 1;">
+                            <i class="bi bi-x-circle"></i> Cancel Order
+                        </button>
+                    ` : ''}
+                    ${['completed', 'delivered'].includes(order.order_status) && order.payment_status !== 'refund_pending' ? `
+                        <button onclick="quickAction('request_refund', '${order.order_id}')" class="btn btn-warning" style="flex: 1;">
+                            <i class="bi bi-arrow-return-left"></i> Refund
+                        </button>
+                    ` : ''}
+                    ${order.payment_status === 'refund_pending' ? `
+                        <div style="flex: 1; padding: 10px; text-align: center; background: rgba(249, 115, 22, 0.1); border-radius: 8px; color: #f97316; font-weight: 600; font-size: 13px;">
+                            <i class="bi bi-hourglass-split"></i> Refund pending Finance approval
+                        </div>
+                    ` : ''}
+                `}
                 <button onclick="closeOrderDetailsModal()" class="btn btn-ghost" style="flex: 1;">
                     Close
                 </button>
