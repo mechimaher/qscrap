@@ -522,6 +522,15 @@ export class RefundService {
                 resultMessage = `Manual refund of ${refund.refund_amount} QAR approved (cash/COD order)`;
             }
 
+            // Notify Support team about the approval decision
+            await this.notifySupportTeam(
+                refund.order_id,
+                refund.order_number,
+                'approved',
+                `Refund of ${refund.refund_amount} QAR approved and processed.${refundMethod === 'split' ? ` Split: ${stripeRefundAmount.toFixed(2)} QAR card + ${manualRefundAmount.toFixed(2)} QAR cash.` : ''} Customer has been notified.`,
+                processedBy
+            );
+
             return {
                 success: true,
                 stripe_refund_id: stripeRefundId,
@@ -617,9 +626,18 @@ export class RefundService {
                 logger.warn('Failed to notify customer about rejection', { error: (notifyErr as Error).message });
             }
 
+            // Notify Support team about the rejection decision
+            await this.notifySupportTeam(
+                refund.order_id,
+                refund.order_number,
+                'rejected',
+                `Refund request rejected by Finance. Reason: ${rejectionReason}. Payment status restored to paid, payout unfrozen.`,
+                rejectedBy
+            );
+
             return {
                 success: true,
-                message: `Refund request rejected. Customer has been notified.`
+                message: `Refund request rejected. Customer and Support have been notified.`
             };
         } catch (err: any) {
             await client.query('ROLLBACK');
@@ -627,6 +645,96 @@ export class RefundService {
             throw err;
         } finally {
             client.release();
+        }
+    }
+
+    /**
+     * Notify Support team when Finance makes a refund decision.
+     * Posts a chat message to the linked ticket and notifies the initiating agent.
+     */
+    private async notifySupportTeam(
+        orderId: string,
+        orderNumber: string,
+        decision: 'approved' | 'rejected',
+        details: string,
+        decidedBy: string
+    ): Promise<void> {
+        try {
+            const readPool = this.pool;
+
+            // Find linked support ticket for this order
+            const ticketResult = await readPool.query(`
+                SELECT t.ticket_id, t.assigned_to
+                FROM support_tickets t
+                WHERE t.order_id = (
+                    SELECT order_id FROM orders WHERE order_id = $1
+                )
+                ORDER BY t.created_at DESC LIMIT 1
+            `, [orderId]);
+
+            if (ticketResult.rows.length > 0) {
+                const ticket = ticketResult.rows[0];
+
+                // Post update to ticket chat so agent sees it
+                const icon = decision === 'approved' ? '✅' : '❌';
+                const statusText = decision === 'approved' ? 'APPROVED' : 'REJECTED';
+                await readPool.query(`
+                    INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
+                    VALUES ($1, $2, 'system', $3, false)
+                `, [
+                    ticket.ticket_id,
+                    decidedBy,
+                    `${icon} **Refund ${statusText} by Finance Team**\n\nOrder #${orderNumber}\n${details}`
+                ]);
+
+                // Notify assigned agent specifically
+                if (ticket.assigned_to) {
+                    const { createNotification } = await import('../notification.service');
+                    await createNotification({
+                        userId: ticket.assigned_to,
+                        target_role: 'admin',
+                        type: `refund_${decision}`,
+                        title: `Refund ${statusText} - Order #${orderNumber}`,
+                        message: details,
+                        data: {
+                            order_id: orderId,
+                            order_number: orderNumber,
+                            decision,
+                            ticket_id: ticket.ticket_id
+                        }
+                    });
+                }
+            }
+
+            // Also find the support agent who initiated the refund request
+            const initiatorResult = await readPool.query(`
+                SELECT initiated_by FROM refunds 
+                WHERE order_id = $1 AND initiated_by != $2
+                ORDER BY created_at DESC LIMIT 1
+            `, [orderId, decidedBy]);
+
+            if (initiatorResult.rows.length > 0 && initiatorResult.rows[0].initiated_by !== 'support') {
+                const initiatorId = initiatorResult.rows[0].initiated_by;
+                // Don't double-notify if initiator is also the assigned agent
+                const alreadyNotified = ticketResult.rows.length > 0 && ticketResult.rows[0].assigned_to === initiatorId;
+                if (!alreadyNotified) {
+                    const { createNotification } = await import('../notification.service');
+                    const icon = decision === 'approved' ? '✅' : '❌';
+                    await createNotification({
+                        userId: initiatorId,
+                        target_role: 'admin',
+                        type: `refund_${decision}`,
+                        title: `${icon} Refund ${decision === 'approved' ? 'Approved' : 'Rejected'} - #${orderNumber}`,
+                        message: details,
+                        data: { order_id: orderId, order_number: orderNumber, decision }
+                    });
+                }
+            }
+
+            logger.info(`Support team notified about refund ${decision}`, { orderId, orderNumber });
+        } catch (err) {
+            // Non-critical - don't fail the refund decision if notifications fail
+            logger.warn('Failed to notify support team about refund decision', { error: (err as Error).message });
         }
     }
 }

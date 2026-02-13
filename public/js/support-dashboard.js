@@ -2844,28 +2844,47 @@ function renderOrderDetailsModal(data) {
             </div>`;
         })() : ''}
             
-            <!-- Refund Info -->
-            ${refund ? `
-            <div style="background: linear-gradient(135deg, #fef2f2, #fecaca); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #ef4444;">
-                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #991b1b; display: flex; align-items: center; gap: 8px;">
-                    <i class="bi bi-arrow-return-left"></i> Refund
+            <!-- Refund Info (status-aware styling) -->
+            ${refund ? (() => {
+            const refundBg = refund.refund_status === 'completed' ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)'
+                : refund.refund_status === 'rejected' ? 'linear-gradient(135deg, #fef2f2, #fecaca)'
+                    : 'linear-gradient(135deg, #fffbeb, #fef3c7)';
+            const refundBorder = refund.refund_status === 'completed' ? '#10b981'
+                : refund.refund_status === 'rejected' ? '#ef4444'
+                    : '#f59e0b';
+            const refundText = refund.refund_status === 'completed' ? '#047857'
+                : refund.refund_status === 'rejected' ? '#991b1b'
+                    : '#92400e';
+            const refundIcon = refund.refund_status === 'completed' ? 'bi-check-circle-fill'
+                : refund.refund_status === 'rejected' ? 'bi-x-circle-fill'
+                    : 'bi-hourglass-split';
+            const refundTitle = refund.refund_status === 'completed' ? 'Refund Processed'
+                : refund.refund_status === 'rejected' ? 'Refund Rejected'
+                    : 'Refund Pending (Finance Review)';
+            return `
+            <div style="background: ${refundBg}; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid ${refundBorder};">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: ${refundText}; display: flex; align-items: center; gap: 8px;">
+                    <i class="bi ${refundIcon}"></i> ${refundTitle}
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                     <div>
-                        <div style="font-size: 11px; color: #991b1b;">Amount</div>
+                        <div style="font-size: 11px; color: ${refundText};">Amount</div>
                         <div style="font-weight: 700;">${formatCurrency(refund.refund_amount)}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; color: #991b1b;">Status</div>
-                        <div style="font-weight: 700; text-transform: uppercase;">${escapeHTML(refund.refund_status || 'pending')}</div>
+                        <div style="font-size: 11px; color: ${refundText};">Status</div>
+                        <div style="font-weight: 700; text-transform: uppercase; color: ${refundBorder};">${escapeHTML(refund.refund_status || 'pending')}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; color: #991b1b;">Reason</div>
-                        <div style="font-weight: 600; font-size: 12px;">${escapeHTML(refund.refund_reason || 'N/A')}</div>
+                        <div style="font-size: 11px; color: ${refundText};">Processed</div>
+                        <div style="font-weight: 600; font-size: 12px;">${refund.processed_at ? new Date(refund.processed_at).toLocaleString() : 'Awaiting Finance'}</div>
                     </div>
                 </div>
-            </div>
-            ` : ''}
+                <div style="margin-top: 10px; font-size: 12px; color: ${refundText}; line-height: 1.5;">
+                    <i class="bi bi-chat-left-text"></i> <strong>Reason:</strong> ${escapeHTML(refund.refund_reason || 'N/A')}
+                </div>
+            </div>`;
+        })() : ''}
             
             <!-- Cancellation Info -->
             ${order.cancellation_reason ? `
