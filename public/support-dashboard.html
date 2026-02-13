@@ -774,6 +774,7 @@
             position: fixed;
             height: 100vh;
             z-index: 100;
+            overflow: hidden;
         }
 
         /* Main content needs margin-left to not be hidden under sidebar */
@@ -784,6 +785,33 @@
 
         .sidebar-compact:hover {
             width: 220px !important;
+        }
+
+        /* Constrain logo within compact sidebar */
+        .sidebar-compact .sidebar-header {
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .sidebar-compact .sidebar-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        .sidebar-compact .sidebar-logo-img {
+            max-width: 46px !important;
+            max-height: 36px !important;
+            padding: 4px 6px !important;
+            transition: max-width 0.3s, max-height 0.3s;
+        }
+
+        .sidebar-compact:hover .sidebar-logo-img {
+            max-width: 140px !important;
+            max-height: 46px !important;
+            padding: 6px 10px !important;
         }
 
         .sidebar-compact .logo-subtitle,
