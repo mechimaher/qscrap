@@ -752,10 +752,6 @@ function sortRequests() {
     loadRequests(1);
 }
 
-// Deprecated client-side sort - kept for reference but unused
-function applyRequestSort() {
-    // Logic moved to backend
-}
 
 // Clear all request filters
 function clearRequestFilters() {
@@ -1386,11 +1382,49 @@ async function respondToCounterFromCard(counterOfferId, action) {
     }
 }
 
-// Open counter input inline (simplified)
+// Open counter input inline (modal-based)
 function openCounterInputForCard(counterOfferId, currentAmount) {
-    const newAmount = prompt(`Enter your counter price (current offer: ${currentAmount} QAR):`);
-    if (newAmount && !isNaN(parseFloat(newAmount))) {
-        respondToCounterWithAmount(counterOfferId, parseFloat(newAmount));
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'counter-price-modal',
+            title: 'Counter Offer',
+            headerIcon: 'bi-arrow-repeat',
+            headerClass: 'linear-gradient(135deg, var(--accent), #8B6914)',
+            size: 'sm',
+            content: `
+                <div style="padding: 8px 0;">
+                    <div style="text-align: center; margin-bottom: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 10px;">
+                        <div style="font-size: 12px; color: var(--text-muted);">Customer's Offer</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">${currentAmount} QAR</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Your Counter Price (QAR) *</label>
+                        <input type="number" id="counterPriceInput" class="form-control" min="1" step="1"
+                            placeholder="Enter your price..." style="margin-top: 6px; font-size: 16px; text-align: center; font-weight: 600;">
+                    </div>
+                </div>
+            `,
+            actions: [
+                { id: 'cancel-counter-btn', text: 'Cancel', class: 'btn btn-ghost', onclick: () => QScrapModal.close('counter-price-modal') },
+                {
+                    id: 'submit-counter-btn', text: 'Send Counter', class: 'btn btn-primary', onclick: () => {
+                        const val = document.getElementById('counterPriceInput')?.value;
+                        if (val && !isNaN(parseFloat(val)) && parseFloat(val) > 0) {
+                            QScrapModal.close('counter-price-modal');
+                            respondToCounterWithAmount(counterOfferId, parseFloat(val));
+                        } else {
+                            showToast('Please enter a valid price', 'error');
+                        }
+                    }
+                }
+            ]
+        });
+        setTimeout(() => document.getElementById('counterPriceInput')?.focus(), 200);
+    } else {
+        const newAmount = prompt(`Enter your counter price (current offer: ${currentAmount} QAR):`);
+        if (newAmount && !isNaN(parseFloat(newAmount))) {
+            respondToCounterWithAmount(counterOfferId, parseFloat(newAmount));
+        }
     }
 }
 
@@ -1651,24 +1685,7 @@ function setOrdersBadgeCount(count) {
     updateOrdersBadge();
 }
 
-// Update earnings badge in nav (payouts awaiting confirmation)
-async function updateEarningsBadge() {
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=awaiting_confirmation`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const count = data.payouts?.length || 0;
-        const badge = document.getElementById('earningsBadge');
-        if (badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'flex' : 'none';
-        }
-    } catch (err) {
-        console.error('Failed to update earnings badge:', err);
-    }
-}
+// updateEarningsBadge() defined at line ~3580 (uses correct /payouts/awaiting-confirmation endpoint)
 
 // Filter bids
 let currentBidFilter = 'all';
@@ -3882,9 +3899,27 @@ async function changePlan(planId, planName, monthlyFee) {
         return;
     }
 
-    // Free plan - just submit request
+    // Free plan - submit request with modal confirmation
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'change-plan-modal',
+            title: 'Change Plan',
+            headerIcon: 'bi-arrow-repeat',
+            headerClass: 'linear-gradient(135deg, var(--accent), #8B6914)',
+            size: 'sm',
+            content: `<div style="padding: 8px 0;"><p>Request to switch to <strong>${planName}</strong>?</p><p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">This will be sent to admin for approval.</p></div>`,
+            actions: [
+                { id: 'cancel-plan-btn', text: 'Cancel', class: 'btn btn-ghost', onclick: () => QScrapModal.close('change-plan-modal') },
+                { id: 'confirm-plan-btn', text: 'Submit Request', class: 'btn btn-primary', onclick: async () => { QScrapModal.close('change-plan-modal'); await executeChangePlan(planId); } }
+            ]
+        });
+        return;
+    }
     if (!confirm(`Request to switch to ${planName}? This will be sent to admin for approval.`)) return;
+    await executeChangePlan(planId);
+}
 
+async function executeChangePlan(planId) {
     try {
         const res = await fetch(`${API_URL}/subscriptions/change-plan`, {
             method: 'PUT',
@@ -3911,8 +3946,26 @@ async function changePlan(planId, planName, monthlyFee) {
 
 // Cancel pending plan change request
 async function cancelPendingRequest() {
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'cancel-plan-request-modal',
+            title: 'Cancel Request',
+            headerIcon: 'bi-x-circle',
+            headerClass: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            size: 'sm',
+            content: `<div style="padding: 8px 0;"><p>Are you sure you want to cancel your pending plan change request?</p></div>`,
+            actions: [
+                { id: 'keep-request-btn', text: 'Keep Request', class: 'btn btn-ghost', onclick: () => QScrapModal.close('cancel-plan-request-modal') },
+                { id: 'cancel-request-btn', text: 'Cancel Request', class: 'btn btn-danger', onclick: async () => { QScrapModal.close('cancel-plan-request-modal'); await executeCancelPendingRequest(); } }
+            ]
+        });
+        return;
+    }
     if (!confirm('Are you sure you want to cancel your pending plan change request?')) return;
+    await executeCancelPendingRequest();
+}
 
+async function executeCancelPendingRequest() {
     try {
         const res = await fetch(`${API_URL}/subscriptions/pending-request`, {
             method: 'DELETE',
@@ -4531,8 +4584,26 @@ async function loadAwaitingConfirmation() {
 
 // Confirm payment receipt
 async function confirmPaymentReceipt(payoutId) {
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'confirm-payment-modal',
+            title: 'Confirm Payment',
+            headerIcon: 'bi-check-circle',
+            headerClass: 'linear-gradient(135deg, #10b981, #059669)',
+            size: 'sm',
+            content: `<div style="padding: 8px 0;"><p>Confirm that you have received this payment?</p><p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">This action cannot be undone.</p></div>`,
+            actions: [
+                { id: 'cancel-confirm-btn', text: 'Not Yet', class: 'btn btn-ghost', onclick: () => QScrapModal.close('confirm-payment-modal') },
+                { id: 'yes-confirm-btn', text: 'Yes, Received', class: 'btn btn-primary', style: 'background: linear-gradient(135deg, #10b981, #059669);', onclick: async () => { QScrapModal.close('confirm-payment-modal'); await executeConfirmPayment(payoutId); } }
+            ]
+        });
+        return;
+    }
     if (!confirm('Confirm that you have received this payment?')) return;
+    await executeConfirmPayment(payoutId);
+}
 
+async function executeConfirmPayment(payoutId) {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/confirm`, {
             method: 'POST',
@@ -4546,7 +4617,7 @@ async function confirmPaymentReceipt(payoutId) {
         const data = await res.json();
 
         if (res.ok) {
-            showToast('✅ Payment confirmed! Thank you.', 'success');
+            showToast('Payment confirmed! Thank you.', 'success');
             loadEarnings();
         } else {
             showToast(data.error || 'Failed to confirm payment', 'error');
@@ -4558,8 +4629,26 @@ async function confirmPaymentReceipt(payoutId) {
 
 // Confirm All Payouts — simple, no password
 async function openConfirmAllModal(count, totalAmount) {
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'confirm-all-modal',
+            title: 'Confirm All Payments',
+            headerIcon: 'bi-check-all',
+            headerClass: 'linear-gradient(135deg, #10b981, #059669)',
+            size: 'sm',
+            content: `<div style="padding: 8px 0;"><p>Confirm receipt of <strong>${count} payment${count > 1 ? 's' : ''}</strong> totaling <strong>${totalAmount.toLocaleString()} QAR</strong>?</p></div>`,
+            actions: [
+                { id: 'cancel-all-btn', text: 'Cancel', class: 'btn btn-ghost', onclick: () => QScrapModal.close('confirm-all-modal') },
+                { id: 'confirm-all-btn', text: 'Confirm All', class: 'btn btn-primary', style: 'background: linear-gradient(135deg, #10b981, #059669);', onclick: async () => { QScrapModal.close('confirm-all-modal'); await executeConfirmAll(count); } }
+            ]
+        });
+        return;
+    }
     if (!confirm(`Confirm receipt of ${count} payment${count > 1 ? 's' : ''} totaling ${totalAmount.toLocaleString()} QAR?`)) return;
+    await executeConfirmAll(count);
+}
 
+async function executeConfirmAll(count) {
     try {
         showToast('Confirming all payouts...', 'info');
         const res = await fetch(`${API_URL}/finance/payouts/confirm-all`, {
@@ -4573,7 +4662,7 @@ async function openConfirmAllModal(count, totalAmount) {
         const data = await res.json();
 
         if (res.ok) {
-            showToast(`✅ ${data.confirmed_count || count} payouts confirmed!`, 'success');
+            showToast(`${data.confirmed_count || count} payouts confirmed!`, 'success');
             loadEarnings();
         } else {
             showToast(data.error || 'Failed to confirm payouts', 'error');
@@ -4585,18 +4674,62 @@ async function openConfirmAllModal(count, totalAmount) {
 
 // Report payment issue
 async function reportPaymentIssue(payoutId, amount) {
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'report-issue-modal',
+            title: 'Report Payment Issue',
+            headerIcon: 'bi-exclamation-triangle',
+            headerClass: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            size: 'sm',
+            content: `
+                <div style="padding: 8px 0;">
+                    <div style="background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <span style="color: #d97706; font-weight: 600;">Payment: ${amount} QAR</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-weight: 600;">Issue Type *</label>
+                        <select id="issueReasonSelect" class="form-control" style="margin-top: 6px;">
+                            <option value="">Select reason...</option>
+                            <option value="not_received">Payment Not Received</option>
+                            <option value="wrong_amount">Wrong Amount</option>
+                            <option value="partial_payment">Partial Payment</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Description</label>
+                        <textarea id="issueDescInput" class="form-control" rows="3" placeholder="Describe the issue..." style="margin-top: 6px;"></textarea>
+                    </div>
+                </div>
+            `,
+            actions: [
+                { id: 'cancel-issue-btn', text: 'Cancel', class: 'btn btn-ghost', onclick: () => QScrapModal.close('report-issue-modal') },
+                {
+                    id: 'submit-issue-btn', text: 'Report Issue', class: 'btn btn-danger', style: 'background: linear-gradient(135deg, #f59e0b, #d97706);', onclick: async () => {
+                        const reason = document.getElementById('issueReasonSelect')?.value;
+                        const description = document.getElementById('issueDescInput')?.value || '';
+                        if (!reason) { showToast('Please select a reason', 'error'); return; }
+                        QScrapModal.close('report-issue-modal');
+                        await executeReportIssue(payoutId, reason, description);
+                    }
+                }
+            ]
+        });
+        return;
+    }
+    // Fallback
     const reason = prompt(`Report issue with payment of ${amount} QAR:\n\nSelect reason:\n1. not_received\n2. wrong_amount\n3. partial_payment\n4. other\n\nEnter reason (e.g. "not_received"):`);
-
     if (!reason) return;
-
     const validReasons = ['not_received', 'wrong_amount', 'partial_payment', 'other'];
     if (!validReasons.includes(reason)) {
         showToast('Invalid reason. Please enter: not_received, wrong_amount, partial_payment, or other', 'error');
         return;
     }
-
     const description = prompt('Please describe the issue:');
+    await executeReportIssue(payoutId, reason, description || '');
+}
 
+async function executeReportIssue(payoutId, reason, description) {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/dispute`, {
             method: 'POST',
@@ -4742,12 +4875,7 @@ async function downloadGarageInvoice(orderId) {
 let unreadNotificationCount = 0;
 // notifications array is defined at the top of the file (line 58)
 
-// Helper function for escaping HTML (assuming it's not defined elsewhere)
-function escapeHTML(str) {
-    const div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
-}
+// escapeHTML() defined at top of file (line ~18)
 
 async function loadNotifications() {
     try {
@@ -4874,12 +5002,7 @@ async function markNotificationRead(id) {
     }
 }
 
-function toggleNotifications() {
-    const dropdown = document.getElementById('notificationsDropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('show'); // Ops uses 'show', Garage used 'active'
-    }
-}
+// toggleNotifications() defined in Premium Upgrade section (~line 5473)
 
 // Helper to format time
 function getTimeAgo(dateString) {
@@ -6276,10 +6399,26 @@ async function togglePartStatus(partId) {
 }
 
 async function deleteShowcasePart(partId) {
-    if (!confirm('Are you sure you want to remove this part from your showcase?')) {
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'delete-showcase-modal',
+            title: 'Remove Part',
+            headerIcon: 'bi-trash',
+            headerClass: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            size: 'sm',
+            content: `<div style="padding: 8px 0;"><p>Are you sure you want to remove this part from your showcase?</p><p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">Customers will no longer see this listing.</p></div>`,
+            actions: [
+                { id: 'keep-part-btn', text: 'Keep', class: 'btn btn-ghost', onclick: () => QScrapModal.close('delete-showcase-modal') },
+                { id: 'delete-part-btn', text: 'Remove Part', class: 'btn btn-danger', onclick: async () => { QScrapModal.close('delete-showcase-modal'); await executeDeletePart(partId); } }
+            ]
+        });
         return;
     }
+    if (!confirm('Are you sure you want to remove this part from your showcase?')) return;
+    await executeDeletePart(partId);
+}
 
+async function executeDeletePart(partId) {
     try {
         const res = await fetch(`${API_URL}/showcase/garage/${partId}`, {
             method: 'DELETE',
