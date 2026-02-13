@@ -1640,6 +1640,17 @@
 
         .footer-grid {
             grid-template-columns: 1fr;
+            text-align: center;
+        }
+
+        .footer-column {
+            align-items: center;
+        }
+
+        /* Floating widget clearance — prevent step cards from hiding behind the FAB */
+        .steps-grid .step-card:last-child,
+        .value-grid .value-card:last-child {
+            margin-bottom: 80px;
         }
 
         /* ===== Mobile Navigation CTA Fix ===== */
@@ -2173,6 +2184,23 @@
         /* Trust counter subtle glow on animation */
         .hero-stat-value {
             transition: color 0.3s ease;
+        }
+
+        /* ===== CTA Download Button Pulse ===== */
+        @keyframes cta-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 15px rgba(201, 162, 39, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 4px 30px rgba(201, 162, 39, 0.6), 0 0 60px rgba(201, 162, 39, 0.2);
+            }
+        }
+
+        .btn-hero-primary {
+            animation: cta-pulse 2s ease-in-out 2s 2;
         }
 
         /* ===== Accessibility: Reduced Motion ===== */
