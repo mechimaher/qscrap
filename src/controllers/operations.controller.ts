@@ -11,12 +11,14 @@ import {
     DisputeService,
     UserManagementService
 } from '../services/operations';
+import { SupportActionsService } from '../services/support/support-actions.service';
 
 // Initialize services
 const dashboardService = new OperationsDashboardService(getReadPool());
 const orderService = new OrderManagementService(getWritePool());
 const disputeService = new DisputeService(getWritePool());
 const userService = new UserManagementService(getReadPool());
+const supportActionsService = new SupportActionsService(getWritePool());
 
 // ============================================
 // DASHBOARD STATS
@@ -409,6 +411,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             SELECT e.*,
                    t.ticket_id, t.customer_id as ticket_customer_id,
                    COALESCE(o.order_number, o2.order_number) as order_number,
+                   COALESCE(o.order_id, o2.order_id, e.order_id) as resolved_order_id,
                    COALESCE(o.customer_id, o2.customer_id, e.customer_id) as customer_id,
                    COALESCE(o.garage_id, o2.garage_id) as garage_id,
                    eu.full_name as escalated_by_name
@@ -425,53 +428,159 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
         }
 
         const escalation = escalationResult.rows[0];
+        const action = resolution_action || 'acknowledge';
 
-        // 2. Update escalation with resolution
+        // 2. EXECUTE THE APPROVED ACTION (the critical missing step)
+        let actionResult: any = null;
+        const orderId = escalation.resolved_order_id;
+        const customerId = escalation.customer_id;
+
+        if (action !== 'acknowledge' && action !== 'reject' && !orderId) {
+            return res.status(400).json({
+                error: 'Cannot execute action: no order linked to this escalation'
+            });
+        }
+
+        switch (action) {
+            case 'approve_refund':
+                // Route to SupportActionsService → creates pending refund for Finance approval
+                if (!orderId || !customerId) {
+                    return res.status(400).json({ error: 'Order and customer required for refund' });
+                }
+                actionResult = await supportActionsService.executeFullRefund({
+                    orderId,
+                    customerId,
+                    agentId: staffId,
+                    reason: resolution_notes || `Escalation #${escalation_id} — refund approved by Operations`
+                });
+                if (!actionResult.success) {
+                    return res.status(400).json({
+                        error: actionResult.error || 'Refund request failed',
+                        details: actionResult.message
+                    });
+                }
+                logger.info('[OPERATIONS] Escalation resolved with REFUND action', {
+                    escalation_id, order_id: orderId,
+                    refund_id: actionResult.refundId,
+                    status: actionResult.status
+                });
+                break;
+
+            case 'approve_cancellation':
+                // Route to SupportActionsService → cancels order + handles payout reversal + refund
+                if (!orderId || !customerId) {
+                    return res.status(400).json({ error: 'Order and customer required for cancellation' });
+                }
+                actionResult = await supportActionsService.executeCancelOrder({
+                    orderId,
+                    customerId,
+                    agentId: staffId,
+                    reason: resolution_notes || `Escalation #${escalation_id} — cancellation approved by Operations`
+                });
+                if (!actionResult.success) {
+                    return res.status(400).json({
+                        error: actionResult.error || 'Cancellation failed',
+                        details: actionResult.message
+                    });
+                }
+                logger.info('[OPERATIONS] Escalation resolved with CANCELLATION action', {
+                    escalation_id, order_id: orderId,
+                    payout_action: actionResult.payoutAction,
+                    refund_action: actionResult.refundAction
+                });
+                break;
+
+            case 'reject':
+                // No action on order — just document the rejection
+                logger.info('[OPERATIONS] Escalation REJECTED', {
+                    escalation_id, reason: resolution_notes
+                });
+                break;
+
+            case 'acknowledge':
+            default:
+                // Current behavior — close escalation, no order action
+                logger.info('[OPERATIONS] Escalation acknowledged (no order action)', {
+                    escalation_id
+                });
+                break;
+        }
+
+        // 3. Update escalation record with resolution + action taken
         const updateResult = await pool.query(`
             UPDATE support_escalations 
-            SET status = 'resolved',
+            SET status = $4,
                 resolved_at = NOW(),
                 resolved_by = $2,
-                resolution_notes = $3
+                resolution_notes = $3,
+                resolution_action = $5
             WHERE escalation_id = $1
             RETURNING *
-        `, [escalation_id, staffId, resolution_notes || 'Resolved by Operations']);
+        `, [
+            escalation_id,
+            staffId,
+            resolution_notes || 'Resolved by Operations',
+            action === 'reject' ? 'rejected' : 'resolved',
+            action
+        ]);
 
-        // 3. Update linked ticket if exists - add resolution message
+        // 4. Update linked ticket if exists - add resolution message with action detail
         if (escalation.ticket_id) {
+            const actionLabels: Record<string, string> = {
+                'approve_refund': 'Refund Approved — Awaiting Finance approval',
+                'approve_cancellation': 'Order Cancelled — Refund processed',
+                'reject': 'Escalation Rejected',
+                'acknowledge': 'Escalation Acknowledged'
+            };
+            const actionLabel = actionLabels[action] || 'Resolved';
+
             await pool.query(`
                 INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
                 VALUES ($1, $2, 'admin', $3, false)
             `, [
                 escalation.ticket_id,
                 staffId,
-                `📋 **Escalation Resolved by Operations**\n\n${resolution_notes || 'Your concern has been addressed.'}`
+                `Escalation Resolved by Operations\n\nAction: ${actionLabel}\n${resolution_notes || 'Your concern has been addressed.'}`
             ]);
 
-            // Update ticket status to resolved if still open
-            await pool.query(`
-                UPDATE support_tickets 
-                SET status = 'resolved', resolved_at = NOW()
-                WHERE ticket_id = $1 AND status NOT IN ('resolved', 'closed')
-            `, [escalation.ticket_id]);
+            // Update ticket status (don't close if rejected — support may need to follow up)
+            if (action !== 'reject') {
+                await pool.query(`
+                    UPDATE support_tickets 
+                    SET status = 'resolved', resolved_at = NOW()
+                    WHERE ticket_id = $1 AND status NOT IN ('resolved', 'closed')
+                `, [escalation.ticket_id]);
+            }
         }
 
-        // 4. Notifications
+        // 5. Notifications
         const io = getIO();
         const orderRef = escalation.order_number ? `Order #${escalation.order_number}` : 'your escalated issue';
 
-        // 4a. Notify support agent who escalated
+        const actionMessages: Record<string, string> = {
+            'approve_refund': `Refund approved for ${orderRef}. Awaiting Finance team processing.`,
+            'approve_cancellation': `${orderRef} has been cancelled and refund processed.`,
+            'reject': `Escalation for ${orderRef} was reviewed and rejected.`,
+            'acknowledge': `Your escalation for ${orderRef} has been resolved by Operations.`
+        };
+        const notificationMsg = actionMessages[action] || `Your escalation for ${orderRef} has been resolved.`;
+
+        // 5a. Notify support agent who escalated
         if (escalation.escalated_by) {
             await createNotification({
                 userId: escalation.escalated_by,
                 type: 'escalation_resolved',
-                title: 'Escalation Resolved ✅',
-                message: `Your escalation for ${orderRef} has been resolved by Operations.`,
+                title: action === 'reject' ? 'Escalation Rejected' : 'Escalation Resolved',
+                message: notificationMsg,
                 data: {
                     escalation_id,
                     order_number: escalation.order_number,
-                    resolution_action: resolution_action || 'resolved',
-                    resolution_notes
+                    resolution_action: action,
+                    resolution_notes,
+                    action_result: actionResult ? {
+                        refund_id: actionResult.refundId,
+                        status: actionResult.status
+                    } : null
                 },
                 target_role: 'operations'
             });
@@ -480,17 +589,26 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                 escalation_id,
                 order_number: escalation.order_number,
                 resolution_notes,
-                resolution_action: resolution_action || 'resolved'
+                resolution_action: action,
+                action_result: actionResult?.success ? 'executed' : null
             });
         }
 
-        // 4b. Notify customer (generic message - no internal details)
+        // 5b. Notify customer (action-appropriate message)
         if (escalation.customer_id) {
+            const customerMessages: Record<string, string> = {
+                'approve_refund': `Your refund request for ${orderRef} has been approved and is being processed.`,
+                'approve_cancellation': `${orderRef} has been cancelled. Your refund will be processed shortly.`,
+                'reject': `Your issue regarding ${orderRef} has been reviewed by our team.`,
+                'acknowledge': `Your issue regarding ${orderRef} has been reviewed and resolved by our team.`
+            };
+
             await createNotification({
                 userId: escalation.customer_id,
                 type: 'issue_resolved',
-                title: 'Issue Resolved',
-                message: `Your issue regarding ${orderRef} has been reviewed and resolved by our team.`,
+                title: action === 'approve_refund' ? 'Refund Approved' :
+                    action === 'approve_cancellation' ? 'Order Cancelled' : 'Issue Resolved',
+                message: customerMessages[action] || `Your issue regarding ${orderRef} has been resolved.`,
                 data: { order_number: escalation.order_number },
                 target_role: 'customer'
             });
@@ -498,41 +616,55 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             io?.to(`user_${escalation.customer_id}`).emit('order_update', {
                 order_number: escalation.order_number,
                 type: 'escalation_resolved',
-                notification: `Your issue regarding ${orderRef} has been resolved.`
+                resolution_action: action,
+                notification: customerMessages[action] || `Your issue regarding ${orderRef} has been resolved.`
             });
         }
 
-        // 4c. Notify garage if relevant
+        // 5c. Notify garage if relevant
         if (escalation.garage_id) {
             io?.to(`garage_${escalation.garage_id}`).emit('escalation_update', {
                 order_number: escalation.order_number,
                 type: 'resolved',
+                resolution_action: action,
                 notification: `Escalation for ${orderRef} has been resolved by Operations.`
             });
         }
 
-        // 4d. Notify operations room
+        // 5d. Notify operations room
         io?.to('operations').emit('escalation_resolved', {
             escalation_id,
             order_number: escalation.order_number,
             resolved_by: staffId,
-            notification: `Escalation ${escalation.order_number ? `for Order #${escalation.order_number}` : escalation_id} has been resolved`
+            resolution_action: action,
+            notification: `Escalation ${escalation.order_number ? `for Order #${escalation.order_number}` : escalation_id} resolved (${action})`
         });
 
         // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
-        logger.info('[OPERATIONS] Escalation resolved with notifications', {
+        logger.info('[OPERATIONS] Escalation resolved', {
             escalation_id,
+            resolution_action: action,
             order_number: escalation.order_number,
+            action_executed: actionResult?.success ?? null,
             customer_notified: !!escalation.customer_id,
             support_notified: !!escalation.escalated_by,
             garage_notified: !!escalation.garage_id
         });
 
         res.json({
-            message: 'Escalation resolved',
+            message: action === 'reject' ? 'Escalation rejected' : 'Escalation resolved',
+            resolution_action: action,
             escalation: updateResult.rows[0],
+            action_result: actionResult ? {
+                success: actionResult.success,
+                action: actionResult.action,
+                refund_id: actionResult.refundId,
+                refund_status: actionResult.status,
+                payout_action: actionResult.payoutAction,
+                message: actionResult.message
+            } : null,
             notifications_sent: {
                 support: !!escalation.escalated_by,
                 customer: !!escalation.customer_id,

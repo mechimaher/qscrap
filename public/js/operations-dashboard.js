@@ -1013,14 +1013,45 @@ async function loadEscalations() {
 }
 
 async function resolveEscalation(escalationId) {
-    QScrapModal.prompt({
+    // Build action-based resolution modal (enterprise SaaS pattern)
+    const modalContent = `
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-primary, #e2e8f0);">
+                <i class="bi bi-gear me-1"></i>Resolution Action
+            </label>
+            <select id="escalationAction" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color, #334155); background: var(--bg-secondary, #1e293b); color: var(--text-primary, #e2e8f0); font-size: 14px;">
+                <option value="approve_refund">Approve Refund (sends to Finance for processing)</option>
+                <option value="approve_cancellation">Approve Cancellation (cancels order + refund)</option>
+                <option value="reject">Reject Escalation (no action taken)</option>
+                <option value="acknowledge" selected>Acknowledge Only (close without order action)</option>
+            </select>
+            <div id="actionWarning" style="margin-top: 8px; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: none;"></div>
+        </div>
+        <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-primary, #e2e8f0);">
+                <i class="bi bi-chat-text me-1"></i>Resolution Notes
+            </label>
+            <textarea id="escalationNotes" rows="3" placeholder="Explain the resolution decision..."
+                style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color, #334155); background: var(--bg-secondary, #1e293b); color: var(--text-primary, #e2e8f0); font-size: 14px; resize: vertical;"></textarea>
+        </div>
+    `;
+
+    QScrapModal.confirm({
         title: 'Resolve Escalation',
-        message: 'Add resolution notes (optional):',
-        inputType: 'textarea',
-        placeholder: 'Resolution notes...',
-        confirmText: 'Resolve',
-        variant: 'success',
-        onConfirm: async (notes) => {
+        message: modalContent,
+        confirmText: 'Execute Resolution',
+        cancelText: 'Cancel',
+        variant: 'primary',
+        onConfirm: async () => {
+            const action = document.getElementById('escalationAction')?.value || 'acknowledge';
+            const notes = document.getElementById('escalationNotes')?.value || '';
+
+            // Require notes for reject
+            if (action === 'reject' && !notes.trim()) {
+                showToast('Rejection reason is required', 'error');
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/operations/escalations/${escalationId}/resolve`, {
                     method: 'POST',
@@ -1028,14 +1059,25 @@ async function resolveEscalation(escalationId) {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ resolution_notes: notes || 'Resolved by operations' })
+                    body: JSON.stringify({
+                        resolution_action: action,
+                        resolution_notes: notes || `Resolved by operations (${action})`
+                    })
                 });
+
+                const data = await res.json();
+
                 if (res.ok) {
-                    showToast('Escalation resolved', 'success');
+                    const actionLabels = {
+                        'approve_refund': 'Refund approved — sent to Finance',
+                        'approve_cancellation': 'Order cancelled — refund processed',
+                        'reject': 'Escalation rejected',
+                        'acknowledge': 'Escalation acknowledged'
+                    };
+                    showToast(actionLabels[action] || 'Escalation resolved', 'success');
                     loadEscalations();
                     loadStats();
                 } else {
-                    const data = await res.json();
                     showToast(data.error || 'Failed to resolve', 'error');
                 }
             } catch (err) {
@@ -1044,6 +1086,38 @@ async function resolveEscalation(escalationId) {
             }
         }
     });
+
+    // Add action change handler after modal renders
+    setTimeout(() => {
+        const actionSelect = document.getElementById('escalationAction');
+        const warningDiv = document.getElementById('actionWarning');
+        if (actionSelect && warningDiv) {
+            actionSelect.addEventListener('change', () => {
+                const val = actionSelect.value;
+                if (val === 'approve_refund') {
+                    warningDiv.style.display = 'block';
+                    warningDiv.style.background = 'rgba(59, 130, 246, 0.1)';
+                    warningDiv.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                    warningDiv.style.color = '#93c5fd';
+                    warningDiv.innerHTML = '<i class="bi bi-info-circle me-1"></i>Creates a pending refund request. Finance team must approve before Stripe refund executes.';
+                } else if (val === 'approve_cancellation') {
+                    warningDiv.style.display = 'block';
+                    warningDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+                    warningDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    warningDiv.style.color = '#fca5a5';
+                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>This will immediately cancel the order, revert payouts, and process customer refund.';
+                } else if (val === 'reject') {
+                    warningDiv.style.display = 'block';
+                    warningDiv.style.background = 'rgba(245, 158, 11, 0.1)';
+                    warningDiv.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+                    warningDiv.style.color = '#fcd34d';
+                    warningDiv.innerHTML = '<i class="bi bi-x-circle me-1"></i>No action will be taken. Rejection reason is required. Ticket stays open for support follow-up.';
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            });
+        }
+    }, 200);
 }
 
 // View ticket details from escalation
