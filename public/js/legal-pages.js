@@ -102,7 +102,7 @@ const legalTranslations = {
         'refund.contact.website': 'Website',
         'refund.contact.company': 'QScrap Services & Trading L.L.C',
         'refund.contact.companyAr': 'كيوسكراب للخدمات والتجارة ذ.م.م',
-        'refund.contact.cr': 'Commercial Registration: 155892 | State of Qatar',
+        'refund.contact.cr': '',
 
         // ===== TERMS OF SERVICE =====
         'terms.title': 'Terms of Service',
@@ -255,7 +255,7 @@ const legalTranslations = {
         'privacy.contact.dpo': 'Data Protection Officer',
         'privacy.contact.general': 'General Support',
         'privacy.contact.address': 'Address',
-        'privacy.contact.addressValue': 'Industrial Area, Street 10<br>P.O. Box 32544, Doha, Qatar',
+        'privacy.contact.addressValue': 'Doha, Qatar',
 
         // Footer
         'footer.copyright': '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
@@ -372,7 +372,7 @@ const legalTranslations = {
         'refund.contact.website': 'الموقع',
         'refund.contact.company': 'كيوسكراب للخدمات والتجارة ذ.م.م',
         'refund.contact.companyAr': 'QScrap Services & Trading L.L.C',
-        'refund.contact.cr': 'السجل التجاري: 155892 | دولة قطر',
+        'refund.contact.cr': '',
 
         // ===== TERMS OF SERVICE (Arabic) =====
         'terms.title': 'شروط الخدمة',
@@ -487,7 +487,7 @@ const legalTranslations = {
 
         // Section 1: Introduction & Scope
         'privacy.s1.title': 'المقدمة والنطاق',
-        'privacy.s1.p1': 'كيوسكراب للخدمات والتجارة ذ.م.م هي شركة مسجلة في دولة قطر (السجل التجاري: 155892) تشغل تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين (مجتمعين، "التطبيقات"). تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
+        'privacy.s1.p1': 'كيوسكراب للخدمات والتجارة ذ.م.م هي شركة مسجلة في دولة قطر تشغل تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين (مجتمعين، "التطبيقات"). تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
         'privacy.s1.user1': '<strong>العملاء:</strong> المستخدمون الباحثون عن قطع غيار السيارات',
         'privacy.s1.user2': '<strong>شركاء الكراجات:</strong> الشركات التي توفر قطع الغيار عبر سوقنا',
         'privacy.s1.user3': '<strong>السائقون:</strong> موظفو التوصيل الذين يستخدمون تطبيق كيوسكراب للسائقين',
@@ -623,7 +623,7 @@ const legalTranslations = {
         'privacy.contact.general': 'الدعم العام',
         'privacy.contact.phone': 'الهاتف',
         'privacy.contact.address': 'العنوان',
-        'privacy.contact.addressValue': 'المنطقة الصناعية، شارع 10<br>ص.ب 32544، الدوحة، قطر',
+        'privacy.contact.addressValue': 'الدوحة، قطر',
 
         // Footer
         'footer.copyright': 'كيوسكراب للخدمات والتجارة ذ.م.م © 2026. جميع الحقوق محفوظة.',

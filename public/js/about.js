@@ -52,14 +52,12 @@ const translations = {
         // Info Cards - Legal Identity
         'info.legal.title': 'Legal Identity',
         'info.legal.company': '<strong>Company Name:</strong><br>QScrap Services & Trading L.L.C<br>كيوسكراب للخدمات والتجارة ذ.م.م',
-        'info.legal.cr': '<strong>Commercial Registration:</strong><br>CR Number: 155892',
-        'info.legal.address': '<strong>Registered Address:</strong><br>P.O. Box 32544<br>Industrial Area Street 10<br>Doha, Qatar',
+        'info.legal.location': '<strong>Location:</strong><br>Doha, Qatar',
 
         // Info Cards - Contact Us
         'info.contact.title': 'Contact Us',
         'info.contact.support': '<strong>Customer Support:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
-        'info.contact.mobile': '<strong>Mobile:</strong><br><a href="tel:+97450267974">+974 5026 7974</a><br><a href="tel:+97455906912">+974 5590 6912</a>',
-        'info.contact.landline': '<strong>Landline:</strong><br>+974 5026 7974',
+        'info.contact.mobile': '<strong>WhatsApp Support:</strong><br><a href="tel:+97450267974">+974 5026 7974</a>',
         'info.contact.hours': '<strong>Business Hours:</strong><br>Sunday - Thursday: 8:00 AM - 5:00 PM<br>Saturday: 8:00 AM - 3:00 PM<br>Friday: Closed',
 
         // Info Cards - Consumer Protection
@@ -95,7 +93,7 @@ const translations = {
         'footer.email': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> support@qscrap.qa',
         'footer.phone': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> +974 5026 7974',
         'footer.whatsapp': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Support',
-        'footer.legalInfo': 'QScrap Services & Trading L.L.C | CR: 155892 | P.O. Box 32544, Doha, Qatar',
+        'footer.legalInfo': 'QScrap Services & Trading L.L.C | Doha, Qatar',
         'footer.copyright': '© 2026 QScrap. All rights reserved.'
     },
     ar: {
@@ -148,14 +146,12 @@ const translations = {
         // Info Cards - Legal Identity
         'info.legal.title': 'الهوية القانونية',
         'info.legal.company': '<strong>اسم الشركة:</strong><br>QScrap Services & Trading L.L.C<br>كيوسكراب للخدمات والتجارة ذ.م.م',
-        'info.legal.cr': '<strong>السجل التجاري:</strong><br>رقم السجل: 155892',
-        'info.legal.address': '<strong>العنوان المسجل:</strong><br>ص.ب: 32544<br>شارع 10، المنطقة الصناعية<br>الدوحة، قطر',
+        'info.legal.location': '<strong>الموقع:</strong><br>الدوحة، قطر',
 
         // Info Cards - Contact Us
         'info.contact.title': 'تواصل معنا',
         'info.contact.support': '<strong>دعم العملاء:</strong><br><a href="mailto:support@qscrap.qa">support@qscrap.qa</a>',
-        'info.contact.mobile': '<strong>الجوال:</strong><br><a href="tel:+97450267974" dir="ltr">+974 5026 7974</a><br><a href="tel:+97455906912" dir="ltr">+974 5590 6912</a>',
-        'info.contact.landline': '<strong>الهاتف الثابت:</strong><br><span dir="ltr">+974 5026 7974</span>',
+        'info.contact.mobile': '<strong>دعم واتساب:</strong><br><a href="tel:+97450267974" dir="ltr">+974 5026 7974</a>',
         'info.contact.hours': '<strong>ساعات العمل:</strong><br>الأحد - الخميس: 8:00 صباحاً - 5:00 مساءً<br>السبت: 8:00 صباحاً - 3:00 مساءً<br>الجمعة: مغلق',
 
         // Info Cards - Consumer Protection
@@ -191,7 +187,7 @@ const translations = {
         'footer.email': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> support@qscrap.qa',
         'footer.phone': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <span dir="ltr">+974 5026 7974</span>',
         'footer.whatsapp': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> دعم واتساب',
-        'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | سجل تجاري: 155892 | ص.ب: 32544، الدوحة، قطر',
+        'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
     }
 };
