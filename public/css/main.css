@@ -107,6 +107,10 @@
             --z-modal: 500;
             --z-popover: 600;
             --z-tooltip: 700;
+
+            /* === RTL Direction Tokens === */
+            --dir-multiplier: 1;
+            --arrow-end: '\2192';
         }
 
         * {
@@ -202,13 +206,37 @@
         /* ===== RTL (Arabic) SUPPORT ===== */
         /* When html has dir="rtl", layout mirrors automatically */
         html[dir="rtl"] {
-            /* Font family for Arabic */
-            --font-arabic: 'Inter', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+            /* Font family for Arabic — Arabic font FIRST */
+            --font-arabic: 'Noto Sans Arabic', 'Cairo', 'Segoe UI', Tahoma, 'Inter', sans-serif;
+            /* RTL direction tokens */
+            --dir-multiplier: -1;
+            --arrow-end: '\2190';
         }
 
         html[dir="rtl"] body {
             font-family: var(--font-arabic);
             text-align: right;
+            line-height: 1.8;
+        }
+
+        /* Arabic typography: reset letter-spacing */
+        html[dir="rtl"] .hero-title,
+        html[dir="rtl"] .cta-title,
+        html[dir="rtl"] .section-title {
+            letter-spacing: 0;
+        }
+
+        html[dir="rtl"] .hero-title {
+            line-height: 1.4;
+        }
+
+        html[dir="rtl"] .hero-subtitle {
+            line-height: 1.9;
+        }
+
+        /* Hero arrow SVG mirror in RTL */
+        html[dir="rtl"] .btn-hero-secondary svg {
+            transform: scaleX(-1);
         }
 
         /* Navigation RTL - No explicit row-reverse needed, RTL direction handles it */
@@ -223,10 +251,6 @@
         /* Hero RTL */
         html[dir="rtl"] .hero-content {
             text-align: right;
-        }
-
-        html[dir="rtl"] .hero-stats {
-            flex-direction: row-reverse;
         }
 
         /* Section headers RTL */
@@ -250,13 +274,6 @@
 
         html[dir="rtl"] .footer-links {
             text-align: right;
-        }
-
-        /* Buttons RTL - flip icon positions */
-        html[dir="rtl"] .btn-hero svg,
-        html[dir="rtl"] .nav-cta svg {
-            margin-left: 8px;
-            margin-right: 0;
         }
 
         /* Logical properties for universal RTL support */
@@ -786,7 +803,7 @@
         }
 
         .hero-stat {
-            text-align: left;
+            text-align: start;
         }
 
         .hero-stat-value {
@@ -972,8 +989,7 @@
             content: '';
             position: absolute;
             top: 72px;
-            left: 12%;
-            right: 12%;
+            inset-inline: 12%;
             height: 3px;
             background: linear-gradient(90deg,
                     var(--qatar-maroon) 0%,
@@ -1083,7 +1099,7 @@
         .step-number-badge {
             position: absolute;
             top: -8px;
-            right: -8px;
+            inset-inline-end: -8px;
             width: 28px;
             height: 28px;
             background: var(--qatar-maroon);
@@ -1289,7 +1305,7 @@
             content: '';
             position: absolute;
             top: -50%;
-            right: -20%;
+            inset-inline-end: -20%;
             width: 600px;
             height: 600px;
             background: radial-gradient(circle, rgba(201, 162, 39, 0.2) 0%, transparent 70%);
@@ -1387,7 +1403,7 @@
         .qr-platform-icon {
             position: absolute;
             bottom: -8px;
-            right: -8px;
+            inset-inline-end: -8px;
             width: 36px;
             height: 36px;
             background: white;
@@ -1541,12 +1557,12 @@
 
         .footer-links a:hover {
             color: var(--white);
-            transform: translateX(4px);
+            transform: translateX(calc(var(--dir-multiplier, 1) * 4px));
         }
 
         .footer-links a:hover::before {
-            content: '→';
-            margin-right: 4px;
+            content: var(--arrow-end, '\2192');
+            margin-inline-end: 4px;
             color: var(--gold);
         }
 
@@ -1853,7 +1869,7 @@
             background: var(--mist);
             padding: 4px 8px;
             border-radius: var(--radius-full);
-            margin-right: var(--space-md);
+            margin-inline-end: var(--space-md);
         }
 
         .lang-btn {
@@ -1896,27 +1912,18 @@
             letter-spacing: 0.5px;
         }
 
-        /* RTL specific styles for switcher */
-        html[dir="rtl"] .lang-switcher {
-            margin-right: 0;
-            margin-left: var(--space-md);
-        }
+
 
         /* Mobile language switcher */
         @media (max-width: 768px) {
             .lang-switcher {
                 position: fixed;
                 bottom: 20px;
-                right: 20px;
+                inset-inline-end: 20px;
                 z-index: var(--z-fixed);
                 background: var(--white);
                 box-shadow: var(--shadow-lg);
                 padding: 6px 12px;
-            }
-
-            html[dir="rtl"] .lang-switcher {
-                right: auto;
-                left: 20px;
             }
         }
 
@@ -1965,12 +1972,12 @@
         .mobile-menu-panel {
             position: absolute;
             top: 0;
-            right: 0;
+            inset-inline-end: 0;
             width: 85%;
             max-width: 380px;
             height: 100%;
             background: var(--white);
-            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.15);
+            box-shadow: calc(var(--dir-multiplier, 1) * -8px) 0 40px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
             transform: translateX(100%);
@@ -1983,10 +1990,7 @@
 
         /* RTL: Panel slides from left */
         html[dir="rtl"] .mobile-menu-panel {
-            right: auto;
-            left: 0;
             transform: translateX(-100%);
-            box-shadow: 8px 0 40px rgba(0, 0, 0, 0.15);
         }
 
         .mobile-menu-overlay.active .mobile-menu-panel {
