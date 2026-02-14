@@ -40,7 +40,7 @@ const SECTIONS_EN: Section[] = [
         num: 1,
         title: 'Introduction & Scope',
         icon: 'globe',
-        content: 'QScrap Services & Trading L.L.C (CR: 155892) operates the QScrap Customer App and QScrap Driver App. This Privacy Policy applies to all users:',
+        content: 'QScrap Services & Trading L.L.C operates the QScrap Customer App and QScrap Driver App. This Privacy Policy applies to all users:',
         items: [
             'Customers: Users seeking automotive spare parts',
             'Garage Partners: Businesses providing spare parts through our marketplace',
@@ -243,7 +243,7 @@ const SECTIONS_AR: Section[] = [
         num: 1,
         title: 'المقدمة والنطاق',
         icon: 'globe',
-        content: 'تدير شركة كيوسكراب للخدمات والتجارة ذ.م.م (السجل التجاري: 155892) تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين. تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
+        content: 'تدير شركة كيوسكراب للخدمات والتجارة ذ.م.م تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين. تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
         items: [
             'العملاء: المستخدمون الباحثون عن قطع غيار السيارات',
             'شركاء الكراجات: الشركات التي توفر قطع الغيار عبر منصتنا',
@@ -451,12 +451,10 @@ const CHROME = {
         contactItems: [
             { icon: 'shield', label: 'Data Protection Officer', value: 'privacy@qscrap.qa' },
             { icon: 'mail', label: 'General Support', value: 'support@qscrap.qa' },
-            { icon: 'call', label: 'Phone', value: '+974 5026 7974' },
-            { icon: 'location', label: 'Address', value: 'Industrial Area, Street 10, Doha, Qatar' },
+            { icon: 'call', label: 'WhatsApp Support', value: '+974 5026 7974' },
         ],
         companyName: 'QScrap Services & Trading L.L.C',
         companyArabic: 'كيوسكراب للخدمات والتجارة ذ.م.م',
-        companyCR: 'Commercial Registration: 155892 | State of Qatar',
         footer: '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
         compliance: 'Compliant with Google Play Developer Program Policies and Qatar\'s Personal Data Protection Law.',
     },
@@ -469,12 +467,10 @@ const CHROME = {
         contactItems: [
             { icon: 'shield', label: 'مسؤول حماية البيانات', value: 'privacy@qscrap.qa' },
             { icon: 'mail', label: 'الدعم العام', value: 'support@qscrap.qa' },
-            { icon: 'call', label: 'الهاتف', value: '+974 5026 7974' },
-            { icon: 'location', label: 'العنوان', value: 'المنطقة الصناعية، شارع 10، الدوحة، قطر' },
+            { icon: 'call', label: 'دعم واتساب', value: '+974 5026 7974' },
         ],
         companyName: 'كيوسكراب للخدمات والتجارة ذ.م.م',
         companyArabic: 'QScrap Services & Trading L.L.C',
-        companyCR: 'السجل التجاري: 155892 | دولة قطر',
         footer: '© 2026 كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.',
         compliance: 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية القطري.',
     },
@@ -638,7 +634,6 @@ export default function PrivacyPolicyScreen() {
                     <View style={styles.contactLegal}>
                         <Text style={styles.companyName}>{chrome.companyName}</Text>
                         <Text style={styles.companyArabic}>{chrome.companyArabic}</Text>
-                        <Text style={styles.companyCR}>{chrome.companyCR}</Text>
                     </View>
                 </LinearGradient>
 

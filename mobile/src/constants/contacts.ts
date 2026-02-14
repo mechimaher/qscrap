@@ -30,7 +30,7 @@ export const CONTACT = {
     COMPANY_NAME: 'QScrap Services & Trading L.L.C',
     COMPANY_NAME_AR: 'كيوسكراب للخدمات والتجارة ذ.م.م',
     COMPANY_BRAND: 'QScrap',
-    LANDLINE: '+97455906912',
+
     TAGLINE: 'Qatar\'s Premium Auto Parts Marketplace',
     TAGLINE_AR: 'أفضل سوق لقطع غيار السيارات في قطر',
 } as const;

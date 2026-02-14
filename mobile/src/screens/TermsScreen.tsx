@@ -242,13 +242,11 @@ const CHROME = {
         contactTitle: 'Contact Us',
         contactItems: [
             { icon: 'mail', label: 'General Inquiries', value: 'support@qscrap.qa' },
-            { icon: 'call', label: 'Customer Service', value: '+974 5026 7974' },
-            { icon: 'location', label: 'Headquarters', value: 'Doha, State of Qatar' },
+            { icon: 'call', label: 'WhatsApp Support', value: '+974 5026 7974' },
             { icon: 'globe', label: 'Website', value: 'qscrap.qa' },
         ],
         companyName: 'QScrap Services & Trading L.L.C',
         companyArabic: 'كيوسكراب للخدمات والتجارة ذ.م.م',
-        companyCR: 'Commercial Registration: 155892 | State of Qatar',
         footer: '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
     },
     ar: {
@@ -259,13 +257,11 @@ const CHROME = {
         contactTitle: 'تواصل معنا',
         contactItems: [
             { icon: 'mail', label: 'استفسارات عامة', value: 'support@qscrap.qa' },
-            { icon: 'call', label: 'خدمة العملاء', value: '+974 5026 7974' },
-            { icon: 'location', label: 'المقر الرئيسي', value: 'الدوحة، دولة قطر' },
+            { icon: 'call', label: 'دعم واتساب', value: '+974 5026 7974' },
             { icon: 'globe', label: 'الموقع الإلكتروني', value: 'qscrap.qa' },
         ],
         companyName: 'كيوسكراب للخدمات والتجارة ذ.م.م',
         companyArabic: 'QScrap Services & Trading L.L.C',
-        companyCR: 'السجل التجاري: 155892 | دولة قطر',
         footer: '© 2026 كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.',
     },
 };
@@ -410,7 +406,6 @@ export default function TermsScreen() {
                     <View style={styles.contactLegal}>
                         <Text style={styles.companyName}>{chrome.companyName}</Text>
                         <Text style={styles.companyArabic}>{chrome.companyArabic}</Text>
-                        <Text style={styles.companyCR}>{chrome.companyCR}</Text>
                     </View>
                 </LinearGradient>
 
