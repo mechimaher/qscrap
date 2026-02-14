@@ -345,13 +345,14 @@ export default function TermsScreen() {
                     <View key={section.num} style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                         {/* Section Header */}
                         <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            {isRTL && <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />}
                             <View style={styles.sectionNumBadge}>
                                 <Text style={styles.sectionNumText}>{section.num}</Text>
                             </View>
                             <View style={styles.sectionTitleWrap}>
                                 <Text style={[styles.sectionTitle, { color: colors.text, textAlign }]}>{section.title}</Text>
                             </View>
-                            <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />
+                            {!isRTL && <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />}
                         </View>
 
                         {/* Content */}
@@ -364,7 +365,7 @@ export default function TermsScreen() {
                         {/* List items */}
                         {section.items && section.items.map((item, idx) => (
                             <View key={idx} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Ionicons name="checkmark" size={16} color={Colors.secondary} style={[styles.listIcon, isRTL && { marginLeft: Spacing.sm, marginRight: 0 }]} />
+                                <Ionicons name="checkmark" size={16} color={Colors.secondary} style={styles.listIcon} />
                                 <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
                             </View>
                         ))}
@@ -382,15 +383,14 @@ export default function TermsScreen() {
                                     backgroundColor: isDark
                                         ? (section.highlight.type === 'gold' ? 'rgba(201,162,39,0.1)' : 'rgba(141,27,61,0.1)')
                                         : (section.highlight.type === 'gold' ? '#FFF9E6' : '#FAF0F3'),
-                                    borderLeftColor: section.highlight.type === 'gold' ? Colors.secondary : Colors.primary,
+                                    borderStartColor: section.highlight.type === 'gold' ? Colors.secondary : Colors.primary,
                                 },
-                                isRTL && styles.highlightBoxRTL,
                             ]}>
                                 <Ionicons
                                     name={section.highlight.type === 'gold' ? 'information-circle' : 'flag'}
                                     size={18}
                                     color={section.highlight.type === 'gold' ? Colors.secondary : Colors.primary}
-                                    style={isRTL ? { marginLeft: Spacing.sm, marginTop: 2 } : { marginRight: Spacing.sm, marginTop: 2 }}
+                                    style={styles.highlightIcon}
                                 />
                                 <Text style={[styles.highlightText, { color: colors.text, flex: 1, textAlign }]}>
                                     {section.highlight.text}
@@ -431,14 +431,15 @@ export default function TermsScreen() {
 // CONTACT ITEM COMPONENT
 // ============================================
 function ContactItem({ icon, label, value, isRTL }: { icon: string; label: string; value: string; isRTL: boolean }) {
+    const textAlign = isRTL ? ('right' as const) : ('left' as const);
     return (
         <View style={[styles.contactItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
             <View style={styles.contactIconWrap}>
                 <Ionicons name={icon as any} size={18} color={Colors.secondary} />
             </View>
-            <View style={{ flex: 1 }}>
-                <Text style={styles.contactLabel}>{label}</Text>
-                <Text style={styles.contactValue}>{value}</Text>
+            <View style={{ flex: 1, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
+                <Text style={[styles.contactLabel, { textAlign }]}>{label}</Text>
+                <Text style={[styles.contactValue, { textAlign }]}>{value}</Text>
             </View>
         </View>
     );
@@ -520,7 +521,7 @@ const styles = StyleSheet.create({
     summaryIconWrap: {
         position: 'absolute',
         top: 16,
-        right: 20,
+        end: 20,
     },
     summaryTitle: {
         fontSize: FontSizes.lg,
@@ -577,7 +578,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.sm,
     },
     listIcon: {
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
         marginTop: 3,
     },
     listText: {
@@ -595,14 +596,14 @@ const styles = StyleSheet.create({
     // Highlight box
     highlightBox: {
         flexDirection: 'row',
-        borderLeftWidth: 4,
+        borderStartWidth: 4,
         borderRadius: BorderRadius.sm,
         padding: Spacing.md,
         marginTop: Spacing.md,
     },
-    highlightBoxRTL: {
-        borderLeftWidth: 0,
-        borderRightWidth: 4,
+    highlightIcon: {
+        marginEnd: Spacing.sm,
+        marginTop: 2,
     },
     highlightText: {
         fontSize: FontSizes.sm,
