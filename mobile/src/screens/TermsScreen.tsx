@@ -14,7 +14,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts';
 import { useTranslation } from '../contexts/LanguageContext';
-import { rtlFlexDirection } from '../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants';
 
 const { width } = Dimensions.get('window');
@@ -297,7 +296,7 @@ export default function TermsScreen() {
                 style={styles.heroGradient}
             >
                 {/* Back button row */}
-                <View style={[styles.headerRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View style={[styles.headerRow, { flexDirection: 'row' }]}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
                         style={styles.backButton}
@@ -344,15 +343,14 @@ export default function TermsScreen() {
                 {sections.map((section) => (
                     <View key={section.num} style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                         {/* Section Header */}
-                        <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            {isRTL && <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />}
+                        <View style={[styles.sectionHeader, { flexDirection: 'row' }]}>
                             <View style={styles.sectionNumBadge}>
                                 <Text style={styles.sectionNumText}>{section.num}</Text>
                             </View>
                             <View style={styles.sectionTitleWrap}>
                                 <Text style={[styles.sectionTitle, { color: colors.text, textAlign }]}>{section.title}</Text>
                             </View>
-                            {!isRTL && <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />}
+                            <Ionicons name={section.icon as any} size={20} color={Colors.primary} style={{ opacity: 0.4 }} />
                         </View>
 
                         {/* Content */}
@@ -364,7 +362,7 @@ export default function TermsScreen() {
 
                         {/* List items */}
                         {section.items && section.items.map((item, idx) => (
-                            <View key={idx} style={[styles.listItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <View key={idx} style={[styles.listItem, { flexDirection: 'row' }]}>
                                 <Ionicons name="checkmark" size={16} color={Colors.secondary} style={styles.listIcon} />
                                 <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
                             </View>
@@ -433,7 +431,7 @@ export default function TermsScreen() {
 function ContactItem({ icon, label, value, isRTL }: { icon: string; label: string; value: string; isRTL: boolean }) {
     const textAlign = isRTL ? ('right' as const) : ('left' as const);
     return (
-        <View style={[styles.contactItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
+        <View style={[styles.contactItem, { flexDirection: 'row' }]}>
             <View style={styles.contactIconWrap}>
                 <Ionicons name={icon as any} size={18} color={Colors.secondary} />
             </View>
