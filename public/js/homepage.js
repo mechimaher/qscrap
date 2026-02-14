@@ -162,9 +162,8 @@ const translations = {
         'gallery.item1': 'Complete Vehicle Components',
         'gallery.item2': 'Engine Internals',
         'gallery.item3': 'Expert Selection',
-        'gallery.item4': 'Premium BMW Components',
+        'gallery.item4': 'Industrial Workshop',
         'gallery.item5': 'Luxury Parts Available',
-        'gallery.item6': 'Industrial Workshop',
 
         // Showcase
         'showcase.label': 'Parts Showcase',
@@ -274,9 +273,8 @@ const translations = {
         'gallery.item1': 'مكونات السيارة الكاملة',
         'gallery.item2': 'أجزاء المحرك الداخلية',
         'gallery.item3': 'اختيار الخبراء',
-        'gallery.item4': 'قطع BMW المتميزة',
+        'gallery.item4': 'ورشة صناعية',
         'gallery.item5': 'قطع فاخرة متوفرة',
-        'gallery.item6': 'ورشة صناعية',
 
         // Showcase
         'showcase.label': 'معرض القطع',
