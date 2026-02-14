@@ -40,7 +40,7 @@ export const BUSINESS_HOURS = {
     WEEKDAY_OPEN: '08:00',
     WEEKDAY_CLOSE: '17:00',
     SATURDAY_OPEN: '08:00',
-    SATURDAY_CLOSE: '15:00',
+    SATURDAY_CLOSE: '17:00',
     FRIDAY: 'closed',
     TIMEZONE: 'Asia/Qatar',
 } as const;

@@ -873,7 +873,7 @@ export const en = {
         fileComplaint: 'File a Complaint',
         complaintDesc: 'Report a problem or concern',
         businessHours: 'Business Hours',
-        hoursDetail: 'Sat-Thu: 8 AM - 10 PM | Fri: 2 PM - 10 PM',
+        hoursDetail: 'Sat-Thu: 8 AM - 5 PM | Fri: OFF',
         fastResponse: 'Fast Response',
         responseTime: 'We typically reply within 15 minutes',
         whatsappNotInstalled: 'WhatsApp is not installed on this device',

@@ -144,12 +144,10 @@ const legalTranslations = {
 
         'terms.s5.title': 'Warranties and Returns',
         'terms.s5.item1': 'Part warranties are provided by individual garages through the QScrap platform',
-        'terms.s5.item2': 'Warranty periods range from 7 to 30 days depending on part condition',
-        'terms.s5.item3': 'New parts: 30-day warranty',
-        'terms.s5.item4': 'Used parts (Excellent/Good): 14-day warranty',
-        'terms.s5.item5': 'Used parts (Fair): 7-day warranty',
-        'terms.s5.item6': 'Disputes must be raised within the applicable warranty period',
-        'terms.s5.item7': 'QScrap will mediate disputes between customers and garages',
+        'terms.s5.item2': 'All parts carry a standard 7-day warranty from date of delivery',
+        'terms.s5.item3': 'The 7-day warranty applies equally to new and used parts of all conditions',
+        'terms.s5.item4': 'Disputes must be raised within the 7-day warranty period',
+        'terms.s5.item5': 'QScrap will mediate disputes between customers and garages',
 
         'terms.s6.title': 'Prohibited Activities',
         'terms.s6.intro': 'You may not:',
@@ -427,12 +425,10 @@ const legalTranslations = {
 
         'terms.s5.title': 'الضمانات والإرجاع',
         'terms.s5.item1': 'ضمانات القطع مقدمة من الكراجات الفردية عبر منصة كيوسكراب',
-        'terms.s5.item2': 'تتراوح فترات الضمان من 7 إلى 30 يوماً حسب حالة القطعة',
-        'terms.s5.item3': 'القطع الجديدة: ضمان 30 يوماً',
-        'terms.s5.item4': 'القطع المستعملة (ممتازة/جيدة): ضمان 14 يوماً',
-        'terms.s5.item5': 'القطع المستعملة (مقبولة): ضمان 7 أيام',
-        'terms.s5.item6': 'يجب رفع النزاعات خلال فترة الضمان المعمول بها',
-        'terms.s5.item7': 'كيوسكراب ستتوسط في النزاعات بين العملاء والكراجات',
+        'terms.s5.item2': 'جميع القطع تحمل ضمان موحد لمدة 7 أيام من تاريخ التسليم',
+        'terms.s5.item3': 'ضمان 7 أيام ينطبق بالتساوي على القطع الجديدة والمستعملة بجميع حالاتها',
+        'terms.s5.item4': 'يجب رفع النزاعات خلال فترة الضمان البالغة 7 أيام',
+        'terms.s5.item5': 'كيوسكراب ستتوسط في النزاعات بين العملاء والكراجات',
 
         'terms.s6.title': 'الأنشطة المحظورة',
         'terms.s6.intro': 'لا يجوز لك:',

@@ -874,7 +874,7 @@ export const ar = {
         fileComplaint: 'تقديم شكوى',
         complaintDesc: 'الإبلاغ عن مشكلة أو قلق',
         businessHours: 'ساعات العمل',
-        hoursDetail: 'السبت-الخميس: 8 ص - 10 م | الجمعة: 2 م - 10 م',
+        hoursDetail: 'السبت-الخميس: 8 ص - 5 م | الجمعة: عطلة',
         fastResponse: 'رد سريع',
         responseTime: 'نرد عادةً خلال 15 دقيقة',
         whatsappNotInstalled: 'واتساب غير مثبت على هذا الجهاز',
