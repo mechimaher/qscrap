@@ -136,7 +136,7 @@ const translations = {
         'step3.title': 'Pay Securely',
         'step3.desc': 'Pay with card or cash on delivery. Your payment is held in escrow.',
         'step4.title': 'Get It Delivered',
-        'step4.desc': 'Same-day delivery across Qatar. 7-day return guarantee included.',
+        'step4.desc': 'Track your order in real-time and receive it at your doorstep. Same-day delivery with a 7-day return guarantee.',
 
         // Value Props
         'value.badge': 'Why QScrap',
@@ -248,7 +248,7 @@ const translations = {
         'step3.title': 'ادفع بأمان',
         'step3.desc': 'ادفع بالبطاقة أو نقداً عند الاستلام. مبلغك محفوظ في ضمان آمن.',
         'step4.title': 'استلم طلبك',
-        'step4.desc': 'توصيل في نفس اليوم في جميع أنحاء قطر. ضمان إرجاع 7 أيام.',
+        'step4.desc': 'تتبع طلبك بالوقت الفعلي واستلمه على بابك. توصيل في نفس اليوم مع ضمان إرجاع 7 أيام.',
 
         // Value Props
         'value.badge': 'لماذا كيوسكراب',
