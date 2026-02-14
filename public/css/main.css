@@ -1423,6 +1423,12 @@
             .qr-label {
                 font-size: 12px;
             }
+
+            /* Floating widget clearance — prevent last cards from hiding behind FAB */
+            .steps-grid .step-card:last-child,
+            .value-grid .value-card:last-child {
+                margin-bottom: 80px;
+            }
         }
 
         /* ===== VVVIP 2030 Premium Footer ===== */
@@ -1647,11 +1653,7 @@
             align-items: center;
         }
 
-        /* Floating widget clearance — prevent step cards from hiding behind the FAB */
-        .steps-grid .step-card:last-child,
-        .value-grid .value-card:last-child {
-            margin-bottom: 80px;
-        }
+        /* Floating widget clearance — only on mobile stacked layout */
 
         /* ===== Mobile Navigation CTA Fix ===== */
         /* Prevent Download App button from overlapping logo on small screens */
