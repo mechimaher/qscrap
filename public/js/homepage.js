@@ -354,7 +354,7 @@ const i18n = {
         if (lang === 'ar') {
             html.setAttribute('dir', 'rtl');
             html.setAttribute('lang', 'ar');
-            document.body.style.fontFamily = "'Noto Sans Arabic', 'Cairo', 'Segoe UI', Tahoma, 'Inter', sans-serif";
+            document.body.style.fontFamily = "'Inter', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif";
         } else {
             html.setAttribute('dir', 'ltr');
             html.setAttribute('lang', 'en');
