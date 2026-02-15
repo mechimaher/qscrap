@@ -5,13 +5,17 @@
 
 import { Pool } from 'pg';
 import Stripe from 'stripe';
-import { generateInvoice } from '../webhooks/stripe.webhook';
+import { InvoiceService } from './invoice.service';
 import logger from '../../utils/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 export class SubscriptionBillingJob {
-    constructor(private pool: Pool) { }
+    private invoiceService: InvoiceService;
+
+    constructor(private pool: Pool) {
+        this.invoiceService = new InvoiceService(pool);
+    }
 
     /**
      * Process all subscriptions due for renewal
@@ -100,12 +104,14 @@ export class SubscriptionBillingJob {
                 await this.extendSubscription(sub.subscription_id, sub.garage_name);
 
                 // Generate invoice
-                await generateInvoice({
+                await this.invoiceService.createInvoice({
                     garage_id: sub.garage_id,
+                    subscription_id: sub.subscription_id,
                     amount,
-                    payment_intent_id: paymentIntent.id,
                     plan_name: sub.plan_name,
-                    payment_method: 'card'
+                    payment_method: 'card',
+                    payment_intent_id: paymentIntent.id,
+                    status: 'paid'
                 });
 
                 // Reset retry count

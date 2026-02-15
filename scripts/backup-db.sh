@@ -16,11 +16,11 @@ BACKUP_FILE="qscrap_db_${TIMESTAMP}.sql.gz"
 MAX_BACKUPS=30  # Keep 30 days locally
 MAX_R2_SIZE_GB=8  # Stay under 10GB limit (safety margin)
 
-# Cloudflare R2 Configuration
-R2_ENDPOINT="https://8181c2840d8ffe75009a3221ad9fd3f4.r2.cloudflarestorage.com"
-R2_BUCKET="qscrap-backups"
-R2_ACCESS_KEY="82b08fda60b61eccd3476d7844002a64"
-R2_SECRET_KEY="80f4a6faf671e759a1bdec99477912f582fd511db845c6caf7e75a3e17f81872"
+# Cloudflare R2 Configuration (Read from environment for security)
+R2_ENDPOINT="${R2_ENDPOINT:?R2_ENDPOINT is required}"
+R2_BUCKET="${R2_BUCKET:-qscrap-backups}"
+R2_ACCESS_KEY="${R2_ACCESS_KEY:?R2_ACCESS_KEY is required}"
+R2_SECRET_KEY="${R2_SECRET_KEY:?R2_SECRET_KEY is required}"
 
 # ============================================
 # CREATE BACKUP
