@@ -20,12 +20,7 @@ let requests = [];
  * Escape HTML to prevent XSS attacks
  * Use this for ALL user-generated content
  */
-function escapeHTML(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+// escapeHTML: provided by shared/utils.js
 
 /**
  * Escape string for use in inline JavaScript onclick handlers

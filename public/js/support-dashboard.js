@@ -20,12 +20,7 @@ let reviewStatus = 'pending';  // For reviews filter
 // UTILITIES
 // ==========================================
 
-function escapeHTML(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+// escapeHTML: provided by shared/utils.js
 
 function formatDate(dateStr) {
     if (!dateStr) return '-';
