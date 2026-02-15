@@ -15,7 +15,7 @@ export const securityMiddleware = helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com", "https://browser.sentry-cdn.com"],
             scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
             imgSrc: ["'self'", "data:", "blob:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://maps.googleapis.com", "https://api.stripe.com", "https://*.sentry.io"],
+            connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://maps.googleapis.com", "https://api.stripe.com", "https://*.sentry.io", "https://browser.sentry-cdn.com"],
             frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com"],
             objectSrc: ["'none'"],
             // Only enable upgrade-insecure-requests when HTTPS is configured
