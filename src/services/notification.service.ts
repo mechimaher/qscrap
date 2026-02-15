@@ -66,7 +66,8 @@ export const createNotification = async (payload: NotificationPayload) => {
         };
 
         if (target_role === 'garage') {
-            emitToUser(userId, 'new_notification', socketPayload);
+            // INSTITUTIONAL FIX: Emit to the entire garage room, not just one user
+            emitToGarage(userId, 'new_notification', socketPayload);
         } else if (target_role === 'customer') {
             emitToUser(userId, 'new_notification', socketPayload);
         } else if (target_role === 'driver') {

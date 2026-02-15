@@ -49,6 +49,13 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/src/config/migrations ./src/config/migrations
 
+# Create persistent storage directories and set permissions
+RUN mkdir -p /app/uploads /app/logs && \
+    chown -R node:node /app/uploads /app/logs
+
+# Switch to non-root user for security
+USER node
+
 EXPOSE 3000
 
 # Run compiled JavaScript in production

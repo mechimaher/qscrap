@@ -2747,6 +2747,7 @@ function initializeWebSocket() {
 
     try {
         socket = io({
+            auth: { token },
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: 5,
@@ -2755,8 +2756,6 @@ function initializeWebSocket() {
 
         socket.on('connect', () => {
             console.log('[WebSocket] Connected to server');
-            // Join admin room for real-time updates
-            socket.emit('join_admin_room');
             updateConnectionStatus(true);
         });
 
@@ -2865,4 +2864,3 @@ if (token) {
         initializeWebSocket();
     }, 500);
 }
-

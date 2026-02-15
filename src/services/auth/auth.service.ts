@@ -297,20 +297,23 @@ export class AuthService {
                 throw new Error('Account is deactivated or suspended');
             }
 
-            // Revoke the used refresh token
+            // Issue new refresh token first so we can link it
             const newRefresh = generateRefreshToken();
-            await client.query(
-                `UPDATE refresh_tokens SET revoked_at = NOW(), replaced_by = (
-                    SELECT token_id FROM refresh_tokens WHERE token_hash = $2
-                ) WHERE token_id = $1`,
-                [row.token_id, newRefresh.hash]
-            );
-
-            // Issue new refresh token
-            await client.query(
+            const insertResult = await client.query(
                 `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-                 VALUES ($1, $2, NOW() + INTERVAL '1 millisecond' * $3)`,
+                 VALUES ($1, $2, NOW() + INTERVAL '1 millisecond' * $3)
+                 RETURNING token_id`,
                 [row.user_id, newRefresh.hash, REFRESH_TOKEN_EXPIRY_MS]
+            );
+            const newTokenId = insertResult.rows[0].token_id;
+
+            // Revoke the used refresh token and link to the new one
+            await client.query(
+                `UPDATE refresh_tokens 
+                 SET revoked_at = NOW(), 
+                     replaced_by = $2 
+                 WHERE token_id = $1`,
+                [row.token_id, newTokenId]
             );
 
             await client.query('COMMIT');

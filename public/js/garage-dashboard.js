@@ -316,8 +316,9 @@ async function showDashboard() {
     initNotificationSound();
 
     // Connect Socket
-    socket = io();
-    socket.emit('join_garage_room', userId);
+    socket = io({
+        auth: { token }
+    });
 
     // Initialize premium features (live datetime, shortcuts, notifications)
     if (typeof initializePremiumFeatures === 'function') {
@@ -6200,10 +6201,6 @@ function updateConnectionStatus(isOnline) {
 if (typeof socket !== 'undefined' && socket) {
     socket.on('connect', () => {
         updateConnectionStatus(true);
-        // Re-join room on reconnection (critical for notifications)
-        if (userId) {
-            socket.emit('join_garage_room', userId);
-        }
     });
 
     socket.on('disconnect', () => {
@@ -7048,4 +7045,3 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(initInvoiceDatePickers, 100);
 }
-

@@ -174,45 +174,6 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
 };
 
 // ============================================
-// DOWNLOAD WITH TOKEN (Mobile Support)
-// ============================================
-
-export const downloadDocumentWithToken = async (req: Request, res: Response) => {
-    const { document_id } = req.params;
-    const token = req.query.token as string;
-
-    if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
-    }
-
-    try {
-        // Verify JWT token
-        const payload = jwt.verify(token, getJwtSecret()) as { userId: string; userType: string };
-        const userId = payload.userId;
-        const userType = payload.userType;
-
-        const doc = await accessService.downloadDocument(document_id, userId, userType);
-
-        // Generate PDF
-        const pdfBuffer = await generatePDFFromDocument(doc);
-
-        // Log access
-        await accessService.logDocumentAccess(document_id, 'download', userId, userType, req);
-
-        // Send PDF
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${doc.document_number}.pdf"`);
-        res.send(pdfBuffer);
-    } catch (err) {
-        logger.error('downloadDocumentWithToken Error', { error: (err as Error).message });
-        if ((err as Error).name === 'JsonWebTokenError' || (err as Error).name === 'TokenExpiredError') {
-            return res.status(401).json({ error: 'Invalid or expired token' });
-        }
-        res.status(500).json({ error: getErrorMessage(err) });
-    }
-};
-
-// ============================================
 // VERIFY DOCUMENT (Public)
 // ============================================
 

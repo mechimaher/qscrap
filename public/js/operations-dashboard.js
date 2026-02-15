@@ -187,8 +187,9 @@ async function showDashboard() {
 
     // Connect socket - only if not already connected
     if (!socket || !socket.connected) {
-        socket = io();
-        socket.emit('join_operations_room');
+        socket = io({
+            auth: { token }
+        });
 
         // Setup socket listeners (only once)
         setupSocketListeners();

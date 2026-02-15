@@ -6,11 +6,12 @@ import jobs from './config/jobs';
 import { closeRedis, initializeRedis } from './config/redis';
 import { initializeSocketAdapter, getGlobalSocketCount } from './config/socketAdapter';
 import { initializeJobQueues, closeJobQueues, createJobWorker, scheduleRecurringJob } from './config/jobQueue';
-import { performStartupSecurityChecks } from './config/security';
+import { performStartupSecurityChecks, getJwtSecret } from './config/security';
 import { initializeSocketIO } from './utils/socketIO';
 import logger from './utils/logger';
 import { startAutoCompleteJob } from './jobs/auto-complete-orders';
 import { startDeliveryReminderJob } from './jobs/delivery-reminders';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const PORT = process.env.PORT || 3000;
 const NODE_ID = process.env.NODE_ID || `node-${process.pid}`;
@@ -52,8 +53,206 @@ initializeSocketIO(io);
 // ============================================
 // SOCKET.IO AUTHENTICATION MIDDLEWARE
 // ============================================
-import jwt from 'jsonwebtoken';
-import { getJwtSecret } from './config/security';
+type SocketUser = {
+    id: string;
+    userType: string;
+    staffRole?: string;
+    garageId?: string;
+};
+
+type AuthTokenClaims = JwtPayload & {
+    userId?: string;
+    user_id?: string;
+    userType?: string;
+    user_type?: string;
+    staffRole?: string;
+    staff_role?: string;
+    garageId?: string;
+    garage_id?: string;
+};
+
+const PRIVILEGED_STAFF_ROLES = new Set(['admin', 'superadmin', 'operations', 'support', 'cs_admin']);
+const SUPPORT_STAFF_ROLES = new Set(['support', 'cs_admin', 'customer_service']);
+const ADMIN_STAFF_ROLES = new Set(['admin', 'superadmin']);
+
+const normalizeClaim = (value: unknown): string | undefined => {
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    return normalized.length > 0 ? normalized : undefined;
+};
+
+const parseSocketUser = (decoded: AuthTokenClaims): SocketUser | null => {
+    const id = decoded.userId || decoded.user_id;
+    if (!id || typeof id !== 'string') {
+        return null;
+    }
+
+    return {
+        id,
+        userType: normalizeClaim(decoded.userType || decoded.user_type) || 'unknown',
+        staffRole: normalizeClaim(decoded.staffRole || decoded.staff_role),
+        garageId: typeof (decoded.garageId || decoded.garage_id) === 'string'
+            ? (decoded.garageId || decoded.garage_id)
+            : undefined
+    };
+};
+
+const getGarageRoomId = (user: SocketUser): string | undefined => {
+    if (user.garageId) return user.garageId;
+    if (user.userType === 'garage') return user.id;
+    return undefined;
+};
+
+const isPrivilegedSocketUser = (user: SocketUser): boolean => {
+    if (user.userType === 'admin' || user.userType === 'operations' || user.userType === 'support') {
+        return true;
+    }
+
+    return user.userType === 'staff' && !!user.staffRole && PRIVILEGED_STAFF_ROLES.has(user.staffRole);
+};
+
+const getRequestIdFromPayload = (payload: unknown): string | null => {
+    if (typeof payload === 'string' && payload.trim()) {
+        return payload.trim();
+    }
+
+    if (
+        payload &&
+        typeof payload === 'object' &&
+        'request_id' in payload &&
+        typeof (payload as { request_id?: unknown }).request_id === 'string'
+    ) {
+        const requestId = (payload as { request_id: string }).request_id.trim();
+        return requestId || null;
+    }
+
+    return null;
+};
+
+const getOrderIdFromPayload = (payload: unknown): string | null => {
+    if (typeof payload === 'string' && payload.trim()) {
+        return payload.trim();
+    }
+
+    if (
+        payload &&
+        typeof payload === 'object' &&
+        'order_id' in payload &&
+        typeof (payload as { order_id?: unknown }).order_id === 'string'
+    ) {
+        const orderId = (payload as { order_id: string }).order_id.trim();
+        return orderId || null;
+    }
+
+    return null;
+};
+
+const canTrackRequest = async (requestId: string, user: SocketUser): Promise<boolean> => {
+    if (isPrivilegedSocketUser(user)) {
+        return true;
+    }
+
+    const requestResult = await pool.query(
+        `SELECT customer_id, status
+         FROM part_requests
+         WHERE request_id = $1
+           AND deleted_at IS NULL
+         LIMIT 1`,
+        [requestId]
+    );
+
+    if (requestResult.rows.length === 0) {
+        return false;
+    }
+
+    const request = requestResult.rows[0] as { customer_id?: string; status?: string };
+
+    if (user.userType === 'customer') {
+        return request.customer_id === user.id;
+    }
+
+    if (user.userType !== 'garage') {
+        return false;
+    }
+
+    if (request.status === 'active') {
+        return true;
+    }
+
+    const garageRoomId = getGarageRoomId(user);
+    if (!garageRoomId) {
+        return false;
+    }
+
+    const bidResult = await pool.query(
+        `SELECT 1
+         FROM bids
+         WHERE request_id = $1
+           AND garage_id = $2
+         LIMIT 1`,
+        [requestId, garageRoomId]
+    );
+
+    return bidResult.rows.length > 0;
+};
+
+const canTrackOrder = async (orderId: string, user: SocketUser): Promise<boolean> => {
+    if (isPrivilegedSocketUser(user)) {
+        return true;
+    }
+
+    const orderResult = await pool.query(
+        `SELECT
+            o.customer_id,
+            o.garage_id,
+            o.driver_id,
+            EXISTS (
+                SELECT 1
+                FROM delivery_assignments da
+                JOIN drivers d ON d.driver_id = da.driver_id
+                WHERE da.order_id = o.order_id
+                  AND d.user_id = $2
+            ) AS matches_driver_user,
+            EXISTS (
+                SELECT 1
+                FROM delivery_assignments da
+                WHERE da.order_id = o.order_id
+                  AND da.driver_id::text = $2
+            ) AS matches_driver_id
+         FROM orders o
+         WHERE o.order_id = $1
+           AND o.deleted_at IS NULL
+         LIMIT 1`,
+        [orderId, user.id]
+    );
+
+    if (orderResult.rows.length === 0) {
+        return false;
+    }
+
+    const order = orderResult.rows[0] as {
+        customer_id?: string;
+        garage_id?: string;
+        driver_id?: string;
+        matches_driver_user?: boolean;
+        matches_driver_id?: boolean;
+    };
+
+    if (user.userType === 'customer') {
+        return order.customer_id === user.id;
+    }
+
+    if (user.userType === 'garage') {
+        const garageRoomId = getGarageRoomId(user);
+        return !!garageRoomId && order.garage_id === garageRoomId;
+    }
+
+    if (user.userType === 'driver') {
+        return order.driver_id === user.id || !!order.matches_driver_user || !!order.matches_driver_id;
+    }
+
+    return false;
+};
 
 // Track viewers per request for real-time viewer count (Institutional Logic)
 const requestViewers = new Map<string, Set<string>>();
@@ -68,14 +267,15 @@ io.use((socket, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, getJwtSecret()) as any;
-        // Derived identity - align with AuthService.ts JWT claims
-        socket.data.user = {
-            id: decoded.userId || decoded.user_id,
-            userType: decoded.userType?.toLowerCase(),
-            staffRole: decoded.staffRole?.toLowerCase(),
-            garageId: decoded.garageId
-        };
+        const decoded = jwt.verify(token, getJwtSecret()) as AuthTokenClaims;
+        const user = parseSocketUser(decoded);
+
+        if (!user) {
+            return next(new Error('Authentication error: Missing user identity claims'));
+        }
+
+        // Derived identity - aligns with both camelCase and snake_case JWT claims
+        socket.data.user = user;
         next();
     } catch (err) {
         next(new Error('Authentication error: Invalid token'));
@@ -102,16 +302,29 @@ io.on('connection', (socket) => {
         // 1. Personal User Room (Canonical)
         socket.join(`user_${user.id}`);
 
-        // 2. Role-Based Rooms (derived)
-        if (user.userType === 'garage' && user.garageId) {
-            socket.join(`garage_${user.garageId}`);
+        // 2. Garage Room (garage_id claim, fallback to userId)
+        const garageRoomId = getGarageRoomId(user);
+        if (garageRoomId) {
+            socket.join(`garage_${garageRoomId}`);
         }
 
-        // 3. Administrative Rooms
-        if (user.userType === 'staff') {
+        // 3. Administrative / Operations / Support Rooms
+        if (user.userType === 'admin') {
             socket.join('admin');
-            if (['admin', 'operations', 'support'].includes(user.staffRole)) {
+            socket.join('operations');
+            socket.join('support');
+        } else if (user.userType === 'operations') {
+            socket.join('operations');
+        } else if (user.userType === 'support') {
+            socket.join('support');
+        } else if (user.userType === 'staff') {
+            if (user.staffRole && ADMIN_STAFF_ROLES.has(user.staffRole)) {
+                socket.join('admin');
                 socket.join('operations');
+                socket.join('support');
+            } else if (user.staffRole === 'operations') {
+                socket.join('operations');
+            } else if (user.staffRole && SUPPORT_STAFF_ROLES.has(user.staffRole)) {
                 socket.join('support');
             }
         }
@@ -126,21 +339,41 @@ io.on('connection', (socket) => {
     // VERIFIED INTERACTION HANDLERS
     // ============================================
 
-    // Real-time Request Tracking (Public pool logic)
-    socket.on('track_request_view', ({ request_id }: { request_id: string }) => {
-        if (!request_id) return;
+    // Real-time Request Tracking (server-side authorization enforced)
+    socket.on('track_request_view', async (payload: unknown) => {
+        const user = socket.data.user as SocketUser | undefined;
+        if (!user) return;
 
-        if (!requestViewers.has(request_id)) {
-            requestViewers.set(request_id, new Set());
+        try {
+            const request_id = getRequestIdFromPayload(payload);
+            if (!request_id) return;
+
+            const allowed = await canTrackRequest(request_id, user);
+            if (!allowed) {
+                logger.warn('Blocked unauthorized request tracking attempt', { socketId: socket.id, userId: user.id, requestId: request_id });
+                socket.emit('tracking_denied', { resource: 'request', request_id });
+                return;
+            }
+
+            if (!requestViewers.has(request_id)) {
+                requestViewers.set(request_id, new Set());
+            }
+            requestViewers.get(request_id)!.add(socket.id);
+            socket.join(`request_${request_id}`);
+
+            const count = requestViewers.get(request_id)!.size;
+            io.to(`request_${request_id}`).emit('viewer_count_update', { request_id, count });
+        } catch (err: unknown) {
+            logger.error('Failed to authorize request tracking', {
+                socketId: socket.id,
+                userId: user.id,
+                error: err instanceof Error ? err.message : String(err)
+            });
         }
-        requestViewers.get(request_id)!.add(socket.id);
-        socket.join(`request_${request_id}`);
-
-        const count = requestViewers.get(request_id)!.size;
-        io.to(`request_${request_id}`).emit('viewer_count_update', { request_id, count });
     });
 
-    socket.on('untrack_request_view', ({ request_id }: { request_id: string }) => {
+    socket.on('untrack_request_view', (payload: unknown) => {
+        const request_id = getRequestIdFromPayload(payload);
         if (request_id && requestViewers.has(request_id)) {
             requestViewers.get(request_id)!.delete(socket.id);
             socket.leave(`request_${request_id}`);
@@ -151,15 +384,25 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Tracking for specific order (Ownership check TODO: Phase 2 DB validation)
-    socket.on('track_order', async (data) => {
-        const orderId = data?.order_id || data;
-        if (!orderId) return;
+    // Tracking for specific order (server-side authorization enforced)
+    socket.on('track_order', async (data: unknown) => {
+        const user = socket.data.user as SocketUser | undefined;
+        if (!user) return;
 
-        socket.join(`tracking_${orderId}`);
-
-        // Send last known driver location
         try {
+            const orderId = getOrderIdFromPayload(data);
+            if (!orderId) return;
+
+            const allowed = await canTrackOrder(orderId, user);
+            if (!allowed) {
+                logger.warn('Blocked unauthorized order tracking attempt', { socketId: socket.id, userId: user.id, orderId });
+                socket.emit('tracking_denied', { resource: 'order', order_id: orderId });
+                return;
+            }
+
+            socket.join(`tracking_${orderId}`);
+
+            // Send last known driver location
             const result = await pool.query(`
                 SELECT d.current_lat, d.current_lng, dl.heading, dl.speed, d.updated_at
                 FROM orders o
@@ -182,8 +425,12 @@ io.on('connection', (socket) => {
                     });
                 }
             }
-        } catch (err: any) {
-            logger.error('Failed to fetch initial driver location', { orderId, error: err.message });
+        } catch (err: unknown) {
+            logger.error('Failed to process order tracking subscription', {
+                socketId: socket.id,
+                userId: user.id,
+                error: err instanceof Error ? err.message : String(err)
+            });
         }
     });
 

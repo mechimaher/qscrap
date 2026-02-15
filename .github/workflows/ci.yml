@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint || echo "Lint warnings found"
+        run: npm run lint
 
       - name: TypeScript type check
         run: npm run build
@@ -94,7 +94,7 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npm test -- --coverage --ci || true
+        run: npm test -- --coverage --ci
         env:
           NODE_ENV: test
           DB_HOST: localhost
@@ -144,7 +144,7 @@ jobs:
             -e NODE_ENV=test \
             -e JWT_SECRET=test \
             -e DB_HOST=localhost \
-            qscrap-backend:test || true
+            qscrap-backend:test
           sleep 5
           docker logs test-container 2>&1 | head -50 || true
           docker rm -f test-container || true

@@ -27,7 +27,7 @@ jobs:
     name: CodeQL SAST Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true  # Don't fail workflow on analysis issues
+    # blocking SAST gate
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
         with:
           image-ref: 'qscrap-backend:${{ github.sha }}'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
@@ -111,8 +111,7 @@ jobs:
       - name: npm audit (Critical/High)
         run: |
           echo "=== NPM Security Audit ==="
-          npm audit --audit-level=high --json > audit-results.json || true
-          npm audit --audit-level=high || true
+          npm audit --audit-level=high
 
       - name: Upload audit results
         uses: actions/upload-artifact@v4
@@ -157,7 +156,7 @@ jobs:
           scan-type: 'config'
           scan-ref: '.'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'
           severity: 'CRITICAL,HIGH'
 
   # ============================================
@@ -182,7 +181,7 @@ jobs:
 
       - name: Check licenses
         run: |
-          npx license-checker --summary --production || true
+          npx license-checker --summary --production
           echo "=== License check complete ==="
 
   # ============================================

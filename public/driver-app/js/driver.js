@@ -86,8 +86,9 @@ async function showApp() {
     document.getElementById('app').classList.add('active');
 
     // Initialize Socket.IO
-    socket = io();
-    socket.emit('join_driver_room', userId);
+    socket = io({
+        auth: { token }
+    });
 
     // Socket event handlers
     socket.on('new_assignment', (data) => {
