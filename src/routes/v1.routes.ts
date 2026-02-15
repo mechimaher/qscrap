@@ -45,11 +45,17 @@ import pushRoutes from './push.routes';
 import adminRoutes from './admin.routes';
 import addressRoutes from './address.routes';
 
+// Configuration Routes (Public)
+import configRoutes from './config.routes';
+
 const v1Router = Router();
 
 // ==========================================
 // CORE ROUTES
 // ==========================================
+
+/** @swagger path /config */
+v1Router.use('/config', configRoutes);
 
 /** @swagger path /auth */
 v1Router.use('/auth', authRoutes);

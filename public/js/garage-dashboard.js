@@ -343,12 +343,12 @@ async function showDashboard() {
             }
         }
     } catch (err) {
-        console.log('Could not sync ignored requests from server:', err);
+        // console.log('Could not sync ignored requests from server:', err);
     }
 
     // Connection handlers for data freshness
     socket.on('connect', () => {
-        console.log('[Socket] Connected - refreshing data');
+        // console.log('[Socket] Connected - refreshing data');
         loadStats();
         loadRequests();
         loadBids();
@@ -356,7 +356,7 @@ async function showDashboard() {
     });
 
     socket.on('disconnect', () => {
-        console.log('[Socket] Disconnected');
+        // console.log('[Socket] Disconnected');
     });
 
     socket.on('new_request', (data) => {
@@ -420,7 +420,7 @@ async function showDashboard() {
 
     // Handle customer deleting a request
     socket.on('request_removed', (data) => {
-        console.log('[SOCKET] Request removed:', data.request_id);
+        // console.log('[SOCKET] Request removed:', data.request_id);
         // Remove the deleted request from local list
         requests = requests.filter(r => r.request_id !== data.request_id);
         renderRequests();
@@ -687,7 +687,7 @@ async function loadBadgeCounts() {
                 activeOrdersBadge.style.display = data.pending_orders > 0 ? 'inline-block' : 'none';
             }
 
-            console.log('[BadgeCounts] Updated:', data);
+            // console.log('[BadgeCounts] Updated:', data);
         }
     } catch (err) {
         console.error('[BadgeCounts] Failed to load:', err);
@@ -2433,7 +2433,7 @@ function toggleBrandsList() {
 
 function renderBrandCheckboxes(filterText = '') {
     const container = document.getElementById('brandCheckboxes');
-    console.log('[DEBUG] Rendering brands start', {
+    // console.log('[DEBUG] Rendering brands start', {
         containerExists: !!container,
         carBrandsLength: typeof CAR_BRANDS !== 'undefined' ? CAR_BRANDS.length : 'undefined',
         filterText
@@ -2620,7 +2620,7 @@ function initLocationMap(lat, lng) {
 
     // Wait for Google Maps SDK to load
     if (!window.googleMapsReady) {
-        console.log('[Google Maps] SDK not ready, queuing map init...');
+        // console.log('[Google Maps] SDK not ready, queuing map init...');
         window.pendingMapInit = { lat, lng };
         return;
     }
@@ -2715,7 +2715,7 @@ function initLocationMap(lat, lng) {
     // Initialize Places Autocomplete
     initPlacesAutocomplete();
 
-    console.log('[Google Maps] Map initialized for Garage Dashboard');
+    // console.log('[Google Maps] Map initialized for Garage Dashboard');
 }
 
 function initPlacesAutocomplete() {
@@ -3205,7 +3205,7 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
 
     // Prevent double submission
     if (isSubmittingBid) {
-        console.log('[BID] Submission already in progress, ignoring duplicate');
+        // console.log('[BID] Submission already in progress, ignoring duplicate');
         return;
     }
     isSubmittingBid = true;
@@ -3270,7 +3270,7 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
                 formData.append('images', photo.file);
             });
 
-            console.log('Submitting bid:', { reqId, amount, condition, brand, partNumber, photos: bidPhotos.length });
+            // console.log('Submitting bid:', { reqId, amount, condition, brand, partNumber, photos: bidPhotos.length });
 
             res = await fetch(`${API_URL}/bids`, {
                 method: 'POST',
@@ -3660,7 +3660,7 @@ let currentPendingRequest = null;
 
 async function loadSubscription() {
     try {
-        console.log('Garage Dashboard v2026.01.10-FIXED-2: Loading subscription...');
+        // console.log('Garage Dashboard v2026.01.10-FIXED-2: Loading subscription...');
         const res = await fetch(`${API_URL}/subscriptions/my`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -3672,7 +3672,7 @@ async function loadSubscription() {
         // CRITICAL FIX: If the "pending" request is for the plan we are ALREADY on, ignore it.
         // This handles cases where admin approved manually but didn't clear the request status.
         if (data.subscription && currentPendingRequest && currentPendingRequest.to_plan_id === data.subscription.plan_id) {
-            console.log('Suppressing stale pending request (already on target plan)');
+            // console.log('Suppressing stale pending request (already on target plan)');
             currentPendingRequest = null;
         }
 
@@ -4178,7 +4178,7 @@ async function loadAnalytics() {
             const data = await res.json();
             document.getElementById('analyticsUpgradePrompt').style.display = 'flex';
             document.getElementById('analyticsContent').style.display = 'none';
-            console.log('Analytics requires upgrade:', data.required_plans);
+            // console.log('Analytics requires upgrade:', data.required_plans);
             return;
         }
 

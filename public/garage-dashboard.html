@@ -1834,24 +1834,61 @@
     <script src="https://js.stripe.com/v3/"></script>
     <script src="/lib/socket.io/socket.io.min.js"></script>
     <!-- Google Maps SDK with Places for Location Picker (Jan 27, 2026) -->
+    <!-- Secure Config & Sentry Loader (Enterprise Audit Fix) -->
+    <script src="https://browser.sentry-cdn.com/7.114.0/bundle.min.js" crossorigin="anonymous"></script>
     <script>
-        // Google Maps Async Loader with callback
+        // Callback Logic (Preserved from legacy)
         window.googleMapsReady = false;
         window.initGoogleMapsCallback = function () {
             window.googleMapsReady = true;
             console.log('[Google Maps] SDK Ready');
             // If profile was already loaded, reinitialize the map
-            if (window.pendingMapInit) {
+            // Check for function existence to be safe
+            if (window.pendingMapInit && typeof window.initLocationMap === 'function') {
                 const { lat, lng } = window.pendingMapInit;
                 window.initLocationMap(lat, lng);
             }
         };
-        (function () {
-            const script = document.createElement('script');
-            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw&libraries=places&callback=initGoogleMapsCallback';
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
+
+        // Secure Configuration Loader
+        (async function() {
+            try {
+                // Fetch public config (safe keys) from backend
+                const res = await fetch('/api/v1/config/public');
+                const data = await res.json();
+                
+                if (data.success && data.config) {
+                    const config = data.config;
+                    
+                    // 1. Initialize Sentry (if available)
+                    if (window.Sentry && config.sentryDsn) {
+                        try {
+                            Sentry.init({ 
+                                dsn: config.sentryDsn,
+                                environment: config.environment || 'production',
+                                tracesSampleRate: 1.0,
+                                release: 'garage-dashboard@1.0.0', // Optional: match version
+                            });
+                            console.log('[Sentry] Monitoring Active');
+                        } catch (err) {
+                            console.warn('[Sentry] Init failed', err);
+                        }
+                    }
+
+                    // 2. Load Google Maps (Dynamic Injection)
+                    if (config.googleMapsKey) {
+                        const script = document.createElement('script');
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMapsKey}&libraries=places&callback=initGoogleMapsCallback`;
+                        script.async = true;
+                        script.defer = true;
+                        document.head.appendChild(script);
+                    } else {
+                        console.error('[Config] Missing Google Maps Key');
+                    }
+                }
+            } catch (e) {
+                console.error('[Config] Critical Loade Failure:', e);
+            }
         })();
     </script>
     <!-- Shared JS utilities (must come before module JS) -->
