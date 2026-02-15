@@ -35,7 +35,7 @@ QScrap is Qatar's first **enterprise-grade automotive services platform** offeri
 - Premium Qatar VVIP theme (Maroon & Gold)
 
 **Infrastructure:**
-- VPS: 147.93.89.153 (Contabo)
+- VPS: $VPS_HOST (Contabo)
 - Nginx reverse proxy
 - Docker for database & Redis
 - PM2 for process management
@@ -221,7 +221,7 @@ cd mobile
 
 ```bash
 # SSH to server
-ssh root@147.93.89.153
+ssh root@$VPS_HOST
 
 # Pull latest code
 cd /opt/qscrap

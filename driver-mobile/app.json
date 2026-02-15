@@ -105,7 +105,13 @@
           }
         }
       ],
-      "@sentry/react-native"
+      [
+        "@sentry/react-native",
+        {
+          "organization": "qscrap",
+          "project": "qscrap-driver"
+        }
+      ]
     ],
     "runtimeVersion": "1.0.0",
     "updates": {

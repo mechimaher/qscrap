@@ -5,8 +5,8 @@
 ---
 
 ## Critical Contact Info
-- **Server IP:** 147.93.89.153
-- **SSH:** `ssh root@147.93.89.153`
+- **Server IP:** $VPS_HOST
+- **SSH:** `ssh root@$VPS_HOST`
 - **Backups:** /opt/qscrap/backups/
 
 ---
@@ -21,7 +21,7 @@
 ### Resolution (ETA: 15min)
 ```bash
 # 1. SSH to server
-ssh root@147.93.89.153
+ssh root@$VPS_HOST
 
 # 2. Check Docker status
 docker ps -a

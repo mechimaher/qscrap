@@ -125,7 +125,7 @@ Retention: 8GB limit, auto-prune oldest
 
 ### Option 1: Docker Tag (Fastest)
 ```bash
-ssh root@147.93.89.153
+ssh root@$VPS_HOST
 cd /opt/qscrap
 docker tag qscrap-backend:stable qscrap-backend:latest
 docker compose up -d
@@ -133,13 +133,13 @@ docker compose up -d
 
 ### Option 2: Script
 ```bash
-ssh root@147.93.89.153
+ssh root@$VPS_HOST
 /opt/qscrap/scripts/rollback.sh
 ```
 
 ### Option 3: Git
 ```bash
-ssh root@147.93.89.153
+ssh root@$VPS_HOST
 cd /opt/qscrap
 git checkout $(cat .last_good_deploy)
 docker compose up -d --build
@@ -181,7 +181,7 @@ chmod +x .git/hooks/pre-commit
 ## VPS Production Environment
 
 ```
-Server: 147.93.89.153
+Server: $VPS_HOST
 Path: /opt/qscrap
 User: root
 Services: qscrap-backend, qscrap-postgres, qscrap-redis

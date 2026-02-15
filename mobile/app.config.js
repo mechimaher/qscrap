@@ -131,7 +131,13 @@ module.exports = ({ config }) => {
                 },
             ],
             'expo-font',
-            '@sentry/react-native',
+            [
+                '@sentry/react-native',
+                {
+                    organization: 'qscrap',
+                    project: 'qscrap-customer',
+                },
+            ],
         ],
         extra: {
             privacyPolicyUrl: 'https://qscrap.qa/privacy',

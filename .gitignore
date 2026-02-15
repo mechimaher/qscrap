@@ -1,10 +1,11 @@
 # Dependencies
 node_modules/
 
-# Environment
+# Environment variables (NEVER commit secrets)
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+!.env.template
 
 # Build output
 dist/
@@ -28,8 +29,7 @@ Thumbs.db
 # Uploads (user data)
 uploads/
 
-# Test files
-*.test.js
+# Test coverage
 coverage/
 
 # Temporary
@@ -37,14 +37,44 @@ tmp/
 temp/
 *.tmp
 
-# Built APK files
+# Built APK/AAB files
 *.apk
-QScrap.apk
-QScrap-Premium.apk
-wget-log
+*.aab
 
-# Credentials
+# Credentials & Sensitive Docs (CRITICAL for public repos)
 VPS_CREDENTIALS.md
+VPS-BRAIN.md
+*CREDENTIALS*
+*credentials*
+
+# Scripts with hardcoded server details
+scripts/ssh_vps.py
+scripts/sync_vps.py
+scripts/scp_vps.py
+scripts/deploy_auto.py
+scripts/check_logs.py
+scripts/fetch_logs.py
+scripts/fetch_nginx_stats.py
+scripts/setup_nginx.py
+scripts/update_nginx_ws.py
+scripts/finalize_nginx.py
+scripts/extreme_compat.py
+scripts/disable_http2.py
+scripts/investigate_order.py
+scripts/setup_email_otp_vps.sh
+scripts/__pycache__/
+
+# Firebase credentials
+mobile/google-services.json
+driver-mobile/google-services.json
+
+# Android build artifacts
+mobile/android/
+driver-mobile/android/
+
+# Expo
+.expo/
 
 # Python cache
 __pycache__/
+*.pyc
