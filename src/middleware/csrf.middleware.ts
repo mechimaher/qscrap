@@ -36,7 +36,7 @@ const isValidOrigin = (origin: string | undefined, referer: string | undefined):
 
     // Check Origin header
     if (origin) {
-        return allowedOrigins.some(allowed => origin === allowed || origin.startsWith(allowed));
+        return allowedOrigins.includes(origin);
     }
 
     // Fall back to Referer header

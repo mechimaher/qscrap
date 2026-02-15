@@ -138,40 +138,6 @@ router.post('/:transactionId/refund',
 );
 
 /**
- * GET /api/payments/:transactionId
- * Get transaction details
- */
-router.get('/:transactionId',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const { transactionId } = req.params;
-            const userId = (req as any).user.userId;
-
-            const transaction = await paymentService.getTransaction(transactionId);
-
-            if (!transaction) {
-                return res.status(404).json({ success: false, error: 'Transaction not found' });
-            }
-
-            // Security: ensure user owns this transaction
-            if (transaction.user_id !== userId) {
-                return res.status(403).json({ success: false, error: 'Unauthorized' });
-            }
-
-            res.json({ success: true, transaction });
-
-        } catch (error: any) {
-            logger.error('Get transaction error', { error: (error as Error).message });
-            res.status(500).json({
-                success: false,
-                error: error.message || 'Failed to retrieve transaction'
-            });
-        }
-    }
-);
-
-/**
  * GET /api/payments/my
  * Get user's payment history
  */
@@ -222,6 +188,40 @@ router.get('/test-cards', (req: Request, res: Response) => {
         note: 'Use any future expiry date (e.g., 12/25) and any 3-digit CVV (e.g., 123)'
     });
 });
+
+/**
+ * GET /api/payments/:transactionId
+ * Get transaction details
+ */
+router.get('/:transactionId',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const { transactionId } = req.params;
+            const userId = (req as any).user.userId;
+
+            const transaction = await paymentService.getTransaction(transactionId);
+
+            if (!transaction) {
+                return res.status(404).json({ success: false, error: 'Transaction not found' });
+            }
+
+            // Security: ensure user owns this transaction
+            if (transaction.user_id !== userId) {
+                return res.status(403).json({ success: false, error: 'Unauthorized' });
+            }
+
+            res.json({ success: true, transaction });
+
+        } catch (error: any) {
+            logger.error('Get transaction error', { error: (error as Error).message });
+            res.status(500).json({
+                success: false,
+                error: error.message || 'Failed to retrieve transaction'
+            });
+        }
+    }
+);
 
 // ============================================================================
 // STRIPE DEPOSIT ROUTES (Delivery Fee Upfront Model)

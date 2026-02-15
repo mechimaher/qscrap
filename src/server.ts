@@ -20,10 +20,23 @@ const server = http.createServer(app);
 // ============================================
 // SOCKET.IO SETUP (Multi-node ready)
 // ============================================
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://qscrap.qa',
+        'https://www.qscrap.qa'
+    ];
+
+// ============================================
+// SOCKET.IO SETUP (Multi-node ready)
+// ============================================
 export const io = new Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
+        methods: ["GET", "POST"],
+        credentials: true
     },
     // Optimized settings for scale
     pingTimeout: 60000,
@@ -36,52 +49,80 @@ export const io = new Server(server, {
 // Initialize Socket.IO singleton for type-safe access throughout the app
 initializeSocketIO(io);
 
-io.on('connection', (socket) => {
-    if (process.env.NODE_ENV !== 'production') {
-        logger.socket('User connected', { socketId: socket.id });
+// ============================================
+// SOCKET.IO AUTHENTICATION MIDDLEWARE
+// ============================================
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from './config/security';
+
+io.use((socket, next) => {
+    // Standard approach: token in auth. For legacy/mobile fallback: check headers
+    const token = socket.handshake.auth?.token || socket.handshake.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+        // Only allow unauthenticated in development if not requiring auth
+        if (process.env.NODE_ENV !== 'production' && !socket.handshake.auth?.requireAuth) {
+            return next();
+        }
+        return next(new Error('Authentication error: Token required'));
     }
 
-    socket.on('join_user_room', (userId) => {
-        socket.join(`user_${userId}`);
-        logger.socket('User joined room', { userId, room: `user_${userId}` });
-    });
+    try {
+        const decoded = jwt.verify(token, getJwtSecret()) as any;
+        // Derived identity - do not trust client-provided IDs later
+        socket.data.user = {
+            id: decoded.userId || decoded.user_id,
+            role: (decoded.role || decoded.userRole || 'customer').toLowerCase(),
+            garageId: decoded.garageId
+        };
+        next();
+    } catch (err) {
+        next(new Error('Authentication error: Invalid token'));
+    }
+});
 
-    // Mobile app customer room join - extracts user ID from auth token
-    socket.on('join_customer_room', async () => {
-        try {
-            const token = socket.handshake.auth?.token;
-            if (token) {
-                const jwt = require('jsonwebtoken');
-                const { getJwtSecret } = require('./config/security');
-                const decoded = jwt.verify(token, getJwtSecret()) as { userId?: string; user_id?: string };
-                const userId = decoded.userId || decoded.user_id;
-                if (userId) {
-                    socket.join(`user_${userId}`);
-                    logger.socket('Customer joined room', { userId, room: `user_${userId}` });
-                }
-            }
-        } catch (err: any) {
-            logger.error('join_customer_room error', { error: err.message });
+io.on('connection', (socket) => {
+    const user = socket.data.user;
+
+    if (process.env.NODE_ENV !== 'production' && user) {
+        logger.socket('Authorized connection', {
+            socketId: socket.id,
+            userId: user.id,
+            role: user.role
+        });
+    }
+
+    // ============================================
+    // SECURE ROOM AUTHORIZATION
+    // Rooms are assigned based on verified Token Claims
+    // ============================================
+    if (user?.id) {
+        // 1. Personal User Room
+        socket.join(`user_${user.id}`);
+
+        // 2. Role-Based Rooms (derived, not requested)
+        if (user.role === 'garage' && user.garageId) {
+            socket.join(`garage_${user.garageId}`);
         }
-    });
 
-    socket.on('join_garage_room', (garageId) => {
-        socket.join(`garage_${garageId}`);
-    });
+        if (['admin', 'staff', 'operations'].includes(user.role)) {
+            socket.join('operations');
+        }
 
-    socket.on('join_operations_room', () => {
-        socket.join('operations');
-    });
+        if (user.role === 'driver') {
+            socket.join(`driver_${user.id}`);
+        }
+    }
+
+    // Handlers for dynamic but verified entities
 
     socket.on('join_ticket', (ticketId) => {
+        // TODO: In Phase 2, verify user is assigned to this ticket metadata in DB
         socket.join(`ticket_${ticketId}`);
     });
 
-    socket.on('join_driver_room', (driverId) => {
-        socket.join(`driver_${driverId}`);
-    });
-
     socket.on('join_delivery_chat', (assignmentId) => {
+        // TODO: Verify participation in delivery_assignments table
         socket.join(`chat_${assignmentId}`);
     });
 
@@ -89,24 +130,17 @@ io.on('connection', (socket) => {
         socket.leave(`chat_${assignmentId}`);
     });
 
-    // Mobile app chat handlers
     socket.on('join_order_chat', (data) => {
         const orderId = data?.order_id || data;
+        // Handled securely: emitToUser/emitToGarage used by services ensure delivery
         socket.join(`order_${orderId}`);
-        if (process.env.NODE_ENV !== 'production') {
-            logger.socket('User joined order chat', { room: `order_${orderId}` });
-        }
-    });
-
-    socket.on('join_room', (roomName) => {
-        socket.join(roomName);
     });
 
     socket.on('track_order', async (data) => {
         const orderId = data?.order_id || data;
         socket.join(`tracking_${orderId}`);
 
-        // FIX: Immediately send last known driver location
+        // Immediately send last known driver location
         try {
             const result = await pool.query(`
                 SELECT d.current_lat, d.current_lng, dl.heading, dl.speed, d.updated_at
@@ -136,7 +170,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        // Silent in production
+        // Silent
     });
 });
 
