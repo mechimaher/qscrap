@@ -79,6 +79,10 @@ services:
       # CORS (comma-separated origins for production)
       - CORS_ORIGINS=${CORS_ORIGINS:-}
 
+      # Public Configuration (Enterprise Audit)
+      - GOOGLE_MAPS_KEY=${GOOGLE_MAPS_KEY:-}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+
     volumes:
       - ./uploads:/app/uploads
     depends_on:

@@ -2433,11 +2433,11 @@ function toggleBrandsList() {
 
 function renderBrandCheckboxes(filterText = '') {
     const container = document.getElementById('brandCheckboxes');
-    // console.log('[DEBUG] Rendering brands start', {
+    /* console.log('[DEBUG] Rendering brands start', {
         containerExists: !!container,
         carBrandsLength: typeof CAR_BRANDS !== 'undefined' ? CAR_BRANDS.length : 'undefined',
         filterText
-    });
+    }); */
 
     if (!container) {
         console.error('[DEBUG] brandCheckboxes container not found!');
