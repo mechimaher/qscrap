@@ -21,7 +21,7 @@ export interface AppError extends Error {
 /**
  * Type guard to check if something is an Error
  */
-export function isError(value: unknown): value is Error {
+function isError(value: unknown): value is Error {
     return value instanceof Error;
 }
 

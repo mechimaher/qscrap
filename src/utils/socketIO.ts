@@ -158,10 +158,4 @@ export function emitToAdmin(event: string, data: unknown): boolean {
     return emitToRoom('admin', event, data);
 }
 
-/**
- * Cleanup for testing purposes
- */
-export function resetSocketIO(): void {
-    ioInstance = null;
-}
 
