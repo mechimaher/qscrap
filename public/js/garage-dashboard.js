@@ -1569,14 +1569,17 @@ async function loadOrders() {
                                 <button class="btn-cancel" onclick="openCancelOrderModal('${o.order_id}')" title="Cancel this order">
                                     <i class="bi bi-x-circle"></i> Cancel
                                 </button>
+                                <button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-tertiary)';" onmouseout="this.style.background='transparent';">
+                                    <i class="bi bi-printer"></i> Print
+                                </button>
                                 <button class="btn-status next" onclick="updateOrderStatus('${o.order_id}', '${transition.next}')">
                                     <i class="bi bi-check-circle"></i> ${transition.label}
                                 </button>
                             </div>
                         `;
             } else if (o.order_status === 'ready_for_pickup') {
-                // Waiting for QScrap collection - no actions for garage
-                actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-hourglass-split"></i> Waiting for QScrap collection</span></div>`;
+                // Waiting for QScrap collection - show print button
+                actionsHtml = `<div class="order-actions" style="display: flex; align-items: center; gap: 8px;"><span style="color: var(--primary);"><i class="bi bi-hourglass-split"></i> Waiting for collection</span><button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 5px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer;"><i class="bi bi-printer"></i> Print</button></div>`;
             } else if (o.order_status === 'collected') {
                 // Part picked up by driver - on the way to customer
                 actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-truck"></i> Part is on its way to customer</span></div>`;
@@ -5216,6 +5219,23 @@ async function viewOrder(orderId) {
             document.getElementById('orderModalNotesSection').style.display = 'none';
         }
 
+        // Print packing slip button in modal (for actionable statuses)
+        const printBtnContainer = document.getElementById('orderModalPrintBtn');
+        if (printBtnContainer) {
+            const printableStatuses = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit'];
+            if (printableStatuses.includes(order.order_status)) {
+                printBtnContainer.innerHTML = `
+                    <button onclick="printPackingSlip('${orderId}')" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';">
+                        <i class="bi bi-printer"></i> Print Packing Slip / طباعة بطاقة
+                    </button>
+                `;
+                printBtnContainer.style.display = 'block';
+            } else {
+                printBtnContainer.innerHTML = '';
+                printBtnContainer.style.display = 'none';
+            }
+        }
+
         // Show modal
         document.getElementById('orderDetailModal').classList.add('active');
 
@@ -5371,6 +5391,304 @@ async function downloadPayoutStatement(orderId) {
     } catch (err) {
         console.error('Payout statement download error:', err);
         showToast('Connection error', 'error');
+    }
+}
+
+// ==========================================
+// PRINTABLE PACKING SLIP
+// ==========================================
+
+/**
+ * Print a packing slip for an order
+ * Opens a print-optimized popup with order details
+ * No backend needed - uses already-fetched order data
+ */
+async function printPackingSlip(orderId) {
+    try {
+        showToast('Preparing packing slip...', 'info');
+
+        // Fetch full order details
+        const res = await fetch(`${API_URL}/orders/${orderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to load order');
+        const data = await res.json();
+        const order = data.order;
+
+        const garageName = localStorage.getItem('garageName') || 'Partner Garage';
+        const orderDate = new Date(order.created_at).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+        const orderTime = new Date(order.created_at).toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        const conditionLabels = {
+            new: 'New / جديد', used_excellent: 'Used - Excellent / ممتاز',
+            used_good: 'Used - Good / جيد', used_fair: 'Used - Fair / مقبول',
+            refurbished: 'Refurbished / مجدد'
+        };
+        const conditionText = conditionLabels[order.part_condition] || order.part_condition || '---';
+
+        const vehicle = `${order.car_make || ''} ${order.car_model || ''} ${order.car_year || ''}`.trim();
+        const partName = order.part_category
+            ? (order.part_subcategory ? `${order.part_category} > ${order.part_subcategory}` : order.part_category)
+            : (order.part_description || 'Spare Part');
+
+        const slipHTML = `
+<!DOCTYPE html>
+<html dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Packing Slip - Order #${order.order_number || orderId.slice(0, 8)}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page { size: A5 portrait; margin: 8mm; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 12px;
+            color: #000;
+            background: #fff;
+            padding: 8mm;
+            max-width: 148mm;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .header-left h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .header-left .subtitle {
+            font-size: 11px;
+            color: #555;
+        }
+        .header-right {
+            text-align: right;
+            font-size: 11px;
+        }
+        .header-right .order-num {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .section {
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .section-title {
+            background: #000;
+            color: #fff;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+        .section-body {
+            padding: 8px 10px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            gap: 8px;
+        }
+        .row .label {
+            color: #666;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+        .row .value {
+            font-weight: 600;
+            text-align: right;
+            font-size: 12px;
+        }
+        .large-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .divider {
+            border-top: 1px dashed #aaa;
+            margin: 8px 0;
+        }
+        .footer {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+        }
+        .footer .brand {
+            font-weight: 700;
+            color: #000;
+            font-size: 12px;
+        }
+        .cut-line {
+            border-top: 1px dashed #aaa;
+            margin: 12px 0 8px;
+            position: relative;
+        }
+        .cut-line::before {
+            content: '✂';
+            position: absolute;
+            top: -9px;
+            left: 0;
+            font-size: 14px;
+            color: #aaa;
+            background: #fff;
+            padding-right: 4px;
+        }
+        .customer-copy {
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        @media print {
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- GARAGE / DRIVER COPY -->
+    <div class="header">
+        <div class="header-left">
+            <h1>📦 PACKING SLIP</h1>
+            <div class="subtitle">بطاقة التعبئة</div>
+        </div>
+        <div class="header-right">
+            <div class="order-num">#${order.order_number || orderId.slice(0, 8)}</div>
+            <div>${orderDate} ${orderTime}</div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER INFO (for Driver) -->
+    <div class="section">
+        <div class="section-title">
+            <span>📍 DELIVERY TO / التوصيل إلى</span>
+        </div>
+        <div class="section-body">
+            <div class="row">
+                <span class="label">Customer / العميل</span>
+                <span class="value">${order.customer_name || 'Customer'}</span>
+            </div>
+            <div class="row">
+                <span class="label">Phone / الهاتف</span>
+                <span class="value large-value">${order.customer_phone || '---'}</span>
+            </div>
+            ${order.delivery_address ? `<div class="row">
+                <span class="label">Address / العنوان</span>
+                <span class="value">${order.delivery_address}</span>
+            </div>` : ''}
+        </div>
+    </div>
+
+    <!-- PART DETAILS -->
+    <div class="section">
+        <div class="section-title">
+            <span>🔧 PART DETAILS / تفاصيل القطعة</span>
+        </div>
+        <div class="section-body">
+            <div class="row">
+                <span class="label">Vehicle / المركبة</span>
+                <span class="value">${vehicle || '---'}</span>
+            </div>
+            <div class="row">
+                <span class="label">Part / القطعة</span>
+                <span class="value">${partName}</span>
+            </div>
+            ${order.part_number ? `<div class="row">
+                <span class="label">Part # / رقم القطعة</span>
+                <span class="value">${order.part_number}</span>
+            </div>` : ''}
+            <div class="row">
+                <span class="label">Condition / الحالة</span>
+                <span class="value">${conditionText}</span>
+            </div>
+            <div class="row">
+                <span class="label">Warranty / الضمان</span>
+                <span class="value">${order.warranty_days || 0} days / أيام</span>
+            </div>
+            <div class="divider"></div>
+            <div class="row">
+                <span class="label">Amount / المبلغ</span>
+                <span class="value large-value">${parseFloat(order.total_amount || order.part_price || 0).toFixed(2)} QAR</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- GARAGE INFO -->
+    <div class="section">
+        <div class="section-title">
+            <span>🏪 FROM / من الورشة</span>
+        </div>
+        <div class="section-body">
+            <div class="row">
+                <span class="label">Garage / الورشة</span>
+                <span class="value">${garageName}</span>
+            </div>
+            ${order.garage_cr_number ? `<div class="row">
+                <span class="label">CR / السجل التجاري</span>
+                <span class="value">${order.garage_cr_number}</span>
+            </div>` : ''}
+        </div>
+    </div>
+
+    <!-- CUT LINE - Customer receipt below -->
+    <div class="cut-line"></div>
+    <div class="customer-copy">✦ CUSTOMER COPY / نسخة العميل ✦</div>
+
+    <!-- COMPACT CUSTOMER RECEIPT -->
+    <div style="border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px; font-size: 11px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <strong>Order #${order.order_number || orderId.slice(0, 8)}</strong>
+            <span>${orderDate}</span>
+        </div>
+        <div style="margin-bottom: 4px;"><strong>Part:</strong> ${partName}</div>
+        <div style="margin-bottom: 4px;"><strong>Vehicle:</strong> ${vehicle || '---'}</div>
+        <div style="margin-bottom: 4px;"><strong>Condition:</strong> ${conditionText}</div>
+        <div style="margin-bottom: 4px;"><strong>Warranty:</strong> ${order.warranty_days || 0} days</div>
+        <div style="font-size: 14px; font-weight: 700; margin-top: 6px;">${parseFloat(order.total_amount || order.part_price || 0).toFixed(2)} QAR</div>
+        <div style="margin-top: 6px; color: #888; font-size: 10px;">Sold by: ${garageName}</div>
+    </div>
+
+    <div class="footer">
+        <div class="brand">QScrap / كيو سكراب</div>
+        <div>Auto Parts Marketplace · qscrap.qa</div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            window.print();
+            window.onafterprint = function() { window.close(); };
+            // Fallback: close after 30 seconds if onafterprint not supported
+            setTimeout(function() { window.close(); }, 30000);
+        };
+    </script>
+</body>
+</html>`;
+
+        // Open print popup
+        const printWindow = window.open('', '_blank', 'width=600,height=800');
+        if (printWindow) {
+            printWindow.document.write(slipHTML);
+            printWindow.document.close();
+        } else {
+            showToast('Please allow popups to print packing slips', 'warning');
+        }
+
+    } catch (err) {
+        console.error('Print packing slip error:', err);
+        showToast('Failed to generate packing slip', 'error');
     }
 }
 
