@@ -3554,7 +3554,6 @@ async function loadPendingDisputes() {
 
         if (data.disputes && data.disputes.length > 0) {
             pendingDisputes = data.disputes.filter(d => d.status === 'pending');
-            pendingDisputes = data.disputes.filter(d => d.status === 'pending');
             updateOrdersBadge();
             if (pendingDisputes.length > 0) {
                 showToast(`${pendingDisputes.length} pending dispute(s) - check Orders section`, 'warning');
