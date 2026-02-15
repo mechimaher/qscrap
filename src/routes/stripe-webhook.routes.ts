@@ -202,7 +202,44 @@ async function handleSubscriptionUpgradePayment(intent: Stripe.PaymentIntent): P
             payment_method: 'card'
         });
 
-        logger.info('Subscription upgrade payment confirmed', { garageId: garage_id, planName: plan_name });
+        // ==========================================
+        // NEW: Auto-Execute Subscription Upgrade
+        // ==========================================
+
+        const effectiveGarageId = garage_id || result.rows[0].garage_id;
+
+        // 1. Deactivate current active subscription
+        await pool.query(`
+            UPDATE garage_subscriptions
+            SET status = 'upgraded',
+                updated_at = NOW()
+            WHERE garage_id = $1 AND status = 'active'
+        `, [effectiveGarageId]);
+
+        // 2. Create new active subscription
+        const today = new Date();
+        const cycleEnd = new Date(today);
+        cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+        const planId = result.rows[0].to_plan_id; // retrieved from RETURNING clause
+
+        await pool.query(`
+            INSERT INTO garage_subscriptions 
+            (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, next_billing_date) 
+            VALUES ($1, $2, 'active', $3, $4, $4)
+        `, [effectiveGarageId, planId, today, cycleEnd]);
+
+        // 3. Mark request as completed
+        await pool.query(`
+            UPDATE subscription_change_requests
+            SET status = 'completed',
+                updated_at = NOW(),
+                admin_notes = 'Auto-upgraded via Stripe Webhook'
+            WHERE request_id = $1
+        `, [request_id]);
+
+        // ==========================================
+
+        logger.info('Subscription upgrade payment confirmed & executed', { garageId: effectiveGarageId, planName: plan_name });
     } catch (error: any) {
         logger.error('handleSubscriptionUpgradePayment error', { intentId: intent.id, error: error.message });
         throw error;

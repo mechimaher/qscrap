@@ -261,9 +261,43 @@ export class SubscriptionService {
                 WHERE request_id = $1
             `, [request.request_id]);
 
+            // ==========================================
+            // NEW: Auto-Execute Subscription Upgrade
+            // ==========================================
+
+            // 1. Deactivate current active subscription
+            await client.query(`
+                UPDATE garage_subscriptions
+                SET status = 'upgraded',
+                    updated_at = NOW()
+                WHERE garage_id = $1 AND status = 'active'
+            `, [request.garage_id]);
+
+            // 2. Create new active subscription
+            const today = new Date();
+            const cycleEnd = new Date(today);
+            cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+
+            await client.query(`
+                INSERT INTO garage_subscriptions 
+                (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, next_billing_date) 
+                VALUES ($1, $2, 'active', $3, $4, $4)
+            `, [request.garage_id, request.to_plan_id, today, cycleEnd]);
+
+            // 3. Mark request as completed
+            await client.query(`
+                UPDATE subscription_change_requests
+                SET status = 'completed',
+                    updated_at = NOW(),
+                    admin_notes = 'Auto-upgraded via Stripe Payment'
+                WHERE request_id = $1
+            `, [request.request_id]);
+
+            // ==========================================
+
             await client.query('COMMIT');
 
-            logger.info('Upgrade payment confirmed', { garageName: request.garage_name, planName: request.plan_name });
+            logger.info('Upgrade payment confirmed & executed', { garageName: request.garage_name, planName: request.plan_name });
 
             return {
                 success: true,
