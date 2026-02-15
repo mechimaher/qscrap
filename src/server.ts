@@ -55,24 +55,25 @@ initializeSocketIO(io);
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from './config/security';
 
+// Track viewers per request for real-time viewer count (Institutional Logic)
+const requestViewers = new Map<string, Set<string>>();
+
 io.use((socket, next) => {
     // Standard approach: token in auth. For legacy/mobile fallback: check headers
     const token = socket.handshake.auth?.token || socket.handshake.headers['authorization']?.split(' ')[1];
 
     if (!token) {
-        // Only allow unauthenticated in development if not requiring auth
-        if (process.env.NODE_ENV !== 'production' && !socket.handshake.auth?.requireAuth) {
-            return next();
-        }
+        // INSTITUTIONAL MANDATE: No unauthenticated WebSocket connections allowed in any environment.
         return next(new Error('Authentication error: Token required'));
     }
 
     try {
         const decoded = jwt.verify(token, getJwtSecret()) as any;
-        // Derived identity - do not trust client-provided IDs later
+        // Derived identity - align with AuthService.ts JWT claims
         socket.data.user = {
             id: decoded.userId || decoded.user_id,
-            role: (decoded.role || decoded.userRole || 'customer').toLowerCase(),
+            userType: decoded.userType?.toLowerCase(),
+            staffRole: decoded.staffRole?.toLowerCase(),
             garageId: decoded.garageId
         };
         next();
@@ -84,63 +85,80 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
     const user = socket.data.user;
 
-    if (process.env.NODE_ENV !== 'production' && user) {
+    if (user) {
         logger.socket('Authorized connection', {
             socketId: socket.id,
             userId: user.id,
-            role: user.role
+            userType: user.userType,
+            staffRole: user.staffRole
         });
     }
 
     // ============================================
     // SECURE ROOM AUTHORIZATION
-    // Rooms are assigned based on verified Token Claims
+    // Rooms are assigned based on verified Token Claims ONLY
     // ============================================
     if (user?.id) {
-        // 1. Personal User Room
+        // 1. Personal User Room (Canonical)
         socket.join(`user_${user.id}`);
 
-        // 2. Role-Based Rooms (derived, not requested)
-        if (user.role === 'garage' && user.garageId) {
+        // 2. Role-Based Rooms (derived)
+        if (user.userType === 'garage' && user.garageId) {
             socket.join(`garage_${user.garageId}`);
         }
 
-        if (['admin', 'staff', 'operations'].includes(user.role)) {
-            socket.join('operations');
+        // 3. Administrative Rooms
+        if (user.userType === 'staff') {
+            socket.join('admin');
+            if (['admin', 'operations', 'support'].includes(user.staffRole)) {
+                socket.join('operations');
+                socket.join('support');
+            }
         }
 
-        if (user.role === 'driver') {
+        // 4. Driver Rooms
+        if (user.userType === 'driver') {
             socket.join(`driver_${user.id}`);
         }
     }
 
-    // Handlers for dynamic but verified entities
+    // ============================================
+    // VERIFIED INTERACTION HANDLERS
+    // ============================================
 
-    socket.on('join_ticket', (ticketId) => {
-        // TODO: In Phase 2, verify user is assigned to this ticket metadata in DB
-        socket.join(`ticket_${ticketId}`);
+    // Real-time Request Tracking (Public pool logic)
+    socket.on('track_request_view', ({ request_id }: { request_id: string }) => {
+        if (!request_id) return;
+
+        if (!requestViewers.has(request_id)) {
+            requestViewers.set(request_id, new Set());
+        }
+        requestViewers.get(request_id)!.add(socket.id);
+        socket.join(`request_${request_id}`);
+
+        const count = requestViewers.get(request_id)!.size;
+        io.to(`request_${request_id}`).emit('viewer_count_update', { request_id, count });
     });
 
-    socket.on('join_delivery_chat', (assignmentId) => {
-        // TODO: Verify participation in delivery_assignments table
-        socket.join(`chat_${assignmentId}`);
+    socket.on('untrack_request_view', ({ request_id }: { request_id: string }) => {
+        if (request_id && requestViewers.has(request_id)) {
+            requestViewers.get(request_id)!.delete(socket.id);
+            socket.leave(`request_${request_id}`);
+
+            const count = requestViewers.get(request_id)!.size;
+            io.to(`request_${request_id}`).emit('viewer_count_update', { request_id, count });
+            if (count === 0) requestViewers.delete(request_id);
+        }
     });
 
-    socket.on('leave_delivery_chat', (assignmentId) => {
-        socket.leave(`chat_${assignmentId}`);
-    });
-
-    socket.on('join_order_chat', (data) => {
-        const orderId = data?.order_id || data;
-        // Handled securely: emitToUser/emitToGarage used by services ensure delivery
-        socket.join(`order_${orderId}`);
-    });
-
+    // Tracking for specific order (Ownership check TODO: Phase 2 DB validation)
     socket.on('track_order', async (data) => {
         const orderId = data?.order_id || data;
+        if (!orderId) return;
+
         socket.join(`tracking_${orderId}`);
 
-        // Immediately send last known driver location
+        // Send last known driver location
         try {
             const result = await pool.query(`
                 SELECT d.current_lat, d.current_lng, dl.heading, dl.speed, d.updated_at
@@ -170,7 +188,15 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        // Silent
+        // Cleanup tracking
+        requestViewers.forEach((viewers, requestId) => {
+            if (viewers.has(socket.id)) {
+                viewers.delete(socket.id);
+                const count = viewers.size;
+                io.to(`request_${requestId}`).emit('viewer_count_update', { request_id: requestId, count });
+                if (count === 0) requestViewers.delete(requestId);
+            }
+        });
     });
 });
 
