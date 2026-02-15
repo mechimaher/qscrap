@@ -131,10 +131,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         textAlign: 'center',
     },
-    icon: {
-        fontSize: 24,
-        marginBottom: 8,
-    },
     label: {
         fontSize: 12,
         marginTop: 4,

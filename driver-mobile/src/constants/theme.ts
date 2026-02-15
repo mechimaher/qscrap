@@ -38,42 +38,6 @@ export const lightTheme = {
     placeholder: '#9CA3AF',
 };
 
-// ============================================
-// DARK THEME - Qatar Night Premium (Future-Ready)
-// ============================================
-export const darkTheme = {
-    background: '#0A0A0B',
-    surface: '#141416',
-    surfaceSecondary: '#1C1C1F',
-    surfaceElevated: '#1F1F23',
-    card: '#1C1C1F',
-    cardHover: '#252529',
-    border: '#2C2C30',
-    borderLight: '#252529',
-
-    text: '#FAFAFA',
-    textSecondary: '#A1A1AA',
-    textMuted: '#71717A',
-    textInverse: '#1A1A1A',
-
-    primary: '#8D1B3D', // Same Qatar Maroon
-    secondary: '#C9A227', // Same Gold accent
-    statusBar: 'light' as const,
-
-    // Additional colors for components
-    success: '#10B981',
-    warning: '#F59E0B',
-    danger: '#EF4444',
-    error: '#EF4444',
-    info: '#C9A227',
-
-    // Input fields
-    inputBackground: '#1C1C1F',
-    inputBorder: '#2C2C30',
-    inputText: '#FAFAFA',
-    placeholder: '#71717A',
-};
-
 // Proper type that supports both light and dark themes
 export interface ThemeColors {
     background: string;
@@ -133,10 +97,8 @@ export const Colors = {
     delivered: '#059669',
     failed: '#dc2626',
 
-    // Theme references
-    light: lightTheme,
-    dark: darkTheme,
-    theme: themeColors, // Default to light
+    // Theme reference (light-only)
+    theme: themeColors,
 
     // Gradients (use with LinearGradient) - Qatar theme
     gradients: {

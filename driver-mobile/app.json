@@ -104,7 +104,8 @@
             "usesCleartextTraffic": false
           }
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "runtimeVersion": "1.0.0",
     "updates": {

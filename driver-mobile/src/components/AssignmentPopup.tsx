@@ -2,7 +2,7 @@
 // Premium accept/reject popup with 30-second countdown timer
 // VVIP cutting-edge feature inspired by Uber/Careem
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -15,7 +15,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Audio } from 'expo-av';
+import { playAssignmentAlert } from '../services/SoundService';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
 import { useI18n } from '../i18n';
@@ -43,11 +43,15 @@ export default function AssignmentPopup({
 }: AssignmentPopupProps) {
     const { colors } = useTheme();
     const { t } = useI18n();
-    const alertSoundRef = useRef<Audio.Sound | null>(null);
+    // Sound is managed by centralized SoundService
     const [timeLeft, setTimeLeft] = useState(COUNTDOWN_SECONDS);
     const progressAnim = useRef(new Animated.Value(1)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+    // Stable ref for onTimeout to prevent countdown timer re-creation
+    const onTimeoutRef = useRef(onTimeout);
+    onTimeoutRef.current = onTimeout;
 
     // Reset and start countdown when popup becomes visible
     useEffect(() => {
@@ -91,28 +95,14 @@ export default function AssignmentPopup({
             Vibration.vibrate([0, 500, 200, 500]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-            // Play alert sound (audible even in silent mode on iOS)
-            (async () => {
-                try {
-                    await Audio.setAudioModeAsync({
-                        playsInSilentModeIOS: true,
-                        shouldDuckAndroid: true,
-                    });
-                    const { sound } = await Audio.Sound.createAsync(
-                        require('../../assets/sounds/new_assignment.mp3'),
-                        { shouldPlay: true, volume: 1.0 }
-                    );
-                    alertSoundRef.current = sound;
-                } catch (e) {
-                    console.warn('[AssignmentPopup] Could not play alert sound:', e);
-                }
-            })();
+            // Play alert sound via centralized SoundService
+            playAssignmentAlert();
         } else {
             scaleAnim.setValue(0.8);
         }
     }, [visible, assignment]);
 
-    // Countdown timer
+    // Countdown timer — uses ref for onTimeout to keep deps stable
     useEffect(() => {
         if (!visible || !assignment) return;
 
@@ -120,7 +110,7 @@ export default function AssignmentPopup({
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(interval);
-                    onTimeout();
+                    onTimeoutRef.current();
                     return 0;
                 }
                 // Haptic feedback for last 10 seconds
@@ -132,27 +122,17 @@ export default function AssignmentPopup({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [visible, assignment, onTimeout]);
+    }, [visible, assignment]);
 
-    const handleAccept = async () => {
+    const handleAccept = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Vibration.cancel();
-        if (alertSoundRef.current) {
-            await alertSoundRef.current.stopAsync().catch(() => { });
-            await alertSoundRef.current.unloadAsync().catch(() => { });
-            alertSoundRef.current = null;
-        }
         onAccept();
     };
 
-    const handleReject = async () => {
+    const handleReject = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         Vibration.cancel();
-        if (alertSoundRef.current) {
-            await alertSoundRef.current.stopAsync().catch(() => { });
-            await alertSoundRef.current.unloadAsync().catch(() => { });
-            alertSoundRef.current = null;
-        }
         onReject();
     };
 

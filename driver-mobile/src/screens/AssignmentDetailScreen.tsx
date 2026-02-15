@@ -424,7 +424,7 @@ export default function AssignmentDetailScreen() {
                 {isCompleted && (assignment.part_price || assignment.delivery_fee || assignment.total_amount) && (
                     <View style={[styles.section, { backgroundColor: colors.surface }, Shadows.sm]}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                            <Ionicons name="wallet" size={16} color={Colors.primary} /> {t('payment_summary') || 'Payment Summary'}
+                            <Ionicons name="wallet" size={16} color={Colors.primary} /> Payment Summary
                         </Text>
 
                         {/* Payment Method Badge */}

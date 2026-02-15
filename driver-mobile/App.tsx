@@ -1,5 +1,6 @@
 // QScrap Driver App - Main Entry Point
 import React from 'react';
+import * as Sentry from '@sentry/react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -20,6 +21,30 @@ import { I18nProvider } from './src/i18n';
 import { ToastProvider } from './src/components/Toast';
 import { NetworkBanner } from './src/components/NetworkBanner';
 import { SettingsProvider } from './src/contexts/SettingsContext';
+
+// Initialize Sentry — must be called before any React rendering
+Sentry.init({
+    dsn: 'https://c29a5eeaa5d1659a3f2f9715a195dcca@o4510826572873728.ingest.de.sentry.io/4510890965794896',
+    // Performance monitoring — sample 20% of transactions in production
+    tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+    // Only send errors in production builds
+    enabled: !__DEV__,
+    // Attach screenshots to error reports for visual context
+    attachScreenshot: true,
+    // Environment tag
+    environment: __DEV__ ? 'development' : 'production',
+    // Enrich errors with device context
+    enableAutoSessionTracking: true,
+    // Filter out noisy network errors that aren't real bugs
+    beforeSend(event) {
+        // Don't report network timeouts — these are expected on mobile
+        const message = event.exception?.values?.[0]?.value || '';
+        if (message.includes('Network request failed') || message.includes('AbortError')) {
+            return null;
+        }
+        return event;
+    },
+});
 
 // Import screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -253,8 +278,8 @@ function ThemedApp() {
     );
 }
 
-// Main App
-export default function App() {
+// Main App — wrapped with Sentry for automatic error capture
+export default Sentry.wrap(function App() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ErrorBoundary name="RootApp">
@@ -278,7 +303,7 @@ export default function App() {
             </ErrorBoundary>
         </GestureHandlerRootView>
     );
-}
+});
 
 const styles = StyleSheet.create({
     loadingContainer: {

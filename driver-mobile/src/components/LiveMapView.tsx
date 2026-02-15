@@ -8,7 +8,7 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/theme';
 import { Assignment } from '../services/api';
-import { VVIP_MIDNIGHT_STYLE, VVIP_LIGHT_STYLE } from '../constants/mapStyle';
+import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 import { Ionicons } from '@expo/vector-icons';
 
 interface DriverLocation {

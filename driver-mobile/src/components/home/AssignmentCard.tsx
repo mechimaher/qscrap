@@ -168,9 +168,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
     },
-    locationEmoji: {
-        fontSize: 14,
-    },
     locationText: {
         flex: 1,
         fontSize: 13,

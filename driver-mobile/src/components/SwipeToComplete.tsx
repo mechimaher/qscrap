@@ -2,7 +2,7 @@
 // Premium gesture-based action completion like Uber's slide to confirm
 // VVIP cutting-edge feature with smooth animations
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -48,6 +48,12 @@ export default function SwipeToComplete({
     const [isLoading, setIsLoading] = useState(false);
     const [trackWidth, setTrackWidth] = useState(SCREEN_WIDTH - 80);
 
+    // Use refs so PanResponder always reads current state
+    const isCompletedRef = useRef(isCompleted);
+    const isLoadingRef = useRef(isLoading);
+    isCompletedRef.current = isCompleted;
+    isLoadingRef.current = isLoading;
+
     const maxSwipe = trackWidth - BUTTON_SIZE - 8;
 
     const gradientColors = {
@@ -56,10 +62,10 @@ export default function SwipeToComplete({
         danger: [Colors.danger, '#dc2626'] as [string, string],
     };
 
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => !disabled && !isCompleted && !isLoading,
-            onMoveShouldSetPanResponder: () => !disabled && !isCompleted && !isLoading,
+    const panResponder = useMemo(
+        () => PanResponder.create({
+            onStartShouldSetPanResponder: () => !disabled && !isCompletedRef.current && !isLoadingRef.current,
+            onMoveShouldSetPanResponder: () => !disabled && !isCompletedRef.current && !isLoadingRef.current,
 
             onPanResponderGrant: () => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -137,8 +143,9 @@ export default function SwipeToComplete({
                     }).start();
                 }
             },
-        })
-    ).current;
+        }),
+        [disabled, maxSwipe]
+    );
 
     return (
         <View
