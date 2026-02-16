@@ -109,8 +109,18 @@ jobs:
           DB_PASSWORD: testpassword
           DB_NAME: qscrap_test
         run: |
+          # Wait for PostgreSQL to be ready
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h localhost -U postgres; do
+            echo "Postgres is unavailable - sleeping"
+            sleep 1
+          done
+          echo "Postgres is up!"
+
           # Apply base schema (creates core tables)
+          echo "Applying src/config/database.sql..."
           psql -h localhost -U postgres -d qscrap_test -f src/config/database.sql
+          
           # Apply incremental migrations on top
           MIGRATION_TOLERANT=true npm run db:migrate
 
