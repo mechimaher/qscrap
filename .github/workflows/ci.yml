@@ -101,7 +101,6 @@ jobs:
           fi
 
       - name: Bootstrap test database schema
-        run: npm run db:migrate
         env:
           PGPASSWORD: testpassword
           DB_HOST: localhost
@@ -109,6 +108,11 @@ jobs:
           DB_USER: postgres
           DB_PASSWORD: testpassword
           DB_NAME: qscrap_test
+        run: |
+          # Apply base schema (creates core tables)
+          psql -h localhost -U postgres -d qscrap_test -f src/config/database.sql
+          # Apply incremental migrations on top
+          MIGRATION_TOLERANT=true npm run db:migrate
 
       - name: Run tests with coverage
         run: npm test -- --coverage --ci
