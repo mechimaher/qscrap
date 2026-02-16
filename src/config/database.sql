@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict fpqutzxvTUu7Tk2ETUANfz2Kdd6HyDvMk0eirEGSzPgb3YvJ4eVp4PMPyKS0rPp
 
 -- Dumped from database version 16.11
 -- Dumped by pg_dump version 16.11
@@ -1546,13 +1545,11 @@ ALTER TABLE ONLY public.undo_audit_log
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fpqutzxvTUu7Tk2ETUANfz2Kdd6HyDvMk0eirEGSzPgb3YvJ4eVp4PMPyKS0rPp
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict 9S2uvEbIllN2pjwdaGd3TDcBgVP1dL8uPNq7Ppe51zh0FGJOOm2uCyrPsEqef4n
 
 -- Dumped from database version 16.11
 -- Dumped by pg_dump version 16.11
@@ -1581,5 +1578,4 @@ INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, monthly_fe
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 9S2uvEbIllN2pjwdaGd3TDcBgVP1dL8uPNq7Ppe51zh0FGJOOm2uCyrPsEqef4n
 
