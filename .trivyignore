@@ -1,6 +1,31 @@
 # Trivy Ignore File
-# Suppress false positives for Stripe test keys in compiled JavaScript
-# These are not actual secrets - they're placeholder strings in the compiled code
+# Suppress false positives and accepted risks
 
-# Stripe test key placeholders in compiled dist/ files
-secret:stripe-secret-token
+# ============================================
+# Stripe Test Key Placeholders (FALSE POSITIVE)
+# ============================================
+# These are NOT actual secrets - they're placeholder strings in compiled TypeScript
+# The actual secret is loaded from environment variables at runtime
+# Pattern: process.env.STRIPE_SECRET_KEY || '*******************'
+
+# Ignore Stripe secret detections in compiled dist/ files
+/app/dist/services/subscription/billing.job.js:stripe-secret-token
+/app/dist/services/subscription/payment-methods.service.js:stripe-secret-token
+/app/dist/services/subscription/subscription.service.js:stripe-secret-token
+
+# ============================================
+# Node.js Dependencies (ACCEPTED RISK)
+# ============================================
+# These are dev dependencies used only in build/test, not in production runtime
+# Upgrading would require major version changes and testing
+
+# cross-spawn - ReDoS vulnerability (dev dependency only)
+CVE-2024-21538
+
+# glob - Command injection via malicious filenames (dev dependency only)
+CVE-2025-64756
+
+# tar - File overwrite vulnerabilities (dev dependency only)
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
