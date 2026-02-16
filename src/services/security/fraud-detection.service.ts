@@ -206,7 +206,7 @@ export class FraudDetectionService {
      * Detect duplicate pricing (possible spam/bot behavior)
      */
     private async checkDuplicatePricing(context: BidContext): Promise<{ suspicious: boolean }> {
-        if (!this.SUSPICIOUS_PRICE_PATTERNS) return { suspicious: false };
+        if (!this.SUSPICIOUS_PRICE_PATTERNS) {return { suspicious: false };}
 
         // Check if garage submitted same exact price on multiple requests in last hour
         const result = await this.pool.query(`

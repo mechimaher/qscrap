@@ -177,8 +177,8 @@ export class AnalyticsService {
             `;
 
             const params = [garageId];
-            if (startDate) params.push(startDate);
-            if (endDate) params.push(endDate);
+            if (startDate) {params.push(startDate);}
+            if (endDate) {params.push(endDate);}
 
             const result = await pool.query(query, params);
             return result.rows;
@@ -367,7 +367,7 @@ export class AnalyticsService {
     }
 
     private static calculateChange(current: number, previous: number): number {
-        if (previous === 0) return current > 0 ? 100 : 0;
+        if (previous === 0) {return current > 0 ? 100 : 0;}
         return Math.round(((current - previous) / previous) * 100);
     }
 }

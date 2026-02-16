@@ -499,8 +499,8 @@ export class SupportActionsService {
             let ticketMsg = `❌ **Order Cancelled**\n\n`;
             ticketMsg += `Order #${context.order.order_number}\n`;
             ticketMsg += `Reason: ${params.reason}\n`;
-            if (payoutAction) ticketMsg += `Payout: Cancelled\n`;
-            if (refundAction) ticketMsg += `Refund: ${refundAction.amount} QAR initiated`;
+            if (payoutAction) {ticketMsg += `Payout: Cancelled\n`;}
+            if (refundAction) {ticketMsg += `Refund: ${refundAction.amount} QAR initiated`;}
 
             await this.postTicketUpdate(ticketId, params.agentId, ticketMsg, client);
 
@@ -833,7 +833,7 @@ export class SupportActionsService {
                     io.to(`garage_${garageId}`).emit('payout_reversal', {
                         reversal_id: reversalId,
                         amount: payout.amount,
-                        reason: reason,
+                        reason,
                         type: 'deduction_pending'
                     });
                 }
@@ -898,7 +898,7 @@ export class SupportActionsService {
                         refund_id: refundId
                     }
                 }, {
-                    idempotencyKey: idempotencyKey // G-04 FIX: Stripe-level idempotency
+                    idempotencyKey // G-04 FIX: Stripe-level idempotency
                 });
 
                 stripeRefundId = stripeRefund.id;

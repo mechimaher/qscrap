@@ -56,11 +56,11 @@ export const CachePrefix = {
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
     const client = getRedisClient();
-    if (!client) return null;
+    if (!client) {return null;}
 
     try {
         const value = await client.get(key);
-        if (!value) return null;
+        if (!value) {return null;}
         return JSON.parse(value) as T;
     } catch (err) {
         logger.warn('Cache get failed', { key, error: (err as Error).message });
@@ -73,7 +73,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
  */
 export async function cacheSet<T>(key: string, value: T, ttlSeconds: number = CacheTTL.MEDIUM): Promise<boolean> {
     const client = getRedisClient();
-    if (!client) return false;
+    if (!client) {return false;}
 
     try {
         await client.setEx(key, ttlSeconds, JSON.stringify(value));
@@ -89,7 +89,7 @@ export async function cacheSet<T>(key: string, value: T, ttlSeconds: number = Ca
  */
 export async function cacheDel(key: string): Promise<boolean> {
     const client = getRedisClient();
-    if (!client) return false;
+    if (!client) {return false;}
 
     try {
         await client.del(key);
@@ -106,11 +106,11 @@ export async function cacheDel(key: string): Promise<boolean> {
  */
 export async function cacheInvalidatePattern(pattern: string): Promise<number> {
     const client = getRedisClient();
-    if (!client) return 0;
+    if (!client) {return 0;}
 
     try {
         const keys = await client.keys(pattern);
-        if (keys.length === 0) return 0;
+        if (keys.length === 0) {return 0;}
 
         await client.del(keys);
         logger.debug('Cache pattern invalidated', { pattern, count: keys.length });

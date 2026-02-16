@@ -38,9 +38,9 @@ class StorageService {
             buffer = Buffer.from(matches[2], 'base64');
 
             // Simple extension mapping
-            if (mimeType === 'image/png') extension = 'png';
-            else if (mimeType === 'image/jpeg') extension = 'jpg';
-            else if (mimeType === 'image/webp') extension = 'webp';
+            if (mimeType === 'image/png') {extension = 'png';}
+            else if (mimeType === 'image/jpeg') {extension = 'jpg';}
+            else if (mimeType === 'image/webp') {extension = 'webp';}
         } else {
             // Assume raw base64 string is jpeg if no prefix
             buffer = Buffer.from(base64String, 'base64');

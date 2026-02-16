@@ -6,12 +6,8 @@
  */
 
 import { Server } from 'socket.io';
-import logger from './logger';
 
 let ioInstance: Server | null = null;
-
-// Track viewers per request for real-time viewer count
-const requestViewers = new Map<string, Set<string>>();
 
 /**
  * Initialize the Socket.IO singleton
@@ -37,7 +33,7 @@ export function getIO(): Server | null {
  * Safely handles the case where socket is not initialized
  */
 export function emitToRoom(room: string, event: string, data: unknown): boolean {
-    if (!ioInstance) return false;
+    if (!ioInstance) {return false;}
     ioInstance.to(room).emit(event, data);
     return true;
 }
@@ -77,5 +73,4 @@ export function emitToDriver(driverId: string, event: string, data: unknown): bo
 export function emitToAdmin(event: string, data: unknown): boolean {
     return emitToRoom('admin', event, data);
 }
-
 

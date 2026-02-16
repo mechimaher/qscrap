@@ -93,6 +93,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Ensure PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+      - name: Bootstrap test database schema
+        run: |
+          psql -h localhost -p 5432 -U postgres -d qscrap_test -v ON_ERROR_STOP=1 -f src/config/database.sql
+          psql -h localhost -p 5432 -U postgres -d qscrap_test -v ON_ERROR_STOP=1 -f src/config/migrations/20260208_refresh_tokens.sql
+          psql -h localhost -p 5432 -U postgres -d qscrap_test -v ON_ERROR_STOP=1 -f src/config/migrations/20260215_schema_alignment_push_tokens_part_subcategory.sql
+          psql -h localhost -p 5432 -U postgres -d qscrap_test -v ON_ERROR_STOP=1 -c "INSERT INTO subscription_plans (plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, display_order) VALUES ('starter','Starter',NULL,199.00,0.180,30,'{}'::jsonb,1),('professional','Professional',NULL,499.00,0.150,NULL,'{}'::jsonb,2),('enterprise','Enterprise',NULL,999.00,0.120,NULL,'{}'::jsonb,3) ON CONFLICT (plan_code) DO NOTHING;"
+        env:
+          PGPASSWORD: testpassword
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: testpassword
+          DB_NAME: qscrap_test
+
       - name: Run tests with coverage
         run: npm test -- --coverage --ci
         env:
@@ -146,8 +167,8 @@ jobs:
             -e DB_HOST=localhost \
             qscrap-backend:test
           sleep 5
-          docker logs test-container 2>&1 | head -50 || true
-          docker rm -f test-container || true
+          docker logs test-container 2>&1 | head -50
+          docker rm -f test-container
 
   # ============================================
   # CI Summary

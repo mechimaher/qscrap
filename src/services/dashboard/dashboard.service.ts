@@ -46,7 +46,7 @@ export class DashboardService {
             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE g.garage_id = $1`, [garageId]);
 
-        if (result.rows.length === 0) return null;
+        if (result.rows.length === 0) {return null;}
         const profile = result.rows[0];
         if (!profile.subscription_status && profile.approval_status === 'demo') {
             profile.subscription_status = 'demo';

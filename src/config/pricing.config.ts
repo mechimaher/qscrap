@@ -71,11 +71,11 @@ const defaultConfig: PricingConfig = {
 export const PRICING_CONFIG: Readonly<PricingConfig> = Object.freeze(defaultConfig);
 
 // Helper function to get current config (can be extended to fetch from DB)
-export async function getPricingConfig(): Promise<PricingConfig> {
+export function getPricingConfig(): Promise<PricingConfig> {
     // TODO: Fetch overrides from system_config table
     // const dbConfig = await pool.query('SELECT key, value FROM system_config WHERE category = $1', ['pricing']);
     // Merge with defaults
-    return PRICING_CONFIG;
+    return Promise.resolve(PRICING_CONFIG);
 }
 
 // Log config on startup

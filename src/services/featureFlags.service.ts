@@ -100,7 +100,7 @@ export function getFlag(flagName: string): FeatureFlag | undefined {
  */
 export function updateFlag(flagName: string, updates: Partial<FeatureFlag>): boolean {
     const flag = flags.get(flagName);
-    if (!flag) return false;
+    if (!flag) {return false;}
 
     Object.assign(flag, updates, { updatedAt: new Date() });
     flags.set(flagName, flag);
@@ -113,7 +113,7 @@ export function updateFlag(flagName: string, updates: Partial<FeatureFlag>): boo
  * Set rollout percentage for gradual rollout
  */
 export function setRolloutPercentage(flagName: string, percentage: number): boolean {
-    if (percentage < 0 || percentage > 100) return false;
+    if (percentage < 0 || percentage > 100) {return false;}
     return updateFlag(flagName, { rolloutPercentage: percentage });
 }
 

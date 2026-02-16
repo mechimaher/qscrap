@@ -4,24 +4,254 @@
  */
 
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
-import { getErrorMessage } from '../types';
-import logger from '../utils/logger';
+import { AuthRequest } from '../middleware/auth.middleware';
 import {
     AnalyticsService,
     GarageApprovalService,
     SubscriptionManagementService,
     UserManagementService,
+    getHttpStatusForError,
     isAdminError,
-    getHttpStatusForError
+    CreateUserDto,
+    GarageFilters,
+    SpecializationData,
+    UserFilters
 } from '../services/admin';
+import { getErrorMessage } from '../types';
+import logger from '../utils/logger';
 
-// Initialize services
 const analyticsService = new AnalyticsService(pool);
 const garageApprovalService = new GarageApprovalService(pool);
 const subscriptionService = new SubscriptionManagementService(pool);
 const userManagementService = new UserManagementService(pool);
+
+const GARAGE_APPROVAL_STATUSES: Array<NonNullable<GarageFilters['approval_status']>> = [
+    'pending',
+    'approved',
+    'rejected',
+    'demo',
+    'all'
+];
+
+const CREATABLE_USER_TYPES: CreateUserDto['user_type'][] = [
+    'customer',
+    'garage',
+    'driver',
+    'staff'
+];
+
+const SUPPLIER_TYPES: SpecializationData['supplier_type'][] = [
+    'dealer',
+    'aftermarket',
+    'general'
+];
+
+interface GarageParams {
+    garage_id: string;
+}
+
+interface RequestParams {
+    request_id: string;
+}
+
+interface UserParams {
+    user_id: string;
+}
+
+interface ApproveGarageBody {
+    notes?: string;
+}
+
+interface RejectGarageBody {
+    reason?: string;
+}
+
+interface GrantDemoAccessBody {
+    days?: number | string;
+    notes?: string;
+}
+
+interface RevokeGarageAccessBody {
+    reason?: string;
+}
+
+interface RejectSubscriptionRequestBody {
+    reason?: string;
+}
+
+interface VerifyBankPaymentBody {
+    bank_reference?: string;
+}
+
+interface AssignPlanBody {
+    plan_id?: number | string;
+    months?: number | string;
+    notes?: string;
+}
+
+interface RevokeSubscriptionBody {
+    reason?: string;
+}
+
+interface ExtendSubscriptionBody {
+    months?: number | string;
+    notes?: string;
+}
+
+interface OverrideCommissionBody {
+    commission_rate?: number | string;
+    reason?: string;
+}
+
+interface UpdateGarageSpecializationBody {
+    supplier_type?: string;
+    specialized_brands?: unknown;
+    all_brands?: boolean | string;
+}
+
+interface UpdateUserBody {
+    full_name?: string;
+    email?: string;
+    phone_number?: string;
+    is_active?: boolean | string;
+}
+
+interface SuspendUserBody {
+    reason?: string;
+}
+
+interface ActivateUserBody {
+    notes?: string;
+}
+
+interface ResetPasswordBody {
+    new_password?: string;
+}
+
+interface CreateUserBody {
+    user_type?: string;
+    full_name?: string;
+    email?: string;
+    phone_number?: string;
+    password?: string;
+    garage_data?: CreateUserDto['garage_data'];
+    driver_data?: CreateUserDto['driver_data'];
+    staff_data?: CreateUserDto['staff_data'];
+    permissions?: unknown;
+}
+
+const getAdminId = (req: AuthRequest): string | null => req.user?.userId ?? null;
+
+const toQueryString = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        return value[0];
+    }
+    return undefined;
+};
+
+const toOptionalInt = (value: unknown): number | undefined => {
+    const raw = toQueryString(value);
+    if (!raw) {
+        return undefined;
+    }
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const toOptionalNumber = (value: unknown): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+
+    const raw = toQueryString(value);
+    if (!raw) {
+        return undefined;
+    }
+
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const toOptionalBoolean = (value: unknown): boolean | undefined => {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    const raw = toQueryString(value);
+    if (!raw) {
+        return undefined;
+    }
+
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === 'true') {
+        return true;
+    }
+    if (normalized === 'false') {
+        return false;
+    }
+
+    return undefined;
+};
+
+const toStringArray = (value: unknown): string[] | undefined => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+    return value.filter((item): item is string => typeof item === 'string');
+};
+
+const toApprovalStatus = (value: unknown): GarageFilters['approval_status'] | undefined => {
+    const status = toQueryString(value);
+    if (!status) {
+        return undefined;
+    }
+
+    return GARAGE_APPROVAL_STATUSES.includes(status as NonNullable<GarageFilters['approval_status']>)
+        ? (status as GarageFilters['approval_status'])
+        : undefined;
+};
+
+const toCreatableUserType = (value: unknown): CreateUserDto['user_type'] | undefined => {
+    const userType = toQueryString(value);
+    if (!userType) {
+        return undefined;
+    }
+
+    return CREATABLE_USER_TYPES.includes(userType as CreateUserDto['user_type'])
+        ? (userType as CreateUserDto['user_type'])
+        : undefined;
+};
+
+const toSupplierType = (value: unknown): SpecializationData['supplier_type'] | undefined => {
+    const supplierType = toQueryString(value);
+    if (!supplierType) {
+        return undefined;
+    }
+
+    return SUPPLIER_TYPES.includes(supplierType as SpecializationData['supplier_type'])
+        ? (supplierType as SpecializationData['supplier_type'])
+        : undefined;
+};
+
+const logAdminError = (context: string, error: unknown): void => {
+    logger.error(context, { error: getErrorMessage(error) });
+};
+
+const sendAdminError = (res: Response, error: unknown, fallbackMessage: string): Response => {
+    if (isAdminError(error)) {
+        return res.status(getHttpStatusForError(error)).json({ error: getErrorMessage(error) });
+    }
+    return res.status(500).json({ error: fallbackMessage });
+};
+
+const getGarageParams = (req: AuthRequest): GarageParams => req.params as unknown as GarageParams;
+const getRequestParams = (req: AuthRequest): RequestParams => req.params as unknown as RequestParams;
+const getUserParams = (req: AuthRequest): UserParams => req.params as unknown as UserParams;
 
 // ============================================
 // GARAGE APPROVAL WORKFLOW
@@ -29,107 +259,121 @@ const userManagementService = new UserManagementService(pool);
 
 export const getPendingGarages = async (req: AuthRequest, res: Response) => {
     try {
-        const { status, search, page, limit } = req.query;
         const result = await garageApprovalService.getPendingGarages({
-            approval_status: status as any,
-            search: search as string,
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined
+            approval_status: toApprovalStatus(req.query.status),
+            search: toQueryString(req.query.search),
+            page: toOptionalInt(req.query.page),
+            limit: toOptionalInt(req.query.limit)
         });
         res.json(result);
-    } catch (err) {
-        logger.error('getPendingGarages error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getPendingGarages error:', error);
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
 };
 
 export const getAllGaragesAdmin = async (req: AuthRequest, res: Response) => {
     try {
-        const { status, search, page, limit } = req.query;
         const result = await garageApprovalService.getAllGarages({
-            approval_status: status as any,
-            search: search as string,
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined
+            approval_status: toApprovalStatus(req.query.status),
+            search: toQueryString(req.query.search),
+            page: toOptionalInt(req.query.page),
+            limit: toOptionalInt(req.query.limit)
         });
         res.json(result);
-    } catch (err) {
-        logger.error('getAllGaragesAdmin error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getAllGaragesAdmin error:', error);
         res.status(500).json({ error: 'Failed to fetch garages' });
     }
 };
 
 export const approveGarage = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { garage_id } = req.params;
-        const { notes } = req.body;
-        const garage = await garageApprovalService.approveGarage(
-            garage_id,
-            req.user!.userId,
-            notes
-        );
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as ApproveGarageBody;
+        const notes = toQueryString(body.notes);
+
+        const garage = await garageApprovalService.approveGarage(garage_id, adminId, notes);
         res.json({ message: 'Garage approved successfully', garage });
-    } catch (err) {
-        logger.error('approveGarage error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('approveGarage error:', error);
+        return sendAdminError(res, error, 'Failed to approve garage');
     }
 };
 
 export const rejectGarage = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { garage_id } = req.params;
-        const { reason } = req.body;
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as RejectGarageBody;
+        const reason = toQueryString(body.reason);
 
         if (!reason) {
             return res.status(400).json({ error: 'Rejection reason is required' });
         }
 
-        const garage = await garageApprovalService.rejectGarage(
-            garage_id,
-            req.user!.userId,
-            reason
-        );
+        const garage = await garageApprovalService.rejectGarage(garage_id, adminId, reason);
         res.json({ message: 'Garage rejected', garage });
-    } catch (err) {
-        logger.error('rejectGarage error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('rejectGarage error:', error);
+        return sendAdminError(res, error, 'Failed to reject garage');
     }
 };
 
 export const grantDemoAccess = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { garage_id } = req.params;
-        const { days, notes } = req.body;
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as GrantDemoAccessBody;
+        const days = toOptionalInt(body.days);
+        const notes = toQueryString(body.notes);
+
         const result = await garageApprovalService.grantDemoAccess(
             garage_id,
-            req.user!.userId,
+            adminId,
             days,
             notes
         );
         res.json(result);
-    } catch (err) {
-        logger.error('grantDemoAccess error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('grantDemoAccess error:', error);
+        return sendAdminError(res, error, 'Failed to grant demo access');
     }
 };
 
 export const revokeGarageAccess = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { garage_id } = req.params;
-        const { reason } = req.body;
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as RevokeGarageAccessBody;
+        const reason = toQueryString(body.reason);
+
         const garage = await garageApprovalService.revokeGarageAccess(
             garage_id,
-            req.user!.userId,
-            reason
+            adminId,
+            reason ?? ''
         );
         res.json({ message: 'Garage access revoked', garage });
-    } catch (err) {
-        logger.error('revokeGarageAccess error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('revokeGarageAccess error:', error);
+        return sendAdminError(res, error, 'Failed to revoke garage access');
     }
 };
 
@@ -137,28 +381,27 @@ export const revokeGarageAccess = async (req: AuthRequest, res: Response) => {
 // ADMIN DASHBOARD STATS
 // ============================================
 
-export const getAdminDashboardStats = async (req: AuthRequest, res: Response) => {
+export const getAdminDashboardStats = async (_req: AuthRequest, res: Response) => {
     try {
         const stats = await analyticsService.getDashboardStats();
         res.json({ stats });
-    } catch (err) {
-        logger.error('getAdminDashboardStats error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getAdminDashboardStats error:', error);
         res.status(500).json({ error: 'Failed to fetch dashboard stats' });
     }
 };
 
 export const getAuditLog = async (req: AuthRequest, res: Response) => {
     try {
-        const { page, limit, action_type, target_type } = req.query;
         const result = await analyticsService.getAuditLog({
-            action_type: action_type as string,
-            target_type: target_type as string,
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined
+            action_type: toQueryString(req.query.action_type),
+            target_type: toQueryString(req.query.target_type),
+            page: toOptionalInt(req.query.page),
+            limit: toOptionalInt(req.query.limit)
         });
         res.json(result);
-    } catch (err) {
-        logger.error('getAuditLog error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getAuditLog error:', error);
         res.status(500).json({ error: 'Failed to fetch audit log' });
     }
 };
@@ -169,35 +412,46 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
 
 export const getSubscriptionRequests = async (req: AuthRequest, res: Response) => {
     try {
-        const { status = 'pending' } = req.query;
-        const requests = await subscriptionService.getSubscriptionRequests(status as string);
+        const status = toQueryString(req.query.status) ?? 'pending';
+        const requests = await subscriptionService.getSubscriptionRequests(status);
         res.json({ requests });
-    } catch (err) {
-        logger.error('getSubscriptionRequests error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getSubscriptionRequests error:', error);
         res.status(500).json({ error: 'Failed to fetch requests' });
     }
 };
 
 export const approveSubscriptionRequest = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { request_id } = req.params;
-        await subscriptionService.approveSubscriptionRequest(request_id, req.user!.userId);
+        const { request_id } = getRequestParams(req);
+        await subscriptionService.approveSubscriptionRequest(request_id, adminId);
         res.json({ message: 'Plan change approved and applied.' });
-    } catch (err) {
-        logger.error('approveSubscriptionRequest error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('approveSubscriptionRequest error:', error);
+        return sendAdminError(res, error, 'Failed to approve subscription request');
     }
 };
 
 export const rejectSubscriptionRequest = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { request_id } = req.params;
-        const { reason } = req.body;
-        await subscriptionService.rejectSubscriptionRequest(request_id, req.user!.userId, reason);
+        const { request_id } = getRequestParams(req);
+        const body = req.body as unknown as RejectSubscriptionRequestBody;
+        const reason = toQueryString(body.reason);
+        await subscriptionService.rejectSubscriptionRequest(request_id, adminId, reason);
         res.json({ message: 'Request rejected' });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed' });
+    } catch (error) {
+        logAdminError('rejectSubscriptionRequest error:', error);
+        return sendAdminError(res, error, 'Failed to reject subscription request');
     }
 };
 
@@ -206,80 +460,106 @@ export const rejectSubscriptionRequest = async (req: AuthRequest, res: Response)
  * Admin calls this after confirming bank transfer was received
  */
 export const verifyBankPayment = async (req: AuthRequest, res: Response) => {
-    try {
-        const { request_id } = req.params;
-        const { bank_reference } = req.body;
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!bank_reference) {
+    try {
+        const { request_id } = getRequestParams(req);
+        const body = req.body as unknown as VerifyBankPaymentBody;
+        const bankReference = toQueryString(body.bank_reference);
+
+        if (!bankReference) {
             return res.status(400).json({ error: 'Bank reference number is required' });
         }
 
-        await subscriptionService.verifyBankPayment(request_id, req.user!.userId, bank_reference);
+        await subscriptionService.verifyBankPayment(request_id, adminId, bankReference);
         res.json({
             message: 'Bank payment verified. You can now approve the subscription upgrade.',
             payment_status: 'paid'
         });
-    } catch (err) {
-        logger.error('verifyBankPayment error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('verifyBankPayment error:', error);
+        return sendAdminError(res, error, 'Failed to verify bank payment');
     }
 };
 
-export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
+export const getSubscriptionPlans = async (_req: AuthRequest, res: Response) => {
     try {
         const plans = await subscriptionService.getSubscriptionPlans();
         res.json({ plans });
-    } catch (err) {
-        logger.error('getSubscriptionPlans error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getSubscriptionPlans error:', error);
         res.status(500).json({ error: 'Failed to fetch plans' });
     }
 };
 
 export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
-    try {
-        const { garage_id } = req.params;
-        const { plan_id, months, notes } = req.body;
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!plan_id) {
+    try {
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as AssignPlanBody;
+
+        const planIdRaw = body.plan_id;
+        const planId = typeof planIdRaw === 'number' ? String(planIdRaw) : toQueryString(planIdRaw);
+        if (!planId) {
             return res.status(400).json({ error: 'Plan ID is required' });
         }
 
+        const months = toOptionalInt(body.months);
+        const notes = toQueryString(body.notes);
+
         const subscription = await subscriptionService.assignPlanToGarage(
             garage_id,
-            plan_id,
-            req.user!.userId,
+            planId,
+            adminId,
             { months, notes }
         );
 
         res.json({
-            message: `Plan assigned for ${months || 1} month(s)`,
+            message: `Plan assigned for ${months ?? 1} month(s)`,
             subscription
         });
-    } catch (err) {
-        logger.error('assignPlanToGarage error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('assignPlanToGarage error:', error);
+        return sendAdminError(res, error, 'Failed to assign plan');
     }
 };
 
 export const revokeSubscription = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { garage_id } = req.params;
-        const { reason } = req.body;
-        await subscriptionService.revokeSubscription(garage_id, req.user!.userId, reason);
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as RevokeSubscriptionBody;
+        const reason = toQueryString(body.reason);
+        await subscriptionService.revokeSubscription(garage_id, adminId, reason);
         res.json({ message: 'Subscription revoked successfully' });
-    } catch (err) {
-        logger.error('revokeSubscription error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('revokeSubscription error:', error);
+        return sendAdminError(res, error, 'Failed to revoke subscription');
     }
 };
 
 export const extendSubscription = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { garage_id } = req.params;
-        const { months, notes } = req.body;
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as ExtendSubscriptionBody;
+        const months = toOptionalInt(body.months);
+        const notes = toQueryString(body.notes);
 
         if (!months || months < 1) {
             return res.status(400).json({ error: 'Valid months value is required' });
@@ -287,8 +567,8 @@ export const extendSubscription = async (req: AuthRequest, res: Response) => {
 
         const subscription = await subscriptionService.extendSubscription(
             garage_id,
-            parseInt(months),
-            req.user!.userId,
+            months,
+            adminId,
             notes
         );
 
@@ -296,53 +576,68 @@ export const extendSubscription = async (req: AuthRequest, res: Response) => {
             message: `Subscription extended by ${months} month(s)`,
             subscription
         });
-    } catch (err) {
-        logger.error('extendSubscription error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('extendSubscription error:', error);
+        return sendAdminError(res, error, 'Failed to extend subscription');
     }
 };
 
 export const overrideCommission = async (req: AuthRequest, res: Response) => {
-    try {
-        const { garage_id } = req.params;
-        const { commission_rate, reason } = req.body;
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (commission_rate === undefined || !reason) {
+    try {
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as OverrideCommissionBody;
+        const commissionRate = toOptionalNumber(body.commission_rate);
+        const reason = toQueryString(body.reason);
+
+        if (commissionRate === undefined || !reason) {
             return res.status(400).json({ error: 'Commission rate and reason are required' });
         }
 
-        await subscriptionService.overrideCommission(
-            garage_id,
-            parseFloat(commission_rate),
-            req.user!.userId,
-            reason
-        );
-
+        await subscriptionService.overrideCommission(garage_id, commissionRate, adminId, reason);
         res.json({ message: 'Commission rate updated successfully' });
-    } catch (err) {
-        logger.error('overrideCommission error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('overrideCommission error:', error);
+        return sendAdminError(res, error, 'Failed to override commission');
     }
 };
 
 export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Response) => {
-    try {
-        const { garage_id } = req.params;
-        const { supplier_type, specialized_brands, all_brands } = req.body;
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        const garage = await subscriptionService.updateGarageSpecialization(
+    try {
+        const { garage_id } = getGarageParams(req);
+        const body = req.body as unknown as UpdateGarageSpecializationBody;
+        const supplierType = toSupplierType(body.supplier_type);
+        const specializedBrands = toStringArray(body.specialized_brands);
+        const allBrands = toOptionalBoolean(body.all_brands);
+
+        if (!supplierType) {
+            return res.status(400).json({ error: 'Valid supplier_type is required' });
+        }
+
+        const garageResult: unknown = await subscriptionService.updateGarageSpecialization(
             garage_id,
-            req.user!.userId,
-            { supplier_type, specialized_brands, all_brands }
+            adminId,
+            {
+                supplier_type: supplierType,
+                specialized_brands: specializedBrands,
+                all_brands: allBrands
+            }
         );
+        const garage = garageResult as Record<string, unknown>;
 
         res.json({ message: 'Specialization updated successfully', garage });
-    } catch (err) {
-        logger.error('updateGarageSpecializationAdmin error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('updateGarageSpecializationAdmin error:', error);
+        return sendAdminError(res, error, 'Failed to update specialization');
     }
 };
 
@@ -352,130 +647,192 @@ export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Res
 
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
     try {
-        const { user_type, status, is_active, is_suspended, search, role, page, limit } = req.query;
-
-        // Handle status param from frontend: 'active', 'suspended', or 'all'
+        const status = toQueryString(req.query.status);
         let suspendedFilter: boolean | undefined;
         if (status === 'suspended') {
             suspendedFilter = true;
         } else if (status === 'active') {
             suspendedFilter = false;
-        } else if (is_suspended !== undefined) {
-            suspendedFilter = is_suspended === 'true';
+        } else {
+            suspendedFilter = toOptionalBoolean(req.query.is_suspended);
         }
 
-        const result = await userManagementService.getAllUsers({
-            user_type: user_type as any,
-            is_active: is_active === 'true' ? true : is_active === 'false' ? false : undefined,
+        const filters: UserFilters = {
+            user_type: toQueryString(req.query.user_type),
+            is_active: toOptionalBoolean(req.query.is_active),
             is_suspended: suspendedFilter,
-            search: search as string,
-            role: role as string,  // Staff role filter
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined
-        });
+            search: toQueryString(req.query.search),
+            role: toQueryString(req.query.role),
+            page: toOptionalInt(req.query.page),
+            limit: toOptionalInt(req.query.limit)
+        };
+
+        const result = await userManagementService.getAllUsers(filters);
         res.json(result);
-    } catch (err) {
-        logger.error('getAllUsers error:', { error: (err as any).message });
+    } catch (error) {
+        logAdminError('getAllUsers error:', error);
         res.status(500).json({ error: 'Failed to fetch users' });
     }
 };
 
 export const getAdminUserDetails = async (req: AuthRequest, res: Response) => {
     try {
-        const { user_id } = req.params;
+        const { user_id } = getUserParams(req);
         const userDetail = await userManagementService.getUserDetails(user_id);
-
-        // Extract type_data and activity from the response
-        const { type_data, activity, ...user } = userDetail;
+        const typeData: unknown = userDetail.type_data;
+        const activity: unknown = userDetail.activity;
+        const user = {
+            user_id: userDetail.user_id,
+            user_type: userDetail.user_type,
+            full_name: userDetail.full_name,
+            email: userDetail.email,
+            phone_number: userDetail.phone_number,
+            is_active: userDetail.is_active,
+            is_suspended: userDetail.is_suspended,
+            created_at: userDetail.created_at,
+            last_login: userDetail.last_login,
+            total_orders: userDetail.total_orders,
+            total_bids: userDetail.total_bids,
+            account_balance: userDetail.account_balance,
+            suspension_reason: userDetail.suspension_reason,
+            recent_activity: userDetail.recent_activity as unknown
+        };
 
         res.json({
             user,
-            type_data: type_data || null,
-            activity: activity || null
+            type_data: typeData ?? null,
+            activity: activity ?? null
         });
-    } catch (err) {
-        logger.error('getAdminUserDetails error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('getAdminUserDetails error:', error);
+        return sendAdminError(res, error, 'Failed to fetch user details');
     }
 };
 
 export const updateUserAdmin = async (req: AuthRequest, res: Response) => {
-    try {
-        const { user_id } = req.params;
-        const { full_name, email, phone_number, is_active } = req.body;
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        const user = await userManagementService.updateUser(
-            user_id,
-            req.user!.userId,
-            { full_name, email, phone_number, is_active }
-        );
+    try {
+        const { user_id } = getUserParams(req);
+        const body = req.body as unknown as UpdateUserBody;
+        const user = await userManagementService.updateUser(user_id, adminId, {
+            full_name: toQueryString(body.full_name),
+            email: toQueryString(body.email),
+            phone_number: toQueryString(body.phone_number),
+            is_active: toOptionalBoolean(body.is_active)
+        });
 
         res.json({ message: 'User updated successfully', user });
-    } catch (err) {
-        logger.error('updateUserAdmin error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('updateUserAdmin error:', error);
+        return sendAdminError(res, error, 'Failed to update user');
     }
 };
 
 export const adminSuspendUser = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { user_id } = req.params;
-        const { reason } = req.body;
+        const { user_id } = getUserParams(req);
+        const body = req.body as unknown as SuspendUserBody;
+        const reason = toQueryString(body.reason);
 
         if (!reason) {
             return res.status(400).json({ error: 'Suspension reason is required' });
         }
 
-        await userManagementService.suspendUser(user_id, req.user!.userId, reason);
+        await userManagementService.suspendUser(user_id, adminId, reason);
         res.json({ message: 'User suspended successfully' });
-    } catch (err) {
-        logger.error('adminSuspendUser error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('adminSuspendUser error:', error);
+        return sendAdminError(res, error, 'Failed to suspend user');
     }
 };
 
 export const adminActivateUser = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { user_id } = req.params;
-        const { notes } = req.body;
-        await userManagementService.activateUser(user_id, req.user!.userId, notes);
+        const { user_id } = getUserParams(req);
+        const body = req.body as unknown as ActivateUserBody;
+        const notes = toQueryString(body.notes);
+        await userManagementService.activateUser(user_id, adminId, notes);
         res.json({ message: 'User activated successfully' });
-    } catch (err) {
-        logger.error('adminActivateUser error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('adminActivateUser error:', error);
+        return sendAdminError(res, error, 'Failed to activate user');
     }
 };
 
 export const adminResetPassword = async (req: AuthRequest, res: Response) => {
-    try {
-        const { user_id } = req.params;
-        const { new_password } = req.body;
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!new_password) {
+    try {
+        const { user_id } = getUserParams(req);
+        const body = req.body as unknown as ResetPasswordBody;
+        const newPassword = toQueryString(body.new_password);
+
+        if (!newPassword) {
             return res.status(400).json({ error: 'New password is required' });
         }
 
-        await userManagementService.resetPassword(user_id, req.user!.userId, new_password);
+        await userManagementService.resetPassword(user_id, adminId, newPassword);
         res.json({ message: 'Password reset successfully. User must change on next login.' });
-    } catch (err) {
-        logger.error('adminResetPassword error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('adminResetPassword error:', error);
+        return sendAdminError(res, error, 'Failed to reset password');
     }
 };
 
 export const adminCreateUser = async (req: AuthRequest, res: Response) => {
+    const adminId = getAdminId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const userData = req.body;
-        const user = await userManagementService.createUser(req.user!.userId, userData);
+        const body = req.body as unknown as CreateUserBody;
+
+        const userType = toCreatableUserType(body.user_type);
+        const fullName = toQueryString(body.full_name);
+        const email = toQueryString(body.email);
+        const phoneNumber = toQueryString(body.phone_number);
+        const password = toQueryString(body.password);
+
+        if (!userType || !fullName || !email || !phoneNumber || !password) {
+            return res.status(400).json({
+                error: 'user_type, full_name, email, phone_number, and password are required'
+            });
+        }
+
+        const userData: CreateUserDto = {
+            user_type: userType,
+            full_name: fullName,
+            email,
+            phone_number: phoneNumber,
+            password,
+            garage_data: body.garage_data,
+            driver_data: body.driver_data,
+            staff_data: body.staff_data,
+            permissions: toStringArray(body.permissions)
+        };
+
+        const user = await userManagementService.createUser(adminId, userData);
         res.status(201).json({ message: 'User created successfully', user });
-    } catch (err) {
-        logger.error('adminCreateUser error:', { error: (err as any).message });
-        const status = isAdminError(err) ? getHttpStatusForError(err) : 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logAdminError('adminCreateUser error:', error);
+        return sendAdminError(res, error, 'Failed to create user');
     }
 };

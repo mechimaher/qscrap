@@ -9,9 +9,9 @@ import { COMPANY_INFO } from '../services/documents/bilingual-labels';
 
 // Format helpers
 function formatDate(dateStr: string | Date | null | undefined): string {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) {return 'N/A';}
     const d = new Date(dateStr);
-    if (isNaN(d.getTime()) || d.getFullYear() < 2000) return 'N/A';
+    if (isNaN(d.getTime()) || d.getFullYear() < 2000) {return 'N/A';}
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 

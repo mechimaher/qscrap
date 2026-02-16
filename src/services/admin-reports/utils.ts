@@ -32,7 +32,7 @@ export const formatCSV = (data: Record<string, unknown>[], columns: { key: strin
     const rows = data.map(row =>
         columns.map(c => {
             const val = row[c.key];
-            if (val === null || val === undefined) return '';
+            if (val === null || val === undefined) {return '';}
             const str = String(val).replace(/"/g, '""');
             return str.includes(',') || str.includes('"') ? `"${str}"` : str;
         }).join(',')

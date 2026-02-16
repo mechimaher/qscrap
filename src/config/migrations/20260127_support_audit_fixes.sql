@@ -60,8 +60,12 @@ COMMENT ON TABLE order_status_history IS 'Complete audit trail of all order stat
 
 -- 4. Add ticket_id to resolution_logs for linking actions to tickets
 DO $$ BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                   WHERE table_name = 'resolution_logs' AND column_name = 'ticket_id') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.tables
+               WHERE table_name = 'resolution_logs')
+       AND EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_name = 'support_tickets')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_name = 'resolution_logs' AND column_name = 'ticket_id') THEN
         ALTER TABLE resolution_logs ADD COLUMN ticket_id UUID REFERENCES support_tickets(ticket_id);
     END IF;
 END $$;
@@ -102,8 +106,19 @@ INSERT INTO canned_responses (title, message_text, category) VALUES
 ON CONFLICT DO NOTHING;
 
 -- 6. Index for efficient internal message filtering
-CREATE INDEX IF NOT EXISTS idx_chat_messages_public 
-ON chat_messages(ticket_id, created_at) 
-WHERE is_internal = false;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chat_messages')
+       AND EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'chat_messages' AND column_name = 'ticket_id')
+       AND EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'chat_messages' AND column_name = 'created_at')
+       AND EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'chat_messages' AND column_name = 'is_internal') THEN
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_public
+        ON chat_messages(ticket_id, created_at)
+        WHERE is_internal = false;
+    END IF;
+END $$;
 
 -- Done!

@@ -103,7 +103,7 @@ export class InvoiceService {
         doc.text(`CR: ${invoice.cr_number || 'N/A'}`);
         doc.text(`Email: ${invoice.email}`);
         doc.text(`Phone: ${invoice.phone_number}`);
-        if (invoice.address) doc.text(`Address: ${invoice.address}`);
+        if (invoice.address) {doc.text(`Address: ${invoice.address}`);}
         doc.moveDown();
 
         // Divider

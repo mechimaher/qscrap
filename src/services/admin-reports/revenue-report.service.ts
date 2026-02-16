@@ -123,7 +123,7 @@ export class RevenueReportService {
                 gross_revenue: parseFloat(summary.rows[0].gross_revenue),
                 commission_revenue: parseFloat(summary.rows[0].commission_revenue),
                 avg_commission_per_order: parseFloat(summary.rows[0].avg_commission_per_order).toFixed(2),
-                avg_commission_rate: parseFloat(summary.rows[0].avg_commission_rate).toFixed(1) + '%'
+                avg_commission_rate: `${parseFloat(summary.rows[0].avg_commission_rate).toFixed(1)  }%`
             },
             breakdown: breakdown.rows,
             top_garages: topGarages.rows

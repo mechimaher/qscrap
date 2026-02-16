@@ -1,8 +1,6 @@
 -- Migration: 20260118_schema_optimization.sql
 -- Description: Decompose 'garages' table, add reporting indexes, and create safe transition views.
 
-BEGIN;
-
 -- ==========================================
 -- 1. Table Decomposition: garage_settings
 -- ==========================================
@@ -25,7 +23,7 @@ INSERT INTO garage_settings (
 )
 SELECT 
     garage_id, auto_renew, provides_repairs, provides_quick_services, 
-    mobile_service_radius_km, max_concurrent_services, service_capabilities
+    mobile_service_radius_km, max_concurrent_services, '{}'::UUID[]
 FROM garages
 ON CONFLICT (garage_id) DO NOTHING;
 
@@ -73,15 +71,33 @@ LEFT JOIN garage_stats st ON g.garage_id = st.garage_id;
 -- ==========================================
 
 -- Audit Logs (Compliance Reports)
-CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'audit_logs') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC)';
+    END IF;
+END $$;
 
 -- Notifications ("My Alerts" Feed)
-CREATE INDEX IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'notifications') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC)';
+    END IF;
+END $$;
 
 -- Orders (Sales Reporting)
-CREATE INDEX IF NOT EXISTS idx_orders_created_at_date ON orders(created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'orders') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_orders_created_at_date ON orders(created_at DESC)';
+    END IF;
+END $$;
 
 -- Ad Impressions (High Volume Analytics)
-CREATE INDEX IF NOT EXISTS idx_ad_impressions_timestamp_brin ON ad_impressions USING BRIN("timestamp");
-
-COMMIT;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ad_impressions' AND column_name = 'timestamp') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_ad_impressions_timestamp_brin ON ad_impressions USING BRIN("timestamp")';
+    END IF;
+END $$;

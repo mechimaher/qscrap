@@ -83,9 +83,9 @@ class SMSService {
         // Add Qatar country code if not present
         if (!cleaned.startsWith('+')) {
             if (cleaned.startsWith('974')) {
-                cleaned = '+' + cleaned;
+                cleaned = `+${  cleaned}`;
             } else {
-                cleaned = '+974' + cleaned;
+                cleaned = `+974${  cleaned}`;
             }
         }
 

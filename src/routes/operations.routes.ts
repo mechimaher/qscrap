@@ -16,7 +16,14 @@ import {
     getUsers,
     cancelOrderByOperations,
     getOrphanOrders,
-    triggerAutoComplete
+    triggerAutoComplete,
+    getAnalytics,
+    getReturnStats,
+    getUserStats,
+    getUserDetails,
+    suspendUser,
+    activateUser,
+    getGarages
 } from '../controllers/operations.controller';
 
 const router = Router();
@@ -28,7 +35,7 @@ router.use(authorizeOperations);
 // Dashboard & Analytics
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/stats', getDashboardStats); // Alias for compatibility
-// router.get('/analytics', getAnalytics); // TODO: Implement getAnalytics
+router.get('/analytics', getAnalytics);
 
 // Orders
 router.get('/orders', getOrders);
@@ -51,7 +58,7 @@ router.post('/escalations/:escalation_id/resolve', resolveEscalation);
 router.get('/returns', async (req, res) => {
     try {
         const { getReturnService } = await import('../services/cancellation/return.service');
-        const pool = (global as any).pool;
+        const { default: pool } = await import('../config/db');
         const returnService = getReturnService(pool);
         const returns = await returnService.getPendingReturns();
         res.json({ returns });
@@ -69,7 +76,7 @@ router.post('/returns/:return_id/approve', async (req, res) => {
         const operatorId = (req as any).user?.userId;
 
         const { getReturnService } = await import('../services/cancellation/return.service');
-        const pool = (global as any).pool;
+        const { default: pool } = await import('../config/db');
         const returnService = getReturnService(pool);
         const result = await returnService.approveReturn(return_id, operatorId, notes);
 
@@ -92,7 +99,7 @@ router.post('/returns/:return_id/reject', async (req, res) => {
         }
 
         const { getReturnService } = await import('../services/cancellation/return.service');
-        const pool = (global as any).pool;
+        const { default: pool } = await import('../config/db');
         const returnService = getReturnService(pool);
         const result = await returnService.rejectReturn(return_id, operatorId, reason);
 
@@ -102,21 +109,20 @@ router.post('/returns/:return_id/reject', async (req, res) => {
         res.status(400).json({ success: false, message: error.message || 'Failed to reject return' });
     }
 });
-// router.get('/returns/stats', getReturnStats); // TODO: Implement getReturnStats
-// router.post('/returns/:assignment_id/assign-driver', assignDriverToReturn); // TODO: Implement assignDriverToReturn
+router.get('/returns/stats', getReturnStats);
 
 // Users
 router.get('/users', getUsers);
-// router.get('/users/stats', getUserStats); // TODO: Implement getUserStats
-// router.get('/users/:user_id', getUserDetails); // TODO: Implement getUserDetails
-// router.post('/users/:user_id/suspend', suspendUser); // TODO: Implement suspendUser
-// router.post('/users/:user_id/activate', activateUser); // TODO: Implement activateUser
+router.get('/users/stats', getUserStats);
+router.get('/users/:user_id', getUserDetails);
+router.post('/users/:user_id/suspend', suspendUser);
+router.post('/users/:user_id/activate', activateUser);
 
 // Jobs (Manual Triggers for Testing)
 router.post('/jobs/auto-complete', triggerAutoComplete); // Manually trigger 48h auto-complete
 
 // Garages
-// router.get('/garages', getGarages); // TODO: Implement getGarages
+router.get('/garages', getGarages);
 
 export default router;
 

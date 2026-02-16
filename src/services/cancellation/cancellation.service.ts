@@ -601,7 +601,7 @@ export class CancellationService {
                         reason_code: reasonCode,
                         reason_text: reasonText,
                         potential_compensation: potentialCompensation,
-                        stage: stage
+                        stage
                     },
                     target_role: 'operations'
                 });
@@ -1103,7 +1103,7 @@ export class CancellationService {
             let cancellationFee = 0;
             let refundAmount = totalAmount;
             let faultParty: 'driver' | 'garage' | 'customer' | 'platform' = 'platform';
-            let newStatus = 'cancelled_by_driver';
+            const newStatus = 'cancelled_by_driver';
 
             switch (reasonCode) {
                 case 'cant_find_garage':

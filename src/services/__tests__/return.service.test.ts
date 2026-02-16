@@ -30,7 +30,8 @@ describe('ReturnService', () => {
                 order_id: 'test-order-1',
                 order_number: 'ORD-001',
                 order_status: 'delivered',
-                delivered_at: deliveredAt.toISOString(),
+                actual_delivery_at: deliveredAt.toISOString(),
+                hours_since_delivery: 72,
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
@@ -38,11 +39,12 @@ describe('ReturnService', () => {
             };
 
             const mockAbuseTracking = {
-                returns_this_month: 0,
+                returns_count: 0,
             };
 
             (mockPool.query as jest.Mock)
                 .mockResolvedValueOnce({ rows: [mockOrder] }) // order query
+                .mockResolvedValueOnce({ rows: [] }) // existing return check
                 .mockResolvedValueOnce({ rows: [mockAbuseTracking] }); // abuse tracking
 
             const preview = await service.getReturnPreview('test-order-1', 'customer-1');
@@ -58,7 +60,8 @@ describe('ReturnService', () => {
                 order_id: 'test-order-2',
                 order_number: 'ORD-002',
                 order_status: 'delivered',
-                delivered_at: deliveredAt.toISOString(),
+                actual_delivery_at: deliveredAt.toISOString(),
+                hours_since_delivery: 240,
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
@@ -66,7 +69,8 @@ describe('ReturnService', () => {
             };
 
             (mockPool.query as jest.Mock)
-                .mockResolvedValueOnce({ rows: [mockOrder] });
+                .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [] }); // existing return check
 
             const preview = await service.getReturnPreview('test-order-2', 'customer-1');
 
@@ -82,7 +86,8 @@ describe('ReturnService', () => {
                 order_id: 'test-order-3',
                 order_number: 'ORD-003',
                 order_status: 'delivered',
-                delivered_at: deliveredAt.toISOString(),
+                actual_delivery_at: deliveredAt.toISOString(),
+                hours_since_delivery: 48,
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
@@ -90,11 +95,12 @@ describe('ReturnService', () => {
             };
 
             const mockAbuseTracking = {
-                returns_this_month: 0,
+                returns_count: 0,
             };
 
             (mockPool.query as jest.Mock)
                 .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [] }) // existing return check
                 .mockResolvedValueOnce({ rows: [mockAbuseTracking] });
 
             const preview = await service.getReturnPreview('test-order-3', 'customer-1');
@@ -114,7 +120,8 @@ describe('ReturnService', () => {
                 order_id: 'test-order-4',
                 order_number: 'ORD-004',
                 order_status: 'delivered',
-                delivered_at: deliveredAt.toISOString(),
+                actual_delivery_at: deliveredAt.toISOString(),
+                hours_since_delivery: 48,
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
@@ -122,17 +129,18 @@ describe('ReturnService', () => {
             };
 
             const mockAbuseTracking = {
-                returns_this_month: 3, // Already at limit
+                returns_count: 3, // Already at limit
             };
 
             (mockPool.query as jest.Mock)
                 .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [] }) // existing return check
                 .mockResolvedValueOnce({ rows: [mockAbuseTracking] });
 
             const preview = await service.getReturnPreview('test-order-4', 'customer-1');
 
             expect(preview.can_return).toBe(false);
-            expect(preview.reason).toContain('limit');
+            expect(preview.reason).toContain('reached');
         });
     });
 });

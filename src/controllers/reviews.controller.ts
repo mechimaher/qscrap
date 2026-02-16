@@ -56,11 +56,11 @@ export const getAllReviews = async (req: AuthRequest, res: Response) => {
 
 export const moderateReview = async (req: AuthRequest, res: Response) => {
     const { action, rejection_reason } = req.body;
-    if (!['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'Invalid action. Use "approve" or "reject"' });
-    if (action === 'reject' && !rejection_reason) return res.status(400).json({ error: 'Rejection reason is required' });
+    if (!['approve', 'reject'].includes(action)) {return res.status(400).json({ error: 'Invalid action. Use "approve" or "reject"' });}
+    if (action === 'reject' && !rejection_reason) {return res.status(400).json({ error: 'Rejection reason is required' });}
     try {
         const review = await reviewsService.moderateReview(req.params.review_id, action, req.user!.userId, rejection_reason);
-        if (!review) return res.status(404).json({ error: 'Review not found' });
+        if (!review) {return res.status(404).json({ error: 'Review not found' });}
         if (action === 'approve') {
             await createNotification({ userId: review.garage_id, type: 'new_review', title: 'New Review Received! ⭐', message: 'A customer review has been approved.', data: { review_id: review.review_id }, target_role: 'garage' });
         }

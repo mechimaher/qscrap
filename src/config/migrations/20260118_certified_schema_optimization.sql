@@ -2,13 +2,11 @@
 -- Description: Production-ready schema optimization with synchronization triggers and clean migration
 -- Status: CERTIFIED by Senior Database Architects
 
-BEGIN;
-
 -- ==========================================
 -- STEP 1: Create Extension Tables
 -- ==========================================
 
-CREATE TABLE garage_settings (
+CREATE TABLE IF NOT EXISTS garage_settings (
     garage_id UUID PRIMARY KEY REFERENCES garages(garage_id) ON DELETE CASCADE,
     auto_renew BOOLEAN DEFAULT true NOT NULL,
     provides_repairs BOOLEAN DEFAULT false NOT NULL,
@@ -24,7 +22,7 @@ CREATE TABLE garage_settings (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE garage_stats (
+CREATE TABLE IF NOT EXISTS garage_stats (
     garage_id UUID PRIMARY KEY REFERENCES garages(garage_id) ON DELETE CASCADE,
     total_services_completed INTEGER DEFAULT 0 NOT NULL,
     quick_service_rating NUMERIC(2,1),
@@ -51,11 +49,12 @@ SELECT
     COALESCE(has_mobile_technicians, false),
     mobile_service_radius_km,
     COALESCE(max_concurrent_services, 3),
-    COALESCE(service_capabilities, '{}'),
+    '{}'::UUID[],
     COALESCE(quick_services_offered, '{}'),
     COALESCE(repair_specializations, '{}'),
     COALESCE(sells_parts, true)
-FROM garages;
+FROM garages
+ON CONFLICT (garage_id) DO NOTHING;
 
 INSERT INTO garage_stats (
     garage_id, total_services_completed, quick_service_rating, 
@@ -67,7 +66,8 @@ SELECT
     quick_service_rating,
     repair_rating,
     average_response_time_minutes
-FROM garages;
+FROM garages
+ON CONFLICT (garage_id) DO NOTHING;
 
 -- ==========================================
 -- STEP 3: Create Synchronization Triggers
@@ -134,43 +134,53 @@ $$ LANGUAGE plpgsql;
 -- ==========================================
 -- STEP 4: Drop Redundant Columns (CLEAN CUT)
 -- ==========================================
--- Since we only have 2 garages, we can safely drop columns immediately
-
-ALTER TABLE garages 
-DROP COLUMN IF EXISTS auto_renew,
-DROP COLUMN IF EXISTS provides_repairs,
-DROP COLUMN IF EXISTS provides_quick_services,
-DROP COLUMN IF EXISTS has_mobile_technicians,
-DROP COLUMN IF EXISTS mobile_service_radius_km,
-DROP COLUMN IF EXISTS max_concurrent_services,
-DROP COLUMN IF EXISTS service_capabilities,
-DROP COLUMN IF EXISTS quick_services_offered,
-DROP COLUMN IF EXISTS repair_specializations,
-DROP COLUMN IF EXISTS sells_parts,
-DROP COLUMN IF EXISTS total_services_completed,
-DROP COLUMN IF EXISTS quick_service_rating,
-DROP COLUMN IF EXISTS repair_rating,
-DROP COLUMN IF EXISTS average_response_time_minutes;
+-- Non-destructive mode for mixed-version compatibility:
+-- keep source columns on garages until all application modules are migrated.
 
 -- ==========================================
 -- STEP 5: Add High-Performance Indexes
 -- ==========================================
 
 -- Audit Logs (Compliance Reports) - B-tree for small-medium tables
-CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'audit_logs') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at_desc ON audit_logs(created_at DESC)';
+    END IF;
+END $$;
 
 -- Notifications ("My Alerts" Feed)
-CREATE INDEX IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'notifications') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_user_recent ON notifications(user_id, created_at DESC)';
+    END IF;
+END $$;
 
 -- Orders (Sales Reporting)
-CREATE INDEX IF NOT EXISTS idx_orders_created_at_desc ON orders(created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'orders') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_orders_created_at_desc ON orders(created_at DESC)';
+    END IF;
+END $$;
 
 -- Documents (Missing from previous migration)
-CREATE INDEX IF NOT EXISTS idx_documents_created_at_desc ON documents(created_at DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'documents') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_created_at_desc ON documents(created_at DESC)';
+    END IF;
+END $$;
 
 -- Ad Impressions - Use B-tree instead of BRIN (table has 0 rows currently)
 -- Will convert to BRIN when table reaches 10M+ rows
-CREATE INDEX IF NOT EXISTS idx_ad_impressions_timestamp_desc ON ad_impressions("timestamp" DESC);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ad_impressions' AND column_name = 'timestamp') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_ad_impressions_timestamp_desc ON ad_impressions("timestamp" DESC)';
+    END IF;
+END $$;
 
 -- ==========================================
 -- STEP 6: Add Indexes on New Tables
@@ -205,8 +215,6 @@ BEGIN
     
     RAISE NOTICE '✅ Migration successful - all tables have matching row counts';
 END $$;
-
-COMMIT;
 
 -- ==========================================
 -- ROLLBACK SCRIPT (Run manually if needed)

@@ -87,15 +87,24 @@ CREATE INDEX IF NOT EXISTS idx_refunds_cancellation ON refunds(cancellation_id);
 CREATE INDEX IF NOT EXISTS idx_refunds_stripe ON refunds(stripe_refund_id) WHERE stripe_refund_id IS NOT NULL;
 
 -- 7. Update refunds status constraint to include 'processing' and 'completed'
-ALTER TABLE refunds DROP CONSTRAINT IF EXISTS refunds_status_check;
-ALTER TABLE refunds ADD CONSTRAINT refunds_status_check 
-CHECK (status IS NULL OR status IN ('pending', 'approved', 'processing', 'processed', 'completed', 'failed'));
+-- Some schema variants use legacy "status", others use canonical "refund_status".
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'refunds' AND column_name = 'status') THEN
+        ALTER TABLE refunds DROP CONSTRAINT IF EXISTS refunds_status_check;
+        ALTER TABLE refunds ADD CONSTRAINT refunds_status_check
+        CHECK (status IS NULL OR status IN ('pending', 'approved', 'processing', 'processed', 'completed', 'failed'));
+    END IF;
+END $$;
 
 -- 8. Similar for refund_status column if different from status
 -- Some inserts use 'refund_status' column with these values
 DO $$ BEGIN
-    ALTER TABLE refunds ADD CONSTRAINT refunds_refund_status_check 
-    CHECK (refund_status IS NULL OR refund_status IN ('pending', 'processing', 'completed', 'failed'));
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'refunds' AND column_name = 'refund_status') THEN
+        ALTER TABLE refunds ADD CONSTRAINT refunds_refund_status_check
+        CHECK (refund_status IS NULL OR refund_status IN ('pending', 'processing', 'completed', 'failed'));
+    END IF;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- 9. Ensure cancellation_requests table has all expected columns

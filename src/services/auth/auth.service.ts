@@ -110,20 +110,20 @@ export class AuthService {
 
     async login(phoneNumber: string, password: string): Promise<LoginResult> {
         const result = await this.pool.query('SELECT * FROM users WHERE phone_number = $1', [phoneNumber]);
-        if (result.rows.length === 0) throw new Error('Invalid credentials');
+        if (result.rows.length === 0) {throw new Error('Invalid credentials');}
         const user = result.rows[0];
 
         const match = await bcrypt.compare(password, user.password_hash);
-        if (!match) throw new Error('Invalid credentials');
-        if (user.is_active === false) throw new Error('Account deactivated');
-        if (user.is_suspended) throw new Error(user.suspension_reason || 'Account suspended');
+        if (!match) {throw new Error('Invalid credentials');}
+        if (user.is_active === false) {throw new Error('Account deactivated');}
+        if (user.is_suspended) {throw new Error(user.suspension_reason || 'Account suspended');}
 
         if (user.user_type === 'garage') {
             const garageResult = await this.pool.query(`SELECT approval_status, demo_expires_at, rejection_reason FROM garages WHERE garage_id = $1`, [user.user_id]);
             if (garageResult.rows.length > 0) {
                 const garage = garageResult.rows[0];
-                if (garage.approval_status === 'pending') throw new Error('pending_approval');
-                if (garage.approval_status === 'rejected') throw new Error(`application_rejected:${garage.rejection_reason || 'Application rejected'}`);
+                if (garage.approval_status === 'pending') {throw new Error('pending_approval');}
+                if (garage.approval_status === 'rejected') {throw new Error(`application_rejected:${garage.rejection_reason || 'Application rejected'}`);}
                 if (garage.approval_status === 'demo' && garage.demo_expires_at && new Date(garage.demo_expires_at) < new Date()) {
                     await this.pool.query(`UPDATE garages SET approval_status = 'expired' WHERE garage_id = $1`, [user.user_id]);
                     await this.pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
@@ -154,7 +154,7 @@ export class AuthService {
         const token = jwt.sign({
             userId: user.user_id,
             userType: user.user_type,
-            staffRole: staffRole
+            staffRole
         }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
 
         // Generate refresh token
@@ -175,7 +175,7 @@ export class AuthService {
 
             // Check user exists
             const userResult = await client.query('SELECT user_type, email, phone_number FROM users WHERE user_id = $1', [userId]);
-            if (userResult.rows.length === 0) throw new Error('User not found');
+            if (userResult.rows.length === 0) {throw new Error('User not found');}
 
             const userType = userResult.rows[0].user_type;
             const shortId = userId.slice(-8); // Last 8 chars of UUID for uniqueness

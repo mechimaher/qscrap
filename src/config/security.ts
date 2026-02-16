@@ -29,7 +29,7 @@ export const TOKEN_EXPIRY_STRING = process.env.ACCESS_TOKEN_EXPIRY || '15m';
 /** Parse token expiry string to seconds */
 function parseExpiryToSeconds(expiry: string): number {
     const match = expiry.match(/^(\d+)(s|m|h|d)$/);
-    if (!match) return 30 * 24 * 60 * 60; // fallback 30 days
+    if (!match) {return 30 * 24 * 60 * 60;} // fallback 30 days
     const value = parseInt(match[1], 10);
     switch (match[2]) {
         case 's': return value;
@@ -115,8 +115,8 @@ export const getJwtSecret = (): string => {
 
         // Generate a consistent dev secret based on machine info
         // This prevents token invalidation during dev restarts
-        cachedJwtSecret = 'dev-secret-qscrap-not-for-production-' +
-            crypto.createHash('sha256').update(process.cwd()).digest('hex').slice(0, 16);
+        cachedJwtSecret = `dev-secret-qscrap-not-for-production-${ 
+            crypto.createHash('sha256').update(process.cwd()).digest('hex').slice(0, 16)}`;
         return cachedJwtSecret;
     }
 
@@ -221,11 +221,7 @@ export const performStartupSecurityChecks = (): void => {
     }
 
     // Pre-validate JWT secret (will throw if invalid in production)
-    try {
-        getJwtSecret();
-    } catch (error: any) {
-        throw error;
-    }
+    getJwtSecret();
 
     // Log security summary
     logger.startup(`Security: ${isProd ? 'PRODUCTION' : 'development'}, Token: ${TOKEN_EXPIRY_SECONDS / 86400}d, Bcrypt: ${BCRYPT_ROUNDS} rounds`);

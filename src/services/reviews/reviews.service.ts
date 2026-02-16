@@ -38,7 +38,7 @@ export class ReviewsService {
     async moderateReview(reviewId: string, action: string, moderatorId: string, rejectionReason?: string) {
         const newStatus = action === 'approve' ? 'approved' : 'rejected';
         const result = await this.pool.query(`UPDATE order_reviews SET moderation_status = $1, moderated_by = $2, moderated_at = NOW(), rejection_reason = $3, is_visible = $4 WHERE review_id = $5 RETURNING review_id, moderation_status, garage_id`, [newStatus, moderatorId, rejectionReason || null, action === 'approve', reviewId]);
-        if (result.rowCount === 0) return null;
+        if (result.rowCount === 0) {return null;}
         if (action === 'approve') {
             await this.pool.query(`UPDATE garages g SET rating_average = (SELECT ROUND(AVG(overall_rating)::numeric, 2) FROM order_reviews WHERE garage_id = g.garage_id AND moderation_status = 'approved'), rating_count = (SELECT COUNT(*) FROM order_reviews WHERE garage_id = g.garage_id AND moderation_status = 'approved') WHERE g.garage_id = $1`, [result.rows[0].garage_id]);
         }

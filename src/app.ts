@@ -17,6 +17,18 @@ import { validateOrigin } from './middleware/csrf.middleware';
 
 const app = express();
 
+type JobRunner = () => Promise<unknown>;
+type JobsModule = {
+    default: Record<string, JobRunner>;
+};
+
+const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return 'Unknown error';
+};
+
 // ==========================================
 // TRUST PROXY (Required behind Cloudflare/Nginx)
 // ==========================================
@@ -160,11 +172,11 @@ app.get('/health', async (req, res) => {
             storage: process.env.S3_BUCKET ? 'S3' :
                 process.env.AZURE_STORAGE_ACCOUNT ? 'Azure' : 'Local'
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         res.status(503).json({
             success: false,
             status: 'ERROR',
-            error: err.message,
+            error: getErrorMessage(err),
             timestamp: new Date().toISOString()
         });
     }
@@ -173,10 +185,8 @@ app.get('/health', async (req, res) => {
 // ==========================================
 // JOB HEALTH CHECK (Premium 2026)
 // ==========================================
-app.get('/health/jobs', async (req, res) => {
+app.get('/health/jobs', (req, res) => {
     try {
-        const jobs = await import('./config/jobs');
-
         res.json({
             success: true,
             scheduler: 'active',
@@ -195,8 +205,8 @@ app.get('/health/jobs', async (req, res) => {
             },
             timestamp: new Date().toISOString()
         });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
+    } catch (err: unknown) {
+        res.status(500).json({ success: false, error: getErrorMessage(err) });
     }
 });
 
@@ -211,8 +221,8 @@ app.post('/health/jobs/:jobName/run', async (req, res) => {
     }
 
     try {
-        const jobs = await import('./config/jobs');
-        const jobFn = (jobs.default as any)[jobName];
+        const jobsModule = await import('./config/jobs') as JobsModule;
+        const jobFn = jobsModule.default[jobName];
 
         if (!jobFn || typeof jobFn !== 'function') {
             return res.status(404).json({ error: `Job not found: ${jobName}` });
@@ -225,8 +235,8 @@ app.post('/health/jobs/:jobName/run', async (req, res) => {
             result,
             timestamp: new Date().toISOString()
         });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
+    } catch (err: unknown) {
+        res.status(500).json({ success: false, error: getErrorMessage(err) });
     }
 });
 
@@ -244,6 +254,10 @@ app.get('/verify/*', (req, res) => {
 
 // 404 Handler - Catches undefined routes
 app.use(notFoundHandler);
+
+import * as Sentry from '@sentry/node';
+// Sentry error handler (Must be before any other error middleware)
+Sentry.setupExpressErrorHandler(app);
 
 // Global Error Handler - Catches all errors
 app.use(errorHandler);

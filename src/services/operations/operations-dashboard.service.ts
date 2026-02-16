@@ -47,6 +47,62 @@ export class OperationsDashboardService {
     }
 
     /**
+     * Get detailed analytics for reports
+     */
+    async getAnalytics(): Promise<any> {
+        const result = await this.pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM orders WHERE order_status = 'completed') as total_completed_orders,
+                (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE order_status = 'completed') as total_gmv,
+                (SELECT COALESCE(SUM(platform_fee), 0) FROM orders WHERE order_status = 'completed') as total_platform_revenue,
+                (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as total_customers,
+                (SELECT COUNT(*) FROM garages) as total_garages,
+                -- Daily trend (last 30 days)
+                (
+                    SELECT json_agg(t) FROM (
+                        SELECT 
+                            DATE(created_at) as date,
+                            COUNT(*) as order_count,
+                            SUM(total_amount) as total_amount
+                        FROM orders
+                        WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+                        GROUP BY DATE(created_at)
+                        ORDER BY DATE(created_at) ASC
+                    ) t
+                ) as daily_trend,
+                -- Monthly trend (last 12 months)
+                (
+                    SELECT json_agg(m) FROM (
+                        SELECT 
+                            to_char(created_at, 'YYYY-MM') as month,
+                            COUNT(*) as order_count,
+                            SUM(total_amount) as total_amount
+                        FROM orders
+                        WHERE created_at >= CURRENT_DATE - INTERVAL '12 months'
+                        GROUP BY to_char(created_at, 'YYYY-MM')
+                        ORDER BY to_char(created_at, 'YYYY-MM') ASC
+                    ) m
+                ) as monthly_trend,
+                -- Top garages by volume
+                (
+                    SELECT json_agg(g) FROM (
+                        SELECT 
+                            ga.garage_name,
+                            COUNT(o.order_id) as order_count,
+                            SUM(o.total_amount) as total_volume
+                        FROM orders o
+                        JOIN garages ga ON o.garage_id = ga.garage_id
+                        WHERE o.order_status = 'completed'
+                        GROUP BY ga.garage_name
+                        ORDER BY order_count DESC
+                        LIMIT 10
+                    ) g
+                ) as top_garages
+        `);
+        return result.rows[0];
+    }
+
+    /**
      * Invalidate dashboard cache (call after status updates)
      */
     async invalidateCache(): Promise<void> {

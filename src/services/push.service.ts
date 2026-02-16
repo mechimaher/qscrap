@@ -274,7 +274,7 @@ class PushService {
         await this.sendToUser(
             recipientUserId,
             `💬 ${senderName}`,
-            message.length > 100 ? message.substring(0, 100) + '...' : message,
+            message.length > 100 ? `${message.substring(0, 100)  }...` : message,
             {
                 type: 'chat_message',
                 orderId,
@@ -342,7 +342,7 @@ class PushService {
         };
 
         const message = statusMessages[newStatus];
-        if (!message) return;
+        if (!message) {return;}
 
         await this.sendToUser(
             customerId,

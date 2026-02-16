@@ -157,7 +157,7 @@ export class DocumentGenerationService {
         // IMPORTANT: Never show customer's raw part_description in invoice (could be long/messy)
         let displayPartName = 'Car Spare Part';  // Generic fallback
         let category = 'Car Spare Part';
-        let subcategory = '';
+        const subcategory = '';
 
         if (order.part_category) {
             category = order.part_category;

@@ -46,7 +46,7 @@ WHERE payout_reference IS NOT NULL;
 
 -- Ensure only one default template per document type
 DROP INDEX IF EXISTS idx_default_template;
-CREATE UNIQUE INDEX idx_default_template_type 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_default_template_type 
 ON document_templates (document_type) 
 WHERE is_default = true;
 

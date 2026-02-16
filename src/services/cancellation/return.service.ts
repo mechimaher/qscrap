@@ -446,6 +446,27 @@ export class ReturnService {
 
         return result.rows;
     }
+
+    /**
+     * Get return statistics for Operations dashboard
+     */
+    async getReturnStats(): Promise<any> {
+        const result = await this.pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM return_requests WHERE status = 'pending') as pending_returns,
+                (SELECT COUNT(*) FROM return_requests WHERE status = 'completed') as total_returns,
+                (SELECT COALESCE(SUM(refund_amount), 0) FROM return_requests WHERE status = 'completed') as total_refunded_amount,
+                (SELECT COUNT(*) FROM return_requests WHERE DATE(created_at) = CURRENT_DATE) as returns_today,
+                (
+                    SELECT json_agg(r) FROM (
+                        SELECT reason, COUNT(*) as count 
+                        FROM return_requests 
+                        GROUP BY reason
+                    ) r
+                ) as reasons_breakdown
+        `);
+        return result.rows[0];
+    }
 }
 
 // Export singleton

@@ -117,8 +117,8 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
     if (vinNumber) {
         const decoded = vinService.decodeVIN(vinNumber);
         if (decoded) {
-            if (!carMake) carMake = decoded.make;
-            if (!carYear && decoded.year) carYear = decoded.year;
+            if (!carMake) {carMake = decoded.make;}
+            if (!carYear && decoded.year) {carYear = decoded.year;}
         }
     }
 
@@ -128,32 +128,32 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
     }
 
     const yearCheck = validateCarYear(carYear);
-    if (!yearCheck.valid) throw new Error(yearCheck.message);
+    if (!yearCheck.valid) {throw new Error(yearCheck.message);}
 
     const vinCheck = validateVIN(vinNumber);
-    if (!vinCheck.valid) throw new Error(vinCheck.message);
+    if (!vinCheck.valid) {throw new Error(vinCheck.message);}
 
     const conditionCheck = validateConditionRequired(conditionRequired);
-    if (!conditionCheck.valid) throw new Error(conditionCheck.message);
+    if (!conditionCheck.valid) {throw new Error(conditionCheck.message);}
 
     const descCheck = validateStringLength(partDescription, 'Part description', 1000);
-    if (!descCheck.valid) throw new Error(descCheck.message);
+    if (!descCheck.valid) {throw new Error(descCheck.message);}
 
     const makeCheck = validateStringLength(carMake, 'Car make', 100);
-    if (!makeCheck.valid) throw new Error(makeCheck.message);
+    if (!makeCheck.valid) {throw new Error(makeCheck.message);}
 
     const modelCheck = validateStringLength(carModel, 'Car model', 100);
-    if (!modelCheck.valid) throw new Error(modelCheck.message);
+    if (!modelCheck.valid) {throw new Error(modelCheck.message);}
 
     // File Handling - Part Photos
     const partImages = (files?.['images'] || []).filter(f => f && f.path);
-    const imageUrls = partImages.map(f => '/' + f.path.replace(/\\/g, '/'));
+    const imageUrls = partImages.map(f => `/${  f.path.replace(/\\/g, '/')}`);
 
     // Vehicle ID Photos (for Qatar scrap garages)
     const carFrontImageFile = files?.['car_front_image']?.[0];
     const carRearImageFile = files?.['car_rear_image']?.[0];
-    const carFrontImageUrl = carFrontImageFile?.path ? '/' + carFrontImageFile.path.replace(/\\/g, '/') : null;
-    const carRearImageUrl = carRearImageFile?.path ? '/' + carRearImageFile.path.replace(/\\/g, '/') : null;
+    const carFrontImageUrl = carFrontImageFile?.path ? `/${  carFrontImageFile.path.replace(/\\/g, '/')}` : null;
+    const carRearImageUrl = carRearImageFile?.path ? `/${  carRearImageFile.path.replace(/\\/g, '/')}` : null;
 
 
 
@@ -246,8 +246,8 @@ async function notifyRelevantGarages(
 ) {
     try {
         let conditionFilter = "1=1";
-        if (conditionRequired === 'new') conditionFilter = "supplier_type IN ('new', 'both')";
-        else if (conditionRequired === 'used') conditionFilter = "supplier_type IN ('used', 'both')";
+        if (conditionRequired === 'new') {conditionFilter = "supplier_type IN ('new', 'both')";}
+        else if (conditionRequired === 'used') {conditionFilter = "supplier_type IN ('used', 'both')";}
 
         const targetGaragesResult = await pool.query(`
             SELECT garage_id, specialized_brands, all_brands 

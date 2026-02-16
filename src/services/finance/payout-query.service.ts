@@ -42,7 +42,7 @@ export class PayoutQueryService {
                  WHERE gp2.payout_status = 'pending' 
                  AND (gp2.payout_type IS NULL OR gp2.payout_type != 'reversal')
                  AND COALESCE(o2.delivered_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
-                 ${whereClause ? 'AND ' + whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id') : ''}
+                 ${whereClause ? `AND ${  whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id')}` : ''}
                 ) as eligible_pending_payouts,
                 -- In-warranty total: payouts still within 7-day window
                 (SELECT COALESCE(SUM(gp3.net_amount), 0) FROM garage_payouts gp3
@@ -50,7 +50,7 @@ export class PayoutQueryService {
                  WHERE gp3.payout_status = 'pending' 
                  AND (gp3.payout_type IS NULL OR gp3.payout_type != 'reversal')
                  AND COALESCE(o3.delivered_at, o3.completed_at, gp3.created_at) > NOW() - INTERVAL '7 days'
-                 ${whereClause ? 'AND ' + whereClause.replace('WHERE ', '').replace('garage_id', 'gp3.garage_id') : ''}
+                 ${whereClause ? `AND ${  whereClause.replace('WHERE ', '').replace('garage_id', 'gp3.garage_id')}` : ''}
                 ) as in_warranty_total,
                 -- CRITICAL: Only count payouts past 7-day warranty window (eligible for processing)
                 (SELECT COUNT(*) FROM garage_payouts gp2
@@ -58,7 +58,7 @@ export class PayoutQueryService {
                  WHERE gp2.payout_status = 'pending' 
                  AND (gp2.payout_type IS NULL OR gp2.payout_type != 'reversal')
                  AND COALESCE(o2.delivered_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
-                 ${whereClause ? 'AND ' + whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id') : ''}
+                 ${whereClause ? `AND ${  whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id')}` : ''}
                 ) as pending_count,
                 COUNT(*) FILTER (WHERE payout_status = 'awaiting_confirmation') as awaiting_count,
                 COUNT(*) FILTER (WHERE payout_status = 'disputed') as disputed_count,

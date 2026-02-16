@@ -45,8 +45,7 @@ jobs:
           # Check for console.log in production code
           CONSOLE_LOGS=$(grep -rn "console\.log" src/ --include="*.ts" | grep -v "\.test\." | grep -v "\.spec\." | wc -l)
           if [ "$CONSOLE_LOGS" -gt 10 ]; then
-            echo "⚠️ Found $CONSOLE_LOGS console.log statements in production code"
-            ISSUES=$((ISSUES + 1))
+            echo "⚠️ Found $CONSOLE_LOGS console.log statements in production code (warning only)"
           else
             echo "✅ Console.log count acceptable: $CONSOLE_LOGS"
           fi
@@ -63,9 +62,23 @@ jobs:
           else
             echo "✅ No debug files found"
           fi
+
+          # Check for merge conflict markers
+          CONFLICT_MARKERS=$(grep -R -n -E "^<<<<<<< |^=======$|^>>>>>>> " \
+            --exclude-dir=node_modules --exclude-dir=.git . 2>/dev/null | wc -l || echo 0)
+          if [ "$CONFLICT_MARKERS" -gt 0 ]; then
+            echo "❌ Found $CONFLICT_MARKERS merge conflict markers"
+            ISSUES=$((ISSUES + 1))
+          else
+            echo "✅ No merge conflict markers found"
+          fi
           
           echo ""
           echo "Total issues: $ISSUES"
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "❌ Quality gate failed due to blocking hygiene issues"
+            exit 1
+          fi
 
       # Gate 2: TypeScript strict mode compliance
       - name: TypeScript compilation
@@ -78,13 +91,13 @@ jobs:
       # Gate 3: Test coverage threshold
       - name: Run tests with coverage
         run: |
-          npm test -- --coverage --ci --coverageReporters="text-summary" 2>&1 | tee test-output.txt || true
+          npm test -- --coverage --ci --coverageReporters="text-summary" 2>&1 | tee test-output.txt
 
       # Gate 4: Security quick scan
       - name: Security quick scan
         run: |
           echo "=== Security Quick Scan ==="
-          npm audit --audit-level=critical 2>&1 || echo "Vulnerabilities found (review required)"
+          npm audit --audit-level=critical 2>&1
 
       # Gate 5: Bundle size check
       - name: Check bundle size

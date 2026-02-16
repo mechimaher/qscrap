@@ -67,21 +67,21 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
             'SELECT * FROM bids WHERE bid_id = $1 FOR UPDATE',
             [bidId]
         );
-        if (bidResult.rows.length === 0) throw new Error('Bid not found');
+        if (bidResult.rows.length === 0) {throw new Error('Bid not found');}
         const bid = bidResult.rows[0];
 
-        if (bid.status !== 'pending') throw new Error('Bid no longer available');
+        if (bid.status !== 'pending') {throw new Error('Bid no longer available');}
 
         // 2. Lock and Validate Request
         const reqResult = await client.query(
             'SELECT * FROM part_requests WHERE request_id = $1 FOR UPDATE',
             [bid.request_id]
         );
-        if (reqResult.rows.length === 0) throw new Error('Request not found');
+        if (reqResult.rows.length === 0) {throw new Error('Request not found');}
         const request = reqResult.rows[0];
 
-        if (request.customer_id !== customerId) throw new Error('Access denied');
-        if (request.status !== 'active') throw new Error('Request already processed');
+        if (request.customer_id !== customerId) {throw new Error('Access denied');}
+        if (request.status !== 'active') {throw new Error('Request already processed');}
 
         // 2b. TURN VALIDATION: Customer cannot accept if they have a pending counter-offer
         // (meaning it's garage's turn to respond)

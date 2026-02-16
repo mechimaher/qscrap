@@ -96,7 +96,7 @@ class SmartNotificationService {
         const now = new Date();
         const hour = now.getHours();
 
-        let sendAt = new Date(now);
+        const sendAt = new Date(now);
 
         if (this.isRamadan()) {
             // Send after Ramadan quiet hours

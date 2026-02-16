@@ -4,16 +4,170 @@
  */
 
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
+import { AuthRequest } from '../middleware/auth.middleware';
+import { GeoService, TrackingService } from '../services/delivery';
+import DeliveryService from '../services/delivery.service';
 import { getErrorMessage } from '../types';
 import logger from '../utils/logger';
-import DeliveryService from '../services/delivery.service';
-import { GeoService, TrackingService } from '../services/delivery';
 
 // Initialize services
 const geoService = new GeoService(pool);
 const trackingService = new TrackingService(pool);
+
+interface OrderParams {
+    order_id: string;
+}
+
+interface DriverParams {
+    driver_id: string;
+}
+
+interface AssignmentParams {
+    assignment_id: string;
+}
+
+interface ZoneParams {
+    zone_id: string;
+}
+
+interface CreateDriverBody {
+    full_name?: string;
+    phone?: string;
+    email?: string;
+    vehicle_type?: string;
+    vehicle_plate?: string;
+    vehicle_model?: string;
+}
+
+interface UpdateDriverBody extends CreateDriverBody {
+    status?: string;
+}
+
+interface AssignCollectionBody {
+    driver_id?: string;
+    notes?: string;
+}
+
+interface AssignDeliveryBody {
+    driver_id?: string;
+    estimated_pickup?: string;
+    estimated_delivery?: string;
+}
+
+interface ReassignDriverBody {
+    new_driver_id?: string;
+    reason?: string;
+}
+
+interface UpdateDeliveryStatusBody {
+    status?: string;
+    notes?: string;
+    proof_of_delivery_url?: string;
+}
+
+interface UpdateDriverLocationBody {
+    latitude?: number | string;
+    longitude?: number | string;
+    accuracy?: number | string;
+    heading?: number | string;
+    speed?: number | string;
+}
+
+interface CompleteWithPODBody {
+    order_id?: string;
+    pod_photo_url?: string;
+}
+
+interface CalculateDeliveryFeeBody {
+    latitude?: number | string;
+    longitude?: number | string;
+    order_total?: number | string;
+}
+
+interface UpdateZoneFeeBody {
+    delivery_fee?: number | string;
+    reason?: string;
+}
+
+interface DriverRow extends Record<string, unknown> {
+    driver_id: string;
+    user_id: string | null;
+    full_name: string;
+    phone: string;
+    vehicle_type: string | null;
+    vehicle_plate: string | null;
+    status: string;
+}
+
+interface CurrentAssignmentRow {
+    assignment_id: string;
+    order_id: string;
+    driver_id: string;
+    old_driver_name: string;
+}
+
+interface NewDriverRow {
+    driver_id: string;
+    user_id: string;
+    full_name: string;
+    status: string;
+}
+
+interface DeliveryAssignmentRow extends Record<string, unknown> {
+    assignment_id: string;
+    order_id: string;
+    driver_id: string;
+}
+
+interface ErrorWithStatusCode {
+    statusCode?: unknown;
+}
+
+const getUserId = (req: AuthRequest): string | null => req.user?.userId ?? null;
+
+const toQueryString = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        return value[0];
+    }
+    return undefined;
+};
+
+const toOptionalInt = (value: unknown): number | undefined => {
+    const raw = toQueryString(value);
+    if (!raw) {
+        return undefined;
+    }
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const toOptionalNumber = (value: unknown): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+    const raw = toQueryString(value);
+    if (!raw) {
+        return undefined;
+    }
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const getErrorStatusCode = (error: unknown, fallback = 500): number => {
+    if (typeof error !== 'object' || error === null) {
+        return fallback;
+    }
+    const maybeError = error as ErrorWithStatusCode;
+    return typeof maybeError.statusCode === 'number' ? maybeError.statusCode : fallback;
+};
+
+const logDeliveryError = (context: string, error: unknown): void => {
+    logger.error(context, { error: getErrorMessage(error) });
+};
 
 // ============================================
 // DRIVER MANAGEMENT
@@ -21,16 +175,15 @@ const trackingService = new TrackingService(pool);
 
 export const getDrivers = async (req: AuthRequest, res: Response) => {
     try {
-        const { status, page, limit } = req.query;
         const result = await DeliveryService.getDrivers({
-            status: status as string,
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined
+            status: toQueryString(req.query.status),
+            page: toOptionalInt(req.query.page),
+            limit: toOptionalInt(req.query.limit)
         });
         res.json(result);
-    } catch (err) {
-        logger.error('Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getDrivers Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
@@ -40,32 +193,36 @@ export const getDrivers = async (req: AuthRequest, res: Response) => {
  */
 export const getRankedDriversForOrder = async (req: AuthRequest, res: Response) => {
     try {
-        const { order_id } = req.params;
-        const result = await DeliveryService.getRankedDriversForOrder(order_id);
+        const { order_id: orderId } = req.params as unknown as OrderParams;
+        const result = await DeliveryService.getRankedDriversForOrder(orderId);
         res.json(result);
-    } catch (err) {
-        logger.error('getRankedDriversForOrder Error', { error: getErrorMessage(err) });
-        const status = (err as any).statusCode || 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getRankedDriversForOrder Error', error);
+        res.status(getErrorStatusCode(error)).json({ error: getErrorMessage(error) });
     }
 };
 
 export const getDriverDetails = async (req: AuthRequest, res: Response) => {
     try {
-        const { driver_id } = req.params;
-        const result = await DeliveryService.getDriverDetails(driver_id);
+        const { driver_id: driverId } = req.params as unknown as DriverParams;
+        const result = await DeliveryService.getDriverDetails(driverId);
         res.json(result);
-    } catch (err) {
-        logger.error('getDriverDetails Error', { error: getErrorMessage(err) });
-        const status = (err as any).statusCode || 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getDriverDetails Error', error);
+        res.status(getErrorStatusCode(error)).json({ error: getErrorMessage(error) });
     }
 };
 
 export const createDriver = async (req: AuthRequest, res: Response) => {
-    const { full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model } = req.body;
+    const body = req.body as unknown as CreateDriverBody;
+    const fullName = toQueryString(body.full_name);
+    const phone = toQueryString(body.phone);
+    const email = toQueryString(body.email);
+    const vehicleType = toQueryString(body.vehicle_type);
+    const vehiclePlate = toQueryString(body.vehicle_plate);
+    const vehicleModel = toQueryString(body.vehicle_model);
 
-    if (!full_name || !phone) {
+    if (!fullName || !phone) {
         return res.status(400).json({ error: 'Name and phone are required' });
     }
 
@@ -73,30 +230,50 @@ export const createDriver = async (req: AuthRequest, res: Response) => {
     try {
         await client.query('BEGIN');
 
-        const result = await client.query(
+        const result = await client.query<DriverRow>(
             `INSERT INTO drivers (full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model, status, is_active)
              VALUES ($1, $2, $3, $4, $5, $6, 'available', true)
              RETURNING *`,
-            [full_name, phone, email || null, vehicle_type, vehicle_plate, vehicle_model || null]
+            [
+                fullName,
+                phone,
+                email ?? null,
+                vehicleType ?? null,
+                vehiclePlate ?? null,
+                vehicleModel ?? null
+            ]
         );
 
+        const driver = result.rows[0];
+        if (!driver) {
+            await client.query('ROLLBACK');
+            return res.status(500).json({ error: 'Failed to create driver' });
+        }
+
         await client.query('COMMIT');
-        res.status(201).json({ driver: result.rows[0] });
-    } catch (err) {
+        res.status(201).json({ driver });
+    } catch (error) {
         await client.query('ROLLBACK');
-        logger.error('createDriver Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+        logDeliveryError('createDriver Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     } finally {
         client.release();
     }
 };
 
 export const updateDriver = async (req: AuthRequest, res: Response) => {
-    const { driver_id } = req.params;
-    const { full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model, status } = req.body;
+    const { driver_id: driverId } = req.params as unknown as DriverParams;
+    const body = req.body as unknown as UpdateDriverBody;
+    const fullName = toQueryString(body.full_name);
+    const phone = toQueryString(body.phone);
+    const email = toQueryString(body.email);
+    const vehicleType = toQueryString(body.vehicle_type);
+    const vehiclePlate = toQueryString(body.vehicle_plate);
+    const vehicleModel = toQueryString(body.vehicle_model);
+    const status = toQueryString(body.status);
 
     try {
-        const result = await pool.query(
+        const result = await pool.query<DriverRow>(
             `UPDATE drivers
              SET full_name = COALESCE($1, full_name),
                  phone = COALESCE($2, phone),
@@ -108,17 +285,27 @@ export const updateDriver = async (req: AuthRequest, res: Response) => {
                  updated_at = NOW()
              WHERE driver_id = $8
              RETURNING *`,
-            [full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model, status, driver_id]
+            [
+                fullName ?? null,
+                phone ?? null,
+                email ?? null,
+                vehicleType ?? null,
+                vehiclePlate ?? null,
+                vehicleModel ?? null,
+                status ?? null,
+                driverId
+            ]
         );
 
-        if (result.rows.length === 0) {
+        const driver = result.rows[0];
+        if (!driver) {
             return res.status(404).json({ error: 'Driver not found' });
         }
 
-        res.json({ driver: result.rows[0] });
-    } catch (err) {
-        logger.error('updateDriver Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+        res.json({ driver });
+    } catch (error) {
+        logDeliveryError('updateDriver Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
@@ -126,84 +313,97 @@ export const updateDriver = async (req: AuthRequest, res: Response) => {
 // DELIVERY ASSIGNMENTS
 // ============================================
 
-export const getOrdersReadyForCollection = async (req: AuthRequest, res: Response) => {
+export const getOrdersReadyForCollection = async (_req: AuthRequest, res: Response) => {
     try {
         const orders = await DeliveryService.getOrdersReadyForCollection();
         res.json({ orders });
-    } catch (err) {
-        logger.error('getOrdersReadyForCollection Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getOrdersReadyForCollection Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
-export const getOrdersReadyForDelivery = async (req: AuthRequest, res: Response) => {
+export const getOrdersReadyForDelivery = async (_req: AuthRequest, res: Response) => {
     try {
         const orders = await DeliveryService.getOrdersReadyForDelivery();
         res.json({ orders });
-    } catch (err) {
-        logger.error('getOrdersReadyForDelivery Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getOrdersReadyForDelivery Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
 export const assignCollectionDriver = async (req: AuthRequest, res: Response) => {
-    try {
-        const { order_id } = req.params;
-        const { driver_id, notes } = req.body;
+    const assignedByUserId = getUserId(req);
+    if (!assignedByUserId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!driver_id) {
+    try {
+        const { order_id: orderId } = req.params as unknown as OrderParams;
+        const body = req.body as unknown as AssignCollectionBody;
+        const driverId = toQueryString(body.driver_id);
+        const notes = toQueryString(body.notes);
+
+        if (!driverId) {
             return res.status(400).json({ error: 'Driver ID is required' });
         }
 
         const result = await DeliveryService.assignCollectionDriver({
-            order_id,
-            driver_id,
+            order_id: orderId,
+            driver_id: driverId,
             notes,
-            assigned_by_user_id: req.user!.userId
+            assigned_by_user_id: assignedByUserId
         });
 
         res.json(result);
-    } catch (err) {
-        logger.error('assignCollectionDriver Error', { error: getErrorMessage(err) });
-        const status = (err as any).statusCode || 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('assignCollectionDriver Error', error);
+        res.status(getErrorStatusCode(error)).json({ error: getErrorMessage(error) });
     }
 };
 
 export const assignDriver = async (req: AuthRequest, res: Response) => {
-    try {
-        const { order_id } = req.params;
-        const { driver_id, estimated_pickup, estimated_delivery } = req.body;
+    const assignedByUserId = getUserId(req);
+    if (!assignedByUserId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!driver_id) {
+    try {
+        const { order_id: orderId } = req.params as unknown as OrderParams;
+        const body = req.body as unknown as AssignDeliveryBody;
+        const driverId = toQueryString(body.driver_id);
+        const estimatedPickup = toQueryString(body.estimated_pickup);
+        const estimatedDelivery = toQueryString(body.estimated_delivery);
+
+        if (!driverId) {
             return res.status(400).json({ error: 'Driver ID is required' });
         }
 
         const result = await DeliveryService.assignDeliveryDriver({
-            order_id,
-            driver_id,
-            estimated_pickup,
-            estimated_delivery,
-            assigned_by_user_id: req.user!.userId
+            order_id: orderId,
+            driver_id: driverId,
+            estimated_pickup: estimatedPickup,
+            estimated_delivery: estimatedDelivery,
+            assigned_by_user_id: assignedByUserId
         });
 
         res.json(result);
-    } catch (err) {
-        logger.error('assignDriver Error', { error: getErrorMessage(err) });
-        const status = (err as any).statusCode || 500;
-        res.status(status).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('assignDriver Error', error);
+        res.status(getErrorStatusCode(error)).json({ error: getErrorMessage(error) });
     }
 };
 
 // Legacy endpoints - keeping for backward compatibility
-export const collectOrder = async (req: AuthRequest, res: Response) => {
+export const collectOrder = (_req: AuthRequest, res: Response) => {
     res.status(410).json({
         error: 'This endpoint is deprecated. Use assignCollectionDriver + driver pickup confirmation instead.',
         migration_guide: 'Use POST /delivery/orders/:order_id/assign-collection-driver'
     });
 };
 
-export const getOrdersForDelivery = async (req: AuthRequest, res: Response) => {
+export const getOrdersForDelivery = async (_req: AuthRequest, res: Response) => {
     try {
         const [collection, delivery] = await Promise.all([
             DeliveryService.getOrdersReadyForCollection(),
@@ -214,17 +414,19 @@ export const getOrdersForDelivery = async (req: AuthRequest, res: Response) => {
             ready_for_collection: collection,
             ready_for_delivery: delivery
         });
-    } catch (err) {
-        logger.error('getOrdersForDelivery Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getOrdersForDelivery Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
 export const reassignDriver = async (req: AuthRequest, res: Response) => {
-    const { assignment_id } = req.params;
-    const { new_driver_id, reason } = req.body;
+    const { assignment_id: assignmentId } = req.params as unknown as AssignmentParams;
+    const body = req.body as unknown as ReassignDriverBody;
+    const newDriverId = toQueryString(body.new_driver_id);
+    const reason = toQueryString(body.reason);
 
-    if (!new_driver_id) {
+    if (!newDriverId) {
         return res.status(400).json({ error: 'New driver ID is required' });
     }
 
@@ -233,34 +435,32 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
         await client.query('BEGIN');
 
         // Get current assignment by assignment_id
-        const currentResult = await client.query(
+        const currentResult = await client.query<CurrentAssignmentRow>(
             `SELECT da.*, d.full_name as old_driver_name, o.order_id, o.order_number
              FROM delivery_assignments da
              JOIN drivers d ON da.driver_id = d.driver_id
              JOIN orders o ON da.order_id = o.order_id
              WHERE da.assignment_id = $1 AND da.status IN ('assigned', 'picked_up', 'in_transit')`,
-            [assignment_id]
+            [assignmentId]
         );
 
-        if (currentResult.rows.length === 0) {
+        const oldAssignment = currentResult.rows[0];
+        if (!oldAssignment) {
             await client.query('ROLLBACK');
             return res.status(404).json({ error: 'No active assignment found for this order' });
         }
 
-        const oldAssignment = currentResult.rows[0];
-
         // Get new driver
-        const newDriverResult = await client.query(
+        const newDriverResult = await client.query<NewDriverRow>(
             'SELECT driver_id, user_id, full_name, status FROM drivers WHERE driver_id = $1',
-            [new_driver_id]
+            [newDriverId]
         );
 
-        if (newDriverResult.rows.length === 0) {
+        const newDriver = newDriverResult.rows[0];
+        if (!newDriver) {
             await client.query('ROLLBACK');
             return res.status(404).json({ error: 'New driver not found' });
         }
-
-        const newDriver = newDriverResult.rows[0];
 
         // Update old driver to available
         await client.query(
@@ -273,13 +473,13 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
             `UPDATE delivery_assignments
              SET driver_id = $1, reassigned_at = NOW(), reassignment_reason = $2, updated_at = NOW()
              WHERE assignment_id = $3`,
-            [new_driver_id, reason || 'Emergency reassignment', oldAssignment.assignment_id]
+            [newDriverId, reason || 'Emergency reassignment', oldAssignment.assignment_id]
         );
 
         // Update new driver to busy
         await client.query(
             'UPDATE drivers SET status = $1 WHERE driver_id = $2',
-            ['busy', new_driver_id]
+            ['busy', newDriverId]
         );
 
         // Update order
@@ -295,18 +495,21 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
             message: `Driver reassigned from ${oldAssignment.old_driver_name} to ${newDriver.full_name}`,
             new_driver: newDriver
         });
-    } catch (err) {
+    } catch (error) {
         await client.query('ROLLBACK');
-        logger.error('reassignDriver Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+        logDeliveryError('reassignDriver Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     } finally {
         client.release();
     }
 };
 
 export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
-    const { assignment_id } = req.params;
-    const { status, notes, proof_of_delivery_url } = req.body;
+    const { assignment_id: assignmentId } = req.params as unknown as AssignmentParams;
+    const body = req.body as unknown as UpdateDeliveryStatusBody;
+    const status = toQueryString(body.status);
+    const notes = toQueryString(body.notes);
+    const proofOfDeliveryUrl = toQueryString(body.proof_of_delivery_url);
 
     if (!status) {
         return res.status(400).json({ error: 'Status is required' });
@@ -326,15 +529,14 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
                  updated_at = NOW()
              WHERE assignment_id = $4
              RETURNING *`,
-            [status, proof_of_delivery_url, notes, assignment_id]
+            [status, proofOfDeliveryUrl ?? null, notes ?? null, assignmentId]
         );
 
-        if (result.rows.length === 0) {
+        const assignment = result.rows[0] as DeliveryAssignmentRow | undefined;
+        if (!assignment) {
             await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Assignment not found' });
         }
-
-        const assignment = result.rows[0];
 
         // Update order status if delivered
         if (status === 'delivered') {
@@ -351,11 +553,11 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
         }
 
         await client.query('COMMIT');
-        res.json({ success: true, assignment: result.rows[0] });
-    } catch (err) {
+        res.json({ success: true, assignment });
+    } catch (error) {
         await client.query('ROLLBACK');
-        logger.error('updateDeliveryStatus Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+        logDeliveryError('updateDeliveryStatus Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     } finally {
         client.release();
     }
@@ -365,32 +567,37 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
 // TRACKING & STATS
 // ============================================
 
-export const getDeliveryStats = async (req: AuthRequest, res: Response) => {
+export const getDeliveryStats = async (_req: AuthRequest, res: Response) => {
     try {
         const stats = await trackingService.getDeliveryStats();
         res.json({ stats });
-    } catch (err) {
-        logger.error('getDeliveryStats Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getDeliveryStats Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
 export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
     try {
-        const { driver_id } = req.params;
-        const { latitude, longitude, accuracy, heading, speed } = req.body;
+        const { driver_id: driverId } = req.params as unknown as DriverParams;
+        const body = req.body as unknown as UpdateDriverLocationBody;
+        const latitude = toOptionalNumber(body.latitude);
+        const longitude = toOptionalNumber(body.longitude);
+        const accuracy = toOptionalNumber(body.accuracy);
+        const heading = toOptionalNumber(body.heading);
+        const speed = toOptionalNumber(body.speed);
 
-        if (!latitude || !longitude) {
+        if (latitude === undefined || longitude === undefined) {
             return res.status(400).json({ error: 'Latitude and longitude are required' });
         }
 
         await trackingService.updateDriverLocation(
-            driver_id,
-            parseFloat(latitude),
-            parseFloat(longitude),
-            accuracy ? parseFloat(accuracy) : undefined,
-            heading ? parseFloat(heading) : undefined,
-            speed ? parseFloat(speed) : undefined
+            driverId,
+            latitude,
+            longitude,
+            accuracy,
+            heading,
+            speed
         );
 
         res.json({
@@ -398,9 +605,9 @@ export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
             message: 'Location updated',
             location: { latitude, longitude }
         });
-    } catch (err) {
-        logger.error('updateDriverLocation Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('updateDriverLocation Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
@@ -409,11 +616,17 @@ export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
  * Driver uploads photo and confirms delivery
  */
 export const completeWithPOD = async (req: AuthRequest, res: Response) => {
-    try {
-        const { order_id, pod_photo_url } = req.body;
-        const driverId = req.user!.userId;
+    const driverId = getUserId(req);
+    if (!driverId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!order_id || !pod_photo_url) {
+    try {
+        const body = req.body as unknown as CompleteWithPODBody;
+        const orderId = toQueryString(body.order_id);
+        const podPhotoUrl = toQueryString(body.pod_photo_url);
+
+        if (!orderId || !podPhotoUrl) {
             return res.status(400).json({ error: 'Order ID and POD photo URL are required' });
         }
 
@@ -421,27 +634,27 @@ export const completeWithPOD = async (req: AuthRequest, res: Response) => {
         const { getWritePool } = await import('../config/db');
         const lifecycleService = new OrderLifecycleService(getWritePool());
 
-        await lifecycleService.completeOrderByDriver(order_id, driverId, pod_photo_url);
+        await lifecycleService.completeOrderByDriver(orderId, driverId, podPhotoUrl);
 
         res.json({
             success: true,
             message: 'Order completed successfully with POD',
-            order_id,
-            pod_photo_url
+            order_id: orderId,
+            pod_photo_url: podPhotoUrl
         });
-    } catch (err) {
-        logger.error('completeWithPOD Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('completeWithPOD Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
-export const getActiveDeliveries = async (req: AuthRequest, res: Response) => {
+export const getActiveDeliveries = async (_req: AuthRequest, res: Response) => {
     try {
         const deliveries = await trackingService.getActiveDeliveries();
         res.json({ deliveries });
-    } catch (err) {
-        logger.error('getActiveDeliveries Error', { error: getErrorMessage(err) });
-        res.status(500).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getActiveDeliveries Error', error);
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
 
@@ -451,21 +664,24 @@ export const getActiveDeliveries = async (req: AuthRequest, res: Response) => {
 
 export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
     try {
-        const { latitude, longitude, order_total } = req.body;
+        const body = req.body as unknown as CalculateDeliveryFeeBody;
+        const latitude = toOptionalNumber(body.latitude);
+        const longitude = toOptionalNumber(body.longitude);
+        const orderTotal = toOptionalNumber(body.order_total);
 
-        if (!latitude || !longitude) {
+        if (latitude === undefined || longitude === undefined) {
             return res.status(400).json({ error: 'Latitude and longitude are required' });
         }
 
         // If order_total provided, use DeliveryFeeService for tier discounts
-        if (order_total !== undefined) {
+        if (orderTotal !== undefined) {
             const { DeliveryFeeService } = await import('../services/delivery/delivery-fee.service');
             const feeService = new DeliveryFeeService(pool);
 
             const result = await feeService.calculateFee(
-                parseFloat(latitude),
-                parseFloat(longitude),
-                parseFloat(order_total)
+                latitude,
+                longitude,
+                orderTotal
             );
 
             return res.json({
@@ -486,8 +702,8 @@ export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
 
         // Fallback to basic geo-based fee (no discount)
         const result = await geoService.calculateDeliveryFee(
-            parseFloat(latitude),
-            parseFloat(longitude),
+            latitude,
+            longitude,
             true // include hub info
         );
 
@@ -501,8 +717,8 @@ export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
             distance_km: result.distance_km,
             hub: result.hub
         });
-    } catch (err) {
-        logger.error('calculateDeliveryFee Error', { error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('calculateDeliveryFee Error', error);
         res.status(500).json({ error: 'Failed to calculate delivery fee' });
     }
 };
@@ -512,25 +728,36 @@ export const getDeliveryZones = async (_req: AuthRequest, res: Response) => {
         const zones = await geoService.getDeliveryZones();
         const hub = await geoService.getPrimaryHub();
         res.json({ zones, hub });
-    } catch (err) {
-        logger.error('getDeliveryZones Error', { error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('getDeliveryZones Error', error);
         res.status(500).json({ error: 'Failed to fetch delivery zones' });
     }
 };
 
 export const updateZoneFee = async (req: AuthRequest, res: Response) => {
-    try {
-        const { zone_id } = req.params;
-        const { delivery_fee, reason } = req.body;
-        const adminId = req.user!.userId;
+    const adminId = getUserId(req);
+    if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!delivery_fee || delivery_fee < 0) {
+    try {
+        const { zone_id: zoneIdRaw } = req.params as unknown as ZoneParams;
+        const body = req.body as unknown as UpdateZoneFeeBody;
+        const zoneId = toOptionalInt(zoneIdRaw);
+        const deliveryFee = toOptionalNumber(body.delivery_fee);
+        const reason = toQueryString(body.reason);
+
+        if (zoneId === undefined) {
+            return res.status(400).json({ error: 'Valid zone_id is required' });
+        }
+
+        if (deliveryFee === undefined || deliveryFee < 0) {
             return res.status(400).json({ error: 'Valid delivery fee is required' });
         }
 
         const zone = await geoService.updateZoneFee(
-            parseInt(zone_id),
-            parseFloat(delivery_fee),
+            zoneId,
+            deliveryFee,
             adminId,
             reason
         );
@@ -539,9 +766,9 @@ export const updateZoneFee = async (req: AuthRequest, res: Response) => {
             message: 'Zone fee updated successfully',
             zone
         });
-    } catch (err) {
-        logger.error('updateZoneFee Error', { error: getErrorMessage(err) });
-        res.status(400).json({ error: getErrorMessage(err) });
+    } catch (error) {
+        logDeliveryError('updateZoneFee Error', error);
+        res.status(400).json({ error: getErrorMessage(error) });
     }
 };
 

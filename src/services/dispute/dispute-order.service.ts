@@ -29,17 +29,17 @@ export class DisputeOrderService {
             await client.query('BEGIN');
 
             const orderResult = await client.query(`SELECT o.*, EXTRACT(EPOCH FROM (NOW() - COALESCE(o.delivered_at, o.updated_at))) / 3600 as hours_since_delivery FROM orders o WHERE o.order_id = $1`, [data.order_id]);
-            if (orderResult.rows.length === 0) throw new Error('Order not found');
+            if (orderResult.rows.length === 0) {throw new Error('Order not found');}
             const order = orderResult.rows[0];
-            if (order.customer_id !== customerId) throw new Error('Access denied');
-            if (order.order_status !== 'delivered') throw new Error('Can only dispute delivered orders');
-            if (order.hours_since_delivery > DISPUTE_WINDOW_HOURS) throw new Error(`Dispute window expired. You had ${DISPUTE_WINDOW_HOURS} hours after delivery to report issues.`);
+            if (order.customer_id !== customerId) {throw new Error('Access denied');}
+            if (order.order_status !== 'delivered') {throw new Error('Can only dispute delivered orders');}
+            if (order.hours_since_delivery > DISPUTE_WINDOW_HOURS) {throw new Error(`Dispute window expired. You had ${DISPUTE_WINDOW_HOURS} hours after delivery to report issues.`);}
 
             const existingDispute = await client.query(`SELECT dispute_id FROM disputes WHERE order_id = $1`, [data.order_id]);
-            if (existingDispute.rows.length > 0) throw new Error('A dispute already exists for this order');
-            if (!DISPUTE_CONFIGS[data.reason]) throw new Error('Invalid dispute reason');
-            if (data.photoUrls.length > MAX_DISPUTE_PHOTOS) throw new Error(`Maximum ${MAX_DISPUTE_PHOTOS} photos allowed per dispute`);
-            if (['damaged', 'wrong_part', 'not_as_described'].includes(data.reason) && data.photoUrls.length === 0) throw new Error('Photos are required for this type of dispute');
+            if (existingDispute.rows.length > 0) {throw new Error('A dispute already exists for this order');}
+            if (!DISPUTE_CONFIGS[data.reason]) {throw new Error('Invalid dispute reason');}
+            if (data.photoUrls.length > MAX_DISPUTE_PHOTOS) {throw new Error(`Maximum ${MAX_DISPUTE_PHOTOS} photos allowed per dispute`);}
+            if (['damaged', 'wrong_part', 'not_as_described'].includes(data.reason) && data.photoUrls.length === 0) {throw new Error('Photos are required for this type of dispute');}
 
             const config = DISPUTE_CONFIGS[data.reason];
             const partPrice = parseFloat(order.part_price);
@@ -111,10 +111,10 @@ export class DisputeOrderService {
         try {
             await client.query('BEGIN');
             const disputeResult = await client.query(`SELECT d.*, o.order_number, o.customer_id FROM disputes d JOIN orders o ON d.order_id = o.order_id WHERE d.dispute_id = $1 FOR UPDATE`, [disputeId]);
-            if (disputeResult.rows.length === 0) throw new Error('Dispute not found');
+            if (disputeResult.rows.length === 0) {throw new Error('Dispute not found');}
             const dispute = disputeResult.rows[0];
-            if (dispute.garage_id !== garageId) throw new Error('Access denied');
-            if (dispute.status === 'resolved') throw new Error('Dispute already resolved');
+            if (dispute.garage_id !== garageId) {throw new Error('Access denied');}
+            if (dispute.status === 'resolved') {throw new Error('Dispute already resolved');}
             await client.query(`UPDATE disputes SET status = 'under_review', garage_response = $2, updated_at = NOW() WHERE dispute_id = $1`, [disputeId, responseMessage]);
             await client.query('COMMIT');
             return { dispute };

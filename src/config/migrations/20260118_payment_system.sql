@@ -61,14 +61,14 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
 );
 
 -- Performance Indexes
-CREATE INDEX idx_payment_transactions_order_id ON payment_transactions(order_id);
-CREATE INDEX idx_payment_transactions_user_id ON payment_transactions(user_id);
-CREATE INDEX idx_payment_transactions_status ON payment_transactions(status);
-CREATE INDEX idx_payment_transactions_created_at ON payment_transactions(created_at DESC);
-CREATE INDEX idx_payment_transactions_idempotency_key ON payment_transactions(idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_order_id ON payment_transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_id ON payment_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status ON payment_transactions(status);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_created_at ON payment_transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_idempotency_key ON payment_transactions(idempotency_key) WHERE idempotency_key IS NOT NULL;
 
 -- Composite index for common queries
-CREATE INDEX idx_payment_transactions_user_status ON payment_transactions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_status ON payment_transactions(user_id, status);
 
 -- Update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_payment_transactions_updated_at()
@@ -79,6 +79,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS payment_transactions_updated_at ON payment_transactions;
 CREATE TRIGGER payment_transactions_updated_at
     BEFORE UPDATE ON payment_transactions
     FOR EACH ROW
@@ -120,10 +121,10 @@ CREATE TABLE IF NOT EXISTS payment_audit_logs (
 );
 
 -- Indexes for audit queries
-CREATE INDEX idx_payment_audit_logs_transaction_id ON payment_audit_logs(transaction_id);
-CREATE INDEX idx_payment_audit_logs_action ON payment_audit_logs(action);
-CREATE INDEX idx_payment_audit_logs_created_at ON payment_audit_logs(created_at DESC);
-CREATE INDEX idx_payment_audit_logs_ip_address ON payment_audit_logs(ip_address);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_transaction_id ON payment_audit_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_action ON payment_audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_created_at ON payment_audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_audit_logs_ip_address ON payment_audit_logs(ip_address);
 
 -- ============================================================================
 -- 3. IDEMPOTENCY KEYS TABLE
@@ -150,8 +151,8 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
 );
 
 -- Index for expiry cleanup job
-CREATE INDEX idx_idempotency_keys_expires_at ON idempotency_keys(expires_at);
-CREATE INDEX idx_idempotency_keys_user_id ON idempotency_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_idempotency_keys_expires_at ON idempotency_keys(expires_at);
+CREATE INDEX IF NOT EXISTS idx_idempotency_keys_user_id ON idempotency_keys(user_id);
 
 -- ============================================================================
 -- 4. HELPER FUNCTIONS
@@ -205,7 +206,12 @@ COMMENT ON COLUMN payment_transactions.idempotency_key IS 'Client-generated UUID
 COMMENT ON COLUMN payment_transactions.card_last4 IS 'Last 4 digits of card - PCI-DSS compliant';
 COMMENT ON COLUMN payment_transactions.provider_response IS 'Encrypted response from payment provider';
 
--- Grant permissions (adjust as needed)
-GRANT SELECT, INSERT, UPDATE ON payment_transactions TO qscrap_app;
-GRANT SELECT, INSERT ON payment_audit_logs TO qscrap_app;
-GRANT SELECT, INSERT, DELETE ON idempotency_keys TO qscrap_app;
+-- Grant permissions when application role exists
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'qscrap_app') THEN
+        GRANT SELECT, INSERT, UPDATE ON payment_transactions TO qscrap_app;
+        GRANT SELECT, INSERT ON payment_audit_logs TO qscrap_app;
+        GRANT SELECT, INSERT, DELETE ON idempotency_keys TO qscrap_app;
+    END IF;
+END $$;

@@ -55,7 +55,7 @@ export class DriverService {
         let notifiedCustomers = 0;
 
         for (const row of affectedOrders) {
-            if (notifiedOrderIds.has(row.order_id)) continue;
+            if (notifiedOrderIds.has(row.order_id)) {continue;}
 
             io?.to(`user_${row.customer_id}`).emit('driver_location_update', {
                 order_id: row.order_id,
@@ -268,13 +268,13 @@ export class DriverService {
             }
             // DELIVERY ASSIGNMENTS: Standard delivery flow
             else if (assignment.assignment_type === 'delivery' || !assignment.assignment_type) {
-                if (status === 'in_transit') newOrderStatus = 'in_transit';
-                else if (status === 'delivered') newOrderStatus = 'delivered';
-                else if (status === 'failed') newOrderStatus = 'disputed';
+                if (status === 'in_transit') {newOrderStatus = 'in_transit';}
+                else if (status === 'delivered') {newOrderStatus = 'delivered';}
+                else if (status === 'failed') {newOrderStatus = 'disputed';}
             }
             // RETURN ASSIGNMENTS: Return to garage
             else if (assignment.assignment_type === 'return_to_garage') {
-                if (status === 'delivered') newOrderStatus = 'returning_to_garage';
+                if (status === 'delivered') {newOrderStatus = 'returning_to_garage';}
             }
 
             if (newOrderStatus) {

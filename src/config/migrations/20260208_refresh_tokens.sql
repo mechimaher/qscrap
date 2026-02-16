@@ -2,6 +2,8 @@
 -- Date: 2026-02-08
 -- Finding: S-2 from Expert Review — Reduce attack window for stolen tokens
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -15,12 +17,12 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 );
 
 -- Fast lookup by token hash (primary query path)
-CREATE INDEX idx_refresh_tokens_hash ON refresh_tokens(token_hash) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash) WHERE revoked_at IS NULL;
 
 -- Per-user token listing and revocation
-CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id) WHERE revoked_at IS NULL;
 
 -- Cleanup of expired tokens
-CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens(expires_at) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at) WHERE revoked_at IS NULL;
 
 -- Note: Migration tracking handled automatically by scripts/migrate.js

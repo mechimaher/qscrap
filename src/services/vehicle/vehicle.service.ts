@@ -81,8 +81,8 @@ export class VehicleService {
         // NOTE: quick_service_bookings check removed - table purged with Quick Services feature
         if (activeRequestsCount > 0 || activeOrdersCount > 0) {
             const errors = [];
-            if (activeRequestsCount > 0) errors.push(`${activeRequestsCount} active request${activeRequestsCount > 1 ? 's' : ''}`);
-            if (activeOrdersCount > 0) errors.push(`${activeOrdersCount} active order${activeOrdersCount > 1 ? 's' : ''}`);
+            if (activeRequestsCount > 0) {errors.push(`${activeRequestsCount} active request${activeRequestsCount > 1 ? 's' : ''}`);}
+            if (activeOrdersCount > 0) {errors.push(`${activeOrdersCount} active order${activeOrdersCount > 1 ? 's' : ''}`);}
 
             const errorMessage = `Cannot delete vehicle. This vehicle has ${errors.join(', ')}. Please complete or cancel them first.`;
             logger.warn('Deletion blocked', { reason: errorMessage });

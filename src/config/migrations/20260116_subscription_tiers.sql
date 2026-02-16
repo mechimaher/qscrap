@@ -19,31 +19,99 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert subscription tiers
-INSERT INTO subscription_plans (
-    plan_code, plan_name, monthly_price_qar, annual_price_qar,
-    max_monthly_orders, analytics_enabled, priority_support,
-    api_access, ad_campaigns_allowed, max_team_members,
-    features_json, display_order
-) VALUES
-('starter', 'Starter', 0, 0, 50, false, false, false, false, 1,
- '{"bid_limit_per_day": 20, "showcase_products": 5, "featured_listing": false}'::jsonb, 1),
- 
-('professional', 'Professional', 299, 2990, 200, true, false, false, true, 3,
- '{"bid_limit_per_day": 100, "showcase_products": 50, "featured_listing": true, "analytics_retention_days": 90}'::jsonb, 2),
- 
-('enterprise', 'Enterprise', 799, 7990, -1, true, true, true, true, 10,
- '{"bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "custom_branding": true, "dedicated_support": true}'::jsonb, 3)
-ON CONFLICT (plan_code) DO UPDATE SET
-    monthly_price_qar = EXCLUDED.monthly_price_qar,
-    annual_price_qar = EXCLUDED.annual_price_qar,
-    max_monthly_orders = EXCLUDED.max_monthly_orders,
-    analytics_enabled = EXCLUDED.analytics_enabled,
-    priority_support = EXCLUDED.priority_support,
-    api_access = EXCLUDED.api_access,
-    ad_campaigns_allowed = EXCLUDED.ad_campaigns_allowed,
-    max_team_members = EXCLUDED.max_team_members,
-    features_json = EXCLUDED.features_json;
+-- Compatibility with canonical schema (which uses plan_id/monthly_fee/is_active/features).
+-- Add legacy columns only when missing so this migration can run safely on both schemas.
+ALTER TABLE subscription_plans
+ADD COLUMN IF NOT EXISTS monthly_price_qar DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS annual_price_qar DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS max_monthly_orders INTEGER,
+ADD COLUMN IF NOT EXISTS analytics_enabled BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS priority_support BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS api_access BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS ad_campaigns_allowed BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS max_team_members INTEGER DEFAULT 1,
+ADD COLUMN IF NOT EXISTS features_json JSONB,
+ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
+
+UPDATE subscription_plans
+SET monthly_price_qar = COALESCE(monthly_price_qar, monthly_fee),
+    annual_price_qar = COALESCE(annual_price_qar, monthly_fee * 12),
+    features_json = COALESCE(features_json, features),
+    active = COALESCE(active, is_active, true)
+WHERE monthly_price_qar IS NULL
+   OR annual_price_qar IS NULL
+   OR features_json IS NULL;
+
+-- Insert subscription tiers (supports both canonical and legacy schemas)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'subscription_plans'
+          AND column_name = 'monthly_fee'
+    ) THEN
+        INSERT INTO subscription_plans (
+            plan_code, plan_name, monthly_fee, commission_rate, max_bids_per_month,
+            features, is_active, display_order,
+            monthly_price_qar, annual_price_qar, max_monthly_orders,
+            analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active
+        ) VALUES
+        ('starter', 'Starter', 0, 0.180, 50,
+         '{"bid_limit_per_day": 20, "showcase_products": 5, "featured_listing": false}'::jsonb, true, 1,
+         0, 0, 50, false, false, false, false, 1,
+         '{"bid_limit_per_day": 20, "showcase_products": 5, "featured_listing": false}'::jsonb, true),
+        ('professional', 'Professional', 299, 0.150, 200,
+         '{"bid_limit_per_day": 100, "showcase_products": 50, "featured_listing": true, "analytics_retention_days": 90}'::jsonb, true, 2,
+         299, 2990, 200, true, false, false, true, 3,
+         '{"bid_limit_per_day": 100, "showcase_products": 50, "featured_listing": true, "analytics_retention_days": 90}'::jsonb, true),
+        ('enterprise', 'Enterprise', 799, 0.120, NULL,
+         '{"bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "custom_branding": true, "dedicated_support": true}'::jsonb, true, 3,
+         799, 7990, -1, true, true, true, true, 10,
+         '{"bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "custom_branding": true, "dedicated_support": true}'::jsonb, true)
+        ON CONFLICT (plan_code) DO UPDATE SET
+            monthly_fee = EXCLUDED.monthly_fee,
+            commission_rate = EXCLUDED.commission_rate,
+            max_bids_per_month = EXCLUDED.max_bids_per_month,
+            features = EXCLUDED.features,
+            is_active = EXCLUDED.is_active,
+            display_order = EXCLUDED.display_order,
+            monthly_price_qar = EXCLUDED.monthly_price_qar,
+            annual_price_qar = EXCLUDED.annual_price_qar,
+            max_monthly_orders = EXCLUDED.max_monthly_orders,
+            analytics_enabled = EXCLUDED.analytics_enabled,
+            priority_support = EXCLUDED.priority_support,
+            api_access = EXCLUDED.api_access,
+            ad_campaigns_allowed = EXCLUDED.ad_campaigns_allowed,
+            max_team_members = EXCLUDED.max_team_members,
+            features_json = EXCLUDED.features_json,
+            active = EXCLUDED.active;
+    ELSE
+        INSERT INTO subscription_plans (
+            plan_code, plan_name, monthly_price_qar, annual_price_qar,
+            max_monthly_orders, analytics_enabled, priority_support,
+            api_access, ad_campaigns_allowed, max_team_members,
+            features_json, display_order
+        ) VALUES
+        ('starter', 'Starter', 0, 0, 50, false, false, false, false, 1,
+         '{"bid_limit_per_day": 20, "showcase_products": 5, "featured_listing": false}'::jsonb, 1),
+        ('professional', 'Professional', 299, 2990, 200, true, false, false, true, 3,
+         '{"bid_limit_per_day": 100, "showcase_products": 50, "featured_listing": true, "analytics_retention_days": 90}'::jsonb, 2),
+        ('enterprise', 'Enterprise', 799, 7990, -1, true, true, true, true, 10,
+         '{"bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "custom_branding": true, "dedicated_support": true}'::jsonb, 3)
+        ON CONFLICT (plan_code) DO UPDATE SET
+            monthly_price_qar = EXCLUDED.monthly_price_qar,
+            annual_price_qar = EXCLUDED.annual_price_qar,
+            max_monthly_orders = EXCLUDED.max_monthly_orders,
+            analytics_enabled = EXCLUDED.analytics_enabled,
+            priority_support = EXCLUDED.priority_support,
+            api_access = EXCLUDED.api_access,
+            ad_campaigns_allowed = EXCLUDED.ad_campaigns_allowed,
+            max_team_members = EXCLUDED.max_team_members,
+            features_json = EXCLUDED.features_json;
+    END IF;
+END $$;
 
 -- 2. Add subscription fields to garages table (if not exists)
 ALTER TABLE garages 
@@ -68,7 +136,7 @@ CREATE TABLE IF NOT EXISTS subscription_history (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_subscription_history_garage ON subscription_history(garage_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_subscription_history_garage ON subscription_history(garage_id, created_at DESC);
 
 -- 4. Function to check feature access
 CREATE OR REPLACE FUNCTION check_feature_access(

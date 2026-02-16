@@ -196,7 +196,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
  * Validate if refund is allowed based on warranty period (7 days)
  */
 export function isWithinWarrantyPeriod(deliveredAt: Date | null): boolean {
-    if (!deliveredAt) return false;
+    if (!deliveredAt) {return false;}
 
     const WARRANTY_DAYS = 7;
     const warrantyEnd = new Date(deliveredAt);
@@ -209,7 +209,7 @@ export function isWithinWarrantyPeriod(deliveredAt: Date | null): boolean {
  * Calculate remaining warranty days
  */
 export function getWarrantyDaysRemaining(deliveredAt: Date | null): number {
-    if (!deliveredAt) return 0;
+    if (!deliveredAt) {return 0;}
 
     const WARRANTY_DAYS = 7;
     const now = new Date();

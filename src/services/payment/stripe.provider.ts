@@ -206,7 +206,7 @@ export class StripePaymentProvider implements PaymentGateway {
             // Check if customer already exists (would need DB lookup in real implementation)
             const customer = await this.stripe.customers.create({
                 email: email || `user_${userId}@qscrap.qa`,
-                name: name,
+                name,
                 metadata: { userId }
             });
 

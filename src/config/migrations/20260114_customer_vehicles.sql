@@ -2,9 +2,13 @@
 -- Allows customers to save their vehicles for quick selection on repeat orders
 -- Date: 2026-01-14
 
+-- Ensure UUID generation functions are available across environments
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create customer_vehicles table
 CREATE TABLE IF NOT EXISTS customer_vehicles (
-    vehicle_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vehicle_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     
     -- Vehicle Info

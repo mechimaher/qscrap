@@ -36,8 +36,10 @@ export class EmailService {
 
         this.transporter = nodemailer.createTransport(config);
 
-        // Verify connection
-        this.verifyConnection();
+        // Avoid external SMTP sockets during test runs.
+        if (process.env.NODE_ENV !== 'test') {
+            this.verifyConnection();
+        }
     }
 
     /**

@@ -187,7 +187,7 @@ export class MockPaymentProvider implements PaymentProvider {
     private validateLuhn(cardNumber: string): boolean {
         const digits = cardNumber.replace(/\D/g, '').split('').map(Number);
 
-        if (digits.length === 0) return false;
+        if (digits.length === 0) {return false;}
 
         let sum = 0;
         let isEven = false;
@@ -215,10 +215,10 @@ export class MockPaymentProvider implements PaymentProvider {
     private detectCardBrand(cardNumber: string): CardBrand {
         const cleaned = cardNumber.replace(/\s/g, '');
 
-        if (/^4/.test(cleaned)) return 'visa';
-        if (/^5[1-5]/.test(cleaned)) return 'mastercard';
-        if (/^3[47]/.test(cleaned)) return 'amex';
-        if (/^6(?:011|5)/.test(cleaned)) return 'discover';
+        if (/^4/.test(cleaned)) {return 'visa';}
+        if (/^5[1-5]/.test(cleaned)) {return 'mastercard';}
+        if (/^3[47]/.test(cleaned)) {return 'amex';}
+        if (/^6(?:011|5)/.test(cleaned)) {return 'discover';}
 
         return 'unknown';
     }
@@ -234,11 +234,11 @@ export class MockPaymentProvider implements PaymentProvider {
             cleaned === TEST_CARDS.AMEX_SUCCESS || cleaned === TEST_CARDS.DISCOVER_SUCCESS) {
             return 'success';
         }
-        if (cleaned === TEST_CARDS.DECLINED) return 'declined';
-        if (cleaned === TEST_CARDS.INSUFFICIENT_FUNDS) return 'insufficient_funds';
-        if (cleaned === TEST_CARDS.CARD_EXPIRED) return 'card_expired';
-        if (cleaned === TEST_CARDS.CARD_INVALID) return 'invalid_cvc';
-        if (cleaned === TEST_CARDS.REQUIRES_3DS) return '3d_secure';
+        if (cleaned === TEST_CARDS.DECLINED) {return 'declined';}
+        if (cleaned === TEST_CARDS.INSUFFICIENT_FUNDS) {return 'insufficient_funds';}
+        if (cleaned === TEST_CARDS.CARD_EXPIRED) {return 'card_expired';}
+        if (cleaned === TEST_CARDS.CARD_INVALID) {return 'invalid_cvc';}
+        if (cleaned === TEST_CARDS.REQUIRES_3DS) {return '3d_secure';}
 
         // Default to success for any valid card
         return 'success';

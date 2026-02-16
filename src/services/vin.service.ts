@@ -37,7 +37,7 @@ export class VINService {
      * Decode VIN to get vehicle details.
      */
     decodeVIN(vin: string): VehicleDetails | null {
-        if (!vin || vin.length !== 17) return null;
+        if (!vin || vin.length !== 17) {return null;}
 
         const normalizedVin = vin.toUpperCase();
         const wmi = normalizedVin.substring(0, 2); // First 2 chars usually enough for major make group
@@ -46,11 +46,11 @@ export class VINService {
         let make = VINService.wmiMap[wmi3] || VINService.wmiMap[wmi];
         if (!make) {
             // Geographic Fallback
-            if (normalizedVin.startsWith('J')) make = 'Japanese Make';
-            else if (normalizedVin.startsWith('K')) make = 'Korean Make';
-            else if (normalizedVin.startsWith('W')) make = 'German Make';
-            else if (normalizedVin.startsWith('1') || normalizedVin.startsWith('4') || normalizedVin.startsWith('5')) make = 'American Make';
-            else return null;
+            if (normalizedVin.startsWith('J')) {make = 'Japanese Make';}
+            else if (normalizedVin.startsWith('K')) {make = 'Korean Make';}
+            else if (normalizedVin.startsWith('W')) {make = 'German Make';}
+            else if (normalizedVin.startsWith('1') || normalizedVin.startsWith('4') || normalizedVin.startsWith('5')) {make = 'American Make';}
+            else {return null;}
         }
 
         // Year decoding (10th character)
@@ -74,12 +74,12 @@ export class VINService {
     }
 
     private getRegion(char: string): string {
-        if (/[A-H]/.test(char)) return 'Africa';
-        if (/[J-R]/.test(char)) return 'Asia';
-        if (/[S-Z]/.test(char)) return 'Europe';
-        if (/[1-5]/.test(char)) return 'North America';
-        if (/[6-7]/.test(char)) return 'Oceania';
-        if (/[8-9]/.test(char)) return 'South America';
+        if (/[A-H]/.test(char)) {return 'Africa';}
+        if (/[J-R]/.test(char)) {return 'Asia';}
+        if (/[S-Z]/.test(char)) {return 'Europe';}
+        if (/[1-5]/.test(char)) {return 'North America';}
+        if (/[6-7]/.test(char)) {return 'Oceania';}
+        if (/[8-9]/.test(char)) {return 'South America';}
         return 'Unknown';
     }
 }

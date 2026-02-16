@@ -173,7 +173,7 @@ export class PayoutHelpers {
         };
 
         const config = notificationMap[type as keyof typeof notificationMap];
-        if (!config) return;
+        if (!config) {return;}
 
         if (config.target === 'operations') {
             emitToOperations(config.event, { payout_id: payout.payout_id, payout });
@@ -199,7 +199,7 @@ export class PayoutHelpers {
             [garageId]
         );
 
-        if (result.rows.length === 0) return false;
+        if (result.rows.length === 0) {return false;}
         return bcrypt.compare(password, result.rows[0].password_hash);
     }
 }

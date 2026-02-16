@@ -7,6 +7,13 @@ import logger from '../utils/logger';
 
 let redisClient: RedisClientType | null = null;
 
+const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return 'Unknown error';
+};
+
 /**
  * Initialize Redis client for caching and future session storage
  * Compatible with redis v4+
@@ -56,8 +63,8 @@ export async function initializeRedis(): Promise<RedisClientType | null> {
 
         return redisClient;
 
-    } catch (err: any) {
-        logger.error('Redis connection failed', { error: err.message });
+    } catch (err: unknown) {
+        logger.error('Redis connection failed', { error: getErrorMessage(err) });
         logger.warn('Application will work without Redis');
         return null;
     }
@@ -81,7 +88,7 @@ export async function checkRedisHealth(): Promise<boolean> {
     try {
         await redisClient.ping();
         return true;
-    } catch (err) {
+    } catch {
         return false;
     }
 }

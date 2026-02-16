@@ -62,7 +62,7 @@ describe('Order Service', () => {
         await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
         await pool.query(`
             INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
-            VALUES ($1, '1af9e120-e679-43d5-9c47-895ceadfe48e', 'active', NOW(), NOW() + INTERVAL '30 days')
+            VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
         `, [testGarageId]);
 
         // 4. Create test part request

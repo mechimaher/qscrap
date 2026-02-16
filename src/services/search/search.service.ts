@@ -20,13 +20,13 @@ export class SearchService {
             orderQuery += ` ORDER BY o.created_at DESC LIMIT $${params.length + 1}`;
             params.push(maxResults);
             const orderResult = await this.pool.query(orderQuery, params);
-            if (orderResult.rows.length > 0) results.orders = orderResult.rows;
+            if (orderResult.rows.length > 0) {results.orders = orderResult.rows;}
         }
 
         // Users search - admin only
         if (userType === 'admin' && (!searchType || searchType === 'users')) {
             const userResult = await this.pool.query(`SELECT user_id, full_name, email, phone_number, user_type, is_active, created_at FROM users WHERE (full_name ILIKE $1 OR email ILIKE $1 OR phone_number ILIKE $1) ORDER BY created_at DESC LIMIT $2`, [searchTerm, maxResults]);
-            if (userResult.rows.length > 0) results.users = userResult.rows;
+            if (userResult.rows.length > 0) {results.users = userResult.rows;}
         }
 
         // Requests search
@@ -38,13 +38,13 @@ export class SearchService {
             requestQuery += ` ORDER BY pr.created_at DESC LIMIT $${params.length + 1}`;
             params.push(maxResults);
             const requestResult = await this.pool.query(requestQuery, params);
-            if (requestResult.rows.length > 0) results.requests = requestResult.rows;
+            if (requestResult.rows.length > 0) {results.requests = requestResult.rows;}
         }
 
         // Disputes search - admin only
         if (userType === 'admin' && (!searchType || searchType === 'disputes')) {
             const disputeResult = await this.pool.query(`SELECT d.dispute_id, d.reason, d.description, d.status, d.created_at, o.order_number, u.full_name as customer_name FROM disputes d JOIN orders o ON d.order_id = o.order_id JOIN users u ON d.customer_id = u.user_id WHERE (d.reason ILIKE $1 OR d.description ILIKE $1 OR o.order_number ILIKE $1 OR u.full_name ILIKE $1) ORDER BY d.created_at DESC LIMIT $2`, [searchTerm, maxResults]);
-            if (disputeResult.rows.length > 0) results.disputes = disputeResult.rows;
+            if (disputeResult.rows.length > 0) {results.disputes = disputeResult.rows;}
         }
 
         return results;
@@ -65,7 +65,7 @@ export class SearchService {
 
         // Part description suggestions
         let partQuery = `SELECT DISTINCT pr.part_description FROM part_requests pr WHERE pr.part_description ILIKE $1`;
-        if (userType === 'customer') partQuery += ` AND pr.customer_id = $2`;
+        if (userType === 'customer') {partQuery += ` AND pr.customer_id = $2`;}
         partQuery += ` LIMIT 3`;
         const partResult = await this.pool.query(partQuery, userType === 'customer' ? [searchTerm, userId] : [searchTerm]);
         suggestions.push(...partResult.rows.map(r => ({ label: r.part_description, type: 'part' })));

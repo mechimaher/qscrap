@@ -119,7 +119,7 @@ router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (r
     try {
         // For garage users, userId IS garageId (they're the same)
         const garageId = (req as any).user?.userId;
-        if (!garageId) return res.status(403).json({ error: 'Garage not found' });
+        if (!garageId) {return res.status(403).json({ error: 'Garage not found' });}
 
         const pool = (await import('../config/db')).default;
         const { BadgeCountService } = await import('../services/notification/badge.service');
@@ -137,7 +137,7 @@ router.get('/garage/badge-counts', authenticate, requireRole('garage'), async (r
 router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), async (req, res) => {
     try {
         const garageId = (req as any).user?.userId;
-        if (!garageId) return res.status(403).json({ error: 'Garage not found' });
+        if (!garageId) {return res.status(403).json({ error: 'Garage not found' });}
 
         const from_date = req.query.from_date as string;
         const to_date = req.query.to_date as string;

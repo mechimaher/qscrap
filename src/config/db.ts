@@ -8,6 +8,8 @@ dotenv.config();
 // DATABASE CONNECTION POOL CONFIGURATION
 // ============================================
 
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 // Production-ready pool configuration with optimizations
 const poolConfig: PoolConfig = {
     host: process.env.DB_HOST || 'localhost',
@@ -17,10 +19,12 @@ const poolConfig: PoolConfig = {
     port: parseInt(process.env.DB_PORT || '5432'),
 
     // Connection Pool Tuning for Vertical Scaling (Phase 1)
-    max: parseInt(process.env.DB_POOL_MAX || '20'),              // Max connections (increase for high load)
-    min: parseInt(process.env.DB_POOL_MIN || '5'),               // Min idle connections
-    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),  // Close idle after 30s
+    max: parseInt(process.env.DB_POOL_MAX || (isTestEnv ? '5' : '20')),              // Max connections (increase for high load)
+    min: parseInt(process.env.DB_POOL_MIN || (isTestEnv ? '0' : '5')),               // Min idle connections
+    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || (isTestEnv ? '1000' : '30000')),  // Close idle after 30s
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECT_TIMEOUT || '5000'), // Connection timeout
+    // Critical for Jest workers: allows Node to exit with idle clients in test runs.
+    allowExitOnIdle: isTestEnv,
 
     // Performance optimizations
     statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '30000'), // 30s query timeout

@@ -1,11 +1,66 @@
 import fs from 'fs';
+import { createRequire } from 'module';
 import path from 'path';
 import { promisify } from 'util';
 import logger from '../utils/logger';
 
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
-const readFile = promisify(fs.readFile);
+const nodeRequire = createRequire(__filename);
+
+const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return 'Unknown error';
+};
+
+type S3CommandConstructor = new (input: Record<string, unknown>) => unknown;
+
+interface S3ClientLike {
+    send(command: unknown): Promise<unknown>;
+}
+
+interface S3ClientConstructor {
+    new (options: {
+        region: string;
+        credentials: {
+            accessKeyId: string;
+            secretAccessKey: string;
+        };
+    }): S3ClientLike;
+}
+
+interface S3Module {
+    S3Client: S3ClientConstructor;
+    PutObjectCommand: S3CommandConstructor;
+    DeleteObjectCommand: S3CommandConstructor;
+}
+
+interface AzureBlockBlobClientLike {
+    uploadData(
+        data: Buffer,
+        options: { blobHTTPHeaders: { blobContentType: string } }
+    ): Promise<unknown>;
+    deleteIfExists(): Promise<unknown>;
+}
+
+interface AzureContainerClientLike {
+    createIfNotExists(options: { access: 'blob' }): Promise<unknown>;
+    getBlockBlobClient(blobName: string): AzureBlockBlobClientLike;
+}
+
+interface AzureBlobServiceClientLike {
+    getContainerClient(containerName: string): AzureContainerClientLike;
+}
+
+interface AzureBlobServiceClientNamespace {
+    fromConnectionString(connectionString: string): AzureBlobServiceClientLike;
+}
+
+interface AzureStorageBlobModule {
+    BlobServiceClient: AzureBlobServiceClientNamespace;
+}
 
 // ============================================
 // FILE STORAGE ABSTRACTION (Phase 2)
@@ -52,7 +107,7 @@ export class LocalFileStorage implements IFileStorage {
     async delete(url: string): Promise<void> {
         // Extract filename from URL
         const filename = url.split('/').pop();
-        if (!filename) return;
+        if (!filename) {return;}
 
         const filePath = path.join(this.uploadDir, filename);
         if (fs.existsSync(filePath)) {
@@ -71,7 +126,9 @@ export class LocalFileStorage implements IFileStorage {
  * Enabled when S3_BUCKET is configured
  */
 export class S3FileStorage implements IFileStorage {
-    private s3Client: any;
+    private s3Client!: S3ClientLike;
+    private putObjectCommand!: S3CommandConstructor;
+    private deleteObjectCommand!: S3CommandConstructor;
     private bucket: string;
     private region: string;
     private baseUrl: string;
@@ -82,9 +139,10 @@ export class S3FileStorage implements IFileStorage {
         this.baseUrl = process.env.S3_BASE_URL ||
             `https://${this.bucket}.s3.${this.region}.amazonaws.com`;
 
-        // Lazy load AWS SDK to avoid dependency if not needed
+        // Load AWS SDK only when S3 storage is selected.
         try {
-            const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+            const s3Module = nodeRequire('@aws-sdk/client-s3') as unknown as S3Module;
+            const { S3Client, PutObjectCommand, DeleteObjectCommand } = s3Module;
             this.s3Client = new S3Client({
                 region: this.region,
                 credentials: {
@@ -92,18 +150,20 @@ export class S3FileStorage implements IFileStorage {
                     secretAccessKey: process.env.S3_SECRET_KEY!
                 }
             });
+            this.putObjectCommand = PutObjectCommand;
+            this.deleteObjectCommand = DeleteObjectCommand;
         } catch (err) {
-            logger.error('AWS SDK not installed. Run: npm install @aws-sdk/client-s3');
+            logger.error('AWS SDK not installed. Run: npm install @aws-sdk/client-s3', {
+                error: getErrorMessage(err)
+            });
             throw new Error('S3 storage requires @aws-sdk/client-s3 package');
         }
     }
 
     async upload(file: Buffer, filename: string, folder?: string): Promise<string> {
-        const { PutObjectCommand } = require('@aws-sdk/client-s3');
-
         const key = folder ? `${folder}/${filename}` : filename;
 
-        const command = new PutObjectCommand({
+        const command = new this.putObjectCommand({
             Bucket: this.bucket,
             Key: key,
             Body: file,
@@ -116,13 +176,11 @@ export class S3FileStorage implements IFileStorage {
     }
 
     async delete(url: string): Promise<void> {
-        const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
-
         // Extract key from URL
         const urlObj = new URL(url);
         const key = urlObj.pathname.substring(1); // Remove leading /
 
-        const command = new DeleteObjectCommand({
+        const command = new this.deleteObjectCommand({
             Bucket: this.bucket,
             Key: key
         });
@@ -154,7 +212,7 @@ export class S3FileStorage implements IFileStorage {
  * Enabled when AZURE_STORAGE_ACCOUNT is configured
  */
 export class AzureBlobStorage implements IFileStorage {
-    private containerClient: any;
+    private containerClient!: AzureContainerClientLike;
     private baseUrl: string;
 
     constructor() {
@@ -163,15 +221,18 @@ export class AzureBlobStorage implements IFileStorage {
         this.baseUrl = `https://${accountName}.blob.core.windows.net/${containerName}`;
 
         try {
-            const { BlobServiceClient } = require('@azure/storage-blob');
+            const azureModule = nodeRequire('@azure/storage-blob') as unknown as AzureStorageBlobModule;
+            const { BlobServiceClient } = azureModule;
             const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING!;
             const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
             this.containerClient = blobServiceClient.getContainerClient(containerName);
 
             // Ensure container exists
-            this.containerClient.createIfNotExists({ access: 'blob' });
+            void this.containerClient.createIfNotExists({ access: 'blob' });
         } catch (err) {
-            logger.error('Azure SDK not installed. Run: npm install @azure/storage-blob');
+            logger.error('Azure SDK not installed. Run: npm install @azure/storage-blob', {
+                error: getErrorMessage(err)
+            });
             throw new Error('Azure storage requires @azure/storage-blob package');
         }
     }

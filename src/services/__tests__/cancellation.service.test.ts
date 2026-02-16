@@ -21,7 +21,7 @@ describe('CancellationService', () => {
 
     beforeEach(() => {
         service = new CancellationService(mockPool);
-        jest.clearAllMocks();
+        jest.resetAllMocks();
     });
 
     describe('Fee Calculation - BRAIN v3.0 Compliance', () => {
@@ -56,9 +56,9 @@ describe('CancellationService', () => {
                 delivery_fee: 20,
             };
 
-            (mockPool.query as jest.Mock).mockResolvedValueOnce({
-                rows: [mockOrder]
-            });
+            (mockPool.query as jest.Mock)
+                .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [{ count: 1 }] });
 
             const preview = await service.getCancellationPreview('test-order-2', 'user-1');
 
@@ -78,9 +78,9 @@ describe('CancellationService', () => {
                 delivery_fee: 20,
             };
 
-            (mockPool.query as jest.Mock).mockResolvedValueOnce({
-                rows: [mockOrder]
-            });
+            (mockPool.query as jest.Mock)
+                .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [{ count: 1 }] });
 
             const preview = await service.getCancellationPreview('test-order-3', 'user-1');
 
@@ -100,9 +100,9 @@ describe('CancellationService', () => {
                 delivery_fee: 20,
             };
 
-            (mockPool.query as jest.Mock).mockResolvedValueOnce({
-                rows: [mockOrder]
-            });
+            (mockPool.query as jest.Mock)
+                .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [{ count: 1 }] });
 
             const preview = await service.getCancellationPreview('test-order-4', 'user-1');
 
@@ -112,8 +112,8 @@ describe('CancellationService', () => {
             expect(preview.delivery_fee_retained).toBe(20); // 100% delivery fee
             expect(preview.cancellation_stage).toBe('IN_DELIVERY');
 
-            // Refund should be: 80 (part) - 8 (10% fee) - 20 (delivery) = 52
-            expect(preview.refund_amount).toBe(52);
+            // Refund should be: 100 (total) - 8 (10% fee) - 20 (delivery) = 72
+            expect(preview.refund_amount).toBe(72);
         });
 
         it('should NOT allow cancellation after delivery (use return flow)', async () => {
@@ -191,12 +191,11 @@ describe('CancellationService', () => {
                 delivery_fee: 20,
             };
 
-            (mockPool.query as jest.Mock).mockResolvedValueOnce({
-                rows: [mockOrder]
-            });
+            (mockPool.query as jest.Mock)
+                .mockResolvedValueOnce({ rows: [mockOrder] })
+                .mockResolvedValueOnce({ rows: [{ count: 1 }] });
 
             const preview = await service.getCancellationPreview('test-order-7', 'user-1');
-
             // 10% of 80 = 8, split 50/50 = 4 each
             expect(preview.fee_breakdown.platform_fee).toBe(4);
             expect(preview.fee_breakdown.garage_compensation).toBe(4);

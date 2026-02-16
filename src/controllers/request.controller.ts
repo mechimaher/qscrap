@@ -15,7 +15,7 @@ const requestFilteringService = new RequestFilteringService(getWritePool());
 // ============================================
 
 export const createRequest = catchAsync(async (req: AuthRequest, res: Response) => {
-    let {
+    const {
         car_make,
         car_model,
         car_year,

@@ -1,3 +1,7 @@
+import { initializeSentry } from './config/sentry';
+// Initialize Sentry as early as possible
+initializeSentry();
+
 import http from 'http';
 import { Server } from 'socket.io';
 import app from './app';
@@ -76,7 +80,7 @@ const SUPPORT_STAFF_ROLES = new Set(['support', 'cs_admin', 'customer_service'])
 const ADMIN_STAFF_ROLES = new Set(['admin', 'superadmin']);
 
 const normalizeClaim = (value: unknown): string | undefined => {
-    if (typeof value !== 'string') return undefined;
+    if (typeof value !== 'string') { return undefined; }
     const normalized = value.trim().toLowerCase();
     return normalized.length > 0 ? normalized : undefined;
 };
@@ -98,8 +102,8 @@ const parseSocketUser = (decoded: AuthTokenClaims): SocketUser | null => {
 };
 
 const getGarageRoomId = (user: SocketUser): string | undefined => {
-    if (user.garageId) return user.garageId;
-    if (user.userType === 'garage') return user.id;
+    if (user.garageId) { return user.garageId; }
+    if (user.userType === 'garage') { return user.id; }
     return undefined;
 };
 
@@ -342,11 +346,11 @@ io.on('connection', (socket) => {
     // Real-time Request Tracking (server-side authorization enforced)
     socket.on('track_request_view', async (payload: unknown) => {
         const user = socket.data.user as SocketUser | undefined;
-        if (!user) return;
+        if (!user) { return; }
 
         try {
             const request_id = getRequestIdFromPayload(payload);
-            if (!request_id) return;
+            if (!request_id) { return; }
 
             const allowed = await canTrackRequest(request_id, user);
             if (!allowed) {
@@ -380,18 +384,18 @@ io.on('connection', (socket) => {
 
             const count = requestViewers.get(request_id)!.size;
             io.to(`request_${request_id}`).emit('viewer_count_update', { request_id, count });
-            if (count === 0) requestViewers.delete(request_id);
+            if (count === 0) { requestViewers.delete(request_id); }
         }
     });
 
     // Tracking for specific order (server-side authorization enforced)
     socket.on('track_order', async (data: unknown) => {
         const user = socket.data.user as SocketUser | undefined;
-        if (!user) return;
+        if (!user) { return; }
 
         try {
             const orderId = getOrderIdFromPayload(data);
-            if (!orderId) return;
+            if (!orderId) { return; }
 
             const allowed = await canTrackOrder(orderId, user);
             if (!allowed) {
@@ -441,7 +445,7 @@ io.on('connection', (socket) => {
                 viewers.delete(socket.id);
                 const count = viewers.size;
                 io.to(`request_${requestId}`).emit('viewer_count_update', { request_id: requestId, count });
-                if (count === 0) requestViewers.delete(requestId);
+                if (count === 0) { requestViewers.delete(requestId); }
             }
         });
     });

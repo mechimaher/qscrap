@@ -67,7 +67,7 @@ export const logAuditEntry = async (entry: AuditLogEntry): Promise<void> => {
 
 // Remove sensitive fields from request body before logging
 const sanitizeRequestBody = (body: any): any => {
-    if (!body || typeof body !== 'object') return body;
+    if (!body || typeof body !== 'object') {return body;}
 
     const sensitiveFields = ['password', 'password_hash', 'token', 'secret', 'credit_card'];
     const sanitized = { ...body };
@@ -87,11 +87,11 @@ const determineAction = (method: string, path: string): string => {
 
     switch (method) {
         case 'POST':
-            if (path.includes('/login')) return 'user_login';
-            if (path.includes('/register')) return 'user_register';
-            if (path.includes('/cancel')) return 'cancel';
-            if (path.includes('/accept')) return 'accept';
-            if (path.includes('/reject')) return 'reject';
+            if (path.includes('/login')) {return 'user_login';}
+            if (path.includes('/register')) {return 'user_register';}
+            if (path.includes('/cancel')) {return 'cancel';}
+            if (path.includes('/accept')) {return 'accept';}
+            if (path.includes('/reject')) {return 'reject';}
             return `create_${resource.type}`;
         case 'PUT':
         case 'PATCH':

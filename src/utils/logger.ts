@@ -51,7 +51,7 @@ class Logger {
     }
 
     private log(level: LogLevel, message: string, context?: LogContext): void {
-        if (!this.shouldLog(level)) return;
+        if (!this.shouldLog(level)) {return;}
 
         const entry: LogEntry = {
             timestamp: new Date().toISOString(),

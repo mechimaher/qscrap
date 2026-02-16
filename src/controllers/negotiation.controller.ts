@@ -17,7 +17,7 @@ export const createCounterOffer = async (req: AuthRequest, res: Response) => {
         const result = await negotiationService.createCounterOffer(req.user!.userId, bid_id, proposed_amount, message);
         res.status(201).json({ message: 'Counter-offer sent', ...result, max_rounds: 3 });
     } catch (err) {
-        if (isNegotiationError(err)) return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });
+        if (isNegotiationError(err)) {return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });}
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
@@ -32,7 +32,7 @@ export const respondToCounterOffer = async (req: AuthRequest, res: Response) => 
         res.json({ message: `Counter-offer ${action}ed` });
     } catch (err) {
         logger.error('respondToCounterOffer error', { error: err });
-        if (isNegotiationError(err)) return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });
+        if (isNegotiationError(err)) {return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });}
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
@@ -46,7 +46,7 @@ export const customerRespondToCounter = async (req: AuthRequest, res: Response) 
         await negotiationService.customerRespondToCounter(req.user!.userId, counter_offer_id, { action, counter_price: counterPrice, notes });
         res.json({ message: `Counter-offer ${action}ed` });
     } catch (err) {
-        if (isNegotiationError(err)) return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });
+        if (isNegotiationError(err)) {return res.status(getHttpStatusForError(err)).json({ error: (err as Error).message });}
         res.status(400).json({ error: getErrorMessage(err) });
     }
 };
@@ -60,7 +60,7 @@ export const getNegotiationHistory = async (req: AuthRequest, res: Response) => 
             ? Math.max(...history.map((h: any) => h.round_number || 0))
             : 0;
         // Return both 'negotiations' (legacy) and 'history' + 'current_round' (mobile app)
-        res.json({ negotiations: history, history: history, current_round: currentRound });
+        res.json({ negotiations: history, history, current_round: currentRound });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
     }

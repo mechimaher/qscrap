@@ -11,6 +11,13 @@ interface JobQueues {
     notifications: Queue | null;
 }
 
+const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) {
+        return err.message;
+    }
+    return 'Unknown error';
+};
+
 const queues: JobQueues = {
     scheduled: null,
     notifications: null
@@ -19,7 +26,7 @@ const queues: JobQueues = {
 /**
  * Initialize job queues if Redis is available
  */
-export async function initializeJobQueues(): Promise<boolean> {
+export function initializeJobQueues(): boolean {
     const redisUrl = process.env.REDIS_URL;
 
     if (!redisUrl) {
@@ -42,8 +49,8 @@ export async function initializeJobQueues(): Promise<boolean> {
 
         logger.startup('BullMQ queues initialized');
         return true;
-    } catch (err: any) {
-        logger.error('Failed to initialize job queues', { error: err.message });
+    } catch (err: unknown) {
+        logger.error('Failed to initialize job queues', { error: getErrorMessage(err) });
         return false;
     }
 }
@@ -61,7 +68,7 @@ export function getJobQueue(name: 'scheduled' | 'notifications'): Queue | null {
 export async function scheduleRecurringJob(
     queueName: 'scheduled' | 'notifications',
     jobName: string,
-    data: any,
+    data: unknown,
     cronExpression: string
 ): Promise<boolean> {
     const queue = queues[queueName];
@@ -77,8 +84,8 @@ export async function scheduleRecurringJob(
         });
         logger.info('Scheduled recurring job', { jobName, cronExpression });
         return true;
-    } catch (err: any) {
-        logger.error('Failed to schedule job', { jobName, error: err.message });
+    } catch (err: unknown) {
+        logger.error('Failed to schedule job', { jobName, error: getErrorMessage(err) });
         return false;
     }
 }
@@ -89,7 +96,7 @@ export async function scheduleRecurringJob(
 export async function addJob(
     queueName: 'scheduled' | 'notifications',
     jobName: string,
-    data: any,
+    data: unknown,
     options?: { delay?: number; priority?: number }
 ): Promise<boolean> {
     const queue = queues[queueName];
@@ -105,8 +112,8 @@ export async function addJob(
             removeOnFail: 50
         });
         return true;
-    } catch (err: any) {
-        logger.error('Failed to add job', { jobName, error: err.message });
+    } catch (err: unknown) {
+        logger.error('Failed to add job', { jobName, error: getErrorMessage(err) });
         return false;
     }
 }
@@ -146,8 +153,8 @@ export function createJobWorker(
         });
 
         return worker;
-    } catch (err: any) {
-        logger.error('Worker creation failed', { error: err.message });
+    } catch (err: unknown) {
+        logger.error('Worker creation failed', { error: getErrorMessage(err) });
         return null;
     }
 }
@@ -174,7 +181,7 @@ export async function getQueueStats(queueName: 'scheduled' | 'notifications'): P
             queue.getFailedCount()
         ]);
         return { waiting, active, completed, failed };
-    } catch (_err) {
+    } catch {
         return null;
     }
 }
@@ -183,9 +190,17 @@ export async function getQueueStats(queueName: 'scheduled' | 'notifications'): P
  * Graceful shutdown
  */
 export async function closeJobQueues(): Promise<void> {
-    const closePromises = Object.values(queues)
-        .filter(q => q !== null)
-        .map(q => q!.close());
+    const closePromises: Promise<void>[] = [];
+
+    if (queues.scheduled) {
+        const queue = queues.scheduled as unknown as { close: () => Promise<void> };
+        closePromises.push(queue.close());
+    }
+
+    if (queues.notifications) {
+        const queue = queues.notifications as unknown as { close: () => Promise<void> };
+        closePromises.push(queue.close());
+    }
 
     await Promise.all(closePromises);
     logger.shutdown('All job queues');

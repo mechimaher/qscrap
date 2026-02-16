@@ -149,7 +149,7 @@ export class UserManagementService {
         const user = userResult.rows[0];
 
         // Get additional metrics based on user type
-        let additionalData: any = {};
+        const additionalData: any = {};
         let typeData: any = null;
         let activity: any = null;
 
@@ -204,7 +204,7 @@ export class UserManagementService {
         return {
             ...user,
             type_data: typeData,
-            activity: activity
+            activity
         };
     }
 

@@ -111,14 +111,23 @@ jobs:
       - name: npm audit (Critical/High)
         run: |
           echo "=== NPM Security Audit ==="
-          npm audit --audit-level=high
+          set +e
+          npm audit --audit-level=high --json > audit-results.json
+          AUDIT_EXIT=$?
+          set -e
+
+          node -e "const fs=require('fs'); const report=JSON.parse(fs.readFileSync('audit-results.json','utf8')); const v=report.metadata?.vulnerabilities||{}; console.log('Vulnerabilities => critical=' + (v.critical||0) + ' high=' + (v.high||0) + ' moderate=' + (v.moderate||0));"
+
+          exit $AUDIT_EXIT
 
       - name: Upload audit results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: npm-audit-${{ github.sha }}
           path: audit-results.json
           retention-days: 30
+          if-no-files-found: error
 
   # ============================================
   # 4. Secret Detection - Gitleaks
@@ -127,7 +136,7 @@ jobs:
     name: Secret Detection
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    continue-on-error: true  # Report but don't fail (historical secrets may exist)
+    # blocking secret detection gate
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -181,8 +190,17 @@ jobs:
 
       - name: Check licenses
         run: |
-          npx license-checker --summary --production
-          echo "=== License check complete ==="
+          npx license-checker --json --production > license-report.json
+          node scripts/check-license-policy.js license-report.json
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report-${{ github.sha }}
+          path: license-report.json
+          retention-days: 30
+          if-no-files-found: error
 
   # ============================================
   # Security Summary Job

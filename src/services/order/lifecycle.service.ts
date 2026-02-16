@@ -626,7 +626,7 @@ export class OrderLifecycleService {
         );
 
         const partName = partDescResult.rows[0]?.part_description;
-        if (!partName) return;
+        if (!partName) {return;}
 
         const suggestions = predictiveService.getSuggestions(partName);
         if (suggestions.length > 0) {

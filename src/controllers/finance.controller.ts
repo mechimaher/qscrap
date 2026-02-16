@@ -3,17 +3,29 @@
  * All business logic delegated to PayoutService, RefundService, and RevenueService
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import {
+    BatchPaymentDto,
+    ConfirmPaymentDto,
+    DisputeDto,
     PayoutService,
+    PayoutStatus,
+    PayoutFilters,
     RefundService,
+    ResolveDisputeDto,
+    RevenuePeriod,
     RevenueService,
+    SendPaymentDto,
+    TransactionFilters,
     isFinanceError,
     getHttpStatusForError
 } from '../services/finance';
 import { createNotification } from '../services/notification.service';
+import { getErrorMessage } from '../types';
 import logger from '../utils/logger';
 
 // Initialize services
@@ -21,48 +33,206 @@ const payoutService = new PayoutService(pool);
 const refundService = new RefundService(pool);
 const revenueService = new RevenueService(pool);
 
+interface ReasonBody {
+    reason?: string;
+}
+
+interface BatchPreviewBody {
+    payout_ids?: string[];
+    garage_id?: string;
+    all_pending?: boolean;
+}
+
+interface BatchPaymentBody extends BatchPreviewBody {
+    reference_number?: string;
+    notes?: string;
+    confirmed?: boolean;
+}
+
+interface CreateRefundBody {
+    refund_amount?: number | string;
+    refund_reason?: string;
+    refund_method?: string;
+}
+
+interface RejectRefundBody {
+    reason?: string;
+}
+
+interface ApproveCompensationBody {
+    notes?: string;
+}
+
+interface DenyCompensationBody {
+    reason?: string;
+    apply_penalty?: boolean | string;
+    penalty_type?: string;
+    penalty_amount?: number | string;
+}
+
+interface CompensationPayoutRow {
+    payout_id: string;
+    order_id: string;
+    garage_id: string;
+    net_amount: number;
+}
+
+interface QRCodeModule {
+    toDataURL(text: string, options?: { width?: number; margin?: number }): Promise<string>;
+}
+
+const payoutStatuses: PayoutStatus[] = [
+    'pending',
+    'processing',
+    'awaiting_confirmation',
+    'confirmed',
+    'completed',
+    'held',
+    'disputed',
+    'cancelled'
+];
+
+const revenuePeriods: RevenuePeriod[] = ['7d', '30d', '90d'];
+
+const getAuthenticatedUser = (req: AuthRequest): { userId: string; userType: string } | null => {
+    if (!req.user?.userId || !req.user.userType) {
+        return null;
+    }
+    return { userId: req.user.userId, userType: req.user.userType };
+};
+
+const toQueryString = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        return value[0];
+    }
+    return undefined;
+};
+
+const toOptionalInt = (value: unknown): number | undefined => {
+    const raw = toQueryString(value);
+    if (!raw) {
+        return undefined;
+    }
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const toOptionalNumber = (value: number | string | undefined): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+};
+
+const toOptionalBoolean = (value: boolean | string | undefined): boolean | undefined => {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true') {
+            return true;
+        }
+        if (normalized === 'false') {
+            return false;
+        }
+    }
+    return undefined;
+};
+
+const toFinanceUserType = (userType: string): PayoutFilters['userType'] => {
+    if (userType === 'garage') {
+        return 'garage';
+    }
+    if (userType === 'operations') {
+        return 'operations';
+    }
+    return 'admin';
+};
+
+const toPayoutStatus = (value: string | undefined): PayoutStatus | undefined => {
+    if (!value) {
+        return undefined;
+    }
+    return payoutStatuses.includes(value as PayoutStatus) ? (value as PayoutStatus) : undefined;
+};
+
+const toRevenuePeriod = (value: string | undefined): RevenuePeriod | null => {
+    if (!value) {
+        return '30d';
+    }
+    return revenuePeriods.includes(value as RevenuePeriod) ? (value as RevenuePeriod) : null;
+};
+
+const logFinanceError = (context: string, err: unknown): void => {
+    logger.error(context, { error: getErrorMessage(err) });
+};
+
+const sendFinanceError = (res: Response, err: unknown, fallbackMessage: string): Response => {
+    if (isFinanceError(err)) {
+        return res.status(getHttpStatusForError(err)).json({ error: err.message });
+    }
+    return res.status(500).json({ error: fallbackMessage });
+};
+
 // ============================================
 // PAYOUT SUMMARY & LIST
 // ============================================
 
 export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const summary = await payoutService.getPayoutSummary(
-            req.user!.userId,
-            req.user!.userType
+            user.userId,
+            user.userType
         );
         res.json(summary);
     } catch (err) {
-        logger.error('getPayoutSummary Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch payout summary' });
+        logFinanceError('getPayoutSummary Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch payout summary');
     }
 };
 
 export const getPayouts = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const { status, garage_id, page, limit, from_date, to_date } = req.query;
+        const status = toPayoutStatus(toQueryString(req.query.status));
+        const garageId = toQueryString(req.query.garage_id);
+        const page = toOptionalInt(req.query.page);
+        const limit = toOptionalInt(req.query.limit);
+        const fromDate = toQueryString(req.query.from_date);
+        const toDate = toQueryString(req.query.to_date);
 
         const result = await payoutService.getPayouts({
-            status: status as any,
-            garage_id: garage_id as string,
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined,
-            from_date: from_date as string,
-            to_date: to_date as string,
-            userId: req.user!.userId,
-            userType: req.user!.userType as any
+            status,
+            garage_id: garageId,
+            page,
+            limit,
+            from_date: fromDate,
+            to_date: toDate,
+            userId: user.userId,
+            userType: toFinanceUserType(user.userType)
         });
 
         res.json(result);
     } catch (err) {
-        logger.error('getPayouts Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch payouts' });
+        logFinanceError('getPayouts Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch payouts');
     }
 };
 
@@ -72,45 +242,41 @@ export const getPayoutStatus = async (req: AuthRequest, res: Response) => {
         const statusDetail = await payoutService.getPayoutStatus(payout_id);
         res.json(statusDetail);
     } catch (err) {
-        logger.error('getPayoutStatus Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch payout status' });
+        logFinanceError('getPayoutStatus Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch payout status');
     }
 };
 
-export const getPaymentStats = async (req: AuthRequest, res: Response) => {
+export const getPaymentStats = async (_req: AuthRequest, res: Response) => {
     try {
         const stats = await payoutService.getPaymentStats();
         res.json(stats);
     } catch (err) {
-        logger.error('getPaymentStats Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch payment stats' });
+        logFinanceError('getPaymentStats Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch payment stats');
     }
 };
 
 // Get payouts still within 7-day warranty window
 export const getInWarrantyPayouts = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const payouts = await payoutService.getInWarrantyPayouts(
-            req.user!.userType,
-            req.user!.userId
+            user.userType,
+            user.userId
         );
         res.json({ in_warranty_payouts: payouts, count: payouts.length });
     } catch (err) {
-        logger.error('getInWarrantyPayouts Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch in-warranty payouts' });
+        logFinanceError('getInWarrantyPayouts Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch in-warranty payouts');
     }
 };
 
-export const getPayoutConfig = async (_req: AuthRequest, res: Response) => {
+export const getPayoutConfig = (_req: AuthRequest, res: Response) => {
     res.json({
         auto_confirm_days: 7,
         min_payout_amount: 50,
@@ -126,60 +292,60 @@ export const getPayoutConfig = async (_req: AuthRequest, res: Response) => {
 export const sendPayment = async (req: AuthRequest, res: Response) => {
     try {
         const { payout_id } = req.params;
-        const result = await payoutService.sendPayment(payout_id, req.body);
+        const details = req.body as unknown as SendPaymentDto;
+        const result = await payoutService.sendPayment(payout_id, details);
         res.json(result);
     } catch (err) {
-        logger.error('sendPayment Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to send payment' });
+        logFinanceError('sendPayment Error:', err);
+        return sendFinanceError(res, err, 'Failed to send payment');
     }
 };
 
 export const confirmPayment = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const { payout_id } = req.params;
-        const garageId = req.user!.userId;
+        const details = req.body as unknown as ConfirmPaymentDto;
 
-        const result = await payoutService.confirmPayment(payout_id, garageId, req.body);
+        const result = await payoutService.confirmPayment(payout_id, user.userId, details);
         res.json(result);
     } catch (err) {
-        logger.error('confirmPayment Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to confirm payment' });
+        logFinanceError('confirmPayment Error:', err);
+        return sendFinanceError(res, err, 'Failed to confirm payment');
     }
 };
 
 export const disputePayment = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const { payout_id } = req.params;
-        const garageId = req.user!.userId;
+        const dispute = req.body as unknown as DisputeDto;
 
-        const result = await payoutService.disputePayment(payout_id, garageId, req.body);
+        const result = await payoutService.disputePayment(payout_id, user.userId, dispute);
         res.json(result);
     } catch (err) {
-        logger.error('disputePayment Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to dispute payment' });
+        logFinanceError('disputePayment Error:', err);
+        return sendFinanceError(res, err, 'Failed to dispute payment');
     }
 };
 
 export const resolvePaymentDispute = async (req: AuthRequest, res: Response) => {
     try {
         const { payout_id } = req.params;
-        const result = await payoutService.resolveDispute(payout_id, req.body);
+        const resolution = req.body as unknown as ResolveDisputeDto;
+        const result = await payoutService.resolveDispute(payout_id, resolution);
         res.json(result);
     } catch (err) {
-        logger.error('resolvePaymentDispute Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to resolve dispute' });
+        logFinanceError('resolvePaymentDispute Error:', err);
+        return sendFinanceError(res, err, 'Failed to resolve dispute');
     }
 };
 
@@ -194,40 +360,38 @@ export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        logger.error('sendPaymentReminder Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to send reminder' });
+        logFinanceError('sendPaymentReminder Error:', err);
+        return sendFinanceError(res, err, 'Failed to send reminder');
     }
 };
 
 export const getAwaitingConfirmation = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
-        const garageId = req.user!.userId;
-        const payouts = await payoutService.getAwaitingConfirmation(garageId);
+        const payouts = await payoutService.getAwaitingConfirmation(user.userId);
         res.json({ awaiting_confirmation: payouts });
     } catch (err) {
-        logger.error('getAwaitingConfirmation Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch awaiting confirmation' });
+        logFinanceError('getAwaitingConfirmation Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch awaiting confirmation');
     }
 };
 
 export const confirmAllPayouts = async (req: AuthRequest, res: Response) => {
-    try {
-        const garageId = req.user!.userId;
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        const result = await payoutService.confirmAllPayouts(garageId);
+    try {
+        const result = await payoutService.confirmAllPayouts(user.userId);
         res.json(result);
     } catch (err) {
-        logger.error('confirmAllPayouts Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to confirm payouts' });
+        logFinanceError('confirmAllPayouts Error:', err);
+        return sendFinanceError(res, err, 'Failed to confirm payouts');
     }
 };
 
@@ -241,18 +405,16 @@ export const processPayout = async (req: AuthRequest, res: Response) => {
         await payoutService.processPayout(payout_id);
         res.json({ message: 'Payout processed successfully' });
     } catch (err) {
-        logger.error('processPayout Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to process payout' });
+        logFinanceError('processPayout Error:', err);
+        return sendFinanceError(res, err, 'Failed to process payout');
     }
 };
 
 export const holdPayout = async (req: AuthRequest, res: Response) => {
     try {
         const { payout_id } = req.params;
-        const { reason } = req.body;
+        const body = req.body as unknown as ReasonBody;
+        const reason = body.reason;
 
         if (!reason) {
             return res.status(400).json({ error: 'Hold reason required' });
@@ -261,11 +423,8 @@ export const holdPayout = async (req: AuthRequest, res: Response) => {
         await payoutService.holdPayout(payout_id, reason);
         res.json({ message: 'Payout held successfully' });
     } catch (err) {
-        logger.error('holdPayout Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to hold payout' });
+        logFinanceError('holdPayout Error:', err);
+        return sendFinanceError(res, err, 'Failed to hold payout');
     }
 };
 
@@ -275,18 +434,16 @@ export const releasePayout = async (req: AuthRequest, res: Response) => {
         await payoutService.releasePayout(payout_id);
         res.json({ message: 'Payout released successfully' });
     } catch (err) {
-        logger.error('releasePayout Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to release payout' });
+        logFinanceError('releasePayout Error:', err);
+        return sendFinanceError(res, err, 'Failed to release payout');
     }
 };
 
 export const forceProcessPayout = async (req: AuthRequest, res: Response) => {
     try {
         const { payout_id } = req.params;
-        const { reason } = req.body;
+        const body = req.body as unknown as ReasonBody;
+        const reason = body.reason;
 
         if (!reason) {
             return res.status(400).json({ error: 'Reason required for force processing' });
@@ -295,11 +452,8 @@ export const forceProcessPayout = async (req: AuthRequest, res: Response) => {
         const result = await payoutService.forceProcessPayout(payout_id, reason);
         res.json(result);
     } catch (err) {
-        logger.error('forceProcessPayout Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to force process payout' });
+        logFinanceError('forceProcessPayout Error:', err);
+        return sendFinanceError(res, err, 'Failed to force process payout');
     }
 };
 
@@ -310,12 +464,12 @@ export const forceProcessPayout = async (req: AuthRequest, res: Response) => {
 /**
  * Get list of garages with pending payouts (for filter dropdown)
  */
-export const getGaragesWithPendingPayouts = async (req: AuthRequest, res: Response) => {
+export const getGaragesWithPendingPayouts = async (_req: AuthRequest, res: Response) => {
     try {
         const result = await payoutService.getGaragesWithPendingPayouts();
         res.json(result);
     } catch (err) {
-        logger.error('getGaragesWithPendingPayouts Error:', { error: (err as any).message });
+        logFinanceError('getGaragesWithPendingPayouts Error:', err);
         res.status(500).json({ error: 'Failed to load garages' });
     }
 };
@@ -325,7 +479,8 @@ export const getGaragesWithPendingPayouts = async (req: AuthRequest, res: Respon
  */
 export const getBatchPayoutPreview = async (req: AuthRequest, res: Response) => {
     try {
-        const { payout_ids, garage_id, all_pending } = req.body;
+        const body = req.body as unknown as BatchPreviewBody;
+        const { payout_ids, garage_id, all_pending } = body;
 
         const result = await payoutService.getBatchPayoutPreview({
             payout_ids,
@@ -335,7 +490,7 @@ export const getBatchPayoutPreview = async (req: AuthRequest, res: Response) => 
 
         res.json(result);
     } catch (err) {
-        logger.error('getBatchPayoutPreview Error:', { error: (err as any).message });
+        logFinanceError('getBatchPayoutPreview Error:', err);
         res.status(500).json({ error: 'Failed to get batch preview' });
     }
 };
@@ -345,13 +500,14 @@ export const getBatchPayoutPreview = async (req: AuthRequest, res: Response) => 
  * Single API call to process many payouts
  */
 export const sendBatchPayments = async (req: AuthRequest, res: Response) => {
-    try {
-        const { payout_ids, garage_id, all_pending, reference_number, notes } = req.body;
-        const sentBy = req.user?.userId;
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        if (!sentBy) {
-            return res.status(401).json({ error: 'Authentication required' });
-        }
+    try {
+        const body = req.body as unknown as BatchPaymentBody;
+        const { payout_ids, garage_id, all_pending, reference_number, notes } = body;
 
         if (!reference_number) {
             return res.status(400).json({ error: 'Reference number is required' });
@@ -360,7 +516,7 @@ export const sendBatchPayments = async (req: AuthRequest, res: Response) => {
         // Safety check - require confirmation for large batches
         if (all_pending && !payout_ids && !garage_id) {
             const preview = await payoutService.getBatchPayoutPreview({ all_pending: true });
-            if (preview.count > 100 && !req.body.confirmed) {
+            if (preview.count > 100 && !body.confirmed) {
                 return res.status(400).json({
                     error: 'Large batch requires confirmation',
                     preview,
@@ -369,21 +525,20 @@ export const sendBatchPayments = async (req: AuthRequest, res: Response) => {
             }
         }
 
-        const result = await payoutService.sendBatchPayments({
+        const dto: BatchPaymentDto = {
             payout_ids,
             garage_id,
             all_pending,
             reference_number,
             notes
-        }, sentBy);
+        };
+
+        const result = await payoutService.sendBatchPayments(dto, user.userId);
 
         res.json(result);
     } catch (err) {
-        logger.error('sendBatchPayments Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to process batch payments' });
+        logFinanceError('sendBatchPayments Error:', err);
+        return sendFinanceError(res, err, 'Failed to process batch payments');
     }
 };
 
@@ -398,10 +553,12 @@ export const sendBatchPayments = async (req: AuthRequest, res: Response) => {
 export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
     try {
         const { garageId } = req.params;
-        const { from_date, to_date, format = 'html' } = req.query;
+        const fromDateParam = toQueryString(req.query.from_date);
+        const toDateParam = toQueryString(req.query.to_date);
+        const format = toQueryString(req.query.format) ?? 'html';
 
         // Validate required params
-        if (!from_date || !to_date) {
+        if (!fromDateParam || !toDateParam) {
             return res.status(400).json({
                 error: 'Date range required',
                 message: 'Please provide from_date and to_date query parameters (YYYY-MM-DD)'
@@ -409,8 +566,8 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         }
 
         // Validate date range (max 3 months)
-        const fromDate = new Date(from_date as string);
-        const toDate = new Date(to_date as string);
+        const fromDate = new Date(fromDateParam);
+        const toDate = new Date(toDateParam);
         const diffDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
 
         if (diffDays > 93) {
@@ -430,15 +587,15 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         // Generate statement data
         const statementData = await payoutService.generatePayoutStatement({
             garage_id: garageId,
-            from_date: from_date as string,
-            to_date: to_date as string
+            from_date: fromDateParam,
+            to_date: toDateParam
         });
 
         // If no orders found
         if (statementData.orders.length === 0) {
             return res.status(404).json({
                 error: 'No completed orders found',
-                message: `No completed orders found for this garage between ${from_date} and ${to_date}`
+                message: `No completed orders found for this garage between ${fromDateParam} and ${toDateParam}`
             });
         }
 
@@ -448,16 +605,14 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         // Generate QR code
         let qrCode = '';
         try {
-            const QRCode = require('qrcode');
+            const QRCode = await import('qrcode') as unknown as QRCodeModule;
             const verifyUrl = `https://theqscrap.com/verify/${statementData.statement_number}`;
             qrCode = await QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
         } catch (e) {
-            logger.warn('QR code generation failed:', { error: (e as any).message });
+            logger.warn('QR code generation failed:', { error: getErrorMessage(e) });
         }
 
         // Get logo base64
-        const fs = require('fs');
-        const path = require('path');
         let logoBase64 = '';
         try {
             const logoPath = path.join(__dirname, '../../public/images/qscrap-logo.png');
@@ -465,7 +620,7 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
                 logoBase64 = fs.readFileSync(logoPath).toString('base64');
             }
         } catch (e) {
-            logger.warn('Logo loading failed:', { error: (e as any).message });
+            logger.warn('Logo loading failed:', { error: getErrorMessage(e) });
         }
 
         const html = generatePayoutStatementHTML(statementData, qrCode, logoBase64);
@@ -482,8 +637,8 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
                 res.setHeader('Content-Disposition',
                     `attachment; filename="invoice-${statementData.statement_number}.pdf"`);
                 return res.send(pdfBuffer);
-            } catch (pdfErr: any) {
-                logger.warn('PDF generation failed, falling back to HTML', { error: pdfErr.message });
+            } catch (pdfErr) {
+                logger.warn('PDF generation failed, falling back to HTML', { error: getErrorMessage(pdfErr) });
                 // Fall through to HTML
             }
         }
@@ -493,11 +648,8 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         res.send(html);
 
     } catch (err) {
-        logger.error('getPayoutStatement Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to generate payout statement' });
+        logFinanceError('getPayoutStatement Error:', err);
+        return sendFinanceError(res, err, 'Failed to generate payout statement');
     }
 };
 
@@ -506,40 +658,47 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
 // ============================================
 
 export const createRefund = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const { order_id } = req.params;
-        const { refund_amount, refund_reason, refund_method } = req.body;
+        const body = req.body as unknown as CreateRefundBody;
+        const { refund_amount, refund_reason, refund_method } = body;
+        const refundAmount = toOptionalNumber(refund_amount);
 
-        if (!refund_amount || !refund_reason) {
+        if (refundAmount === undefined || !refund_reason) {
             return res.status(400).json({ error: 'Refund amount and reason required' });
         }
 
         const result = await refundService.createRefund({
             order_id,
-            refund_amount: parseFloat(refund_amount),
+            refund_amount: refundAmount,
             refund_reason,
             refund_method,
-            initiated_by: req.user!.userId
+            initiated_by: user.userId
         });
 
         res.json(result);
     } catch (err) {
-        logger.error('createRefund Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to create refund' });
+        logFinanceError('createRefund Error:', err);
+        return sendFinanceError(res, err, 'Failed to create refund');
     }
 };
 
 export const getRefunds = async (req: AuthRequest, res: Response) => {
     try {
-        const { status, page, limit } = req.query;
+        const status = toQueryString(req.query.status);
+        const page = toOptionalInt(req.query.page);
+        const limit = toOptionalInt(req.query.limit);
+        const offset = page ? (page - 1) * (limit || 50) : undefined;
 
         const result = await refundService.getRefunds({
-            status: status as string,
-            limit: limit ? parseInt(limit as string) : undefined,
-            offset: page ? (parseInt(page as string) - 1) * (parseInt(limit as string) || 50) : undefined
+            status,
+            limit,
+            offset
         });
 
         // Prevent caching of API response
@@ -548,11 +707,8 @@ export const getRefunds = async (req: AuthRequest, res: Response) => {
         res.setHeader('Expires', '0');
         res.json(result);
     } catch (err) {
-        logger.error('getRefunds Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch refunds' });
+        logFinanceError('getRefunds Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch refunds');
     }
 };
 
@@ -564,11 +720,8 @@ export const getPendingRefunds = async (req: AuthRequest, res: Response) => {
         const result = await refundService.getPendingRefunds();
         res.json(result);
     } catch (err) {
-        logger.error('getPendingRefunds Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch pending refunds' });
+        logFinanceError('getPendingRefunds Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch pending refunds');
     }
 };
 
@@ -577,18 +730,23 @@ export const getPendingRefunds = async (req: AuthRequest, res: Response) => {
  * This actually calls Stripe API to process the refund
  */
 export const processStripeRefund = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const { refund_id } = req.params;
-        const processedBy = req.user!.userId;
+        const processedBy = user.userId;
 
         const result = await refundService.executeStripeRefund(refund_id, processedBy);
         res.json(result);
-    } catch (err: any) {
-        logger.error('processStripeRefund Error:', { error: (err as any).message });
+    } catch (err) {
+        logFinanceError('processStripeRefund Error:', err);
         if (isFinanceError(err)) {
             return res.status(getHttpStatusForError(err)).json({ error: err.message });
         }
-        res.status(500).json({ error: err.message || 'Failed to process refund' });
+        res.status(500).json({ error: getErrorMessage(err) || 'Failed to process refund' });
     }
 };
 
@@ -597,10 +755,16 @@ export const processStripeRefund = async (req: AuthRequest, res: Response) => {
  * Updates status to 'rejected' with reason
  */
 export const rejectRefund = async (req: AuthRequest, res: Response) => {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     try {
         const { refund_id } = req.params;
-        const { reason } = req.body;
-        const rejectedBy = req.user!.userId;
+        const body = req.body as unknown as RejectRefundBody;
+        const reason = body.reason;
+        const rejectedBy = user.userId;
 
         if (!reason) {
             return res.status(400).json({ error: 'Rejection reason required' });
@@ -615,12 +779,12 @@ export const rejectRefund = async (req: AuthRequest, res: Response) => {
         const result = await refundService.rejectRefund(refund_id, rejectedBy, reason);
 
         res.json(result);
-    } catch (err: any) {
-        logger.error('rejectRefund Error:', { error: (err as any).message });
+    } catch (err) {
+        logFinanceError('rejectRefund Error:', err);
         if (isFinanceError(err)) {
             return res.status(getHttpStatusForError(err)).json({ error: err.message });
         }
-        res.status(500).json({ error: err.message || 'Failed to reject refund' });
+        res.status(500).json({ error: getErrorMessage(err) || 'Failed to reject refund' });
     }
 };
 
@@ -630,44 +794,54 @@ export const rejectRefund = async (req: AuthRequest, res: Response) => {
 
 export const getRevenueReport = async (req: AuthRequest, res: Response) => {
     try {
-        const { period = '30d', garage_id } = req.query;
+        const period = toRevenuePeriod(toQueryString(req.query.period));
+        const garageId = toQueryString(req.query.garage_id);
+
+        if (!period) {
+            return res.status(400).json({ error: 'Invalid period. Allowed values: 7d, 30d, 90d' });
+        }
 
         const report = await revenueService.getRevenueReport(
-            period as any,
-            garage_id ? { garage_id: garage_id as string } : undefined
+            period,
+            garageId ? { garage_id: garageId } : undefined
         );
 
         res.json(report);
     } catch (err) {
-        logger.error('getRevenueReport Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch revenue report' });
+        logFinanceError('getRevenueReport Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch revenue report');
     }
 };
 
 export const getTransactions = async (req: AuthRequest, res: Response) => {
-    try {
-        const { status, from_date, to_date, page, limit } = req.query;
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
-        const transactions = await revenueService.getTransactions({
-            user_id: req.user!.userId,
-            user_type: req.user!.userType as any,
-            status: status ? (status as string).split(',') : undefined,
-            from_date: from_date ? new Date(from_date as string) : undefined,
-            to_date: to_date ? new Date(to_date as string) : undefined,
-            page: page ? parseInt(page as string) : undefined,
-            limit: limit ? parseInt(limit as string) : undefined
-        });
+    try {
+        const status = toQueryString(req.query.status);
+        const fromDate = toQueryString(req.query.from_date);
+        const toDate = toQueryString(req.query.to_date);
+        const page = toOptionalInt(req.query.page);
+        const limit = toOptionalInt(req.query.limit);
+
+        const filters: TransactionFilters = {
+            user_id: user.userId,
+            user_type: toFinanceUserType(user.userType),
+            status: status ? status.split(',') : undefined,
+            from_date: fromDate ? new Date(fromDate) : undefined,
+            to_date: toDate ? new Date(toDate) : undefined,
+            page,
+            limit
+        };
+
+        const transactions = await revenueService.getTransactions(filters);
 
         res.json({ transactions });
     } catch (err) {
-        logger.error('getTransactions Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch transactions' });
+        logFinanceError('getTransactions Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch transactions');
     }
 };
 
@@ -677,11 +851,8 @@ export const getTransactionDetails = async (req: AuthRequest, res: Response) => 
         const detail = await revenueService.getTransactionDetail(order_id);
         res.json(detail);
     } catch (err) {
-        logger.error('getTransactionDetails Error:', { error: (err as any).message });
-        if (isFinanceError(err)) {
-            return res.status(getHttpStatusForError(err)).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Failed to fetch transaction details' });
+        logFinanceError('getTransactionDetails Error:', err);
+        return sendFinanceError(res, err, 'Failed to fetch transaction details');
     }
 };
 
@@ -695,7 +866,7 @@ export const autoConfirmPayouts = async () => {
         logger.info(`Auto-confirmed ${result.confirmed} payouts, ${result.failed} failed`);
         return result;
     } catch (err) {
-        logger.error('[CRON] autoConfirmPayouts error:', { error: (err as any).message });
+        logFinanceError('[CRON] autoConfirmPayouts error:', err);
         return { confirmed: 0, failed: 1 };
     }
 };
@@ -711,7 +882,7 @@ export const autoConfirmPayouts = async () => {
  */
 export const getPendingCompensationReviews = async (req: AuthRequest, res: Response) => {
     try {
-        const result = await pool.query(`
+        const result = await pool.query<Record<string, unknown>>(`
             SELECT 
                 gp.payout_id,
                 gp.order_id,
@@ -741,8 +912,8 @@ export const getPendingCompensationReviews = async (req: AuthRequest, res: Respo
             reviews: result.rows,
             count: result.rows.length
         });
-    } catch (err: any) {
-        logger.error('[Finance] getPendingCompensationReviews error:', { error: (err as any).message });
+    } catch (err) {
+        logFinanceError('[Finance] getPendingCompensationReviews error:', err);
         res.status(500).json({ error: 'Failed to get pending reviews' });
     }
 };
@@ -753,11 +924,12 @@ export const getPendingCompensationReviews = async (req: AuthRequest, res: Respo
  */
 export const approveCompensation = async (req: AuthRequest, res: Response) => {
     const { payout_id } = req.params;
-    const { notes } = req.body;
+    const body = req.body as unknown as ApproveCompensationBody;
+    const { notes } = body;
     const reviewerId = req.user?.userId;
 
     try {
-        const result = await pool.query(`
+        const result = await pool.query<CompensationPayoutRow>(`
             UPDATE garage_payouts 
             SET payout_status = 'pending',
                 net_amount = potential_compensation,
@@ -777,6 +949,7 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
         }
 
         const payout = result.rows[0];
+        const payoutAmount = toOptionalNumber(payout.net_amount) ?? 0;
 
         // Update cancellation request
         await pool.query(`
@@ -784,22 +957,22 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
             SET garage_compensation = $2,
                 compensation_status = 'approved'
             WHERE order_id = $1
-        `, [payout.order_id, payout.net_amount]);
+        `, [payout.order_id, payoutAmount]);
 
         // Notify garage
         await createNotification({
             userId: payout.garage_id,
             type: 'compensation_approved',
             title: '✅ Compensation Approved',
-            message: `Your compensation of ${payout.net_amount?.toFixed(2)} QAR has been approved!`,
-            data: { payout_id, order_id: payout.order_id, amount: payout.net_amount },
+            message: `Your compensation of ${payoutAmount.toFixed(2)} QAR has been approved!`,
+            data: { payout_id, order_id: payout.order_id, amount: payoutAmount },
             target_role: 'garage'
         });
 
-        logger.info('Compensation approved', { amount: payout.net_amount, payoutId: payout_id });
+        logger.info('Compensation approved', { amount: payoutAmount, payoutId: payout_id });
         res.json({ success: true, message: 'Compensation approved', payout: result.rows[0] });
-    } catch (err: any) {
-        logger.error('[Finance] approveCompensation error:', { error: (err as any).message });
+    } catch (err) {
+        logFinanceError('[Finance] approveCompensation error:', err);
         res.status(500).json({ error: 'Failed to approve compensation' });
     }
 };
@@ -811,11 +984,14 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
  */
 export const denyCompensation = async (req: AuthRequest, res: Response) => {
     const { payout_id } = req.params;
-    const { reason, apply_penalty, penalty_type, penalty_amount } = req.body;
+    const body = req.body as unknown as DenyCompensationBody;
+    const { reason, penalty_type } = body;
+    const applyPenalty = toOptionalBoolean(body.apply_penalty) ?? false;
+    const penaltyAmount = toOptionalNumber(body.penalty_amount);
     const reviewerId = req.user?.userId;
 
     try {
-        const result = await pool.query(`
+        const result = await pool.query<CompensationPayoutRow>(`
             UPDATE garage_payouts 
             SET payout_status = 'cancelled',
                 cancellation_reason = $2,
@@ -843,13 +1019,13 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
         `, [payout.order_id]);
 
         // Apply penalty if requested
-        if (apply_penalty && penalty_type && penalty_amount > 0) {
+        if (applyPenalty && penalty_type && penaltyAmount && penaltyAmount > 0) {
             await pool.query(`
                 INSERT INTO garage_penalties (garage_id, order_id, penalty_type, penalty_amount, reason, created_at)
                 VALUES ($1, $2, $3, $4, $5, NOW())
-            `, [payout.garage_id, payout.order_id, penalty_type, penalty_amount, reason]);
+            `, [payout.garage_id, payout.order_id, penalty_type, penaltyAmount, reason]);
 
-            logger.info('Penalty applied', { penaltyAmount: penalty_amount, penaltyType: penalty_type, garageId: payout.garage_id });
+            logger.info('Penalty applied', { penaltyAmount, penaltyType: penalty_type, garageId: payout.garage_id });
         }
 
         // Notify garage
@@ -864,8 +1040,8 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
 
         logger.info('Compensation denied', { payoutId: payout_id, reason });
         res.json({ success: true, message: 'Compensation denied', payout: result.rows[0] });
-    } catch (err: any) {
-        logger.error('[Finance] denyCompensation error:', { error: (err as any).message });
+    } catch (err) {
+        logFinanceError('[Finance] denyCompensation error:', err);
         res.status(500).json({ error: 'Failed to deny compensation' });
     }
 };

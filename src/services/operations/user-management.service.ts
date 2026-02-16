@@ -100,4 +100,63 @@ export class UserManagementService {
             };
         }
     }
+
+    /**
+     * Get single user details
+     */
+    async getUserDetails(userId: string): Promise<any> {
+        const result = await this.pool.query(`
+            SELECT u.*, 
+                   g.garage_name, g.license_number, g.commercial_reg as cr_number,
+                   (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id) as customer_orders,
+                   (SELECT COUNT(*) FROM orders WHERE garage_id = u.user_id) as garage_orders,
+                   (SELECT COUNT(*) FROM part_requests WHERE customer_id = u.user_id) as total_requests,
+                   (SELECT SUM(total_amount) FROM orders WHERE customer_id = u.user_id AND order_status = 'completed') as total_spend
+            FROM users u
+            LEFT JOIN garages g ON u.user_id = g.garage_id
+            WHERE u.user_id = $1
+        `, [userId]);
+
+        if (result.rows.length === 0) {
+            throw new Error('User not found');
+        }
+
+        return result.rows[0];
+    }
+
+    /**
+     * Suspend user
+     */
+    async suspendUser(userId: string, reason: string): Promise<void> {
+        await this.pool.query(`
+            UPDATE users SET is_active = false, updated_at = NOW() WHERE user_id = $1
+        `, [userId]);
+
+        // LOG SUSPENSION (Institutional Mandate)
+        console.log(`[USER_MGMT] User ${userId} suspended. Reason: ${reason}`);
+    }
+
+    /**
+     * Activate user
+     */
+    async activateUser(userId: string): Promise<void> {
+        await this.pool.query(`
+            UPDATE users SET is_active = true, updated_at = NOW() WHERE user_id = $1
+        `, [userId]);
+    }
+
+    /**
+     * Get user directory statistics
+     */
+    async getUserStats(): Promise<any> {
+        const result = await this.pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM users WHERE user_type = 'customer') as count_customers,
+                (SELECT COUNT(*) FROM garages) as count_garages,
+                (SELECT COUNT(*) FROM users WHERE is_active = true) as active_users,
+                (SELECT COUNT(*) FROM users WHERE is_active = false) as inactive_users,
+                (SELECT COUNT(*) FROM users WHERE created_at >= CURRENT_DATE - INTERVAL '7 days') as new_users_week
+        `);
+        return result.rows[0];
+    }
 }

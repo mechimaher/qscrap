@@ -423,7 +423,7 @@ async function notifyGarageAsync(orderId: string): Promise<void> {
             [orderId]
         );
 
-        if (orderResult.rows.length === 0) return;
+        if (orderResult.rows.length === 0) {return;}
 
         const order = orderResult.rows[0];
 

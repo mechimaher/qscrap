@@ -28,6 +28,7 @@ const pool = new Pool({
 
 const MIGRATIONS_DIR = path.join(__dirname, '../src/config/migrations');
 const SCHEMA_FILE = path.join(__dirname, '../src/config/database.sql');
+const TOLERATE_IDEMPOTENT_ERRORS = process.env.MIGRATION_TOLERANT === 'true';
 
 // ============================================
 // CORE FUNCTIONS
@@ -142,7 +143,24 @@ async function applyMigrations(dryRun = false) {
 
             try {
                 await client.query('BEGIN');
-                await client.query(sql);
+                try {
+                    await client.query(sql);
+                } catch (sqlErr) {
+                    // Strict by default: fail on SQL errors.
+                    // Legacy compatibility mode can be enabled with MIGRATION_TOLERANT=true.
+                    const isIdempotentConflict = (
+                        sqlErr.code === '42P07' || // duplicate_table
+                        sqlErr.code === '42710' || // duplicate_object
+                        sqlErr.code === '42701' || // duplicate_column
+                        sqlErr.code === '42P01'    // undefined_table (common in down/cleanup scripts)
+                    );
+
+                    if (TOLERATE_IDEMPOTENT_ERRORS && isIdempotentConflict) {
+                        console.warn(`   ⚠️  Tolerated idempotent conflict: ${sqlErr.message}`);
+                    } else {
+                        throw sqlErr;
+                    }
+                }
                 await client.query(
                     'INSERT INTO migrations (name, checksum) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET checksum = $2',
                     [file, checksum]

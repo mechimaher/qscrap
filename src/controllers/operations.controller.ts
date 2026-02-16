@@ -1,35 +1,204 @@
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth.middleware';
 import { getReadPool, getWritePool } from '../config/db';
-import { getErrorMessage } from '../types';
+import { runAutoCompleteNow } from '../jobs/auto-complete-orders';
+import { AuthRequest } from '../middleware/auth.middleware';
 import { createNotification } from '../services/notification.service';
-import { getIO, emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
-import logger from '../utils/logger';
+import { CancellationService } from '../services/cancellation/cancellation.service';
 import {
+    DisputeService,
     OperationsDashboardService,
     OrderManagementService,
-    DisputeService,
     UserManagementService
 } from '../services/operations';
 import { SupportActionsService } from '../services/support/support-actions.service';
+import { getErrorMessage } from '../types';
+import { emitToOperations, getIO } from '../utils/socketIO';
+import logger from '../utils/logger';
 
-// Initialize services
 const dashboardService = new OperationsDashboardService(getReadPool());
 const orderService = new OrderManagementService(getWritePool());
 const disputeService = new DisputeService(getWritePool());
 const userService = new UserManagementService(getReadPool());
 const supportActionsService = new SupportActionsService(getWritePool());
+const cancellationService = new CancellationService(getWritePool());
+
+interface CountRow {
+    count: string;
+}
+
+interface OrderNotificationRecord {
+    order_number: string;
+    customer_id: string;
+    garage_id: string;
+    garage_name?: string | null;
+    garage_payout_amount?: number | string | null;
+}
+
+interface OrderDetailsPayload {
+    order: OrderNotificationRecord;
+}
+
+interface DisputeNotificationRecord {
+    customer_id: string;
+    garage_id: string;
+    order_id: string;
+    order_number: string;
+}
+
+interface DisputeDetailsPayload {
+    dispute: DisputeNotificationRecord;
+}
+
+interface ResolveDisputeResult {
+    message: string;
+    resolution: string;
+    refund_amount: number | null;
+    return_assignment: { assignment_id: string } | null;
+    payout_action: unknown;
+}
+
+type ResolutionAction = 'approve_refund' | 'approve_cancellation' | 'reject' | 'acknowledge';
+
+interface EscalationRow {
+    escalation_id: string;
+    ticket_id: string | null;
+    resolved_order_id: string | null;
+    customer_id: string | null;
+    garage_id: string | null;
+    order_number: string | null;
+    escalated_by: string | null;
+}
+
+type EscalationListRow = Record<string, unknown>;
+
+type EscalationUpdateRow = Record<string, unknown>;
+
+interface SupportActionResult {
+    success: boolean;
+    action?: string;
+    orderId?: string;
+    message?: string;
+    payoutAction?: unknown;
+    refundAction?: unknown;
+    refundId?: string;
+    status?: string;
+    error?: string;
+}
+
+interface UpdateOrderStatusBody {
+    new_status?: string;
+    notes?: string;
+}
+
+interface CollectOrderBody {
+    notes?: string;
+}
+
+interface ResolveDisputeBody {
+    resolution?: string;
+    refund_amount?: number | string;
+    notes?: string;
+}
+
+interface ResolveEscalationBody {
+    resolution_notes?: string;
+    resolution_action?: string;
+}
+
+interface CancelOrderByOperationsBody {
+    reason?: string;
+    refund_type?: 'full' | 'partial' | 'none' | string;
+    partial_refund_amount?: number | string;
+    notify_customer?: boolean | string;
+    notify_garage?: boolean | string;
+}
+
+const toQueryString = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        return value[0];
+    }
+    return undefined;
+};
+
+const parseOptionalInt = (value: unknown): number | undefined => {
+    const normalized = toQueryString(value);
+    if (!normalized) {
+        return undefined;
+    }
+    const parsed = Number.parseInt(normalized, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const parseBoundedInt = (value: unknown, fallback: number, min: number, max: number): number => {
+    const parsed = parseOptionalInt(value);
+    if (parsed === undefined) {
+        return fallback;
+    }
+    return Math.min(max, Math.max(min, parsed));
+};
+
+const toOptionalNumber = (value: number | string | undefined): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+};
+
+const toOptionalBoolean = (value: boolean | string | undefined): boolean | undefined => {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true') {
+            return true;
+        }
+        if (normalized === 'false') {
+            return false;
+        }
+    }
+    return undefined;
+};
+
+const getUserId = (req: AuthRequest): string | null => req.user?.userId ?? null;
+
+const logControllerError = (context: string, err: unknown): void => {
+    logger.error(context, { error: getErrorMessage(err) });
+};
+
+const isResolutionAction = (value: string | undefined): value is ResolutionAction =>
+    value === 'approve_refund' ||
+    value === 'approve_cancellation' ||
+    value === 'reject' ||
+    value === 'acknowledge';
 
 // ============================================
 // DASHBOARD STATS
 // ============================================
 
-export const getDashboardStats = async (req: AuthRequest, res: Response) => {
+export const getDashboardStats = async (_req: AuthRequest, res: Response) => {
     try {
         const stats = await dashboardService.getDashboardStats();
         res.json({ stats });
     } catch (err) {
-        logger.error('[OPERATIONS] getDashboardStats error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getDashboardStats error:', err);
+        res.status(500).json({ error: getErrorMessage(err) });
+    }
+};
+
+export const getAnalytics = async (_req: AuthRequest, res: Response) => {
+    try {
+        const analytics = await dashboardService.getAnalytics();
+        res.json({ analytics });
+    } catch (err) {
+        logControllerError('[OPERATIONS] getAnalytics error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -39,31 +208,35 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 // ============================================
 
 export const getOrders = async (req: AuthRequest, res: Response) => {
-    const { status, search, page, limit } = req.query;
+    const status = toQueryString(req.query.status);
+    const search = toQueryString(req.query.search);
+    const page = req.query.page;
+    const limit = req.query.limit;
 
     try {
         const result = await orderService.getOrders({
-            status: status as string,
-            search: search as string,
-            page: page ? parseInt(page as string, 10) : undefined,
-            limit: limit ? parseInt(limit as string, 10) : undefined
+            status,
+            search,
+            page: parseOptionalInt(page),
+            limit: parseOptionalInt(limit)
         });
 
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] getOrders error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getOrders error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
 export const getOrderDetails = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
+    const params = req.params as unknown as { order_id: string };
+    const { order_id } = params;
 
     try {
-        const result = await orderService.getOrderDetails(order_id);
+        const result = await orderService.getOrderDetails(order_id) as unknown as Record<string, unknown>;
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] getOrderDetails error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getOrderDetails error:', err);
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Order not found' });
         }
@@ -72,43 +245,50 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
 };
 
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const { new_status, notes } = req.body;
-    const staffId = req.user!.userId;
+    const params = req.params as unknown as { order_id: string };
+    const body = req.body as unknown as UpdateOrderStatusBody;
+    const { order_id } = params;
+    const { new_status, notes } = body;
+    const staffId = getUserId(req);
+
+    if (!staffId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!new_status) {
+        return res.status(400).json({ error: 'new_status is required' });
+    }
 
     try {
         const result = await orderService.updateOrderStatus(order_id, new_status, staffId, notes);
 
-        // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
-        // Notify customer and garage
         const io = getIO();
-
-        // Get order details for notifications
-        const orderDetails = await orderService.getOrderDetails(order_id);
+        const orderDetails = await orderService.getOrderDetails(order_id) as unknown as OrderDetailsPayload;
         const order = orderDetails.order;
+        const orderNumber = order.order_number;
 
         const customerNotification = new_status === 'completed'
-            ? `✅ Order #${order.order_number} has been marked as completed by Operations.`
-            : `Order #${order.order_number} status updated to ${new_status}`;
+            ? `✅ Order #${orderNumber} has been marked as completed by Operations.`
+            : `Order #${orderNumber} status updated to ${new_status}`;
 
         const garageNotification = new_status === 'completed'
-            ? `✅ Order #${order.order_number} completed. Payment will be processed soon.`
-            : `Order #${order.order_number} status updated to ${new_status}`;
+            ? `✅ Order #${orderNumber} completed. Payment will be processed soon.`
+            : `Order #${orderNumber} status updated to ${new_status}`;
 
         io?.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
-            order_number: order.order_number,
+            order_number: orderNumber,
             old_status: result.old_status,
             new_status,
-            garage_name: order.garage_name,
+            garage_name: order.garage_name ?? undefined,
             notification: customerNotification
         });
 
         io?.to(`garage_${order.garage_id}`).emit('order_status_updated', {
             order_id,
-            order_number: order.order_number,
+            order_number: orderNumber,
             old_status: result.old_status,
             new_status,
             notification: garageNotification
@@ -117,16 +297,16 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         if (new_status === 'completed') {
             io?.to('operations').emit('order_completed', {
                 order_id,
-                order_number: order.order_number,
-                notification: `Order #${order.order_number} manually completed by Operations`
+                order_number: orderNumber,
+                notification: `Order #${orderNumber} manually completed by Operations`
             });
 
             io?.to('operations').emit('payout_pending', {
                 order_id,
-                order_number: order.order_number,
+                order_number: orderNumber,
                 garage_id: order.garage_id,
-                payout_amount: order.garage_payout_amount,
-                notification: `💰 Order #${order.order_number} complete - payout pending`
+                payout_amount: order.garage_payout_amount ?? null,
+                notification: `💰 Order #${orderNumber} complete - payout pending`
             });
         }
 
@@ -137,7 +317,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             payout_created: result.payout_created
         });
     } catch (err) {
-        logger.error('[OPERATIONS] updateOrderStatus error', { error: getErrorMessage(err) });
+        logControllerError('[OPERATIONS] updateOrderStatus error', err);
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Order not found' });
         }
@@ -146,21 +326,24 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 };
 
 export const collectOrder = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const { notes } = req.body;
-    const staffId = req.user!.userId;
+    const params = req.params as unknown as { order_id: string };
+    const body = req.body as unknown as CollectOrderBody;
+    const { order_id } = params;
+    const { notes } = body;
+    const staffId = getUserId(req);
+
+    if (!staffId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     try {
         const result = await orderService.collectOrder(order_id, staffId, notes);
 
-        // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
-        // Get order details for notifications
-        const orderDetails = await orderService.getOrderDetails(order_id);
+        const orderDetails = await orderService.getOrderDetails(order_id) as unknown as OrderDetailsPayload;
         const order = orderDetails.order;
 
-        // Notify customer and garage
         const io = getIO();
         io?.to(`user_${order.customer_id}`).emit('order_status_updated', {
             order_id,
@@ -191,7 +374,7 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
             ...result
         });
     } catch (err) {
-        logger.error('[OPERATIONS] collectOrder error', { error: getErrorMessage(err) });
+        logControllerError('[OPERATIONS] collectOrder error', err);
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Order not found' });
         }
@@ -207,30 +390,33 @@ export const collectOrder = async (req: AuthRequest, res: Response) => {
 // ============================================
 
 export const getDisputes = async (req: AuthRequest, res: Response) => {
-    const { status, page, limit } = req.query;
+    const status = toQueryString(req.query.status);
+    const page = req.query.page;
+    const limit = req.query.limit;
 
     try {
         const result = await disputeService.getDisputes({
-            status: status as string,
-            page: page ? parseInt(page as string, 10) : undefined,
-            limit: limit ? parseInt(limit as string, 10) : undefined
+            status,
+            page: parseOptionalInt(page),
+            limit: parseOptionalInt(limit)
         });
 
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] getDisputes error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getDisputes error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
 export const getDisputeDetails = async (req: AuthRequest, res: Response) => {
-    const { dispute_id } = req.params;
+    const params = req.params as unknown as { dispute_id: string };
+    const { dispute_id } = params;
 
     try {
-        const result = await disputeService.getDisputeDetails(dispute_id);
+        const result = await disputeService.getDisputeDetails(dispute_id) as unknown as Record<string, unknown>;
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] getDisputeDetails error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getDisputeDetails error:', err);
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Dispute not found' });
         }
@@ -239,25 +425,36 @@ export const getDisputeDetails = async (req: AuthRequest, res: Response) => {
 };
 
 export const resolveDispute = async (req: AuthRequest, res: Response) => {
-    const { dispute_id } = req.params;
-    const { resolution, refund_amount, notes } = req.body;
-    const staffId = req.user!.userId;
+    const params = req.params as unknown as { dispute_id: string };
+    const body = req.body as unknown as ResolveDisputeBody;
+    const { dispute_id } = params;
+    const { resolution, refund_amount, notes } = body;
+    const staffId = getUserId(req);
+
+    if (!staffId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (resolution !== 'refund_approved' && resolution !== 'dispute_rejected') {
+        return res.status(400).json({ error: 'resolution must be refund_approved or dispute_rejected' });
+    }
 
     try {
         const result = await disputeService.resolveDispute(
             dispute_id,
-            { resolution, refund_amount, notes },
+            {
+                resolution,
+                refund_amount: toOptionalNumber(refund_amount),
+                notes
+            },
             staffId
-        );
+        ) as unknown as ResolveDisputeResult;
 
-        // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
-        // Get dispute details for notifications
-        const disputeDetails = await disputeService.getDisputeDetails(dispute_id);
+        const disputeDetails = await disputeService.getDisputeDetails(dispute_id) as unknown as DisputeDetailsPayload;
         const dispute = disputeDetails.dispute;
 
-        // Socket.IO Notifications + Persistent
         const io = getIO();
 
         const refundMsg = resolution === 'refund_approved'
@@ -269,7 +466,13 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             type: 'dispute_resolved',
             title: resolution === 'refund_approved' ? 'Refund Approved ✅' : 'Dispute Resolved',
             message: `Your dispute for Order #${dispute.order_number} has been resolved. ${refundMsg}`,
-            data: { dispute_id, order_id: dispute.order_id, order_number: dispute.order_number, resolution, refund_amount: result.refund_amount },
+            data: {
+                dispute_id,
+                order_id: dispute.order_id,
+                order_number: dispute.order_number,
+                resolution,
+                refund_amount: result.refund_amount
+            },
             target_role: 'customer'
         });
 
@@ -291,7 +494,12 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
             type: 'dispute_resolved',
             title: 'Dispute Resolved ⚖️',
             message: garageResolutionMsg,
-            data: { dispute_id, order_id: dispute.order_id, order_number: dispute.order_number, resolution },
+            data: {
+                dispute_id,
+                order_id: dispute.order_id,
+                order_number: dispute.order_number,
+                resolution
+            },
             target_role: 'garage'
         });
 
@@ -322,7 +530,7 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
 
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] resolveDispute error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] resolveDispute error:', err);
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Dispute not found' });
         }
@@ -335,16 +543,18 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
 // ============================================
 
 export const getEscalations = async (req: AuthRequest, res: Response) => {
-    const { status, page = '1', limit = '20' } = req.query;
+    const status = toQueryString(req.query.status);
+    const page = req.query.page;
+    const limit = req.query.limit;
 
     try {
         const pool = getReadPool();
-        const pageNum = Math.max(1, parseInt(page as string, 10));
-        const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
+        const pageNum = parseBoundedInt(page, 1, 1, 1000000);
+        const limitNum = parseBoundedInt(limit, 20, 1, 100);
         const offset = (pageNum - 1) * limitNum;
 
         let whereClause = '';
-        const params: any[] = [];
+        const params: Array<string | number> = [];
         let paramIndex = 1;
 
         if (status && status !== 'all') {
@@ -352,15 +562,14 @@ export const getEscalations = async (req: AuthRequest, res: Response) => {
             params.push(status);
         }
 
-        // Count total
-        const countResult = await pool.query(
+        const countResult = await pool.query<CountRow>(
             `SELECT COUNT(*) FROM support_escalations e ${whereClause}`,
             params
         );
-        const total = parseInt(countResult.rows[0].count);
+        const total = Number.parseInt(countResult.rows[0]?.count ?? '0', 10);
 
-        // Get escalations with ticket and customer info
-        const result = await pool.query(`
+        const result = await pool.query<EscalationListRow>(
+            `
             SELECT e.*,
                    t.ticket_id, t.subject as ticket_subject, t.status as ticket_status,
                    t.category,
@@ -380,7 +589,9 @@ export const getEscalations = async (req: AuthRequest, res: Response) => {
                 CASE WHEN e.priority = 'urgent' THEN 0 WHEN e.priority = 'high' THEN 1 ELSE 2 END,
                 e.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limitNum, offset]);
+        `,
+            [...params, limitNum, offset]
+        );
 
         res.json({
             escalations: result.rows,
@@ -392,22 +603,28 @@ export const getEscalations = async (req: AuthRequest, res: Response) => {
             }
         });
     } catch (err) {
-        logger.error('[OPERATIONS] getEscalations error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getEscalations error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
 
 export const resolveEscalation = async (req: AuthRequest, res: Response) => {
-    const { escalation_id } = req.params;
-    const { resolution_notes, resolution_action } = req.body;
-    const staffId = req.user!.userId;
+    const params = req.params as unknown as { escalation_id: string };
+    const body = req.body as unknown as ResolveEscalationBody;
+    const { escalation_id } = params;
+    const { resolution_notes, resolution_action } = body;
+    const staffId = getUserId(req);
+
+    if (!staffId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     try {
         const pool = getWritePool();
         const readPool = getReadPool();
 
-        // 1. Get escalation with related ticket, order, customer, garage info
-        const escalationResult = await readPool.query(`
+        const escalationResult = await readPool.query<EscalationRow>(
+            `
             SELECT e.*,
                    t.ticket_id, t.customer_id as ticket_customer_id,
                    COALESCE(o.order_number, o2.order_number) as order_number,
@@ -421,17 +638,17 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             LEFT JOIN orders o2 ON e.order_id = o2.order_id
             LEFT JOIN users eu ON e.escalated_by = eu.user_id
             WHERE e.escalation_id = $1
-        `, [escalation_id]);
+        `,
+            [escalation_id]
+        );
 
-        if (escalationResult.rows.length === 0) {
+        const escalation = escalationResult.rows[0];
+        if (!escalation) {
             return res.status(404).json({ error: 'Escalation not found' });
         }
 
-        const escalation = escalationResult.rows[0];
-        const action = resolution_action || 'acknowledge';
-
-        // 2. EXECUTE THE APPROVED ACTION (the critical missing step)
-        let actionResult: any = null;
+        const action: ResolutionAction = isResolutionAction(resolution_action) ? resolution_action : 'acknowledge';
+        let actionResult: SupportActionResult | null = null;
         const orderId = escalation.resolved_order_id;
         const customerId = escalation.customer_id;
 
@@ -443,7 +660,6 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
 
         switch (action) {
             case 'approve_refund':
-                // Route to SupportActionsService → creates pending refund for Finance approval
                 if (!orderId || !customerId) {
                     return res.status(400).json({ error: 'Order and customer required for refund' });
                 }
@@ -451,23 +667,24 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                     orderId,
                     customerId,
                     agentId: staffId,
-                    reason: resolution_notes || `Escalation #${escalation_id} — refund approved by Operations`
-                });
+                    reason: resolution_notes ?? `Escalation #${escalation_id} — refund approved by Operations`
+                }) as SupportActionResult;
+
                 if (!actionResult.success) {
                     return res.status(400).json({
-                        error: actionResult.error || 'Refund request failed',
+                        error: actionResult.error ?? 'Refund request failed',
                         details: actionResult.message
                     });
                 }
                 logger.info('[OPERATIONS] Escalation resolved with REFUND action', {
-                    escalation_id, order_id: orderId,
+                    escalation_id,
+                    order_id: orderId,
                     refund_id: actionResult.refundId,
                     status: actionResult.status
                 });
                 break;
 
             case 'approve_cancellation':
-                // Route to SupportActionsService → cancels order + handles payout reversal + refund
                 if (!orderId || !customerId) {
                     return res.status(400).json({ error: 'Order and customer required for cancellation' });
                 }
@@ -475,39 +692,40 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                     orderId,
                     customerId,
                     agentId: staffId,
-                    reason: resolution_notes || `Escalation #${escalation_id} — cancellation approved by Operations`
-                });
+                    reason: resolution_notes ?? `Escalation #${escalation_id} — cancellation approved by Operations`
+                }) as SupportActionResult;
+
                 if (!actionResult.success) {
                     return res.status(400).json({
-                        error: actionResult.error || 'Cancellation failed',
+                        error: actionResult.error ?? 'Cancellation failed',
                         details: actionResult.message
                     });
                 }
                 logger.info('[OPERATIONS] Escalation resolved with CANCELLATION action', {
-                    escalation_id, order_id: orderId,
+                    escalation_id,
+                    order_id: orderId,
                     payout_action: actionResult.payoutAction,
                     refund_action: actionResult.refundAction
                 });
                 break;
 
             case 'reject':
-                // No action on order — just document the rejection
                 logger.info('[OPERATIONS] Escalation REJECTED', {
-                    escalation_id, reason: resolution_notes
+                    escalation_id,
+                    reason: resolution_notes
                 });
                 break;
 
             case 'acknowledge':
             default:
-                // Current behavior — close escalation, no order action
                 logger.info('[OPERATIONS] Escalation acknowledged (no order action)', {
                     escalation_id
                 });
                 break;
         }
 
-        // 3. Update escalation record with resolution + action taken
-        const updateResult = await pool.query(`
+        const updateResult = await pool.query<EscalationUpdateRow>(
+            `
             UPDATE support_escalations 
             SET status = $4,
                 resolved_at = NOW(),
@@ -516,56 +734,61 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                 resolution_action = $5
             WHERE escalation_id = $1
             RETURNING *
-        `, [
-            escalation_id,
-            staffId,
-            resolution_notes || 'Resolved by Operations',
-            action === 'reject' ? 'rejected' : 'resolved',
-            action
-        ]);
+        `,
+            [
+                escalation_id,
+                staffId,
+                resolution_notes ?? 'Resolved by Operations',
+                action === 'reject' ? 'rejected' : 'resolved',
+                action
+            ]
+        );
 
-        // 4. Update linked ticket if exists - add resolution message with action detail
         if (escalation.ticket_id) {
-            const actionLabels: Record<string, string> = {
-                'approve_refund': 'Refund Approved — Awaiting Finance approval',
-                'approve_cancellation': 'Order Cancelled — Refund processed',
-                'reject': 'Escalation Rejected',
-                'acknowledge': 'Escalation Acknowledged'
+            const actionLabels: Record<ResolutionAction, string> = {
+                approve_refund: 'Refund Approved — Awaiting Finance approval',
+                approve_cancellation: 'Order Cancelled — Refund processed',
+                reject: 'Escalation Rejected',
+                acknowledge: 'Escalation Acknowledged'
             };
-            const actionLabel = actionLabels[action] || 'Resolved';
 
-            await pool.query(`
+            const actionLabel = actionLabels[action];
+            await pool.query(
+                `
                 INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
                 VALUES ($1, $2, 'admin', $3, false)
-            `, [
-                escalation.ticket_id,
-                staffId,
-                `Escalation Resolved by Operations\n\nAction: ${actionLabel}\n${resolution_notes || 'Your concern has been addressed.'}`
-            ]);
+            `,
+                [
+                    escalation.ticket_id,
+                    staffId,
+                    `Escalation Resolved by Operations\n\nAction: ${actionLabel}\n${resolution_notes ?? 'Your concern has been addressed.'}`
+                ]
+            );
 
-            // Update ticket status (don't close if rejected — support may need to follow up)
             if (action !== 'reject') {
-                await pool.query(`
+                await pool.query(
+                    `
                     UPDATE support_tickets 
                     SET status = 'resolved', resolved_at = NOW()
                     WHERE ticket_id = $1 AND status NOT IN ('resolved', 'closed')
-                `, [escalation.ticket_id]);
+                `,
+                    [escalation.ticket_id]
+                );
             }
         }
 
-        // 5. Notifications
         const io = getIO();
         const orderRef = escalation.order_number ? `Order #${escalation.order_number}` : 'your escalated issue';
 
-        const actionMessages: Record<string, string> = {
-            'approve_refund': `Refund approved for ${orderRef}. Awaiting Finance team processing.`,
-            'approve_cancellation': `${orderRef} has been cancelled and refund processed.`,
-            'reject': `Escalation for ${orderRef} was reviewed and rejected.`,
-            'acknowledge': `Your escalation for ${orderRef} has been resolved by Operations.`
+        const actionMessages: Record<ResolutionAction, string> = {
+            approve_refund: `Refund approved for ${orderRef}. Awaiting Finance team processing.`,
+            approve_cancellation: `${orderRef} has been cancelled and refund processed.`,
+            reject: `Escalation for ${orderRef} was reviewed and rejected.`,
+            acknowledge: `Your escalation for ${orderRef} has been resolved by Operations.`
         };
-        const notificationMsg = actionMessages[action] || `Your escalation for ${orderRef} has been resolved.`;
 
-        // 5a. Notify support agent who escalated
+        const notificationMsg = actionMessages[action];
+
         if (escalation.escalated_by) {
             await createNotification({
                 userId: escalation.escalated_by,
@@ -578,8 +801,8 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                     resolution_action: action,
                     resolution_notes,
                     action_result: actionResult ? {
-                        refund_id: actionResult.refundId,
-                        status: actionResult.status
+                        refund_id: actionResult.refundId ?? null,
+                        status: actionResult.status ?? null
                     } : null
                 },
                 target_role: 'operations'
@@ -594,21 +817,25 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // 5b. Notify customer (action-appropriate message)
         if (escalation.customer_id) {
-            const customerMessages: Record<string, string> = {
-                'approve_refund': `Your refund request for ${orderRef} has been approved and is being processed.`,
-                'approve_cancellation': `${orderRef} has been cancelled. Your refund will be processed shortly.`,
-                'reject': `Your issue regarding ${orderRef} has been reviewed by our team.`,
-                'acknowledge': `Your issue regarding ${orderRef} has been reviewed and resolved by our team.`
+            const customerMessages: Record<ResolutionAction, string> = {
+                approve_refund: `Your refund request for ${orderRef} has been approved and is being processed.`,
+                approve_cancellation: `${orderRef} has been cancelled. Your refund will be processed shortly.`,
+                reject: `Your issue regarding ${orderRef} has been reviewed by our team.`,
+                acknowledge: `Your issue regarding ${orderRef} has been reviewed and resolved by our team.`
             };
+
+            const customerMessage = customerMessages[action];
 
             await createNotification({
                 userId: escalation.customer_id,
                 type: 'issue_resolved',
-                title: action === 'approve_refund' ? 'Refund Approved' :
-                    action === 'approve_cancellation' ? 'Order Cancelled' : 'Issue Resolved',
-                message: customerMessages[action] || `Your issue regarding ${orderRef} has been resolved.`,
+                title: action === 'approve_refund'
+                    ? 'Refund Approved'
+                    : action === 'approve_cancellation'
+                        ? 'Order Cancelled'
+                        : 'Issue Resolved',
+                message: customerMessage,
                 data: { order_number: escalation.order_number },
                 target_role: 'customer'
             });
@@ -617,11 +844,10 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
                 order_number: escalation.order_number,
                 type: 'escalation_resolved',
                 resolution_action: action,
-                notification: customerMessages[action] || `Your issue regarding ${orderRef} has been resolved.`
+                notification: customerMessage
             });
         }
 
-        // 5c. Notify garage if relevant
         if (escalation.garage_id) {
             io?.to(`garage_${escalation.garage_id}`).emit('escalation_update', {
                 order_number: escalation.order_number,
@@ -631,7 +857,6 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // 5d. Notify operations room
         io?.to('operations').emit('escalation_resolved', {
             escalation_id,
             order_number: escalation.order_number,
@@ -640,7 +865,6 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             notification: `Escalation ${escalation.order_number ? `for Order #${escalation.order_number}` : escalation_id} resolved (${action})`
         });
 
-        // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
         logger.info('[OPERATIONS] Escalation resolved', {
@@ -656,14 +880,15 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
         res.json({
             message: action === 'reject' ? 'Escalation rejected' : 'Escalation resolved',
             resolution_action: action,
-            escalation: updateResult.rows[0],
+            escalation: updateResult.rows[0] ?? null,
             action_result: actionResult ? {
                 success: actionResult.success,
-                action: actionResult.action,
-                refund_id: actionResult.refundId,
-                refund_status: actionResult.status,
-                payout_action: actionResult.payoutAction,
-                message: actionResult.message
+                action: actionResult.action ?? action,
+                refund_id: actionResult.refundId ?? null,
+                refund_status: actionResult.status ?? null,
+                payout_action: actionResult.payoutAction ?? null,
+                refund_action: actionResult.refundAction ?? null,
+                message: actionResult.message ?? null
             } : null,
             notifications_sent: {
                 support: !!escalation.escalated_by,
@@ -672,7 +897,7 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
             }
         });
     } catch (err) {
-        logger.error('[OPERATIONS] resolveEscalation error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] resolveEscalation error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
 };
@@ -682,20 +907,69 @@ export const resolveEscalation = async (req: AuthRequest, res: Response) => {
 // ============================================
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
-    const { type, search, page, limit } = req.query;
+    const type = toQueryString(req.query.type);
+    const search = toQueryString(req.query.search);
+    const page = req.query.page;
+    const limit = req.query.limit;
+
+    const normalizedType = type === 'customer' || type === 'garage' ? type : undefined;
 
     try {
         const result = await userService.getUsers({
-            type: type as 'customer' | 'garage',
-            search: search as string,
-            page: page ? parseInt(page as string, 10) : undefined,
-            limit: limit ? parseInt(limit as string, 10) : undefined
+            type: normalizedType,
+            search,
+            page: parseOptionalInt(page),
+            limit: parseOptionalInt(limit)
         });
 
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] getUsers error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getUsers error:', err);
         res.status(500).json({ error: 'Failed to fetch users' });
+    }
+};
+
+export const getUserStats = async (_req: AuthRequest, res: Response) => {
+    try {
+        const stats = await userService.getUserStats();
+        res.json({ stats });
+    } catch (err) {
+        logControllerError('[OPERATIONS] getUserStats error:', err);
+        res.status(500).json({ error: 'Failed to fetch user stats' });
+    }
+};
+
+export const getUserDetails = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    try {
+        const user = await userService.getUserDetails(user_id);
+        res.json({ user });
+    } catch (err) {
+        logControllerError('[OPERATIONS] getUserDetails error:', err);
+        res.status(404).json({ error: 'User not found' });
+    }
+};
+
+export const suspendUser = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    const { reason } = req.body;
+    try {
+        await userService.suspendUser(user_id, reason || 'Suspended by operations');
+        res.json({ success: true, message: 'User suspended' });
+    } catch (err) {
+        logControllerError('[OPERATIONS] suspendUser error:', err);
+        res.status(400).json({ error: 'Failed to suspend user' });
+    }
+};
+
+export const activateUser = async (req: AuthRequest, res: Response) => {
+    const { user_id } = req.params;
+    try {
+        await userService.activateUser(user_id);
+        res.json({ success: true, message: 'User activated' });
+    } catch (err) {
+        logControllerError('[OPERATIONS] activateUser error:', err);
+        res.status(400).json({ error: 'Failed to activate user' });
     }
 };
 
@@ -703,42 +977,48 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 // ORDER CLEANUP (Orphan Management)
 // ============================================
 
-import { CancellationService } from '../services/cancellation/cancellation.service';
-const cancellationService = new CancellationService(getWritePool());
-
 export const cancelOrderByOperations = async (req: AuthRequest, res: Response) => {
-    const { order_id } = req.params;
-    const { reason, refund_type, partial_refund_amount, notify_customer, notify_garage } = req.body;
-    const operationsUserId = req.user!.userId;
+    const params = req.params as unknown as { order_id: string };
+    const body = req.body as unknown as CancelOrderByOperationsBody;
+    const { order_id } = params;
+    const { reason, refund_type, partial_refund_amount, notify_customer, notify_garage } = body;
+    const operationsUserId = getUserId(req);
 
-    if (!reason) {
+    if (!operationsUserId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!reason || !reason.trim()) {
         return res.status(400).json({ error: 'Cancellation reason is required' });
     }
+
+    const normalizedRefundType: 'full' | 'partial' | 'none' =
+        refund_type === 'partial' || refund_type === 'none' || refund_type === 'full'
+            ? refund_type
+            : 'full';
 
     try {
         const result = await cancellationService.cancelOrderByOperations(
             order_id,
             operationsUserId,
-            reason,
+            reason.trim(),
             {
-                refund_type: refund_type || 'full',
-                partial_refund_amount,
-                notify_customer: notify_customer !== false,
-                notify_garage: notify_garage !== false
+                refund_type: normalizedRefundType,
+                partial_refund_amount: toOptionalNumber(partial_refund_amount),
+                notify_customer: toOptionalBoolean(notify_customer) ?? true,
+                notify_garage: toOptionalBoolean(notify_garage) ?? true
             }
         );
 
-        // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
-        // Notify Operations room
         emitToOperations('order_cancelled_by_operations', {
             order_id,
             previous_status: result.previous_status,
             refund_processed: result.refund_processed,
             refund_amount: result.refund_amount,
             cancelled_by: operationsUserId,
-            reason
+            reason: reason.trim()
         });
 
         logger.info('[OPERATIONS] Order cancelled', {
@@ -750,7 +1030,7 @@ export const cancelOrderByOperations = async (req: AuthRequest, res: Response) =
 
         res.json(result);
     } catch (err) {
-        logger.error('[OPERATIONS] cancelOrder error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] cancelOrder error:', err);
         if (err instanceof Error && err.message.includes('not found')) {
             return res.status(404).json({ error: 'Order not found' });
         }
@@ -758,7 +1038,7 @@ export const cancelOrderByOperations = async (req: AuthRequest, res: Response) =
     }
 };
 
-export const getOrphanOrders = async (req: AuthRequest, res: Response) => {
+export const getOrphanOrders = async (_req: AuthRequest, res: Response) => {
     try {
         const orphanOrders = await cancellationService.getOrphanOrders();
 
@@ -770,7 +1050,7 @@ export const getOrphanOrders = async (req: AuthRequest, res: Response) => {
                 : 'No orphan orders found'
         });
     } catch (err) {
-        logger.error('[OPERATIONS] getOrphanOrders error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] getOrphanOrders error:', err);
         res.status(500).json({ error: 'Failed to fetch orphan orders' });
     }
 };
@@ -779,15 +1059,12 @@ export const getOrphanOrders = async (req: AuthRequest, res: Response) => {
 // AUTO-COMPLETE TRIGGER (for testing)
 // ============================================
 
-import { runAutoCompleteNow } from '../jobs/auto-complete-orders';
-
 export const triggerAutoComplete = async (req: AuthRequest, res: Response) => {
     try {
         logger.info('[OPERATIONS] Manual auto-complete triggered by:', { userId: req.user?.userId });
 
         const result = await runAutoCompleteNow();
 
-        // Invalidate dashboard stats cache
         await dashboardService.invalidateCache();
 
         res.json({
@@ -799,7 +1076,25 @@ export const triggerAutoComplete = async (req: AuthRequest, res: Response) => {
                 : 'No orders eligible for auto-completion (must be delivered 48h+ with no open disputes)'
         });
     } catch (err) {
-        logger.error('[OPERATIONS] triggerAutoComplete error:', { error: getErrorMessage(err) } as any);
+        logControllerError('[OPERATIONS] triggerAutoComplete error:', err);
         res.status(500).json({ error: 'Failed to run auto-complete job' });
     }
+};
+
+export const getReturnStats = async (_req: AuthRequest, res: Response) => {
+    try {
+        const { getReturnService } = await import('../services/cancellation/return.service');
+        const returnService = getReturnService(getWritePool());
+        const stats = await returnService.getReturnStats();
+        res.json({ stats });
+    } catch (err) {
+        logControllerError('[OPERATIONS] getReturnStats error:', err);
+        res.status(500).json({ error: 'Failed to fetch return stats' });
+    }
+};
+
+export const getGarages = async (req: AuthRequest, res: Response) => {
+    // Reusing getUsers with type=garage for simplicity
+    req.query.type = 'garage';
+    return getUsers(req, res);
 };

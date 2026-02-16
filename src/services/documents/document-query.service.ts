@@ -152,7 +152,7 @@ export class DocumentQueryService {
                 order_number: doc.order_number,
                 garage: doc.garage_name,
                 status: doc.status,
-                digital_signature: doc.digital_signature?.substring(0, 16) + '...',
+                digital_signature: `${doc.digital_signature?.substring(0, 16)  }...`,
                 signature_timestamp: doc.signature_timestamp,
             },
             item: docData?.item || {},

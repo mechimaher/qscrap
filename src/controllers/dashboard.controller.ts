@@ -19,7 +19,7 @@ export const getGarageStats = async (req: AuthRequest, res: Response) => {
 export const getGarageProfile = async (req: AuthRequest, res: Response) => {
     try {
         const profile = await dashboardService.getGarageProfile(req.user!.userId);
-        if (!profile) return res.status(404).json({ error: 'Garage not found' });
+        if (!profile) {return res.status(404).json({ error: 'Garage not found' });}
         res.json(profile);
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
@@ -29,7 +29,7 @@ export const getGarageProfile = async (req: AuthRequest, res: Response) => {
 export const updateGarageBusinessDetails = async (req: AuthRequest, res: Response) => {
     try {
         const result = await dashboardService.updateGarageBusinessDetails(req.user!.userId, req.body);
-        if (!result) return res.status(404).json({ error: 'Garage not found' });
+        if (!result) {return res.status(404).json({ error: 'Garage not found' });}
         res.json({ message: 'Business details updated successfully', garage: result });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
@@ -51,7 +51,7 @@ export const updateGarageSpecialization = async (req: AuthRequest, res: Response
 
     try {
         const result = await dashboardService.updateGarageSpecialization(req.user!.userId, req.body);
-        if (!result) return res.status(404).json({ error: 'Garage not found' });
+        if (!result) {return res.status(404).json({ error: 'Garage not found' });}
         res.json({ message: 'Garage specialization updated successfully', garage: result });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
@@ -76,7 +76,7 @@ export const updateGarageLocation = async (req: AuthRequest, res: Response) => {
 
     try {
         const result = await dashboardService.updateGarageLocation(req.user!.userId, lat, lng, address);
-        if (!result) return res.status(404).json({ error: 'Garage not found' });
+        if (!result) {return res.status(404).json({ error: 'Garage not found' });}
         res.json({
             message: 'Garage location updated successfully',
             garage: result,
@@ -128,7 +128,7 @@ export const addAddress = async (req: AuthRequest, res: Response) => {
 export const deleteAddress = async (req: AuthRequest, res: Response) => {
     try {
         const deleted = await dashboardService.deleteAddress(req.user!.userId, req.params.addressId);
-        if (!deleted) return res.status(404).json({ error: 'Address not found' });
+        if (!deleted) {return res.status(404).json({ error: 'Address not found' });}
         res.json({ message: 'Address deleted' });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
@@ -138,7 +138,7 @@ export const deleteAddress = async (req: AuthRequest, res: Response) => {
 export const setDefaultAddress = async (req: AuthRequest, res: Response) => {
     try {
         const address = await dashboardService.setDefaultAddress(req.user!.userId, req.params.addressId);
-        if (!address) return res.status(404).json({ error: 'Address not found' });
+        if (!address) {return res.status(404).json({ error: 'Address not found' });}
         res.json({ address, message: 'Default address updated' });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
@@ -176,7 +176,7 @@ export const markAllNotificationsRead = async (req: AuthRequest, res: Response) 
 export const deleteNotification = async (req: AuthRequest, res: Response) => {
     try {
         const deleted = await dashboardService.deleteNotification(req.user!.userId, req.params.notificationId);
-        if (!deleted) return res.status(404).json({ error: 'Notification not found' });
+        if (!deleted) {return res.status(404).json({ error: 'Notification not found' });}
         res.json({ message: 'Notification deleted' });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });

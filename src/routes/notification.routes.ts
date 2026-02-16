@@ -19,7 +19,7 @@ router.post('/register-token', authenticate, async (req: any, res: any) => {
         const userId = req.user!.userId;
         const userType = req.user!.userType;
 
-        if (!token) return res.status(400).json({ error: 'Push token is required' });
+        if (!token) {return res.status(400).json({ error: 'Push token is required' });}
 
         const appType = userType === 'driver' ? 'driver' : 'customer';
         await pushService.registerToken(userId, token, platform || 'android', appType, device_id);
