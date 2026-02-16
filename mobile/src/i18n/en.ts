@@ -113,6 +113,16 @@ export const en = {
         invalidTime: 'Invalid time',
     },
 
+    // =============================================
+    // ERRORS - Error messages
+    // =============================================
+    errors: {
+        requestNotFound: 'Request not found',
+        orderNotFound: 'Order not found',
+        vehicleNotFound: 'Vehicle not found',
+        addressNotFound: 'Address not found',
+    },
+
 
 
     // =============================================
@@ -207,6 +217,7 @@ export const en = {
         hidePassword: 'Hide password',
         registrationSuccess: 'Registration Successful!',
         accountCreated: 'Your account has been created successfully!',
+        getStarted: 'Get Started',
     },
 
     // =============================================
@@ -361,7 +372,7 @@ export const en = {
         anyCondition: 'Any Condition',
         newOnly: 'New Only',
         usedOnly: 'Used Only',
-        photosOptional: 'Photos (Optional)',
+        photosOptional: 'Part Photos (Optional)',
         addUpTo5: 'Add up to 5 photos',
         gallery: 'Gallery',
         camera: 'Camera',

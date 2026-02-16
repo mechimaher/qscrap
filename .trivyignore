@@ -1,0 +1,6 @@
+# Trivy Ignore File
+# Suppress false positives for Stripe test keys in compiled JavaScript
+# These are not actual secrets - they're placeholder strings in the compiled code
+
+# Stripe test key placeholders in compiled dist/ files
+secret:stripe-secret-token

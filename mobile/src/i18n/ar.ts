@@ -114,6 +114,16 @@ export const ar = {
         invalidTime: 'وقت غير صالح',
     },
 
+    // =============================================
+    // ERRORS - رسائل الخطأ
+    // =============================================
+    errors: {
+        requestNotFound: 'الطلب غير موجود',
+        orderNotFound: 'الطلبية غير موجودة',
+        vehicleNotFound: 'المركبة غير موجودة',
+        addressNotFound: 'العنوان غير موجود',
+    },
+
 
 
     // =============================================
@@ -208,6 +218,7 @@ export const ar = {
         hidePassword: 'إخفاء كلمة المرور',
         registrationSuccess: 'تم التسجيل بنجاح!',
         accountCreated: 'تم إنشاء حسابك بنجاح!',
+        getStarted: 'ابدأ الآن',
     },
 
     // =============================================
@@ -362,7 +373,7 @@ export const ar = {
         anyCondition: 'أي حالة',
         newOnly: 'جديد فقط',
         usedOnly: 'مستعمل فقط',
-        photosOptional: 'الصور (اختياري)',
+        photosOptional: 'صور القطعة (اختياري)',
         addUpTo5: 'أضف حتى 5 صور',
         gallery: 'المعرض',
         camera: 'الكاميرا',

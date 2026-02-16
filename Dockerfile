@@ -21,7 +21,9 @@ RUN npm run build
 FROM node:18-alpine
 
 # Install dependencies for Puppeteer/Chromium on Alpine (needed for invoice PDFs)
-RUN apk add --no-cache \
+# Upgrade all packages first to get latest security patches (OpenSSL 3.3.6+)
+RUN apk upgrade --no-cache && \
+    apk add --no-cache \
     chromium \
     nss \
     freetype \
