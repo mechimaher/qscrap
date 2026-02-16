@@ -113,6 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
+            // Revoke refresh token server-side before clearing local state
+            await api.serverLogout();
+
             // Clear all authentication tokens and user data
             await api.clearToken();
 

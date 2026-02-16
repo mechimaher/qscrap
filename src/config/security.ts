@@ -24,7 +24,7 @@ import logger from '../utils/logger';
  * Transition period: defaults to '30d' for backward compatibility.
  * Target: '15m' after mobile apps support refresh flow.
  */
-export const TOKEN_EXPIRY_STRING = process.env.ACCESS_TOKEN_EXPIRY || '30d';
+export const TOKEN_EXPIRY_STRING = process.env.ACCESS_TOKEN_EXPIRY || '15m';
 
 /** Parse token expiry string to seconds */
 function parseExpiryToSeconds(expiry: string): number {

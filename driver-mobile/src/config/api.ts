@@ -12,6 +12,8 @@ export const UPLOAD_BASE_URL = 'https://qscrap.qa';
 export const API_ENDPOINTS = {
     // Auth
     LOGIN: '/auth/login',
+    REFRESH: '/auth/refresh',
+    LOGOUT: '/auth/logout',
 
     // Driver Profile
     PROFILE: '/driver/me',

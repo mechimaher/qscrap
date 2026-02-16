@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // Token Storage Keys
 const TOKEN_KEY = 'qscrap_token';
+const REFRESH_TOKEN_KEY = 'qscrap_refresh_token';
 const USER_KEY = 'qscrap_user';
 
 // Types
@@ -18,6 +19,7 @@ export interface User {
 
 export interface AuthResponse {
     token: string;
+    refreshToken?: string;
     userId: string;
     userType: string;
     user?: User;
@@ -227,6 +229,9 @@ export interface UrgentAction {
 // API Helper
 class ApiService {
     private token: string | null = null;
+    private refreshTokenValue: string | null = null;
+    private isRefreshing = false;
+    private refreshQueue: Array<{ resolve: (token: string) => void; reject: (error: Error) => void }> = [];
 
     async getToken(): Promise<string | null> {
         if (this.token) return this.token;
@@ -243,10 +248,90 @@ class ApiService {
         await SecureStore.setItemAsync(TOKEN_KEY, token);
     }
 
+    async getRefreshToken(): Promise<string | null> {
+        if (this.refreshTokenValue) return this.refreshTokenValue;
+        try {
+            this.refreshTokenValue = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+            return this.refreshTokenValue;
+        } catch {
+            return null;
+        }
+    }
+
+    async setRefreshToken(token: string): Promise<void> {
+        this.refreshTokenValue = token;
+        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+    }
+
     async clearToken(): Promise<void> {
         this.token = null;
+        this.refreshTokenValue = null;
         await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
         await SecureStore.deleteItemAsync(USER_KEY);
+    }
+
+    async serverLogout(): Promise<void> {
+        try {
+            const rt = await this.getRefreshToken();
+            if (rt) {
+                await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOGOUT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: rt }),
+                });
+            }
+        } catch {
+            // Best-effort — don't block logout if server call fails
+        }
+    }
+
+    private async attemptTokenRefresh(): Promise<string> {
+        const rt = await this.getRefreshToken();
+        if (!rt) throw new Error('No refresh token available');
+
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REFRESH}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: rt }),
+        });
+
+        if (!response.ok) {
+            // Refresh token is invalid/expired — force re-login
+            await this.clearToken();
+            throw new Error('Session expired. Please log in again.');
+        }
+
+        const data = await response.json();
+        await this.setToken(data.token);
+        if (data.refreshToken) {
+            await this.setRefreshToken(data.refreshToken);
+        }
+        return data.token;
+    }
+
+    private async handleTokenRefresh(): Promise<string> {
+        if (this.isRefreshing) {
+            // Queue this request — another refresh is already in flight
+            return new Promise<string>((resolve, reject) => {
+                this.refreshQueue.push({ resolve, reject });
+            });
+        }
+
+        this.isRefreshing = true;
+        try {
+            const newToken = await this.attemptTokenRefresh();
+            // Resolve all queued requests with the new token
+            this.refreshQueue.forEach(({ resolve }) => resolve(newToken));
+            return newToken;
+        } catch (error: any) {
+            // Reject all queued requests
+            this.refreshQueue.forEach(({ reject }) => reject(error));
+            throw error;
+        } finally {
+            this.refreshQueue = [];
+            this.isRefreshing = false;
+        }
     }
 
     async saveUser(user: User): Promise<void> {
@@ -262,11 +347,12 @@ class ApiService {
         }
     }
 
-    public async request<T>(
+    private async rawRequest<T>(
         endpoint: string,
-        options: RequestInit = {}
-    ): Promise<T> {
-        const token = await this.getToken();
+        options: RequestInit = {},
+        tokenOverride?: string | null
+    ): Promise<{ data: T; status: number }> {
+        const token = tokenOverride !== undefined ? tokenOverride : await this.getToken();
 
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
@@ -274,9 +360,8 @@ class ApiService {
             ...options.headers,
         };
 
-        // Add timeout to prevent infinite hangs on stalled connections
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -287,45 +372,62 @@ class ApiService {
 
             clearTimeout(timeoutId);
 
-            // Try to parse JSON response
             let data: any;
             const contentType = response.headers.get('content-type');
 
             if (contentType && contentType.includes('application/json')) {
                 data = await response.json();
             } else {
-                // Non-JSON response (likely HTML error page or plain text)
                 const text = await response.text();
                 logError('[API] Non-JSON response:', text.substring(0, 200));
                 throw new Error('Server returned invalid response. Please try again later.');
             }
 
-            if (!response.ok) {
-                // Properly extract error message from various response formats
-                let errorMessage = 'Request failed';
-                if (typeof data.error === 'string') {
-                    errorMessage = data.error;
-                } else if (typeof data.error?.message === 'string') {
-                    errorMessage = data.error.message;
-                } else if (typeof data.message === 'string') {
-                    errorMessage = data.message;
-                }
-                throw new Error(errorMessage);
-            }
-
-            return data;
+            return { data, status: response.status };
         } catch (error: any) {
             clearTimeout(timeoutId);
-            // Handle timeout (AbortError)
             if (error.name === 'AbortError') {
                 throw new Error('Request timed out. Please check your connection and try again.');
             }
-            // Handle JSON parse errors explicitly
             if (error.message?.includes('JSON')) {
                 throw new Error('Invalid server response. Please check your connection and try again.');
             }
             throw error;
         }
+    }
+
+    public async request<T>(
+        endpoint: string,
+        options: RequestInit = {}
+    ): Promise<T> {
+        const { data, status } = await this.rawRequest<T>(endpoint, options);
+
+        // If 401, attempt token refresh and retry (skip for auth endpoints)
+        if (status === 401 && !endpoint.startsWith('/auth/')) {
+            try {
+                const newToken = await this.handleTokenRefresh();
+                const retry = await this.rawRequest<T>(endpoint, options, newToken);
+                if (retry.status >= 400) {
+                    throw new Error(this.extractError(retry.data));
+                }
+                return retry.data;
+            } catch (refreshError: any) {
+                throw refreshError;
+            }
+        }
+
+        if (status >= 400) {
+            throw new Error(this.extractError(data));
+        }
+
+        return data;
+    }
+
+    private extractError(data: any): string {
+        if (typeof data?.error === 'string') return data.error;
+        if (typeof data?.error?.message === 'string') return data.error.message;
+        if (typeof data?.message === 'string') return data.message;
+        return 'Request failed';
     }
 
     // Auth
@@ -337,6 +439,9 @@ class ApiService {
 
         if (data.token) {
             await this.setToken(data.token);
+            if (data.refreshToken) {
+                await this.setRefreshToken(data.refreshToken);
+            }
 
             // If user data is provided in login response, save it directly
             // including the critical userId and userType from the response root
@@ -393,6 +498,9 @@ class ApiService {
         // Auto-login after successful verification
         if (response.token) {
             await this.setToken(response.token);
+            if ((response as any).refreshToken) {
+                await this.setRefreshToken((response as any).refreshToken);
+            }
             await this.saveUser({
                 user_id: response.userId,
                 user_type: response.userType as 'customer',

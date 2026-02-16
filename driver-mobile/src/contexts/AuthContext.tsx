@@ -133,6 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Clear active orders (chat rooms)
             await clearActiveOrders();
 
+            // Revoke refresh token server-side before clearing local state
+            await api.serverLogout();
+
             await api.clearToken();
             Sentry.setUser(null);
             setDriver(null);

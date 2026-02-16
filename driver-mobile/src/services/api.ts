@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // Token Storage Keys
 const TOKEN_KEY = 'qscrap_driver_token';
+const REFRESH_TOKEN_KEY = 'qscrap_driver_refresh_token';
 const USER_KEY = 'qscrap_driver_user';
 
 // Types
@@ -84,6 +85,7 @@ export interface DriverStats {
 
 export interface AuthResponse {
     token: string;
+    refreshToken?: string;
     userId: string;
     userType: string;
     driver?: Driver;
@@ -93,6 +95,9 @@ export interface AuthResponse {
 // API Service
 class DriverApiService {
     private token: string | null = null;
+    private refreshTokenValue: string | null = null;
+    private isRefreshing = false;
+    private refreshQueue: Array<{ resolve: (token: string) => void; reject: (error: Error) => void }> = [];
 
     // Timeout wrapper to prevent SecureStore from hanging indefinitely
     private async withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
@@ -122,7 +127,7 @@ class DriverApiService {
         try {
             this.token = await this.withTimeout(
                 SecureStore.getItemAsync(TOKEN_KEY),
-                5000, // 5 second timeout
+                5000,
                 null
             );
             return this.token;
@@ -133,12 +138,12 @@ class DriverApiService {
     }
 
     async setToken(token: string): Promise<void> {
-        this.token = token; // Set in-memory immediately
+        this.token = token;
 
         try {
             await this.withTimeout(
                 SecureStore.setItemAsync(TOKEN_KEY, token),
-                5000, // 5 second timeout
+                5000,
                 undefined
             );
         } catch (error) {
@@ -146,13 +151,101 @@ class DriverApiService {
         }
     }
 
+    async getRefreshToken(): Promise<string | null> {
+        if (this.refreshTokenValue) return this.refreshTokenValue;
+        try {
+            this.refreshTokenValue = await this.withTimeout(
+                SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
+                5000,
+                null
+            );
+            return this.refreshTokenValue;
+        } catch {
+            return null;
+        }
+    }
+
+    async setRefreshToken(token: string): Promise<void> {
+        this.refreshTokenValue = token;
+        try {
+            await this.withTimeout(
+                SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token),
+                5000,
+                undefined
+            );
+        } catch (error) {
+            console.warn('[API] Failed to persist refresh token:', error);
+        }
+    }
+
     async clearToken(): Promise<void> {
         this.token = null;
+        this.refreshTokenValue = null;
         try {
             await this.withTimeout(SecureStore.deleteItemAsync(TOKEN_KEY), 5000, undefined);
+            await this.withTimeout(SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY), 5000, undefined);
             await this.withTimeout(SecureStore.deleteItemAsync(USER_KEY), 5000, undefined);
         } catch (error) {
             console.warn('[API] Error clearing tokens:', error);
+        }
+    }
+
+    async serverLogout(): Promise<void> {
+        try {
+            const rt = await this.getRefreshToken();
+            if (rt) {
+                await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOGOUT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: rt }),
+                });
+            }
+        } catch {
+            // Best-effort
+        }
+    }
+
+    private async attemptTokenRefresh(): Promise<string> {
+        const rt = await this.getRefreshToken();
+        if (!rt) throw new Error('No refresh token available');
+
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REFRESH}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: rt }),
+        });
+
+        if (!response.ok) {
+            await this.clearToken();
+            throw new Error('Session expired. Please log in again.');
+        }
+
+        const data = await response.json();
+        await this.setToken(data.token);
+        if (data.refreshToken) {
+            await this.setRefreshToken(data.refreshToken);
+        }
+        return data.token;
+    }
+
+    private async handleTokenRefresh(): Promise<string> {
+        if (this.isRefreshing) {
+            return new Promise<string>((resolve, reject) => {
+                this.refreshQueue.push({ resolve, reject });
+            });
+        }
+
+        this.isRefreshing = true;
+        try {
+            const newToken = await this.attemptTokenRefresh();
+            this.refreshQueue.forEach(({ resolve }) => resolve(newToken));
+            return newToken;
+        } catch (error: any) {
+            this.refreshQueue.forEach(({ reject }) => reject(error));
+            throw error;
+        } finally {
+            this.refreshQueue = [];
+            this.isRefreshing = false;
         }
     }
 
@@ -183,11 +276,12 @@ class DriverApiService {
         }
     }
 
-    public async request<T>(
+    private async rawRequest<T>(
         endpoint: string,
-        options: RequestInit = {}
-    ): Promise<T> {
-        const token = await this.getToken();
+        options: RequestInit = {},
+        tokenOverride?: string | null
+    ): Promise<{ data: T; status: number }> {
+        const token = tokenOverride !== undefined ? tokenOverride : await this.getToken();
 
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
@@ -197,9 +291,8 @@ class DriverApiService {
 
         const url = `${API_BASE_URL}${endpoint}`;
 
-        // Add timeout to prevent infinite hangs on stalled connections
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         let response: Response;
         try {
@@ -219,7 +312,6 @@ class DriverApiService {
             throw new Error('Network error - please check your connection');
         }
 
-        // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -235,8 +327,31 @@ class DriverApiService {
             throw new Error('Invalid response from server');
         }
 
-        if (!response.ok) {
-            throw new Error(data.error || data.message || 'Request failed');
+        return { data, status: response.status };
+    }
+
+    public async request<T>(
+        endpoint: string,
+        options: RequestInit = {}
+    ): Promise<T> {
+        const { data, status } = await this.rawRequest<T>(endpoint, options);
+
+        // If 401, attempt token refresh and retry (skip for auth endpoints)
+        if (status === 401 && !endpoint.startsWith('/auth/')) {
+            try {
+                const newToken = await this.handleTokenRefresh();
+                const retry = await this.rawRequest<T>(endpoint, options, newToken);
+                if (retry.status >= 400) {
+                    throw new Error(retry.data && typeof (retry.data as any).error === 'string' ? (retry.data as any).error : 'Request failed');
+                }
+                return retry.data;
+            } catch (refreshError: any) {
+                throw refreshError;
+            }
+        }
+
+        if (status >= 400) {
+            throw new Error((data as any)?.error || (data as any)?.message || 'Request failed');
         }
 
         return data;
@@ -258,6 +373,9 @@ class DriverApiService {
 
         if (data.token) {
             await this.setToken(data.token);
+            if (data.refreshToken) {
+                await this.setRefreshToken(data.refreshToken);
+            }
         } else {
             console.warn('[API] No token in response!');
         }
