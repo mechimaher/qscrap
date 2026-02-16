@@ -644,3 +644,28 @@ CREATE INDEX IF NOT EXISTS idx_orders_undo_deadline
     ON orders(undo_deadline)
     WHERE undo_deadline IS NOT NULL;
 
+
+-- ============================================
+-- 14. Seed Data
+-- ============================================
+
+-- Subscription Plans
+INSERT INTO subscription_plans (
+    plan_code, plan_name, monthly_fee, commission_rate, max_bids_per_month,
+    features, is_active, display_order,
+    monthly_price_qar, annual_price_qar, max_monthly_orders,
+    analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active
+) VALUES
+('starter', 'Starter', 0, 0.180, 50,
+ '{"bid_limit_per_day": 20, "showcase_products": 5, "featured_listing": false}'::jsonb, true, 1,
+ 0, 0, 50, false, false, false, false, 1,
+ '{"bid_limit_per_day": 20, "showcase_products": 5, "featured_listing": false}'::jsonb, true),
+('professional', 'Professional', 299, 0.150, 200,
+ '{"bid_limit_per_day": 100, "showcase_products": 50, "featured_listing": true, "analytics_retention_days": 90}'::jsonb, true, 2,
+ 299, 2990, 200, true, false, false, true, 3,
+ '{"bid_limit_per_day": 100, "showcase_products": 50, "featured_listing": true, "analytics_retention_days": 90}'::jsonb, true),
+('enterprise', 'Enterprise', 799, 0.120, NULL,
+ '{"bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "custom_branding": true, "dedicated_support": true}'::jsonb, true, 3,
+ 799, 7990, -1, true, true, true, true, 10,
+ '{"bid_limit_per_day": -1, "showcase_products": -1, "featured_listing": true, "analytics_retention_days": 365, "custom_branding": true, "dedicated_support": true}'::jsonb, true)
+ON CONFLICT (plan_code) DO NOTHING;
