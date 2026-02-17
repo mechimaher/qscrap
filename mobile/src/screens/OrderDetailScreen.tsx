@@ -216,28 +216,36 @@ export default function OrderDetailScreen() {
         setIsDownloadingInvoice(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         try {
+            // Step 1: Generate or retrieve the invoice document
+            let documentId = null;
+            try {
+                const invoiceResponse = await api.request(`/documents/invoice/${order.order_id}`, {
+                    method: 'POST',
+                });
+                documentId = invoiceResponse.document?.document_id || invoiceResponse.document_id;
+            } catch (err: any) {
+                // If invoice already exists, fetch existing documents
+                if (err.message?.includes('already exists') || err.message?.includes('409')) {
+                    const docsResponse = await api.request(`/documents/order/${order.order_id}`);
+                    documentId = docsResponse.documents?.find((d: any) => d.document_type === 'invoice')?.document_id;
+                } else {
+                    throw err;
+                }
+            }
+
+            if (!documentId) {
+                throw new Error('Could not generate or find invoice');
+            }
+
+            // Step 2: Get fresh token and download via authenticated URL
             const token = await api.getToken();
             if (!token) {
                 Alert.alert(t('auth.sessionExpired'), t('auth.loginAgainInvoice'));
                 return;
             }
-            const generateResponse = await fetch(`${SOCKET_URL}/api/documents/invoice/${order.order_id}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            });
-            let documentId = null;
-            if (generateResponse.ok) {
-                const invoiceData = await generateResponse.json();
-                documentId = invoiceData.document?.document_id || invoiceData.document_id;
-            } else {
-                const docsResponse = await fetch(`${SOCKET_URL}/api/documents/order/${order.order_id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                });
-                const docsData = await docsResponse.json();
-                documentId = docsData.documents?.find((d: any) => d.document_type === 'invoice')?.document_id;
-            }
-            if (!documentId) throw new Error('Could not generate invoice');
-            await Linking.openURL(`${SOCKET_URL}/api/documents/public/${documentId}/download?token=${token}`);
+
+            // Use authenticated download endpoint
+            await Linking.openURL(`${SOCKET_URL}/api/documents/${documentId}/download?token=${token}`);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error: any) {
             handleApiError(error, toast, { useAlert: true });
