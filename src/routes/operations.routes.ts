@@ -25,6 +25,11 @@ import {
     activateUser,
     getGarages
 } from '../controllers/operations.controller';
+import {
+    getReturns,
+    approveReturn,
+    rejectReturn
+} from '../controllers/operations-returns.controller';
 
 const router = Router();
 
@@ -55,60 +60,13 @@ router.get('/escalations', getEscalations);
 router.post('/escalations/:escalation_id/resolve', resolveEscalation);
 
 // Return Assignments
-router.get('/returns', async (req, res) => {
-    try {
-        const { getReturnService } = await import('../services/cancellation/return.service');
-        const { default: pool } = await import('../config/db');
-        const returnService = getReturnService(pool);
-        const returns = await returnService.getPendingReturns();
-        res.json({ returns });
-    } catch (error) {
-        logger.error('Get returns error', { error });
-        res.json({ returns: [] });
-    }
-});
+router.get('/returns', getReturns);
 
 // Approve return request (BRAIN v3.0)
-router.post('/returns/:return_id/approve', async (req, res) => {
-    try {
-        const { return_id } = req.params;
-        const { notes } = req.body;
-        const operatorId = (req as any).user?.userId;
-
-        const { getReturnService } = await import('../services/cancellation/return.service');
-        const { default: pool } = await import('../config/db');
-        const returnService = getReturnService(pool);
-        const result = await returnService.approveReturn(return_id, operatorId, notes);
-
-        res.json(result);
-    } catch (error: any) {
-        logger.error('Approve return error', { error });
-        res.status(400).json({ success: false, message: error.message || 'Failed to approve return' });
-    }
-});
+router.post('/returns/:return_id/approve', approveReturn);
 
 // Reject return request
-router.post('/returns/:return_id/reject', async (req, res) => {
-    try {
-        const { return_id } = req.params;
-        const { reason } = req.body;
-        const operatorId = (req as any).user?.userId;
-
-        if (!reason) {
-            return res.status(400).json({ success: false, message: 'Rejection reason is required' });
-        }
-
-        const { getReturnService } = await import('../services/cancellation/return.service');
-        const { default: pool } = await import('../config/db');
-        const returnService = getReturnService(pool);
-        const result = await returnService.rejectReturn(return_id, operatorId, reason);
-
-        res.json(result);
-    } catch (error: any) {
-        logger.error('Reject return error', { error });
-        res.status(400).json({ success: false, message: error.message || 'Failed to reject return' });
-    }
-});
+router.post('/returns/:return_id/reject', rejectReturn);
 router.get('/returns/stats', getReturnStats);
 
 // Users
