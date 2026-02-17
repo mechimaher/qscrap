@@ -9,10 +9,11 @@
 
 import { Router, RequestHandler } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import { pushService } from '../services/push.service';
-import { AuthRequest } from '../middleware/auth.middleware';
-import { Response } from 'express';
-import logger from '../utils/logger';
+import {
+    registerPushToken,
+    unregisterPushToken,
+    sendTestPushNotification
+} from '../controllers/push.controller';
 
 const router = Router();
 
@@ -20,100 +21,27 @@ const router = Router();
 router.use(authenticate as RequestHandler);
 
 /**
- * POST /notifications/register
- * Register a push token for the authenticated user
+ * @route   POST /notifications/register
+ * @desc    Register a push token for the authenticated user
+ * @access  Private
  */
-router.post('/register', async (req: AuthRequest, res: Response) => {
-    logger.info('Push token registration attempt received');
-    try {
-        const { token, platform, device_id } = req.body;
-        const userId = req.user!.userId;
-        const userType = req.user!.userType;
-
-        logger.info('Push token registration details', {
-            userId: userId?.substring(0, 8),
-            userType,
-            platform,
-            hasToken: !!token,
-            tokenPrefix: token?.substring(0, 20),
-            device_id
-        });
-
-        if (!token) {
-            logger.error('Missing token in request');
-            return res.status(400).json({ error: 'Push token is required' });
-        }
-
-        if (!platform || !['ios', 'android'].includes(platform)) {
-            logger.error('Invalid platform', { platform });
-            return res.status(400).json({ error: 'Platform must be ios or android' });
-        }
-
-        // Determine app type based on user type
-        const appType = userType === 'driver' ? 'driver' : 'customer';
-        logger.info('Determined app_type', { appType, userType });
-
-        await pushService.registerToken(userId, token, platform, appType, device_id);
-
-        logger.info('Token registered successfully', { userType, appType });
-        res.json({
-            success: true,
-            message: 'Push token registered successfully'
-        });
-    } catch (err) {
-        logger.error('Registration failed', { error: (err as Error).message });
-        res.status(500).json({ error: 'Failed to register push token' });
-    }
-});
+router.post('/register', registerPushToken);
 
 /**
- * DELETE /notifications/unregister
- * Unregister push token(s) for the authenticated user
+ * @route   DELETE /notifications/unregister
+ * @desc    Unregister push token(s) for the authenticated user
+ * @access  Private
  */
-router.delete('/unregister', async (req: AuthRequest, res: Response) => {
-    try {
-        const { token } = req.body;
-        const userId = req.user!.userId;
-
-        await pushService.unregisterToken(userId, token);
-
-        res.json({
-            success: true,
-            message: 'Push token unregistered successfully'
-        });
-    } catch (err) {
-        logger.error('Push unregister error', { error: (err as Error).message });
-        res.status(500).json({ error: 'Failed to unregister push token' });
-    }
-});
+router.delete('/unregister', unregisterPushToken);
 
 /**
- * POST /notifications/test
- * Send a test push notification to the authenticated user (dev only)
+ * @route   POST /notifications/test
+ * @desc    Send a test push notification (dev only)
+ * @access  Private (dev only)
  */
 if (process.env.NODE_ENV !== 'production') {
-    router.post('/test', async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user!.userId;
-            const { title, body } = req.body;
-
-            const results = await pushService.sendToUser(
-                userId,
-                title || '🔔 Test Notification',
-                body || 'This is a test push notification from QScrap',
-                { type: 'test', timestamp: new Date().toISOString() }
-            );
-
-            res.json({
-                success: true,
-                results,
-                message: `Sent to ${results.length} device(s)`
-            });
-        } catch (err) {
-            logger.error('Push test error', { error: (err as Error).message });
-            res.status(500).json({ error: 'Failed to send test notification' });
-        }
-    });
+    router.post('/test', sendTestPushNotification);
 }
 
 export default router;
+
