@@ -65,8 +65,8 @@ export class PayoutQueryService {
                 COALESCE(SUM(net_amount) FILTER (
                     WHERE payout_status IN ('completed', 'confirmed') 
                     AND (payout_type IS NULL OR payout_type != 'reversal')
-                    AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
-                    AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+                    AND EXTRACT(MONTH FROM COALESCE(processed_at, confirmed_at, created_at)) = EXTRACT(MONTH FROM CURRENT_DATE)
+                    AND EXTRACT(YEAR FROM COALESCE(processed_at, confirmed_at, created_at)) = EXTRACT(YEAR FROM CURRENT_DATE)
                 ), 0) as this_month_completed,
                 -- Count payouts still in warranty window (not yet eligible)
                 COUNT(*) FILTER (
@@ -195,14 +195,14 @@ export class PayoutQueryService {
             params.push(filters.userId);
         }
 
-        // Date range filters - use confirmed_at for confirmed/completed, otherwise created_at
+        // Date range filters - use processed_at (best), confirmed_at, or created_at
         if (filters.from_date) {
-            whereClause += ` AND COALESCE(gp.confirmed_at, gp.created_at)::date >= $${paramIndex++}::date`;
+            whereClause += ` AND COALESCE(gp.processed_at, gp.confirmed_at, gp.created_at)::date >= $${paramIndex++}::date`;
             params.push(filters.from_date);
         }
 
         if (filters.to_date) {
-            whereClause += ` AND COALESCE(gp.confirmed_at, gp.created_at)::date <= $${paramIndex++}::date`;
+            whereClause += ` AND COALESCE(gp.processed_at, gp.confirmed_at, gp.created_at)::date <= $${paramIndex++}::date`;
             params.push(filters.to_date);
         }
 
