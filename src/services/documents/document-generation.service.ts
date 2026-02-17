@@ -3,9 +3,9 @@
  * Handles invoice generation, PDF creation, QR codes, and digital signatures
  */
 import { Pool } from 'pg';
-import crypto from 'crypto';
-import path from 'path';
-import fs from 'fs';
+import * as crypto from 'crypto';
+import * as path from 'path';
+import * as fs from 'fs';
 import { DocumentData, GenerateInvoiceParams, DocumentRecord } from './types';
 import { DocumentGenerationError, PDFGenerationError } from './errors';
 import logger from '../../utils/logger';

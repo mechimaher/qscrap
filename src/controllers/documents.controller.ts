@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/security';
 import { getWritePool, getReadPool } from '../config/db';
 import { getErrorMessage } from '../types';
