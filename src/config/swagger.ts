@@ -11,6 +11,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
 import logger from '../utils/logger';
+import generatedPaths from './generated-openapi-paths.json';
 
 // ============================================
 // OPENAPI SPECIFICATION
@@ -65,15 +66,39 @@ Authorization: Bearer <your_jwt_token>
         }
     ],
     tags: [
-        { name: 'Auth', description: 'Authentication endpoints' },
+        { name: 'Auth', description: 'Authentication and authorization' },
         { name: 'Requests', description: 'Part request management' },
         { name: 'Bids', description: 'Garage bidding on requests' },
-        { name: 'Orders', description: 'Order management' },
+        { name: 'Orders', description: 'Order management and tracking' },
         { name: 'Delivery', description: 'Delivery and driver management' },
-        { name: 'Quality', description: 'Quality control inspections' },
-        { name: 'Finance', description: 'Payments and payouts' },
+        { name: 'Finance', description: 'Payments, payouts, and billing' },
         { name: 'Support', description: 'Customer support tickets' },
-        { name: 'Admin', description: 'Platform administration' }
+        { name: 'Admin', description: 'Platform administration' },
+        { name: 'Operations', description: 'Operations dashboard and monitoring' },
+        { name: 'Dashboard', description: 'User dashboards (garage/customer)' },
+        { name: 'Notifications', description: 'Notification management' },
+        { name: 'Push Notifications', description: 'Push notification registration' },
+        { name: 'Health', description: 'Health checks and system status' },
+        { name: 'Configuration', description: 'Public configuration' },
+        { name: 'Fraud Prevention', description: 'Fraud detection and prevention' },
+        { name: 'Cancellations', description: 'Order cancellations and returns' },
+        { name: 'Disputes', description: 'Dispute resolution' },
+        { name: 'Drivers', description: 'Driver management' },
+        { name: 'Garages', description: 'Garage management and profiles' },
+        { name: 'Customers', description: 'Customer management' },
+        { name: 'Addresses', description: 'Address management' },
+        { name: 'Vehicles', description: 'Vehicle information' },
+        { name: 'Reviews', description: 'Order reviews and ratings' },
+        { name: 'Chat', description: 'Delivery chat' },
+        { name: 'Analytics', description: 'Analytics and reporting' },
+        { name: 'Subscriptions', description: 'Garage subscription plans' },
+        { name: 'Documents', description: 'Invoice and document generation' },
+        { name: 'Negotiations', description: 'Price negotiations' },
+        { name: 'Showcase', description: 'Garage showcase' },
+        { name: 'Search', description: 'Search functionality' },
+        { name: 'Advertisements', description: 'Ad campaigns' },
+        { name: 'History', description: 'Historical data' },
+        { name: 'Loyalty', description: 'Loyalty program' }
     ],
     components: {
         securitySchemes: {
@@ -449,6 +474,17 @@ const options = {
 };
 
 const swaggerSpec = swaggerJsdoc(options);
+
+// Merge generated paths with manual paths
+const generatedPathsData = generatedPaths as any;
+if (generatedPathsData && generatedPathsData.paths) {
+    swaggerSpec.paths = {
+        ...generatedPathsData.paths,
+        ...swaggerSpec.paths // Manual paths override generated ones
+    };
+
+    logger.info(`OpenAPI spec loaded: ${Object.keys(swaggerSpec.paths).length} paths, ${generatedPathsData.metadata?.totalOperations || 0} operations`);
+}
 
 // ============================================
 // SETUP FUNCTION
