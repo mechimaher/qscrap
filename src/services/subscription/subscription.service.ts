@@ -28,7 +28,7 @@ export class SubscriptionService {
         }
 
         const garageResult = await this.pool.query(`SELECT approval_status, demo_expires_at FROM garages WHERE garage_id = $1`, [garageId]);
-        if (garageResult.rows.length === 0) {return null;}
+        if (garageResult.rows.length === 0) { return null; }
         const garage = garageResult.rows[0];
 
         if (garage.approval_status === 'demo') {
@@ -48,10 +48,10 @@ export class SubscriptionService {
         try {
             await client.query('BEGIN');
             const existingSub = await client.query(`SELECT subscription_id FROM garage_subscriptions WHERE garage_id = $1 AND status IN ('active', 'trial')`, [garageId]);
-            if (existingSub.rows.length > 0) {throw new Error('Already have an active subscription. Please cancel or upgrade instead.');}
+            if (existingSub.rows.length > 0) { throw new Error('Already have an active subscription. Please cancel or upgrade instead.'); }
 
             const planResult = await client.query(`SELECT * FROM subscription_plans WHERE plan_code = $1 AND is_active = true`, [planCode]);
-            if (planResult.rows.length === 0) {throw new Error('Invalid subscription plan');}
+            if (planResult.rows.length === 0) { throw new Error('Invalid subscription plan'); }
             const plan = planResult.rows[0];
 
             const today = new Date();
@@ -76,7 +76,7 @@ export class SubscriptionService {
         try {
             await client.query('BEGIN');
             const currentSub = await client.query(`SELECT plan_id, monthly_fee FROM garage_subscriptions JOIN subscription_plans USING (plan_id) WHERE garage_id = $1 AND status IN ('active', 'trial')`, [garageId]);
-            if (currentSub.rows.length === 0) {throw new Error('No active subscription found.');}
+            if (currentSub.rows.length === 0) { throw new Error('No active subscription found.'); }
             const currentPlanId = currentSub.rows[0].plan_id;
             const currentFee = parseFloat(currentSub.rows[0].monthly_fee);
 
@@ -90,7 +90,7 @@ export class SubscriptionService {
             }
 
             const newPlan = await client.query(`SELECT plan_id, monthly_fee, plan_name FROM subscription_plans WHERE plan_id = $1`, [planId]);
-            if (newPlan.rows.length === 0) {throw new Error('Invalid plan.');}
+            if (newPlan.rows.length === 0) { throw new Error('Invalid plan.'); }
             const newFee = parseFloat(newPlan.rows[0].monthly_fee);
             const type = newFee < currentFee ? 'downgrade' : 'upgrade';
 
@@ -128,7 +128,7 @@ export class SubscriptionService {
         try {
             await client.query('BEGIN');
             const result = await client.query(`UPDATE garage_subscriptions SET status = 'cancelled', cancelled_at = NOW(), cancellation_reason = $2, auto_renew = false, updated_at = NOW() WHERE garage_id = $1 AND status IN ('active', 'trial') RETURNING subscription_id, billing_cycle_end`, [garageId, reason]);
-            if (result.rows.length === 0) {throw new Error('No active subscription to cancel');}
+            if (result.rows.length === 0) { throw new Error('No active subscription to cancel'); }
             await client.query('COMMIT');
             return result.rows[0];
         } catch (err) {
@@ -175,7 +175,7 @@ export class SubscriptionService {
 
             // Import Stripe (using existing test credentials)
             const Stripe = require('stripe');
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
             // Create PaymentIntent
             const paymentIntent = await stripe.paymentIntents.create({
@@ -244,7 +244,7 @@ export class SubscriptionService {
 
             // Verify payment with Stripe
             const Stripe = require('stripe');
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
             const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
             if (paymentIntent.status !== 'succeeded') {
@@ -356,7 +356,7 @@ export class SubscriptionService {
             if (request.payment_intent_id && request.payment_status === 'pending') {
                 try {
                     const Stripe = require('stripe');
-                    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+                    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
                     await stripe.paymentIntents.cancel(request.payment_intent_id);
                 } catch (stripeErr) {
                     logger.warn('Could not cancel PaymentIntent (may already be cancelled)', { error: stripeErr });

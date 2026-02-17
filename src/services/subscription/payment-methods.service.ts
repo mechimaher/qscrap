@@ -7,7 +7,7 @@ import { Pool } from 'pg';
 import Stripe from 'stripe';
 import logger from '../../utils/logger';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export class PaymentMethodsService {
     constructor(private pool: Pool) { }
