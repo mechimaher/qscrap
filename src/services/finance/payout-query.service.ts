@@ -41,24 +41,24 @@ export class PayoutQueryService {
                  LEFT JOIN orders o2 ON gp2.order_id = o2.order_id
                  WHERE gp2.payout_status = 'pending' 
                  AND (gp2.payout_type IS NULL OR gp2.payout_type != 'reversal')
-                 AND COALESCE(o2.delivered_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
-                 ${whereClause ? `AND ${  whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id')}` : ''}
+                 AND COALESCE(o2.actual_delivery_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
+                 ${whereClause ? `AND ${whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id')}` : ''}
                 ) as eligible_pending_payouts,
                 -- In-warranty total: payouts still within 7-day window
                 (SELECT COALESCE(SUM(gp3.net_amount), 0) FROM garage_payouts gp3
                  LEFT JOIN orders o3 ON gp3.order_id = o3.order_id
                  WHERE gp3.payout_status = 'pending' 
                  AND (gp3.payout_type IS NULL OR gp3.payout_type != 'reversal')
-                 AND COALESCE(o3.delivered_at, o3.completed_at, gp3.created_at) > NOW() - INTERVAL '7 days'
-                 ${whereClause ? `AND ${  whereClause.replace('WHERE ', '').replace('garage_id', 'gp3.garage_id')}` : ''}
+                 AND COALESCE(o3.actual_delivery_at, o3.completed_at, gp3.created_at) > NOW() - INTERVAL '7 days'
+                 ${whereClause ? `AND ${whereClause.replace('WHERE ', '').replace('garage_id', 'gp3.garage_id')}` : ''}
                 ) as in_warranty_total,
                 -- CRITICAL: Only count payouts past 7-day warranty window (eligible for processing)
                 (SELECT COUNT(*) FROM garage_payouts gp2
                  LEFT JOIN orders o2 ON gp2.order_id = o2.order_id
                  WHERE gp2.payout_status = 'pending' 
                  AND (gp2.payout_type IS NULL OR gp2.payout_type != 'reversal')
-                 AND COALESCE(o2.delivered_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
-                 ${whereClause ? `AND ${  whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id')}` : ''}
+                 AND COALESCE(o2.actual_delivery_at, o2.completed_at, gp2.created_at) <= NOW() - INTERVAL '7 days'
+                 ${whereClause ? `AND ${whereClause.replace('WHERE ', '').replace('garage_id', 'gp2.garage_id')}` : ''}
                 ) as pending_count,
                 COUNT(*) FILTER (WHERE payout_status = 'awaiting_confirmation') as awaiting_count,
                 COUNT(*) FILTER (WHERE payout_status = 'disputed') as disputed_count,
@@ -104,15 +104,15 @@ export class PayoutQueryService {
         // CRITICAL: Only show payouts for orders delivered 7+ days ago (warranty window)
         // This is a Qatar B2B business rule - no early payouts
         const pendingResult = await this.pool.query(`
-            SELECT gp.*, g.garage_name, o.order_number, o.delivered_at,
-                   EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)) as days_since_delivery,
-                   GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)))::int as days_until_eligible
+            SELECT gp.*, g.garage_name, o.order_number, o.actual_delivery_at,
+                   EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)) as days_since_delivery,
+                   GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)))::int as days_until_eligible
             FROM garage_payouts gp
             JOIN garages g ON gp.garage_id = g.garage_id
             LEFT JOIN orders o ON gp.order_id = o.order_id
             WHERE gp.payout_status = 'pending' 
             AND (gp.payout_type IS NULL OR gp.payout_type != 'reversal')
-            AND COALESCE(o.delivered_at, o.completed_at, gp.created_at) <= NOW() - INTERVAL '7 days'
+            AND COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at) <= NOW() - INTERVAL '7 days'
             ${userType === 'garage' ? 'AND gp.garage_id = $1' : ''}
             ORDER BY gp.created_at ASC
             LIMIT 20
@@ -131,7 +131,7 @@ export class PayoutQueryService {
     async getInWarrantyPayouts(userType: string, userId?: string): Promise<Payout[]> {
         let whereClause = `WHERE gp.payout_status = 'pending' 
             AND (gp.payout_type IS NULL OR gp.payout_type != 'reversal')
-            AND COALESCE(o.delivered_at, o.completed_at, gp.created_at) > NOW() - INTERVAL '7 days'`;
+            AND COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at) > NOW() - INTERVAL '7 days'`;
         const params: unknown[] = [];
 
         if (userType === 'garage') {
@@ -140,14 +140,14 @@ export class PayoutQueryService {
         }
 
         const result = await this.pool.query(`
-            SELECT gp.*, g.garage_name, o.order_number, o.delivered_at,
-                   EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)) as days_since_delivery,
-                   GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at, gp.created_at)))::int as days_until_eligible
+            SELECT gp.*, g.garage_name, o.order_number, o.actual_delivery_at,
+                   EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)) as days_since_delivery,
+                   GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)))::int as days_until_eligible
             FROM garage_payouts gp
             JOIN garages g ON gp.garage_id = g.garage_id
             LEFT JOIN orders o ON gp.order_id = o.order_id
             ${whereClause}
-            ORDER BY o.delivered_at ASC
+            ORDER BY o.actual_delivery_at ASC
             LIMIT 50
         `, params);
 

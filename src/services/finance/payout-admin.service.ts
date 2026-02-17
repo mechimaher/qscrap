@@ -411,7 +411,7 @@ export class PayoutAdminService {
                         THEN r.part_subcategory
                     ELSE 'Car Part'
                 END as part_name,
-                o.delivered_at,
+                o.actual_delivery_at,
                 gp.confirmed_at,
                 gp.payout_status,
                 gp.gross_amount,
@@ -424,16 +424,16 @@ export class PayoutAdminService {
             LEFT JOIN part_requests r ON o.request_id = r.request_id
             WHERE gp.garage_id = $1
             AND gp.payout_status NOT IN ('cancelled', 'failed')
-            AND o.delivered_at::date >= $2::date
-            AND o.delivered_at::date <= $3::date
-            ORDER BY o.delivered_at ASC
+            AND o.actual_delivery_at::date >= $2::date
+            AND o.actual_delivery_at::date <= $3::date
+            ORDER BY o.actual_delivery_at ASC
         `, [garage_id, from_date, to_date]);
 
         const orders = ordersResult.rows.map(row => ({
             order_id: row.order_id,
             order_number: row.order_number || 'N/A',
             part_name: row.part_name || 'Auto Part',
-            delivered_at: row.delivered_at,
+            delivered_at: row.actual_delivery_at,
             confirmed_at: row.confirmed_at,
             gross_amount: parseFloat(row.gross_amount) || 0,
             platform_fee: parseFloat(row.platform_fee) || 0,
