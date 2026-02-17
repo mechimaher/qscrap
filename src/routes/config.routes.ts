@@ -1,5 +1,6 @@
 import express from 'express';
 import { requestContext } from '../middleware/requestContext.middleware';
+import { getPublicConfig } from '../controllers/config.controller';
 
 const router = express.Router();
 
@@ -8,19 +9,6 @@ const router = express.Router();
  * @desc    Get public configuration (safe keys only)
  * @access  Public
  */
-router.get('/public', requestContext, (req, res) => {
-    res.json({
-        success: true,
-        config: {
-            // Safe to expose (restricted by HTTP Referrer in Google Cloud Console)
-            googleMapsKey: process.env.GOOGLE_MAPS_KEY || '',
-            // Safe to expose (DSN is public)
-            sentryDsn: process.env.SENTRY_DSN || '',
-            // Environment context
-            environment: process.env.NODE_ENV || 'development'
-        },
-        timestamp: new Date().toISOString()
-    });
-});
+router.get('/public', requestContext, getPublicConfig);
 
 export default router;
