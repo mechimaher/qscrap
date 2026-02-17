@@ -1,0 +1,315 @@
+{
+  "timestamp": "2026-02-17T06:39:22.289Z",
+  "summary": {
+    "productionTables": 73,
+    "validReferencedTables": 60,
+    "phantomTables": 32,
+    "unusedTables": 13,
+    "coverageScore": 82
+  },
+  "phantomTables": [
+    {
+      "table": "points",
+      "references": 2,
+      "files": [
+        "src/services/__tests__/loyalty.service.test.ts",
+        "src/services/loyalty.service.ts"
+      ]
+    },
+    {
+      "table": "previous",
+      "references": 1,
+      "files": [
+        "src/services/__tests__/order.service.test.ts"
+      ]
+    },
+    {
+      "table": "ad_campaign_analytics",
+      "references": 1,
+      "files": [
+        "src/services/ad.service.ts"
+      ]
+    },
+    {
+      "table": "get_active_ads_for_placement",
+      "references": 1,
+      "files": [
+        "src/services/ad.service.ts"
+      ]
+    },
+    {
+      "table": "across",
+      "references": 1,
+      "files": [
+        "src/services/admin/analytics.service.ts"
+      ]
+    },
+    {
+      "table": "garage_popular_parts",
+      "references": 2,
+      "files": [
+        "src/services/analytics.service.ts"
+      ]
+    },
+    {
+      "table": "garage_daily_analytics",
+      "references": 1,
+      "files": [
+        "src/services/analytics.service.ts"
+      ]
+    },
+    {
+      "table": "garage_bid_analytics",
+      "references": 1,
+      "files": [
+        "src/services/analytics.service.ts"
+      ]
+    },
+    {
+      "table": "assignments",
+      "references": 1,
+      "files": [
+        "src/services/driver.service.ts"
+      ]
+    },
+    {
+      "table": "driver_assignments",
+      "references": 2,
+      "files": [
+        "src/services/driver.service.ts"
+      ]
+    },
+    {
+      "table": "escrow_transactions",
+      "references": 8,
+      "files": [
+        "src/services/escrow.service.ts"
+      ]
+    },
+    {
+      "table": "proof_of_condition",
+      "references": 2,
+      "files": [
+        "src/services/escrow.service.ts"
+      ]
+    },
+    {
+      "table": "get_customer_rewards_summary",
+      "references": 1,
+      "files": [
+        "src/services/loyalty.service.ts"
+      ]
+    },
+    {
+      "table": "add_customer_points",
+      "references": 1,
+      "files": [
+        "src/services/loyalty.service.ts"
+      ]
+    },
+    {
+      "table": "redeem_points_for_discount",
+      "references": 1,
+      "files": [
+        "src/services/loyalty.service.ts"
+      ]
+    },
+    {
+      "table": "bid_amount",
+      "references": 1,
+      "files": [
+        "src/services/negotiation/negotiation.service.ts"
+      ]
+    },
+    {
+      "table": "ready_for_pickup",
+      "references": 1,
+      "files": [
+        "src/services/operations/order-management.service.ts"
+      ]
+    },
+    {
+      "table": "operations",
+      "references": 2,
+      "files": [
+        "src/services/operations.service.ts",
+        "src/services/order.service.ts"
+      ]
+    },
+    {
+      "table": "statuses",
+      "references": 1,
+      "files": [
+        "src/services/order.service.ts"
+      ]
+    },
+    {
+      "table": "payment_transactions",
+      "references": 6,
+      "files": [
+        "src/services/payments/payment.service.ts"
+      ]
+    },
+    {
+      "table": "idempotency_keys",
+      "references": 2,
+      "files": [
+        "src/services/payments/payment.service.ts"
+      ]
+    },
+    {
+      "table": "payment_audit_logs",
+      "references": 1,
+      "files": [
+        "src/services/payments/payment.service.ts"
+      ]
+    },
+    {
+      "table": "part_price_benchmarks",
+      "references": 1,
+      "files": [
+        "src/services/pricing.service.ts"
+      ]
+    },
+    {
+      "table": "last_orders",
+      "references": 1,
+      "files": [
+        "src/services/reorder-reminder.service.ts"
+      ]
+    },
+    {
+      "table": "latestcounters",
+      "references": 3,
+      "files": [
+        "src/services/request/request-query.service.ts"
+      ]
+    },
+    {
+      "table": "image_urls",
+      "references": 1,
+      "files": [
+        "src/services/showcase/management.service.ts"
+      ]
+    },
+    {
+      "table": "queued_notifications",
+      "references": 3,
+      "files": [
+        "src/services/smart-notification.service.ts"
+      ]
+    },
+    {
+      "table": "admin_actions",
+      "references": 1,
+      "files": [
+        "src/services/subscription/billing.job.ts"
+      ]
+    },
+    {
+      "table": "get_subscription_details",
+      "references": 1,
+      "files": [
+        "src/services/subscription.service.ts"
+      ]
+    },
+    {
+      "table": "change_subscription",
+      "references": 1,
+      "files": [
+        "src/services/subscription.service.ts"
+      ]
+    },
+    {
+      "table": "subscription_revenue_stats",
+      "references": 1,
+      "files": [
+        "src/services/subscription.service.ts"
+      ]
+    },
+    {
+      "table": "address",
+      "references": 2,
+      "files": [
+        "src/controllers/address.controller.ts"
+      ]
+    }
+  ],
+  "unusedTables": [
+    "delivery_vouchers",
+    "document_templates",
+    "driver_payouts",
+    "driver_transactions",
+    "driver_wallets",
+    "drivers",
+    "garages",
+    "migrations",
+    "orders",
+    "part_price_history",
+    "service_definitions",
+    "stripe_webhook_events",
+    "users"
+  ],
+  "validReferences": [
+    "reward_transactions",
+    "garage_payouts",
+    "order_status_history",
+    "bids",
+    "garage_subscriptions",
+    "part_requests",
+    "subscription_plans",
+    "ad_campaigns",
+    "ad_pricing",
+    "user_addresses",
+    "subscription_change_requests",
+    "disputes",
+    "admin_audit_log",
+    "staff_profiles",
+    "delivery_assignments",
+    "password_reset_tokens",
+    "order_reviews",
+    "support_tickets",
+    "refunds",
+    "refresh_tokens",
+    "cancellation_requests",
+    "payment_intents",
+    "garage_penalties",
+    "customer_abuse_tracking",
+    "audit_logs",
+    "return_requests",
+    "delivery_chats",
+    "counter_offers",
+    "customer_rewards",
+    "customer_addresses",
+    "notifications",
+    "delivery_fee_tiers",
+    "hub_locations",
+    "delivery_zones",
+    "delivery_zone_history",
+    "documents",
+    "document_access_log",
+    "driver_locations",
+    "chat_messages",
+    "reward_tiers",
+    "payout_reversals",
+    "support_escalations",
+    "undo_audit_log",
+    "email_otps",
+    "payment_refunds",
+    "stripe_customers",
+    "payment_methods",
+    "push_tokens",
+    "garage_ignored_requests",
+    "garage_parts",
+    "garage_payment_methods",
+    "subscription_invoices",
+    "subscription_payments",
+    "subscription_history",
+    "resolution_logs",
+    "customer_notes",
+    "canned_responses",
+    "customer_credits",
+    "customer_vehicles",
+    "vehicle_history_events"
+  ]
+}

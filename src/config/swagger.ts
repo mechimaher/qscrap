@@ -473,7 +473,7 @@ const options = {
     apis: ['./src/routes/*.ts', './src/controllers/*.ts']
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec = swaggerJsdoc(options) as any;
 
 // Merge generated paths with manual paths
 const generatedPathsData = generatedPaths as any;

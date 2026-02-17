@@ -48,6 +48,9 @@ import addressRoutes from './address.routes';
 // Configuration Routes (Public)
 import configRoutes from './config.routes';
 
+// Health Routes
+import healthRoutes from './health.routes';
+
 const v1Router = Router();
 
 // ==========================================
@@ -56,6 +59,9 @@ const v1Router = Router();
 
 /** @swagger path /config */
 v1Router.use('/config', configRoutes);
+
+/** @swagger path /health */
+v1Router.use('/', healthRoutes);
 
 /** @swagger path /auth */
 v1Router.use('/auth', authRoutes);

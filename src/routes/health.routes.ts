@@ -36,4 +36,9 @@ router.get('/status', getPlatformStatus);
  */
 router.get('/metrics', getMetrics);
 
+// Job Health Check (Premium 2026)
+import { getJobHealth, triggerJob } from '../controllers/health.controller';
+router.get('/health/jobs', getJobHealth);
+router.post('/health/jobs/:jobName/run', triggerJob);
+
 export default router;
