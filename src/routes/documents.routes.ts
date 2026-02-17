@@ -1,6 +1,8 @@
-import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware';
+import { Router, Request, Response, NextFunction } from 'express';
+import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
+import * as jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/security';
 import {
     generateInvoice,
     getDocument,
@@ -19,7 +21,24 @@ const router = Router();
 // Public verification endpoint (QR code scanning)
 router.get('/verify/:code', verifyDocument);
 
-// AUTHENTICATED ROUTES
+// Download document as PDF (token via query param for browser access)
+router.get('/:document_id/download', (req: AuthRequest, res: Response, next: NextFunction) => {
+    // Accept token from query param (needed for Linking.openURL in mobile)
+    // Falls back to standard Authorization header
+    const token = (req.query.token as string) || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    try {
+        const payload = jwt.verify(token, getJwtSecret()) as { userId: string; userType: string };
+        req.user = payload;
+        next();
+    } catch {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+}, downloadDocument);
+
+// AUTHENTICATED ROUTES (header-based token only)
 // ============================================
 
 router.use(authenticate);
@@ -33,8 +52,8 @@ router.get('/order/:order_id', getOrderDocuments);
 // Get specific document
 router.get('/:document_id', getDocument);
 
-// Download document as PDF
-router.get('/:document_id/download', downloadDocument);
+// Note: Download route is registered above (before authenticate middleware)
+// to support query-param tokens from mobile browser downloads
 
 // ============================================
 // DOCUMENT GENERATION
