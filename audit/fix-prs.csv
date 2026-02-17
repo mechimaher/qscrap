@@ -1,0 +1,7 @@
+PR_ID,Title,Owner,Priority,Files_Changed,Est_Hours,Blocking,Status
+PR-001,chore: remove orphaned controllers,Backend Lead,MEDIUM,4,2,No,READY
+PR-002,refactor: extract inline route handlers to controllers,Backend Lead,MEDIUM,6,8,No,READY
+PR-003,docs: generate complete OpenAPI spec with JSDoc,Backend Lead,CRITICAL,38,40,Yes,READY
+PR-004,test: add contract testing framework,QA Lead,CRITICAL,New,60,Yes,BLOCKED_BY_PR-003
+PR-005,audit: verify database schema alignment,DB Lead,HIGH,1,8,No,READY
+PR-006,security: audit idempotency key usage,Security Lead,HIGH,5,4,No,READY
