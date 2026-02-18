@@ -193,4 +193,49 @@ export class SubscriptionService {
             throw new Error('Failed to calculate price difference');
         }
     }
+
+    /**
+     * Cancel subscription
+     */
+    static async cancelSubscription(garageId: string, cancelledBy: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+
+                await client.query(
+                    `UPDATE garage_subscriptions 
+                     SET status = 'cancelled', 
+                         end_date = CURRENT_TIMESTAMP,
+                         updated_at = CURRENT_TIMESTAMP 
+                     WHERE garage_id = $1 AND status = 'active'`,
+                    [garageId]
+                );
+
+                await client.query(
+                    `INSERT INTO subscription_history 
+                     (garage_id, old_plan, new_plan, action, changed_by, notes) 
+                     VALUES ($1, 
+                            (SELECT plan_id FROM garage_subscriptions WHERE garage_id = $1 LIMIT 1),
+                            NULL, 
+                            'cancellation', 
+                            $2, 
+                            'Subscription cancelled by user')`,
+                    [garageId, cancelledBy]
+                );
+
+                await client.query('COMMIT');
+
+                return { success: true, message: 'Subscription cancelled successfully' };
+            } catch (err) {
+                await client.query('ROLLBACK');
+                throw err;
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            logger.error('Error cancelling subscription', { error: (error as Error).message });
+            throw new Error('Failed to cancel subscription');
+        }
+    }
 }

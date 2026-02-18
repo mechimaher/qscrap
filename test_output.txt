@@ -1,0 +1,1404 @@
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /home/user/qscrap.qa/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+FAIL src/controllers/__tests__/auth.controller.test.ts
+  ● Test suite failed to run
+
+    ReferenceError: Cannot access 'mockCreateOTP' before initialization
+
+      42 | jest.mock('../../services/otp.service', () => ({
+      43 |     otpService: {
+    > 44 |         createOTP: mockCreateOTP,
+         |                    ^
+      45 |         verifyOTP: mockVerifyOTP
+      46 |     }
+      47 | }));
+
+      at src/controllers/__tests__/auth.controller.test.ts:44:20
+      at Object.<anonymous> (src/controllers/auth.controller.ts:10:1)
+      at Object.<anonymous> (src/controllers/__tests__/auth.controller.test.ts:7:1)
+
+FAIL tests/contract/core-flows.test.ts
+  ● Test suite failed to run
+
+    Cannot find module '../../app' from 'tests/contract/core-flows.test.ts'
+
+       5 |
+       6 | import request from 'supertest';
+    >  7 | import app from '../../app';
+         | ^
+       8 | import pool from '../../config/db';
+       9 | import { generateTestPhone, cleanupTestData } from '../__tests__/utils/test-utils';
+      10 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (tests/contract/core-flows.test.ts:7:1)
+
+PASS src/middleware/__tests__/auth.middleware.test.ts
+  Auth Middleware
+    authenticate
+      ✓ should authenticate valid token successfully (8 ms)
+      ✓ should reject request with no authorization header (2 ms)
+      ✓ should reject request with invalid header format (2 ms)
+      ✓ should reject request with expired token (2 ms)
+      ✓ should reject request with invalid token (3 ms)
+      ✓ should reject request with malformed JWT (2 ms)
+      ✓ should handle authorization header with wrong scheme (1 ms)
+      ✓ should handle authorization header with extra spaces (1 ms)
+    requireRole
+      ✓ should allow access when user has required role (2 ms)
+      ✓ should deny access when user has different role (2 ms)
+      ✓ should deny access when user is not authenticated (2 ms)
+      ✓ should allow admin access to admin routes (2 ms)
+      ✓ should allow garage access to garage routes (1 ms)
+      ✓ should allow driver access to driver routes (1 ms)
+    authorizeOperations
+      ✓ should allow operations user access (1 ms)
+      ✓ should allow admin user access (1 ms)
+      ✓ should allow staff user access (1 ms)
+      ✓ should deny customer user access (1 ms)
+      ✓ should deny garage user access (2 ms)
+      ✓ should deny unauthenticated access (1 ms)
+
+  console.log
+    [2026-02-18T11:26:24.790Z] [DEBUG] [node-768280] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.049Z] [INFO] [node-768280] No active tokens for user {"userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.058Z] [INFO] [node-768280] Push notification sent {"targetRole":"customer","userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.066Z] [DEBUG] [node-768280] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.070Z] [DEBUG] [node-768280] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.124Z] [INFO] [node-768280] Order status updated {"orderId":"79ff1eea-c162-417d-bd67-7d87690a148f","oldStatus":"pending_payment","newStatus":"preparing","payoutCreated":false,"driverReleased":false}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.135Z] [INFO] [node-768280] No active tokens for user {"userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.138Z] [INFO] [node-768280] No active tokens for user {"userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.139Z] [INFO] [node-768280] Push notification sent {"targetRole":"customer","userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.160Z] [INFO] [node-768280] Order status updated {"orderId":"79ff1eea-c162-417d-bd67-7d87690a148f","oldStatus":"preparing","newStatus":"ready_for_pickup","payoutCreated":false,"driverReleased":false}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.163Z] [INFO] [node-768280] No active tokens for user {"userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.166Z] [INFO] [node-768280] No active tokens for user {"userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.168Z] [INFO] [node-768280] Push notification sent {"targetRole":"customer","userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.184Z] [INFO] [node-768280] Order status updated {"orderId":"79ff1eea-c162-417d-bd67-7d87690a148f","oldStatus":"ready_for_pickup","newStatus":"completed","payoutCreated":true,"driverReleased":false}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.191Z] [INFO] [node-768280] No active tokens for user {"userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:25.192Z] [INFO] [node-768280] Push notification sent {"targetRole":"customer","userId":"11111111-1111-1111-1111-111111111111"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+PASS src/services/__tests__/order.service.test.ts
+  Order Service
+    createOrderFromBid
+      ✓ should create an order from a valid bid (112 ms)
+      ✓ should reject duplicate bid acceptance (65 ms)
+    updateOrderStatus
+      ✓ should update order status successfully (23 ms)
+      ✓ should record status change in history (4 ms)
+    getOrderWithDetails
+      ✓ should return order with all related data (9 ms)
+      ✓ should return null for non-existent order (4 ms)
+    Order Status Transitions
+      ✓ should allow full lifecycle: preparing -> ready -> completed (39 ms)
+
+FAIL src/services/__tests__/bid.service.test.ts
+  Bid Service
+    submitBid
+      ✕ should submit bid successfully (4 ms)
+      ✓ should reject bid if fraud check fails (3 ms)
+      ✓ should reject bid with invalid amount (1 ms)
+      ✓ should reject bid with invalid part condition (2 ms)
+      ✕ should accept valid part conditions (3 ms)
+      ✕ should handle missing optional fields (1 ms)
+      ✕ should handle file uploads (1 ms)
+      ✓ should handle database connection errors (1 ms)
+      ✓ should release database connection on error (2 ms)
+    Validation Helpers
+      validateBidAmount
+        ✕ should validate valid bid amount (1 ms)
+        ✕ should reject NaN amount
+        ✕ should reject zero amount (1 ms)
+        ✕ should reject negative amount (1 ms)
+        ✕ should reject amount exceeding limit
+        ✕ should accept maximum valid amount (1 ms)
+        ✕ should handle string numbers (1 ms)
+      validateWarrantyDays
+        ✕ should accept valid warranty days
+        ✕ should accept zero warranty days (1 ms)
+        ✕ should accept maximum warranty days (1 ms)
+        ✕ should reject warranty days over 365
+        ✕ should reject negative warranty days
+        ✕ should return null for undefined (1 ms)
+        ✕ should return null for null (1 ms)
+        ✕ should return null for empty string
+        ✕ should handle string numbers (1 ms)
+        ✕ should return null for invalid string (1 ms)
+
+  ● Bid Service › submitBid › should submit bid successfully
+
+    Request is no longer active
+
+      104 |         const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [requestId]);
+      105 |         if (reqCheck.rows.length === 0) {throw new Error('Request not found');}
+    > 106 |         if (reqCheck.rows[0].status !== 'active') {throw new Error('Request is no longer active');}
+          |                                                          ^
+      107 |
+      108 |         const customerId = reqCheck.rows[0].customer_id;
+      109 |
+
+      at Object.submitBid (src/services/bid.service.ts:106:58)
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:60:28)
+
+  ● Bid Service › submitBid › should accept valid part conditions
+
+    expect(received).resolves.toBeDefined()
+
+    Received promise rejected instead of resolved
+    Rejected to value: [Error: Request is no longer active]
+
+      100 |             for (const condition of validConditions) {
+      101 |                 const params = { ...mockBidParams, partCondition: condition };
+    > 102 |                 await expect(bidService.submitBid(params)).resolves.toBeDefined();
+          |                       ^
+      103 |             }
+      104 |         });
+      105 |
+
+      at expect (node_modules/expect/build/index.js:2116:15)
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:102:23)
+
+  ● Bid Service › submitBid › should handle missing optional fields
+
+    Request is no longer active
+
+      104 |         const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [requestId]);
+      105 |         if (reqCheck.rows.length === 0) {throw new Error('Request not found');}
+    > 106 |         if (reqCheck.rows[0].status !== 'active') {throw new Error('Request is no longer active');}
+          |                                                          ^
+      107 |
+      108 |         const customerId = reqCheck.rows[0].customer_id;
+      109 |
+
+      at Object.submitBid (src/services/bid.service.ts:106:58)
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:120:28)
+
+  ● Bid Service › submitBid › should handle file uploads
+
+    Request is no longer active
+
+      104 |         const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [requestId]);
+      105 |         if (reqCheck.rows.length === 0) {throw new Error('Request not found');}
+    > 106 |         if (reqCheck.rows[0].status !== 'active') {throw new Error('Request is no longer active');}
+          |                                                          ^
+      107 |
+      108 |         const customerId = reqCheck.rows[0].customer_id;
+      109 |
+
+      at Object.submitBid (src/services/bid.service.ts:106:58)
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:139:28)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should validate valid bid amount
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      164 |         describe('validateBidAmount', () => {
+      165 |             it('should validate valid bid amount', () => {
+    > 166 |                 const result = bidService['validateBidAmount'](100);
+          |                                                               ^
+      167 |                 expect(result.valid).toBe(true);
+      168 |                 expect(result.value).toBe(100);
+      169 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:166:63)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should reject NaN amount
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      170 |
+      171 |             it('should reject NaN amount', () => {
+    > 172 |                 const result = bidService['validateBidAmount']('invalid');
+          |                                                               ^
+      173 |                 expect(result.valid).toBe(false);
+      174 |                 expect(result.message).toBe('Bid amount must be a number');
+      175 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:172:63)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should reject zero amount
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      176 |
+      177 |             it('should reject zero amount', () => {
+    > 178 |                 const result = bidService['validateBidAmount'](0);
+          |                                                               ^
+      179 |                 expect(result.valid).toBe(false);
+      180 |                 expect(result.message).toBe('Bid amount must be greater than zero');
+      181 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:178:63)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should reject negative amount
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      182 |
+      183 |             it('should reject negative amount', () => {
+    > 184 |                 const result = bidService['validateBidAmount'](-50);
+          |                                                               ^
+      185 |                 expect(result.valid).toBe(false);
+      186 |                 expect(result.message).toBe('Bid amount must be greater than zero');
+      187 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:184:63)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should reject amount exceeding limit
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      188 |
+      189 |             it('should reject amount exceeding limit', () => {
+    > 190 |                 const result = bidService['validateBidAmount'](1000001);
+          |                                                               ^
+      191 |                 expect(result.valid).toBe(false);
+      192 |                 expect(result.message).toBe('Bid amount exceeds maximum limit');
+      193 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:190:63)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should accept maximum valid amount
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      194 |
+      195 |             it('should accept maximum valid amount', () => {
+    > 196 |                 const result = bidService['validateBidAmount'](1000000);
+          |                                                               ^
+      197 |                 expect(result.valid).toBe(true);
+      198 |                 expect(result.value).toBe(1000000);
+      199 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:196:63)
+
+  ● Bid Service › Validation Helpers › validateBidAmount › should handle string numbers
+
+    TypeError: bidService.validateBidAmount is not a function
+
+      200 |
+      201 |             it('should handle string numbers', () => {
+    > 202 |                 const result = bidService['validateBidAmount']('150.50');
+          |                                                               ^
+      203 |                 expect(result.valid).toBe(true);
+      204 |                 expect(result.value).toBe(150.5);
+      205 |             });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:202:63)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should accept valid warranty days
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      208 |         describe('validateWarrantyDays', () => {
+      209 |             it('should accept valid warranty days', () => {
+    > 210 |                 const result = bidService['validateWarrantyDays'](90);
+          |                                                                  ^
+      211 |                 expect(result).toBe(90);
+      212 |             });
+      213 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:210:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should accept zero warranty days
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      213 |
+      214 |             it('should accept zero warranty days', () => {
+    > 215 |                 const result = bidService['validateWarrantyDays'](0);
+          |                                                                  ^
+      216 |                 expect(result).toBe(0);
+      217 |             });
+      218 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:215:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should accept maximum warranty days
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      218 |
+      219 |             it('should accept maximum warranty days', () => {
+    > 220 |                 const result = bidService['validateWarrantyDays'](365);
+          |                                                                  ^
+      221 |                 expect(result).toBe(365);
+      222 |             });
+      223 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:220:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should reject warranty days over 365
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      223 |
+      224 |             it('should reject warranty days over 365', () => {
+    > 225 |                 const result = bidService['validateWarrantyDays'](400);
+          |                                                                  ^
+      226 |                 expect(result).toBeNull();
+      227 |             });
+      228 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:225:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should reject negative warranty days
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      228 |
+      229 |             it('should reject negative warranty days', () => {
+    > 230 |                 const result = bidService['validateWarrantyDays'](-10);
+          |                                                                  ^
+      231 |                 expect(result).toBeNull();
+      232 |             });
+      233 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:230:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should return null for undefined
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      233 |
+      234 |             it('should return null for undefined', () => {
+    > 235 |                 const result = bidService['validateWarrantyDays'](undefined);
+          |                                                                  ^
+      236 |                 expect(result).toBeNull();
+      237 |             });
+      238 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:235:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should return null for null
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      238 |
+      239 |             it('should return null for null', () => {
+    > 240 |                 const result = bidService['validateWarrantyDays'](null);
+          |                                                                  ^
+      241 |                 expect(result).toBeNull();
+      242 |             });
+      243 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:240:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should return null for empty string
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      243 |
+      244 |             it('should return null for empty string', () => {
+    > 245 |                 const result = bidService['validateWarrantyDays']('');
+          |                                                                  ^
+      246 |                 expect(result).toBeNull();
+      247 |             });
+      248 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:245:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should handle string numbers
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      248 |
+      249 |             it('should handle string numbers', () => {
+    > 250 |                 const result = bidService['validateWarrantyDays']('180');
+          |                                                                  ^
+      251 |                 expect(result).toBe(180);
+      252 |             });
+      253 |
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:250:66)
+
+  ● Bid Service › Validation Helpers › validateWarrantyDays › should return null for invalid string
+
+    TypeError: bidService.validateWarrantyDays is not a function
+
+      253 |
+      254 |             it('should return null for invalid string', () => {
+    > 255 |                 const result = bidService['validateWarrantyDays']('invalid');
+          |                                                                  ^
+      256 |                 expect(result).toBeNull();
+      257 |             });
+      258 |         });
+
+      at Object.<anonymous> (src/services/__tests__/bid.service.test.ts:255:66)
+
+  console.error
+    [2026-02-18T11:26:26.021Z] [ERROR] [node-768280] Error fetching plans {"error":"Database error"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at Function.getAvailablePlans (src/services/subscription.service.ts:48:20)
+      at Object.<anonymous> (src/services/__tests__/subscription.service.test.ts:77:13)
+
+  console.error
+    [2026-02-18T11:26:26.046Z] [ERROR] [node-768280] Error fetching subscription {"error":"Database error"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at Function.getGarageSubscription (src/services/subscription.service.ts:65:20)
+      at Object.<anonymous> (src/services/__tests__/subscription.service.test.ts:121:13)
+
+  console.error
+    [2026-02-18T11:26:26.054Z] [ERROR] [node-768280] Error checking feature access {"error":"Database error"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at Function.checkFeatureAccess (src/services/subscription.service.ts:85:20)
+      at Object.<anonymous> (src/services/__tests__/subscription.service.test.ts:159:31)
+
+  console.error
+    [2026-02-18T11:26:26.060Z] [ERROR] [node-768280] Error changing subscription {"error":"Database error"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at Function.changeSubscription (src/services/subscription.service.ts:111:20)
+      at Object.<anonymous> (src/services/__tests__/subscription.service.test.ts:190:13)
+
+FAIL src/services/__tests__/subscription.service.test.ts
+  Subscription Service
+    getAvailablePlans
+      ✓ should return available subscription plans (8 ms)
+      ✓ should handle empty plans list (1 ms)
+      ✓ should throw error on database failure (27 ms)
+    getGarageSubscription
+      ✓ should return active subscription for garage (2 ms)
+      ✓ should return null for garage without subscription (1 ms)
+      ✓ should throw error on database failure (4 ms)
+      ✓ should return subscription with plan details (2 ms)
+    checkFeatureAccess
+      ✓ should return true for feature access (1 ms)
+      ✓ should return false for no feature access (1 ms)
+      ✓ should return false on database error (3 ms)
+    changeSubscription
+      ✓ should change subscription successfully (1 ms)
+      ✓ should handle database errors (3 ms)
+    cancelSubscription
+      ✕ should cancel subscription successfully (1 ms)
+      ✕ should handle database errors (1 ms)
+    getSubscriptionByGarageId
+      ✓ should get subscription by garage ID (1 ms)
+      ✓ should return empty array for no subscription (1 ms)
+
+  ● Subscription Service › cancelSubscription › should cancel subscription successfully
+
+    TypeError: subscription_service_1.SubscriptionService.cancelSubscription is not a function
+
+      204 |             (mockPool.query as jest.Mock).mockResolvedValue({ rows: [mockResult] });
+      205 |
+    > 206 |             const result = await SubscriptionService.cancelSubscription(testGarageId, 'admin-user');
+          |                                                      ^
+      207 |
+      208 |             expect(result.success).toBe(true);
+      209 |             expect(result.message).toContain('cancelled');
+
+      at Object.<anonymous> (src/services/__tests__/subscription.service.test.ts:206:54)
+
+  ● Subscription Service › cancelSubscription › should handle database errors
+
+    TypeError: subscription_service_1.SubscriptionService.cancelSubscription is not a function
+
+      213 |             (mockPool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
+      214 |
+    > 215 |             await expect(SubscriptionService.cancelSubscription(testGarageId, 'admin-user'))
+          |                                              ^
+      216 |                 .rejects.toThrow();
+      217 |         });
+      218 |     });
+
+      at Object.<anonymous> (src/services/__tests__/subscription.service.test.ts:215:46)
+
+PASS src/middleware/__tests__/security.middleware.test.ts
+  Security Middleware
+    securityMiddleware (Helmet)
+      ✓ should be a function (4 ms)
+      ✓ should call next when used as middleware (3 ms)
+    additionalSecurityHeaders
+      ✓ should set cache control headers (3 ms)
+      ✓ should set permissions policy header (1 ms)
+      ✓ should call next middleware (1 ms)
+      ✓ should set all security headers in correct order (1 ms)
+    sanitizeRequest
+      ✓ should sanitize string values in request body (3 ms)
+      ✓ should remove javascript: protocol from strings (1 ms)
+      ✓ should remove on* event handlers from strings (1 ms)
+      ✓ should sanitize nested objects (2 ms)
+      ✓ should sanitize arrays of strings (1 ms)
+      ✓ should sanitize arrays of objects (1 ms)
+      ✓ should handle null and undefined values (1 ms)
+      ✓ should handle empty body (2 ms)
+      ✓ should handle missing body (1 ms)
+      ✓ should preserve numbers and booleans (2 ms)
+      ✓ should handle complex nested structures (1 ms)
+      ✓ should remove multiple script tags (1 ms)
+      ✓ should handle case-insensitive script tags
+
+PASS src/services/__tests__/loyalty.service.test.ts
+  Loyalty Service
+    Points Calculation
+      ✓ should calculate 1 point per 10 QAR (4 ms)
+      ✓ should round down partial points (1 ms)
+      ✓ should handle zero amount (1 ms)
+      ✓ should handle large amounts (1 ms)
+    Discount Calculation
+      ✓ should calculate discount from points (100 points = 10 QAR) (1 ms)
+      ✓ should handle 200 points = 20 QAR (1 ms)
+    Award Points
+      ✓ should add points to customer account (2 ms)
+      ✓ should create transaction record (1 ms)
+    Redeem Points
+      ✓ should deduct points from account (1 ms)
+      ✓ should fail if insufficient points (2 ms)
+      ✓ should calculate discount correctly (1 ms)
+    Get Customer Summary
+      ✓ should return complete loyalty summary (2 ms)
+    Transaction History
+      ✓ should retrieve recent transactions (2 ms)
+      ✓ should limit results to specified count (1 ms)
+      ✓ should order by date descending
+    Can Redeem
+      ✓ should check if customer can redeem points (1 ms)
+      ✓ should return false if insufficient balance (1 ms)
+
+  console.warn
+    [2026-02-18T11:26:26.881Z] [WARN] [node-768280] Twilio not configured - SMS notifications disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at new SMSService (src/services/sms.service.ts:28:20)
+      at Object.<anonymous> (src/services/sms.service.ts:97:27)
+      at Object.<anonymous> (src/services/cancellation/cancellation.service.ts:33:1)
+      at Object.<anonymous> (src/services/__tests__/cancellation.service.test.ts:6:1)
+
+PASS src/services/__tests__/cancellation.service.test.ts
+  CancellationService
+    Fee Calculation - BRAIN v3.0 Compliance
+      ✓ should return 0% fee before payment (pending_payment status) (4 ms)
+      ✓ should return 5% fee after payment (confirmed status) (2 ms)
+      ✓ should return 10% fee during preparation (2 ms)
+      ✓ should return 10% + full delivery fee when in delivery (2 ms)
+      ✓ should NOT allow cancellation after delivery (use return flow) (2 ms)
+      ✓ should NOT allow cancellation of already cancelled orders (2 ms)
+    Status to Stage Mapping
+      ✓ should correctly map pending_payment to BEFORE_PAYMENT (1 ms)
+      ✓ should correctly map confirmed to AFTER_PAYMENT (1 ms)
+      ✓ should correctly map preparing to DURING_PREPARATION (1 ms)
+      ✓ should correctly map in_transit to IN_DELIVERY
+      ✓ should correctly map delivered to AFTER_DELIVERY
+    Fee Breakdown
+      ✓ should split fee 50/50 between platform and garage (1 ms)
+  CANCELLATION_FEES Constants
+    ✓ should have correct values per BRAIN spec (2 ms)
+
+  console.warn
+    [2026-02-18T11:26:28.850Z] [WARN] [node-768280] pdfkit not installed - PDF generation disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at Object.<anonymous> (src/services/subscription/invoice.service.ts:16:12)
+      at Object.<anonymous> (src/controllers/subscription.controller.ts:148:1)
+      at Object.<anonymous> (src/routes/subscription.routes.ts:2:1)
+      at Object.<anonymous> (src/routes/v1.routes.ts:23:1)
+      at Object.<anonymous> (src/app.ts:6:1)
+      at Object.<anonymous> (src/routes/__tests__/auth.test.ts:2:1)
+
+  console.warn
+    [2026-02-18T11:26:28.963Z] [WARN] [node-768280] Twilio not configured - SMS notifications disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at new SMSService (src/services/sms.service.ts:28:20)
+      at Object.<anonymous> (src/services/sms.service.ts:97:27)
+      at Object.<anonymous> (src/services/cancellation/cancellation.service.ts:33:1)
+      at Object.<anonymous> (src/services/cancellation/index.ts:1:1)
+      at Object.<anonymous> (src/controllers/cancellation.controller.ts:3:1)
+      at Object.<anonymous> (src/routes/cancellation.routes.ts:2:1)
+      at Object.<anonymous> (src/routes/v1.routes.ts:24:1)
+      at Object.<anonymous> (src/app.ts:6:1)
+      at Object.<anonymous> (src/routes/__tests__/auth.test.ts:2:1)
+
+  console.log
+    [2026-02-18T11:26:31.945Z] [INFO] [node-768280] Feature flags initialized {"count":3}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:32.185Z] [INFO] [node-768280] Payment provider initialized {"provider":"mock"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:32.508Z] [INFO] [node-768280] OpenAPI spec loaded: 301 paths, 332 operations
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:32.602Z] [INFO] [node-768280] ✅ Swagger UI available at /api/docs initialized
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:33.062Z] [INFO] [node-768280] Request started {"requestId":"23617986-3147-49f7-94ce-def9a3a1e2db","method":"POST","path":"/api/auth/register"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:33.109Z] [DEBUG] [node-768280] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:33.527Z] [INFO] [node-768280] Request completed {"requestId":"23617986-3147-49f7-94ce-def9a3a1e2db","method":"POST","path":"/register","statusCode":201,"durationMs":465}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:33.543Z] [INFO] [node-768280] Request started {"requestId":"4cd6f61e-3a0d-4fd5-acbe-9ed0a9b8222c","method":"POST","path":"/api/auth/register"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.warn
+    [2026-02-18T11:26:33.552Z] [WARN] [node-768280] Request completed {"requestId":"4cd6f61e-3a0d-4fd5-acbe-9ed0a9b8222c","method":"POST","path":"/register","statusCode":400,"durationMs":9}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:33.559Z] [INFO] [node-768280] Request started {"requestId":"8741d26b-931b-48ee-b3b8-d6c5b6e12c6d","method":"POST","path":"/api/auth/register"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.error
+    [2026-02-18T11:26:33.576Z] [ERROR] [node-768280] Validation failed {"requestId":"8741d26b-931b-48ee-b3b8-d6c5b6e12c6d","statusCode":400,"code":"VALIDATION_ERROR","stack":"Error: Validation failed\n    at Function.validation (/home/user/qscrap.qa/src/middleware/errorHandler.middleware.ts:48:16)\n    at /home/user/qscrap.qa/src/middleware/validation.middleware.ts:17:27\n    at Layer.handle [as handle_request] (/home/user/qscrap.qa/node_modules/express/lib/router/layer.js:95:5)\n    at next (/home/user/qscrap.qa/node_modules/express/lib/router/route.js:149:13)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:840:9\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:825:5"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at errorHandler (src/middleware/errorHandler.middleware.ts:152:12)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at sentryErrorMiddleware (node_modules/@sentry/node/src/integrations/tracing/express.ts:137:54)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at next (node_modules/express/lib/router/route.js:147:13)
+      at src/middleware/validation.middleware.ts:17:13
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at node_modules/express-rate-limit/dist/index.cjs:840:9
+      at node_modules/express-rate-limit/dist/index.cjs:825:5
+
+  console.warn
+    [2026-02-18T11:26:33.592Z] [WARN] [node-768280] Request completed {"requestId":"8741d26b-931b-48ee-b3b8-d6c5b6e12c6d","method":"POST","path":"/api/auth/register","statusCode":400,"durationMs":33}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:33.616Z] [INFO] [node-768280] Request started {"requestId":"a4ce1b93-e1fa-4c95-aa18-703f69e20ae5","method":"POST","path":"/api/auth/login"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:33.999Z] [INFO] [node-768280] Request completed {"requestId":"a4ce1b93-e1fa-4c95-aa18-703f69e20ae5","method":"POST","path":"/login","statusCode":200,"durationMs":383}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:34.006Z] [INFO] [node-768280] Request started {"requestId":"bca9670f-fa39-4025-bd56-d6f2cd4d190c","method":"POST","path":"/api/auth/login"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.warn
+    [2026-02-18T11:26:34.369Z] [WARN] [node-768280] Request completed {"requestId":"bca9670f-fa39-4025-bd56-d6f2cd4d190c","method":"POST","path":"/login","statusCode":401,"durationMs":363}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:34.377Z] [INFO] [node-768280] Request started {"requestId":"2ac7576f-e25c-4f24-9e89-6441a8b25f26","method":"POST","path":"/api/auth/login"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.warn
+    [2026-02-18T11:26:34.384Z] [WARN] [node-768280] Request completed {"requestId":"2ac7576f-e25c-4f24-9e89-6441a8b25f26","method":"POST","path":"/login","statusCode":401,"durationMs":7}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:34.391Z] [INFO] [node-768280] Request started {"requestId":"5bd517ad-b5f3-46ba-9cdb-bcd0ef609bfc","method":"POST","path":"/api/auth/login"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:34.767Z] [INFO] [node-768280] Request completed {"requestId":"5bd517ad-b5f3-46ba-9cdb-bcd0ef609bfc","method":"POST","path":"/login","statusCode":200,"durationMs":376}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:34.774Z] [INFO] [node-768280] Request started {"requestId":"8e6030a1-584b-4ae3-b90f-c24ccda67769","method":"POST","path":"/api/auth/login"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:35.151Z] [INFO] [node-768280] Request completed {"requestId":"8e6030a1-584b-4ae3-b90f-c24ccda67769","method":"POST","path":"/login","statusCode":200,"durationMs":377}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:35.157Z] [INFO] [node-768280] Request started {"requestId":"7de4cd05-37c3-4835-983c-c88f258f4a23","method":"GET","path":"/api/dashboard/profile"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:35.183Z] [DEBUG] [node-768280] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:35.186Z] [DEBUG] [node-768280] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:35.204Z] [INFO] [node-768280] Request completed {"requestId":"7de4cd05-37c3-4835-983c-c88f258f4a23","method":"GET","path":"/profile","statusCode":200,"durationMs":47}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:35.212Z] [INFO] [node-768280] Request started {"requestId":"3bd394dc-abfa-45f3-9931-c13939e3a5cd","method":"GET","path":"/api/dashboard/profile"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.warn
+    [2026-02-18T11:26:35.219Z] [WARN] [node-768280] Request completed {"requestId":"3bd394dc-abfa-45f3-9931-c13939e3a5cd","method":"GET","path":"/profile","statusCode":401,"durationMs":7}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:35.235Z] [INFO] [node-768280] Request started {"requestId":"9b54b986-8eea-4223-9593-872da7b1787d","method":"GET","path":"/api/dashboard/profile"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.warn
+    [2026-02-18T11:26:35.241Z] [WARN] [node-768280] Request completed {"requestId":"9b54b986-8eea-4223-9593-872da7b1787d","method":"GET","path":"/profile","statusCode":401,"durationMs":6}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:35.247Z] [INFO] [node-768280] Request started {"requestId":"daa93531-ea7a-4e5c-ab16-2026ce36c3ad","method":"POST","path":"/api/auth/register"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.error
+    [2026-02-18T11:26:35.254Z] [ERROR] [node-768280] Validation failed {"requestId":"daa93531-ea7a-4e5c-ab16-2026ce36c3ad","statusCode":400,"code":"VALIDATION_ERROR","stack":"Error: Validation failed\n    at Function.validation (/home/user/qscrap.qa/src/middleware/errorHandler.middleware.ts:48:16)\n    at /home/user/qscrap.qa/src/middleware/validation.middleware.ts:17:27\n    at Layer.handle [as handle_request] (/home/user/qscrap.qa/node_modules/express/lib/router/layer.js:95:5)\n    at next (/home/user/qscrap.qa/node_modules/express/lib/router/route.js:149:13)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:840:9\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:825:5"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at errorHandler (src/middleware/errorHandler.middleware.ts:152:12)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at sentryErrorMiddleware (node_modules/@sentry/node/src/integrations/tracing/express.ts:137:54)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at next (node_modules/express/lib/router/route.js:147:13)
+      at src/middleware/validation.middleware.ts:17:13
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at node_modules/express-rate-limit/dist/index.cjs:840:9
+      at node_modules/express-rate-limit/dist/index.cjs:825:5
+
+  console.warn
+    [2026-02-18T11:26:35.264Z] [WARN] [node-768280] Request completed {"requestId":"daa93531-ea7a-4e5c-ab16-2026ce36c3ad","method":"POST","path":"/api/auth/register","statusCode":400,"durationMs":17}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:35.634Z] [INFO] [node-768280] Request started {"requestId":"28046ceb-1ea6-452d-b53c-415e0526cce6","method":"POST","path":"/api/auth/register"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:36.021Z] [INFO] [node-768280] Request completed {"requestId":"28046ceb-1ea6-452d-b53c-415e0526cce6","method":"POST","path":"/register","statusCode":201,"durationMs":387}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+PASS src/routes/__tests__/auth.test.ts (9.175 s)
+  Authentication API
+    POST /api/auth/register
+      ✓ should register a new customer (508 ms)
+      ✓ should reject duplicate phone number (17 ms)
+      ✓ should validate required fields (52 ms)
+      ✓ should hash password before storing (5 ms)
+    POST /api/auth/login
+      ✓ should login with correct credentials (390 ms)
+      ✓ should reject incorrect password (370 ms)
+      ✓ should reject non-existent user (15 ms)
+      ✓ should return valid JWT token (383 ms)
+    JWT Token Validation
+      ✓ should accept valid token for protected routes (54 ms)
+      ✓ should reject missing token (23 ms)
+      ✓ should reject invalid token format (12 ms)
+    Password Security
+      ✓ should require minimum password length (22 ms)
+      ✓ should hash passwords with bcrypt (363 ms)
+    Role-Based Access
+      ✓ should set correct role on registration (393 ms)
+
+PASS src/services/__tests__/return.service.test.ts
+  ReturnService
+    Return Preview - 7-Day Window
+      ✓ should allow return within 7-day window (6 ms)
+      ✓ should NOT allow return after 7-day window expires (13 ms)
+      ✓ should apply 20% fee on return (BRAIN v3.0) (2 ms)
+    Customer Abuse Limits
+      ✓ should block return if customer exceeds monthly limit (1 ms)
+  RETURN_POLICY Constants
+    ✓ should have correct values per BRAIN spec (2 ms)
+
+  console.warn
+    [2026-02-18T11:26:36.497Z] [WARN] [node-768280] CSRF blocked request from invalid origin {"origin":"https://qscrap.qa.attacker.com"}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at validateOrigin (src/middleware/csrf.middleware.ts:84:16)
+      at Object.<anonymous> (src/middleware/__tests__/csrf.middleware.test.ts:48:23)
+
+  console.warn
+    [2026-02-18T11:26:36.513Z] [WARN] [node-768280] CSRF-STRICT blocked request with no origin
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at strictValidateOrigin (src/middleware/csrf.middleware.ts:118:16)
+      at Object.<anonymous> (src/middleware/__tests__/csrf.middleware.test.ts:95:29)
+
+  console.warn
+    [2026-02-18T11:26:36.518Z] [WARN] [node-768280] CSRF-STRICT blocked request from invalid origin {"origin":"https://qscrap.qa.attacker.com/steal"}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at strictValidateOrigin (src/middleware/csrf.middleware.ts:126:16)
+      at Object.<anonymous> (src/middleware/__tests__/csrf.middleware.test.ts:111:29)
+
+PASS src/middleware/__tests__/csrf.middleware.test.ts
+  CSRF origin middleware
+    ✓ blocks prefix-origin bypasses in production (13 ms)
+    ✓ allows exact allowed origin in production (1 ms)
+    ✓ skips origin validation for authenticated bearer requests (1 ms)
+    ✓ strict mode requires origin/referer on state-changing requests (4 ms)
+    ✓ strict mode blocks malicious referer prefixes (5 ms)
+
+PASS src/routes/__tests__/payments.route-precedence.test.ts
+  Payments route precedence
+    ✓ routes GET /my to payment history (not /:transactionId) (20 ms)
+    ✓ routes GET /test-cards to static endpoint (not /:transactionId) (6 ms)
+    ✓ routes GET /:transactionId to transaction lookup (6 ms)
+
+  console.warn
+    [2026-02-18T11:26:37.460Z] [WARN] [node-768280] pdfkit not installed - PDF generation disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at Object.<anonymous> (src/services/subscription/invoice.service.ts:16:12)
+      at Object.<anonymous> (src/controllers/subscription.controller.ts:148:1)
+      at Object.<anonymous> (src/routes/subscription.routes.ts:2:1)
+      at Object.<anonymous> (src/routes/v1.routes.ts:23:1)
+      at Object.<anonymous> (src/app.ts:6:1)
+      at Object.<anonymous> (tests/contract/basic.test.ts:2:1)
+
+  console.warn
+    [2026-02-18T11:26:37.471Z] [WARN] [node-768280] Twilio not configured - SMS notifications disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at new SMSService (src/services/sms.service.ts:28:20)
+      at Object.<anonymous> (src/services/sms.service.ts:97:27)
+      at Object.<anonymous> (src/services/cancellation/cancellation.service.ts:33:1)
+      at Object.<anonymous> (src/services/cancellation/index.ts:1:1)
+      at Object.<anonymous> (src/controllers/cancellation.controller.ts:3:1)
+      at Object.<anonymous> (src/routes/cancellation.routes.ts:2:1)
+      at Object.<anonymous> (src/routes/v1.routes.ts:24:1)
+      at Object.<anonymous> (src/app.ts:6:1)
+      at Object.<anonymous> (tests/contract/basic.test.ts:2:1)
+
+  console.log
+    [2026-02-18T11:26:37.988Z] [INFO] [node-768280] Feature flags initialized {"count":3}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.000Z] [INFO] [node-768280] Payment provider initialized {"provider":"mock"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.181Z] [INFO] [node-768280] OpenAPI spec loaded: 301 paths, 332 operations
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.201Z] [INFO] [node-768280] ✅ Swagger UI available at /api/docs initialized
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.479Z] [INFO] [node-768280] Request started {"requestId":"c6e782fa-4ede-49f4-9b32-6e36f80d23cc","method":"GET","path":"/api/health"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.491Z] [INFO] [node-768280] Request completed {"requestId":"c6e782fa-4ede-49f4-9b32-6e36f80d23cc","method":"GET","path":"/health","statusCode":200,"durationMs":12}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.504Z] [INFO] [node-768280] Request started {"requestId":"a5699b6f-ff2f-4fec-8c38-8a647d868cad","method":"GET","path":"/api/docs.json"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.513Z] [INFO] [node-768280] Request completed {"requestId":"a5699b6f-ff2f-4fec-8c38-8a647d868cad","method":"GET","path":"/api/docs.json","statusCode":200,"durationMs":9}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T11:26:38.533Z] [INFO] [node-768280] Request started {"requestId":"dd136bee-38c0-4895-9f8e-fdf1592ea81e","method":"POST","path":"/api/auth/login"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.error
+    [2026-02-18T11:26:38.560Z] [ERROR] [node-768280] Validation failed {"requestId":"dd136bee-38c0-4895-9f8e-fdf1592ea81e","statusCode":400,"code":"VALIDATION_ERROR","stack":"Error: Validation failed\n    at Function.validation (/home/user/qscrap.qa/src/middleware/errorHandler.middleware.ts:48:16)\n    at /home/user/qscrap.qa/src/middleware/validation.middleware.ts:17:27\n    at Layer.handle [as handle_request] (/home/user/qscrap.qa/node_modules/express/lib/router/layer.js:95:5)\n    at next (/home/user/qscrap.qa/node_modules/express/lib/router/route.js:149:13)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:840:9\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:825:5"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at errorHandler (src/middleware/errorHandler.middleware.ts:152:12)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at sentryErrorMiddleware (node_modules/@sentry/node/src/integrations/tracing/express.ts:137:54)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at next (node_modules/express/lib/router/route.js:147:13)
+      at src/middleware/validation.middleware.ts:17:13
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at node_modules/express-rate-limit/dist/index.cjs:840:9
+      at node_modules/express-rate-limit/dist/index.cjs:825:5
+
+  console.warn
+    [2026-02-18T11:26:38.569Z] [WARN] [node-768280] Request completed {"requestId":"dd136bee-38c0-4895-9f8e-fdf1592ea81e","method":"POST","path":"/api/auth/login","statusCode":400,"durationMs":36}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T11:26:38.576Z] [INFO] [node-768280] Request started {"requestId":"05075725-13e1-4629-8cc2-1d0bd5ef4c66","method":"POST","path":"/api/auth/register"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.error
+    [2026-02-18T11:26:38.583Z] [ERROR] [node-768280] Validation failed {"requestId":"05075725-13e1-4629-8cc2-1d0bd5ef4c66","statusCode":400,"code":"VALIDATION_ERROR","stack":"Error: Validation failed\n    at Function.validation (/home/user/qscrap.qa/src/middleware/errorHandler.middleware.ts:48:16)\n    at /home/user/qscrap.qa/src/middleware/validation.middleware.ts:17:27\n    at Layer.handle [as handle_request] (/home/user/qscrap.qa/node_modules/express/lib/router/layer.js:95:5)\n    at next (/home/user/qscrap.qa/node_modules/express/lib/router/route.js:149:13)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:840:9\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at /home/user/qscrap.qa/node_modules/express-rate-limit/dist/index.cjs:825:5"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at errorHandler (src/middleware/errorHandler.middleware.ts:152:12)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at sentryErrorMiddleware (node_modules/@sentry/node/src/integrations/tracing/express.ts:137:54)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at next (node_modules/express/lib/router/route.js:147:13)
+      at src/middleware/validation.middleware.ts:17:13
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at node_modules/express-rate-limit/dist/index.cjs:840:9
+      at node_modules/express-rate-limit/dist/index.cjs:825:5
+
+  console.warn
+    [2026-02-18T11:26:38.592Z] [WARN] [node-768280] Request completed {"requestId":"05075725-13e1-4629-8cc2-1d0bd5ef4c66","method":"POST","path":"/api/auth/register","statusCode":400,"durationMs":16}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+PASS tests/contract/basic.test.ts
+  Contract Testing - Public Endpoints
+    ✓ GET /api/health should return valid health status (31 ms)
+    ✓ GET /api/docs.json should return valid OpenAPI spec (19 ms)
+  Contract Testing - Authentication Schema
+    ✓ POST /api/auth/login with invalid data should return standard error schema (52 ms)
+    ✓ POST /api/auth/register with missing data should return validation errors (22 ms)
+
+PASS src/security/__tests__/websocket-hardening.test.ts
+  WebSocket hardening regression guards
+    ✓ keeps mandatory Socket.IO auth middleware enabled (4 ms)
+    ✓ does not allow client-driven join_* room handlers (1 ms)
+    ✓ enforces server-side authorization for request and order tracking (15 ms)
+
+Test Suites: 4 failed, 11 passed, 15 total
+Tests:       23 failed, 129 passed, 152 total
+Snapshots:   0 total
+Time:        16.186 s
+Ran all test suites.

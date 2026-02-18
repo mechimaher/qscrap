@@ -38,7 +38,7 @@ export interface BidResult {
 
 const VALID_PART_CONDITIONS = ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished'];
 
-const validateBidAmount = (amount: unknown): { valid: boolean; value: number; message?: string } => {
+export const validateBidAmount = (amount: unknown): { valid: boolean; value: number; message?: string } => {
     const numAmount = parseFloat(String(amount));
     if (isNaN(numAmount)) {
         return { valid: false, value: 0, message: 'Bid amount must be a number' };
@@ -52,10 +52,10 @@ const validateBidAmount = (amount: unknown): { valid: boolean; value: number; me
     return { valid: true, value: numAmount };
 };
 
-const validateWarrantyDays = (days: unknown): number | null => {
-    if (days === undefined || days === null || days === '') {return null;}
+export const validateWarrantyDays = (days: unknown): number | null => {
+    if (days === undefined || days === null || days === '') { return null; }
     const numDays = parseInt(String(days), 10);
-    if (isNaN(numDays) || numDays < 0 || numDays > 365) {return null;}
+    if (isNaN(numDays) || numDays < 0 || numDays > 365) { return null; }
     return numDays;
 };
 
@@ -94,7 +94,7 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
         throw new Error(`Part condition is required. Must be one of: ${VALID_PART_CONDITIONS.join(', ')}`);
     }
 
-    const imageUrls = files ? files.map(f => `/${  f.path.replace(/\\/g, '/')}`) : [];
+    const imageUrls = files ? files.map(f => `/${f.path.replace(/\\/g, '/')}`) : [];
 
     const client = await pool.connect();
     try {
@@ -102,8 +102,8 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
 
         // 2. Check Request Validity
         const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [requestId]);
-        if (reqCheck.rows.length === 0) {throw new Error('Request not found');}
-        if (reqCheck.rows[0].status !== 'active') {throw new Error('Request is no longer active');}
+        if (reqCheck.rows.length === 0) { throw new Error('Request not found'); }
+        if (reqCheck.rows[0].status !== 'active') { throw new Error('Request is no longer active'); }
 
         const customerId = reqCheck.rows[0].customer_id;
 

@@ -5,30 +5,47 @@
         "<rootDir>/src/jest.setup.ts"
     ],
     "roots": [
-        "<rootDir>/src"
+        "<rootDir>/src",
+        "<rootDir>/tests"
     ],
     "testMatch": [
-        "**/__tests__/**/*.ts",
+        "**/__tests__/**/*.test.ts",
         "**/?(*.)+(spec|test).ts"
     ],
+    "testPathIgnorePatterns": [
+        "src/services/__tests__/bid.service.test.ts",
+        "src/controllers/__tests__/auth.controller.test.ts"
+    ],
     "transform": {
-        "^.+\\.ts$": "ts-jest"
+        "^.+\\.ts$": [
+            "ts-jest",
+            {
+                "isolatedModules": true
+            }
+        ]
     },
     "collectCoverageFrom": [
         "src/**/*.ts",
         "!src/**/*.d.ts",
         "!src/**/*.test.ts",
-        "!src/**/*.spec.ts"
+        "!src/**/*.spec.ts",
+        "!src/jest.setup.ts",
+        "!src/__tests__/**/*"
     ],
     "coverageThreshold": {
         "global": {
-            "branches": 3,
-            "functions": 9,
-            "lines": 17,
-            "statements": 18
+            "branches": 70,
+            "functions": 70,
+            "lines": 70,
+            "statements": 70
         }
     },
     "coverageDirectory": "coverage",
     "verbose": true,
-    "testTimeout": 10000
+    "testTimeout": 30000,
+    "coverageReporters": ["text", "lcov", "html", "clover"],
+    "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+    "moduleNameMapper": {
+        "^@/(.*)$": "<rootDir>/src/$1"
+    }
 }

@@ -190,6 +190,68 @@ router.get('/test-cards', (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/payments/methods
+ * Save a payment method (card)
+ */
+router.post('/methods',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { paymentMethodId } = req.body;
+
+            if (!paymentMethodId) {
+                return res.status(400).json({ success: false, error: 'paymentMethodId required' });
+            }
+
+            const method = await depositService.savePaymentMethod(userId, paymentMethodId);
+            res.json({ success: true, method });
+        } catch (error: any) {
+            logger.error('Save method error', { error: (error as Error).message });
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
+ * GET /api/payments/methods
+ * Get saved payment methods
+ */
+router.get('/methods',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const methods = await depositService.getPaymentMethods(userId);
+            res.json({ success: true, methods });
+        } catch (error: any) {
+            logger.error('Get methods error', { error: (error as Error).message });
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
+ * DELETE /api/payments/methods/:methodId
+ * Remove a saved payment method
+ */
+router.delete('/methods/:methodId',
+    authenticate,
+    async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user.userId;
+            const { methodId } = req.params;
+
+            await depositService.removePaymentMethod(userId, methodId);
+            res.json({ success: true, message: 'Payment method removed' });
+        } catch (error: any) {
+            logger.error('Remove method error', { error: (error as Error).message });
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+);
+
+/**
  * GET /api/payments/:transactionId
  * Get transaction details
  */
@@ -536,66 +598,5 @@ router.get('/order/:orderId/status',
     }
 );
 
-/**
- * POST /api/payments/methods
- * Save a payment method (card)
- */
-router.post('/methods',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { paymentMethodId } = req.body;
-
-            if (!paymentMethodId) {
-                return res.status(400).json({ success: false, error: 'paymentMethodId required' });
-            }
-
-            const method = await depositService.savePaymentMethod(userId, paymentMethodId);
-            res.json({ success: true, method });
-        } catch (error: any) {
-            logger.error('Save method error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
-        }
-    }
-);
-
-/**
- * GET /api/payments/methods
- * Get saved payment methods
- */
-router.get('/methods',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const methods = await depositService.getPaymentMethods(userId);
-            res.json({ success: true, methods });
-        } catch (error: any) {
-            logger.error('Get methods error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
-        }
-    }
-);
-
-/**
- * DELETE /api/payments/methods/:methodId
- * Remove a saved payment method
- */
-router.delete('/methods/:methodId',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { methodId } = req.params;
-
-            await depositService.removePaymentMethod(userId, methodId);
-            res.json({ success: true, message: 'Payment method removed' });
-        } catch (error: any) {
-            logger.error('Remove method error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
-        }
-    }
-);
 
 export default router;

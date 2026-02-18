@@ -1,0 +1,293 @@
+/**
+ * Bid Service Tests
+ * Tests for bid.service.ts
+ */
+
+import * as bidService from '../bid.service';
+import pool from '../../config/db';
+import { getFraudDetectionService } from '../security/fraud-detection.service';
+
+// Mock dependencies
+jest.mock('../../config/db');
+jest.mock('../../utils/socketIO');
+jest.mock('fs/promises');
+jest.mock('../security/fraud-detection.service');
+
+const mockPool = pool as jest.Mocked<typeof pool>;
+const mockFraudService = {
+    checkBidAllowed: jest.fn()
+};
+
+describe('Bid Service', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (getFraudDetectionService as jest.Mock).mockReturnValue(mockFraudService);
+    });
+
+    describe('submitBid', () => {
+        const mockBidParams = {
+            requestId: 'test-request-id',
+            garageId: 'test-garage-id',
+            bidAmount: 150,
+            warrantyDays: 90,
+            notes: 'Test bid notes',
+            partCondition: 'new',
+            brandName: 'Toyota',
+            partNumber: '12345'
+        };
+
+        const mockBidResult = {
+            bid_id: 'test-bid-id',
+            request_id: mockBidParams.requestId,
+            garage_id: mockBidParams.garageId,
+            bid_amount: mockBidParams.bidAmount,
+            warranty_days: mockBidParams.warrantyDays,
+            part_condition: mockBidParams.partCondition,
+            status: 'pending'
+        };
+
+        beforeEach(() => {
+            mockFraudService.checkBidAllowed.mockResolvedValue({ allowed: true });
+        });
+
+        it('should submit bid successfully', async () => {
+            const mockClient = {
+                query: jest.fn()
+                    .mockResolvedValueOnce({ rows: [] }) // BEGIN
+                    .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] }) // Request check
+                    .mockResolvedValueOnce({ rows: [] }) // Duplicate bid check
+                    .mockResolvedValueOnce({ rows: [] }) // Subscription check
+                    .mockResolvedValueOnce({ rows: [mockBidResult] }) // Insert bid
+                    .mockResolvedValueOnce({ rows: [] }) // Update count
+                    .mockResolvedValueOnce({ rows: [{ count: '5' }] }) // Count bids
+                    .mockResolvedValueOnce({ rows: [] }), // COMMIT
+                release: jest.fn()
+            };
+            mockPool.connect.mockResolvedValue(mockClient as any);
+
+            const result = await bidService.submitBid(mockBidParams);
+
+            expect(result).toHaveProperty('bid');
+            expect(result).toHaveProperty('message');
+            expect(mockFraudService.checkBidAllowed).toHaveBeenCalled();
+            expect(mockClient.release).toHaveBeenCalled();
+        });
+
+        it('should reject bid if fraud check fails', async () => {
+            mockFraudService.checkBidAllowed.mockResolvedValue({
+                allowed: false,
+                reason: 'Suspicious bidding pattern detected'
+            });
+
+            await expect(bidService.submitBid(mockBidParams))
+                .rejects.toThrow('Suspicious bidding pattern detected');
+        });
+
+        it('should reject bid with invalid amount', async () => {
+            const invalidParams = { ...mockBidParams, bidAmount: -50 };
+
+            await expect(bidService.submitBid(invalidParams))
+                .rejects.toThrow('Bid amount must be greater than zero');
+        });
+
+        it('should reject bid with invalid part condition', async () => {
+            const invalidParams = { ...mockBidParams, partCondition: 'invalid' };
+
+            await expect(bidService.submitBid(invalidParams))
+                .rejects.toThrow('Part condition is required');
+        });
+
+        it('should accept valid part conditions', async () => {
+            const validConditions = ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished'];
+
+            for (const condition of validConditions) {
+                const mockClient = {
+                    query: jest.fn()
+                        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+                        .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] })
+                        .mockResolvedValueOnce({ rows: [] }) // Duplicate check
+                        .mockResolvedValueOnce({ rows: [] }) // Subscription
+                        .mockResolvedValueOnce({ rows: [mockBidResult] }) // Insert
+                        .mockResolvedValueOnce({ rows: [] }) // Update count
+                        .mockResolvedValueOnce({ rows: [{ count: '5' }] })
+                        .mockResolvedValueOnce({ rows: [] }), // COMMIT
+                    release: jest.fn()
+                };
+                mockPool.connect.mockResolvedValue(mockClient as any);
+
+                const params = { ...mockBidParams, partCondition: condition };
+                await expect(bidService.submitBid(params)).resolves.toBeDefined();
+            }
+        });
+
+        it('should handle missing optional fields', async () => {
+            const minimalParams = {
+                requestId: 'test-request-id',
+                garageId: 'test-garage-id',
+                bidAmount: 100,
+                partCondition: 'new'
+            };
+
+            const mockClient = {
+                query: jest.fn()
+                    .mockResolvedValueOnce({ rows: [] }) // BEGIN
+                    .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] })
+                    .mockResolvedValueOnce({ rows: [] }) // Duplicate check
+                    .mockResolvedValueOnce({ rows: [] }) // Subscription
+                    .mockResolvedValueOnce({ rows: [mockBidResult] }) // Insert
+                    .mockResolvedValueOnce({ rows: [] }) // Update count
+                    .mockResolvedValueOnce({ rows: [{ count: '5' }] })
+                    .mockResolvedValueOnce({ rows: [] }), // COMMIT
+                release: jest.fn()
+            };
+            mockPool.connect.mockResolvedValue(mockClient as any);
+
+            const result = await bidService.submitBid(minimalParams);
+            expect(result).toBeDefined();
+        });
+
+        it('should handle file uploads', async () => {
+            const paramsWithFiles = {
+                ...mockBidParams,
+                files: [
+                    { path: 'uploads/test1.jpg', path: 'uploads/test1.jpg' },
+                    { path: 'uploads/test2.jpg', path: 'uploads/test2.jpg' }
+                ] as unknown as Express.Multer.File[]
+            };
+
+            const mockClient = {
+                query: jest.fn()
+                    .mockResolvedValueOnce({ rows: [] }) // BEGIN
+                    .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] })
+                    .mockResolvedValueOnce({ rows: [] }) // Duplicate check
+                    .mockResolvedValueOnce({ rows: [] }) // Subscription
+                    .mockResolvedValueOnce({ rows: [mockBidResult] }) // Insert
+                    .mockResolvedValueOnce({ rows: [] }) // Update count
+                    .mockResolvedValueOnce({ rows: [{ count: '5' }] })
+                    .mockResolvedValueOnce({ rows: [] }), // COMMIT
+                release: jest.fn()
+            };
+            mockPool.connect.mockResolvedValue(mockClient as any);
+
+            const result = await bidService.submitBid(paramsWithFiles);
+            expect(result).toBeDefined();
+        });
+
+        it('should handle database connection errors', async () => {
+            mockPool.connect.mockRejectedValue(new Error('Database connection failed'));
+
+            await expect(bidService.submitBid(mockBidParams))
+                .rejects.toThrow('Database connection failed');
+        });
+
+        it('should release database connection on error', async () => {
+            const mockClient = {
+                query: jest.fn().mockRejectedValue(new Error('Query failed')),
+                release: jest.fn()
+            };
+            mockPool.connect.mockResolvedValue(mockClient as any);
+
+            await expect(bidService.submitBid(mockBidParams))
+                .rejects.toThrow('Query failed');
+            expect(mockClient.release).toHaveBeenCalled();
+        });
+    });
+
+    describe('Validation Helpers', () => {
+        describe('validateBidAmount', () => {
+            it('should validate valid bid amount', () => {
+                const result = bidService.validateBidAmount(100);
+                expect(result.valid).toBe(true);
+                expect(result.value).toBe(100);
+            });
+
+            it('should reject NaN amount', () => {
+                const result = bidService.validateBidAmount('invalid');
+                expect(result.valid).toBe(false);
+                expect(result.message).toBe('Bid amount must be a number');
+            });
+
+            it('should reject zero amount', () => {
+                const result = bidService.validateBidAmount(0);
+                expect(result.valid).toBe(false);
+                expect(result.message).toBe('Bid amount must be greater than zero');
+            });
+
+            it('should reject negative amount', () => {
+                const result = bidService.validateBidAmount(-50);
+                expect(result.valid).toBe(false);
+                expect(result.message).toBe('Bid amount must be greater than zero');
+            });
+
+            it('should reject amount exceeding limit', () => {
+                const result = bidService.validateBidAmount(1000001);
+                expect(result.valid).toBe(false);
+                expect(result.message).toBe('Bid amount exceeds maximum limit');
+            });
+
+            it('should accept maximum valid amount', () => {
+                const result = bidService.validateBidAmount(1000000);
+                expect(result.valid).toBe(true);
+                expect(result.value).toBe(1000000);
+            });
+
+            it('should handle string numbers', () => {
+                const result = bidService.validateBidAmount('150.50');
+                expect(result.valid).toBe(true);
+                expect(result.value).toBe(150.5);
+            });
+        });
+
+        describe('validateWarrantyDays', () => {
+            it('should accept valid warranty days', () => {
+                const result = bidService.validateWarrantyDays(90);
+                expect(result).toBe(90);
+            });
+
+            it('should accept zero warranty days', () => {
+                const result = bidService.validateWarrantyDays(0);
+                expect(result).toBe(0);
+            });
+
+            it('should accept maximum warranty days', () => {
+                const result = bidService.validateWarrantyDays(365);
+                expect(result).toBe(365);
+            });
+
+            it('should reject warranty days over 365', () => {
+                const result = bidService.validateWarrantyDays(400);
+                expect(result).toBeNull();
+            });
+
+            it('should reject negative warranty days', () => {
+                const result = bidService.validateWarrantyDays(-10);
+                expect(result).toBeNull();
+            });
+
+            it('should return null for undefined', () => {
+                const result = bidService.validateWarrantyDays(undefined);
+                expect(result).toBeNull();
+            });
+
+            it('should return null for null', () => {
+                const result = bidService.validateWarrantyDays(null);
+                expect(result).toBeNull();
+            });
+
+            it('should return null for empty string', () => {
+                const result = bidService.validateWarrantyDays('');
+                expect(result).toBeNull();
+            });
+
+            it('should handle string numbers', () => {
+                const result = bidService.validateWarrantyDays('180');
+                expect(result).toBe(180);
+            });
+
+            it('should return null for invalid string', () => {
+                const result = bidService.validateWarrantyDays('invalid');
+                expect(result).toBeNull();
+            });
+        });
+    });
+});

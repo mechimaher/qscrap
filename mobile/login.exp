@@ -1,0 +1,9 @@
+
+set timeout 20
+spawn npx eas login
+expect "Email or username"
+send "mechimaher.pro@gmail.com\r"
+expect "Password"
+send "RootRoot2024@\r"
+expect eof
+
