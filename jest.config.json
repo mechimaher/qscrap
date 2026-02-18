@@ -12,10 +12,7 @@
         "**/__tests__/**/*.test.ts",
         "**/?(*.)+(spec|test).ts"
     ],
-    "testPathIgnorePatterns": [
-        "src/services/__tests__/bid.service.test.ts",
-        "src/controllers/__tests__/auth.controller.test.ts"
-    ],
+    "testPathIgnorePatterns": [],
     "transform": {
         "^.+\\.ts$": [
             "ts-jest",
@@ -43,8 +40,20 @@
     "coverageDirectory": "coverage",
     "verbose": true,
     "testTimeout": 30000,
-    "coverageReporters": ["text", "lcov", "html", "clover"],
-    "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+    "coverageReporters": [
+        "text",
+        "lcov",
+        "html",
+        "clover"
+    ],
+    "moduleFileExtensions": [
+        "ts",
+        "tsx",
+        "js",
+        "jsx",
+        "json",
+        "node"
+    ],
     "moduleNameMapper": {
         "^@/(.*)$": "<rootDir>/src/$1"
     }

@@ -416,7 +416,7 @@ async function notifyGarageAsync(orderId: string): Promise<void> {
 
         // Get order details for notification
         const orderResult = await pool.query(
-            `SELECT o.*, g.garage_id as garage_user_id 
+            `SELECT o.*, g.user_id as garage_user_id 
              FROM orders o
              JOIN garages g ON g.garage_id = o.garage_id
              WHERE o.order_id = $1`,
