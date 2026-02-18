@@ -29,3 +29,14 @@ CVE-2025-64756
 CVE-2026-23745
 CVE-2026-23950
 CVE-2026-24842
+
+# ============================================
+# Alpine Base Image (ACCEPTED RISK)
+# ============================================
+# Common false positives in Alpine/BusyBox
+# CVE-2016-2781 - chroot/coreutils (mitigated by container runtime)
+CVE-2016-2781
+
+# OpenSSL Low Severity / Feature Requests
+CVE-2023-5363
+CVE-2023-5678

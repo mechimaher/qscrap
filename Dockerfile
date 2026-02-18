@@ -1,7 +1,7 @@
 # ========================================
 # Stage 1: Build
 # ========================================
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN npm run build
 # ========================================
 # Stage 2: Production
 # ========================================
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Install dependencies for Puppeteer/Chromium on Alpine (needed for invoice PDFs)
 # Upgrade all packages first to get latest security patches (OpenSSL 3.3.6+)
