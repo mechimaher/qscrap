@@ -7,7 +7,7 @@ export default tseslint.config(
     {
         languageOptions: {
             parserOptions: {
-                project: './tsconfig.json',
+                project: './tsconfig.eslint.json',
                 ecmaVersion: 2022,
                 sourceType: 'module'
             }
@@ -54,6 +54,14 @@ export default tseslint.config(
         }
     },
     {
-        ignores: ['dist/**', 'node_modules/**', '*.js']
+        ignores: [
+            'dist/**',
+            'node_modules/**',
+            '*.js',
+            '**/__tests__/**',
+            '**/*.test.ts',
+            '**/*.spec.ts',
+            'src/__tests__/**'
+        ]
     }
 );
