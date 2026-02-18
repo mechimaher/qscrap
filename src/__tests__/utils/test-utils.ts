@@ -273,7 +273,7 @@ export const createTestGarageData = (
     const { overrides = {} } = options;
 
     return {
-        garage_id: generateTestId(),
+        garage_id: userId,
         user_id: userId,
         garage_name: `Test Garage ${Date.now()}`,
         approval_status: 'approved',
@@ -386,7 +386,7 @@ export const insertTestGarage = async (
     garageData: Partial<TestGarageData> & { user_id: string }
 ): Promise<string> => {
     const garage = {
-        garage_id: generateTestId(),
+        garage_id: garageData.garage_id || garageData.user_id,
         user_id: garageData.user_id,
         garage_name: garageData.garage_name || 'Test Garage',
         approval_status: garageData.approval_status || 'approved',
@@ -396,10 +396,10 @@ export const insertTestGarage = async (
     };
 
     await pool.query(
-        `INSERT INTO garages (garage_id, user_id, garage_name, approval_status, location_lat, location_lng)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
+         VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (garage_id) DO NOTHING`,
-        [garage.garage_id, garage.user_id, garage.garage_name, garage.approval_status, garage.location_lat, garage.location_lng]
+        [garage.garage_id, garage.garage_name, garage.approval_status, garage.location_lat, garage.location_lng]
     );
 
     return garage.garage_id;
