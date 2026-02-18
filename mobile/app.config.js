@@ -9,7 +9,7 @@ module.exports = ({ config }) => {
     return {
         ...config,
         name: 'QScrap',
-        slug: 'qa-qscrap-app',
+        slug: 'qscrap',
         version: '1.1.0',
         orientation: 'portrait',
         icon: './assets/icon.png',
