@@ -61,7 +61,7 @@ jobs:
           npx ts-prune --error 2>/dev/null | head -50 || echo "ts-prune not available"
 
       - name: Upload analysis results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dead-code-report-${{ github.sha }}
           path: eslint-unused.json
@@ -170,7 +170,7 @@ jobs:
           echo "Generated orphan-detection.sql for manual review"
 
       - name: Upload detection scripts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: db-orphan-scripts-${{ github.sha }}
           path: orphan-detection.sql
