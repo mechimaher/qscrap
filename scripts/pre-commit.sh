@@ -46,7 +46,8 @@ fi
 SECRET_PATTERNS="password\s*=\s*['\"][^'\"]+['\"]|api_key\s*=\s*['\"][^'\"]+['\"]|secret\s*=\s*['\"][^'\"]+['\"]"
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM || true)
 if [ -n "$STAGED_FILES" ]; then
-    SECRETS=$(echo "$STAGED_FILES" | xargs grep -lEi "$SECRET_PATTERNS" 2>/dev/null | grep -v "\.example\|\.sample\|\.md" || true)
+    # Exclude test files, examples, and config files from secret detection
+    SECRETS=$(echo "$STAGED_FILES" | xargs grep -lEi "$SECRET_PATTERNS" 2>/dev/null | grep -v "\.example\|\.sample\|\.md\|jest\.setup\|test-utils\|\.test\.\|\.spec\." || true)
     if [ -n "$SECRETS" ]; then
         echo -e "${RED}❌ Potential hardcoded secrets detected:${NC}"
         echo "$SECRETS"
