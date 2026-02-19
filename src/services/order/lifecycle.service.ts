@@ -266,7 +266,7 @@ export class OrderLifecycleService {
                         cash_collected = driver_wallets.cash_collected + $2,
                         last_updated = NOW()
                     RETURNING wallet_id
-                `, [driverId, codAmount]);
+                `, [assignment.driver_id, codAmount]);
 
                 const walletId = walletRes.rows[0].wallet_id;
 
@@ -275,7 +275,7 @@ export class OrderLifecycleService {
                     VALUES ($1, $2, 'cash_collection', $3, 'Cash collected from customer')
                 `, [walletId, codAmount, orderId]);
 
-                logger.info('Recorded driver COD collection', { driver_id: driverId, order_id: orderId, codAmount, walletId });
+                logger.info('Recorded driver COD collection', { driver_id: assignment.driver_id, order_id: orderId, codAmount, walletId });
             }
             // -------------------------------------------------------------
 
