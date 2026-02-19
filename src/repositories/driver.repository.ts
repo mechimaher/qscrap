@@ -287,17 +287,30 @@ export class DriverRepository {
         assignmentId: string,
         photoUrl: string,
         signatureUrl: string | null,
-        notes: string | undefined
+        notes: string | undefined,
+        paymentMethod?: string
     ) {
         const result = await this.pool.query(`
-            UPDATE delivery_assignments SET
-                delivery_photo_url = $1,
-                signature_url = $2,
-                driver_notes = COALESCE($3, driver_notes),
-                updated_at = NOW()
-            WHERE assignment_id = $4
-            RETURNING *
-        `, [photoUrl, signatureUrl, notes, assignmentId]);
+            WITH updated_assignment AS (
+                UPDATE delivery_assignments SET
+                    delivery_photo_url = $1,
+                    signature_url = $2,
+                    driver_notes = COALESCE($3, driver_notes),
+                    updated_at = NOW()
+                WHERE assignment_id = $4
+                RETURNING *
+            ),
+            updated_order AS (
+                UPDATE orders o
+                SET 
+                    payment_method = COALESCE($5, o.payment_method),
+                    updated_at = NOW()
+                FROM updated_assignment ua
+                WHERE o.order_id = ua.order_id
+                AND $5 IS NOT NULL
+            )
+            SELECT * FROM updated_assignment
+        `, [photoUrl, signatureUrl, notes, assignmentId, paymentMethod]);
         return result.rows[0];
     }
 

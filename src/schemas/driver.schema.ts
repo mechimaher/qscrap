@@ -18,6 +18,7 @@ export const uploadProofSchema = z.object({
     photo_base64: z.string().min(1, "Photo is required"),
     signature_base64: z.string().optional(),
     notes: z.string().optional(),
+    payment_method: z.string().optional(),
 });
 
 export const toggleAvailabilitySchema = z.object({

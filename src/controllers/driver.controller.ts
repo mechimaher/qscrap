@@ -36,6 +36,7 @@ interface UploadProofBody {
     photo_base64?: string;
     signature_base64?: string;
     notes?: string;
+    payment_method?: string;
 }
 
 interface ToggleAvailabilityBody {
@@ -335,6 +336,7 @@ export const uploadDeliveryProof = async (req: AuthRequest, res: Response) => {
     const photoBase64 = toStringValue(body.photo_base64);
     const signatureBase64 = toStringValue(body.signature_base64);
     const notes = toStringValue(body.notes);
+    const paymentMethod = toStringValue(body.payment_method);
 
     if (!photoBase64) {
         return res.status(400).json({ error: 'photo_base64 is required' });
@@ -346,7 +348,8 @@ export const uploadDeliveryProof = async (req: AuthRequest, res: Response) => {
             assignmentId,
             photoBase64,
             signatureBase64,
-            notes
+            notes,
+            paymentMethod
         );
         res.json(result);
     } catch (err) {

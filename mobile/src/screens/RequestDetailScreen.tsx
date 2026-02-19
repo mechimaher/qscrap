@@ -157,7 +157,7 @@ export default function RequestDetailScreen() {
                 [
                     { text: t('common.cancel'), style: 'cancel' },
                     {
-                        text: t('common.payNow') || 'Pay Now',
+                        text: t('COMMON.PAYNOW'),
                         onPress: () => {
                             navigation.navigate('Payment', {
                                 bidId: data.bid_id,

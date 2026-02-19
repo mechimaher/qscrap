@@ -5,6 +5,9 @@
  */
 
 export const en = {
+    COMMON: {
+        PAYNOW: 'Pay Now',
+    },
     // =============================================
     // COMMON - Universal UI elements
     // =============================================

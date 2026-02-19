@@ -417,7 +417,8 @@ class DriverApiService {
         assignmentId: string,
         photoBase64: string,
         signatureBase64?: string,
-        notes?: string
+        notes?: string,
+        paymentMethod?: string
     ): Promise<{ success: boolean }> {
         return this.request(API_ENDPOINTS.UPLOAD_PROOF(assignmentId), {
             method: 'POST',
@@ -425,6 +426,7 @@ class DriverApiService {
                 photo_base64: photoBase64,
                 signature_base64: signatureBase64,
                 notes,
+                payment_method: paymentMethod
             }),
         });
     }

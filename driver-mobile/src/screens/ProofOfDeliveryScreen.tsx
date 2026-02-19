@@ -177,7 +177,8 @@ export default function ProofOfDeliveryScreen() {
                         assignmentId,
                         base64Photo,
                         undefined, // No signature - enterprise speed optimization
-                        paymentNotes
+                        paymentNotes,
+                        paymentMethod
                     );
                 },
                 {
