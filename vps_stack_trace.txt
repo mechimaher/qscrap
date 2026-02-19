@@ -1,0 +1,386 @@
+
+--- Logs surrounding /proof request ---
+qscrap-backend  | [2026-02-19T06:58:44.875Z] [INFO] [node-40] Request started {"requestId":"b0f6e9c9-b461-4ee5-a1b7-014b8d06d1af","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:44.879Z] [WARN] [node-40] Request completed {"requestId":"b0f6e9c9-b461-4ee5-a1b7-014b8d06d1af","method":"POST","path":"/location","statusCode":429,"durationMs":4}
+qscrap-backend  | [2026-02-19T06:58:45.227Z] [INFO] [node-40] Request started {"requestId":"0894c3fb-33ba-4556-907c-e2ac77377bfe","method":"GET","path":"/api/driver/me"}
+qscrap-backend  | [2026-02-19T06:58:45.229Z] [INFO] [node-40] Request started {"requestId":"72ccc8ec-6f45-4a06-aaf6-c9c9432a51e3","method":"GET","path":"/api/driver/stats"}
+qscrap-backend  | [2026-02-19T06:58:45.231Z] [INFO] [node-40] Request completed {"requestId":"0894c3fb-33ba-4556-907c-e2ac77377bfe","method":"GET","path":"/me","statusCode":304,"durationMs":4}
+qscrap-backend  | [2026-02-19T06:58:45.239Z] [INFO] [node-40] Request completed {"requestId":"72ccc8ec-6f45-4a06-aaf6-c9c9432a51e3","method":"GET","path":"/stats","statusCode":200,"durationMs":10}
+qscrap-backend  | [2026-02-19T06:58:47.276Z] [WARN] [node-40] Request completed {"requestId":"5cbe952e-07f3-453e-9064-70560a27dc29","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T06:58:47.274Z] [INFO] [node-40] Request started {"requestId":"5cbe952e-07f3-453e-9064-70560a27dc29","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:51.652Z] [INFO] [node-40] Request started {"requestId":"597a30da-bcbe-4e6e-94c1-03d7f40682b3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:51.661Z] [INFO] [node-40] Request completed {"requestId":"597a30da-bcbe-4e6e-94c1-03d7f40682b3","method":"POST","path":"/location","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T06:58:51.989Z] [INFO] [node-40] Request started {"requestId":"ed094f96-2ec8-4a4e-9843-a6a7d3ac4d95","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:51.992Z] [WARN] [node-40] Request completed {"requestId":"ed094f96-2ec8-4a4e-9843-a6a7d3ac4d95","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T06:58:53.313Z] [INFO] [node-40] Request started {"requestId":"9af622cd-ce1a-4561-be23-cffca56545c6","method":"GET","path":"/api/driver/assignments"}
+qscrap-backend  | [2026-02-19T06:58:53.326Z] [INFO] [node-40] Request completed {"requestId":"9af622cd-ce1a-4561-be23-cffca56545c6","method":"GET","path":"/assignments","statusCode":304,"durationMs":13}
+qscrap-backend  | [2026-02-19T06:58:54.416Z] [INFO] [node-40] Request started {"requestId":"155cdbf0-c577-4acf-8cae-4d866a8b6edb","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:54.419Z] [WARN] [node-40] Request completed {"requestId":"155cdbf0-c577-4acf-8cae-4d866a8b6edb","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T06:58:54.770Z] [INFO] [node-40] Request started {"requestId":"be563a99-5b19-49a9-8a12-e2e699557acc","method":"GET","path":"/api/driver/assignments"}
+qscrap-backend  | [2026-02-19T06:58:54.785Z] [INFO] [node-40] Request completed {"requestId":"be563a99-5b19-49a9-8a12-e2e699557acc","method":"GET","path":"/assignments","statusCode":200,"durationMs":15}
+qscrap-backend  | [2026-02-19T06:58:56.432Z] [INFO] [node-40] Request started {"requestId":"d8bbfc38-db0a-4ea1-ab44-face8c193a0f","method":"GET","path":"/api/driver/assignments/c17ecda8-85fb-4a1e-b6f8-048f26279144"}
+qscrap-backend  | [2026-02-19T06:58:56.441Z] [INFO] [node-40] Request completed {"requestId":"d8bbfc38-db0a-4ea1-ab44-face8c193a0f","method":"GET","path":"/assignments/c17ecda8-85fb-4a1e-b6f8-048f26279144","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T06:58:56.816Z] [INFO] [node-40] Request started {"requestId":"4734cd93-5b2f-46dc-827f-acf66468a5cb","method":"GET","path":"/uploads/proofs/67dc2789-c3c1-4c48-b353-2d05237e83f8.jpg"}
+qscrap-backend  | [2026-02-19T06:58:56.823Z] [INFO] [node-40] Request completed {"requestId":"4734cd93-5b2f-46dc-827f-acf66468a5cb","method":"GET","path":"/proofs/67dc2789-c3c1-4c48-b353-2d05237e83f8.jpg","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T06:58:58.806Z] [INFO] [node-40] Request started {"requestId":"87398e83-1c05-40ff-ad9b-cca013a78a00","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:58.815Z] [INFO] [node-40] Request completed {"requestId":"87398e83-1c05-40ff-ad9b-cca013a78a00","method":"POST","path":"/location","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T06:58:59.140Z] [INFO] [node-40] Request started {"requestId":"5591868a-1069-4b64-a04a-c416057a1ada","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:58:59.143Z] [WARN] [node-40] Request completed {"requestId":"5591868a-1069-4b64-a04a-c416057a1ada","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T06:59:01.499Z] [INFO] [node-40] Request started {"requestId":"120cf289-6e96-4118-9038-eee22f54262c","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:59:01.504Z] [WARN] [node-40] Request completed {"requestId":"120cf289-6e96-4118-9038-eee22f54262c","method":"POST","path":"/location","statusCode":429,"durationMs":6}
+qscrap-backend  | [2026-02-19T06:59:01.809Z] [INFO] [node-40] Request started {"requestId":"c8e40ef9-b367-4b27-b106-acd612a3beda","method":"GET","path":"/api/driver/assignments"}
+qscrap-backend  | [2026-02-19T06:59:01.834Z] [INFO] [node-40] Request completed {"requestId":"c8e40ef9-b367-4b27-b106-acd612a3beda","method":"GET","path":"/assignments","statusCode":304,"durationMs":25}
+qscrap-backend  | [2026-02-19T06:59:05.869Z] [INFO] [node-40] Request started {"requestId":"61a3e40f-c863-4b96-9e42-cf54a5de9bb2","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:59:05.877Z] [INFO] [node-40] Request completed {"requestId":"61a3e40f-c863-4b96-9e42-cf54a5de9bb2","method":"POST","path":"/location","statusCode":200,"durationMs":8}
+qscrap-backend  | [2026-02-19T06:59:06.409Z] [INFO] [node-40] Request started {"requestId":"18da1bce-df8e-4c52-972c-6fce561bb951","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:59:06.412Z] [WARN] [node-40] Request completed {"requestId":"18da1bce-df8e-4c52-972c-6fce561bb951","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T06:59:07.858Z] [INFO] [node-40] Request started {"requestId":"531181f5-30b6-464c-937e-dabff664d9ca","method":"GET","path":"/api/driver/assignments"}
+qscrap-backend  | [2026-02-19T06:59:07.866Z] [INFO] [node-40] Request completed {"requestId":"531181f5-30b6-464c-937e-dabff664d9ca","method":"GET","path":"/assignments","statusCode":304,"durationMs":8}
+qscrap-backend  | [2026-02-19T06:59:08.297Z] [INFO] [node-40] Request started {"requestId":"553a52e7-0084-4cfd-a9fd-be2b0668c843","method":"GET","path":"/api/driver/me"}
+qscrap-backend  | [2026-02-19T06:59:08.302Z] [INFO] [node-40] Request completed {"requestId":"553a52e7-0084-4cfd-a9fd-be2b0668c843","method":"GET","path":"/me","statusCode":200,"durationMs":5}
+qscrap-backend  | [2026-02-19T06:59:08.420Z] [INFO] [node-40] Request started {"requestId":"a17f6770-d931-45e1-9bbf-1daddf198ffb","method":"GET","path":"/api/driver/stats"}
+qscrap-backend  | [2026-02-19T06:59:08.424Z] [INFO] [node-40] Request completed {"requestId":"a17f6770-d931-45e1-9bbf-1daddf198ffb","method":"GET","path":"/stats","statusCode":304,"durationMs":4}
+qscrap-backend  | [2026-02-19T06:59:08.923Z] [INFO] [node-40] Request started {"requestId":"a40e23eb-ffd7-4355-b85b-fa0acb1a8d13","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T06:59:08.925Z] [WARN] [node-40] Request completed {"requestId":"a40e23eb-ffd7-4355-b85b-fa0acb1a8d13","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+--
+qscrap-backend  | [2026-02-19T08:21:14.076Z] [WARN] [node-40] Request completed {"requestId":"a151ee04-2bf5-4611-b160-4f512dc6d211","method":"GET","path":"/garages","statusCode":403,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:14.077Z] [INFO] [node-40] Request started {"requestId":"18a83b73-2903-4963-91c0-657a6a935e81","method":"GET","path":"/api/operations/dashboard/stats"}
+qscrap-backend  | [2026-02-19T08:21:14.078Z] [INFO] [node-40] Request started {"requestId":"f80892de-429c-4e10-9e8b-3b4c5ee550e0","method":"GET","path":"/api/operations/orders"}
+qscrap-backend  | [2026-02-19T08:21:14.098Z] [INFO] [node-40] Request completed {"requestId":"f80892de-429c-4e10-9e8b-3b4c5ee550e0","method":"GET","path":"/orders","statusCode":304,"durationMs":20}
+qscrap-backend  | [2026-02-19T08:21:14.101Z] [INFO] [node-40] Request completed {"requestId":"b67708a9-961c-41a2-9ede-8c0262054668","method":"GET","path":"/stats","statusCode":304,"durationMs":28}
+qscrap-backend  | [2026-02-19T08:21:14.111Z] [INFO] [node-40] Request completed {"requestId":"18a83b73-2903-4963-91c0-657a6a935e81","method":"GET","path":"/dashboard/stats","statusCode":304,"durationMs":34}
+qscrap-backend  | [2026-02-19T08:21:15.978Z] [INFO] [node-40] Request started {"requestId":"6c504f9c-74d7-49a2-8267-56b1c7cd6e01","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:15.980Z] [WARN] [node-40] Request completed {"requestId":"6c504f9c-74d7-49a2-8267-56b1c7cd6e01","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:20.208Z] [INFO] [node-40] Request started {"requestId":"abbe3a35-718b-4fae-acb8-eaf19f08dc3b","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:20.222Z] [INFO] [node-40] Request completed {"requestId":"abbe3a35-718b-4fae-acb8-eaf19f08dc3b","method":"POST","path":"/location","statusCode":200,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:21:20.481Z] [INFO] [node-40] Request started {"requestId":"5b39a6f0-1231-4f13-bf52-5fedde6b53df","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:20.484Z] [WARN] [node-40] Request completed {"requestId":"5b39a6f0-1231-4f13-bf52-5fedde6b53df","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:22.692Z] [INFO] [node-40] Request started {"requestId":"0070c0ab-13d9-489f-a514-38adab255b6a","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:22.695Z] [WARN] [node-40] Request completed {"requestId":"0070c0ab-13d9-489f-a514-38adab255b6a","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:26.931Z] [INFO] [node-40] Request started {"requestId":"db0edbcf-a38f-47d8-8aa0-4e7368b9a58c","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:26.937Z] [INFO] [node-40] Request completed {"requestId":"db0edbcf-a38f-47d8-8aa0-4e7368b9a58c","method":"POST","path":"/location","statusCode":200,"durationMs":6}
+qscrap-backend  | [2026-02-19T08:21:27.330Z] [INFO] [node-40] Request started {"requestId":"2bf08dae-a22f-40a8-be7f-4e688c437fa1","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:27.332Z] [WARN] [node-40] Request completed {"requestId":"2bf08dae-a22f-40a8-be7f-4e688c437fa1","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:29.781Z] [INFO] [node-40] Request started {"requestId":"8320456b-1ce4-402c-b9f9-3f31d0e50efc","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:29.783Z] [WARN] [node-40] Request completed {"requestId":"8320456b-1ce4-402c-b9f9-3f31d0e50efc","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:29.785Z] [INFO] [node-40] Request started {"requestId":"241fbfc7-c145-41d6-ad66-0d09300c4477","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:21:29.797Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/c3515944-11a1-41f8-b301-8b62e8ef470f.jpg'"}
+qscrap-backend  | [2026-02-19T08:21:29.798Z] [WARN] [node-40] Request completed {"requestId":"241fbfc7-c145-41d6-ad66-0d09300c4477","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":13}
+qscrap-backend  | [2026-02-19T08:21:33.962Z] [INFO] [node-40] Request started {"requestId":"c775d15b-529a-4490-8884-ac48a843dece","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:33.971Z] [INFO] [node-40] Request completed {"requestId":"c775d15b-529a-4490-8884-ac48a843dece","method":"POST","path":"/location","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T08:21:34.318Z] [INFO] [node-40] Request started {"requestId":"1ee4c491-8aca-41c6-975e-55afba71e1d8","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:34.321Z] [WARN] [node-40] Request completed {"requestId":"1ee4c491-8aca-41c6-975e-55afba71e1d8","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:36.563Z] [INFO] [node-40] Request started {"requestId":"fc235e88-9056-43d7-a9fb-673237b54f7f","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:36.566Z] [WARN] [node-40] Request completed {"requestId":"fc235e88-9056-43d7-a9fb-673237b54f7f","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:38.991Z] [INFO] [node-40] Request started {"requestId":"2a8ed9a9-784b-4dc6-a2ba-0d7d3c802389","method":"GET","path":"/api/orders/my"}
+qscrap-backend  | [2026-02-19T08:21:39.005Z] [INFO] [node-40] Request completed {"requestId":"2a8ed9a9-784b-4dc6-a2ba-0d7d3c802389","method":"GET","path":"/my","statusCode":200,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:21:41.845Z] [INFO] [node-40] Request started {"requestId":"d108add5-7c0f-46ec-b096-74031c8811ec","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:41.852Z] [INFO] [node-40] Request completed {"requestId":"d108add5-7c0f-46ec-b096-74031c8811ec","method":"POST","path":"/location","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:21:42.129Z] [INFO] [node-40] Request started {"requestId":"358d57b1-180d-4786-9c4c-3ae8c14cf1ed","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:42.132Z] [WARN] [node-40] Request completed {"requestId":"358d57b1-180d-4786-9c4c-3ae8c14cf1ed","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:42.335Z] [INFO] [node-40] Request started {"requestId":"9e3841cd-2a6d-4b74-adfc-973efcbb28a0","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:21:42.347Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/9e15bcf4-0efd-4995-91a4-ace67ee750e3.jpg'"}
+qscrap-backend  | [2026-02-19T08:21:42.347Z] [WARN] [node-40] Request completed {"requestId":"9e3841cd-2a6d-4b74-adfc-973efcbb28a0","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:21:44.073Z] [INFO] [node-40] Request started {"requestId":"931ce68a-a1aa-4f14-b32a-cc36228451c2","method":"GET","path":"/api/operations/stats"}
+qscrap-backend  | [2026-02-19T08:21:44.077Z] [INFO] [node-40] Request started {"requestId":"dd8be022-da1a-4f76-8007-a86b00b4fb94","method":"GET","path":"/api/admin/garages"}
+qscrap-backend  | [2026-02-19T08:21:44.079Z] [INFO] [node-40] Request started {"requestId":"5d0eb1ec-c140-4e6f-a90a-fdc192ae07b3","method":"GET","path":"/api/operations/orders"}
+qscrap-backend  | [2026-02-19T08:21:44.079Z] [WARN] [node-40] Request completed {"requestId":"dd8be022-da1a-4f76-8007-a86b00b4fb94","method":"GET","path":"/garages","statusCode":403,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:44.081Z] [INFO] [node-40] Request completed {"requestId":"931ce68a-a1aa-4f14-b32a-cc36228451c2","method":"GET","path":"/stats","statusCode":304,"durationMs":8}
+qscrap-backend  | [2026-02-19T08:21:44.082Z] [INFO] [node-40] Request started {"requestId":"2ccc1b8e-7af0-4cf4-9523-5d7346cc80d1","method":"GET","path":"/api/operations/dashboard/stats"}
+qscrap-backend  | [2026-02-19T08:21:44.084Z] [INFO] [node-40] Request completed {"requestId":"2ccc1b8e-7af0-4cf4-9523-5d7346cc80d1","method":"GET","path":"/dashboard/stats","statusCode":304,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:44.091Z] [INFO] [node-40] Request completed {"requestId":"5d0eb1ec-c140-4e6f-a90a-fdc192ae07b3","method":"GET","path":"/orders","statusCode":304,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:21:44.308Z] [INFO] [node-40] Request started {"requestId":"798bb3ce-b680-429c-a6e6-2d13e580b30f","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:44.310Z] [WARN] [node-40] Request completed {"requestId":"798bb3ce-b680-429c-a6e6-2d13e580b30f","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:46.042Z] [INFO] [node-40] Request started {"requestId":"823507ed-e660-4242-8ebd-2b52f9f3f3dd","method":"GET","path":"/api/dashboard/garage/stats"}
+qscrap-backend  | [2026-02-19T08:21:46.045Z] [INFO] [node-40] Request started {"requestId":"e55f0b85-db96-46e3-9810-a950078d3bfe","method":"GET","path":"/api/notifications"}
+qscrap-backend  | [2026-02-19T08:21:46.047Z] [INFO] [node-40] Request started {"requestId":"06388136-d401-46ef-bbc1-18d975d296fd","method":"GET","path":"/api/orders/my"}
+qscrap-backend  | [2026-02-19T08:21:46.073Z] [INFO] [node-40] Request completed {"requestId":"e55f0b85-db96-46e3-9810-a950078d3bfe","method":"GET","path":"/","statusCode":304,"durationMs":28}
+qscrap-backend  | [2026-02-19T08:21:46.076Z] [INFO] [node-40] Request completed {"requestId":"06388136-d401-46ef-bbc1-18d975d296fd","method":"GET","path":"/my","statusCode":200,"durationMs":29}
+qscrap-backend  | [2026-02-19T08:21:46.086Z] [INFO] [node-40] Request completed {"requestId":"823507ed-e660-4242-8ebd-2b52f9f3f3dd","method":"GET","path":"/garage/stats","statusCode":304,"durationMs":44}
+qscrap-backend  | [2026-02-19T08:21:48.508Z] [INFO] [node-40] Request started {"requestId":"4ac09da8-15c9-407d-acb0-92c1d358b3d5","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:48.532Z] [INFO] [node-40] Request completed {"requestId":"4ac09da8-15c9-407d-acb0-92c1d358b3d5","method":"POST","path":"/location","statusCode":200,"durationMs":24}
+qscrap-backend  | [2026-02-19T08:21:48.697Z] [INFO] [node-40] Request started {"requestId":"39ab836a-5557-45fc-802c-24ec91be4924","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:48.699Z] [WARN] [node-40] Request completed {"requestId":"39ab836a-5557-45fc-802c-24ec91be4924","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:50.878Z] [INFO] [node-40] Request started {"requestId":"c76b9d7d-1c84-496c-8d94-e37fe12e9d02","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:50.880Z] [WARN] [node-40] Request completed {"requestId":"c76b9d7d-1c84-496c-8d94-e37fe12e9d02","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:55.109Z] [INFO] [node-40] Request started {"requestId":"74ea4102-624b-49bb-b5c5-acc4824ab947","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:55.117Z] [INFO] [node-40] Request completed {"requestId":"74ea4102-624b-49bb-b5c5-acc4824ab947","method":"POST","path":"/location","statusCode":200,"durationMs":8}
+qscrap-backend  | [2026-02-19T08:21:55.327Z] [INFO] [node-40] Request started {"requestId":"0e2b6158-c241-468c-b806-9ca5a1f546fd","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:55.330Z] [WARN] [node-40] Request completed {"requestId":"0e2b6158-c241-468c-b806-9ca5a1f546fd","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:57.588Z] [INFO] [node-40] Request started {"requestId":"33429512-2f5c-455b-be52-33de8bd4ee9e","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:21:57.590Z] [WARN] [node-40] Request completed {"requestId":"33429512-2f5c-455b-be52-33de8bd4ee9e","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:59.023Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":4,"dbConnections":7,"dbIdle":7}
+qscrap-backend  | [2026-02-19T08:22:01.839Z] [INFO] [node-40] Request started {"requestId":"8ec9aad0-68d4-467e-b2a5-36fefcba9dfe","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:01.866Z] [INFO] [node-40] Request completed {"requestId":"8ec9aad0-68d4-467e-b2a5-36fefcba9dfe","method":"POST","path":"/location","statusCode":200,"durationMs":27}
+qscrap-backend  | [2026-02-19T08:22:02.060Z] [INFO] [node-40] Request started {"requestId":"ce6161c5-e1ac-426d-873c-160efc5bf7d3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:02.067Z] [WARN] [node-40] Request completed {"requestId":"ce6161c5-e1ac-426d-873c-160efc5bf7d3","method":"POST","path":"/location","statusCode":429,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:22:04.246Z] [INFO] [node-40] Request started {"requestId":"3b6a7035-11f9-4224-b834-8d1b5e20e109","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:22:04.263Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/d7bd4136-caf2-4a17-8a9f-e52682e1cfb4.jpg'"}
+qscrap-backend  | [2026-02-19T08:22:04.264Z] [WARN] [node-40] Request completed {"requestId":"3b6a7035-11f9-4224-b834-8d1b5e20e109","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":18}
+qscrap-backend  | [2026-02-19T08:22:04.310Z] [INFO] [node-40] Request started {"requestId":"ead8c793-1166-4b8d-b5ed-a823dc9f6c4e","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:04.312Z] [WARN] [node-40] Request completed {"requestId":"ead8c793-1166-4b8d-b5ed-a823dc9f6c4e","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:08.548Z] [INFO] [node-40] Request started {"requestId":"ff1ac676-2cfc-452b-ba51-84f1c14764d2","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:08.561Z] [INFO] [node-40] Request completed {"requestId":"ff1ac676-2cfc-452b-ba51-84f1c14764d2","method":"POST","path":"/location","statusCode":200,"durationMs":13}
+qscrap-backend  | [2026-02-19T08:22:08.718Z] [INFO] [node-40] Request started {"requestId":"cb954fb3-376e-4730-9afb-9877d250417d","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:08.720Z] [WARN] [node-40] Request completed {"requestId":"cb954fb3-376e-4730-9afb-9877d250417d","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:14.074Z] [INFO] [node-40] Request started {"requestId":"cb6c6450-df74-4728-8c05-1f42eaaba318","method":"GET","path":"/api/operations/stats"}
+qscrap-backend  | [2026-02-19T08:22:14.076Z] [INFO] [node-40] Request started {"requestId":"ff283469-0601-4ac9-94eb-c3f2e2e7d0d0","method":"GET","path":"/api/admin/garages"}
+qscrap-backend  | [2026-02-19T08:22:14.076Z] [INFO] [node-40] Request started {"requestId":"20ca2565-4594-4fcd-8fbe-305fe28e9b2c","method":"GET","path":"/api/operations/orders"}
+qscrap-backend  | [2026-02-19T08:22:14.077Z] [INFO] [node-40] Request started {"requestId":"fe0cd24d-9bc5-44b7-be65-68bfe5f97071","method":"GET","path":"/api/operations/dashboard/stats"}
+qscrap-backend  | [2026-02-19T08:22:14.078Z] [WARN] [node-40] Request completed {"requestId":"ff283469-0601-4ac9-94eb-c3f2e2e7d0d0","method":"GET","path":"/garages","statusCode":403,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:14.080Z] [INFO] [node-40] Request completed {"requestId":"cb6c6450-df74-4728-8c05-1f42eaaba318","method":"GET","path":"/stats","statusCode":304,"durationMs":6}
+qscrap-backend  | [2026-02-19T08:22:14.081Z] [INFO] [node-40] Request completed {"requestId":"fe0cd24d-9bc5-44b7-be65-68bfe5f97071","method":"GET","path":"/dashboard/stats","statusCode":304,"durationMs":4}
+qscrap-backend  | [2026-02-19T08:22:14.089Z] [INFO] [node-40] Request completed {"requestId":"20ca2565-4594-4fcd-8fbe-305fe28e9b2c","method":"GET","path":"/orders","statusCode":304,"durationMs":13}
+qscrap-backend  | [2026-02-19T08:22:17.548Z] [INFO] [node-40] Request started {"requestId":"ecf01565-9c19-4c19-8d45-06b817f8eb8b","method":"GET","path":"/api/driver/assignments"}
+qscrap-backend  | [2026-02-19T08:22:17.557Z] [INFO] [node-40] Request completed {"requestId":"ecf01565-9c19-4c19-8d45-06b817f8eb8b","method":"GET","path":"/assignments","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T08:22:17.778Z] [INFO] [node-40] Request started {"requestId":"0960da29-b653-400e-bfcd-698bea1ff1e0","method":"GET","path":"/api/driver/stats"}
+qscrap-backend  | [2026-02-19T08:22:17.782Z] [INFO] [node-40] Request completed {"requestId":"0960da29-b653-400e-bfcd-698bea1ff1e0","method":"GET","path":"/stats","statusCode":304,"durationMs":4}
+qscrap-backend  | [2026-02-19T08:22:17.808Z] [INFO] [node-40] Request started {"requestId":"b724f6ea-85cc-4ffc-b914-97d571d6369f","method":"GET","path":"/api/driver/me"}
+qscrap-backend  | [2026-02-19T08:22:17.813Z] [INFO] [node-40] Request completed {"requestId":"b724f6ea-85cc-4ffc-b914-97d571d6369f","method":"GET","path":"/me","statusCode":200,"durationMs":5}
+qscrap-backend  | [2026-02-19T08:22:17.914Z] [INFO] [node-40] Request started {"requestId":"e8fc2671-ecc6-4443-8be0-e40fa5ec42e2","method":"GET","path":"/api/driver/me"}
+qscrap-backend  | [2026-02-19T08:22:17.918Z] [INFO] [node-40] Request completed {"requestId":"e8fc2671-ecc6-4443-8be0-e40fa5ec42e2","method":"GET","path":"/me","statusCode":200,"durationMs":4}
+qscrap-backend  | [2026-02-19T08:22:19.887Z] [INFO] [node-40] Request started {"requestId":"d9260a38-9b08-4af2-992d-d1b4e1d3d8dd","method":"GET","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621"}
+qscrap-backend  | [2026-02-19T08:22:19.899Z] [INFO] [node-40] Request completed {"requestId":"d9260a38-9b08-4af2-992d-d1b4e1d3d8dd","method":"GET","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621","statusCode":304,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:22:19.958Z] [INFO] [node-40] Request started {"requestId":"bf236881-cc77-48c2-babf-6602c71f781a","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:19.965Z] [INFO] [node-40] Request completed {"requestId":"bf236881-cc77-48c2-babf-6602c71f781a","method":"POST","path":"/location","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:22:20.269Z] [INFO] [node-40] Request started {"requestId":"d0b83223-b9c3-4d70-be76-f80da70873e0","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:20.271Z] [WARN] [node-40] Request completed {"requestId":"d0b83223-b9c3-4d70-be76-f80da70873e0","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:22.017Z] [INFO] [node-40] Request started {"requestId":"9227422d-c09b-4b1d-b6f1-793ce3f46c98","method":"GET","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621"}
+qscrap-backend  | [2026-02-19T08:22:22.026Z] [INFO] [node-40] Request completed {"requestId":"9227422d-c09b-4b1d-b6f1-793ce3f46c98","method":"GET","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621","statusCode":304,"durationMs":9}
+qscrap-backend  | [2026-02-19T08:22:22.438Z] [INFO] [node-40] Request started {"requestId":"98750272-72c5-46a1-bb72-aeb30f85ebb1","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:22.440Z] [WARN] [node-40] Request completed {"requestId":"98750272-72c5-46a1-bb72-aeb30f85ebb1","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:26.212Z] [INFO] [node-40] Request started {"requestId":"62a92dbc-1297-4b9b-9e34-fc51d6a2d068","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:22:26.226Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/cd7903cb-5e28-410e-8924-6fcb702d6fbd.jpg'"}
+qscrap-backend  | [2026-02-19T08:22:26.226Z] [WARN] [node-40] Request completed {"requestId":"62a92dbc-1297-4b9b-9e34-fc51d6a2d068","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:22:26.628Z] [INFO] [node-40] Request started {"requestId":"109b7ed5-caa1-418b-b282-21c83554aae3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:26.637Z] [INFO] [node-40] Request completed {"requestId":"109b7ed5-caa1-418b-b282-21c83554aae3","method":"POST","path":"/location","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T08:22:26.808Z] [INFO] [node-40] Request started {"requestId":"1c48ea9f-299a-4ab2-8aa7-cead6ca612e3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:26.810Z] [WARN] [node-40] Request completed {"requestId":"1c48ea9f-299a-4ab2-8aa7-cead6ca612e3","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:29.038Z] [INFO] [node-40] Request started {"requestId":"0b941f87-65e1-498e-9db4-4d28a56c3f30","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:29.040Z] [WARN] [node-40] Request completed {"requestId":"0b941f87-65e1-498e-9db4-4d28a56c3f30","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:33.249Z] [INFO] [node-40] Request started {"requestId":"755e9917-2b38-4df4-8030-bd1c071e5a07","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:33.256Z] [INFO] [node-40] Request completed {"requestId":"755e9917-2b38-4df4-8030-bd1c071e5a07","method":"POST","path":"/location","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:22:33.438Z] [INFO] [node-40] Request started {"requestId":"6879e3d4-7fef-4c59-b7a3-ac8f20bff8e9","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:33.440Z] [WARN] [node-40] Request completed {"requestId":"6879e3d4-7fef-4c59-b7a3-ac8f20bff8e9","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:34.606Z] [INFO] [node-40] Request started {"requestId":"98ee7dfc-5966-4396-913b-61c4a58680af","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:22:34.617Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/53ea7365-094a-4392-8be6-23af4de9bf2f.jpg'"}
+qscrap-backend  | [2026-02-19T08:22:34.618Z] [WARN] [node-40] Request completed {"requestId":"98ee7dfc-5966-4396-913b-61c4a58680af","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:22:35.668Z] [INFO] [node-40] Request started {"requestId":"3cf2e5db-3fa5-4206-bba2-83732df032a4","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:35.670Z] [WARN] [node-40] Request completed {"requestId":"3cf2e5db-3fa5-4206-bba2-83732df032a4","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:39.889Z] [INFO] [node-40] Request started {"requestId":"20629a14-5af1-4a23-ac65-1dd1dc7c8ea1","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:39.897Z] [INFO] [node-40] Request completed {"requestId":"20629a14-5af1-4a23-ac65-1dd1dc7c8ea1","method":"POST","path":"/location","statusCode":200,"durationMs":8}
+qscrap-backend  | [2026-02-19T08:22:40.078Z] [INFO] [node-40] Request started {"requestId":"41c0a29c-d7b6-4e1c-86a8-11b837144348","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:40.080Z] [WARN] [node-40] Request completed {"requestId":"41c0a29c-d7b6-4e1c-86a8-11b837144348","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:42.341Z] [INFO] [node-40] Request started {"requestId":"1f04f0ef-b9fa-430a-9388-6c48de719b88","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:42.343Z] [WARN] [node-40] Request completed {"requestId":"1f04f0ef-b9fa-430a-9388-6c48de719b88","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:44.075Z] [INFO] [node-40] Request started {"requestId":"708f7483-7a63-4779-b35a-589a50b857a1","method":"GET","path":"/api/admin/garages"}
+qscrap-backend  | [2026-02-19T08:22:44.077Z] [WARN] [node-40] Request completed {"requestId":"708f7483-7a63-4779-b35a-589a50b857a1","method":"GET","path":"/garages","statusCode":403,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:44.078Z] [INFO] [node-40] Request started {"requestId":"643af193-bb92-49b8-87aa-f2eb7f3d8196","method":"GET","path":"/api/operations/orders"}
+qscrap-backend  | [2026-02-19T08:22:44.079Z] [INFO] [node-40] Request started {"requestId":"d7509d27-c869-428b-8455-831cc9da0248","method":"GET","path":"/api/operations/dashboard/stats"}
+qscrap-backend  | [2026-02-19T08:22:44.079Z] [INFO] [node-40] Request started {"requestId":"e404bf4b-a58c-4140-8878-32d287d91e79","method":"GET","path":"/api/operations/stats"}
+qscrap-backend  | [2026-02-19T08:22:44.091Z] [INFO] [node-40] Request completed {"requestId":"643af193-bb92-49b8-87aa-f2eb7f3d8196","method":"GET","path":"/orders","statusCode":304,"durationMs":13}
+qscrap-backend  | [2026-02-19T08:22:44.105Z] [INFO] [node-40] Request completed {"requestId":"d7509d27-c869-428b-8455-831cc9da0248","method":"GET","path":"/dashboard/stats","statusCode":304,"durationMs":26}
+qscrap-backend  | [2026-02-19T08:22:44.109Z] [INFO] [node-40] Request completed {"requestId":"e404bf4b-a58c-4140-8878-32d287d91e79","method":"GET","path":"/stats","statusCode":304,"durationMs":30}
+qscrap-backend  | [2026-02-19T08:22:46.539Z] [INFO] [node-40] Request started {"requestId":"c4ac4b91-fbbf-48ed-a69f-d4c844c11bd6","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:46.555Z] [INFO] [node-40] Request completed {"requestId":"c4ac4b91-fbbf-48ed-a69f-d4c844c11bd6","method":"POST","path":"/location","statusCode":200,"durationMs":16}
+qscrap-backend  | [2026-02-19T08:22:46.748Z] [INFO] [node-40] Request started {"requestId":"8b3569e7-6d02-4ad8-85f7-7765fc2a5fe5","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:46.750Z] [WARN] [node-40] Request completed {"requestId":"8b3569e7-6d02-4ad8-85f7-7765fc2a5fe5","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+--
+qscrap-backend  | [2026-02-19T08:32:09.268Z] [INFO] [node-40] Request started {"requestId":"49e48525-87d1-411c-8ab0-95c219279130","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:09.270Z] [WARN] [node-40] Request completed {"requestId":"49e48525-87d1-411c-8ab0-95c219279130","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:13.500Z] [INFO] [node-40] Request started {"requestId":"1c182225-f5cf-498c-925a-a333c8f12f08","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:13.508Z] [INFO] [node-40] Request completed {"requestId":"1c182225-f5cf-498c-925a-a333c8f12f08","method":"POST","path":"/location","statusCode":200,"durationMs":8}
+qscrap-backend  | [2026-02-19T08:32:13.677Z] [INFO] [node-40] Request started {"requestId":"b3727f4b-29b8-410b-b775-bb3b0f9b5bd6","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:13.680Z] [WARN] [node-40] Request completed {"requestId":"b3727f4b-29b8-410b-b775-bb3b0f9b5bd6","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:32:15.067Z] [INFO] [node-40] Request started {"requestId":"1d564625-63d9-4a13-a134-b5de46b8f3ab","method":"GET","path":"/api/support/customer-360/sa"}
+qscrap-backend  | [2026-02-19T08:32:15.098Z] [INFO] [node-40] Request completed {"requestId":"1d564625-63d9-4a13-a134-b5de46b8f3ab","method":"GET","path":"/customer-360/sa","statusCode":200,"durationMs":31}
+qscrap-backend  | [2026-02-19T08:32:15.917Z] [INFO] [node-40] Request started {"requestId":"96c85963-9f08-461e-81c2-2cae21be2ea9","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:15.919Z] [WARN] [node-40] Request completed {"requestId":"96c85963-9f08-461e-81c2-2cae21be2ea9","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:16.051Z] [INFO] [node-40] Request started {"requestId":"6f4d1ce4-6ac4-4a9e-87eb-f23202b45614","method":"GET","path":"/api/support/customer-360/sarra"}
+qscrap-backend  | [2026-02-19T08:32:16.070Z] [INFO] [node-40] Request completed {"requestId":"6f4d1ce4-6ac4-4a9e-87eb-f23202b45614","method":"GET","path":"/customer-360/sarra","statusCode":200,"durationMs":19}
+qscrap-backend  | [2026-02-19T08:32:20.148Z] [INFO] [node-40] Request started {"requestId":"fdc51e37-cc26-49df-af84-a7ac3d77e410","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:20.155Z] [INFO] [node-40] Request completed {"requestId":"fdc51e37-cc26-49df-af84-a7ac3d77e410","method":"POST","path":"/location","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:32:20.338Z] [INFO] [node-40] Request started {"requestId":"c3eee5c8-6212-4b06-85ad-a3e15d0e344e","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:20.340Z] [WARN] [node-40] Request completed {"requestId":"c3eee5c8-6212-4b06-85ad-a3e15d0e344e","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:22.575Z] [INFO] [node-40] Request started {"requestId":"a77f007d-fe7b-441f-ad10-87d56b86dd64","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:22.577Z] [WARN] [node-40] Request completed {"requestId":"a77f007d-fe7b-441f-ad10-87d56b86dd64","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:23.433Z] [INFO] [node-40] Request started {"requestId":"c14d4933-856f-4e79-ac21-74a1f3de01c0","method":"GET","path":"/api/support/order-details/17ef2148-7597-45b0-bb60-1abb3f1f94c6"}
+qscrap-backend  | [2026-02-19T08:32:23.454Z] [INFO] [node-40] Request completed {"requestId":"c14d4933-856f-4e79-ac21-74a1f3de01c0","method":"GET","path":"/order-details/17ef2148-7597-45b0-bb60-1abb3f1f94c6","statusCode":200,"durationMs":21}
+qscrap-backend  | [2026-02-19T08:32:23.621Z] [INFO] [node-40] Request started {"requestId":"d5e772f8-8208-4c91-be63-51007d3547fe","method":"GET","path":"/uploads/proofs/67dc2789-c3c1-4c48-b353-2d05237e83f8.jpg"}
+qscrap-backend  | [2026-02-19T08:32:23.631Z] [INFO] [node-40] Request completed {"requestId":"d5e772f8-8208-4c91-be63-51007d3547fe","method":"GET","path":"/proofs/67dc2789-c3c1-4c48-b353-2d05237e83f8.jpg","statusCode":200,"durationMs":10}
+qscrap-backend  | [2026-02-19T08:32:26.808Z] [INFO] [node-40] Request started {"requestId":"017183eb-6c46-4eb4-a6ec-13143b7bfd08","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:26.822Z] [INFO] [node-40] Request completed {"requestId":"017183eb-6c46-4eb4-a6ec-13143b7bfd08","method":"POST","path":"/location","statusCode":200,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:32:27.029Z] [INFO] [node-40] Request started {"requestId":"f1202c53-0fed-4ae4-8cab-4467c613d8bf","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:27.031Z] [WARN] [node-40] Request completed {"requestId":"f1202c53-0fed-4ae4-8cab-4467c613d8bf","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:29.267Z] [INFO] [node-40] Request started {"requestId":"7cfcfbd5-a629-478e-95f9-612a59c62f29","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:29.270Z] [WARN] [node-40] Request completed {"requestId":"7cfcfbd5-a629-478e-95f9-612a59c62f29","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:32:33.508Z] [INFO] [node-40] Request started {"requestId":"7a1000c0-1631-4a99-b505-0fe52af72b5d","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:33.515Z] [INFO] [node-40] Request completed {"requestId":"7a1000c0-1631-4a99-b505-0fe52af72b5d","method":"POST","path":"/location","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:32:33.695Z] [INFO] [node-40] Request started {"requestId":"b50ef652-0eb6-41a6-984e-4dd7ee1a37fc","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:33.697Z] [WARN] [node-40] Request completed {"requestId":"b50ef652-0eb6-41a6-984e-4dd7ee1a37fc","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:35.948Z] [INFO] [node-40] Request started {"requestId":"75923653-3082-45a9-b724-6d27035affad","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:35.951Z] [WARN] [node-40] Request completed {"requestId":"75923653-3082-45a9-b724-6d27035affad","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:32:40.196Z] [INFO] [node-40] Request started {"requestId":"079617da-66b8-4e00-a761-51ce63df1437","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:40.205Z] [INFO] [node-40] Request completed {"requestId":"079617da-66b8-4e00-a761-51ce63df1437","method":"POST","path":"/location","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T08:32:40.368Z] [INFO] [node-40] Request started {"requestId":"f5bfc185-60b4-415f-83e5-f74c6cde5ad3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:40.369Z] [WARN] [node-40] Request completed {"requestId":"f5bfc185-60b4-415f-83e5-f74c6cde5ad3","method":"POST","path":"/location","statusCode":429,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:32:42.615Z] [INFO] [node-40] Request started {"requestId":"caca7177-256a-46d2-a082-fc327323dc85","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:42.617Z] [WARN] [node-40] Request completed {"requestId":"caca7177-256a-46d2-a082-fc327323dc85","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:32:46.847Z] [INFO] [node-40] Request started {"requestId":"c95ac737-721a-4434-93f8-f7bc1abf899a","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:32:46.853Z] [INFO] [node-40] Request completed {"requestId":"c95ac737-721a-4434-93f8-f7bc1abf899a","method":"POST","path":"/location","statusCode":200,"durationMs":6}
+--
+qscrap-backend  | [2026-02-19T08:34:17.318Z] [WARN] [node-40] Request completed {"requestId":"4687e71b-69a3-401b-8ec4-d462f10193df","method":"GET","path":"/my-escalations","statusCode":401,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:34:17.318Z] [INFO] [node-40] Request started {"requestId":"960460d7-149b-49c1-9154-8d5107fafd48","method":"GET","path":"/api/reviews/moderation"}
+qscrap-backend  | [2026-02-19T08:34:17.319Z] [WARN] [node-40] Request completed {"requestId":"960460d7-149b-49c1-9154-8d5107fafd48","method":"GET","path":"/moderation","statusCode":401,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:34:17.321Z] [WARN] [node-40] Request completed {"requestId":"d304712a-b0e1-47b6-adfa-4769450a1509","method":"GET","path":"/urgent","statusCode":401,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:34:17.320Z] [INFO] [node-40] Request started {"requestId":"d304712a-b0e1-47b6-adfa-4769450a1509","method":"GET","path":"/api/support/urgent"}
+qscrap-backend  | [2026-02-19T08:34:19.319Z] [INFO] [node-40] Request started {"requestId":"bb4c8ed2-0e65-42b9-912d-f6b9611f0a9b","method":"GET","path":"/api/support/tickets"}
+qscrap-backend  | [2026-02-19T08:34:19.322Z] [WARN] [node-40] Request completed {"requestId":"bb4c8ed2-0e65-42b9-912d-f6b9611f0a9b","method":"GET","path":"/tickets","statusCode":401,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:34:26.393Z] [INFO] [node-40] Request started {"requestId":"1e9706e0-9e15-4443-89ba-2be5918886de","method":"GET","path":"/api/operations/orders"}
+qscrap-backend  | [2026-02-19T08:34:26.398Z] [WARN] [node-40] Request completed {"requestId":"1e9706e0-9e15-4443-89ba-2be5918886de","method":"GET","path":"/orders","statusCode":401,"durationMs":5}
+qscrap-backend  | [2026-02-19T08:34:26.399Z] [INFO] [node-40] Request started {"requestId":"bb87cfda-4463-499d-b472-1437d496b147","method":"GET","path":"/api/admin/garages"}
+qscrap-backend  | [2026-02-19T08:34:26.402Z] [WARN] [node-40] Request completed {"requestId":"bb87cfda-4463-499d-b472-1437d496b147","method":"GET","path":"/garages","statusCode":401,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:34:26.402Z] [INFO] [node-40] Request started {"requestId":"5e604fbe-828f-44bf-a4b9-3220d20f9c9c","method":"GET","path":"/api/operations/stats"}
+qscrap-backend  | [2026-02-19T08:34:26.404Z] [WARN] [node-40] Request completed {"requestId":"5e604fbe-828f-44bf-a4b9-3220d20f9c9c","method":"GET","path":"/stats","statusCode":401,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:34:26.404Z] [INFO] [node-40] Request started {"requestId":"d311996e-a32e-4dc8-9988-2ae93354db79","method":"GET","path":"/api/operations/dashboard/stats"}
+qscrap-backend  | [2026-02-19T08:34:26.406Z] [WARN] [node-40] Request completed {"requestId":"d311996e-a32e-4dc8-9988-2ae93354db79","method":"GET","path":"/dashboard/stats","statusCode":401,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:36:59.028Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:38:45.719Z] [INFO] [node-40] Request started {"requestId":"9017af50-3ce8-4922-bfad-035289d3c266","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:38:45.720Z] [INFO] [node-40] Request completed {"requestId":"9017af50-3ce8-4922-bfad-035289d3c266","method":"HEAD","path":"/health","statusCode":200,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:39:10.389Z] [INFO] [node-40] Request started {"requestId":"69f5e141-ac5f-42bd-b0c6-ba6eb78a425f","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:39:10.393Z] [WARN] [node-40] Request completed {"requestId":"69f5e141-ac5f-42bd-b0c6-ba6eb78a425f","method":"POST","path":"/location","statusCode":401,"durationMs":4}
+qscrap-backend  | [2026-02-19T08:39:10.743Z] [INFO] [node-40] Request started {"requestId":"8c2308d7-e957-4ff1-9a0c-0b70e8f18c3c","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:39:10.747Z] [WARN] [node-40] Request completed {"requestId":"8c2308d7-e957-4ff1-9a0c-0b70e8f18c3c","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":401,"durationMs":4}
+qscrap-backend  | [2026-02-19T08:39:10.748Z] [INFO] [node-40] Request started {"requestId":"a6c22552-f6f6-410b-8899-0bade795cc3c","method":"POST","path":"/api/auth/refresh"}
+qscrap-backend  | [2026-02-19T08:39:10.762Z] [INFO] [node-40] Request completed {"requestId":"a6c22552-f6f6-410b-8899-0bade795cc3c","method":"POST","path":"/refresh","statusCode":200,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:39:10.972Z] [INFO] [node-40] Request started {"requestId":"f7e33aba-4b3b-4004-8b8a-5735291a4b74","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:39:10.982Z] [INFO] [node-40] Request completed {"requestId":"f7e33aba-4b3b-4004-8b8a-5735291a4b74","method":"POST","path":"/location","statusCode":200,"durationMs":10}
+qscrap-backend  | [2026-02-19T08:39:11.188Z] [INFO] [node-40] Request started {"requestId":"efa0206e-d8fc-4be8-9277-c17c01f8e9c1","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:39:11.190Z] [WARN] [node-40] Request completed {"requestId":"efa0206e-d8fc-4be8-9277-c17c01f8e9c1","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:39:11.291Z] [INFO] [node-40] Request started {"requestId":"64c22ef0-d2af-4949-9136-c44bef0d43c2","method":"POST","path":"/api/driver/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof"}
+qscrap-backend  | [2026-02-19T08:39:11.301Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/65986851-c5fe-41f6-a575-032da2aa7cb4.jpg'"}
+qscrap-backend  | [2026-02-19T08:39:11.302Z] [WARN] [node-40] Request completed {"requestId":"64c22ef0-d2af-4949-9136-c44bef0d43c2","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":11}
+qscrap-backend  | [2026-02-19T08:39:13.369Z] [INFO] [node-40] Request started {"requestId":"8470bf22-e876-4cb1-b36a-d7dfc7bc0e1c","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:39:13.371Z] [WARN] [node-40] Request completed {"requestId":"8470bf22-e876-4cb1-b36a-d7dfc7bc0e1c","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:41:59.030Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:43:49.900Z] [INFO] [node-40] Request started {"requestId":"791bd46d-cf44-45a8-82a5-5485f2f08ffd","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:43:49.902Z] [INFO] [node-40] Request completed {"requestId":"791bd46d-cf44-45a8-82a5-5485f2f08ffd","method":"HEAD","path":"/health","statusCode":200,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:46:59.032Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:48:54.492Z] [INFO] [node-40] Request started {"requestId":"03f77d03-0a66-4643-a010-fe35f80e3f49","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:48:54.493Z] [INFO] [node-40] Request completed {"requestId":"03f77d03-0a66-4643-a010-fe35f80e3f49","method":"HEAD","path":"/health","statusCode":200,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:51:59.030Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:53:58.943Z] [INFO] [node-40] Request started {"requestId":"ac764e0e-b6d5-495b-9282-36caa5d83cd0","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:53:58.944Z] [INFO] [node-40] Request completed {"requestId":"ac764e0e-b6d5-495b-9282-36caa5d83cd0","method":"HEAD","path":"/health","statusCode":200,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:56:59.033Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:59:02.885Z] [INFO] [node-40] Request started {"requestId":"a0e9ed26-d0b6-4874-94d2-979da47d222b","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:59:02.886Z] [INFO] [node-40] Request completed {"requestId":"a0e9ed26-d0b6-4874-94d2-979da47d222b","method":"HEAD","path":"/health","statusCode":200,"durationMs":2}
+qscrap-backend  | [2026-02-19T09:00:00.020Z] [ERROR] [node-40] [DELIVERY-REMINDERS] Error sending reminders {"length":105,"name":"error","severity":"ERROR","code":"42703","position":"445","file":"parse_relation.c","line":"3647","routine":"errorMissingColumn"}
+qscrap-backend  | [2026-02-19T09:00:00.050Z] [INFO] [node-40] Running scheduled jobs {"nodeId":"node-40"}
+qscrap-backend  | [2026-02-19T09:00:00.050Z] [INFO] [node-40] [CRON] Starting runAllJobs
+qscrap-backend  | [2026-02-19T09:00:00.099Z] [INFO] [node-40] Cleanup complete {"notifications":0,"historyRecords":0}
+qscrap-backend  | [2026-02-19T09:00:00.100Z] [INFO] [node-40] [CRON] Starting processSubscriptionRenewals
+qscrap-backend  | [2026-02-19T09:00:00.100Z] [INFO] [node-40] Starting subscription renewal processing
+STDERR: time="2026-02-19T11:32:40Z" level=warning msg="/opt/qscrap/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+
+--- Recent Stack Traces ---
+qscrap-backend  | [2026-02-19T08:21:36.566Z] [WARN] [node-40] Request completed {"requestId":"fc235e88-9056-43d7-a9fb-673237b54f7f","method":"POST","path":"/location","statusCode":429,"durationMs":3}
+qscrap-backend  | [2026-02-19T08:21:38.991Z] [INFO] [node-40] Request started {"requestId":"2a8ed9a9-784b-4dc6-a2ba-0d7d3c802389","method":"GET","path":"/api/orders/my"}
+qscrap-backend  | [2026-02-19T08:21:39.005Z] [INFO] [node-40] Request completed {"requestId":"2a8ed9a9-784b-4dc6-a2ba-0d7d3c802389","method":"GET","path":"/my","statusCode":200,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:21:41.845Z] [INFO] [node-40] Request started {"requestId":"d108add5-7c0f-46ec-b096-74031c8811ec","method":"POST","path":"/api/driver/location"}
+--
+qscrap-backend  | [2026-02-19T08:21:42.347Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/9e15bcf4-0efd-4995-91a4-ace67ee750e3.jpg'"}
+qscrap-backend  | [2026-02-19T08:21:42.347Z] [WARN] [node-40] Request completed {"requestId":"9e3841cd-2a6d-4b74-adfc-973efcbb28a0","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:21:44.073Z] [INFO] [node-40] Request started {"requestId":"931ce68a-a1aa-4f14-b32a-cc36228451c2","method":"GET","path":"/api/operations/stats"}
+qscrap-backend  | [2026-02-19T08:21:44.077Z] [INFO] [node-40] Request started {"requestId":"dd8be022-da1a-4f76-8007-a86b00b4fb94","method":"GET","path":"/api/admin/garages"}
+qscrap-backend  | [2026-02-19T08:21:44.079Z] [INFO] [node-40] Request started {"requestId":"5d0eb1ec-c140-4e6f-a90a-fdc192ae07b3","method":"GET","path":"/api/operations/orders"}
+qscrap-backend  | [2026-02-19T08:21:44.079Z] [WARN] [node-40] Request completed {"requestId":"dd8be022-da1a-4f76-8007-a86b00b4fb94","method":"GET","path":"/garages","statusCode":403,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:44.081Z] [INFO] [node-40] Request completed {"requestId":"931ce68a-a1aa-4f14-b32a-cc36228451c2","method":"GET","path":"/stats","statusCode":304,"durationMs":8}
+qscrap-backend  | [2026-02-19T08:21:44.082Z] [INFO] [node-40] Request started {"requestId":"2ccc1b8e-7af0-4cf4-9523-5d7346cc80d1","method":"GET","path":"/api/operations/dashboard/stats"}
+qscrap-backend  | [2026-02-19T08:21:44.084Z] [INFO] [node-40] Request completed {"requestId":"2ccc1b8e-7af0-4cf4-9523-5d7346cc80d1","method":"GET","path":"/dashboard/stats","statusCode":304,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:21:44.091Z] [INFO] [node-40] Request completed {"requestId":"5d0eb1ec-c140-4e6f-a90a-fdc192ae07b3","method":"GET","path":"/orders","statusCode":304,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:21:44.308Z] [INFO] [node-40] Request started {"requestId":"798bb3ce-b680-429c-a6e6-2d13e580b30f","method":"POST","path":"/api/driver/location"}
+--
+qscrap-backend  | [2026-02-19T08:22:04.263Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/d7bd4136-caf2-4a17-8a9f-e52682e1cfb4.jpg'"}
+qscrap-backend  | [2026-02-19T08:22:04.264Z] [WARN] [node-40] Request completed {"requestId":"3b6a7035-11f9-4224-b834-8d1b5e20e109","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":18}
+qscrap-backend  | [2026-02-19T08:22:04.310Z] [INFO] [node-40] Request started {"requestId":"ead8c793-1166-4b8d-b5ed-a823dc9f6c4e","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:04.312Z] [WARN] [node-40] Request completed {"requestId":"ead8c793-1166-4b8d-b5ed-a823dc9f6c4e","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:08.548Z] [INFO] [node-40] Request started {"requestId":"ff1ac676-2cfc-452b-ba51-84f1c14764d2","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:08.561Z] [INFO] [node-40] Request completed {"requestId":"ff1ac676-2cfc-452b-ba51-84f1c14764d2","method":"POST","path":"/location","statusCode":200,"durationMs":13}
+qscrap-backend  | [2026-02-19T08:22:08.718Z] [INFO] [node-40] Request started {"requestId":"cb954fb3-376e-4730-9afb-9877d250417d","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:08.720Z] [WARN] [node-40] Request completed {"requestId":"cb954fb3-376e-4730-9afb-9877d250417d","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:14.074Z] [INFO] [node-40] Request started {"requestId":"cb6c6450-df74-4728-8c05-1f42eaaba318","method":"GET","path":"/api/operations/stats"}
+qscrap-backend  | [2026-02-19T08:22:14.076Z] [INFO] [node-40] Request started {"requestId":"ff283469-0601-4ac9-94eb-c3f2e2e7d0d0","method":"GET","path":"/api/admin/garages"}
+qscrap-backend  | [2026-02-19T08:22:14.076Z] [INFO] [node-40] Request started {"requestId":"20ca2565-4594-4fcd-8fbe-305fe28e9b2c","method":"GET","path":"/api/operations/orders"}
+--
+qscrap-backend  | [2026-02-19T08:22:26.226Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/cd7903cb-5e28-410e-8924-6fcb702d6fbd.jpg'"}
+qscrap-backend  | [2026-02-19T08:22:26.226Z] [WARN] [node-40] Request completed {"requestId":"62a92dbc-1297-4b9b-9e34-fc51d6a2d068","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":14}
+qscrap-backend  | [2026-02-19T08:22:26.628Z] [INFO] [node-40] Request started {"requestId":"109b7ed5-caa1-418b-b282-21c83554aae3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:26.637Z] [INFO] [node-40] Request completed {"requestId":"109b7ed5-caa1-418b-b282-21c83554aae3","method":"POST","path":"/location","statusCode":200,"durationMs":9}
+qscrap-backend  | [2026-02-19T08:22:26.808Z] [INFO] [node-40] Request started {"requestId":"1c48ea9f-299a-4ab2-8aa7-cead6ca612e3","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:26.810Z] [WARN] [node-40] Request completed {"requestId":"1c48ea9f-299a-4ab2-8aa7-cead6ca612e3","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:29.038Z] [INFO] [node-40] Request started {"requestId":"0b941f87-65e1-498e-9db4-4d28a56c3f30","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:29.040Z] [WARN] [node-40] Request completed {"requestId":"0b941f87-65e1-498e-9db4-4d28a56c3f30","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:33.249Z] [INFO] [node-40] Request started {"requestId":"755e9917-2b38-4df4-8030-bd1c071e5a07","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:33.256Z] [INFO] [node-40] Request completed {"requestId":"755e9917-2b38-4df4-8030-bd1c071e5a07","method":"POST","path":"/location","statusCode":200,"durationMs":7}
+qscrap-backend  | [2026-02-19T08:22:33.438Z] [INFO] [node-40] Request started {"requestId":"6879e3d4-7fef-4c59-b7a3-ac8f20bff8e9","method":"POST","path":"/api/driver/location"}
+--
+qscrap-backend  | [2026-02-19T08:22:34.617Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/53ea7365-094a-4392-8be6-23af4de9bf2f.jpg'"}
+qscrap-backend  | [2026-02-19T08:22:34.618Z] [WARN] [node-40] Request completed {"requestId":"98ee7dfc-5966-4396-913b-61c4a58680af","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":12}
+qscrap-backend  | [2026-02-19T08:22:35.668Z] [INFO] [node-40] Request started {"requestId":"3cf2e5db-3fa5-4206-bba2-83732df032a4","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:35.670Z] [WARN] [node-40] Request completed {"requestId":"3cf2e5db-3fa5-4206-bba2-83732df032a4","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:39.889Z] [INFO] [node-40] Request started {"requestId":"20629a14-5af1-4a23-ac65-1dd1dc7c8ea1","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:39.897Z] [INFO] [node-40] Request completed {"requestId":"20629a14-5af1-4a23-ac65-1dd1dc7c8ea1","method":"POST","path":"/location","statusCode":200,"durationMs":8}
+qscrap-backend  | [2026-02-19T08:22:40.078Z] [INFO] [node-40] Request started {"requestId":"41c0a29c-d7b6-4e1c-86a8-11b837144348","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:40.080Z] [WARN] [node-40] Request completed {"requestId":"41c0a29c-d7b6-4e1c-86a8-11b837144348","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:42.341Z] [INFO] [node-40] Request started {"requestId":"1f04f0ef-b9fa-430a-9388-6c48de719b88","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:22:42.343Z] [WARN] [node-40] Request completed {"requestId":"1f04f0ef-b9fa-430a-9388-6c48de719b88","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:22:44.075Z] [INFO] [node-40] Request started {"requestId":"708f7483-7a63-4779-b35a-589a50b857a1","method":"GET","path":"/api/admin/garages"}
+--
+qscrap-backend  | [2026-02-19T08:39:11.301Z] [ERROR] [node-40] uploadDeliveryProof Error {"error":"EACCES: permission denied, open '/app/uploads/proofs/65986851-c5fe-41f6-a575-032da2aa7cb4.jpg'"}
+qscrap-backend  | [2026-02-19T08:39:11.302Z] [WARN] [node-40] Request completed {"requestId":"64c22ef0-d2af-4949-9136-c44bef0d43c2","method":"POST","path":"/assignments/0c6e0196-6c19-482c-8730-7c979492f621/proof","statusCode":500,"durationMs":11}
+qscrap-backend  | [2026-02-19T08:39:13.369Z] [INFO] [node-40] Request started {"requestId":"8470bf22-e876-4cb1-b36a-d7dfc7bc0e1c","method":"POST","path":"/api/driver/location"}
+qscrap-backend  | [2026-02-19T08:39:13.371Z] [WARN] [node-40] Request completed {"requestId":"8470bf22-e876-4cb1-b36a-d7dfc7bc0e1c","method":"POST","path":"/location","statusCode":429,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:41:59.030Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:43:49.900Z] [INFO] [node-40] Request started {"requestId":"791bd46d-cf44-45a8-82a5-5485f2f08ffd","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:43:49.902Z] [INFO] [node-40] Request completed {"requestId":"791bd46d-cf44-45a8-82a5-5485f2f08ffd","method":"HEAD","path":"/health","statusCode":200,"durationMs":2}
+qscrap-backend  | [2026-02-19T08:46:59.032Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+qscrap-backend  | [2026-02-19T08:48:54.492Z] [INFO] [node-40] Request started {"requestId":"03f77d03-0a66-4643-a010-fe35f80e3f49","method":"HEAD","path":"/health"}
+qscrap-backend  | [2026-02-19T08:48:54.493Z] [INFO] [node-40] Request completed {"requestId":"03f77d03-0a66-4643-a010-fe35f80e3f49","method":"HEAD","path":"/health","statusCode":200,"durationMs":1}
+qscrap-backend  | [2026-02-19T08:51:59.030Z] [INFO] [node-40] Server stats {"nodeId":"node-40","sockets":0,"dbConnections":5,"dbIdle":5}
+--
+qscrap-backend  | [2026-02-19T09:00:00.020Z] [ERROR] [node-40] [DELIVERY-REMINDERS] Error sending reminders {"length":105,"name":"error","severity":"ERROR","code":"42703","position":"445","file":"parse_relation.c","line":"3647","routine":"errorMissingColumn"}
+qscrap-backend  | [2026-02-19T09:00:00.050Z] [INFO] [node-40] Running scheduled jobs {"nodeId":"node-40"}
+qscrap-backend  | [2026-02-19T09:00:00.050Z] [INFO] [node-40] [CRON] Starting runAllJobs
+qscrap-backend  | [2026-02-19T09:00:00.099Z] [INFO] [node-40] Cleanup complete {"notifications":0,"historyRecords":0}
+qscrap-backend  | [2026-02-19T09:00:00.100Z] [INFO] [node-40] [CRON] Starting processSubscriptionRenewals
+qscrap-backend  | [2026-02-19T09:00:00.100Z] [INFO] [node-40] Starting subscription renewal processing
+qscrap-backend  | [2026-02-19T09:00:00.124Z] [INFO] [node-40] Found subscriptions due for renewal {"count":0}
+qscrap-backend  | [2026-02-19T09:00:00.124Z] [INFO] [node-40] Renewal processing complete
+qscrap-backend  | [2026-02-19T09:00:00.124Z] [INFO] [node-40] [CRON] Completed processSubscriptionRenewals {"status":"complete"}
+qscrap-backend  | [2026-02-19T09:00:00.124Z] [INFO] [node-40] [CRON] Starting sendRenewalReminders
+qscrap-backend  | [2026-02-19T09:00:00.124Z] [INFO] [node-40] Sending renewal reminders
+--
+qscrap-backend  | [2026-02-19T10:00:00.185Z] [ERROR] [node-40] [DELIVERY-REMINDERS] Error sending reminders {"length":105,"name":"error","severity":"ERROR","code":"42703","position":"445","file":"parse_relation.c","line":"3647","routine":"errorMissingColumn"}
+qscrap-backend  | [2026-02-19T10:00:00.190Z] [INFO] [node-40] Running scheduled jobs {"nodeId":"node-40"}
+qscrap-backend  | [2026-02-19T10:00:00.191Z] [INFO] [node-40] [CRON] Starting runAllJobs
+qscrap-backend  | [2026-02-19T10:00:00.379Z] [INFO] [node-40] Cleanup complete {"notifications":0,"historyRecords":0}
+qscrap-backend  | [2026-02-19T10:00:00.380Z] [INFO] [node-40] [CRON] Starting processSubscriptionRenewals
+qscrap-backend  | [2026-02-19T10:00:00.381Z] [INFO] [node-40] Starting subscription renewal processing
+qscrap-backend  | [2026-02-19T10:00:00.412Z] [INFO] [node-40] Found subscriptions due for renewal {"count":0}
+qscrap-backend  | [2026-02-19T10:00:00.412Z] [INFO] [node-40] Renewal processing complete
+qscrap-backend  | [2026-02-19T10:00:00.413Z] [INFO] [node-40] [CRON] Completed processSubscriptionRenewals {"status":"complete"}
+qscrap-backend  | [2026-02-19T10:00:00.413Z] [INFO] [node-40] [CRON] Starting sendRenewalReminders
+qscrap-backend  | [2026-02-19T10:00:00.413Z] [INFO] [node-40] Sending renewal reminders
+--
+qscrap-backend  | [2026-02-19T11:00:00.201Z] [ERROR] [node-40] [DELIVERY-REMINDERS] Error sending reminders {"length":105,"name":"error","severity":"ERROR","code":"42703","position":"445","file":"parse_relation.c","line":"3647","routine":"errorMissingColumn"}
+qscrap-backend  | [2026-02-19T11:00:00.214Z] [INFO] [node-40] Running scheduled jobs {"nodeId":"node-40"}
+qscrap-backend  | [2026-02-19T11:00:00.214Z] [INFO] [node-40] [CRON] Starting runAllJobs
+qscrap-backend  | [2026-02-19T11:00:00.405Z] [INFO] [node-40] Cleanup complete {"notifications":0,"historyRecords":0}
+qscrap-backend  | [2026-02-19T11:00:00.406Z] [INFO] [node-40] [CRON] Starting processSubscriptionRenewals
+qscrap-backend  | [2026-02-19T11:00:00.407Z] [INFO] [node-40] Starting subscription renewal processing
+qscrap-backend  | [2026-02-19T11:00:00.428Z] [INFO] [node-40] Found subscriptions due for renewal {"count":0}
+qscrap-backend  | [2026-02-19T11:00:00.428Z] [INFO] [node-40] Renewal processing complete
+qscrap-backend  | [2026-02-19T11:00:00.429Z] [INFO] [node-40] [CRON] Completed processSubscriptionRenewals {"status":"complete"}
+qscrap-backend  | [2026-02-19T11:00:00.430Z] [INFO] [node-40] [CRON] Starting sendRenewalReminders
+qscrap-backend  | [2026-02-19T11:00:00.431Z] [INFO] [node-40] Sending renewal reminders
+STDERR: time="2026-02-19T11:32:41Z" level=warning msg="/opt/qscrap/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"

@@ -336,6 +336,7 @@ export const uploadDeliveryProof = async (req: AuthRequest, res: Response) => {
     const photoBase64 = toStringValue(body.photo_base64);
     const signatureBase64 = toStringValue(body.signature_base64);
     const notes = toStringValue(body.notes);
+    // DEFENSIVE: Pass undefined through cleanly to let repository handle NULL coalescence
     const paymentMethod = toStringValue(body.payment_method);
 
     if (!photoBase64) {

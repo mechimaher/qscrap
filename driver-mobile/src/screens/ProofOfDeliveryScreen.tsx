@@ -147,6 +147,17 @@ export default function ProofOfDeliveryScreen() {
     const handleSubmit = async () => {
         if (!photoUri || !orderId) return;
 
+        // DEFENSIVE: Ensure payment method is loaded before submitting
+        // This prevents edge cases where order details failed to load
+        if (!paymentMethod) {
+            Alert.alert(
+                'Error',
+                'Payment method not loaded. Please go back and try again.',
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             // 1. Save Photo to permanent storage (media service pattern)

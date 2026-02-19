@@ -290,6 +290,8 @@ export class DriverRepository {
         notes: string | undefined,
         paymentMethod?: string
     ) {
+        // Explicitly cast paymentMethod to text to avoid PostgreSQL type inference errors
+        // when parameter is undefined (error: "Could not determine data type of parameter $5")
         const result = await this.pool.query(`
             WITH updated_assignment AS (
                 UPDATE delivery_assignments SET
@@ -302,15 +304,15 @@ export class DriverRepository {
             ),
             updated_order AS (
                 UPDATE orders o
-                SET 
-                    payment_method = COALESCE($5, o.payment_method),
+                SET
+                    payment_method = COALESCE($5::text, o.payment_method),
                     updated_at = NOW()
                 FROM updated_assignment ua
                 WHERE o.order_id = ua.order_id
-                AND $5 IS NOT NULL
+                AND $5::text IS NOT NULL
             )
             SELECT * FROM updated_assignment
-        `, [photoUrl, signatureUrl, notes, assignmentId, paymentMethod]);
+        `, [photoUrl, signatureUrl, notes, assignmentId, paymentMethod || null]);
         return result.rows[0];
     }
 
@@ -367,6 +369,39 @@ export class DriverRepository {
         `, [userId]);
         return parseInt(result.rows[0].count);
     }
-}
 
+    async recordCashCollection(driverId: string, orderId: string, amount: number) {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 1. Upsert Wallet
+            const walletRes = await client.query(`
+                INSERT INTO driver_wallets (driver_id, cash_collected, balance)
+                VALUES ($1, $2, 0)
+                ON CONFLICT (driver_id) DO UPDATE SET
+                    cash_collected = driver_wallets.cash_collected + $2,
+                    last_updated = NOW()
+                RETURNING wallet_id
+            `, [driverId, amount]);
+
+            const walletId = walletRes.rows[0].wallet_id;
+
+            // 2. Log Transaction
+            await client.query(`
+                INSERT INTO driver_transactions (wallet_id, amount, type, reference_id, description)
+                VALUES ($1, $2, 'cash_collection', $3, 'Cash collected from customer')
+            `, [walletId, amount, orderId]);
+
+            await client.query('COMMIT');
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+
+}
 export const driverRepository = new DriverRepository();

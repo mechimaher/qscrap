@@ -439,6 +439,7 @@ export class DriverService {
         // Handle Payment Method Logic
         // Preserve 'card_full' if driver sends 'online', otherwise map 'online' -> 'card'
         // 'cash' remains 'cash'
+        // DEFENSIVE: Allow undefined to pass to repository for NULL coalescence
         let effectivePaymentMethod = paymentMethod;
         if (paymentMethod === 'online') {
             if (assignment.payment_method === 'card_full') {

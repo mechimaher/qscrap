@@ -231,7 +231,7 @@ export class OrderLifecycleService {
                     updated_at = NOW()
                 WHERE order_id = $1 
                   AND order_status = 'in_transit'
-                RETURNING garage_id, customer_id, order_number
+                RETURNING garage_id, customer_id, order_number, payment_method, part_price, delivery_fee, loyalty_discount
             `, [orderId, podPhotoUrl]);
 
             if (result.rows.length === 0) {
@@ -239,6 +239,45 @@ export class OrderLifecycleService {
             }
 
             const order = result.rows[0];
+
+            // -------------------------------------------------------------
+            // AUDIT & COD COLLECTION RECORDING
+            // Driver collected money must be added to driver_wallets
+            // -------------------------------------------------------------
+            const partPrice = parseFloat(order.part_price) || 0;
+            const deliveryFee = parseFloat(order.delivery_fee) || 0;
+            const loyaltyDiscount = parseFloat(order.loyalty_discount) || 0;
+            const effectivePartPrice = Math.max(0, partPrice - loyaltyDiscount);
+
+            let codAmount = 0;
+            if (order.payment_method === 'card_full') {
+                codAmount = 0;
+            } else if (order.payment_method === 'card') {
+                codAmount = effectivePartPrice;
+            } else {
+                codAmount = effectivePartPrice + deliveryFee;
+            }
+
+            if (codAmount > 0) {
+                const walletRes = await client.query(`
+                    INSERT INTO driver_wallets (driver_id, cash_collected, balance)
+                    VALUES ($1, $2, 0)
+                    ON CONFLICT (driver_id) DO UPDATE SET
+                        cash_collected = driver_wallets.cash_collected + $2,
+                        last_updated = NOW()
+                    RETURNING wallet_id
+                `, [driverId, codAmount]);
+
+                const walletId = walletRes.rows[0].wallet_id;
+
+                await client.query(`
+                    INSERT INTO driver_transactions (wallet_id, amount, type, reference_id, description)
+                    VALUES ($1, $2, 'cash_collection', $3, 'Cash collected from customer')
+                `, [walletId, codAmount, orderId]);
+
+                logger.info('Recorded driver COD collection', { driver_id: driverId, order_id: orderId, codAmount, walletId });
+            }
+            // -------------------------------------------------------------
 
             // Update delivery assignment status
             await client.query(`
@@ -626,7 +665,7 @@ export class OrderLifecycleService {
         );
 
         const partName = partDescResult.rows[0]?.part_description;
-        if (!partName) {return;}
+        if (!partName) { return; }
 
         const suggestions = predictiveService.getSuggestions(partName);
         if (suggestions.length > 0) {
