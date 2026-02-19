@@ -137,7 +137,7 @@ export default function LoginScreen() {
                                 style={styles.logo}
                                 contentFit="cover"
                                 transition={200}
-                                accessibilityLabel="QScrap logo"
+                                accessibilityLabel={t('common.appName')}
                             />
                         </Animated.View>
                         <Text style={styles.logoText}>{t('common.appName')}</Text>

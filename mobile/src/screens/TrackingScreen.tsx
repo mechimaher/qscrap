@@ -252,7 +252,7 @@ export default function TrackingScreen() {
             // Listen for chat messages from driver
             socket.current.on('new_message', (data: any) => {
                 if (data.order_id === orderId && data.sender_type === 'driver') {
-                    setNewChatMessage({ text: data.message, from: data.sender_name || 'Driver' });
+                    setNewChatMessage({ text: data.message, from: data.sender_name || t('common.driver') });
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                     // Auto-clear after 5 seconds
                     setTimeout(() => setNewChatMessage(null), 5000);
@@ -319,8 +319,8 @@ export default function TrackingScreen() {
 
                 // Set order details for display
                 setOrderDetails({
-                    garage_name: order.garage_name || 'Unknown Garage',
-                    part_description: order.part_description || order.part_name || 'Part',
+                    garage_name: order.garage_name || t('common.unknown'),
+                    part_description: order.part_description || order.part_name || t('common.part'),
                     part_condition: order.part_condition || 'used_good',
                     warranty_days: parseInt(String(order.warranty_days)) || 0,
                     part_price: parseFloat(String(order.part_price)) || 0,
@@ -576,7 +576,7 @@ export default function TrackingScreen() {
                         navigation.navigate('Chat', {
                             orderId: orderId,
                             orderNumber: orderNumber,
-                            recipientName: driverInfo?.name || 'Driver',
+                            recipientName: driverInfo?.name || t('common.driver'),
                             recipientType: 'driver',
                         });
                     }}
@@ -695,7 +695,7 @@ export default function TrackingScreen() {
                                 navigation.navigate('Chat', {
                                     orderId: orderId,
                                     orderNumber: orderNumber,
-                                    recipientName: driverInfo?.name || 'Driver',
+                                    recipientName: driverInfo?.name || t('common.driver'),
                                     recipientType: 'driver',
                                 });
                             }}

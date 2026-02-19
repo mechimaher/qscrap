@@ -48,6 +48,8 @@ export const en = {
         add: 'Add',
         remove: 'Remove',
         view: 'View',
+        doha: 'Doha',
+        qatar: 'Qatar',
         viewAll: 'View All',
         seeAll: 'See All',
         more: 'More',
@@ -111,16 +113,46 @@ export const en = {
         unexpectedError: 'An unexpected error occurred',
         invalidDate: 'Invalid date',
         invalidTime: 'Invalid time',
+        time_short: {
+            m: 'm',
+            h: 'h',
+            d: 'd',
+            now: 'Just now',
+            ago: 'ago'
+        },
     },
 
     // =============================================
     // ERRORS - Error messages
     // =============================================
     errors: {
+        // Entity Errors
         requestNotFound: 'Request not found',
         orderNotFound: 'Order not found',
         vehicleNotFound: 'Vehicle not found',
         addressNotFound: 'Address not found',
+
+        // Network & System
+        network: 'No internet connection',
+        networkRetry: 'Please check your connection and try again',
+        server: 'Server error. Please try again.',
+        unknown: 'Something went wrong',
+        timeout: 'Request timed out',
+        loadFailed: 'Failed to load data',
+        sessionExpired: 'Session expired. Please login again.',
+        permissionDenied: 'Permission Denied',
+        cameraRequired: 'Camera access is required',
+        galleryRequired: 'Photo library access is required',
+        locationRequired: 'Location access is required',
+        notFound: 'Not found',
+
+        // Validation
+        required: '{{field}} is required',
+        invalidPhone: 'Please enter a valid phone number',
+        invalidEmail: 'Please enter a valid email address',
+        invalidVin: 'Please enter a valid 17-character VIN',
+        passwordShort: 'Password must be at least 6 characters',
+        passwordMismatch: 'Passwords do not match',
     },
 
 
@@ -211,6 +243,7 @@ export const en = {
         invalidEmail: 'Please enter a valid email address',
         registrationFailedRetry: 'Registration failed. Please try again.',
         emailAddress: 'Email Address',
+        emailPlaceholder: 'name@company.qa',
         phoneHint: 'Enter your phone number to log in',
         passwordHint: 'Enter your password',
         showPassword: 'Show password',
@@ -218,6 +251,15 @@ export const en = {
         registrationSuccess: 'Registration Successful!',
         accountCreated: 'Your account has been created successfully!',
         getStarted: 'Get Started',
+        // Verify OTP
+        emailVerification: 'Verify Your Email',
+        enterCodeSentTo: 'We sent a 6-digit code to',
+        codeExpiresIn: 'Code expires in',
+        codeExpired: 'Code expired - Please request a new one',
+        verifying: 'Verifying...',
+        resendCode: 'Resend Code',
+        resendWait: 'Please wait {{seconds}}s',
+        wrongEmail: 'Wrong email? Go back and change it',
     },
 
     // =============================================
@@ -231,7 +273,9 @@ export const en = {
         support: 'Support',
         myVehicles: 'My Vehicles',
         settings: 'Settings',
+
         newRequest: 'New Request',
+        whatsappGreeting: 'Hi QScrap Support',
     },
 
     // =============================================
@@ -332,6 +376,22 @@ export const en = {
             satellite: 'Satellite',
             map: 'Map',
         },
+        labels: {
+            home: 'Home',
+            office: 'Office',
+            work: 'Work',
+            other: 'Other'
+        },
+        zones: {
+            alSadd: 'Al Sadd',
+            thePearl: 'The Pearl',
+            westBay: 'West Bay',
+            lusail: 'Lusail',
+            alWakra: 'Al Wakra',
+            alRayyan: 'Al Rayyan',
+            alDuhail: 'Al Duhail',
+            industrialArea: 'Industrial Area'
+        }
     },
 
     // =============================================
@@ -875,7 +935,15 @@ export const en = {
         whatsappSubtitle: 'Get fast, personal support from our team',
         startChat: 'Start Chat',
         quickHelp: 'Quick Help Options',
+
         generalInquiry: 'General Inquiry',
+        generalInquiryPrefix: 'Hi QScrap! I have a question: ',
+        orderHelpPrefix: 'Hi QScrap! I need help with my order: ',
+        paymentIssuePrefix: 'Hi QScrap! I have a payment issue: ',
+        complaintPrefix: 'Hi QScrap! I would like to report an issue: ',
+        followUpPrefix: 'Hi QScrap! I have a follow-up on my support ticket "{{subject}}" (ID: {{id}}): ',
+        startChatPrefix: 'Hi QScrap! ',
+
         generalDesc: 'Questions about QScrap services',
         orderHelp: 'Order Help',
         orderHelpDesc: 'Issues with your current order',
@@ -1131,26 +1199,8 @@ export const en = {
     // ERRORS
     // =============================================
 
-    errors: {
-        network: 'No internet connection',
-        networkRetry: 'Please check your connection and try again',
-        server: 'Server error. Please try again.',
-        unknown: 'Something went wrong',
-        required: '{{field}} is required',
-        invalidPhone: 'Please enter a valid phone number',
-        invalidEmail: 'Please enter a valid email address',
-        invalidVin: 'Please enter a valid 17-character VIN',
-        passwordShort: 'Password must be at least 6 characters',
-        passwordMismatch: 'Passwords do not match',
-        permissionDenied: 'Permission Denied',
-        cameraRequired: 'Camera access is required',
-        galleryRequired: 'Photo library access is required',
-        locationRequired: 'Location access is required',
-        sessionExpired: 'Session expired. Please login again.',
-        notFound: 'Not found',
-        timeout: 'Request timed out',
-        loadFailed: 'Failed to load data',
-    },
+    // Errors moved to existing key or merged
+    // errors: { ... } - Duplicate removed
 
     // =============================================
     // ALERTS & DIALOGS

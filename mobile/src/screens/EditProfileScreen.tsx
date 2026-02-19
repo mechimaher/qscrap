@@ -97,10 +97,9 @@ export default function EditProfileScreen() {
             if (response.ok) {
                 // Refresh user data in AuthContext so ProfileScreen shows updated name
                 await refreshUser();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(t('common.success'), t('profile.profileUpdated'), [
-                    { text: t('common.ok'), onPress: () => navigation.goBack() }
-                ]);
+                // Success feedback via Toast (Non-blocking)
+                toast.success(t('common.success'), t('profile.profileUpdated'));
+                navigation.goBack();
             } else {
                 throw new Error(data.error || data.message || t('profile.updateFailed'));
             }
@@ -147,8 +146,8 @@ export default function EditProfileScreen() {
             });
 
             if (response.ok) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(t('common.success'), t('profile.passwordChanged'));
+                // Success feedback via Toast (Non-blocking)
+                toast.success(t('common.success'), t('profile.passwordChanged'));
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');

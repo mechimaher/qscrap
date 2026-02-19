@@ -26,6 +26,7 @@ import { StripeProvider, CardField, useStripe } from '@stripe/stripe-react-nativ
 import { Colors, FontSizes, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage as useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import { api } from '../services/api';
 import { API_BASE_URL } from '../config/api';
@@ -539,7 +540,7 @@ export default function PaymentScreen() {
                 {/* Header */}
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-                        <Text style={styles.backText}>← {t('common.cancel')}</Text>
+                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
                         {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
@@ -574,15 +575,15 @@ export default function PaymentScreen() {
                             {/* Price Breakdown - Elegant */}
                             <View style={styles.vvipDivider} />
 
-                            <View style={styles.vvipPriceRow}>
+                            <View style={[styles.vvipPriceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Text style={styles.vvipPriceLabel}>{t('order.partPrice')}</Text>
                                 <Text style={styles.vvipPriceValue}>{partPrice.toFixed(0)} {t('common.currency')}</Text>
                             </View>
-                            <View style={styles.vvipPriceRow}>
+                            <View style={[styles.vvipPriceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Text style={styles.vvipPriceLabel}>{t('order.deliveryFee')}</Text>
                                 <Text style={styles.vvipPriceValue}>{deliveryFee.toFixed(0)} {t('common.currency')}</Text>
                             </View>
-                            <View style={[styles.vvipPriceRow, { marginTop: Spacing.sm }]}>
+                            <View style={[styles.vvipPriceRow, { marginTop: Spacing.sm, flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Text style={styles.vvipTotalLabel}>{t('common.total')}</Text>
                                 <Text style={styles.vvipTotalValue}>{totalAmount.toFixed(0)} {t('common.currency')}</Text>
                             </View>
@@ -607,7 +608,7 @@ export default function PaymentScreen() {
                                 }}
                                 activeOpacity={0.85}
                             >
-                                <View style={styles.vvipPaymentLeft}>
+                                <View style={[styles.vvipPaymentLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                     <View style={[styles.vvipPaymentIcon, { backgroundColor: '#3B82F6' }]}>
                                         <Ionicons name="car-sport" size={20} color="#fff" />
                                     </View>
@@ -637,7 +638,7 @@ export default function PaymentScreen() {
                                 }}
                                 activeOpacity={0.85}
                             >
-                                <View style={styles.vvipPaymentLeft}>
+                                <View style={[styles.vvipPaymentLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                     <View style={[styles.vvipPaymentIcon, { backgroundColor: '#22C55E' }]}>
                                         <Ionicons name="card" size={20} color="#fff" />
                                     </View>
@@ -661,7 +662,7 @@ export default function PaymentScreen() {
                                 styles.vvipLoyaltyCard,
                                 freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
                             ]}>
-                                <View style={styles.vvipLoyaltyRow}>
+                                <View style={[styles.vvipLoyaltyRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                     <View style={styles.vvipLoyaltyLeft}>
                                         <Ionicons name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'} size={28} color={loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0'} />
                                         <View>
@@ -760,7 +761,7 @@ export default function PaymentScreen() {
                                 />
                             </View>
 
-                            <View style={styles.cardSecurityRow}>
+                            <View style={[styles.cardSecurityRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Ionicons name="lock-closed" size={16} color="#22c55e" />
                                 <Text style={[styles.securityText, { color: colors.textSecondary }]}>
                                     {t('payment.cardSecure')}

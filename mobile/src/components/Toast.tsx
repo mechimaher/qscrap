@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
     View,
     Text,
@@ -58,6 +59,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setToast(config);
         setVisible(true);
+
+        // Premium Tactile Feedback
+        if (config.type === 'success') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else if (config.type === 'error') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } else if (config.type === 'warning') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        } else {
+            Haptics.selectionAsync();
+        }
 
         // Animate in
         Animated.parallel([
@@ -276,7 +288,7 @@ const styles = StyleSheet.create({
         minHeight: 56,
     },
     icon: {
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     textContainer: {
         flex: 1,
@@ -292,7 +304,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     actionButton: {
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -304,7 +316,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     closeButton: {
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
         padding: Spacing.xs,
     },
 });

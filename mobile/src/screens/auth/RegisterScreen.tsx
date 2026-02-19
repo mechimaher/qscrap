@@ -87,7 +87,7 @@ export default function RegisterScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
             // Navigate to OTP verification screen
-            navigation.navigate('VerifyOTP' as any, {
+            navigation.navigate('VerifyOTP', {
                 email: email.toLowerCase().trim(),
                 full_name: name,
                 phone_number: phone,
@@ -119,7 +119,7 @@ export default function RegisterScreen() {
                     {/* Header */}
                     <View style={[styles.header, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                            <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -160,7 +160,7 @@ export default function RegisterScreen() {
                             <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.emailAddress')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder="name@company.qa"
+                                placeholder={t('auth.emailPlaceholder')}
                                 placeholderTextColor="#999"
                                 value={email}
                                 onChangeText={setEmail}
@@ -174,7 +174,7 @@ export default function RegisterScreen() {
                             <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.phoneNumber')}</Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder="+974 XXXX XXXX"
+                                placeholder={t('auth.phonePlaceholder')}
                                 placeholderTextColor="#999"
                                 value={phone}
                                 onChangeText={setPhone}

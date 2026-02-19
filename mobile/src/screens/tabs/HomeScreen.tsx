@@ -56,6 +56,7 @@ const HomeSkeletonLoading = () => {
     const { width } = Dimensions.get('window');
     const shimmerAnim = useRef(new Animated.Value(0)).current;
     const { colors } = useTheme();
+    const { isRTL } = useTranslation();
 
     useEffect(() => {
         Animated.loop(
@@ -80,7 +81,7 @@ const HomeSkeletonLoading = () => {
         <View style={styles.skeletonContainer}>
             <SkeletonBox style={styles.skeletonHero} />
             <SkeletonBox style={styles.skeletonCTA} />
-            <View style={styles.skeletonStatsRow}>
+            <View style={[styles.skeletonStatsRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <SkeletonBox style={[styles.skeletonStatCard, { width: cardWidth }]} />
                 <SkeletonBox style={[styles.skeletonStatCard, { width: cardWidth }]} />
             </View>

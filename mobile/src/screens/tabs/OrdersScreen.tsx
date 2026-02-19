@@ -231,11 +231,12 @@ const PremiumOrderCard = ({
                     <View style={styles.cardContent}>
                         {/* Header: Order Number + Status */}
                         <View style={[styles.cardHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <View style={styles.orderInfo}>
+                            <View style={[styles.orderInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Animated.View style={[
                                     styles.orderIconBg,
                                     { backgroundColor: statusConfig.bg },
-                                    isInTransit && { opacity: pulseOpacity }
+                                    isInTransit && { opacity: pulseOpacity },
+                                    isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }
                                 ]}>
                                     <Ionicons name={statusConfig.icon} size={20} color={statusConfig.color} />
                                 </Animated.View>

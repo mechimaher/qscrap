@@ -221,12 +221,12 @@ export default function OrderDetailScreen() {
             try {
                 const invoiceResponse = await api.request(`/documents/invoice/${order.order_id}`, {
                     method: 'POST',
-                });
+                }) as any;
                 documentId = invoiceResponse.document?.document_id || invoiceResponse.document_id;
             } catch (err: any) {
                 // If invoice already exists, fetch existing documents
                 if (err.message?.includes('already exists') || err.message?.includes('409')) {
-                    const docsResponse = await api.request(`/documents/order/${order.order_id}`);
+                    const docsResponse = await api.request(`/documents/order/${order.order_id}`) as any;
                     documentId = docsResponse.documents?.find((d: any) => d.document_type === 'invoice')?.document_id;
                 } else {
                     throw err;
@@ -528,7 +528,7 @@ export default function OrderDetailScreen() {
                                 garageName: order.garage_name,
                                 partPrice: order.part_price,
                                 deliveryFee: order.delivery_fee,
-                                partDescription: order.part_description || 'Part',
+                                partDescription: order.part_description || t('common.part'),
                                 orderId: order.order_id, // Pass existing order ID to resume payment
                             });
                         }}

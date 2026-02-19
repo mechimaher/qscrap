@@ -14,7 +14,7 @@ const ShimmerPlaceholder: React.FC<{ style?: any }> = ({ style }) => {
         const animation = Animated.loop(
             Animated.timing(animatedValue, {
                 toValue: 1,
-                duration: 1500,
+                duration: 1000, // Faster, snappier feel (Premium Standard)
                 useNativeDriver: true,
             })
         );

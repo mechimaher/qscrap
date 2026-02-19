@@ -251,13 +251,14 @@ function AuthNavigator() {
 
 // Root Navigator with all screens
 function RootNavigator() {
+  const { t } = useLanguage();
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>QScrap</Text>
+        <Text style={styles.loadingText}>{t('common.appName')}</Text>
       </View>
     );
   }

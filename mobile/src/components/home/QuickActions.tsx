@@ -91,7 +91,7 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                     emoji="chatbubble-ellipses-outline"
                     label={t('nav.support')}
                     bgColor="#FFF3E0"
-                    onPress={() => Linking.openURL(`https://wa.me/${CONTACT.SUPPORT_PHONE_RAW}?text=Hi%20QScrap%20Support`)}
+                    onPress={() => Linking.openURL(`https://wa.me/${CONTACT.SUPPORT_PHONE_RAW}?text=${encodeURIComponent(t('nav.whatsappGreeting'))}`)}
                 />
                 <ActionButton
                     emoji="settings-outline"

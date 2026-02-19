@@ -331,7 +331,7 @@ const ActiveRequestCard = ({
                                             styles.timerBadge,
                                             { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '15' }
                                         ]}>
-                                            <Text style={styles.timerIcon}>⏱</Text>
+                                            <Ionicons name="time-outline" size={12} color={getUrgencyColor(timeRemaining.urgency)} style={{ marginRight: 4 }} />
                                             <Text style={[
                                                 styles.timerText,
                                                 { color: getUrgencyColor(timeRemaining.urgency) }

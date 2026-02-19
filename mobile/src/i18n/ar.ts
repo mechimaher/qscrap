@@ -49,6 +49,8 @@ export const ar = {
         add: 'إضافة',
         remove: 'إزالة',
         view: 'عرض',
+        doha: 'الدوحة',
+        qatar: 'قطر',
         viewAll: 'عرض الكل',
         seeAll: 'مشاهدة الكل',
         more: 'المزيد',
@@ -112,16 +114,46 @@ export const ar = {
         unexpectedError: 'حدث خطأ غير متوقع',
         invalidDate: 'تاريخ غير صالح',
         invalidTime: 'وقت غير صالح',
+        time_short: {
+            m: 'د',
+            h: 'س',
+            d: 'ي',
+            now: 'الآن',
+            ago: 'منذ'
+        },
     },
 
     // =============================================
     // ERRORS - رسائل الخطأ
     // =============================================
     errors: {
+        // Entity Errors
         requestNotFound: 'الطلب غير موجود',
         orderNotFound: 'الطلبية غير موجودة',
         vehicleNotFound: 'المركبة غير موجودة',
         addressNotFound: 'العنوان غير موجود',
+
+        // Network & System
+        network: 'لا يوجد اتصال بالإنترنت',
+        networkRetry: 'يرجى التحقق من الاتصال والمحاولة مرة أخرى',
+        server: 'خطأ في الخادم. يرجى المحاولة مرة أخرى.',
+        unknown: 'حدث خطأ ما',
+        timeout: 'انتهت مهلة الطلب',
+        loadFailed: 'فشل تحميل البيانات',
+        sessionExpired: 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
+        permissionDenied: 'تم رفض الإذن',
+        cameraRequired: 'الوصول للكاميرا مطلوب',
+        galleryRequired: 'الوصول لمكتبة الصور مطلوب',
+        locationRequired: 'الوصول للموقع مطلوب',
+        notFound: 'غير موجود',
+
+        // Validation
+        required: '{{field}} مطلوب',
+        invalidPhone: 'يرجى إدخال رقم هاتف صحيح',
+        invalidEmail: 'يرجى إدخال بريد إلكتروني صحيح',
+        invalidVin: 'يرجى إدخال رقم شاسيه صحيح مكون من 17 حرف',
+        passwordShort: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+        passwordMismatch: 'كلمات المرور غير متطابقة',
     },
 
 
@@ -212,6 +244,7 @@ export const ar = {
         invalidEmail: 'يرجى إدخال بريد إلكتروني صحيح',
         registrationFailedRetry: 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
         emailAddress: 'البريد الإلكتروني',
+        emailPlaceholder: 'name@company.qa',
         phoneHint: 'أدخل رقم هاتفك لتسجيل الدخول',
         passwordHint: 'أدخل كلمة المرور',
         showPassword: 'إظهار كلمة المرور',
@@ -219,6 +252,15 @@ export const ar = {
         registrationSuccess: 'تم التسجيل بنجاح!',
         accountCreated: 'تم إنشاء حسابك بنجاح!',
         getStarted: 'ابدأ الآن',
+        // Verify OTP
+        emailVerification: 'تحقق من بريدك الإلكتروني',
+        enterCodeSentTo: 'أرسلنا رمزاً مكوناً من 6 أرقام إلى',
+        codeExpiresIn: 'تنتهي صلاحية الرمز خلال',
+        codeExpired: 'انتهت صلاحية الرمز - يرجى طلب رمز جديد',
+        verifying: 'جاري التحقق...',
+        resendCode: 'إعادة إرسال الرمز',
+        resendWait: 'يرجى الانتظار {{seconds}} ثانية',
+        wrongEmail: 'البريد خاطئ؟ ارجع وقم بتغييره',
     },
 
     // =============================================
@@ -232,7 +274,9 @@ export const ar = {
         support: 'الدعم',
         myVehicles: 'سياراتي',
         settings: 'الإعدادات',
+
         newRequest: 'طلب جديد',
+        whatsappGreeting: 'مرحباً دعم كيو سكراب',
     },
 
     // =============================================
@@ -333,6 +377,22 @@ export const ar = {
             satellite: 'قمر صناعي',
             map: 'خريطة',
         },
+        labels: {
+            home: 'المنزل',
+            office: 'المكتب',
+            work: 'العمل',
+            other: 'أخرى'
+        },
+        zones: {
+            alSadd: 'السد',
+            thePearl: 'اللؤلؤة',
+            westBay: 'الدفنة',
+            lusail: 'لوسيل',
+            alWakra: 'الوكرة',
+            alRayyan: 'الريان',
+            alDuhail: 'الدحيل',
+            industrialArea: 'المنطقة الصناعية'
+        }
     },
 
     // =============================================
@@ -876,7 +936,15 @@ export const ar = {
         whatsappSubtitle: 'احصل على دعم سريع وشخصي من فريقنا',
         startChat: 'بدء المحادثة',
         quickHelp: 'خيارات المساعدة السريعة',
+
         generalInquiry: 'استفسار عام',
+        generalInquiryPrefix: 'مرحباً كيو سكراب! لدي سؤال: ',
+        orderHelpPrefix: 'مرحباً كيو سكراب! أحتاج مساعدة بخصوص طلبي: ',
+        paymentIssuePrefix: 'مرحباً كيو سكراب! لدي مشكلة في الدفع: ',
+        complaintPrefix: 'مرحباً كيو سكراب! أود الإبلاغ عن مشكلة: ',
+        followUpPrefix: 'مرحباً كيو سكراب! لدي متابعة بخصوص تذكرة الدعم "{{subject}}" (ID: {{id}}): ',
+        startChatPrefix: 'مرحباً كيو سكراب! ',
+
         generalDesc: 'أسئلة حول خدمات كيو سكراب',
         orderHelp: 'مساعدة الطلب',
         orderHelpDesc: 'مشاكل مع طلبك الحالي',
@@ -1132,26 +1200,8 @@ export const ar = {
     // ERRORS - الأخطاء
     // =============================================
 
-    errors: {
-        network: 'لا يوجد اتصال بالإنترنت',
-        networkRetry: 'يرجى التحقق من الاتصال والمحاولة مرة أخرى',
-        server: 'خطأ في الخادم. يرجى المحاولة مرة أخرى.',
-        unknown: 'حدث خطأ ما',
-        required: '{{field}} مطلوب',
-        invalidPhone: 'يرجى إدخال رقم هاتف صحيح',
-        invalidEmail: 'يرجى إدخال بريد إلكتروني صحيح',
-        invalidVin: 'يرجى إدخال رقم شاسيه صحيح مكون من 17 حرف',
-        passwordShort: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
-        passwordMismatch: 'كلمات المرور غير متطابقة',
-        permissionDenied: 'تم رفض الإذن',
-        cameraRequired: 'الوصول للكاميرا مطلوب',
-        galleryRequired: 'الوصول لمكتبة الصور مطلوب',
-        locationRequired: 'الوصول للموقع مطلوب',
-        sessionExpired: 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
-        notFound: 'غير موجود',
-        timeout: 'انتهت مهلة الطلب',
-        loadFailed: 'فشل تحميل البيانات',
-    },
+    // Errors moved to existing key or merged
+    // errors: { ... } - Duplicate removed
 
     // =============================================
     // ALERTS & DIALOGS - التنبيهات والحوارات

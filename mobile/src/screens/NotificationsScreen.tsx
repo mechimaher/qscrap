@@ -141,10 +141,10 @@ export default function NotificationsScreen() {
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
 
-        // Use localized time labels
-        if (minutes < 60) return `${minutes}m`;
-        if (hours < 24) return `${hours}h`;
-        return `${days}d`;
+        if (minutes < 1) return t('common.time_short.now');
+        if (minutes < 60) return `${minutes}${t('common.time_short.m')}`;
+        if (hours < 24) return `${hours}${t('common.time_short.h')}`;
+        return `${days}${t('common.time_short.d')}`;
     };
 
     const renderNotification = ({ item }: { item: AppNotification }) => (

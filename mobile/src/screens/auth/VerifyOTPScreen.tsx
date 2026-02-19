@@ -14,20 +14,24 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { Ionicons } from '@expo/vector-icons';
+import { AuthStackParamList } from '../../../App';
+import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+
+type VerifyOTPScreenProps = NativeStackScreenProps<AuthStackParamList, 'VerifyOTP'>;
 
 export default function VerifyOTPScreen() {
-    const navigation = useNavigation<any>();
-    const route = useRoute<any>();
+    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+    const route = useRoute<VerifyOTPScreenProps['route']>();
     const { refreshUser } = useAuth();
 
     const { email, full_name, phone_number, password } = route.params;
-    const { t } = useTranslation();
+    const { t, isRTL } = useTranslation();
 
     const [otp, setOTP] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(600); // 10 minutes
@@ -87,7 +91,7 @@ export default function VerifyOTPScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         try {
-            const result = await api.verifyEmailOTP({
+            await api.verifyEmailOTP({
                 email,
                 otp: otpCode,
                 full_name,
@@ -168,23 +172,24 @@ export default function VerifyOTPScreen() {
                 style={styles.keyboardView}
             >
                 {/* Header */}
-                <View style={styles.header}>
+                <View style={[styles.header, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Text style={styles.backText}>← Back</Text>
+                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.theme.text} />
+                        <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Content */}
                 <View style={styles.content}>
                     <Ionicons name="mail-outline" size={64} color="#fff" style={{ marginBottom: Spacing.md }} />
-                    <Text style={styles.title}>Verify Your Email</Text>
+                    <Text style={styles.title}>{t('auth.emailVerification')}</Text>
                     <Text style={styles.subtitle}>
-                        We sent a 6-digit code to{'\n'}
+                        {t('auth.enterCodeSentTo')}{'\n'}
                         <Text style={styles.email}>{email}</Text>
                     </Text>
 
                     {/* OTP Input */}
-                    <View style={styles.otpContainer}>
+                    <View style={[styles.otpContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                         {otp.map((digit, index) => (
                             <TextInput
                                 key={index}
@@ -207,17 +212,17 @@ export default function VerifyOTPScreen() {
                     {/* Timer */}
                     <Text style={[styles.timer, timer === 0 && styles.timerExpired]}>
                         {timer > 0 ? (
-                            <>Code expires in {formatTime(timer)}</>
+                            <>{t('auth.codeExpiresIn')} {formatTime(timer)}</>
                         ) : (
-                            <>Code expired - Please request a new one</>
+                            <>{t('auth.codeExpired')}</>
                         )}
                     </Text>
 
                     {/* Verify Button */}
                     {isVerifying && (
-                        <View style={styles.verifyingContainer}>
+                        <View style={[styles.verifyingContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <ActivityIndicator color={Colors.primary} size="small" />
-                            <Text style={styles.verifyingText}>Verifying...</Text>
+                            <Text style={styles.verifyingText}>{t('auth.verifying')}</Text>
                         </View>
                     )}
 
@@ -231,7 +236,7 @@ export default function VerifyOTPScreen() {
                             <ActivityIndicator color="#fff" size="small" />
                         ) : (
                             <Text style={styles.resendText}>
-                                {canResend ? 'Resend Code' : 'Please wait 30s'}
+                                {canResend ? t('auth.resendCode') : t('auth.resendWait', { seconds: 30 })}
                             </Text>
                         )}
                     </TouchableOpacity>
@@ -243,7 +248,7 @@ export default function VerifyOTPScreen() {
                             navigation.goBack();
                         }}
                     >
-                        <Text style={styles.helpText}>Wrong email? Go back and change it</Text>
+                        <Text style={styles.helpText}>{t('auth.wrongEmail')}</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -264,10 +269,12 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.md,
     },
     backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
         padding: Spacing.sm,
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
         borderRadius: BorderRadius.md,
-        alignSelf: 'flex-start',
+        gap: Spacing.xs,
     },
     backText: {
         color: '#ffffff',
@@ -279,10 +286,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.xl,
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    titleEmoji: {
-        fontSize: 64,
-        marginBottom: Spacing.md,
     },
     title: {
         fontSize: FontSizes.xxl + 4,
@@ -302,7 +305,6 @@ const styles = StyleSheet.create({
         color: Colors.secondary,
     },
     otpContainer: {
-        flexDirection: 'row',
         justifyContent: 'center',
         marginBottom: Spacing.lg,
         gap: Spacing.sm,
@@ -335,7 +337,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     verifyingContainer: {
-        flexDirection: 'row',
         alignItems: 'center',
         marginBottom: Spacing.md,
         gap: Spacing.sm,

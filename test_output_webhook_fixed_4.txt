@@ -1,0 +1,205 @@
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /home/user/qscrap.qa/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+  console.warn
+    [2026-02-18T14:29:57.391Z] [WARN] [node-1161231] pdfkit not installed - PDF generation disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at Object.<anonymous> (src/services/subscription/invoice.service.ts:16:12)
+      at Object.<anonymous> (src/controllers/subscription.controller.ts:148:1)
+      at Object.<anonymous> (src/routes/subscription.routes.ts:2:1)
+      at Object.<anonymous> (src/routes/v1.routes.ts:23:1)
+      at Object.<anonymous> (src/app.ts:6:1)
+      at Object.<anonymous> (tests/contract/webhook-flows.test.ts:3:1)
+
+  console.warn
+    [2026-02-18T14:29:57.485Z] [WARN] [node-1161231] Twilio not configured - SMS notifications disabled
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at new SMSService (src/services/sms.service.ts:28:20)
+      at Object.<anonymous> (src/services/sms.service.ts:97:27)
+      at Object.<anonymous> (src/services/cancellation/cancellation.service.ts:33:1)
+      at Object.<anonymous> (src/services/cancellation/index.ts:1:1)
+      at Object.<anonymous> (src/controllers/cancellation.controller.ts:3:1)
+      at Object.<anonymous> (src/routes/cancellation.routes.ts:2:1)
+      at Object.<anonymous> (src/routes/v1.routes.ts:24:1)
+      at Object.<anonymous> (src/app.ts:6:1)
+      at Object.<anonymous> (tests/contract/webhook-flows.test.ts:3:1)
+
+  console.log
+    [2026-02-18T14:29:58.385Z] [INFO] [node-1161231] Feature flags initialized {"count":3}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:58.406Z] [INFO] [node-1161231] Payment provider initialized {"provider":"mock"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:58.664Z] [INFO] [node-1161231] OpenAPI spec loaded: 301 paths, 332 operations
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.018Z] [INFO] [node-1161231] ✅ Swagger UI available at /api/docs initialized
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.520Z] [DEBUG] [node-1161231] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.626Z] [INFO] [node-1161231] Request started {"requestId":"9684b966-35de-4fe9-b053-435747178e56","method":"POST","path":"/api/stripe/webhook"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.638Z] [INFO] [node-1161231] Stripe webhook received {"eventType":"payment_intent.succeeded","eventId":"evt_test_123"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.642Z] [INFO] [node-1161231] Payment succeeded {"intentId":"pi_1771424999584"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.671Z] [INFO] [node-1161231] Order confirmed via webhook {"orderId":"d86f4d3b-160d-4f2f-82f9-61440d4d20e7"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.677Z] [INFO] [node-1161231] Request completed {"requestId":"9684b966-35de-4fe9-b053-435747178e56","method":"POST","path":"/webhook","statusCode":200,"durationMs":51}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.error
+    [2026-02-18T14:29:59.680Z] [ERROR] [node-1161231] Garage notification error {"orderId":"d86f4d3b-160d-4f2f-82f9-61440d4d20e7","error":"column g.user_id does not exist"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at notifyGarageAsync (src/routes/stripe-webhook.routes.ts:445:16)
+
+  console.log
+    [2026-02-18T14:29:59.704Z] [DEBUG] [node-1161231] [DB] New client connected to pool
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.725Z] [INFO] [node-1161231] Request started {"requestId":"d067794e-b5e1-42de-b1e9-9b5afcabeea2","method":"POST","path":"/api/stripe/webhook"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.error
+    [2026-02-18T14:29:59.730Z] [ERROR] [node-1161231] Stripe signature verification failed {"error":"Invalid signature"}
+
+      66 |         switch (level) {
+      67 |             case 'error':
+    > 68 |                 console.error(formatted);
+         |                         ^
+      69 |                 break;
+      70 |             case 'warn':
+      71 |                 console.warn(formatted);
+
+      at Logger.log (src/utils/logger.ts:68:25)
+      at Logger.error (src/utils/logger.ts:91:14)
+      at src/routes/stripe-webhook.routes.ts:51:20
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at node_modules/body-parser/lib/read.js:137:5
+      at invokeCallback (node_modules/raw-body/index.js:238:16)
+      at done (node_modules/raw-body/index.js:227:7)
+      at IncomingMessage.onEnd (node_modules/raw-body/index.js:287:7)
+
+  console.warn
+    [2026-02-18T14:29:59.734Z] [WARN] [node-1161231] Request completed {"requestId":"d067794e-b5e1-42de-b1e9-9b5afcabeea2","method":"POST","path":"/webhook","statusCode":400,"durationMs":9}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at ServerResponse.<anonymous> (src/middleware/requestContext.middleware.ts:34:25)
+
+  console.log
+    [2026-02-18T14:29:59.750Z] [INFO] [node-1161231] Request started {"requestId":"b94cfb15-34bc-4b92-8912-f75193c07938","method":"POST","path":"/api/stripe/webhook"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.log
+    [2026-02-18T14:29:59.755Z] [INFO] [node-1161231] Stripe webhook received {"eventType":"payment_intent.payment_failed","eventId":"evt_fail_123"}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+  console.warn
+    [2026-02-18T14:29:59.757Z] [WARN] [node-1161231] Payment failed {"intentId":"pi_fail_1771424999740","error":"Insufficient funds"}
+
+      69 |                 break;
+      70 |             case 'warn':
+    > 71 |                 console.warn(formatted);
+         |                         ^
+      72 |                 break;
+      73 |             default:
+      74 |                 console.log(formatted);
+
+      at Logger.log (src/utils/logger.ts:71:25)
+      at Logger.warn (src/utils/logger.ts:87:14)
+      at handlePaymentFailed (src/routes/stripe-webhook.routes.ts:392:12)
+      at src/routes/stripe-webhook.routes.ts:64:27
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at node_modules/body-parser/lib/read.js:137:5
+      at invokeCallback (node_modules/raw-body/index.js:238:16)
+      at done (node_modules/raw-body/index.js:227:7)
+      at IncomingMessage.onEnd (node_modules/raw-body/index.js:287:7)
+
+  console.log
+    [2026-02-18T14:29:59.767Z] [INFO] [node-1161231] Request completed {"requestId":"b94cfb15-34bc-4b92-8912-f75193c07938","method":"POST","path":"/webhook","statusCode":200,"durationMs":17}
+
+      at Logger.log (src/utils/logger.ts:74:25)
+
+PASS tests/contract/webhook-flows.test.ts
+  Webhook Integration Flows
+    ✓ should confirm order when payment_intent.succeeded webhook is received (156 ms)
+    ✓ should reject webhook with invalid signature (17 ms)
+    ✓ should handle payment_intent.payment_failed (32 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        3.882 s, estimated 5 s
+Ran all test suites matching tests/contract/webhook-flows.test.ts.

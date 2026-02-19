@@ -50,28 +50,28 @@ const SUPPORT_OPTIONS: SupportOption[] = [
         icon: 'chatbubble-ellipses-outline',
         titleKey: 'support.generalInquiry',
         descriptionKey: 'support.generalDesc',
-        messagePrefix: 'Hi QScrap! I have a question: ',
+        messagePrefix: 'support.generalInquiryPrefix',
     },
     {
         id: 'order',
         icon: 'cube-outline',
         titleKey: 'support.orderHelp',
         descriptionKey: 'support.orderHelpDesc',
-        messagePrefix: 'Hi QScrap! I need help with my order: ',
+        messagePrefix: 'support.orderHelpPrefix',
     },
     {
         id: 'payment',
         icon: 'card-outline',
         titleKey: 'support.paymentIssue',
         descriptionKey: 'support.paymentDesc',
-        messagePrefix: 'Hi QScrap! I have a payment issue: ',
+        messagePrefix: 'support.paymentIssuePrefix',
     },
     {
         id: 'complaint',
         icon: 'warning-outline',
         titleKey: 'support.fileComplaint',
         descriptionKey: 'support.complaintDesc',
-        messagePrefix: 'Hi QScrap! I would like to report an issue: ',
+        messagePrefix: 'support.complaintPrefix',
     },
 ];
 
@@ -140,9 +140,10 @@ export default function SupportScreen() {
         fetchTickets(true);
     };
 
-    const openWhatsApp = (messagePrefix: string) => {
+    const openWhatsApp = (messagePrefixKey: string, params?: any) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+        const messagePrefix = t(messagePrefixKey as any, params) || '';
         const message = encodeURIComponent(messagePrefix);
         const url = `whatsapp://send?phone=${CONTACT.SUPPORT_PHONE}&text=${message}`;
 
@@ -167,8 +168,10 @@ export default function SupportScreen() {
     };
 
     const openTicketWhatsApp = (ticket: Ticket) => {
-        const message = `Hi QScrap! I have a follow-up on my support ticket "${ticket.subject}" (ID: ${ticket.ticket_id.slice(0, 8)}): `;
-        openWhatsApp(message);
+        openWhatsApp('support.followUpPrefix', {
+            subject: ticket.subject,
+            id: ticket.ticket_id.slice(0, 8)
+        });
     };
 
     const renderTicketCard = (ticket: Ticket) => {
@@ -333,7 +336,7 @@ export default function SupportScreen() {
 
                         <TouchableOpacity
                             style={styles.mainChatButton}
-                            onPress={() => openWhatsApp('Hi QScrap! ')}
+                            onPress={() => openWhatsApp('support.startChatPrefix')}
                             activeOpacity={0.9}
                         >
                             <Ionicons name="chatbubble-outline" size={20} color="#25D366" style={{ marginRight: Spacing.sm }} />

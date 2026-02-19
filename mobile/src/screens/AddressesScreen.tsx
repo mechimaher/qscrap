@@ -36,15 +36,16 @@ type AddressScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>
 const { width } = Dimensions.get('window');
 
 // Popular Qatar Areas for Quick-Pick
-const QATAR_ZONES = [
-    { name: 'Al Sadd', lat: 25.2632, lng: 51.5230 },
-    { name: 'The Pearl', lat: 25.3716, lng: 51.5513 },
-    { name: 'West Bay', lat: 25.3235, lng: 51.5310 },
-    { name: 'Lusail', lat: 25.4300, lng: 51.4900 },
-    { name: 'Al Wakra', lat: 25.1659, lng: 51.6036 },
-    { name: 'Al Rayyan', lat: 25.2919, lng: 51.4244 },
-    { name: 'Al Duhail', lat: 25.3100, lng: 51.4700 },
-    { name: 'Industrial Area', lat: 25.1800, lng: 51.4500 },
+// Popular Qatar Areas for Quick-Pick - Keys for localization
+const QATAR_ZONE_KEYS = [
+    { key: 'alSadd', lat: 25.2632, lng: 51.5230 },
+    { key: 'thePearl', lat: 25.3716, lng: 51.5513 },
+    { key: 'westBay', lat: 25.3235, lng: 51.5310 },
+    { key: 'lusail', lat: 25.4300, lng: 51.4900 },
+    { key: 'alWakra', lat: 25.1659, lng: 51.6036 },
+    { key: 'alRayyan', lat: 25.2919, lng: 51.4244 },
+    { key: 'alDuhail', lat: 25.3100, lng: 51.4700 },
+    { key: 'industrialArea', lat: 25.1800, lng: 51.4500 },
 ];
 
 export default function AddressBookScreen() {
@@ -156,7 +157,7 @@ export default function AddressBookScreen() {
             });
 
             const area = geocoded?.district || geocoded?.subregion || geocoded?.name || '';
-            const city = geocoded?.city || 'Doha';
+            const city = geocoded?.city || t('common.doha');
             const street = geocoded?.street || '';
             const addressStr = `${street}, ${area}, ${city}`.replace(/^, /, '').trim();
 
@@ -177,14 +178,15 @@ export default function AddressBookScreen() {
     };
 
     // Quick-Pick Zone Selection
-    const handleZoneSelect = (zone: typeof QATAR_ZONES[0]) => {
+    const handleZoneSelect = (zone: typeof QATAR_ZONE_KEYS[0]) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        const zoneName = t(`profile.zones.${zone.key}` as any);
         setSelectedLocation({
             latitude: zone.lat,
             longitude: zone.lng,
-            address: `${zone.name}, Doha, Qatar`,
+            address: `${zoneName}, ${t('common.doha')}, ${t('common.qatar')}`,
         });
-        setAddressText(`${zone.name}, Doha, Qatar`);
+        setAddressText(`${zoneName}, ${t('common.doha')}, ${t('common.qatar')}`);
         setFlowStep('details');
     };
 
@@ -278,9 +280,9 @@ export default function AddressBookScreen() {
         >
             <View style={styles.cardIcon}>
                 <Ionicons
-                    name={item.label?.toLowerCase().includes('home') ? 'home' :
-                        item.label?.toLowerCase().includes('office') ? 'business' :
-                            item.label?.toLowerCase().includes('work') ? 'briefcase' : 'location'}
+                    name={item.label?.toLowerCase().includes('home') || item.label?.includes(t('profile.labels.home')) ? 'home' :
+                        item.label?.toLowerCase().includes('office') || item.label?.includes(t('profile.labels.office')) ? 'business' :
+                            item.label?.toLowerCase().includes('work') || item.label?.includes(t('profile.labels.work')) ? 'briefcase' : 'location'}
                     size={22}
                     color={Colors.primary}
                 />
@@ -353,13 +355,13 @@ export default function AddressBookScreen() {
                     {t('profile.popularAreas')}
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {QATAR_ZONES.map((zone) => (
+                    {QATAR_ZONE_KEYS.map((zone) => (
                         <TouchableOpacity
-                            key={zone.name}
+                            key={zone.key}
                             style={[styles.zoneChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                             onPress={() => handleZoneSelect(zone)}
                         >
-                            <Text style={[styles.zoneChipText, { color: colors.text }]}>{zone.name}</Text>
+                            <Text style={[styles.zoneChipText, { color: colors.text }]}>{t(`profile.zones.${zone.key}` as any)}</Text>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -430,27 +432,30 @@ export default function AddressBookScreen() {
                         {t('profile.label')} *
                     </Text>
                     <View style={[styles.labelChips, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        {['Home', 'Office', 'Work', 'Other'].map((preset) => (
-                            <TouchableOpacity
-                                key={preset}
-                                style={[
-                                    styles.labelChip,
-                                    { backgroundColor: colors.background, borderColor: colors.border },
-                                    label === preset && styles.labelChipActive
-                                ]}
-                                onPress={() => {
-                                    Haptics.selectionAsync();
-                                    setLabel(preset);
-                                }}
-                            >
-                                <Text style={[
-                                    styles.labelChipText,
-                                    { color: label === preset ? '#fff' : colors.text }
-                                ]}>
-                                    {preset === 'Home' ? '' : preset === 'Office' ? '' : preset === 'Work' ? '' : ''}{preset}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                        {['home', 'office', 'work', 'other'].map((key) => {
+                            const presetText = t(`profile.labels.${key}` as any);
+                            return (
+                                <TouchableOpacity
+                                    key={key}
+                                    style={[
+                                        styles.labelChip,
+                                        { backgroundColor: colors.background, borderColor: colors.border },
+                                        label === presetText && styles.labelChipActive
+                                    ]}
+                                    onPress={() => {
+                                        Haptics.selectionAsync();
+                                        setLabel(presetText);
+                                    }}
+                                >
+                                    <Text style={[
+                                        styles.labelChipText,
+                                        { color: label === presetText ? '#fff' : colors.text }
+                                    ]}>
+                                        {presetText}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
                     <TextInput
                         style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}

@@ -234,7 +234,7 @@ export default function ProfileScreen() {
                             t('profile.contactUs'),
                             t('profile.chooseContact'),
                             [
-                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL(`${CONTACT.WHATSAPP_URL}?text=${encodeURIComponent(CONTACT.WHATSAPP_GREETING)}`) },
+                                { text: t('alerts.whatsapp'), onPress: () => Linking.openURL(`${CONTACT.WHATSAPP_URL}?text=${encodeURIComponent(t('nav.whatsappGreeting'))}`) },
                                 { text: t('alerts.callUs'), onPress: () => Linking.openURL(`tel:${CONTACT.SUPPORT_PHONE}`) },
                                 { text: t('alerts.emailUs'), onPress: () => Linking.openURL(`mailto:${CONTACT.SUPPORT_EMAIL}`) },
                                 { text: t('common.cancel'), style: 'cancel' }
