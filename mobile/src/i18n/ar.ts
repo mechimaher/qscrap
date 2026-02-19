@@ -1230,6 +1230,8 @@ export const ar = {
         continueToPayment: 'المتابعة للدفع',
         totalBreakdown: 'الإجمالي: {{total}} {{currency}}\n(القطعة: {{price}} {{currency}} + التوصيل: {{fee}} {{currency}})',
         chooseMethodHint: 'يمكنك اختيار طريقة الدفع في الشاشة التالية.',
+        counterAcceptedTitle: 'تم قبول العرض المقابل!',
+        counterAcceptedMsg: 'قبل الكراج عرضك بمبلغ {{price}} ر.ق. المتابعة للدفع؟',
     },
 
     // =============================================

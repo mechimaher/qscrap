@@ -120,29 +120,82 @@ export default function RequestDetailScreen() {
 
     useEffect(() => {
         if (!socket) return;
+
         const handleEvent = () => {
             log('[RequestDetail] Socket event received, refreshing...');
             loadRequestDetails();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         };
+
+        // Specific handler for when garage accepts customer's counter-offer
+        const handleCounterAccepted = async (data: any) => {
+            log('[RequestDetail] Counter offer accepted - Triggering Payment Flow', data);
+
+            // Reload data first to ensure UI reflects accepted status
+            loadRequestDetails();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            // Calculate fees for payment screen
+            let deliveryFee = 10;
+            if (request?.delivery_lat && request?.delivery_lng) {
+                try {
+                    const feeRes = await api.calculateDeliveryFee(Number(request.delivery_lat), Number(request.delivery_lng));
+                    deliveryFee = feeRes.fee || 10;
+                } catch (e) {
+                    log('Fee calc failed', e);
+                }
+            }
+
+            // Find garage name from existing bids (or default)
+            // Note: Bids might reload after this, but we try to find it in current state
+            const bid = bids.find(b => b.bid_id === data.bid_id);
+            const garageName = bid?.garage_name || t('common.garage');
+
+            Alert.alert(
+                t('alerts.counterAcceptedTitle'),
+                t('alerts.counterAcceptedMsg', { price: data.final_price }),
+                [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    {
+                        text: t('common.payNow') || 'Pay Now',
+                        onPress: () => {
+                            navigation.navigate('Payment', {
+                                bidId: data.bid_id,
+                                garageName: garageName,
+                                partPrice: Number(data.final_price),
+                                deliveryFee: deliveryFee,
+                                partDescription: request?.part_description || '',
+                                orderId: data.order_id,
+                                _cacheKey: `payment_${data.bid_id}_${Date.now()}`
+                            });
+                        }
+                    }
+                ]
+            );
+        };
+
         // Listen for all counter-offer related events
         socket.on('garage_counter_offer', handleEvent);
         socket.on('counter_offer_received', handleEvent); // Backend also emits this
-        socket.on('counter_offer_accepted', handleEvent);
+
+        // Use specific handler for acceptance
+        socket.on('counter_offer_accepted', handleCounterAccepted);
+
         socket.on('counter_offer_rejected', handleEvent);
         socket.on('bid_updated', handleEvent);
         socket.on('bid_withdrawn', handleEvent); // VVIP Fix: Now listening to bid_withdrawn
         socket.on('bid:superseded', handleEvent); // Flag workflow: corrected bid received
+
         return () => {
             socket.off('garage_counter_offer', handleEvent);
             socket.off('counter_offer_received', handleEvent);
-            socket.off('counter_offer_accepted', handleEvent);
+            socket.off('counter_offer_accepted', handleCounterAccepted);
             socket.off('counter_offer_rejected', handleEvent);
             socket.off('bid_updated', handleEvent);
             socket.off('bid_withdrawn', handleEvent);
             socket.off('bid:superseded', handleEvent);
         };
-    }, [socket, requestId]);
+    }, [socket, requestId, request, bids]); // Added request and bids to dependency array
 
     const loadRequestDetails = async () => {
         try {

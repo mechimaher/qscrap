@@ -183,7 +183,7 @@ export class NegotiationService {
             JOIN part_requests pr ON b.request_id = pr.request_id 
             WHERE b.bid_id = $1
             `, [bidId]);
-        if (result.rows.length === 0) {throw new Error('Bid not found');}
+        if (result.rows.length === 0) { throw new Error('Bid not found'); }
         return result.rows[0];
     }
 
@@ -194,20 +194,20 @@ export class NegotiationService {
             JOIN part_requests pr ON b.request_id = pr.request_id 
             WHERE b.bid_id = $1
             `, [bidId]);
-        if (result.rows.length === 0) {throw new Error('Bid not found');}
+        if (result.rows.length === 0) { throw new Error('Bid not found'); }
         return result.rows[0];
     }
 
     private verifyCustomerOwnership(bid: any, customerId: string): void {
-        if (bid.customer_id !== customerId) {throw new Error('Access denied');}
+        if (bid.customer_id !== customerId) { throw new Error('Access denied'); }
     }
 
     private verifyGarageOwnership(offer: any, garageId: string): void {
-        if (offer.garage_id !== garageId) {throw new Error('Access denied');}
+        if (offer.garage_id !== garageId) { throw new Error('Access denied'); }
     }
 
     private verifyBidStatus(bid: any): void {
-        if (bid.status !== 'pending') {throw new BidNotPendingError(bid.bid_id, bid.status);}
+        if (bid.status !== 'pending') { throw new BidNotPendingError(bid.bid_id, bid.status); }
     }
 
     private async getCurrentRound(bidId: string, client: PoolClient): Promise<number> {
@@ -220,7 +220,7 @@ export class NegotiationService {
             'SELECT counter_offer_id FROM counter_offers WHERE bid_id = $1 AND status = $2',
             [bidId, 'pending']
         );
-        if (result.rows.length > 0) {throw new Error('Pending counter-offer exists');}
+        if (result.rows.length > 0) { throw new Error('Pending counter-offer exists'); }
     }
 
     private async getCounterOfferForUpdate(counterOfferId: string, client: PoolClient): Promise<any> {
@@ -228,7 +228,7 @@ export class NegotiationService {
             'SELECT co.*, b.garage_id FROM counter_offers co JOIN bids b ON co.bid_id = b.bid_id WHERE co.counter_offer_id = $1 FOR UPDATE',
             [counterOfferId]
         );
-        if (result.rows.length === 0) {throw new Error('Counter-offer not found');}
+        if (result.rows.length === 0) { throw new Error('Counter-offer not found'); }
         return result.rows[0];
     }
 
@@ -247,7 +247,7 @@ export class NegotiationService {
 
         // 3. Get request details for order creation
         const reqResult = await client.query('SELECT * FROM part_requests WHERE request_id = $1', [bid.request_id]);
-        if (reqResult.rows.length === 0) {throw new Error('Request not found');}
+        if (reqResult.rows.length === 0) { throw new Error('Request not found'); }
         const request = reqResult.rows[0];
 
         // 4. Calculate commission
@@ -289,8 +289,8 @@ export class NegotiationService {
             INSERT INTO orders
             (request_id, bid_id, customer_id, garage_id, part_price, commission_rate,
                 platform_fee, delivery_fee, total_amount, garage_payout_amount,
-                payment_method, delivery_address)
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                payment_method, delivery_address, order_status)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending_payment')
             RETURNING order_id, order_number
             `, [bid.request_id, offer.bid_id, customerId, bid.garage_id, partPrice, commissionRate,
             platformFee, deliveryFee, totalAmount, garagePayout, 'cash',
@@ -311,7 +311,7 @@ export class NegotiationService {
         await client.query(`
             INSERT INTO order_status_history
             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-        VALUES($1, NULL, 'confirmed', $2, 'customer', 'Order created from accepted counter-offer')
+        VALUES($1, NULL, 'pending_payment', $2, 'customer', 'Order created from accepted counter-offer - Awaiting Payment')
         `, [order.order_id, customerId]);
 
         // 10. Notify both parties about accepted counter-offer

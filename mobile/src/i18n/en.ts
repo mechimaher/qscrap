@@ -1229,6 +1229,8 @@ export const en = {
         continueToPayment: 'Continue to Payment',
         totalBreakdown: 'Total: {{total}} {{currency}}\n(Part: {{price}} {{currency}} + Delivery: {{fee}} {{currency}})',
         chooseMethodHint: 'You can choose payment method on the next screen.',
+        counterAcceptedTitle: 'Counter-Offer Accepted!',
+        counterAcceptedMsg: 'Garage accepted your offer of {{price}} QAR. Proceed to payment?',
     },
 
     // =============================================

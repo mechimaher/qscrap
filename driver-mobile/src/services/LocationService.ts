@@ -7,6 +7,10 @@ const LOCATION_TASK_NAME = 'background-location-task';
 
 // Define the background task in global scope
 // Define the background task in global scope
+// Define the background task in global scope
+let lastUpdateTimestamp = 0;
+const MIN_UPDATE_INTERVAL = 30 * 1000; // 30 seconds
+
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {
         console.error('[LocationService] Background task error:', error);
@@ -16,6 +20,14 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         const { locations } = data as { locations: Location.LocationObject[] };
         const location = locations[0];
         if (location) {
+            // THROTTLING: Ignore updates if too frequent
+            const now = Date.now();
+            if (now - lastUpdateTimestamp < MIN_UPDATE_INTERVAL) {
+                // Too soon, skip this update
+                return;
+            }
+            lastUpdateTimestamp = now;
+
             try {
                 // Use offline queue for guaranteed delivery
                 await offlineQueue.enqueue(

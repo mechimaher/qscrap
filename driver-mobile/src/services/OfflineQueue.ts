@@ -109,12 +109,19 @@ class OfflineQueueService {
                     body: JSON.stringify(bodyToSend)
                 });
 
-
                 // Success: remove from queue
                 this.queue.shift();
                 this.saveQueue();
             } catch (err: any) {
-                console.error(`[OfflineQueue] Failed Failed ${req.endpoint}:`, err.message || err);
+                console.error(`[OfflineQueue] Failed ${req.endpoint}:`, err.message || err);
+
+                // THROTTLING: Handle 429 Too Many Requests
+                if (err.message && err.message.includes('429')) {
+                    console.warn('[OfflineQueue] Rate limit hit (429), pausing queue for 60s');
+                    // Wait 60 seconds before retrying THIS same request
+                    await new Promise(resolve => setTimeout(resolve, 60000));
+                    continue; // Loop again to retry the same request
+                }
 
                 // If it's a 4xx error (client error), we should probably drop it 
                 // as retrying won't fix a bad request (e.g. invalid status transition)

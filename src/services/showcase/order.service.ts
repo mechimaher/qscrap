@@ -102,12 +102,11 @@ export class ShowcaseOrderService {
 
             // Create order
             const orderResult = await client.query(`
-                INSERT INTO orders 
                 (customer_id, garage_id, request_id, bid_id, order_status,
                  part_price, delivery_fee, platform_fee, total_amount,
                  garage_payout_amount, payment_method, delivery_notes,
                  delivery_zone_id, source)
-                VALUES ($1, $2, $3, $4, 'confirmed', $5, $6, $7, $8, $9, $10, $11, $12, 'showcase')
+                VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6, $7, $8, $9, $10, $11, $12, 'showcase')
                 RETURNING order_id, order_number
             `, [
                 customerId, part.garage_id, request_id, bid_id,
