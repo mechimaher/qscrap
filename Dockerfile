@@ -24,6 +24,7 @@ FROM node:20-alpine
 # Upgrade all packages first to get latest security patches (OpenSSL 3.3.6+)
 RUN apk upgrade --no-cache && \
     apk add --no-cache \
+    curl \
     chromium \
     nss \
     freetype \
