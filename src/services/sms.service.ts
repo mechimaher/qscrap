@@ -41,8 +41,8 @@ class SMSService {
         }
 
         try {
-            // Type-safe dynamic import for Twilio
-            const twilio = require('twilio');
+            // Type-safe dynamic import for Twilio (CommonJS module)
+            const twilio = require('twilio') as any;
             const client = twilio(this.accountSid, this.authToken);
 
             const message = await withRetry<any>(
