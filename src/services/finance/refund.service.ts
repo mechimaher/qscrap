@@ -369,8 +369,9 @@ export class RefundService {
                     throw new Error('Stripe not configured');
                 }
 
-                const Stripe = require('stripe');
-                const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
+                // Type-safe Stripe import
+                const Stripe = require('stripe') as typeof import('stripe');
+                const stripe = new Stripe.default(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
 
                 // CRITICAL: Get actual charge amount from Stripe to avoid refunding more than was charged
                 // This handles deposit-based orders (e.g., 10 QAR Stripe deposit + 310 QAR COD)

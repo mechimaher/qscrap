@@ -206,7 +206,7 @@ export class SubscriptionService {
             logger.info('Created upgrade PaymentIntent', { paymentIntentId: paymentIntent.id, amount });
 
             return {
-                clientSecret: paymentIntent.client_secret,
+                clientSecret: paymentIntent.client_secret || '',
                 amount,
                 planName: request.plan_name
             };
