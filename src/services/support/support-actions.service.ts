@@ -499,8 +499,8 @@ export class SupportActionsService {
             let ticketMsg = `❌ **Order Cancelled**\n\n`;
             ticketMsg += `Order #${context.order.order_number}\n`;
             ticketMsg += `Reason: ${params.reason}\n`;
-            if (payoutAction) {ticketMsg += `Payout: Cancelled\n`;}
-            if (refundAction) {ticketMsg += `Refund: ${refundAction.amount} QAR initiated`;}
+            if (payoutAction) { ticketMsg += `Payout: Cancelled\n`; }
+            if (refundAction) { ticketMsg += `Refund: ${refundAction.amount} QAR initiated`; }
 
             await this.postTicketUpdate(ticketId, params.agentId, ticketMsg, client);
 
@@ -885,7 +885,7 @@ export class SupportActionsService {
             try {
                 // Type-safe Stripe import
                 const Stripe = require('stripe') as typeof import('stripe');
-                const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY, {
+                const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
                     apiVersion: '2025-12-15.clover'
                 });
 
