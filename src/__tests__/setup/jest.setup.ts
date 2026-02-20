@@ -117,13 +117,7 @@ jest.mock('../services/storage.service', () => ({
 // Mock VIN service
 jest.mock('../services/vin.service', () => ({
     vinService: {
-        decodeVIN: jest.fn().mockResolvedValue({
-            make: 'Toyota',
-            model: 'Camry',
-            year: 2022,
-            trim: 'LE',
-            engine: '2.5L 4-Cylinder'
-        }),
+        isValid: jest.fn().mockReturnValue(true),
         extractVINFromPhoto: jest.fn().mockResolvedValue('1HGBH41JXMN109186')
     }
 }));
@@ -289,4 +283,4 @@ declare global {
     }
 }
 
-export {};
+export { };
