@@ -364,7 +364,7 @@ export class RefundService {
                 manualRefundAmount = totalRefundAmount;
             } else {
                 // Initialize Stripe and process refund
-                const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+                const stripeSecretKey = process.env.STRIPE_SECRET_KEY!;
                 if (!stripeSecretKey) {
                     throw new Error('Stripe not configured');
                 }

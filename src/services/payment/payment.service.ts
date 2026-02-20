@@ -40,7 +40,7 @@ export class PaymentService {
         const type = providerType || process.env.PAYMENT_PROVIDER || 'mock';
 
         if (type === 'stripe') {
-            const secretKey = process.env.STRIPE_SECRET_KEY;
+            const secretKey = process.env.STRIPE_SECRET_KEY!;
             if (!secretKey) {
                 logger.warn('No Stripe key, falling back to Mock');
                 this.provider = new MockPaymentProvider();
