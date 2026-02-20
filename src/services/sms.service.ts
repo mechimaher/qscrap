@@ -44,7 +44,7 @@ class SMSService {
             const twilio = require('twilio');
             const client = twilio(this.accountSid, this.authToken);
 
-            const message = await withRetry(
+            const message: any = await withRetry(
                 () => client.messages.create({
                     body: options.message,
                     from: this.fromNumber,
