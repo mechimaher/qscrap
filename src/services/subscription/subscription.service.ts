@@ -174,8 +174,10 @@ export class SubscriptionService {
             }
 
             // Import Stripe (using existing test credentials)
-            const Stripe = require('stripe');
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+            const Stripe = require('stripe') as typeof import('stripe');
+            const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
+                apiVersion: '2025-12-15.clover',
+            });
 
             // Create PaymentIntent
             const paymentIntent = await stripe.paymentIntents.create({
@@ -243,8 +245,10 @@ export class SubscriptionService {
             const request = reqQuery.rows[0];
 
             // Verify payment with Stripe
-            const Stripe = require('stripe');
-            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+            const Stripe = require('stripe') as typeof import('stripe');
+            const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
+                apiVersion: '2025-12-15.clover',
+            });
             const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
             if (paymentIntent.status !== 'succeeded') {
@@ -355,8 +359,10 @@ export class SubscriptionService {
             // Cancel Stripe PaymentIntent if pending
             if (request.payment_intent_id && request.payment_status === 'pending') {
                 try {
-                    const Stripe = require('stripe');
-                    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+                    const Stripe = require('stripe') as typeof import('stripe');
+                    const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
+                        apiVersion: '2025-12-15.clover',
+                    });
                     await stripe.paymentIntents.cancel(request.payment_intent_id);
                 } catch (stripeErr) {
                     logger.warn('Could not cancel PaymentIntent (may already be cancelled)', { error: stripeErr });

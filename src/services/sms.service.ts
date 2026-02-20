@@ -41,10 +41,11 @@ class SMSService {
         }
 
         try {
-            const twilio = require('twilio');
-            const client = twilio(this.accountSid, this.authToken);
+            // Type-safe dynamic import for Twilio
+            const twilio = require('twilio') as typeof import('twilio');
+            const client = twilio.default(this.accountSid, this.authToken);
 
-            const message: any = await withRetry(
+            const message = await withRetry<any>(
                 () => client.messages.create({
                     body: options.message,
                     from: this.fromNumber,
