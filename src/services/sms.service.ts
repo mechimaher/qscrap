@@ -6,6 +6,7 @@
  */
 
 import logger from '../utils/logger';
+import { withRetry } from '../utils/retry';
 
 interface SMSOptions {
     to: string;
@@ -43,11 +44,14 @@ class SMSService {
             const twilio = require('twilio');
             const client = twilio(this.accountSid, this.authToken);
 
-            const message = await client.messages.create({
-                body: options.message,
-                from: this.fromNumber,
-                to: options.to
-            });
+            const message = await withRetry(
+                () => client.messages.create({
+                    body: options.message,
+                    from: this.fromNumber,
+                    to: options.to
+                }),
+                { label: 'twilio.sendSms' }
+            );
 
             logger.info('SMS sent', { to: options.to, messageId: message.sid });
             return { success: true, messageId: message.sid };
@@ -83,9 +87,9 @@ class SMSService {
         // Add Qatar country code if not present
         if (!cleaned.startsWith('+')) {
             if (cleaned.startsWith('974')) {
-                cleaned = `+${  cleaned}`;
+                cleaned = `+${cleaned}`;
             } else {
-                cleaned = `+974${  cleaned}`;
+                cleaned = `+974${cleaned}`;
             }
         }
 

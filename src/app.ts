@@ -100,6 +100,11 @@ const cacheControl = (req: express.Request, res: express.Response, next: express
         }
         // Add ETag support for conditional requests
         res.setHeader('Vary', 'Accept-Encoding');
+    } else if (req.method === 'GET' && req.path.startsWith('/api/')) {
+        // Short cache for GET API responses (no sensitive data)
+        // Vary by Authorization and Accept-Language for proper caching
+        res.setHeader('Cache-Control', 'private, max-age=30, must-revalidate');
+        res.setHeader('Vary', 'Authorization, Accept-Language');
     } else {
         // HTML pages: short cache with revalidation
         res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');

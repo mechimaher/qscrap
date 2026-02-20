@@ -3,6 +3,7 @@
 
 import nodemailer from 'nodemailer';
 import logger from '../utils/logger';
+import { withRetry } from '../utils/retry';
 
 interface EmailConfig {
     host: string;
@@ -69,13 +70,16 @@ export class EmailService {
      */
     async send(to: string, subject: string, html: string, text?: string): Promise<boolean> {
         try {
-            const info = await this.transporter.sendMail({
-                from: `"${this.fromName}" <${this.fromEmail}>`,
-                to,
-                subject,
-                html,
-                text: text || this.stripHtml(html)
-            });
+            const info = await withRetry(
+                () => this.transporter.sendMail({
+                    from: `"${this.fromName}" <${this.fromEmail}>`,
+                    to,
+                    subject,
+                    html,
+                    text: text || this.stripHtml(html)
+                }),
+                { label: 'nodemailer.sendMail' }
+            );
 
             logger.info('Email sent', { to, messageId: info.messageId });
             return true;
