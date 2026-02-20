@@ -46,6 +46,12 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
         return next();
     }
 
+    // SECURITY: Exempt authentication endpoints from CSRF
+    // (they use JWT tokens which are already CSRF-resistant)
+    if (req.path.startsWith('/auth/')) {
+        return next();
+    }
+
     // Skip for API calls with valid JWT (Bearer token)
     // CSRF is primarily a concern for cookie-based authentication.
     // However, for defense-in-depth, we can still enforce it for all web-originated requests.
