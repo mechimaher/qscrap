@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 
 // Versioned API Routes
@@ -13,7 +15,7 @@ import setupSwagger from './config/swagger';
 import { requestContext } from './middleware/requestContext.middleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.middleware';
 import { securityMiddleware, additionalSecurityHeaders, sanitizeRequest } from './middleware/security.middleware';
-import { validateOrigin } from './middleware/csrf.middleware';
+import { validateOrigin, ensureCsrfToken, validateCsrfToken } from './middleware/csrf.middleware';
 import { getHealth, getJobHealth, triggerJob } from './controllers/health.controller';
 
 const app = express();
@@ -29,6 +31,7 @@ app.set('trust proxy', 1); // Trust first proxy (Nginx/Cloudflare)
 // ==========================================
 app.use(securityMiddleware);
 app.use(additionalSecurityHeaders);
+app.use(cookieParser());
 
 // ==========================================
 // REQUEST CONTEXT (Request ID + Timing)
@@ -71,8 +74,12 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(sanitizeRequest);
 
 // ==========================================
-// CSRF PROTECTION (Origin Validation)
+// CSRF PROTECTION (Double-Submit Cookie)
 // ==========================================
+// Set CSRF token cookie for all requests
+app.use(ensureCsrfToken);
+// Validate CSRF token for all API state-changing requests
+app.use('/api', validateCsrfToken);
 app.use('/api', validateOrigin);
 
 // ==========================================

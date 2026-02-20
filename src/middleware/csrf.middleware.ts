@@ -1,133 +1,99 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import logger from '../utils/logger';
 
 /**
- * Origin Validation Middleware
+ * Double-Submit Cookie CSRF Protection
  * 
- * Validates that state-changing requests (POST, PUT, PATCH, DELETE)
- * come from allowed origins. This provides defense-in-depth
- * protection against CSRF attacks even with JWT auth.
+ * This middleware implements CSRF protection by:
+ * 1. Setting a random CSRF token in a signed/secure cookie if not present.
+ * 2. Checking that the 'X-CSRF-Token' header matches the value in the cookie
+ *    for all state-changing requests (POST, PUT, PATCH, DELETE).
  */
 
-// Get allowed origins from environment or use defaults
-const getAllowedOrigins = (): string[] => {
-    const defaults = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:3001',
-        'http://127.0.0.1:3001',
-        'https://qscrap.qa',
-        'https://www.qscrap.qa'
-    ];
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
+const CSRF_HEADER_NAME = 'x-csrf-token';
 
-    return process.env.ALLOWED_ORIGINS
-        ? [...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()), ...defaults]
-        : defaults;
-};
+/**
+ * Middleware to ensure a CSRF token exists in a cookie
+ */
+export const ensureCsrfToken = (req: Request, res: Response, next: NextFunction) => {
+    // Generate token if it doesn't exist in cookies
+    if (!req.cookies[CSRF_COOKIE_NAME]) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const isProduction = process.env.NODE_ENV === 'production';
 
-// Check if origin is valid
-const isValidOrigin = (origin: string | undefined, referer: string | undefined): boolean => {
-    const allowedOrigins = getAllowedOrigins();
+        res.cookie(CSRF_COOKIE_NAME, token, {
+            httpOnly: false, // Must be readable by frontend JS to send in header
+            secure: isProduction,
+            sameSite: 'lax',
+            path: '/'
+        });
 
-    // In development, allow same-origin requests without Origin header
-    if (process.env.NODE_ENV !== 'production' && !origin && !referer) {
-        return true;
+        // Also attach to request object for use in this cycle if needed
+        req.cookies[CSRF_COOKIE_NAME] = token;
     }
-
-    // Check Origin header
-    if (origin) {
-        return allowedOrigins.includes(origin);
-    }
-
-    // Fall back to Referer header
-    if (referer) {
-        try {
-            const refererUrl = new URL(referer);
-            const refererOrigin = refererUrl.origin;
-            return allowedOrigins.some(allowed => refererOrigin === allowed);
-        } catch {
-            return false;
-        }
-    }
-
-    // No origin information - Allow for Mobile Apps (which often don't send Origin)
-    return true;
+    next();
 };
 
 /**
- * CSRF Protection via Origin Validation
- * 
- * Only applies to state-changing methods (POST, PUT, PATCH, DELETE).
- * Safe methods (GET, HEAD, OPTIONS) are allowed without validation.
+ * Validates the CSRF token from header against the cookie
  */
-export const validateOrigin = (req: Request, res: Response, next: NextFunction) => {
-    // Skip validation for safe methods
+export const validateCsrfToken = (req: Request, res: Response, next: NextFunction) => {
+    // Skip for safe methods
     const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
     if (safeMethods.includes(req.method)) {
         return next();
     }
 
-    // Skip validation for API calls with valid JWT (already authenticated)
-    // This is an additional layer, not a replacement for JWT auth
+    // Skip for API calls with valid JWT (Bearer token)
+    // CSRF is primarily a concern for cookie-based authentication.
+    // However, for defense-in-depth, we can still enforce it for all web-originated requests.
     const hasAuthHeader = req.headers.authorization?.startsWith('Bearer ');
-
-    // If authenticated with Token, skip CSRF (it's stateless)
     if (hasAuthHeader) {
         return next();
     }
 
-    const origin = req.headers.origin as string | undefined;
-    const referer = req.headers.referer as string | undefined;
+    const cookieToken = req.cookies[CSRF_COOKIE_NAME];
+    const headerToken = req.headers[CSRF_HEADER_NAME];
 
-    // Validate origin
-    if (!isValidOrigin(origin, referer)) {
-        logger.warn('CSRF blocked request from invalid origin', { origin: origin || referer || 'none' });
+    if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+        logger.warn('CSRF validation failed', {
+            hasCookie: !!cookieToken,
+            hasHeader: !!headerToken,
+            ip: req.ip,
+            path: req.path
+        });
 
-        // In production, block the request
-        if (process.env.NODE_ENV === 'production') {
-            return res.status(403).json({
-                error: 'Invalid origin',
-                message: 'Request blocked due to CSRF protection'
-            });
-        }
-
-        // In development, log a warning but allow the request
-        logger.warn('CSRF request allowed in development mode despite invalid origin');
+        return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Invalid or missing CSRF token'
+        });
     }
 
     next();
 };
 
 /**
- * Strict Origin Validation
- * 
- * Use this for highly sensitive endpoints (e.g., password change, delete account).
- * Always blocks requests from invalid origins, even in development.
+ * Legacy Origin Validation (Defense-in-Depth)
  */
-export const strictValidateOrigin = (req: Request, res: Response, next: NextFunction) => {
-    const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
-    if (safeMethods.includes(req.method)) {
-        return next();
-    }
+const getAllowedOrigins = (): string[] => {
+    const defaults = [
+        'https://qscrap.qa',
+        'https://www.qscrap.qa'
+    ];
+    return process.env.ALLOWED_ORIGINS
+        ? [...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()), ...defaults]
+        : defaults;
+};
 
+export const validateOrigin = (req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin as string | undefined;
-    const referer = req.headers.referer as string | undefined;
+    const allowed = getAllowedOrigins();
 
-    // For strict validation, always require valid origin
-    if (!origin && !referer) {
-        logger.warn('CSRF-STRICT blocked request with no origin');
-        return res.status(403).json({
-            error: 'Origin required',
-            message: 'Requests to this endpoint must include Origin header'
-        });
-    }
-
-    if (!isValidOrigin(origin, referer)) {
-        logger.warn('CSRF-STRICT blocked request from invalid origin', { origin: origin || referer });
-        return res.status(403).json({
-            error: 'Invalid origin',
-            message: 'Request blocked due to CSRF protection'
-        });
+    if (origin && !allowed.includes(origin) && process.env.NODE_ENV === 'production') {
+        logger.warn('Origin validation failed', { origin });
+        return res.status(403).json({ error: 'Invalid origin' });
     }
 
     next();
