@@ -1878,7 +1878,7 @@
                     // 2. Load Google Maps (Dynamic Injection)
                     if (config.googleMapsKey) {
                         const script = document.createElement('script');
-                        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMapsKey}&libraries=places&callback=initGoogleMapsCallback`;
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMapsKey}&libraries=places&callback=initGoogleMapsCallback&loading=async`;
                         script.async = true;
                         script.defer = true;
                         document.head.appendChild(script);
