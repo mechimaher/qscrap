@@ -1,3 +1,4 @@
+import { Pool, PoolClient } from 'pg';
 import { CANCELLATION_FEES, STATUS_TO_STAGE, FEE_POLICY, CancellationStage } from '../cancellation/cancellation.constants';
 import { calculateRefundableAmount } from '../finance/refund-calculator.service';
 
@@ -566,6 +567,9 @@ export class SupportService {
                         [order.customer_id]
                     );
                     const customerCancellationCount = parseInt(prevCancellations.rows[0].count);
+
+                    const totalAmount = parseFloat(String(order.total_amount));
+                    const deliveryFee = parseFloat(String(order.delivery_fee || 0));
 
                     const calculation = calculateRefundableAmount({
                         orderStatus: order.order_status,
