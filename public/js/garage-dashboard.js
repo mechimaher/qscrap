@@ -730,6 +730,13 @@ async function loadRequests(page = 1) {
 }
 
 function renderRequests() {
+    // VVIP Enterprise Guard: If in Quick Bid Mode, sync and refresh operational view instead
+    if (typeof QuickBidStore !== 'undefined' && QuickBidStore.isActive) {
+        QuickBidStore.syncWithRequests(requests);
+        if (typeof renderQuickBidTable === 'function') renderQuickBidTable();
+        return;
+    }
+
     const html = requests.length ? requests.map(r => createRequestCard(r)).join('') :
         '<div class="empty-state"><i class="bi bi-inbox"></i><h4>No requests yet</h4><p>New requests will appear here in real-time</p></div>';
 

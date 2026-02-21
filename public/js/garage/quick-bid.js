@@ -31,13 +31,13 @@ let QB_CONDITION = null;
  * the DOM already reflects those changes and a re-render causes flicker.
  */
 const RE_RENDER_EVENTS = new Set([
-    'SESSION_CREATED',
-    'SESSION_RESTORED',
-    'SESSION_SUSPENDED',
-    'SESSION_DISCARDED',
-    'ITEM_AVAILABILITY_CHANGED',  // Toggles disabled states on price/condition fields
-    'ITEM_SKIPPED',
-    'META_UPDATED',
+  'SESSION_CREATED',
+  'SESSION_RESTORED',
+  'SESSION_SUSPENDED',
+  'SESSION_DISCARDED',
+  'ITEM_AVAILABILITY_CHANGED',  // Toggles disabled states on price/condition fields
+  'ITEM_SKIPPED',
+  'META_UPDATED',
 ]);
 
 
@@ -53,50 +53,54 @@ const RE_RENDER_EVENTS = new Set([
  * navigation if the dashboard is a SPA.
  */
 async function initQuickBid() {
-    try {
-        const module = await import('./QuickBidStore.js');
+  // Expose for dashboard integration
+  window.qbIsActive = qbIsActive;
 
-        // Bridge named exports into controller-scoped variables
-        QB_EVENTS = module.EVENTS;
-        QB_ITEM_STATUS = module.ITEM_STATUS;
-        QB_AVAILABILITY = module.AVAILABILITY;
-        QB_CONDITION = module.CONDITION;
+  try {
+    const { QuickBidStore, EVENTS, AVAILABILITY, CONDITION, ITEM_STATUS, SESSION_STATUS } =
+      await import('./QuickBidStore.js');
 
-        const garageId = localStorage.getItem('userId');
-        if (!garageId) {
-            console.warn('[QuickBidUI] No garageId in localStorage. Aborting init.');
-            return;
-        }
+    // Bridge named exports into controller-scoped variables
+    QB_EVENTS = EVENTS;
+    QB_ITEM_STATUS = ITEM_STATUS;
+    QB_AVAILABILITY = AVAILABILITY;
+    QB_CONDITION = CONDITION;
 
-        qbStore = new module.QuickBidStore({ garageId });
-
-        // Reactive UI — only re-render on events that require structural DOM changes
-        qbStore.on('*', (eventName) => {
-            if (qbIsActive && RE_RENDER_EVENTS.has(eventName)) {
-                renderQuickBidTable();
-            }
-        });
-
-        // Log persistence errors visibly during development
-        qbStore.on(QB_EVENTS.PERSISTENCE_ERROR, (_, payload) => {
-            console.error('[QuickBidUI] Persistence error:', payload);
-        });
-
-        // Warn operator if their workspace is stale (>4 hours)
-        qbStore.on(QB_EVENTS.STALE_SESSION_DETECTED, (_, { ageMs }) => {
-            const hours = Math.round(ageMs / 1000 / 60 / 60);
-            showToast(`Your draft workspace is ${hours}h old. Prices may no longer be accurate.`, 'warning');
-        });
-
-        await qbStore.init(window.requests || []);
-        console.log('[QuickBidUI] Store initialized. Status:', qbStore.getStatus());
-
-        // Attach event delegation after DOM is ready
-        attachTableDelegation();
-
-    } catch (err) {
-        console.error('[QuickBidUI] Failed to initialize:', err);
+    const garageId = localStorage.getItem('userId');
+    if (!garageId) {
+      console.warn('[QuickBidUI] No garageId in localStorage. Aborting init.');
+      return;
     }
+
+    qbStore = new QuickBidStore({ garageId });
+
+    // Reactive UI — only re-render on events that require structural DOM changes
+    qbStore.on('*', (eventName) => {
+      if (qbIsActive && RE_RENDER_EVENTS.has(eventName)) {
+        renderQuickBidTable();
+      }
+    });
+
+    // Log persistence errors visibly during development
+    qbStore.on(QB_EVENTS.PERSISTENCE_ERROR, (_, payload) => {
+      console.error('[QuickBidUI] Persistence error:', payload);
+    });
+
+    // Warn operator if their workspace is stale (>4 hours)
+    qbStore.on(QB_EVENTS.STALE_SESSION_DETECTED, (_, { ageMs }) => {
+      const hours = Math.round(ageMs / 1000 / 60 / 60);
+      showToast(`Your draft workspace is ${hours}h old. Prices may no longer be accurate.`, 'warning');
+    });
+
+    await qbStore.init(window.requests || []);
+    console.log('[QuickBidUI] Store initialized. Status:', qbStore.getStatus());
+
+    // Attach event delegation after DOM is ready
+    attachTableDelegation();
+
+  } catch (err) {
+    console.error('[QuickBidUI] Failed to initialize:', err);
+  }
 }
 
 
@@ -105,35 +109,33 @@ async function initQuickBid() {
 // ─────────────────────────────────────────────
 
 function toggleQuickBidMode() {
-    if (!qbStore) {
-        console.warn('[QuickBidUI] Store not ready. Cannot toggle mode.');
-        return;
-    }
+  if (!qbStore) {
+    console.warn('[QuickBidUI] Store not ready. Cannot toggle mode.');
+    return;
+  }
 
-    qbIsActive = !qbIsActive;
+  qbIsActive = !qbIsActive;
 
-    const container = document.getElementById('requestsList');
-    const toggleBtn = document.getElementById('quickBidToggleBtn');
+  const container = document.getElementById('requestsList');
+  const toggleBtn = document.getElementById('quickBidToggleBtn');
 
-    if (qbIsActive) {
-        container?.classList.add('quick-bid-mode');
-        toggleBtn?.classList.add('active');
-        if (toggleBtn) toggleBtn.innerHTML = '<i class="bi bi-grid-fill"></i> Standard View';
+  if (qbIsActive) {
+    container?.classList.add('quick-bid-mode');
+    toggleBtn?.classList.add('active');
+    if (toggleBtn) toggleBtn.innerHTML = '<i class="bi bi-grid-fill"></i> Standard View';
 
-        // Merge any new requests that arrived since the session was created
-        if (window.requests) {
-            qbStore.syncNewRequests(window.requests);
-        }
+    // Merge any new requests that arrived since the session was created
+    if (window.requests) qbStore.syncNewRequests(window.requests);
 
-        renderQuickBidTable();
-    } else {
-        container?.classList.remove('quick-bid-mode');
-        toggleBtn?.classList.remove('active');
-        if (toggleBtn) toggleBtn.innerHTML = '<i class="bi bi-lightning-charge-fill"></i> Quick Bid Mode';
+    renderQuickBidTable();
+  } else {
+    container?.classList.remove('quick-bid-mode');
+    toggleBtn?.classList.remove('active');
+    if (toggleBtn) toggleBtn.innerHTML = '<i class="bi bi-lightning-charge-fill"></i> Quick Bid Mode';
 
-        // Hand back to the standard dashboard renderer
-        if (typeof renderRequests === 'function') renderRequests();
-    }
+    // Hand back to the standard dashboard renderer
+    if (typeof renderRequests === 'function') renderRequests();
+  }
 }
 
 
@@ -142,17 +144,17 @@ function toggleQuickBidMode() {
 // ─────────────────────────────────────────────
 
 function renderQuickBidTable() {
-    const container = document.getElementById('requestsList');
-    if (!container || !qbStore) return;
+  const container = document.getElementById('requestsList');
+  if (!container || !qbStore) return;
 
-    const session = qbStore.getSession();
-    const meta = qbStore.getMeta();
-    if (!session) return;
+  const session = qbStore.getSession();
+  const meta = qbStore.getMeta();
+  if (!session) return;
 
-    const submittable = qbStore.isSubmittable();
+  const submittable = qbStore.isSubmittable();
 
-    // ── Toolbar ──────────────────────────────────
-    let html = `
+  // ── Toolbar ──────────────────────────────────
+  let html = `
     <div class="quick-bid-layout">
       <div class="quick-bid-toolbar">
         <div class="qb-stats">
@@ -184,15 +186,15 @@ function renderQuickBidTable() {
           <tbody>
   `;
 
-    // ── Rows ─────────────────────────────────────
-    session.items.forEach(item => {
-        const s = item.snapshot;
-        const isSkipped = item.itemStatus === QB_ITEM_STATUS.SKIPPED;
-        const isReady = item.itemStatus === QB_ITEM_STATUS.READY;
-        // Price and condition fields are only active when availability is AVAILABLE
-        const fieldsDisabled = item.availability !== QB_AVAILABILITY.AVAILABLE;
+  // ── Rows ─────────────────────────────────────
+  session.items.forEach(item => {
+    const s = item.snapshot;
+    const isSkipped = item.itemStatus === QB_ITEM_STATUS.SKIPPED;
+    const isReady = item.itemStatus === QB_ITEM_STATUS.READY;
+    // Price and condition fields are only active when availability is AVAILABLE
+    const fieldsDisabled = item.availability !== QB_AVAILABILITY.AVAILABLE;
 
-        html += `
+    html += `
       <tr class="qb-row status-${item.itemStatus.toLowerCase()}" data-id="${item.requestId}">
 
         <td>
@@ -263,10 +265,10 @@ function renderQuickBidTable() {
 
       </tr>
     `;
-    });
+  });
 
-    html += `</tbody></table></div></div>`;
-    container.innerHTML = html;
+  html += `</tbody></table></div></div>`;
+  container.innerHTML = html;
 }
 
 
@@ -280,70 +282,70 @@ function renderQuickBidTable() {
  * Attached once on init — survives innerHTML re-renders.
  */
 function attachTableDelegation() {
-    const container = document.getElementById('requestsList');
-    if (!container) return;
+  const container = document.getElementById('requestsList');
+  if (!container) return;
 
-    // ── Click actions ────────────────────────────
-    container.addEventListener('click', (e) => {
-        if (!qbIsActive || !qbStore) return;
+  // ── Click actions ────────────────────────────
+  container.addEventListener('click', (e) => {
+    if (!qbIsActive || !qbStore) return;
 
-        const actionEl = e.target.closest('[data-action]');
-        if (!actionEl) return;
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
 
-        const action = actionEl.dataset.action;
-        const row = actionEl.closest('[data-id]');
-        const requestId = row?.dataset.id;
+    const action = actionEl.dataset.action;
+    const row = actionEl.closest('[data-id]');
+    const requestId = row?.dataset.id;
 
-        switch (action) {
-            case 'set-available':
-                qbStore.setAvailability(requestId, QB_AVAILABILITY.AVAILABLE);
-                break;
+    switch (action) {
+      case 'set-available':
+        qbStore.setAvailability(requestId, QB_AVAILABILITY.AVAILABLE);
+        break;
 
-            case 'set-unavailable':
-                qbStore.setAvailability(requestId, QB_AVAILABILITY.UNAVAILABLE);
-                break;
+      case 'set-unavailable':
+        qbStore.setAvailability(requestId, QB_AVAILABILITY.UNAVAILABLE);
+        break;
 
-            case 'copy-vin': {
-                const vin = actionEl.dataset.vin;
-                navigator.clipboard?.writeText(vin).then(() => {
-                    showToast(`VIN copied: ${vin}`, 'info');
-                });
-                break;
-            }
+      case 'copy-vin': {
+        const vin = actionEl.dataset.vin;
+        navigator.clipboard?.writeText(vin).then(() => {
+          showToast(`VIN copied: ${vin}`, 'info');
+        });
+        break;
+      }
 
-            case 'submit-all':
-                handleQuickBidSubmit();
-                break;
-        }
-    });
+      case 'submit-all':
+        handleQuickBidSubmit();
+        break;
+    }
+  });
 
-    // ── Change actions (inputs & selects) ────────
-    container.addEventListener('change', (e) => {
-        if (!qbIsActive || !qbStore) return;
+  // ── Change actions (inputs & selects) ────────
+  container.addEventListener('change', (e) => {
+    if (!qbIsActive || !qbStore) return;
 
-        const actionEl = e.target.closest('[data-action]');
-        if (!actionEl) return;
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
 
-        const action = actionEl.dataset.action;
-        const row = actionEl.closest('[data-id]');
-        const requestId = row?.dataset.id;
+    const action = actionEl.dataset.action;
+    const row = actionEl.closest('[data-id]');
+    const requestId = row?.dataset.id;
 
-        switch (action) {
-            case 'set-price': {
-                const val = e.target.value.trim();
-                qbStore.setPrice(requestId, val === '' ? null : parseFloat(val));
-                break;
-            }
+    switch (action) {
+      case 'set-price': {
+        const val = e.target.value.trim();
+        qbStore.setPrice(requestId, val === '' ? null : parseFloat(val));
+        break;
+      }
 
-            case 'set-condition':
-                if (e.target.value) qbStore.setCondition(requestId, e.target.value);
-                break;
+      case 'set-condition':
+        if (e.target.value) qbStore.setCondition(requestId, e.target.value);
+        break;
 
-            case 'set-note':
-                qbStore.setNote(requestId, e.target.value);
-                break;
-        }
-    });
+      case 'set-note':
+        qbStore.setNote(requestId, e.target.value);
+        break;
+    }
+  });
 }
 
 
@@ -352,77 +354,77 @@ function attachTableDelegation() {
 // ─────────────────────────────────────────────
 
 async function handleQuickBidSubmit() {
-    if (!qbStore) return;
+  if (!qbStore) return;
 
-    const { valid, payload, errors } = qbStore.buildSubmissionPayload();
+  const { valid, payload, errors } = qbStore.buildSubmissionPayload();
 
-    if (!valid) {
-        showToast('Some bids have missing fields. Please review before submitting.', 'error');
-        console.warn('[QuickBidUI] Validation errors:', errors);
-        return;
+  if (!valid) {
+    showToast('Some bids have missing fields. Please review before submitting.', 'error');
+    console.warn('[QuickBidUI] Validation errors:', errors);
+    return;
+  }
+
+  // Disable submit button for the duration of the operation
+  const btn = document.getElementById('qbSubmitBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting...';
+  }
+
+  showToast(`Submitting ${payload.bids.length} bid${payload.bids.length !== 1 ? 's' : ''}...`, 'info');
+
+  // Track per-bid outcomes for partial confirmation
+  const succeededIds = [];
+  const failedIds = [];
+
+  for (const bid of payload.bids) {
+    try {
+      const formData = new FormData();
+      formData.append('request_id', bid.requestId);
+      formData.append('bid_amount', bid.price);
+      formData.append('part_condition', bid.condition.toLowerCase());
+      formData.append('warranty_days', 7);
+      formData.append('notes', bid.note);
+
+      const res = await fetch('/api/bids', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${window.token}` },
+        body: formData,
+      });
+
+      if (res.ok) {
+        succeededIds.push(bid.requestId);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        console.warn(`[QuickBidUI] Bid failed for ${bid.requestId}:`, res.status, body);
+        failedIds.push(bid.requestId);
+      }
+    } catch (err) {
+      console.error(`[QuickBidUI] Network error for ${bid.requestId}:`, err);
+      failedIds.push(bid.requestId);
     }
+  }
 
-    // Disable submit button for the duration of the operation
-    const btn = document.getElementById('qbSubmitBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting...';
-    }
+  // ── Partial confirmation ──────────────────────
+  // Only mark succeeded bids as confirmed. Failed bids stay in READY
+  // state so the operator can retry without re-entering data.
+  if (succeededIds.length > 0) {
+    qbStore.confirmPartialSubmission(succeededIds);
+    showToast(`${succeededIds.length} bid${succeededIds.length !== 1 ? 's' : ''} submitted successfully.`, 'success');
 
-    showToast(`Submitting ${payload.bids.length} bid${payload.bids.length !== 1 ? 's' : ''}...`, 'info');
+    // Refresh the main dashboard lists
+    if (typeof loadBids === 'function') loadBids();
+    if (typeof loadRequests === 'function') loadRequests();
+  }
 
-    // Track per-bid outcomes for partial confirmation
-    const succeededIds = [];
-    const failedIds = [];
+  if (failedIds.length > 0) {
+    showToast(
+      `${failedIds.length} bid${failedIds.length !== 1 ? 's' : ''} failed. They remain in your workspace for retry.`,
+      'error'
+    );
+  }
 
-    for (const bid of payload.bids) {
-        try {
-            const formData = new FormData();
-            formData.append('request_id', bid.requestId);
-            formData.append('bid_amount', bid.price);
-            formData.append('part_condition', bid.condition.toLowerCase());
-            formData.append('warranty_days', 7);
-            formData.append('notes', bid.note);
-
-            const res = await fetch('/api/bids', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${window.token}` },
-                body: formData,
-            });
-
-            if (res.ok) {
-                succeededIds.push(bid.requestId);
-            } else {
-                const body = await res.json().catch(() => ({}));
-                console.warn(`[QuickBidUI] Bid failed for ${bid.requestId}:`, res.status, body);
-                failedIds.push(bid.requestId);
-            }
-        } catch (err) {
-            console.error(`[QuickBidUI] Network error for ${bid.requestId}:`, err);
-            failedIds.push(bid.requestId);
-        }
-    }
-
-    // ── Partial confirmation ──────────────────────
-    // Only mark succeeded bids as confirmed. Failed bids stay in READY
-    // state so the operator can retry without re-entering data.
-    if (succeededIds.length > 0) {
-        qbStore.confirmPartialSubmission(succeededIds);
-        showToast(`${succeededIds.length} bid${succeededIds.length !== 1 ? 's' : ''} submitted successfully.`, 'success');
-
-        // Refresh the main dashboard lists
-        if (typeof loadBids === 'function') loadBids();
-        if (typeof loadRequests === 'function') loadRequests();
-    }
-
-    if (failedIds.length > 0) {
-        showToast(
-            `${failedIds.length} bid${failedIds.length !== 1 ? 's' : ''} failed. They remain in your workspace for retry.`,
-            'error'
-        );
-    }
-
-    renderQuickBidTable();
+  renderQuickBidTable();
 }
 
 
@@ -436,13 +438,13 @@ async function handleQuickBidSubmit() {
  * a global escapeHTML, this will be overridden at runtime — that's fine.
  */
 function escapeHTML(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 
