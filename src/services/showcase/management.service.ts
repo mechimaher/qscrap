@@ -220,7 +220,7 @@ export class ShowcaseManagementService {
         }
 
         const { plan_code, features } = result.rows[0];
-        const hasShowcase = features?.showcase === true || features?.featured === true || plan_code === 'enterprise';
+        const hasShowcase = features?.showcase === true || features?.featured === true || plan_code === 'enterprise' || plan_code === 'platinum';
 
         if (!hasShowcase) {
             throw new NoShowcaseAccessError(garageId);

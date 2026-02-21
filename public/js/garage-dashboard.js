@@ -3709,16 +3709,17 @@ async function loadSubscription() {
             const planCode = (sub.plan_code || '').toLowerCase();
             const analyticsBadge = document.getElementById('analyticsPlanBadge');
             const analyticsHeaderBadge = document.getElementById('analyticsHeaderBadge');
+            const showcaseHeaderBadge = document.getElementById('showcaseHeaderBadge');
 
             let badgeText = 'PRO+';
             let badgeStyle = 'background: linear-gradient(135deg, #A82050, #8D1B3D);';
 
-            if (planCode === 'enterprise') {
+            if (planCode === 'enterprise' || planCode === 'platinum') {
                 badgeText = 'ENTERPRISE';
                 badgeStyle = 'background: linear-gradient(135deg, #eab308, #f59e0b);';
-            } else if (planCode === 'professional') {
-                badgeText = 'PRO';
-                badgeStyle = 'background: linear-gradient(135deg, #A82050, #8D1B3D);';
+            } else if (planCode === 'gold' || planCode === 'professional') {
+                badgeText = 'PRO+';
+                badgeStyle = 'background: linear-gradient(135deg, #A82050, #831034);';
             } else if (planCode === 'starter') {
                 badgeText = 'UPGRADE';
                 badgeStyle = 'background: linear-gradient(135deg, #6b7280, #9ca3af);';
@@ -3731,6 +3732,10 @@ async function loadSubscription() {
             if (analyticsHeaderBadge) {
                 analyticsHeaderBadge.textContent = badgeText;
                 analyticsHeaderBadge.style.cssText += badgeStyle;
+            }
+            if (showcaseHeaderBadge) {
+                showcaseHeaderBadge.textContent = badgeText;
+                showcaseHeaderBadge.style.cssText += badgeStyle;
             }
 
             // Price display - commission plans have no monthly fee
